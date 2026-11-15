@@ -70,7 +70,9 @@ import java.util.UUID;
  * before the event (CR 603.10a): the permanents on the battlefield, those that left in the same event as their
  * last-known copies, and the cards in graveyards and face up in exile that were there before it (the haunting
  * cards among them, CR 702.55c). For another kind of move they are listed as they are after it, and a permanent
- * that entered is listed for its enters abilities (CR 603.6a); cards in command zones are listed too. Abilities their
+ * that entered is listed for its enters abilities (CR 603.6a); cards in command zones are listed too. The face-up
+ * planes and schemes are listed for either kind of move, their abilities functioning from the command zone (CR 901.7,
+ * 314.4). Abilities their
  * owner perpetually lost are left out everywhere. {@link #permanentChangeCandidates} lists the abilities that see a
  * permanent phase, transform or be turned face up.
  *
@@ -128,6 +130,7 @@ public class TriggerIndex {
         }
         graveyardCandidates(gameData, batch, candidates);
         exileCandidates(gameData, batch, candidates);
+        commandZoneObjectCandidates(gameData, batch, true, candidates);
         return candidates;
     }
 
@@ -157,6 +160,29 @@ public class TriggerIndex {
         graveyardCandidates(gameData, batch, into);
         exileCandidates(gameData, batch, into);
         commandZoneCandidates(gameData, into);
+        commandZoneObjectCandidates(gameData, batch, false, into);
+    }
+
+    /**
+     * The face-up planar objects' and schemes' zone-change abilities, which trigger from the command zone (CR 901.7,
+     * 314.4): a plane's under the planar controller's control (CR 901.6), a scheme's as the permanent view its steps
+     * read it as, under its owner's control. {@code departure} is as {@link #battlefieldCandidates} reads it.
+     */
+    private void commandZoneObjectCandidates(GameData gameData, List<ZoneChangeEvent> batch, boolean departure,
+                                             List<TriggerCandidate> into) {
+        if (gameData.planechase != null && gameData.planechase.controllerId != null) {
+            UUID planarControllerId = gameData.planechase.controllerId;
+            for (PlanarObject plane : List.copyOf(gameData.planechase.faceUp)) {
+                Card card = plane.getCard();
+                for (TriggeredAbility ability : card.getTriggeredAbilities()) {
+                    if (ability.conditions().stream().anyMatch(c -> c.trigger() instanceof ZoneChangeTrigger)) {
+                        into.add(new TriggerCandidate(card, null, planarControllerId, Zone.COMMAND, ability, plane));
+                    }
+                }
+            }
+        }
+        gameData.forEachFaceUpSchemeSource((ownerId, scheme) ->
+                battlefieldCandidates(gameData, batch, departure, scheme, ownerId, into));
     }
 
     /** The cards in command zones, under their owners' control, with the abilities that function there. */

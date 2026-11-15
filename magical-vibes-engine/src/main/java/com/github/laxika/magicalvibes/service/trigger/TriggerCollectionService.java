@@ -159,7 +159,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -1333,12 +1332,19 @@ public class TriggerCollectionService {
         Card sourceCard = candidate.sourceCard();
         Permanent source = candidate.sourcePermanent() == null ? null : namedSourcePermanent(candidate);
         boolean dies = trigger.to() == Zone.GRAVEYARD && trigger.from().equals(Set.of(Zone.BATTLEFIELD));
+        TriggerRecord eventRecord = zoneChangeRecord(gameData, candidate, source, events,
+                thatPlayer(gameData, trigger, event),
+                dies && trigger.causes().isEmpty()
+                        && candidate.ability().options().multiplicity() == TriggerMultiplicity.ONE_OR_MORE,
+                dies && trigger.relation() == ObjectRelation.ENCHANTED);
+        // A plane's ability names the planar object it is an ability of, as it was when it triggered (CR 608.2h).
+        PlanarObject plane = candidate.plane() == null ? null : candidate.plane().copy();
+        TriggerRecord record = plane == null ? eventRecord : entry -> {
+            eventRecord.stamp(entry);
+            entry.setSourcePlanarObject(plane);
+        };
         TriggeredAbilityRequest request = new TriggeredAbilityRequest(watchedAbility(gameData, candidate), sourceCard,
-                source, candidate.controllerId(), sourceCard.getName() + "'s ability", ifContext,
-                zoneChangeRecord(gameData, candidate, source, events, thatPlayer(gameData, trigger, event),
-                        dies && trigger.causes().isEmpty()
-                                && candidate.ability().options().multiplicity() == TriggerMultiplicity.ONE_OR_MORE,
-                        dies && trigger.relation() == ObjectRelation.ENCHANTED));
+                source, candidate.controllerId(), sourceCard.getName() + "'s ability", ifContext, record);
         if (event.enteredBattlefield() && event.permanent() != null && !createsTokens(candidate)) {
             Permanent entered = gameQueryService.findPermanentById(gameData, event.permanent().getId());
             request = request.withEvent(new TriggerContext.PermanentEnters(
@@ -1510,7 +1516,7 @@ public class TriggerCollectionService {
      *       stay it went to ("that card");</li>
      *   <li>a permanent that entered: as "it", with its controller, power and toughness as it entered, the card it
      *       entered as and the player or planeswalker it entered attacking;</li>
-     *   <li>a card that moved between other zones: as "that card" with its graveyard stay;</li>
+     *   <li>a card that moved between other zones: as "that card" with its graveyard stay and its owner;</li>
      *   <li>for "one or more": every object of the batch ("them", "those cards") and how many there were as the event
      *       value, or, for creatures dying, their total power (The Skullspore Nexus);</li>
      *   <li>"that player" ({@code thatPlayerId}) as its triggering player and non-targeting target.</li>
@@ -1555,6 +1561,7 @@ public class TriggerCollectionService {
             }
         }
         int batchPower = totalPower;
+        UUID cardOwnerId = event.ownerId() != null ? event.ownerId() : gameData.ownerOf(event.card());
         return entry -> {
             entry.setNonTargeting(true);
             if (snapshot != null) {
@@ -1616,6 +1623,8 @@ public class TriggerCollectionService {
             } else {
                 entry.setTriggeringCardId(movedCard.getId());
                 entry.setTriggeringCardSnapshot(event.card());
+                // "That card's owner": the zone change names it, as a card in a hand or library may name none.
+                entry.setTriggeringPermanentOwnerId(cardOwnerId);
             }
             if (graveyardStays.containsKey(movedCard.getId())) {
                 entry.setTriggeringCard(movedCard.getId(), graveyardStays.get(movedCard.getId()));
@@ -2247,8 +2256,8 @@ public class TriggerCollectionService {
 
     /**
      * The creature-death triggered abilities that aren't abilities of an object the trigger pipeline indexes: the
-     * global ones a resolved spell or ability registered (CR 603.7), emblems', the delayed "when that creature
-     * dies" watchers and face-up planes' (CR 901.7). They trigger as {@code dyingPermanent}, which
+     * global ones a resolved spell or ability registered (CR 603.7), emblems' and the delayed "when that creature
+     * dies" watchers. They trigger as {@code dyingPermanent}, which
      * {@code dyingControllerId} controlled, dies.
      */
     public void checkCreatureDeathRegisteredTriggers(GameData gameData, UUID dyingControllerId,
@@ -2263,7 +2272,6 @@ public class TriggerCollectionService {
         }
         collectEmblemCreatureDeathTriggers(gameData, dyingCard, ctx);
         collectCreatureDeathTriggerWatchers(gameData, dyingPermanent);
-        collectPlanarCreatureDeathTriggers(gameData, dyingCard, dyingPermanent, dyingControllerId);
     }
 
     private void collectRegisteredCreatureDeathTrigger(GameData gameData, TemporaryGlobalTriggeredAbility watcher,
@@ -2577,122 +2585,6 @@ public class TriggerCollectionService {
     }
 
     /** Fires "whenever you lose a coin flip" triggers for the losing player's battlefield. */
-
-    private void collectPlanarCreatureDeathTriggers(GameData gameData, Card dyingCard,
-                                                    Permanent dyingPermanent,
-                                                    UUID dyingCreatureControllerId) {
-        if (gameData.planechase == null || gameData.planechase.controllerId == null) return;
-
-        UUID planarControllerId = gameData.planechase.controllerId;
-        for (var object : List.copyOf(gameData.planechase.faceUp)) {
-            // "Whenever a white creature dies" (Agyrem): the trigger's filter on the creature as it last existed.
-            FilterContext planarContext = FilterContext.of(gameData).withSourceControllerId(planarControllerId)
-                    .withSourceCardId(object.getCard().getId());
-            List<TriggeredAbility> abilities = planarCreatureDeathAbilities(object.getCard()).stream()
-                    .filter(narrowed -> narrowed.filter() == null || TriggeredAbilityStackService.departedFilterMatches(
-                            predicateEvaluationService, narrowed.filter(), dyingPermanent, DepartedAttachments.NONE,
-                            planarContext))
-                    .map(NarrowedAbility::ability)
-                    .toList();
-            // Each ability of the plane goes on the stack whole (CR 603.3), its target chosen as it goes there
-            // (CR 603.3d).
-            Card plane = object.getCard();
-            int power = Math.max(0, dyingPermanent.getEffectivePower());
-            long graveyardVersion = gameData.graveyardEntryVersion(dyingCard.getId());
-            for (TriggeredAbility ability : abilities) {
-                PlanarObject source = object.copy();
-                triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability, plane, null,
-                        planarControllerId, plane.getName() + "'s ability",
-                        ConditionContext.forCard(plane, planarControllerId), entry -> {
-                            entry.setSourcePlanarObject(source);
-                            entry.setTriggeringCard(dyingCard.getId(), graveyardVersion);
-                            entry.setTriggeringPermanentId(dyingPermanent.getId());
-                            entry.setTriggeringPermanentControllerId(dyingCreatureControllerId);
-                            entry.setTriggeringPermanentPowerAtTrigger(power);
-                            entry.setEventValue(power);
-                        }).withCreatureDying());
-            }
-        }
-    }
-
-    /**
-     * An ability of a plane whose trigger condition is "whenever a creature dies", or that narrowed by a further filter
-     * on the dying creature, and that filter.
-     *
-     * @param ability the ability
-     * @param filter  what the dying creature must also be, or {@code null} when the condition is "a creature"
-     */
-    private record NarrowedAbility(TriggeredAbility ability, PermanentPredicate filter) {
-    }
-
-    /**
-     * The abilities of {@code plane} whose trigger condition is {@code Triggers.creatureDies(ANY)} or that trigger
-     * narrowed by a further filter on the dying creature ({@code Triggers.creatureDies(white, ANY)}, Agyrem), with
-     * that filter, in the order they were added; the caller judges the filter.
-     */
-    private static List<NarrowedAbility> planarCreatureDeathAbilities(Card plane) {
-        ZoneChangeTrigger creatureDies = Triggers.creatureDies(ObjectRelation.ANY);
-        List<NarrowedAbility> abilities = new ArrayList<>();
-        for (TriggeredAbility ability : plane.getTriggeredAbilities()) {
-            for (TriggerCondition condition : ability.conditions()) {
-                if (!(condition.trigger() instanceof ZoneChangeTrigger move)) {
-                    continue;
-                }
-                if (move.equals(creatureDies)) {
-                    abilities.add(new NarrowedAbility(ability, null));
-                    break;
-                }
-                if (move.filter() instanceof PermanentAllOfPredicate allOf && allOf.predicates().size() == 2
-                        && allOf.predicates().getFirst().equals(creatureDies.filter())
-                        && move.withFilter(creatureDies.filter()).equals(creatureDies)) {
-                    abilities.add(new NarrowedAbility(ability, allOf.predicates().getLast()));
-                    break;
-                }
-            }
-        }
-        return abilities;
-    }
-
-    /**
-     * Face-up planes' "whenever a nonblack card is put into a graveyard from anywhere" abilities. A plane is no
-     * object the trigger pipeline lists, so its abilities are still collected as the card arrives.
-     */
-    public void checkPlanarNonblackCardPutIntoGraveyardTriggers(GameData gameData, UUID graveyardOwnerId, Card card) {
-        if (card.getColors() != null && card.getColors().contains(CardColor.BLACK) || gameData.planechase == null) {
-            return;
-        }
-        var trigger = Triggers.putIntoGraveyardFromAnywhere(Triggers.NONBLACK_CARD, ObjectRelation.ANOTHER);
-        UUID planarControllerId = gameData.planechase.controllerId;
-        for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            Card plane = object.getCard();
-            for (TriggeredAbility ability : plane.getTriggeredAbilities(trigger)) {
-                if (!ability.options().equals(TriggerOptions.DEFAULT)) {
-                    throw new IllegalStateException("No planar graveyard reader judges " + ability.options() + ": "
-                            + ability);
-                }
-                // "That player" is the graveyard's owner, whom the ability doesn't target; "that card" is the card
-                // with the graveyard stay it went to (CR 400.7).
-                PlanarObject source = object.copy();
-                boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
-                        plane, null, planarControllerId, plane.getName() + "'s ability",
-                        ConditionContext.forCard(plane, planarControllerId), entry -> {
-                            long graveyardStay = gameData.graveyardEntryVersion(card.getId());
-                            entry.setTargetId(graveyardOwnerId);
-                            entry.setNonTargeting(true);
-                            entry.setTriggeringCards(List.of(card));
-                            entry.getEventCardGraveyardEntryVersions().put(card.getId(), graveyardStay);
-                            entry.setTriggeringCard(card.getId(), graveyardStay);
-                            entry.setTriggeringPlayerId(graveyardOwnerId);
-                            entry.setSourcePlanarObject(source);
-                        }));
-                if (triggered) {
-                    gameLogService.append(gameData, GameLog.abilityTriggers(plane));
-                    log.info("Game {} - {} triggers (card put into a player's graveyard from anywhere)", gameData.id,
-                            plane.getName());
-                }
-            }
-        }
-    }
 
     /** Fires effects that care when the given player foretells a card. */
 
@@ -3040,113 +2932,6 @@ public class TriggerCollectionService {
         }
     }
 
-    /**
-     * Face-up planes' "whenever a creature leaves the battlefield" abilities (Takenuma). A plane is no object the
-     * trigger pipeline lists, so its abilities are still collected as the creature leaves.
-     */
-    public void checkPlanarCreatureLeavesBattlefieldTriggers(GameData gameData, Permanent leavingPermanent,
-                                                             boolean wasCreature, UUID leavingControllerId) {
-        if (!wasCreature) return;
-        UUID leavingId = leavingPermanent.getId();
-        if (gameData.planechase == null || leavingControllerId == null) {
-            return;
-        }
-        UUID planarControllerId = gameData.planechase.controllerId;
-        if (planarControllerId == null) {
-            return;
-        }
-        for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            // Each ability of the plane goes on the stack whole (CR 603.3).
-            Card plane = object.getCard();
-            for (TriggeredAbility ability : plane.getTriggeredAbilities(
-                    Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER))) {
-                PlanarObject source = object.copy();
-                triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability, plane, null,
-                        planarControllerId, plane.getName() + "'s ability",
-                        ConditionContext.forCard(plane, planarControllerId), entry -> {
-                            entry.setSourcePlanarObject(source);
-                            entry.setTriggeringPermanentId(leavingId);
-                            entry.setTriggeringPermanentControllerId(leavingControllerId);
-                            entry.setNonTargeting(true);
-                        }));
-                gameLogService.append(gameData, GameLog.text(object.getCard().getName() + "'s ability triggers."));
-                log.info("Game {} - {} planar trigger on another creature leaving the battlefield ({})",
-                        gameData.id, object.getCard().getName(), leavingPermanent.getCard().getName());
-            }
-        }
-    }
-
-    /**
-     * "Whenever another permanent leaves the battlefield" triggers. Called from every
-     * leave-the-battlefield path after the permanent has been removed. Permanents that leave in the
-     * same simultaneous event as the leaving permanent still see it (CR 603.10a), so their
-     * snapshots are checked as well; an ability that was lost before the event does not trigger.
-     */
-    /**
-     * Face-up schemes' "whenever another permanent leaves the battlefield" abilities, which trigger from the command
-     * zone (CR 314.4). A scheme is no object the trigger pipeline lists, so its abilities are still collected as the
-     * permanent leaves.
-     */
-    public void checkSchemePermanentLeavesBattlefieldTriggers(GameData gameData, Permanent leavingPermanent) {
-        UUID leavingId = leavingPermanent.getId();
-
-        UUID leavingOwnerId = leavingPermanent.getCard().getOwnerId();
-        boolean leavingHasStaticEffects = !leavingPermanent.getCard().getStaticEffects().isEmpty();
-        BiConsumer<UUID, Permanent> collect = (ownerId, perm) -> {
-            if (perm.getId().equals(leavingId)) return;
-            if (perm.isLosesAllAbilitiesUntilEndOfTurn()
-                    || gameQueryService.hasLostAllAbilities(gameData, perm)) return;
-            // CR 603.10a: look back to just before the event. An ability removed only by the leaving
-            // permanent's own static effect (Humility) was not there to trigger.
-            if (leavingHasStaticEffects
-                    && gameQueryService.findPermanentById(gameData, perm.getId()) != null
-                    && gameQueryService.withEnteringPermanent(gameData, leavingOwnerId != null ? leavingOwnerId : ownerId, leavingPermanent,
-                    () -> gameQueryService.hasLostAllAbilities(gameData, perm))) return;
-            // Each ability of the scheme goes on the stack whole (CR 603.3).
-            for (TriggeredAbility ability : schemeLeavesBattlefieldAbilities(gameData, perm, ownerId,
-                    leavingPermanent)) {
-                Permanent snapshot = new Permanent(perm);
-                triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability, perm.getCard(), perm,
-                        ownerId, perm.getCard().getName() + "'s ability", ConditionContext.forPermanent(perm, ownerId),
-                        entry -> {
-                            entry.setSourcePermanentSnapshot(snapshot);
-                            entry.setTriggeringPermanent(leavingPermanent);
-                        }));
-                gameLogService.append(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
-                log.info("Game {} - {} triggers on another permanent leaving the battlefield ({})",
-                        gameData.id, perm.getCard().getName(), leavingPermanent.getCard().getName());
-            }
-        };
-        // CR 314.4: a face-up scheme's triggered abilities trigger from the command zone.
-        gameData.forEachFaceUpSchemeSource(collect);
-    }
-
-    /**
-     * A face-up scheme's "whenever another [permanent] leaves the battlefield" abilities whose filter {@code leaving}
-     * matches ("whenever your commander leaves the battlefield"), with the scheme as the filter's source.
-     */
-    private List<TriggeredAbility> schemeLeavesBattlefieldAbilities(GameData gameData, Permanent scheme, UUID ownerId,
-                                                                    Permanent leaving) {
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(scheme.getOriginalCard().getId())
-                .withSourceControllerId(ownerId)
-                .withSourcePermanentId(scheme.getId())
-                .withSourcePermanentSnapshot(scheme);
-        List<TriggeredAbility> matching = new ArrayList<>();
-        for (TriggeredAbility ability : scheme.getCard().getTriggeredAbilities()) {
-            boolean matches = ability.conditions().stream()
-                    .map(TriggerCondition::trigger)
-                    .anyMatch(trigger -> trigger instanceof ZoneChangeTrigger move && leavesForAnyZone(move)
-                            && move.relation() == ObjectRelation.ANOTHER && (move.filter() == null
-                            || predicateEvaluationService.matchesPermanentPredicate(leaving, move.filter(),
-                            filterContext)));
-            if (matches) {
-                matching.add(ability);
-            }
-        }
-        return matching;
-    }
-
     public void triggerDelayedPoisonOnDeath(GameData gameData, UUID dyingCreatureCardId, UUID controllerId) {
         Integer poisonAmount = gameData.creatureGivingControllerPoisonOnDeathThisTurn.remove(dyingCreatureCardId);
         if (poisonAmount == null || poisonAmount <= 0) {
@@ -3375,17 +3160,6 @@ public class TriggerCollectionService {
                 ? allOf.predicates().getFirst() : filter;
     }
 
-    /** Whether {@code trigger} is about an object leaving the battlefield for any zone. */
-    private static boolean leavesForAnyZone(ZoneChangeTrigger trigger) {
-        return trigger.from().equals(Set.of(Zone.BATTLEFIELD)) && trigger.to() == null
-                && trigger.excludedTo().isEmpty() && trigger.causes().isEmpty();
-    }
-
-    /** Whether {@code trigger} is landfall: "whenever a land [you control] enters", a land of a kind included. */
-    private static boolean landfall(ZoneChangeTrigger trigger) {
-        return trigger.entersBattlefield() && Triggers.LAND.equals(narrowedFrom(trigger.filter()));
-    }
-
     private void collectCreatureSpellBoonTriggers(GameData gameData, Card spellCard,
                                                  UUID castingPlayerId, boolean castFaceDown) {
         if (!castFaceDown && !spellCard.hasType(CardType.CREATURE)) return;
@@ -3511,123 +3285,6 @@ public class TriggerCollectionService {
             }
             gameLogService.append(gameData, GameLog.abilityTriggers(boon.sourceCard()));
         }
-    }
-
-    /** Collects creature-entry triggers from face-up planes, which are not battlefield permanents. */
-    public void checkPlanarCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId,
-                                                  Card enteringCreature) {
-        if (gameData.planechase == null || gameData.planechase.controllerId == null
-                || !enteringPermanentHasType(gameData, enteringCreature, CardType.CREATURE)) {
-            return;
-        }
-        // "Whenever a creature enters": a plane is no permanent, so "another creature" is any creature.
-        putPlanarEnteringAbilities(gameData, enteringCreatureControllerId, enteringCreature,
-                trigger -> trigger.relation() == ObjectRelation.ANY || trigger.relation() == ObjectRelation.ANOTHER);
-    }
-
-    /**
-     * Puts each of the face-up planes' "whenever [an object] enters" abilities whose trigger {@code collects} and
-     * whose trigger's filter the entering permanent matches on the stack through the stack door (a plane isn't on the
-     * battlefield, so the trigger pipeline doesn't match its abilities, and no "triggers an additional time" effect for
-     * a permanent's abilities counts it): its event condition is judged here, and its record names the permanent that
-     * entered ({@link #recordEnteringPermanent}) and the plane as its source.
-     */
-    private void putPlanarEnteringAbilities(GameData gameData, UUID enteringControllerId, Card enteringCard,
-                                            java.util.function.Predicate<ZoneChangeTrigger> collects) {
-        UUID planarControllerId = gameData.planechase.controllerId;
-        Permanent enteringPermanent = findPermanentByCard(gameData, enteringCard);
-        UUID enteringPermanentId = enteringPermanent == null ? null : enteringPermanent.getId();
-        for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            Card plane = object.getCard();
-            ConditionContext context = ConditionContext.forCard(plane, planarControllerId)
-                    .withTriggeringPermanentId(enteringPermanentId);
-            for (TriggeredAbility ability : planarEnteringAbilities(gameData, plane, planarControllerId,
-                    enteringPermanent, collects)) {
-                if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), context)) {
-                    continue;
-                }
-                PlanarObject source = object.copy();
-                boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
-                        plane, null, planarControllerId, plane.getName() + "'s ability", context, entry -> {
-                            entry.setNonTargeting(true);
-                            entry.setSourcePlanarObject(source);
-                            recordEnteringPermanent(gameData, entry, enteringCard, enteringPermanent,
-                                    enteringControllerId);
-                        }).withEvent(new TriggerContext.PermanentEnters(enteringCard, enteringControllerId, null, 1,
-                        enteringPermanentId)));
-                if (triggered) {
-                    gameLogService.append(gameData, GameLog.abilityTriggers(plane));
-                }
-            }
-        }
-    }
-
-    /**
-     * Records the permanent an enter event was about on {@code entry}: "it" and "that creature" (the triggering
-     * permanent, read as the ability resolves), "its controller", its power and toughness as the ability triggered,
-     * the card it entered as, and that card as it last existed on the battlefield should it leave before the ability
-     * resolves (CR 608.2h), and the player or planeswalker it entered attacking.
-     *
-     * @param entering             the entering permanent, or {@code null} when it already left the battlefield (only
-     *                             the card it entered as and the player it entered under are recorded then)
-     * @param enteringControllerId the player it entered under, its controller when it can't be looked up
-     */
-    private void recordEnteringPermanent(GameData gameData, StackEntry entry, Card enteringCard, Permanent entering,
-                                         UUID enteringControllerId) {
-        entry.setTriggeringCardSnapshot(enteringCard);
-        if (entering == null) {
-            entry.setTriggeringPermanentControllerId(enteringControllerId);
-            return;
-        }
-        UUID controllerId = gameQueryService.findPermanentController(gameData, entering.getId());
-        entry.setTriggeringPermanentId(entering.getId());
-        entry.setTriggeringPermanentIds(List.of(entering.getId()));
-        entry.setTriggeringCardId(entering.getCard().getId());
-        entry.setTriggeringPermanentControllerId(controllerId != null ? controllerId : enteringControllerId);
-        entry.setTriggeringPermanentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, entering));
-        entry.setTriggeringPermanentToughnessAtTrigger(gameQueryService.getEffectiveToughness(gameData, entering));
-        entry.rememberLastKnownPermanentCard(entering.getId(), entering.getCard());
-        entry.setAttachedPermanentSnapshot(new Permanent(entering));
-        if (entering.isAttacking()) {
-            UUID attackedTargetId = entering.getAttackTarget();
-            entry.setAttackedTargetId(attackedTargetId);
-            entry.setDefendingPlayerId(gameQueryService.defendingPlayerOfAttackTarget(gameData, attackedTargetId));
-        }
-    }
-
-    /**
-     * Each of {@code plane}'s "whenever [an object] enters" abilities whose trigger {@code collects} and whose
-     * trigger's filter {@code entering} matches as it entered.
-     */
-    private List<TriggeredAbility> planarEnteringAbilities(GameData gameData, Card plane, UUID planarControllerId,
-                                                           Permanent entering,
-                                                           java.util.function.Predicate<ZoneChangeTrigger> collects) {
-        FilterContext context = FilterContext.of(gameData).withSourceControllerId(planarControllerId)
-                .withSourceCardId(plane.getId());
-        List<TriggeredAbility> abilities = new ArrayList<>();
-        for (TriggeredAbility ability : plane.getTriggeredAbilities()) {
-            boolean matched = ability.conditions().stream().anyMatch(condition ->
-                    condition.trigger() instanceof ZoneChangeTrigger trigger && trigger.entersBattlefield()
-                            && collects.test(trigger)
-                            && (trigger.filter() == null || entering != null && predicateEvaluationService
-                            .matchesPermanentPredicate(entering, trigger.filter(), context)));
-            if (matched) {
-                abilities.add(ability);
-            }
-        }
-        return abilities;
-    }
-
-    /** Collects ally-permanent-entry triggers from face-up planes, which are not battlefield permanents. */
-    public void checkPlanarAllyPermanentEntersTriggers(GameData gameData, UUID enteringControllerId,
-                                                        Card enteringCard) {
-        if (gameData.planechase == null || gameData.planechase.controllerId == null
-                || !gameData.planechase.controllerId.equals(enteringControllerId)) {
-            return;
-        }
-        // "Whenever an enchantment you control enters" (Nyx); a plane's landfall is its land collector's.
-        putPlanarEnteringAbilities(gameData, enteringControllerId, enteringCard,
-                trigger -> trigger.relation().youControl() && !landfall(trigger));
     }
 
     /**
@@ -3994,40 +3651,6 @@ public class TriggerCollectionService {
     /** The exiled voyages that see a land enter under its controller's control. */
     public void checkAllyLandEntersTriggers(GameData gameData, UUID landControllerId, Card enteringLand) {
         collectExiledVoyageTriggers(gameData, landControllerId);
-    }
-
-    /** Collects land-entry triggers from face-up planes, which are not battlefield permanents. */
-    public void checkPlanarLandEntersTriggers(GameData gameData, UUID landControllerId, Card enteringLand) {
-        if (gameData.planechase == null || gameData.planechase.controllerId == null) return;
-
-        UUID planarControllerId = gameData.planechase.controllerId;
-        ObjectRelation relation = planarControllerId.equals(landControllerId) ? ObjectRelation.YOU_CONTROL
-                : ObjectRelation.OPPONENT_CONTROLS;
-
-        Permanent landPermanent = findPermanentByCard(gameData, enteringLand);
-        for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            // Each ability of the plane goes on the stack whole (CR 603.3); "that player" is the land's controller.
-            Card plane = object.getCard();
-            for (TriggeredAbility ability : plane.getTriggeredAbilities()) {
-                if (ability.conditions().stream().noneMatch(condition -> condition.trigger() instanceof
-                        ZoneChangeTrigger trigger && landfall(trigger) && trigger.relation() == relation)) {
-                    continue;
-                }
-                PlanarObject source = object.copy();
-                boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
-                        plane, null, planarControllerId, plane.getName() + "'s ability",
-                        ConditionContext.forCard(plane, planarControllerId).withTargetId(landControllerId), entry -> {
-                            entry.setTargetId(landControllerId);
-                            entry.setTriggeringPermanentControllerId(landControllerId);
-                            if (landPermanent != null) entry.setTriggeringPermanentId(landPermanent.getId());
-                            entry.setSourcePlanarObject(source);
-                            entry.setNonTargeting(true);
-                        }));
-                if (triggered) {
-                    gameLogService.append(gameData, GameLog.abilityTriggers(plane));
-                }
-            }
-        }
     }
 
     private void collectExiledVoyageTriggers(GameData gameData, UUID landControllerId) {

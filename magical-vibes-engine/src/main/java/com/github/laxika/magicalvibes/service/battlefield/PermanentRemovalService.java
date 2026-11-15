@@ -552,11 +552,6 @@ public class PermanentRemovalService {
                 triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
                 triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
                 triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-                collectTriggersInScope(gameData, () -> {
-                    triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
-                            gameData, target, wasCreature, controllerId);
-                    triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
-                });
             }
             processGraveyardAndTriggers(gameData, target, wasCreature, modifiedAtDeath, wasArtifact, wasEnchantment,
                     wasLand, creatureSubtypesAtDeath, undyingInstances, persistInstances, controllerId, ownerId,
@@ -1220,9 +1215,6 @@ public class PermanentRemovalService {
                 triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
                 triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
                 triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-                triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
-                        gameData, target, wasCreature, info.controllerId());
-                triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             }
             processGraveyardAndTriggers(gameData, target, wasCreature, modifiedAtDeath, wasArtifact, wasEnchantment,
                     wasLand, creatureSubtypesAtDeath, undyingInstances, persistInstances, info.controllerId(), info.ownerId(), false,
@@ -1277,9 +1269,6 @@ public class PermanentRemovalService {
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-            triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
-                    gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             // A creature made a token by a continuous effect is still put into its owner's hand and
             // ceases to exist the next time state-based actions are checked (CR 111.7, CR 704.5d).
             for (Card leaving : target.cardsLeavingBattlefield()) {
@@ -1324,9 +1313,6 @@ public class PermanentRemovalService {
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-            triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
-                    gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             for (Card leaving : target.cardsLeavingBattlefield()) {
                 gameData.playerCommandZones.computeIfAbsent(ownerId, ignored -> new ArrayList<>()).add(leaving);
             }
@@ -1366,9 +1352,6 @@ public class PermanentRemovalService {
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-            triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
-                    gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             forgetDepartedPermanentState(gameData, target);
             handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
             target.setAttachedTo(null);
@@ -1482,9 +1465,6 @@ public class PermanentRemovalService {
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-            triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
-                    gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             if (!dynamicToken) {
                 for (Card leaving : leavingCards) {
                     boolean companion = werewhatCompanion != null
@@ -1583,9 +1563,6 @@ public class PermanentRemovalService {
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-            triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
-                    gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             if (!dynamicToken) {
                 if (target.isMergedByMutation() || target.cardsLeavingBattlefield().size() > 1) {
                     putMutationComponentsInLibrary(gameData, target, ownerId, false, 0, !shuffle);
@@ -1641,9 +1618,6 @@ public class PermanentRemovalService {
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-            triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
-                    gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             if (!dynamicToken) {
                 if (target.isMergedByMutation() || target.cardsLeavingBattlefield().size() > 1) {
                     putMutationComponentsInLibrary(gameData, target, ownerId, true, null, true);
@@ -1727,9 +1701,6 @@ public class PermanentRemovalService {
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-            triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
-                    gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             if (!dynamicToken) {
                 if (target.isMergedByMutation() || target.cardsLeavingBattlefield().size() > 1) {
                     putMutationComponentsInLibrary(gameData, target, ownerId, false, position, true);
@@ -1804,9 +1775,6 @@ public class PermanentRemovalService {
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-            triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
-                    gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             int cardsPutIntoLibrary = 0;
             if (!dynamicToken) {
                 for (Card leaving : target.cardsLeavingBattlefield()) {

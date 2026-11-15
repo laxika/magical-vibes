@@ -872,9 +872,6 @@ public class GraveyardService {
         if (!isToken(gameData, card) && card.hasType(CardType.LAND)) {
             gameData.landCardGraveyardEntriesThisTurn.merge(ownerId, 1, Integer::sum);
         }
-        if (!isToken(gameData, card)) {
-            triggerCollectionService.checkPlanarNonblackCardPutIntoGraveyardTriggers(gameData, ownerId, card);
-        }
     }
 
     private boolean isPermanentCard(Card card) {

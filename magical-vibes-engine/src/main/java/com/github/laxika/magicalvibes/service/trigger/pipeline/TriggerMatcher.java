@@ -70,7 +70,8 @@ final class TriggerMatcher {
     /**
      * The first of the ability's trigger conditions that {@code event} meets, or {@code null}. A condition is met
      * when its trigger is a zone change of this kind, the moving object relates to the source as the trigger says,
-     * and the source is in a zone the condition functions from (CR 113.6).
+     * and the source is in a zone the condition functions from (CR 113.6); a face-up plane's abilities function from
+     * the command zone whatever zones its conditions name (CR 901.7).
      *
      * @param movingObject whether the candidate's source is the object that moved, rather than another object that
      *                     sees it move
@@ -81,7 +82,7 @@ final class TriggerMatcher {
                                             boolean movingObject) {
         for (TriggerCondition condition : candidate.ability().conditions()) {
             if (condition.trigger() instanceof ZoneChangeTrigger trigger
-                    && condition.zones().functionsIn(candidate.zone())
+                    && (candidate.plane() != null || condition.zones().functionsIn(candidate.zone()))
                     && trigger.matchesMove(event.from(), event.to(), event.cause())
                     && (!trigger.duringYourTurn() || gameData.activePlayerId != null
                     && gameData.activePlayerId.equals(candidate.controllerId()))
@@ -328,7 +329,8 @@ final class TriggerMatcher {
 
     /**
      * Whether {@code departed}, a permanent's last-known copy, passes {@code filter} as it last existed on the
-     * battlefield (CR 603.10a), for a reader outside the pipeline (a face-up plane's "whenever a white creature dies").
+     * battlefield (CR 603.10a), for a reader outside the pipeline (an emblem's "whenever an artifact is put into your
+     * graveyard from the battlefield").
      */
     static boolean departedFilterMatches(PredicateEvaluationService predicates, PermanentPredicate filter,
                                                 Permanent departed, DepartedAttachments attachments,

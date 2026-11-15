@@ -891,7 +891,10 @@ public class StackEntry {
     @Setter private VotingResult triggeringVotingResult;
     /** Controller of the triggering permanent when its non-targeting reference was captured. */
     @Setter private UUID triggeringPermanentControllerId;
-    /** Owner of the triggering permanent when its non-targeting reference was captured. */
+    /**
+     * Owner of the triggering permanent when its non-targeting reference was captured, or of the card a zone change
+     * between zones other than the battlefield moved, as the zone change named it.
+     */
     @Setter private UUID triggeringPermanentOwnerId;
     /** Power and toughness captured for a permanent when its trigger was created. */
     @Setter private Integer triggeringPermanentPowerAtTrigger;

@@ -15,7 +15,8 @@ public class TheDarkBarony extends Card {
 
     public TheDarkBarony() {
         addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONBLACK_CARD, ObjectRelation.ANOTHER),
-                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
+                // "That player" is the graveyard's owner, the card's owner (CR 400.3).
+                new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_CARD_OWNER));
         addTrigger(Triggers.chaosEnsues(),
                 new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
     }
