@@ -2671,32 +2671,17 @@ public class BattlefieldPlacementService {
 
         record SourcedCounters(Permanent source, CardSubtype subtype, DynamicAmount count,
                                boolean allCreatures) {}
-        List<SourcedCounters> effects = gameQueryService.activeStaticEffects(gameData, controllerId, CardEffect.class)
+        List<SourcedCounters> effects = gameQueryService.activeStaticEffects(gameData, controllerId,
+                        ControlledCreaturesEnterWithAdditionalCountersEffect.class)
                 .stream()
                 .filter(active -> active.source() != permanent)
                 .filter(active -> !gameQueryService.hasLostAllAbilities(gameData, active.source()))
-                .flatMap(active -> {
-                    Permanent source = active.source();
-                    CardEffect effect = active.effect();
-                    ControlledCreaturesEnterWithAdditionalCountersEffect countersEffect = null;
-                    if (effect instanceof ControlledCreaturesEnterWithAdditionalCountersEffect direct) {
-                        countersEffect = direct;
-                    } else if (effect instanceof ConditionalEffect conditional
-                            && conditional.wrapped() instanceof ControlledCreaturesEnterWithAdditionalCountersEffect wrapped
-                            && conditionEvaluationService.isMet(gameData, conditional.condition(),
-                            ConditionContext.forStaticEffect(source, controllerId))) {
-                        countersEffect = wrapped;
-                    }
-                    if (countersEffect == null) {
-                        return java.util.stream.Stream.empty();
-                    }
-                    return java.util.stream.Stream.of(new SourcedCounters(
-                            source,
-                            countersEffect.subtype() != null
-                                    ? countersEffect.subtype() : source.getChosenSubtype(),
-                            countersEffect.count(),
-                            countersEffect.allCreatures()));
-                })
+                .map(active -> new SourcedCounters(
+                        active.source(),
+                        active.effect().subtype() != null
+                                ? active.effect().subtype() : active.source().getChosenSubtype(),
+                        active.effect().count(),
+                        active.effect().allCreatures()))
                 .filter(sourced -> sourced.allCreatures() ? enteringIsCreature : sourced.subtype() != null)
                 .toList();
         if (effects.isEmpty()) return;
@@ -2742,18 +2727,11 @@ public class BattlefieldPlacementService {
         if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
 
         Map<CounterType, Integer> additionalCounters = new EnumMap<>(CounterType.class);
-        for (GameQueryService.ActiveStaticEffect<CardEffect> active
-                : gameQueryService.activeStaticEffects(gameData, controllerId, CardEffect.class)) {
+        for (GameQueryService.ActiveStaticEffect<ControlledPermanentEntryReplacementEffect> active
+                : gameQueryService.activeStaticEffects(gameData, controllerId,
+                ControlledPermanentEntryReplacementEffect.class)) {
             Permanent source = active.source();
-            CardEffect activeEffect = active.effect();
-            if (activeEffect instanceof ConditionalEffect conditional) {
-                if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        ConditionContext.forStaticEffect(source, controllerId))) {
-                    continue;
-                }
-                activeEffect = conditional.wrapped();
-            }
-            if (!(activeEffect instanceof ControlledPermanentEntryReplacementEffect replacement)) continue;
+            ControlledPermanentEntryReplacementEffect replacement = active.effect();
             FilterContext sourceContext = FilterContext.of(gameData)
                     .withSourceCardId(source.getCard().getId())
                     .withSourceControllerId(controllerId)

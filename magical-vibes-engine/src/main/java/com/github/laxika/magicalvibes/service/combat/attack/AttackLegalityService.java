@@ -372,13 +372,6 @@ public class AttackLegalityService {
                     .withSourcePermanentId(source.getId())
                     .withSourceControllerId(protectedPlayerId);
             CardEffect effect = active.effect();
-            if (effect instanceof ConditionalEffect conditional) {
-                if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        ConditionContext.forStaticEffect(source, protectedPlayerId))) {
-                    continue;
-                }
-                effect = conditional.wrapped();
-            }
             if (effect instanceof EnchantedCreatureAttackRestrictionEffect
                     && (targetIsPlayer || !(effect instanceof EnchantedCreatureCantAttackPlayerEffect)
                     && targetPermanent != null

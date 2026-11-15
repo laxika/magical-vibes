@@ -1175,22 +1175,12 @@ public class CastingCostService {
                                                 Permanent sourcePermanent, ActivatedAbility ability,
                                                 boolean manaAbility) {
         int tax = 0;
-        for (GameQueryService.ActiveStaticEffect<CardEffect> active
-                : gameQueryService.activeStaticEffects(gameData, CardEffect.class)) {
+        for (GameQueryService.ActiveStaticEffect<ActivatedAbilityCostIncreasingEffect> active
+                : gameQueryService.activeStaticEffects(gameData, ActivatedAbilityCostIncreasingEffect.class)) {
             Permanent perm = active.source();
             UUID pid = active.controllerId();
-            CardEffect effect = active.effect();
-            ActivatedAbilityCostIncreasingEffect taxEffect = null;
-            if (effect instanceof ActivatedAbilityCostIncreasingEffect directTax) {
-                taxEffect = directTax;
-            } else if (effect instanceof ConditionalEffect conditional
-                    && conditional.wrapped() instanceof ActivatedAbilityCostIncreasingEffect wrappedTax
-                    && conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    ConditionContext.forStaticEffect(perm, pid))) {
-                taxEffect = wrappedTax;
-            }
-            if (taxEffect != null
-                    && !(ability != null && ability.isSuspendsSourceFromHand())
+            ActivatedAbilityCostIncreasingEffect taxEffect = active.effect();
+            if (!(ability != null && ability.isSuspendsSourceFromHand())
                     && taxEffect.appliesTo(ability, manaAbility, activatingPlayerId, pid)
                     && predicateEvaluationService.matchesPermanentPredicate(
                             sourcePermanent, taxEffect.affectedPermanents(),
@@ -1208,22 +1198,12 @@ public class CastingCostService {
             GameData gameData, UUID activatingPlayerId, Permanent sourcePermanent,
             ActivatedAbility ability, boolean manaAbility) {
         Map<UUID, Integer> taxes = new HashMap<>();
-        for (GameQueryService.ActiveStaticEffect<CardEffect> active
-                : gameQueryService.activeStaticEffects(gameData, CardEffect.class)) {
+        for (GameQueryService.ActiveStaticEffect<ActivatedAbilityCostIncreasingEffect> active
+                : gameQueryService.activeStaticEffects(gameData, ActivatedAbilityCostIncreasingEffect.class)) {
             Permanent perm = active.source();
             UUID pid = active.controllerId();
-            CardEffect effect = active.effect();
-            ActivatedAbilityCostIncreasingEffect taxEffect = null;
-            if (effect instanceof ActivatedAbilityCostIncreasingEffect directTax) {
-                taxEffect = directTax;
-            } else if (effect instanceof ConditionalEffect conditional
-                    && conditional.wrapped() instanceof ActivatedAbilityCostIncreasingEffect wrappedTax
-                    && conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    ConditionContext.forStaticEffect(perm, pid))) {
-                taxEffect = wrappedTax;
-            }
-            if (taxEffect != null
-                    && !(ability != null && ability.isSuspendsSourceFromHand())
+            ActivatedAbilityCostIncreasingEffect taxEffect = active.effect();
+            if (!(ability != null && ability.isSuspendsSourceFromHand())
                     && taxEffect.appliesTo(ability, manaAbility, activatingPlayerId, pid)
                     && predicateEvaluationService.matchesPermanentPredicate(
                     sourcePermanent, taxEffect.affectedPermanents(),
@@ -1733,19 +1713,11 @@ public class CastingCostService {
         int reduction = 0;
         int boundedReduction = 0;
         int minimumManaCost = 0;
-        for (GameQueryService.ActiveStaticEffect<CardEffect> active
-                : gameQueryService.activeStaticEffects(gameData, activatingPlayerId, CardEffect.class)) {
-            CardEffect activeEffect = active.effect();
-            while (activeEffect instanceof ConditionalEffect conditional) {
-                if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        ConditionContext.forStaticEffect(active.source(), activatingPlayerId))) {
-                    activeEffect = null;
-                    break;
-                }
-                activeEffect = conditional.wrapped();
-            }
-            if (activeEffect instanceof GraveyardActivatedAbilityCostReducingEffect reducer
-                    && predicateEvaluationService.matchesCardPredicate(
+        for (GameQueryService.ActiveStaticEffect<GraveyardActivatedAbilityCostReducingEffect> active
+                : gameQueryService.activeStaticEffects(gameData, activatingPlayerId,
+                GraveyardActivatedAbilityCostReducingEffect.class)) {
+            GraveyardActivatedAbilityCostReducingEffect reducer = active.effect();
+            if (predicateEvaluationService.matchesCardPredicate(
                             graveyardCard, reducer.affectedGraveyardCards(), null)) {
                 if (reducer.minimumManaCost() == 0) {
                     reduction += reducer.genericCostReduction();
@@ -1955,15 +1927,12 @@ public class CastingCostService {
         }
 
         FreeCastSource oncePerTurnFallback = null;
-        for (GameQueryService.ActiveStaticEffect<CardEffect> active
-                : gameQueryService.activeStaticEffects(gameData, CardEffect.class)) {
+        for (GameQueryService.ActiveStaticEffect<AlternativeCostForSpellsEffect> active
+                : gameQueryService.activeStaticEffects(gameData, AlternativeCostForSpellsEffect.class)) {
             Permanent perm = active.source();
             UUID ownerId = active.controllerId();
-            CardEffect effect = active.effect();
-            AlternativeCostForSpellsEffect altCost = activeAlternativeCost(
-                    gameData, effect, perm, ownerId);
-            if (altCost != null
-                    && !altCost.appliesToSpellItself()
+            AlternativeCostForSpellsEffect altCost = active.effect();
+            if (!altCost.appliesToSpellItself()
                     && (altCost.appliesToAllPlayers() || ownerId.equals(playerId))
                     && isApplicableZeroAlternative(gameData, playerId, card, sourceZone, altCost, perm)
                     && !(altCost.oncePerTurn() && gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))) {
@@ -2037,20 +2006,6 @@ public class CastingCostService {
     private boolean matchesAlternativeCostPredicate(GameData gameData, UUID playerId, Card card,
                                                     CardPredicate predicate) {
         return predicateEvaluationService.matchesCardPredicate(card, predicate, null, gameData, playerId);
-    }
-
-    private AlternativeCostForSpellsEffect activeAlternativeCost(GameData gameData, CardEffect effect,
-                                                                  Permanent sourcePermanent,
-                                                                  UUID sourceControllerId) {
-        CardEffect current = effect;
-        while (current instanceof ConditionalEffect conditional) {
-            if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    ConditionContext.forStaticEffect(sourcePermanent, sourceControllerId))) {
-                return null;
-            }
-            current = conditional.wrapped();
-        }
-        return current instanceof AlternativeCostForSpellsEffect alternative ? alternative : null;
     }
 
     /**
@@ -2136,14 +2091,11 @@ public class CastingCostService {
             return new AlternativeCostSelection(null, false,
                     new PayLifeEqualToSpellManaValueCost(), null, false);
         }
-        for (GameQueryService.ActiveStaticEffect<CardEffect> active
-                : gameQueryService.activeStaticEffects(gameData, playerId, CardEffect.class)) {
+        for (GameQueryService.ActiveStaticEffect<AlternativeCostForSpellsEffect> active
+                : gameQueryService.activeStaticEffects(gameData, playerId, AlternativeCostForSpellsEffect.class)) {
             Permanent perm = active.source();
-            CardEffect effect = active.effect();
-            AlternativeCostForSpellsEffect altCost = activeAlternativeCost(
-                    gameData, effect, perm, playerId);
-            if (altCost != null
-                    && (sourceZone == Zone.HAND || !altCost.fromHandOnly())
+            AlternativeCostForSpellsEffect altCost = active.effect();
+            if ((sourceZone == Zone.HAND || !altCost.fromHandOnly())
                     && (altCost.allowedZones() == null || altCost.allowedZones().contains(sourceZone))
                     && (!altCost.controllerTurnOnly() || playerId.equals(gameData.activePlayerId))
                     && (!altCost.oncePerTurn() || !gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))
