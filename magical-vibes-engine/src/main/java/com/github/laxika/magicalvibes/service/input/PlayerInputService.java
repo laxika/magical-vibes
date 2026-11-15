@@ -73,11 +73,35 @@ public class PlayerInputService {
 
     @Autowired(required = false)
     private CardCatalog cardCatalog;
+    private volatile List<CatalogCard> catalogCards;
     private volatile List<String> catalogNonbasicLandCardNames;
     private volatile List<String> catalogNonbasicCardNames;
     private final Map<CardNameFilter, List<String>> catalogCardNames = new java.util.concurrent.ConcurrentHashMap<>();
 
     private record CardNameFilter(List<CardType> excludedTypes, CardType requiredType) {}
+
+    /**
+     * What a name prompt reads off one named card class of the catalog. Every catalog name list is
+     * filtered from these, so the catalog's cards are built once rather than once per list.
+     *
+     * @param tokenOnly whether the card is a token that is not also a card, whose name is no card name
+     */
+    private record CatalogCard(List<String> names, CardType type, Set<CardType> additionalTypes,
+                               Set<CardSupertype> supertypes, boolean tokenOnly) {
+
+        boolean hasType(CardType cardType) {
+            return type == cardType || additionalTypes.contains(cardType);
+        }
+
+        boolean isBasicLand() {
+            return hasType(CardType.LAND) && supertypes.contains(CardSupertype.BASIC);
+        }
+
+        boolean isNameCandidate(List<CardType> excludedTypes, CardType requiredType) {
+            return type != null && !tokenOnly && excludedTypes.stream().noneMatch(this::hasType)
+                    && (requiredType == null || hasType(requiredType));
+        }
+    }
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         beginCardChoice(gameData, playerId, validIndices, prompt, false);
@@ -2779,19 +2803,8 @@ public class PlayerInputService {
                 card -> isNameCandidate(card, excludedTypes, requiredType)));
         if (cardCatalog != null) {
             names.addAll(catalogCardNames.computeIfAbsent(new CardNameFilter(List.copyOf(excludedTypes), requiredType),
-                    filter -> {
-                        Set<String> catalogNames = new TreeSet<>();
-                        for (CardSet set : CardSet.values()) {
-                            for (CardPrinting printing : cardCatalog.getPrintings(set)) {
-                                Card card = printing.createCard();
-                                if (card.getName() != null && card.getType() != null
-                                        && isNameCandidate(card, filter.excludedTypes(), filter.requiredType())) {
-                                    catalogNames.addAll(card.getNames());
-                                }
-                            }
-                        }
-                        return List.copyOf(catalogNames);
-                    }));
+                    filter -> catalogCardNames(
+                            card -> card.isNameCandidate(filter.excludedTypes(), filter.requiredType()))));
         }
         return new ArrayList<>(names);
     }
@@ -2812,18 +2825,7 @@ public class PlayerInputService {
         if (cached != null) {
             return cached;
         }
-        Set<String> names = new TreeSet<>();
-        for (CardSet set : CardSet.values()) {
-            for (CardPrinting printing : cardCatalog.getPrintings(set)) {
-                Card card = printing.createCard();
-                if (card.getName() != null
-                        && !(card.hasType(CardType.LAND)
-                        && card.getSupertypes().contains(CardSupertype.BASIC))) {
-                    names.addAll(card.getNames());
-                }
-            }
-        }
-        List<String> result = List.copyOf(names);
+        List<String> result = catalogCardNames(card -> !card.isBasicLand());
         catalogNonbasicCardNames = result;
         return result;
     }
@@ -2844,18 +2846,48 @@ public class PlayerInputService {
         if (cached != null) {
             return cached;
         }
+        List<String> result = catalogCardNames(card -> card.hasType(CardType.LAND) && !card.isBasicLand());
+        catalogNonbasicLandCardNames = result;
+        return result;
+    }
+
+    /** The sorted, distinct names of the catalog's cards that satisfy {@code candidate}. */
+    private List<String> catalogCardNames(Predicate<CatalogCard> candidate) {
         Set<String> names = new TreeSet<>();
+        for (CatalogCard card : catalogCards()) {
+            if (candidate.test(card)) {
+                names.addAll(card.names());
+            }
+        }
+        return List.copyOf(names);
+    }
+
+    /**
+     * Every named card class of the catalog, built on first use. A class registered at several
+     * printings is built once: its name and types come from its oracle data, which is the same at
+     * each of them.
+     */
+    private List<CatalogCard> catalogCards() {
+        List<CatalogCard> cached = catalogCards;
+        if (cached != null) {
+            return cached;
+        }
+        Set<String> seenClassNames = new HashSet<>();
+        List<CatalogCard> cards = new ArrayList<>();
         for (CardSet set : CardSet.values()) {
             for (CardPrinting printing : cardCatalog.getPrintings(set)) {
+                if (!seenClassNames.add(printing.cardClassName())) {
+                    continue;
+                }
                 Card card = printing.createCard();
-                if (card.hasType(CardType.LAND)
-                        && !card.getSupertypes().contains(CardSupertype.BASIC)) {
-                    names.addAll(card.getNames());
+                if (card.getName() != null) {
+                    cards.add(new CatalogCard(card.getNames(), card.getType(), Set.copyOf(card.getAdditionalTypes()),
+                            Set.copyOf(card.getSupertypes()), card.isToken() && !card.isTokenCard()));
                 }
             }
         }
-        List<String> result = List.copyOf(names);
-        catalogNonbasicLandCardNames = result;
+        List<CatalogCard> result = List.copyOf(cards);
+        catalogCards = result;
         return result;
     }
 
