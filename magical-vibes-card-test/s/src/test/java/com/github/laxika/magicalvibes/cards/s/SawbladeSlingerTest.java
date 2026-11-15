@@ -86,7 +86,7 @@ class SawbladeSlingerTest extends BaseCardTest {
     void canChooseFightWhenEnteringWithoutBeingCast() {
         Permanent zombie = harness.addToBattlefieldAndReturn(player2, new Gravecrawler());
         Permanent slinger = harness.enterBattlefieldAndReturn(player1, new SawbladeSlinger());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService()
                 .processNextTriggeredModalTrigger(gd));
 
         harness.handleListChoice(player1, FIGHT_MODE);

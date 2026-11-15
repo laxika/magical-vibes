@@ -107,7 +107,7 @@ class DoctorSpectrumTest extends BaseCardTest {
         harness.castFromHand(player1, new DoctorSpectrum(), "{3}{W}{W}");
         harness.passBothPriorities();
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1, "Put a +1/+1 counter on each other Hero you control");
         harness.passBothPriorities();
 

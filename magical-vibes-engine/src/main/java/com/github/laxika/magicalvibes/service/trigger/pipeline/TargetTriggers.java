@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -31,10 +33,13 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TargetRedirectionSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
@@ -73,19 +78,28 @@ public class TargetTriggers {
     private final GameLogService gameLogService;
     private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final TriggeredAbilityStackService triggeredAbilityStackService;
+    private final ETBTokenTargetService etbTokenTargetService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
+    private final TargetRedirectionSupport targetRedirectionSupport;
 
     public TargetTriggers(@Lazy GameQueryService gameQueryService,
                           @Lazy PredicateEvaluationService predicateEvaluationService,
                           @Lazy ConditionEvaluationService conditionEvaluationService,
                           @Lazy GameLogService gameLogService,
                           @Lazy GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
-                          @Lazy TriggeredAbilityStackService triggeredAbilityStackService) {
+                          @Lazy TriggeredAbilityStackService triggeredAbilityStackService,
+                          @Lazy ETBTokenTargetService etbTokenTargetService,
+                          @Lazy TriggeredAbilityQueueService triggeredAbilityQueueService,
+                          @Lazy TargetRedirectionSupport targetRedirectionSupport) {
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.conditionEvaluationService = conditionEvaluationService;
         this.gameLogService = gameLogService;
         this.grantedTriggeredAbilitySupport = grantedTriggeredAbilitySupport;
         this.triggeredAbilityStackService = triggeredAbilityStackService;
+        this.etbTokenTargetService = etbTokenTargetService;
+        this.triggeredAbilityQueueService = triggeredAbilityQueueService;
+        this.targetRedirectionSupport = targetRedirectionSupport;
     }
 
     /** Triggers the abilities {@code event} triggers. */
@@ -100,7 +114,7 @@ public class TargetTriggers {
                 collectBecomesTargetOfAbilityTriggers(gameData, targeting);
                 return null;
             });
-            case TARGETS_CHOSEN -> checkTargetChoiceTriggers(gameData, targeting);
+            case TARGETS_CHOSEN -> collectTargetChoiceTriggers(gameData, targeting);
         }
     }
 
@@ -613,7 +627,7 @@ public class TargetTriggers {
      * its intervening "if" ("if it has a single target") judged there on the spell or ability whose targets were
      * chosen, its record naming that object as its triggering spell.
      */
-    private void checkTargetChoiceTriggers(GameData gameData, StackEntry targetEntry) {
+    private void collectTargetChoiceTriggers(GameData gameData, StackEntry targetEntry) {
         if (targetEntry == null || !targetEntry.hasAnyTarget() || targetEntry.isNonTargeting()) {
             return;
         }
@@ -1523,5 +1537,116 @@ public class TargetTriggers {
      */
     private static boolean isBackupAbility(StackEntry entry) {
         return entry.getEffectsToResolve().stream().anyMatch(entry.getCard().getOwnEntryEffects()::contains);
+    }
+
+    public void checkBecomesTargetOfSpellTriggers(GameData gameData) {
+        if (gameData.stack.isEmpty()) return;
+        StackEntry spellEntry = null;
+        for (int i = gameData.stack.size() - 1; i >= 0; i--) {
+            StackEntry candidate = gameData.stack.get(i);
+            if (candidate.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                    && candidate.getEntryType() != StackEntryType.ACTIVATED_ABILITY) {
+                spellEntry = candidate;
+                break;
+            }
+        }
+        if (spellEntry == null) return;
+        chooseTargetAtRandomIfRequired(gameData, spellEntry);
+        checkBecomesTargetOfSpellTriggers(gameData, spellEntry);
+        checkTargetChoiceTriggers(gameData, spellEntry);
+    }
+
+    /**
+     * The players and permanents {@code spellEntry} targets became its targets (CR 601.2c): the rules event the
+     * becomes-the-target abilities trigger on; then the choices of the abilities that went to the stack door begin.
+     */
+    public void checkBecomesTargetOfSpellTriggers(GameData gameData, StackEntry spellEntry) {
+        TargetEvent event = new TargetEvent(TargetEvent.Kind.BECAME_TARGET_OF_SPELL, spellEntry);
+        gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(event));
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
+        }
+        triggeredAbilityQueueService.beginStackDoorChoices(gameData);
+    }
+
+    /**
+     * Checks becomes-target triggers for activated/triggered abilities that target permanents.
+     * Must be called after an ability is pushed onto the stack with a target permanent.
+     */
+    public void checkBecomesTargetOfAbilityTriggers(GameData gameData) {
+        if (gameData.stack.isEmpty()) return;
+        StackEntry abilityEntry = gameData.stack.getLast();
+        chooseTargetAtRandomIfRequired(gameData, abilityEntry);
+        checkBecomesTargetOfAbilityTriggers(gameData, abilityEntry);
+        checkTargetChoiceTriggers(gameData, abilityEntry);
+    }
+
+    /**
+     * Checks becomes-target triggers for an explicitly supplied activated or triggered ability.
+     * This overload is used when the ability is not the current top stack entry, such as while
+     * Psychic Battle is resolving.
+     */
+    public void checkBecomesTargetOfAbilityTriggers(GameData gameData, StackEntry abilityEntry) {
+        if (abilityEntry == null) return;
+        TargetEvent event = new TargetEvent(TargetEvent.Kind.BECAME_TARGET_OF_ABILITY, abilityEntry);
+        gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(event));
+
+        triggeredAbilityQueueService.beginStackDoorChoices(gameData);
+    }
+
+    /**
+     * A player chose the targets of {@code targetEntry} (CR 601.2c, 603.3d): the rules event "whenever a player chooses
+     * one or more targets" abilities trigger on. A spell or ability with no target, or one that targets nothing,
+     * chose none.
+     */
+    public void checkTargetChoiceTriggers(GameData gameData, StackEntry targetEntry) {
+        if (targetEntry == null || !targetEntry.hasAnyTarget() || targetEntry.isNonTargeting()) {
+            return;
+        }
+        TargetEvent event = new TargetEvent(TargetEvent.Kind.TARGETS_CHOSEN, targetEntry);
+        gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(event));
+    }
+
+    /**
+     * High Troller: as a spell or ability with a single target is put on the stack, its target is
+     * chosen uniformly at random from its legal targets instead of by its controller. The chosen
+     * target may be the one originally announced.
+     */
+    private void chooseTargetAtRandomIfRequired(GameData gameData, StackEntry entry) {
+        if (!entry.isSingleTarget() || entry.isNonTargeting()) {
+            return;
+        }
+        Permanent[] randomizer = new Permanent[1];
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (randomizer[0] == null
+                    && !gameQueryService.hasLostAllAbilities(gameData, permanent)
+                    && permanent.getCard().getStaticEffects().stream()
+                    .anyMatch(ChooseTargetsAtRandomEffect.class::isInstance)) {
+                randomizer[0] = permanent;
+            }
+        });
+        if (randomizer[0] == null) {
+            return;
+        }
+        UUID currentTarget = entry.getTargetId() != null
+                ? entry.getTargetId()
+                : entry.getTargetIds().isEmpty() ? null : entry.getTargetIds().getFirst();
+        if (currentTarget == null) {
+            return;
+        }
+        List<UUID> legalTargets = targetRedirectionSupport.collectValidTargetsIncludingCurrent(gameData, entry);
+        if (legalTargets.isEmpty()) {
+            return;
+        }
+        UUID selectedTarget = legalTargets.get(
+                java.util.concurrent.ThreadLocalRandom.current().nextInt(legalTargets.size()));
+        if (selectedTarget.equals(currentTarget)) {
+            return;
+        }
+        entry.replaceTargetReferences(currentTarget, selectedTarget);
+        gameLogService.append(gameData, GameLog.cardTextCard(
+                randomizer[0].getCard(), " chooses the target of ", entry.getCard(), " at random."));
     }
 }

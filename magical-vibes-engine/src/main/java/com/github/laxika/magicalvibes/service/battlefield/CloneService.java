@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -48,7 +49,6 @@ import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSuppor
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -81,7 +81,6 @@ public class CloneService {
     private final PermanentCopierService permanentCopierService;
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
-    private final TriggerCollectionService triggerCollectionService;
     private final ExiledCreatureCopyOnEnterService exiledCreatureCopyOnEnterService;
     private final AuraAttachmentService auraAttachmentService;
     @Autowired
@@ -907,7 +906,7 @@ public class CloneService {
         if (landPlay || landPlayZone != null) {
             battlefieldEntryService.processLandETBEffects(gameData, controllerId, perm.getCard());
             if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, controllerId, perm.getCard(),
+                ActionEvents.landPlayed(gameData, controllerId, perm.getCard(),
                         landPlayZone == null ? Zone.HAND : landPlayZone);
             }
         } else {

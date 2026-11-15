@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -45,7 +45,6 @@ public class CounterSupport {
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final StateTriggerService stateTriggerService;
-    private final TriggerCollectionService triggerCollectionService;
     // @Lazy breaks the cycle: EffectResolutionService → EffectHandlerRegistry →
     // CounterUnlessPaysEffectHandler → CounterSupport → EffectResolutionService.
     private final EffectResolutionService effectResolutionService;
@@ -57,14 +56,12 @@ public class CounterSupport {
                           GameLogService gameLogService,
                           GameQueryService gameQueryService,
                           StateTriggerService stateTriggerService,
-                          @Lazy TriggerCollectionService triggerCollectionService,
                           @Lazy EffectResolutionService effectResolutionService) {
         this.graveyardService = graveyardService;
         this.exileService = exileService;
         this.gameLogService = gameLogService;
         this.gameQueryService = gameQueryService;
         this.stateTriggerService = stateTriggerService;
-        this.triggerCollectionService = triggerCollectionService;
         this.effectResolutionService = effectResolutionService;
     }
 
@@ -500,7 +497,7 @@ public class CounterSupport {
 
     public void notifyCounteredSpell(GameData gameData, UUID counteringPlayerId, StackEntry target) {
         if (target == null) return;
-        triggerCollectionService.completeDungeonRoomIfReady(gameData, target);
+        ActionEvents.completeDungeonRoomIfReady(gameData, target);
         if (isAbility(target)) return;
         emitCounteredCue(gameData, target);
         emitCounteredOrFizzled(gameData, target);

@@ -68,7 +68,7 @@ class DownwindAmbusherTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.enterBattlefieldAndReturn(player1, new DownwindAmbusher());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1,
                 "Target creature an opponent controls gets -1/-1 until end of turn");
         harness.passBothPriorities();
@@ -85,7 +85,7 @@ class DownwindAmbusherTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, spider.getId());
 
         harness.enterBattlefieldAndReturn(player1, new DownwindAmbusher());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1,
                 "Destroy target creature an opponent controls that was dealt damage this turn");
         harness.passBothPriorities();
@@ -138,7 +138,7 @@ class DownwindAmbusherTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1, mode);
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();

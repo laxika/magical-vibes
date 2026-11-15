@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +24,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ClashForControlOfEnchantedCreatureEffectHandler implements NormalEffectHandlerBean {
 
-    private final TriggerCollectionService triggerCollectionService;
+    private final ClashSupport clashSupport;
     private final GameQueryService gameQueryService;
     private final CreatureControlService creatureControlService;
 
@@ -57,7 +56,7 @@ public class ClashForControlOfEnchantedCreatureEffectHandler implements NormalEf
                 .filter(id -> !id.equals(controllerId))
                 .findFirst().orElse(null);
 
-        boolean won = triggerCollectionService.performClash(gameData, controllerId);
+        boolean won = clashSupport.performClash(gameData, controllerId);
 
         UUID newControllerId = won ? controllerId : opponentId;
         java.util.List<CardEffect> followUps = new java.util.ArrayList<>();

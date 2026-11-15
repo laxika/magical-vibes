@@ -204,12 +204,12 @@ class AbilityLimitMarkTest extends BaseCardTest {
         TriggerCollectionService collection = GameTestEngineContext.get().getBean(TriggerCollectionService.class);
 
         harness.inMutationScope(() -> {
-            collection.beginPermanentTapTriggerBatch(gd);
+            gd.beginPermanentTapTriggerBatch();
             first.tap();
             gd.rulesEvents.occur(new TapEvent.BecameTapped(first, player1.getId(), false));
             second.tap();
             gd.rulesEvents.occur(new TapEvent.BecameTapped(second, player1.getId(), false));
-            collection.endPermanentTapTriggerBatch(gd);
+            gd.endPermanentTapTriggerBatch();
         });
 
         assertThat(effectCountsOf("Twin Tollkeeper")).containsExactlyInAnyOrder(1, 2);

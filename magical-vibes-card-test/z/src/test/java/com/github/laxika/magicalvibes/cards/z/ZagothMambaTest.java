@@ -173,6 +173,6 @@ class ZagothMambaTest extends BaseCardTest {
     private void triggerMutation(Permanent mamba) {
         harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, mamba, List.of(mamba.getCard()), player1.getId()));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().beginStackDoorChoices(gd));
     }
 }

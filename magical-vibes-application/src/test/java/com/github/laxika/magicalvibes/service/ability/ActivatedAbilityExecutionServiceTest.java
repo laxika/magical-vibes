@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.ability;
 
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -120,6 +121,8 @@ class ActivatedAbilityExecutionServiceTest {
     @Mock private DrawService drawService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private TriggerCollectionService triggerCollectionService;
+    @Mock private com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService triggeredAbilityQueueService;
+    @Mock private TargetTriggers targetTriggers;
     @Mock private StateBasedActionService stateBasedActionService;
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
@@ -746,7 +749,7 @@ class ActivatedAbilityExecutionServiceTest {
 
             assertThat(gameData.stack).hasSize(1);
             assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-            verify(triggerCollectionService).checkBecomesTargetOfAbilityTriggers(gameData);
+            verify(targetTriggers).checkBecomesTargetOfAbilityTriggers(gameData);
             verify(stateBasedActionService).performStateBasedActions(gameData);
             verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
         }

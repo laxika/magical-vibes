@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.rules.RoomEvent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.ManaChoiceNarrowingService;
@@ -49,7 +50,6 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.Collections;
@@ -108,7 +108,8 @@ public class GameService {
 
     private final PermanentCounterSupport permanentCounterSupport;
 
-    private final TriggerCollectionService triggerCollectionService;
+    private final ETBTokenTargetService etbTokenTargetService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     private final CastingCostService castingCostService;
 
@@ -126,8 +127,8 @@ public class GameService {
                        ManaChoiceNarrowingService manaChoiceNarrowingService,
                        CardRevealService cardRevealService, PredicateEvaluationService predicateEvaluationService,
                        AmountEvaluationService amountEvaluationService,
-                       PermanentCounterSupport permanentCounterSupport,
-                       TriggerCollectionService triggerCollectionService,
+                       PermanentCounterSupport permanentCounterSupport, ETBTokenTargetService etbTokenTargetService,
+                       TriggeredAbilityQueueService triggeredAbilityQueueService,
                        CastingCostService castingCostService,
                        PotentialManaService potentialManaService,
                        TurnFaceUpCopyService turnFaceUpCopyService) {
@@ -147,7 +148,8 @@ public class GameService {
         this.predicateEvaluationService = predicateEvaluationService;
         this.amountEvaluationService = amountEvaluationService;
         this.permanentCounterSupport = permanentCounterSupport;
-        this.triggerCollectionService = triggerCollectionService;
+        this.etbTokenTargetService = etbTokenTargetService;
+        this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.castingCostService = castingCostService;
         this.potentialManaService = potentialManaService;
         this.turnFaceUpCopyService = turnFaceUpCopyService;
@@ -164,7 +166,7 @@ public class GameService {
         this(gameQueryService, gameLogService, combatService, turnProgressionService,
                 interactionHandlerRegistry, spellCastingService, stackResolutionService,
                 abilityActivationService, mulliganService, gameOutcomeService, mutationCoordinator,
-                manaChoiceNarrowingService, null, null, null, null, null, null, null, null);
+                manaChoiceNarrowingService, null, null, null, null, null, null, null, null, null);
     }
 
     private boolean runAsActionIfNeeded(GameData gameData, Runnable action) {
@@ -245,7 +247,8 @@ public class GameService {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             planechaseService.rollSpecialAction(gameData, player.getId());
-            triggerCollectionService.processNextSpellTargetTrigger(gameData);
+            triggeredAbilityQueueService.processNextSpellTargetTrigger(gameData);
+            triggeredAbilityQueueService.beginStackDoorChoices(gameData);
             stepTriggerService.beginNextStepTriggerChoice(gameData);
             stateBasedActionService.performStateBasedActions(gameData);
             mutationCoordinator.invalidateAllPlayerViews(gameData);
@@ -640,9 +643,9 @@ public class GameService {
             if (!wasFullyUnlocked && room.isRoomFullyUnlocked()) {
                 gameData.rulesEvents.occur(new RoomEvent.FullyUnlocked(room, player.getId()));
             }
-            triggerCollectionService.beginStackDoorChoices(gameData);
+            triggeredAbilityQueueService.beginStackDoorChoices(gameData);
             if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+                etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
             }
             gameData.priorityPassedBy.clear();
             gameLogService.append(gameData, GameLog.textCardText(

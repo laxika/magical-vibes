@@ -30,7 +30,7 @@ class SylvanEchoesTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
         harness.passBothPriorities(); // Resolve the trigger to offer the optional draw.
         harness.handleMayAbilityChosen(player1, true);
 
@@ -48,7 +48,7 @@ class SylvanEchoesTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -68,7 +68,7 @@ class SylvanEchoesTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
@@ -84,7 +84,7 @@ class SylvanEchoesTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new KithkinGreatheart()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -101,7 +101,7 @@ class SylvanEchoesTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);

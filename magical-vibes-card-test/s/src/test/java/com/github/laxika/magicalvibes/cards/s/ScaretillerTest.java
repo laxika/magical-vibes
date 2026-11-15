@@ -148,7 +148,7 @@ class ScaretillerTest extends BaseCardTest {
         permanent.tap();
         harness.inMutationScope(() -> {
             gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
-            harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd);
+            harness.getTriggeredAbilityQueueService().processNextTriggeredModalTrigger(gd);
         });
     }
 }

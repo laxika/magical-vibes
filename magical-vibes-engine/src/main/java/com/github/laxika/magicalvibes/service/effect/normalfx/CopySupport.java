@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyTargetAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.EpicEffect;
 import com.github.laxika.magicalvibes.model.effect.PsychicBattleRetargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -39,7 +39,7 @@ import java.util.UUID;
 @Component
 public class CopySupport {
 
-    private final TriggerCollectionService triggerCollectionService;
+    private final TargetTriggers targetTriggers;
     private final GameQueryService gameQueryService;
 
     /**
@@ -84,18 +84,18 @@ public class CopySupport {
     }
 
     public CopySupport() {
-        this.triggerCollectionService = null;
+        this.targetTriggers = null;
         this.gameQueryService = null;
     }
 
     @Autowired
-    public CopySupport(TriggerCollectionService triggerCollectionService, GameQueryService gameQueryService) {
-        this.triggerCollectionService = triggerCollectionService;
+    public CopySupport(TargetTriggers targetTriggers, GameQueryService gameQueryService) {
+        this.targetTriggers = targetTriggers;
         this.gameQueryService = gameQueryService;
     }
 
-    public CopySupport(TriggerCollectionService triggerCollectionService) {
-        this(triggerCollectionService, null);
+    public CopySupport(TargetTriggers targetTriggers) {
+        this(targetTriggers, null);
     }
 
     public void addCopyToStack(GameData gameData, StackEntry copyEntry) {
@@ -142,7 +142,7 @@ public class CopySupport {
             stageCopy(gameData, copyEntry, retargetPrompt);
         } else {
             gameData.stack.add(copyEntry);
-            if (triggerCollectionService != null) {
+            if (targetTriggers != null) {
                 gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(new SpellEvent.Copied(copyEntry, copyEntry.getControllerId())));
             }
         }
@@ -255,10 +255,10 @@ public class CopySupport {
             }
             gameData.stagedSpellCopies.removeFirst();
             gameData.stack.add(next);
-            if (triggerCollectionService != null) {
+            if (targetTriggers != null) {
                 gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(new SpellEvent.Copied(next, next.getControllerId())));
                 if (next.getTargetId() != null || !next.getTargetIds().isEmpty()) {
-                    triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, next);
+                    targetTriggers.checkBecomesTargetOfSpellTriggers(gameData, next);
                 }
             }
         }
@@ -439,7 +439,7 @@ public class CopySupport {
     }
 
     public void checkSpellCopyTriggers(GameData gameData, StackEntry copyEntry) {
-        if (triggerCollectionService == null || copyEntry == null || !copyEntry.isCopy()) return;
+        if (targetTriggers == null || copyEntry == null || !copyEntry.isCopy()) return;
         if (copyEntry.getEntryType() != StackEntryType.INSTANT_SPELL
                 && copyEntry.getEntryType() != StackEntryType.SORCERY_SPELL) {
             return;

@@ -261,7 +261,7 @@ class CollectorRouteRecordTest extends BaseCardTest {
 
         harness.inMutationScope(() -> removal().tryDestroyPermanent(gd, plainPermanent));
         harness.inMutationScope(() -> removal().tryDestroyPermanent(gd, modalPermanent));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class)
                 .processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1, "You gain 1 life");
 
@@ -343,7 +343,7 @@ class CollectorRouteRecordTest extends BaseCardTest {
 
         harness.inMutationScope(() -> removal().tryDestroyPermanent(gd, plainPermanent));
         harness.inMutationScope(() -> removal().tryDestroyPermanent(gd, modalPermanent));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class)
                 .processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1, "Destroy target creature");
         harness.handlePermanentChosen(player1, victim.getId());

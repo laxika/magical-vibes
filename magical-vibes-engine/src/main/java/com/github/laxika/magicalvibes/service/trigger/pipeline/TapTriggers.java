@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -101,6 +102,7 @@ public class TapTriggers {
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final TriggeredAbilityStackService stackService;
     private final TriggerCollectionService triggerCollectionService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     public TapTriggers(EventAbilitySupport abilities, @Lazy GameQueryService gameQueryService,
                        @Lazy PredicateEvaluationService predicateEvaluationService,
@@ -108,7 +110,8 @@ public class TapTriggers {
                        @Lazy GameLogService gameLogService, @Lazy GameOutcomeService gameOutcomeService,
                        @Lazy EffectHandlerRegistry effectHandlerRegistry,
                        @Lazy TriggeredAbilityStackService stackService,
-                       @Lazy TriggerCollectionService triggerCollectionService) {
+                       @Lazy TriggerCollectionService triggerCollectionService,
+                       @Lazy TriggeredAbilityQueueService triggeredAbilityQueueService) {
         this.abilities = abilities;
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
@@ -118,6 +121,7 @@ public class TapTriggers {
         this.effectHandlerRegistry = effectHandlerRegistry;
         this.stackService = stackService;
         this.triggerCollectionService = triggerCollectionService;
+        this.triggeredAbilityQueueService = triggeredAbilityQueueService;
     }
 
     /** Triggers the abilities {@code event} triggers. */
@@ -223,7 +227,7 @@ public class TapTriggers {
             gameOutcomeService.checkWinCondition(gameData);
         }
         // A targeted ability of the tap chooses its target as it goes on the stack (CR 603.3d), right after the tap.
-        triggerCollectionService.beginStackDoorChoices(gameData);
+        triggeredAbilityQueueService.beginStackDoorChoices(gameData);
     }
 
     /** "Whenever you tap a creature for mana" (Badgermole Cub). */
@@ -237,7 +241,7 @@ public class TapTriggers {
                         tappedCreatureId, Set.of(), tappedCreatureId, true);
             }
         }
-        triggerCollectionService.beginStackDoorChoices(gameData);
+        triggeredAbilityQueueService.beginStackDoorChoices(gameData);
     }
 
     /** "Whenever you tap a nonland permanent for mana" (Kinnan) and "an artifact token" (Roxanne). */
@@ -266,7 +270,7 @@ public class TapTriggers {
                 }
             }
         }
-        triggerCollectionService.beginStackDoorChoices(gameData);
+        triggeredAbilityQueueService.beginStackDoorChoices(gameData);
     }
 
     /**
@@ -307,7 +311,7 @@ public class TapTriggers {
                 }
             }
         }
-        triggerCollectionService.beginStackDoorChoices(gameData);
+        triggeredAbilityQueueService.beginStackDoorChoices(gameData);
     }
 
     /**
@@ -563,7 +567,7 @@ public class TapTriggers {
         entry.setProducedManaColors(Set.of(manaColor));
         stackService.putHeld(gameData, entry);
         if (!gameData.interaction.isAwaitingInput()) {
-            triggerCollectionService.beginStackDoorChoices(gameData);
+            triggeredAbilityQueueService.beginStackDoorChoices(gameData);
         }
         return true;
     }

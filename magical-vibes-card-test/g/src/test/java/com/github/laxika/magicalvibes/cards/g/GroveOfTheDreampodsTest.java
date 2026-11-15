@@ -77,7 +77,7 @@ class GroveOfTheDreampodsTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opponentCreature));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService()
                 .processNextSpellGraveyardTargetTrigger(gd));
 
         PendingInteraction.MultiGraveyardChoice choice =
@@ -171,7 +171,7 @@ class GroveOfTheDreampodsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(target, otherCreature));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService()
                 .processNextSpellGraveyardTargetTrigger(gd));
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.setGraveyard(player1, List.of(otherCreature));

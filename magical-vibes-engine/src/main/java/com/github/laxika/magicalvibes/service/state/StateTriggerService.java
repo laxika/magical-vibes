@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -57,6 +58,7 @@ public class StateTriggerService {
     private final GameQueryService gameQueryService;
     private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final TriggerCollectionService triggerCollectionService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final TriggerIndex triggerIndex;
 
     /** The trigger the state-trigger reader watches. */
@@ -68,6 +70,7 @@ public class StateTriggerService {
                                GameQueryService gameQueryService,
                                @Lazy TriggeredAbilityStackService triggeredAbilityStackService,
                                @Lazy TriggerCollectionService triggerCollectionService,
+                               @Lazy TriggeredAbilityQueueService triggeredAbilityQueueService,
                                @Lazy TriggerIndex triggerIndex) {
         this.triggerIndex = triggerIndex;
         this.gameLogService = gameLogService;
@@ -75,6 +78,7 @@ public class StateTriggerService {
         this.gameQueryService = gameQueryService;
         this.triggeredAbilityStackService = triggeredAbilityStackService;
         this.triggerCollectionService = triggerCollectionService;
+        this.triggeredAbilityQueueService = triggeredAbilityQueueService;
     }
 
     /**
@@ -174,7 +178,7 @@ public class StateTriggerService {
         }
         // A target chosen as the ability goes on the stack (CR 603.3d) is chosen now, as the game state triggered it.
         if (parked && triggerCollectionService != null) {
-            triggerCollectionService.beginStackDoorChoices(gameData);
+            triggeredAbilityQueueService.beginStackDoorChoices(gameData);
         }
     }
 

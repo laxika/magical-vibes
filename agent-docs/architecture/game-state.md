@@ -23,7 +23,7 @@ Why: a wrong room or a shortened duration changes what the dungeon does.
 
 ### A dungeon is completed when its last room ability leaves the stack (CR 309.6)
 A bottom-room ability completes the dungeon however it leaves the stack — resolved, countered or removed for an illegal target — unless another room ability of that dungeon is still on the stack.
-Owner: `TriggerCollectionService.completeDungeonRoomIfReady`.
+Owner: `ActionEvents.completeDungeonRoomIfReady`.
 Why: a countered bottom-room ability would otherwise leave the player stuck in a dungeon that can never be completed.
 
 ## Characteristics

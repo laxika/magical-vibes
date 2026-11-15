@@ -5,15 +5,13 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CompleteDungeonEffect;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class CompleteDungeonEffectHandler implements NormalEffectHandlerBean {
-
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -22,6 +20,6 @@ public class CompleteDungeonEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        triggerCollectionService.completeDungeonRoomIfReady(gameData, entry);
+        ActionEvents.completeDungeonRoomIfReady(gameData, entry);
     }
 }

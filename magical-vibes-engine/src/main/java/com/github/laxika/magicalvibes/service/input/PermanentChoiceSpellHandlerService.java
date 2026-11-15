@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -59,6 +60,7 @@ public class PermanentChoiceSpellHandlerService {
     private final GraveyardService graveyardService;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
+    private final TargetTriggers targetTriggers;
     private final PlayerInputService playerInputService;
     // @Lazy breaks the cycle: PermanentChoiceSpellHandlerService → ExileFreeCastQueueSupport →
     // PlayerInputService → InteractionHandlerRegistry → ImprovisationCapstoneCastChoiceInteractionHandler
@@ -81,6 +83,7 @@ public class PermanentChoiceSpellHandlerService {
                                               GraveyardService graveyardService,
                                               GameLogService gameLogService,
                                               TriggerCollectionService triggerCollectionService,
+                                              TargetTriggers targetTriggers,
                                               PlayerInputService playerInputService,
                                               @Lazy ExileFreeCastQueueSupport exileFreeCastQueueSupport,
                                               ExileCastTargetSupport exileCastTargetSupport,
@@ -99,6 +102,7 @@ public class PermanentChoiceSpellHandlerService {
         this.graveyardService = graveyardService;
         this.gameLogService = gameLogService;
         this.triggerCollectionService = triggerCollectionService;
+        this.targetTriggers = targetTriggers;
         this.playerInputService = playerInputService;
         this.exileFreeCastQueueSupport = exileFreeCastQueueSupport;
         this.exileCastTargetSupport = exileCastTargetSupport;
@@ -234,9 +238,9 @@ public class PermanentChoiceSpellHandlerService {
         }
         if (retargeted.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || retargeted.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
-            triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, retargeted);
+            targetTriggers.checkBecomesTargetOfAbilityTriggers(gameData, retargeted);
         } else {
-            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, retargeted);
+            targetTriggers.checkBecomesTargetOfSpellTriggers(gameData, retargeted);
         }
     }
 
@@ -283,7 +287,7 @@ public class PermanentChoiceSpellHandlerService {
 
             triggerCollectionService.checkSpellCastTriggers(gameData, lct.cardToCast(), lct.controllerId(),
                     lct.ownerIdOverride() != null ? Zone.OUTSIDE_GAME : lct.sourceZone());
-            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+            targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
             if (lct.cardsToBottom() != null) {
                 beginBottomReorder(gameData, lct.controllerId(), lct.cardsToBottom());
                 if (gameData.interaction.isAwaitingInput()) {
@@ -483,7 +487,7 @@ public class PermanentChoiceSpellHandlerService {
 
             triggerCollectionService.checkSpellCastTriggers(
                     gameData, ect.cardToCast(), ect.controllerId(), Zone.EXILE, ect.sourcePermanentId());
-            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+            targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
             if (ect.copy() && spellweaverVoluteSupport.handleSuccessfulCopyCast(
                     gameData, ect.cardToCast().getId())) {
                 return;
@@ -669,7 +673,7 @@ public class PermanentChoiceSpellHandlerService {
 
         triggerCollectionService.checkSpellCastTriggers(
                 gameData, card, ect.controllerId(), Zone.EXILE, ect.sourcePermanentId());
-        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
         if (ect.copy() && spellweaverVoluteSupport.handleSuccessfulCopyCast(gameData, card.getId())) {
             return;
         }
@@ -782,7 +786,7 @@ public class PermanentChoiceSpellHandlerService {
             log.info("Game {} - {} cast-from-graveyard targets {}", gameData.id, spellCard.getName(), targetName);
 
             triggerCollectionService.checkSpellCastTriggers(gameData, castCharacteristics, gct.controllerId(), false);
-            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+            targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
         } else {
             UUID ownerId = gct.ownerId() != null ? gct.ownerId() : gct.controllerId();
             graveyardService.addCardToGraveyard(gameData, ownerId, gct.cardToCast());
@@ -888,7 +892,7 @@ public class PermanentChoiceSpellHandlerService {
                 triggerCollectionService.checkSpellCastTriggers(gameData, hct.cardToCast(), hct.controllerId(),
                         hct.castForMadnessCost() ? Zone.EXILE : Zone.HAND);
             }
-            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+            targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
             exileCastTargetSupport.resolveAfterSuccessfulCast(gameData, hct.cardToCast(), hct.controllerId(),
                     hct.sourcePermanentId(), hct.afterSuccessfulCastEffect());
         } else {
@@ -978,7 +982,7 @@ public class PermanentChoiceSpellHandlerService {
         gameData.priorityPassedBy.clear();
         triggerCollectionService.checkSpellCastTriggers(gameData, context.cardToCast(), context.controllerId(),
                 context.castForMadnessCost() ? Zone.EXILE : context.sourceZone());
-        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
         exileCastTargetSupport.resolveAfterSuccessfulCast(gameData, context.cardToCast(), context.controllerId(),
                 context.sourcePermanentId(), context.afterSuccessfulCastEffect());
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

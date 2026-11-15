@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -70,6 +71,7 @@ public class SplitCardCastSupport {
     private final PlayerInputService playerInputService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final TriggerCollectionService triggerCollectionService;
+    private final TargetTriggers targetTriggers;
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final DealDividedDamageSupport dealDividedDamageSupport;
     private final InputCompletionService inputCompletionService;
@@ -91,7 +93,7 @@ public class SplitCardCastSupport {
     public SplitCardCastSupport(GameLogService gameLogService,
                                 PlayerInputService playerInputService,
                                 InteractionHandlerRegistry interactionHandlerRegistry,
-                                TriggerCollectionService triggerCollectionService,
+                                TriggerCollectionService triggerCollectionService, TargetTriggers targetTriggers,
                                 ExileCastTargetSupport exileCastTargetSupport,
                                 DealDividedDamageSupport dealDividedDamageSupport,
                                 @Lazy InputCompletionService inputCompletionService,
@@ -110,6 +112,7 @@ public class SplitCardCastSupport {
         this.playerInputService = playerInputService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.triggerCollectionService = triggerCollectionService;
+        this.targetTriggers = targetTriggers;
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.dealDividedDamageSupport = dealDividedDamageSupport;
         this.inputCompletionService = inputCompletionService;
@@ -632,7 +635,7 @@ public class SplitCardCastSupport {
         triggerCollectionService.checkSpellCastTriggers(gameData, card, controllerId, cast.sourceZone(),
                 exiledSourcePermanentId);
         if (!targets.isEmpty()) {
-            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+            targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
         }
         exileCastTargetSupport.resolveAfterSuccessfulCast(gameData, card, controllerId,
                 cast.sourcePermanentId(), cast.afterSuccessfulCastEffect());

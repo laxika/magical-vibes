@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import java.util.List;
 import java.util.EnumSet;
 import java.util.UUID;
@@ -27,7 +28,7 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
     private final CopySupport copySupport;
-    private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
+    private final com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers targetTriggers;
     private final TargetLegalityService targetLegalityService;
 
     @Override
@@ -136,7 +137,7 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
         // spell the copy's controller controls. A staged copy does so only when it is committed with its
         // final targets.
         if (!offersNewTargets && (copyEntry.getTargetId() != null || !copyEntry.getTargetIds().isEmpty())) {
-            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, copyEntry);
+            targetTriggers.checkBecomesTargetOfSpellTriggers(gameData, copyEntry);
         }
     }
 

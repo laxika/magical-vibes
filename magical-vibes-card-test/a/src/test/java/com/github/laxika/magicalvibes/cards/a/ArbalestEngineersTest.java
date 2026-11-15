@@ -90,7 +90,7 @@ class ArbalestEngineersTest extends BaseCardTest {
     @Test
     void counterModeCanTargetTheEnteringEngineers() {
         Permanent engineers = harness.enterBattlefieldAndReturn(player1, new ArbalestEngineers());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1,
                 "Put a +1/+1 counter on target creature. It gains trample and haste until end of turn");
         harness.handlePermanentChosen(player1, engineers.getId());
@@ -114,7 +114,7 @@ class ArbalestEngineersTest extends BaseCardTest {
 
     private void enterAndChooseMode(String mode) {
         harness.enterBattlefieldAndReturn(player1, new ArbalestEngineers());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1, mode);
     }
 

@@ -37,7 +37,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addFirst(new WoodlandChangeling());
         gd.playerDecks.get(player2.getId()).addFirst(new Forest());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
         harness.passBothPriorities(); // resolve clash trigger → may-pay prompt
         harness.handleMayAbilityChosen(player1, true);
 
@@ -59,7 +59,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addFirst(new Forest());
         gd.playerDecks.get(player2.getId()).addFirst(new WoodlandChangeling());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -78,7 +78,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addFirst(new WoodlandChangeling());
         gd.playerDecks.get(player2.getId()).addFirst(new Forest());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -96,7 +96,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addFirst(new WoodlandChangeling());
         gd.playerDecks.get(player2.getId()).addFirst(new Forest());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         assertThat(token().hasKeyword(Keyword.HASTE)).isTrue();
@@ -116,7 +116,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new WoodlandChangeling()));
         harness.setLibrary(player2, List.of(new WoodlandChangeling()));
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -132,7 +132,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new WoodlandChangeling()));
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -175,7 +175,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new WoodlandChangeling()));
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -106,6 +107,8 @@ class TapTriggersTest {
 
     @Mock
     private TriggerCollectionService triggerCollectionService;
+    @Mock
+    private TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     @Mock
     private ConditionEvaluationService conditionEvaluationService;
@@ -137,10 +140,10 @@ class TapTriggersTest {
         gd.playerManaPools.put(player2Id, new ManaPool());
         gd.playerIds.addAll(List.of(player1Id, player2Id));
         TriggeredAbilityStackService door = new TriggeredAbilityStackService(conditionEvaluationService,
-                gameQueryService, graveyardTargetingSupport, gameLogService, triggerCollectionService,
+                gameQueryService, graveyardTargetingSupport, gameLogService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.ZoneChangeRequests.class), org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers.class), triggeredAbilityQueueService,
                 amountEvaluationService, predicateEvaluationService, triggerTargetCollector);
         sut = new TapTriggers(null, gameQueryService, predicateEvaluationService, conditionEvaluationService,
-                gameLogService, null, effectHandlerRegistry, door, triggerCollectionService);
+                gameLogService, null, effectHandlerRegistry, door, triggerCollectionService, triggeredAbilityQueueService);
         addOneOfEachHandler = new AddOneOfEachManaTypeProducedByLandEffectHandler(
                 gameQueryService, gameLogService, interactionHandlerRegistry);
         effectHandlerRegistry.register(AddOneOfEachManaTypeProducedByLandEffect.class, addOneOfEachHandler);
@@ -341,7 +344,7 @@ class TapTriggersTest {
             assertThat(record.getTriggeringPermanentId()).isEqualTo(land.getId());
             // "Target creature you control" is the effect's own target, not a filter the collector adds.
             assertThat(record.getTargetFilter()).isNull();
-            verify(triggerCollectionService).beginStackDoorChoices(gd);
+            verify(triggeredAbilityQueueService).beginStackDoorChoices(gd);
         }
 
         @Test

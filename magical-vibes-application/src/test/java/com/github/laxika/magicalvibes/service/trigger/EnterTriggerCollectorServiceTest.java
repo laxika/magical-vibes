@@ -90,13 +90,11 @@ class EnterTriggerCollectorServiceTest {
                 triggeredAbilityQueueService, gameQueryService, predicateEvaluationService,
                 targetLegalityService,
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
-                gameLogService, etbTokenTargetService,
-                new GrantedTriggeredAbilitySupport(gameQueryService));
+                gameLogService);
         // The emblems' abilities go on the stack through the stack door.
         org.springframework.test.util.ReflectionTestUtils.setField(service, "triggeredAbilityStackService",
-                new com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService(
-                        new ConditionEvaluationService(gameQueryService, predicateEvaluationService), gameQueryService,
-                        new GraveyardTargetingSupport(), gameLogService, service,
+                new com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService(new ConditionEvaluationService(gameQueryService, predicateEvaluationService), gameQueryService,
+                        new GraveyardTargetingSupport(), gameLogService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.ZoneChangeRequests.class), org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers.class), triggeredAbilityQueueService,
                         new AmountEvaluationService(predicateEvaluationService, gameQueryService),
                         predicateEvaluationService,
                         new TriggerTargetCollector(gameQueryService, predicateEvaluationService, targetLegalityService)));

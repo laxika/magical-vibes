@@ -46,8 +46,8 @@ class DamageAndTargetCollectorAbilityStackObjectTest extends BaseCardTest {
         return gd.stack.stream().filter(entry -> entry.getCard().getName().equals(name)).toList();
     }
 
-    private TriggerCollectionService collectors() {
-        return harness.getTriggerCollectionService();
+    private com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers targetTriggers() {
+        return com.github.laxika.magicalvibes.testutil.GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers.class);
     }
 
     private DamageTriggers damageCollectors() {
@@ -170,7 +170,7 @@ class DamageAndTargetCollectorAbilityStackObjectTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1, card);
         StackEntry spell = opponentSpellTargeting(target.getId());
 
-        harness.inMutationScope(() -> collectors().checkBecomesTargetOfSpellTriggers(gd, spell));
+        harness.inMutationScope(() -> targetTriggers().checkBecomesTargetOfSpellTriggers(gd, spell));
 
         assertThat(entriesOf("Spell Target")).hasSize(2)
                 .allSatisfy(entry -> assertThat(entry.getEffectsToResolve()).hasSize(1));
@@ -185,7 +185,7 @@ class DamageAndTargetCollectorAbilityStackObjectTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1, card);
         StackEntry spell = opponentSpellTargeting(target.getId());
 
-        harness.inMutationScope(() -> collectors().checkBecomesTargetOfSpellTriggers(gd, spell));
+        harness.inMutationScope(() -> targetTriggers().checkBecomesTargetOfSpellTriggers(gd, spell));
 
         assertThat(entriesOf("Any Target")).hasSize(2)
                 .allSatisfy(entry -> assertThat(entry.getEffectsToResolve()).hasSize(1));
@@ -199,7 +199,7 @@ class DamageAndTargetCollectorAbilityStackObjectTest extends BaseCardTest {
         addCreatureReady(player1, card);
         StackEntry spell = opponentSpellTargeting(player1.getId());
 
-        harness.inMutationScope(() -> collectors().checkBecomesTargetOfSpellTriggers(gd, spell));
+        harness.inMutationScope(() -> targetTriggers().checkBecomesTargetOfSpellTriggers(gd, spell));
 
         assertThat(entriesOf("Player Target Watcher")).singleElement()
                 .satisfies(entry -> assertThat(entry.getEffectsToResolve()).hasSize(2));
@@ -216,7 +216,7 @@ class DamageAndTargetCollectorAbilityStackObjectTest extends BaseCardTest {
         Permanent second = addCreatureReady(player1, new GrizzlyBears());
         StackEntry spell = opponentSpellTargeting(first.getId(), second.getId());
 
-        harness.inMutationScope(() -> collectors().checkBecomesTargetOfSpellTriggers(gd, spell));
+        harness.inMutationScope(() -> targetTriggers().checkBecomesTargetOfSpellTriggers(gd, spell));
 
         assertThat(entriesOf("Each Target Watcher")).hasSize(2);
     }
@@ -232,7 +232,7 @@ class DamageAndTargetCollectorAbilityStackObjectTest extends BaseCardTest {
         Permanent second = addCreatureReady(player1, new GrizzlyBears());
         StackEntry spell = opponentSpellTargeting(first.getId(), second.getId());
 
-        harness.inMutationScope(() -> collectors().checkBecomesTargetOfSpellTriggers(gd, spell));
+        harness.inMutationScope(() -> targetTriggers().checkBecomesTargetOfSpellTriggers(gd, spell));
 
         assertThat(entriesOf("One Or More Target Watcher")).singleElement()
                 .satisfies(entry -> assertThat(entry.getEffectsToResolve()).hasSize(2));

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -27,12 +27,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TheMaelstromTest extends BaseCardTest {
 
     private PlanechaseService planar;
-    private TriggerCollectionService triggers;
+    private TriggeredAbilityQueueService triggers;
 
     @BeforeEach
     void preparePlane() {
         planar = GameTestEngineContext.get().getBean(PlanechaseService.class);
-        triggers = GameTestEngineContext.get().getBean(TriggerCollectionService.class);
+        triggers = GameTestEngineContext.get().getBean(TriggeredAbilityQueueService.class);
         gd.planechase = new PlanechaseState();
         gd.planechase.controllerId = player1.getId();
         gd.planechase.faceUp.add(new PlanarObject(new TheMaelstrom(), gd.nextTimestamp()));

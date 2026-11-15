@@ -55,10 +55,10 @@ class SagaChapterCopyRecordTest extends BaseCardTest {
         Card graveyardCreature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(graveyardCreature));
         SagaChapterService sagaChapterService = GameTestEngineContext.get().getBean(SagaChapterService.class);
-        TriggerCollectionService collection = GameTestEngineContext.get().getBean(TriggerCollectionService.class);
+        var queue = GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class);
         harness.inMutationScope(() -> {
             sagaChapterService.triggerCopiedSagaChapter(gd, saga, player1.getId(), 1);
-            collection.processNextTriggeredModalTrigger(gd);
+            queue.processNextTriggeredModalTrigger(gd);
         });
 
         for (int round = 0; round < 5 && gd.interaction.isAwaitingInput(); round++) {

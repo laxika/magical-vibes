@@ -137,7 +137,7 @@ class IWillSavorYourAgonyTest extends BaseCardTest {
         harness.inMutationScope(() -> {
             door.putMade(gd, TriggeredAbilityStackService.madeAbility(scheme, player1.getId(), scheme.getName(),
                     scheme.getCastingCostsAndSpellEffects()));
-            harness.getTriggerCollectionService().beginStackDoorChoices(gd);
+            harness.getTriggeredAbilityQueueService().beginStackDoorChoices(gd);
         });
     }
 }

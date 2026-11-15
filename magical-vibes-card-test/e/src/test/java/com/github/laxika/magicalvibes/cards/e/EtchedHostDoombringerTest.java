@@ -72,7 +72,7 @@ class EtchedHostDoombringerTest extends BaseCardTest {
         Permanent battle = addBattle(player1, player2.getId(), 5);
 
         harness.enterBattlefieldAndReturn(player1, new EtchedHostDoombringer());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1, BATTLE_MODE);
         harness.handlePermanentChosen(player1, battle.getId());
         harness.passBothPriorities();

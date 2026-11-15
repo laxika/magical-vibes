@@ -121,6 +121,8 @@ class TriggeredAbilityStackServiceTest {
     @Mock
     private TriggerCollectionService triggerCollectionService;
     @Mock
+    private TargetTriggers targetTriggers;
+    @Mock
     private AttackTriggers attackTriggers;
 
     private TriggeredAbilityStackService stackService;
@@ -138,7 +140,7 @@ class TriggeredAbilityStackServiceTest {
     @BeforeEach
     void setUp() {
         stackService = new TriggeredAbilityStackService(conditionEvaluationService, gameQueryService,
-                graveyardTargetingSupport, gameLogService, triggerCollectionService, amountEvaluationService,
+                graveyardTargetingSupport, gameLogService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.ZoneChangeRequests.class), targetTriggers, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class), amountEvaluationService,
                 predicateEvaluationService, triggerTargetCollector);
         org.springframework.test.util.ReflectionTestUtils.setField(stackService, "attackTriggers", attackTriggers);
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
@@ -884,7 +886,7 @@ class TriggeredAbilityStackServiceTest {
         StackEntry finished = stackService.finishParked(gd, record,
                 entry -> entry.setTargetCardIds(List.of(graveyardCardId)));
 
-        verify(triggerCollectionService).checkBecomesTargetOfAbilityTriggers(gd);
+        verify(targetTriggers).checkBecomesTargetOfAbilityTriggers(gd);
     }
 
     /** A combat damage record naming the damaged player PLAYER2 as "that player", as the combat collector stamps it. */

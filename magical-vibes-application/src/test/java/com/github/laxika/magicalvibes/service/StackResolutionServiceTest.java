@@ -88,6 +88,7 @@ class StackResolutionServiceTest {
     @Mock private EffectResolutionService effectResolutionService;
     @Mock private PlayerInputService playerInputService;
     @Mock private TriggerCollectionService triggerCollectionService;
+    @Mock private TriggeredAbilityQueueService triggeredAbilityQueueService;
     @Mock private CreatureControlService creatureControlService;
     @Mock private StateTriggerService stateTriggerService;
     @Mock private ExileService exileService;
@@ -133,11 +134,11 @@ class StackResolutionServiceTest {
 
     @BeforeEach
     void setUp() {
-        sagaChapterService = new SagaChapterService(gameQueryService, gameLogService, triggerCollectionService);
+        sagaChapterService = new SagaChapterService(gameQueryService, gameLogService, triggeredAbilityQueueService);
         svc = new StackResolutionService(
                 battlefieldEntryService, sagaChapterService, cloneService, graveyardService,
                 legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
-                gameLogService, effectResolutionService, playerInputService, triggerCollectionService,
+                gameLogService, effectResolutionService, playerInputService, triggeredAbilityQueueService,
                 creatureControlService, stateTriggerService, exileService, null, permanentCounterSupport,
                 mutationCoordinator, null, auraCopyService, null, null);
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");

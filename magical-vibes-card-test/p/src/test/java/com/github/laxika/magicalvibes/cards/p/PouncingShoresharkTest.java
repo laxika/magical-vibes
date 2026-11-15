@@ -132,6 +132,6 @@ class PouncingShoresharkTest extends BaseCardTest {
     private void triggerMutation(Permanent shark) {
         harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, shark, List.of(shark.getCard()), player1.getId()));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().beginStackDoorChoices(gd));
     }
 }

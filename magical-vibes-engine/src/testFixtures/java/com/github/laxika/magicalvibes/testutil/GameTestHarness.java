@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.GameSetupService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
@@ -95,6 +96,7 @@ public class GameTestHarness {
     private static BattlefieldEntryService staticBattlefieldEntryService;
     private static SagaChapterService staticSagaChapterService;
     private static TriggerCollectionService staticTriggerCollectionService;
+    private static TriggeredAbilityQueueService staticTriggeredAbilityQueueService;
     private static com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers staticDamageTriggers;
     private static SpellCastingService staticSpellCastingService;
     private static CombatAttackService staticCombatAttackService;
@@ -136,6 +138,7 @@ public class GameTestHarness {
         staticBattlefieldEntryService = context.getBean(BattlefieldEntryService.class);
         staticSagaChapterService = context.getBean(SagaChapterService.class);
         staticTriggerCollectionService = context.getBean(TriggerCollectionService.class);
+        staticTriggeredAbilityQueueService = context.getBean(TriggeredAbilityQueueService.class);
         staticDamageTriggers = context.getBean(
                 com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers.class);
         staticSpellCastingService = context.getBean(SpellCastingService.class);
@@ -193,6 +196,7 @@ public class GameTestHarness {
     private final BattlefieldEntryService battlefieldEntryService;
     private final SagaChapterService sagaChapterService;
     private final TriggerCollectionService triggerCollectionService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final SpellCastingService spellCastingService;
     private final CombatAttackService combatAttackService;
     private final CombatService combatService;
@@ -235,6 +239,7 @@ public class GameTestHarness {
         battlefieldEntryService = staticBattlefieldEntryService;
         sagaChapterService = staticSagaChapterService;
         triggerCollectionService = staticTriggerCollectionService;
+        triggeredAbilityQueueService = staticTriggeredAbilityQueueService;
         spellCastingService = staticSpellCastingService;
         combatAttackService = staticCombatAttackService;
         combatService = staticCombatService;
@@ -393,7 +398,7 @@ public class GameTestHarness {
                 battlefieldEntryService.processCreatureETBEffects(
                         gameData, player.getId(), permanent.getCard(), null, false);
             }
-            triggerCollectionService.processNextTriggeredModalTrigger(gameData);
+            triggeredAbilityQueueService.processNextTriggeredModalTrigger(gameData);
         });
         return permanent;
     }
@@ -404,9 +409,9 @@ public class GameTestHarness {
         inMutationScope(() -> {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
             battlefieldEntryService.processLandETBEffects(gameData, player.getId(), permanent.getCard());
-            triggerCollectionService.processNextTriggeredModalTrigger(gameData);
+            triggeredAbilityQueueService.processNextTriggeredModalTrigger(gameData);
             if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.processNextSpellTargetTrigger(gameData);
+                processNextSpellTargetTrigger();
             }
         });
         return permanent;
@@ -449,7 +454,7 @@ public class GameTestHarness {
      */
     public void beginTriggerChoices() {
         inMutationScope(() -> {
-            triggerCollectionService.processNextSpellTargetTrigger(gameData);
+            processNextSpellTargetTrigger();
             GameTestEngineContext.get().getBean(StepTriggerService.class).beginNextStepTriggerChoice(gameData);
         });
     }
@@ -2686,6 +2691,20 @@ public class GameTestHarness {
     /** The trigger pipeline's damage collectors. */
     public com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers getDamageTriggers() {
         return staticDamageTriggers;
+    }
+
+    /** Begins the next spell-target choice the stack door queued, then the door's next choice. */
+    private void processNextSpellTargetTrigger() {
+        triggeredAbilityQueueService.processNextSpellTargetTrigger(gameData);
+        triggeredAbilityQueueService.beginStackDoorChoices(gameData);
+    }
+
+    public TriggeredAbilityQueueService getTriggeredAbilityQueueService() {
+        return triggeredAbilityQueueService;
+    }
+
+    public com.github.laxika.magicalvibes.service.effect.normalfx.ClashSupport getClashSupport() {
+        return GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.effect.normalfx.ClashSupport.class);
     }
 
     public TriggerCollectionService getTriggerCollectionService() {

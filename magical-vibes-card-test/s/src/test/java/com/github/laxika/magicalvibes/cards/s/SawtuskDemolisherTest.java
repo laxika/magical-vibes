@@ -103,6 +103,6 @@ class SawtuskDemolisherTest extends BaseCardTest {
     private void triggerMutation(Permanent demolisher) {
         harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, demolisher, List.of(demolisher.getCard()), player1.getId()));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().beginStackDoorChoices(gd));
     }
 }

@@ -122,6 +122,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -148,6 +149,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -190,6 +192,8 @@ public class ActivatedAbilityExecutionService {
     private final PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.battlefield.DepartureService departureService;
     private final TriggerCollectionService triggerCollectionService;
+    private final TargetTriggers targetTriggers;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final StateBasedActionService stateBasedActionService;
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
@@ -233,7 +237,7 @@ public class ActivatedAbilityExecutionService {
         abilityEntry.setSourceStackCardId(sourceStackEntry.getCard().getId());
         abilityEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(abilityEntry);
-        triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
+        targetTriggers.checkBecomesTargetOfAbilityTriggers(gameData);
         stateBasedActionService.performStateBasedActions(gameData);
         gameData.priorityPassedBy.clear();
         mutationCoordinator.invalidateAllPlayerViews(gameData);
@@ -1172,12 +1176,12 @@ public class ActivatedAbilityExecutionService {
         // target now, when it goes on the stack, rather than waiting for the next priority pass.
         if (!gameData.interaction.isAwaitingInput()
                 && gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
-            triggerCollectionService.processNextEntersTriggerTarget(gameData);
+            triggeredAbilityQueueService.processNextEntersTriggerTarget(gameData);
         }
         // Likewise a trigger that targets a graveyard card (Riveteers Ascendancy's sacrifice trigger).
         if (!gameData.interaction.isAwaitingInput()
                 && gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
-            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+            triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
         }
         // Likewise an activation trigger that targets a permanent (Vazi, Keen Negotiator).
         if (!gameData.pendingMayAbilities.isEmpty()) {
@@ -2514,7 +2518,7 @@ public class ActivatedAbilityExecutionService {
         }
         gameData.stack.add(stackEntry);
         gameData.stack.addAll(rollCostTriggers);
-        triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
+        targetTriggers.checkBecomesTargetOfAbilityTriggers(gameData);
         stateBasedActionService.performStateBasedActions(gameData);
         gameData.priorityPassedBy.clear();
         mutationCoordinator.invalidateAllPlayerViews(gameData);

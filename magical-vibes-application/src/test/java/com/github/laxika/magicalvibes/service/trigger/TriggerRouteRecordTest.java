@@ -108,8 +108,10 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ClassLevelUpEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EvolveEffectHandler;
@@ -224,13 +226,35 @@ class TriggerRouteRecordTest extends BaseCardTest {
             .peek(field -> field.setAccessible(true))
             .toList();
 
-    /** The trigger-choice queue pumps of {@link TriggerCollectionService}: {@code processNext*(GameData)}. */
-    private static final List<Method> QUEUE_PUMPS = Arrays.stream(TriggerCollectionService.class.getMethods())
-            .filter(method -> method.getName().startsWith("processNext")
-                    && method.getParameterCount() == 1
-                    && method.getParameterTypes()[0] == GameData.class)
-            .sorted(Comparator.comparing(Method::getName))
-            .toList();
+    /**
+     * The trigger-choice queue pumps, in name order: those of {@link TriggeredAbilityQueueService} and
+     * {@link ETBTokenTargetService} that begin a choice the stack door queued, the day-and-night and spell-target
+     * pumps followed by the door's next choice.
+     */
+    private static final List<Pump> QUEUE_PUMPS = List.of(
+            (queue, etb, game) -> queue.processNextAttackCounterMoveFirstTarget(game),
+            (queue, etb, game) -> queue.processNextAttackTriggerTarget(game),
+            (queue, etb, game) -> {
+                queue.processNextDayNightTriggerTarget(game);
+                queue.beginStackDoorChoices(game);
+            },
+            (queue, etb, game) -> etb.processNextETBSpellTargetTrigger(game),
+            (queue, etb, game) -> etb.processNextETBTokenMultiTargetTrigger(game),
+            (queue, etb, game) -> queue.processNextEntersTriggerTarget(game),
+            (queue, etb, game) -> queue.processNextSagaChapterGraveyardTarget(game),
+            (queue, etb, game) -> queue.processNextSagaChapterPlayerTarget(game),
+            (queue, etb, game) -> queue.processNextSagaChapterTarget(game),
+            (queue, etb, game) -> queue.processNextSpellGraveyardTargetTrigger(game),
+            (queue, etb, game) -> {
+                queue.processNextSpellTargetTrigger(game);
+                queue.beginStackDoorChoices(game);
+            },
+            (queue, etb, game) -> queue.processNextTriggeredModalTrigger(game));
+
+    /** One trigger-choice queue pump of the engine's, for {@code game}. */
+    private interface Pump {
+        void pump(TriggeredAbilityQueueService queue, ETBTokenTargetService etb, GameData game);
+    }
 
     /**
      * The (watch, variant) pairs that reach no stack entry, as {@code "<watch> / <variant>"} to a one-line reason.
@@ -872,7 +896,8 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         (test, collection) -> ActionEvents.taxPaid(test.gd, test.player2.getId(),
                                 test.player1.getId(), 2)),
                 collected("you clash", "youClash", Triggers::youClash,
-                        (test, collection) -> collection.performClash(test.gd, test.player1.getId())));
+                        (test, collection) -> bean(com.github.laxika.magicalvibes.service.effect.normalfx.ClashSupport.class)
+                                .performClash(test.gd, test.player1.getId())));
     }
 
     /** The draw, discard, cycling, scry, search, shuffle and tap-for-mana triggers the first lists don't have. */
@@ -1655,8 +1680,8 @@ class TriggerRouteRecordTest extends BaseCardTest {
                             test.harness.inMutationScope(() -> phasing.phaseOut(test.gd, permanents));
                             test.harness.inMutationScope(() -> phasing.applyPhasing(test.gd, test.player1.getId()));
                             test.answerAll();
-                            TriggerCollectionService triggers = bean(TriggerCollectionService.class);
-                            test.harness.inMutationScope(() -> triggers.beginStackDoorChoices(test.gd));
+                            var queue = bean(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class);
+                            test.harness.inMutationScope(() -> queue.beginStackDoorChoices(test.gd));
                         }),
                 watch("a permanent you control transforms", "transforms",
                         () -> Triggers.transforms(null, ObjectRelation.YOU_CONTROL), CardType.ENCHANTMENT,
@@ -2292,7 +2317,8 @@ class TriggerRouteRecordTest extends BaseCardTest {
             Permanent equipment = addCreatureReady(player1, card);
             rememberPermanents();
             equipment.setAttachedTo(creature.getId());
-            collect(collection -> collection.equipmentBecameAttached(gd, equipment, null));
+            harness.inMutationScope(() -> bean(com.github.laxika.magicalvibes.service.trigger.pipeline.AttachmentTriggers.class)
+                    .equipmentBecameAttached(gd, equipment, null));
             answerAll();
         }
     }
@@ -2596,7 +2622,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
             harness.inMutationScope(() -> {
                 entry.putPermanentOntoBattlefield(gd, player1.getId(), permanent);
                 entry.processCreatureETBEffects(gd, player1.getId(), card, null, false);
-                collection.processNextTriggeredModalTrigger(gd);
+                bean(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class).processNextTriggeredModalTrigger(gd);
             });
             answerAll();
         }
@@ -2832,7 +2858,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
             harness.inMutationScope(() -> {
                 entry.putPermanentOntoBattlefield(gd, player1.getId(), permanent);
                 entry.processCreatureETBEffects(gd, player1.getId(), card, null, false);
-                collection.processNextTriggeredModalTrigger(gd);
+                bean(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class).processNextTriggeredModalTrigger(gd);
             });
             answerAll();
         }
@@ -3142,19 +3168,14 @@ class TriggerRouteRecordTest extends BaseCardTest {
     }
 
     private void pumpQueues() {
-        TriggerCollectionService collection = bean(TriggerCollectionService.class);
-        for (Method pump : QUEUE_PUMPS) {
+        TriggeredAbilityQueueService queue = bean(TriggeredAbilityQueueService.class);
+        ETBTokenTargetService etb = bean(ETBTokenTargetService.class);
+        for (Pump pump : QUEUE_PUMPS) {
             if (gd.interaction.isAwaitingInput()) {
                 return;
             }
             try {
-                harness.inMutationScope(() -> {
-                    try {
-                        pump.invoke(collection, gd);
-                    } catch (ReflectiveOperationException e) {
-                        throw new IllegalStateException(e);
-                    }
-                });
+                harness.inMutationScope(() -> pump.pump(queue, etb, gd));
             } catch (RuntimeException | AssertionError ignored) {
                 // A pump with nothing queued, or one whose queue is not ready, changes nothing.
             }

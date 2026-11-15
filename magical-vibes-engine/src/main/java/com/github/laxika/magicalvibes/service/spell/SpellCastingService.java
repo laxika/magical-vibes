@@ -209,6 +209,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
@@ -231,6 +232,7 @@ import com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentServic
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
@@ -323,6 +325,8 @@ public class SpellCastingService {
     private final PermanentRemovalService permanentRemovalService;
 
     private final TriggerCollectionService triggerCollectionService;
+    private final TargetTriggers targetTriggers;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
 
@@ -2462,7 +2466,7 @@ public class SpellCastingService {
         ActionEvents.plotted(gameData, playerId, card);
         // Plotting is a special action, not a resolution: the plotted card's "when this card becomes plotted"
         // target choice begins here (Longhorn Sharpshooter).
-        triggerCollectionService.beginStackDoorChoices(gameData);
+        triggeredAbilityQueueService.beginStackDoorChoices(gameData);
     }
 
     /**
@@ -5631,14 +5635,14 @@ public class SpellCastingService {
             // are deferred so they don't sit on the stack mid-cast; finishSpellCast()
             // flushes pendingManaAbilityTriggers onto the stack above the spell.
             int stackBeforeTriggers = gameData.stack.size();
-            triggerCollectionService.beginPermanentTapTriggerBatch(gameData);
+            gameData.beginPermanentTapTriggerBatch();
             try {
                 for (Permanent source : validatedSources) {
                     source.tap();
                     gameData.rulesEvents.occur(new TapEvent.BecameTapped(source, null, true));
                 }
             } finally {
-                triggerCollectionService.endPermanentTapTriggerBatch(gameData);
+                gameData.endPermanentTapTriggerBatch();
             }
             if (gameData.stack.size() > stackBeforeTriggers) {
                 List<StackEntry> deferred = new ArrayList<>(
@@ -5700,14 +5704,14 @@ public class SpellCastingService {
             }
             // Tap after validation for atomic failure; defer any tap triggers (see convoke above).
             int stackBeforeTriggers = gameData.stack.size();
-            triggerCollectionService.beginPermanentTapTriggerBatch(gameData);
+            gameData.beginPermanentTapTriggerBatch();
             try {
                 for (Permanent creature : conspireCreatures) {
                     creature.tap();
                     gameData.rulesEvents.occur(new TapEvent.BecameTapped(creature, null, true));
                 }
             } finally {
-                triggerCollectionService.endPermanentTapTriggerBatch(gameData);
+                gameData.endPermanentTapTriggerBatch();
             }
             if (gameData.stack.size() > stackBeforeTriggers) {
                 List<StackEntry> deferred = new ArrayList<>(
@@ -5874,7 +5878,7 @@ public class SpellCastingService {
                 // Process ETB effects for lands (e.g. Glimmerpost)
                 battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
                 if (!gameData.interaction.isAwaitingInput()) {
-                    triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, landFace);
+                    ActionEvents.landPlayed(gameData, playerId, landFace);
                     turnProgressionService.resolveAutoPass(gameData);
                 }
             }
@@ -8775,7 +8779,7 @@ public class SpellCastingService {
         }
         List<Permanent> toTap = additionalSpellCostService.validateEscalateTapCost(
                 gameData, player, card, cost, modesChosen, tapPermanentIds);
-        triggerCollectionService.beginPermanentTapTriggerBatch(gameData);
+        gameData.beginPermanentTapTriggerBatch();
         try {
             for (Permanent permanent : toTap) {
                 permanent.tap();
@@ -8789,7 +8793,7 @@ public class SpellCastingService {
                         .build());
             }
         } finally {
-            triggerCollectionService.endPermanentTapTriggerBatch(gameData);
+            gameData.endPermanentTapTriggerBatch();
         }
     }
 
@@ -8837,7 +8841,7 @@ public class SpellCastingService {
                                                 TapAnyNumberOfPermanentsCost cost, List<UUID> tapPermanentIds) {
         List<Permanent> toTap = additionalSpellCostService.validateTapAnyNumberOfPermanentsCost(
                 gameData, player, card, cost, tapPermanentIds);
-        triggerCollectionService.beginPermanentTapTriggerBatch(gameData);
+        gameData.beginPermanentTapTriggerBatch();
         try {
             for (Permanent permanent : toTap) {
                 permanent.tap();
@@ -8851,7 +8855,7 @@ public class SpellCastingService {
                         .build());
             }
         } finally {
-            triggerCollectionService.endPermanentTapTriggerBatch(gameData);
+            gameData.endPermanentTapTriggerBatch();
         }
         return toTap.size();
     }
@@ -8860,7 +8864,7 @@ public class SpellCastingService {
                                             List<UUID> tapPermanentIds) {
         List<Permanent> toTap = additionalSpellCostService.validateTapCreaturesForManaCost(
                 gameData, player, card, tapPermanentIds);
-        triggerCollectionService.beginPermanentTapTriggerBatch(gameData);
+        gameData.beginPermanentTapTriggerBatch();
         try {
             for (Permanent permanent : toTap) {
                 permanent.tap();
@@ -8874,7 +8878,7 @@ public class SpellCastingService {
                         .build());
             }
         } finally {
-            triggerCollectionService.endPermanentTapTriggerBatch(gameData);
+            gameData.endPermanentTapTriggerBatch();
         }
     }
 
@@ -8884,7 +8888,7 @@ public class SpellCastingService {
                                              int announcedXValue) {
         List<Permanent> toTap = additionalSpellCostService.validateTapMultiplePermanentsCost(
                 gameData, player, card, cost, tapPermanentIds, announcedXValue);
-        triggerCollectionService.beginPermanentTapTriggerBatch(gameData);
+        gameData.beginPermanentTapTriggerBatch();
         try {
             for (Permanent permanent : toTap) {
                 permanent.tap();
@@ -8898,7 +8902,7 @@ public class SpellCastingService {
                         .build());
             }
         } finally {
-            triggerCollectionService.endPermanentTapTriggerBatch(gameData);
+            gameData.endPermanentTapTriggerBatch();
         }
         return toTap.isEmpty() ? null : toTap.getFirst().getId();
     }
@@ -8949,7 +8953,7 @@ public class SpellCastingService {
                                  TeamworkCost cost, List<UUID> teamworkPermanentIds) {
         List<Permanent> toTap = additionalSpellCostService.validateTeamworkCost(
                 gameData, player, card, cost, teamworkPermanentIds);
-        triggerCollectionService.beginPermanentTapTriggerBatch(gameData);
+        gameData.beginPermanentTapTriggerBatch();
         try {
             for (Permanent permanent : toTap) {
                 permanent.tap();
@@ -8964,7 +8968,7 @@ public class SpellCastingService {
                         .build());
             }
         } finally {
-            triggerCollectionService.endPermanentTapTriggerBatch(gameData);
+            gameData.endPermanentTapTriggerBatch();
         }
     }
 
@@ -12190,7 +12194,7 @@ public class SpellCastingService {
             battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
         }
         if (!gameData.interaction.isAwaitingInput()) {
-            triggerCollectionService.checkControllerPlaysLandTriggers(
+            ActionEvents.landPlayed(
                     gameData, playerId, landFace, Zone.GRAVEYARD);
             turnProgressionService.resolveAutoPass(gameData);
         }
@@ -12257,7 +12261,7 @@ public class SpellCastingService {
             battlefieldEntryService.processLandETBEffects(gameData, player.getId(), landFace);
         }
         if (!gameData.interaction.isAwaitingInput()) {
-            triggerCollectionService.checkControllerPlaysLandTriggers(
+            ActionEvents.landPlayed(
                     gameData, player.getId(), landFace, Zone.EXILE, exiledEntry.sourcePermanentId());
         }
         return true;
@@ -12824,7 +12828,7 @@ public class SpellCastingService {
                 battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
             }
             if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, landFace,
+                ActionEvents.landPlayed(gameData, playerId, landFace,
                         sourceZone, copy || exiledEntry == null ? null : exiledEntry.sourcePermanentId());
                 turnProgressionService.resolveAutoPass(gameData);
             }
@@ -13171,7 +13175,7 @@ public class SpellCastingService {
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, sourceZone,
                 copy || exiledEntry == null ? null : exiledEntry.sourcePermanentId());
-        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
         mutationCoordinator.invalidateAllPlayerViews(gameData);
         if (autoPass) {
             turnProgressionService.resolveAutoPass(gameData);
@@ -13712,7 +13716,7 @@ public class SpellCastingService {
                 battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
             }
             if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, landFace,
+                ActionEvents.landPlayed(gameData, playerId, landFace,
                         Zone.LIBRARY);
                 turnProgressionService.resolveAutoPass(gameData);
             }
@@ -13990,7 +13994,7 @@ public class SpellCastingService {
         log.info("Game {} - {} casts {} from library top", gameData.id, player.getUsername(), card.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, Zone.LIBRARY);
-        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
         mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
@@ -14111,7 +14115,7 @@ public class SpellCastingService {
                 gameData.id, player.getUsername(), castCard.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, castCard, playerId, Zone.LIBRARY);
-        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
         mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
@@ -18675,7 +18679,7 @@ public class SpellCastingService {
                     castFromHand ? Zone.HAND : Zone.GRAVEYARD, null,
                     castEntry != null && castEntry.isCastFaceDown());
         }
-        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
         if (!gameData.pendingSpellCastCostTriggers.isEmpty()) {
             gameData.stack.addAll(gameData.pendingSpellCastCostTriggers);
             gameData.pendingSpellCastCostTriggers.clear();

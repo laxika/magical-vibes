@@ -98,6 +98,7 @@ import com.github.laxika.magicalvibes.model.action.TargetPlayerHandExileReturnAt
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
@@ -268,6 +269,7 @@ public class StepTriggerService {
     private final GraveyardTransformedReturnService graveyardTransformedReturnService;
     private final GraveyardService graveyardService;
     private final TriggerCollectionService triggerCollectionService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final TriggerTargetCollector triggerTargetCollector;
     private final ParadigmService paradigmService;
     private final EpicService epicService;
@@ -291,6 +293,7 @@ public class StepTriggerService {
                               GraveyardTransformedReturnService graveyardTransformedReturnService,
                               GraveyardService graveyardService,
                               TriggerCollectionService triggerCollectionService,
+                              TriggeredAbilityQueueService triggeredAbilityQueueService,
                               TriggerTargetCollector triggerTargetCollector,
                               @Lazy ParadigmService paradigmService,
                               EpicService epicService,
@@ -313,6 +316,7 @@ public class StepTriggerService {
         this.graveyardTransformedReturnService = graveyardTransformedReturnService;
         this.graveyardService = graveyardService;
         this.triggerCollectionService = triggerCollectionService;
+        this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.triggerTargetCollector = triggerTargetCollector;
         this.paradigmService = paradigmService;
         this.epicService = epicService;
@@ -889,13 +893,13 @@ public class StepTriggerService {
             return;
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
-            triggerCollectionService.processNextTriggeredModalTrigger(gameData);
+            triggeredAbilityQueueService.processNextTriggeredModalTrigger(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
-            triggerCollectionService.processNextAttackTriggerTarget(gameData);
+            triggeredAbilityQueueService.processNextAttackTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
@@ -907,12 +911,13 @@ public class StepTriggerService {
             }
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
-            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+            triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
         }
-        triggerCollectionService.processNextDayNightTriggerTarget(gameData);
+        triggeredAbilityQueueService.processNextDayNightTriggerTarget(gameData);
+        triggeredAbilityQueueService.beginStackDoorChoices(gameData);
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }

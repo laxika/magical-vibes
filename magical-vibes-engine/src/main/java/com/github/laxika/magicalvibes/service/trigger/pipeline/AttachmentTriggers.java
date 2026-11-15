@@ -4,12 +4,24 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.AsThisBecomesAttachedEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachedCreatureBecomesCopyOfExiledCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseColorForSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AttachedCreatureBecomesCopyOfExiledCreatureEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardNameAtResolutionEffectHandler;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -44,10 +56,22 @@ public class AttachmentTriggers {
 
     private final EventAbilitySupport abilities;
     private final GameQueryService gameQueryService;
+    private final PlayerInputService playerInputService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
+    private final ChooseCardNameAtResolutionEffectHandler chooseCardNameHandler;
+    private final AttachedCreatureBecomesCopyOfExiledCreatureEffectHandler attachedCreatureCopyHandler;
 
-    public AttachmentTriggers(EventAbilitySupport abilities, @Lazy GameQueryService gameQueryService) {
+    public AttachmentTriggers(EventAbilitySupport abilities, @Lazy GameQueryService gameQueryService,
+                              @Lazy PlayerInputService playerInputService,
+                              @Lazy TriggeredAbilityQueueService triggeredAbilityQueueService,
+                              @Lazy ChooseCardNameAtResolutionEffectHandler chooseCardNameHandler,
+                              @Lazy AttachedCreatureBecomesCopyOfExiledCreatureEffectHandler attachedCreatureCopyHandler) {
         this.abilities = abilities;
         this.gameQueryService = gameQueryService;
+        this.playerInputService = playerInputService;
+        this.triggeredAbilityQueueService = triggeredAbilityQueueService;
+        this.chooseCardNameHandler = chooseCardNameHandler;
+        this.attachedCreatureCopyHandler = attachedCreatureCopyHandler;
     }
 
     /** Triggers the abilities {@code event} triggers. */
@@ -150,6 +174,62 @@ public class AttachmentTriggers {
             if (triggered) {
                 log.info("Game {} - {} triggers on becoming unattached", gameData.id, equipment.getCard().getName());
             }
+        }
+    }
+
+    /**
+     * After {@code equipment} became attached to a creature: its "as this Equipment becomes attached to a creature"
+     * abilities apply while it becomes attached, without using the stack ({@link AsThisBecomesAttachedEffect}: a color,
+     * a creature card name and a creature type, a copy of a creature card exiled with it), and then it is an
+     * {@link AttachmentEvent.EquipmentAttached} event, which its "whenever this Equipment becomes attached to a
+     * creature" abilities trigger on.
+     */
+    public void equipmentBecameAttached(GameData gameData, Permanent equipment, UUID oldAttachedTo) {
+        if (equipment == null || equipment.getAttachedTo() == null
+                || equipment.getAttachedTo().equals(oldAttachedTo)
+                || !equipment.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+            return;
+        }
+
+        Permanent equipped = gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
+        if (equipped == null || !gameQueryService.isCreature(gameData, equipped)) return;
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, equipment.getId());
+        if (controllerId == null) return;
+
+        for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, equipment)) {
+            if (effect instanceof AsThisBecomesAttachedEffect asAttaches) {
+                applyAsBecomesAttached(gameData, equipment, equipped, controllerId, asAttaches.effect());
+            }
+        }
+
+        gameData.rulesEvents.occur(new AttachmentEvent.EquipmentAttached(equipment, equipped.getId(), controllerId));
+        triggeredAbilityQueueService.beginStackDoorChoices(gameData);
+    }
+
+    /**
+     * Applies {@code effect}, an "as this Equipment becomes attached to a creature" ability of {@code equipment}, as it
+     * becomes attached to {@code equipped}: its controller chooses a color, or a creature card name and then a creature
+     * type, for the Equipment; or the creature becomes a copy of a creature card exiled with the Equipment.
+     */
+    private void applyAsBecomesAttached(GameData gameData, Permanent equipment, Permanent equipped,
+                                        UUID controllerId, CardEffect effect) {
+        if (effect instanceof ChooseColorForSourceEffect) {
+            playerInputService.beginColorChoice(gameData, controllerId, equipment.getId(), null);
+        } else if (effect instanceof SequenceEffect sequence && sequence.steps().size() == 2
+                && sequence.steps().get(0) instanceof ChooseCardNameAtResolutionEffect nameChoice
+                && sequence.steps().get(1) instanceof ChooseSubtypeForSourceEffect subtypeChoice) {
+            chooseCardNameHandler.begin(gameData, equipment.getCard(), controllerId, equipment.getId(),
+                    nameChoice, subtypeChoice);
+        } else if (effect instanceof AttachedCreatureBecomesCopyOfExiledCreatureEffect) {
+            // The attachment's record, never put on the stack: the Equipment and the creature it became attached to.
+            StackEntry attachment = StackEntry.carrier(equipment.getCard(), controllerId,
+                    equipment.getCard().getName() + "'s ability", List.of(effect), null, equipment.getId());
+            attachment.setTriggeringPermanentId(equipped.getId());
+            attachedCreatureCopyHandler.resolve(gameData, attachment, effect);
+        } else {
+            throw new IllegalStateException(equipment.getCard().getName()
+                    + " has an \"as this becomes attached\" ability nothing applies: " + effect);
         }
     }
 }

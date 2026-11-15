@@ -150,7 +150,7 @@ class BiblioplexTomekeeperTest extends BaseCardTest {
         UUID copyId = firesinger.getPreparedSpellCardId();
 
         harness.enterBattlefieldAndReturn(player1, new BiblioplexTomekeeper());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1, "Target creature becomes unprepared");
         harness.handlePermanentChosen(player1, firesinger.getId());
         resolveAllTriggers();

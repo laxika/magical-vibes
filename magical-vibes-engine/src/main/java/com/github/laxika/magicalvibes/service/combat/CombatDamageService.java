@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.rules.CombatDamageStepEvent;
 import com.github.laxika.magicalvibes.model.rules.DamageDealtEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
@@ -58,7 +60,6 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -94,7 +95,8 @@ public class CombatDamageService {
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final TriggerCollectionService triggerCollectionService;
+    private final ETBTokenTargetService etbTokenTargetService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers damageTriggers;
@@ -722,12 +724,12 @@ public class CombatDamageService {
         // attacking flags out from under an "attacking creature" target restriction.
         if (!gameData.interaction.isAwaitingInput()
                 && gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
-            triggerCollectionService.processNextAttackTriggerTarget(gameData);
+            triggeredAbilityQueueService.processNextAttackTriggerTarget(gameData);
         }
 
         if (!gameData.interaction.isAwaitingInput()
                 && gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
-            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+            etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
         }
 
         // "Whenever this creature is dealt damage" triggers with a target choose it as they are put on

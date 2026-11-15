@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerCause;
@@ -119,6 +120,7 @@ public class PermanentRemovalService {
     private final GraveyardService graveyardService;
     private final BattlefieldEntryService battlefieldEntryService;
     private TriggerCollectionService triggerCollectionService;
+    private GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final DamagePreventionService damagePreventionService;
     private final AuraAttachmentService auraAttachmentService;
     private final GameQueryService gameQueryService;
@@ -147,6 +149,7 @@ public class PermanentRemovalService {
     public PermanentRemovalService(GraveyardService graveyardService,
                                    BattlefieldEntryService battlefieldEntryService,
                                    @Lazy TriggerCollectionService triggerCollectionService,
+                                   @Lazy GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
                                    DamagePreventionService damagePreventionService,
                                    AuraAttachmentService auraAttachmentService,
                                    GameQueryService gameQueryService,
@@ -165,6 +168,7 @@ public class PermanentRemovalService {
         this.graveyardService = graveyardService;
         this.battlefieldEntryService = battlefieldEntryService;
         this.triggerCollectionService = triggerCollectionService;
+        this.grantedTriggeredAbilitySupport = grantedTriggeredAbilitySupport;
         this.damagePreventionService = damagePreventionService;
         this.auraAttachmentService = auraAttachmentService;
         this.gameQueryService = gameQueryService;
@@ -273,7 +277,7 @@ public class PermanentRemovalService {
                 gameData.simultaneousDyingPermanents.put(permanent.getId(), snapshot);
                 gameData.simultaneousDyingPermanentControllers.put(permanent.getId(), controllerId);
                 gameData.simultaneousDyingGrantedZoneChangeAbilities.put(permanent.getId(),
-                        List.copyOf(triggerCollectionService.grantedZoneChangeAbilities(gameData, permanent)));
+                        List.copyOf(grantedTriggeredAbilitySupport.grantedZoneChangeAbilities(gameData, permanent)));
                 if (!gameQueryService.isCreature(gameData, permanent)) continue;
                 gameData.simultaneousDyingCreatures.put(permanent.getId(), snapshot);
                 gameData.simultaneousDyingControllers.put(permanent.getId(), controllerId);
@@ -1031,7 +1035,7 @@ public class PermanentRemovalService {
     private List<TriggeredAbility> grantedZoneChangeAbilities(GameData gameData, Permanent permanent) {
         List<TriggeredAbility> snapshot = gameData.simultaneousDyingGrantedZoneChangeAbilities.get(permanent.getId());
         return snapshot != null ? snapshot
-                : triggerCollectionService.grantedZoneChangeAbilities(gameData, permanent);
+                : grantedTriggeredAbilitySupport.grantedZoneChangeAbilities(gameData, permanent);
     }
 
     private Set<CardSubtype> effectiveCreatureSubtypesAtDeath(GameData gameData, Permanent permanent) {

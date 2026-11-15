@@ -132,7 +132,6 @@ import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.outcome.ExquisiteArchangelLossReplacer;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
@@ -228,8 +227,6 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final AuspiciousStarrixSupport auspiciousStarrixSupport;
 
     private final StateBasedActionService stateBasedActionService;
-
-    private final TriggerCollectionService triggerCollectionService;
 
     private final TriggerTargetCollector triggerTargetCollector;
 
@@ -1543,7 +1540,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             battlefieldEntryService.processLandETBEffects(
                     gameData, context.sacrificingPlayerId(), context.enteringCard());
             if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(
+                ActionEvents.landPlayed(
                         gameData, context.sacrificingPlayerId(), context.enteringCard(), context.landPlayZone());
             }
         }
@@ -2012,7 +2009,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                     gameData, context.controllerId(), context.enteringPermanent().getCard());
         }
         if (!batchEntry && !gameData.interaction.isAwaitingInput()) {
-            triggerCollectionService.checkControllerPlaysLandTriggers(
+            ActionEvents.landPlayed(
                     gameData, context.controllerId(), context.enteringPermanent().getCard());
         }
         if (!gameData.interaction.isAwaitingInput()) {

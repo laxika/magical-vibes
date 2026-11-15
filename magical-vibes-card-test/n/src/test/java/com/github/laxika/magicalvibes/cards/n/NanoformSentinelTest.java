@@ -195,7 +195,7 @@ class NanoformSentinelTest extends BaseCardTest {
         permanent.tap();
         harness.inMutationScope(() -> {
             gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
-            harness.getTriggerCollectionService().beginStackDoorChoices(gd);
+            harness.getTriggeredAbilityQueueService().beginStackDoorChoices(gd);
         });
     }
 }

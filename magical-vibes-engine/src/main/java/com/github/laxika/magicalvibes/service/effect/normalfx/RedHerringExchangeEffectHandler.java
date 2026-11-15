@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -31,7 +31,7 @@ public class RedHerringExchangeEffectHandler implements NormalEffectHandlerBean 
 
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final TargetTriggers targetTriggers;
     private final GameLogService gameLogService;
     private final TargetLegalityService targetLegalityService;
 
@@ -140,9 +140,9 @@ public class RedHerringExchangeEffectHandler implements NormalEffectHandlerBean 
         for (StackEntry targetingEntry : entriesThatChangedTarget) {
             if (targetingEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                     || targetingEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
-                triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, targetingEntry);
+                targetTriggers.checkBecomesTargetOfAbilityTriggers(gameData, targetingEntry);
             } else {
-                triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, targetingEntry);
+                targetTriggers.checkBecomesTargetOfSpellTriggers(gameData, targetingEntry);
             }
             if (gameData.interaction.isAwaitingInput()) {
                 return;

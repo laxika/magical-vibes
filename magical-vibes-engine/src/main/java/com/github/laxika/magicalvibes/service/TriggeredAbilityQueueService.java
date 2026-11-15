@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.CastAbility;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -728,7 +727,7 @@ public class TriggeredAbilityQueueService {
             StackEntryPredicate spellFilter = TriggerTargetCollector.spellTargetFilter(chosenModes.getFirst());
             gameData.queueInteractionFirst(new PermanentChoiceContext.ETBSpellTargetTrigger(
                     sourceCard, controllerId, effects, spellFilter,
-                    spellFilter != null && TriggerCollectionService.predicateContainsHasTarget(spellFilter),
+                    spellFilter != null && TriggerTargetCollector.predicateContainsHasTarget(spellFilter),
                     sourcePermanentId).withTriggerRecord(triggerRecord));
             return;
         }
@@ -2126,5 +2125,38 @@ public class TriggeredAbilityQueueService {
                 .filter(java.util.Objects::nonNull)
                 .mapToInt(permanent -> permanent.getCard().getManaValue())
                 .sum();
+    }
+
+    /**
+     * Begins the next choice the stack door queued (CR 603.3c, 603.3d): its mode, its targets in one choice or group by
+     * group, its graveyard cards; nothing while a choice is awaited. It runs where an action or a resolution that made
+     * abilities trigger begins their choices: a spell cast, an ability activated, either targeted, the
+     * trigger-target choices of the other routes. The answer's handler begins the one after it.
+     */
+    public void beginStackDoorChoices(GameData gameData) {
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
+            processNextTriggeredModalTrigger(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
+            processNextAttackTriggerTarget(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
+            etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
+            processNextSpellGraveyardTargetTrigger(gameData);
+        }
     }
 }

@@ -180,6 +180,6 @@ class SnapdaxApexOfTheHuntTest extends BaseCardTest {
     private void triggerMutation(Permanent snapdax) {
         harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, snapdax, List.of(snapdax.getCard()), player1.getId()));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().beginStackDoorChoices(gd));
     }
 }

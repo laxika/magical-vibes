@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
@@ -17,7 +18,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,7 @@ public class SagaChapterService {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     @Autowired
     @Lazy
@@ -45,10 +45,10 @@ public class SagaChapterService {
 
     public SagaChapterService(GameQueryService gameQueryService,
                               GameLogService gameLogService,
-                              @Lazy TriggerCollectionService triggerCollectionService) {
+                              @Lazy TriggeredAbilityQueueService triggeredAbilityQueueService) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
-        this.triggerCollectionService = triggerCollectionService;
+        this.triggeredAbilityQueueService = triggeredAbilityQueueService;
     }
 
     public void initializeSaga(GameData gameData, Permanent sagaPermanent, Card card, UUID controllerId) {
@@ -206,16 +206,16 @@ public class SagaChapterService {
     public void beginChapterChoices(GameData gameData) {
         if (!gameData.interaction.isAwaitingInput()
                 && gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
-            triggerCollectionService.processNextSagaChapterTarget(gameData);
+            triggeredAbilityQueueService.processNextSagaChapterTarget(gameData);
         }
         if (!gameData.interaction.isAwaitingInput()
                 && gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterPlayerTarget.class)) {
-            triggerCollectionService.processNextSagaChapterPlayerTarget(gameData);
+            triggeredAbilityQueueService.processNextSagaChapterPlayerTarget(gameData);
         }
         if (!gameData.interaction.isAwaitingInput()
                 && gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterGraveyardTarget.class)) {
-            triggerCollectionService.processNextSagaChapterGraveyardTarget(gameData);
+            triggeredAbilityQueueService.processNextSagaChapterGraveyardTarget(gameData);
         }
-        triggerCollectionService.beginStackDoorChoices(gameData);
+        triggeredAbilityQueueService.beginStackDoorChoices(gameData);
     }
 }

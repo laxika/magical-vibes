@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.AdventureCast;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.AttachmentTriggers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -155,6 +156,7 @@ public class LibraryChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     private final TriggerCollectionService triggerCollectionService;
+    private final AttachmentTriggers attachmentTriggers;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
 
@@ -737,11 +739,11 @@ public class LibraryChoiceHandlerService {
                     }
                     if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT && librarySearch.attachToPermanentId() != null) {
                         perm.setAttachedTo(librarySearch.attachToPermanentId());
-                        triggerCollectionService.equipmentBecameAttached(
+                        attachmentTriggers.equipmentBecameAttached(
                                 gameData, perm, librarySearch.attachToPermanentId());
                     }
                     if (!perm.getCard().isAura()) {
-                        triggerCollectionService.equipmentBecameAttached(gameData, perm, null);
+                        attachmentTriggers.equipmentBecameAttached(gameData, perm, null);
                     }
                     if (chosenCard.hasType(CardType.CREATURE)) {
                         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, battlefieldControllerId, chosenCard, null, false);
@@ -1910,7 +1912,7 @@ public class LibraryChoiceHandlerService {
                 perm.setAttachedTo(librarySearch.attachToPlayerId());
             }
             if (!perm.getCard().isAura()) {
-                triggerCollectionService.equipmentBecameAttached(gameData, perm, null);
+                attachmentTriggers.equipmentBecameAttached(gameData, perm, null);
             }
         } else if (destination == LibrarySearchDestination.BATTLEFIELD && (selectedFromGraveyard || selectedFromHand)) {
             Permanent perm = new Permanent(chosenCard, selectedFromGraveyard ? Zone.GRAVEYARD : Zone.HAND);
@@ -1929,11 +1931,11 @@ public class LibraryChoiceHandlerService {
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             if (librarySearch.attachToPermanentId() != null) {
                 perm.setAttachedTo(librarySearch.attachToPermanentId());
-                triggerCollectionService.equipmentBecameAttached(
+                attachmentTriggers.equipmentBecameAttached(
                         gameData, perm, librarySearch.attachToPermanentId());
             }
             if (!perm.getCard().isAura()) {
-                triggerCollectionService.equipmentBecameAttached(gameData, perm, null);
+                attachmentTriggers.equipmentBecameAttached(gameData, perm, null);
             }
             battlefieldEntryService.handleCreatureEnteredBattlefield(
                     gameData, playerId, perm.getCard(), null, false);

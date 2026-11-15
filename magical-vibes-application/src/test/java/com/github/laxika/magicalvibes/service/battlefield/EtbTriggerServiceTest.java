@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -69,6 +70,7 @@ class EtbTriggerServiceTest {
     @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private TriggerCollectionService triggerCollectionService;
+    @Mock private TriggeredAbilityQueueService triggeredAbilityQueueService;
     @Mock private AmountEvaluationService amountEvaluationService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private ConditionEvaluationService conditionEvaluationService;
@@ -81,11 +83,9 @@ class EtbTriggerServiceTest {
     @BeforeEach
     void setUp() {
         service = new EtbTriggerService(gameQueryService, gameLogService, playerInputService,
-                triggerCollectionService, new EtbEffectResolver(conditionEvaluationService));
+                triggerCollectionService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class), triggeredAbilityQueueService, new EtbEffectResolver(conditionEvaluationService));
         // A permanent's own enters abilities go on the stack through the stack door.
-        ReflectionTestUtils.setField(service, "triggeredAbilityStackService", new TriggeredAbilityStackService(
-                conditionEvaluationService, gameQueryService, new GraveyardTargetingSupport(), gameLogService,
-                triggerCollectionService, amountEvaluationService, predicateEvaluationService,
+        ReflectionTestUtils.setField(service, "triggeredAbilityStackService", new TriggeredAbilityStackService(conditionEvaluationService, gameQueryService, new GraveyardTargetingSupport(), gameLogService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.ZoneChangeRequests.class), org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers.class), triggeredAbilityQueueService, amountEvaluationService, predicateEvaluationService,
                 new TriggerTargetCollector(gameQueryService, predicateEvaluationService, targetLegalityService)));
         controllerId = UUID.randomUUID();
         gameData = new GameData(UUID.randomUUID(), "test", controllerId, "Player");
@@ -168,7 +168,7 @@ class EtbTriggerServiceTest {
         assertThat(gameData.hasPendingInteraction(
                 PermanentChoiceContext.AttackTriggerTarget.class)).isTrue();
         assertThat(gameData.stack).isEmpty();
-        verify(triggerCollectionService).beginStackDoorChoices(gameData);
+        verify(triggeredAbilityQueueService).beginStackDoorChoices(gameData);
     }
 
     @Test

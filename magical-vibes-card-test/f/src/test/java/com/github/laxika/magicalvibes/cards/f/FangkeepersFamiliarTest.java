@@ -144,7 +144,7 @@ class FangkeepersFamiliarTest extends BaseCardTest {
 
     private void enterAndChooseMode(String mode) {
         harness.enterBattlefieldAndReturn(player1, new FangkeepersFamiliar());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1, mode);
     }
 
@@ -184,7 +184,7 @@ class FangkeepersFamiliarTest extends BaseCardTest {
     @DisplayName("Entering without being cast, the counter mode isn't offered without a creature spell to target")
     void counterModeIsNotOfferedWithoutACreatureSpell() {
         harness.enterBattlefieldAndReturn(player1, new FangkeepersFamiliar());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().processNextTriggeredModalTrigger(gd));
 
         PendingInteraction.ColorChoice modeChoice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);

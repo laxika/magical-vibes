@@ -17,10 +17,10 @@ import com.github.laxika.magicalvibes.model.trigger.PlayerActionTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlayerActionTrigger.PlayerAction;
 import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -56,15 +56,15 @@ public class ActionTriggers {
     private final EventAbilitySupport abilities;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameQueryService gameQueryService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     public ActionTriggers(EventAbilitySupport abilities, @Lazy PredicateEvaluationService predicateEvaluationService,
                           @Lazy GameQueryService gameQueryService,
-                          @Lazy TriggerCollectionService triggerCollectionService) {
+                          @Lazy TriggeredAbilityQueueService triggeredAbilityQueueService) {
         this.abilities = abilities;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameQueryService = gameQueryService;
-        this.triggerCollectionService = triggerCollectionService;
+        this.triggeredAbilityQueueService = triggeredAbilityQueueService;
     }
 
     /** Triggers the abilities {@code event} triggers. */
@@ -149,7 +149,7 @@ public class ActionTriggers {
                 UUID monarchId = monarch.playerId();
                 playerAction(gameData, PlayerAction.BECOMES_MONARCH, monarchId,
                         Facts.of(entry -> entry.setTriggeringPlayerId(monarchId)).namingThatPlayer());
-                triggerCollectionService.beginStackDoorChoices(gameData);
+                triggeredAbilityQueueService.beginStackDoorChoices(gameData);
             }
             case ActionEvent.CoinFlipWon won -> playerAction(gameData, PlayerAction.WINS_COIN_FLIP, won.playerId(),
                     Facts.NONE);
@@ -167,7 +167,7 @@ public class ActionTriggers {
                     entry.setTriggeringPlayerId(clashed.playerId());
                     entry.setEventValue(outcome);
                 }).withContextValue(outcome));
-                triggerCollectionService.beginStackDoorChoices(gameData);
+                triggeredAbilityQueueService.beginStackDoorChoices(gameData);
             }
             case ActionEvent.LostGame lost -> playerLosesGame(gameData, lost.playerId());
             case ActionEvent.CrimeCommitted crime -> playerAction(gameData, PlayerAction.COMMITS_CRIME,

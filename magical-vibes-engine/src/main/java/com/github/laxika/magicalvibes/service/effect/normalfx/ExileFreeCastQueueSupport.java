@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -64,6 +65,7 @@ public class ExileFreeCastQueueSupport {
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
+    private final TargetTriggers targetTriggers;
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final InputCompletionService inputCompletionService;
     private final GraveyardService graveyardService;
@@ -95,6 +97,7 @@ public class ExileFreeCastQueueSupport {
     public ExileFreeCastQueueSupport(GameLogService gameLogService,
                                             PlayerInputService playerInputService,
                                             TriggerCollectionService triggerCollectionService,
+                                            TargetTriggers targetTriggers,
                                             ExileCastTargetSupport exileCastTargetSupport,
                                             @Lazy InputCompletionService inputCompletionService,
                                             GraveyardService graveyardService,
@@ -107,6 +110,7 @@ public class ExileFreeCastQueueSupport {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.triggerCollectionService = triggerCollectionService;
+        this.targetTriggers = targetTriggers;
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.inputCompletionService = inputCompletionService;
         this.graveyardService = graveyardService;
@@ -1085,7 +1089,7 @@ public class ExileFreeCastQueueSupport {
         gameData.deathReplacementsCanRerunEffect = false;
         completeCastAfterDiscard(gameData, replay.entry());
         if (replay.checksTargetTriggers()) {
-            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+            targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
         }
     }
 
@@ -1095,7 +1099,7 @@ public class ExileFreeCastQueueSupport {
         // The sacrifice was asked its death replacements first (CR 616.1); nothing after it is redone.
         gameData.deathReplacementsCanRerunEffect = false;
         completeCastAfterDiscard(gameData, context.entry());
-        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
     }
 
     public void completeTapCost(GameData gameData, List<UUID> permanentIds,
@@ -1107,14 +1111,14 @@ public class ExileFreeCastQueueSupport {
         // An escalate sacrifice was asked its death replacements first (CR 616.1); nothing after it is redone.
         gameData.deathReplacementsCanRerunEffect = false;
         completeCastAfterDiscard(gameData, context.entry());
-        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
     }
 
     public void completeBeholdCost(GameData gameData, UUID objectId,
                                   PermanentChoiceContext.FreeCastBeholdCost context) {
         spellCastingService.payBeholdCostForPreparedCast(gameData, context.entry(), objectId);
         completeCastAfterDiscard(gameData, context.entry());
-        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
     }
 
     /** Adds a spell to the stack only after its queued discard cost has been paid. */

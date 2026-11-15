@@ -125,6 +125,8 @@ class PermanentRemovalServiceTest {
 
     @Mock
     private TriggerCollectionService triggerCollectionService;
+    @Mock
+    private com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
 
     @Mock
     private DamagePreventionService damagePreventionService;
@@ -1022,7 +1024,7 @@ class PermanentRemovalServiceTest {
         @BeforeEach
         void setUpDepartures() {
             org.springframework.test.util.ReflectionTestUtils.setField(prs, "departureService",
-                    new DepartureService(gameQueryService, prs, graveyardService, triggerCollectionService,
+                    new DepartureService(gameQueryService, prs, graveyardService, triggerCollectionService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class),
                             gameLogService));
         }
 

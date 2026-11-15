@@ -129,13 +129,13 @@ class CombatDamageServiceTest {
                                 gameLogService, gameQueryService),
                         new com.github.laxika.magicalvibes.service.state.StateTriggerService(gameLogService,
                                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
-                                null, null, null,
+                                null, null, null, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class),
                                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerIndex.class)),
                         triggerCollectionService,
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.LegendRuleService.class),
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class),
                         new com.github.laxika.magicalvibes.service.battlefield.DepartureService(gameQueryService,
-                                permanentRemovalService, graveyardService, triggerCollectionService, gameLogService));
+                                permanentRemovalService, graveyardService, triggerCollectionService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class), gameLogService));
         com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport =
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport.class);
         combatDamageService = new CombatDamageService(gameQueryService,
@@ -143,7 +143,9 @@ class CombatDamageServiceTest {
                 conditionEvaluationService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
                 gameLogService, damagePreventionService, graveyardService,
-                permanentRemovalService, playerInputService, registry, triggerCollectionService,
+                permanentRemovalService, playerInputService, registry,
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService.class),
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class),
                 grantedTriggeredAbilitySupport,
                 lifeSupport,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService.class),
@@ -153,10 +155,9 @@ class CombatDamageServiceTest {
                 stateBasedActionService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class),
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.event.VisualCueService.class),
-                new com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService(
-                        conditionEvaluationService, gameQueryService,
+                new com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService(conditionEvaluationService, gameQueryService,
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport.class),
-                        gameLogService, triggerCollectionService,
+                        gameLogService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.ZoneChangeRequests.class), org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers.class), org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class),
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
                         predicateEvaluationService,
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector.class)));

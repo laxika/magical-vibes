@@ -129,11 +129,11 @@ class ClassKeyedRecordCollectorTest extends BaseCardTest {
         Permanent second = addCreatureReady(player1, new GrizzlyBears());
 
         StackEntry twoTargets = opponentSpellTargeting(first.getId(), second.getId());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkTargetChoiceTriggers(gd, twoTargets));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers.class).checkTargetChoiceTriggers(gd, twoTargets));
         assertThat(entriesOf("Single Target Watcher")).isEmpty();
 
         StackEntry oneTarget = opponentSpellTargeting(first.getId());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkTargetChoiceTriggers(gd, oneTarget));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers.class).checkTargetChoiceTriggers(gd, oneTarget));
         assertThat(entriesOf("Single Target Watcher")).hasSize(1);
     }
 
@@ -147,7 +147,7 @@ class ClassKeyedRecordCollectorTest extends BaseCardTest {
         silenced.setLosesAllAbilitiesUntilEndOfTurn(true);
         StackEntry spell = opponentSpellTargeting(bears.getId());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkTargetChoiceTriggers(gd, spell));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers.class).checkTargetChoiceTriggers(gd, spell));
 
         assertThat(entriesOf("Silenced Target Watcher")).isEmpty();
     }

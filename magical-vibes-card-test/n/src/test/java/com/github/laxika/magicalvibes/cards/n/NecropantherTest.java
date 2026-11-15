@@ -126,6 +126,6 @@ class NecropantherTest extends BaseCardTest {
     private void triggerMutation(Permanent panther) {
         harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, panther, List.of(panther.getCard()), player1.getId()));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().beginStackDoorChoices(gd));
     }
 }

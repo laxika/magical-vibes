@@ -3088,6 +3088,27 @@ public class GameData {
      * by its ability's limit key ({@code TriggeredAbility.limitKey()}).
      */
     public final Map<UUID, Set<String>> permanentTapTriggerBatchFiredAbilities = new ConcurrentHashMap<>();
+
+    /**
+     * Opens a batch of permanents tapping together (tapping several as a cost, attackers tapping as they're
+     * declared): the "whenever one or more permanents become tapped" abilities that fired in it are forgotten when the
+     * outermost batch opens and closes. Batches nest.
+     */
+    public void beginPermanentTapTriggerBatch() {
+        if (permanentTapTriggerBatchDepth++ == 0) {
+            permanentTapTriggerBatchFiredAbilities.clear();
+        }
+    }
+
+    /** Closes the batch {@link #beginPermanentTapTriggerBatch} opened. */
+    public void endPermanentTapTriggerBatch() {
+        if (permanentTapTriggerBatchDepth <= 0) {
+            throw new IllegalStateException("No permanent tap trigger batch is active");
+        }
+        if (--permanentTapTriggerBatchDepth == 0) {
+            permanentTapTriggerBatchFiredAbilities.clear();
+        }
+    }
     /** Players who had one or more cards leave their graveyard this turn (cleared at turn cleanup). Used by Wilt in the Heat cost reduction. */
     public final Set<UUID> playersWhoseCardsLeftGraveyardThisTurn = ConcurrentHashMap.newKeySet();
     /** Players whose graveyards had one or more creature cards leave this turn. */

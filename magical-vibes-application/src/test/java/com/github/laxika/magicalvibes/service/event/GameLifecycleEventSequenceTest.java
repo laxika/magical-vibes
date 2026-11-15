@@ -187,7 +187,8 @@ class GameLifecycleEventSequenceTest {
         AutoPassService autoPass = new AutoPassService(
                 gameQueryService,
                 actionAvailability,
-                mock(TriggerCollectionService.class),
+                mock(com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService.class),
+                mock(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class),
                 mock(StackResolutionService.class),
                 stepTriggers,
                 mock(CombatAttackService.class),

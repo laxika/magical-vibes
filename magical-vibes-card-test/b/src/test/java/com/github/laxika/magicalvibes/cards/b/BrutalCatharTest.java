@@ -91,7 +91,7 @@ class BrutalCatharTest extends BaseCardTest {
         // An ability that triggers during the untap step goes on the stack, its target chosen, the next time a player
         // would receive priority, the upkeep (CR 502.4).
         harness.inMutationScope(() -> com.github.laxika.magicalvibes.testutil.GameTestEngineContext.get()
-                .getBean(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class)
+                .getBean(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class)
                 .beginStackDoorChoices(gd));
 
         assertThat(cathar.isTransformed()).isFalse();

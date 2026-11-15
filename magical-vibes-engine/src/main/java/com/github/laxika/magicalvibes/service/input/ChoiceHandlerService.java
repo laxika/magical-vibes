@@ -84,9 +84,11 @@ import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.MulliganService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.ExileAndReturnTransformedService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
@@ -109,6 +111,7 @@ import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
 import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TapTriggers;
 import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -184,7 +187,8 @@ public class ChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.battlefield.CreaturePositioningSupport creaturePositioningSupport;
     private final EffectResolutionService effectResolutionService;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
-    private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
+    private final com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService etbTokenTargetService;
+    private final com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final TapTriggers tapTriggers;
     private final VotingFinishedSupport votingFinishedSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.VotingSupport votingSupport;
@@ -3446,7 +3450,7 @@ public class ChoiceHandlerService {
         if (perm.getCard().hasType(CardType.LAND)) {
             battlefieldEntryService.processLandETBEffects(gameData, controllerId, perm.getCard());
             if (ctx.landPlayZone() != null) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, controllerId, perm.getCard());
+                ActionEvents.landPlayed(gameData, controllerId, perm.getCard());
             }
         } else {
             battlefieldEntryService.processCreatureETBEffects(
@@ -3608,23 +3612,23 @@ public class ChoiceHandlerService {
         // CR 608.2c: the chosen modes are followed in the order written on the card, not the order picked.
         List<ChooseOneEffect.ChooseOneOption> modesInPrintedOrder = new ArrayList<>(chosenModes);
         modesInPrintedOrder.sort(java.util.Comparator.comparingInt(mode -> ctx.effect().options().indexOf(mode)));
-        triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
+        triggeredAbilityQueueService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
                 ctx.sourcePermanentId(), modesInPrintedOrder, ctx.attackedTargetId(), ctx.triggerRecord());
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
-            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+            etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
-            triggerCollectionService.processNextEntersTriggerTarget(gameData);
+            triggeredAbilityQueueService.processNextEntersTriggerTarget(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
             // The chosen mode's target of an ability about an attack or a damaged player, chosen before the next
             // ability's mode (CR 603.3c, 603.3d).
-            triggerCollectionService.processNextAttackTriggerTarget(gameData);
+            triggeredAbilityQueueService.processNextAttackTriggerTarget(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
-            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+            triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)) {
-            triggerCollectionService.processNextETBSpellTargetTrigger(gameData);
+            etbTokenTargetService.processNextETBSpellTargetTrigger(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
-            triggerCollectionService.processNextTriggeredModalTrigger(gameData);
+            triggeredAbilityQueueService.processNextTriggeredModalTrigger(gameData);
         }
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -4603,7 +4607,7 @@ public class ChoiceHandlerService {
             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                     ctx.sourceCard(), ctx.controllerId(), selectedEffects, ctx.sourcePermanentId(),
                     List.of(), 0, 0, List.of(), 0, true));
-            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+            etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
@@ -5909,7 +5913,7 @@ public class ChoiceHandlerService {
             // top four cards" trigger, which reads the chosen type from the permanent.
             battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, perm.getCard(), null, true);
             if (ctx.landPlay()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, controllerId, perm.getCard());
+                ActionEvents.landPlayed(gameData, controllerId, perm.getCard());
             }
         }
 

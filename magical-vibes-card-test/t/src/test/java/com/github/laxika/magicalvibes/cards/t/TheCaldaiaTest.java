@@ -94,7 +94,7 @@ class TheCaldaiaTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(noncreature, creature));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService()
                 .processNextSpellGraveyardTargetTrigger(gd));
 
         PendingInteraction.MultiGraveyardChoice choice =
@@ -187,7 +187,7 @@ class TheCaldaiaTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(new GrizzlyBears()));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService()
                 .processNextSpellGraveyardTargetTrigger(gd));
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);

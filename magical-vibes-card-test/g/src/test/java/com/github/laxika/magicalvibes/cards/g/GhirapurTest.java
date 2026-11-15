@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -143,7 +142,7 @@ class GhirapurTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(land, artifactCreature, artifact));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class)
                 .processNextSpellGraveyardTargetTrigger(gd));
 
         PendingInteraction.MultiGraveyardChoice choice =
@@ -165,7 +164,7 @@ class GhirapurTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opponentArtifact));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class)
                 .processNextSpellGraveyardTargetTrigger(gd));
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -185,7 +184,7 @@ class GhirapurTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(artifact, replacement));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class)
                 .processNextSpellGraveyardTargetTrigger(gd));
         harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
         harness.setGraveyard(player1, List.of(replacement));

@@ -83,7 +83,7 @@ class DestroyAttachmentsOnTargetCreatureEffectHandlerTest {
         lenient().when(permanentRemovalService.departToGraveyard(any(), any(), any(), any())).thenReturn(true);
         org.springframework.test.util.ReflectionTestUtils.setField(destructionSupport, "departureService",
                 new DepartureService(gameQueryService, permanentRemovalService, graveyardService,
-                        triggerCollectionService, gameLogService));
+                        triggerCollectionService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class), gameLogService));
     }
 
     // ===== Helper methods =====

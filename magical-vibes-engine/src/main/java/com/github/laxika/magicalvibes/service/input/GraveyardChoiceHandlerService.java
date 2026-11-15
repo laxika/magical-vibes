@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFrom
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
@@ -48,6 +49,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
@@ -95,6 +97,8 @@ public class GraveyardChoiceHandlerService {
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
+    private final TargetTriggers targetTriggers;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final PlayerInputService playerInputService;
     private final LifeSupport lifeSupport;
     private final ExileService exileService;
@@ -712,7 +716,7 @@ public class GraveyardChoiceHandlerService {
                         log.info("Game {} - {} targets {} in graveyard for may ability", gameData.id,
                                 player.getUsername(), card.getName());
                         pendingEntry.setTargetId(card.getId());
-                        triggerCollectionService.checkTargetChoiceTriggers(gameData, pendingEntry);
+                        targetTriggers.checkTargetChoiceTriggers(gameData, pendingEntry);
                         effectResolutionService.resolveEffectsFrom(gameData, pendingEntry, gameData.pendingEffectResolutionIndex);
                         if (!gameData.interaction.isAwaitingInput()) {
                             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -2070,7 +2074,7 @@ public class GraveyardChoiceHandlerService {
 
             triggerCollectionService.checkSpellCastTriggers(gameData, pendingCard, controllerId,
                     !pendingFlashback);
-            triggerCollectionService.checkTargetChoiceTriggers(gameData, spellEntry);
+            targetTriggers.checkTargetChoiceTriggers(gameData, spellEntry);
             inputCompletionService.publishStateAfterInput(gameData);
         } else {
             // A triggered ability the stack door parked for its graveyard target goes on the stack with the cards
@@ -2109,13 +2113,13 @@ public class GraveyardChoiceHandlerService {
 
         // Process any remaining pending saga chapter graveyard targets before auto-pass
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterGraveyardTarget.class)) {
-            triggerCollectionService.processNextSagaChapterGraveyardTarget(gameData);
+            triggeredAbilityQueueService.processNextSagaChapterGraveyardTarget(gameData);
             return;
         }
 
         // Process any remaining pending graveyard-target triggers before auto-pass
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
-            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+            triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
             return;
         }
 

@@ -67,7 +67,6 @@ import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
@@ -115,7 +114,7 @@ public class StackResolutionService {
 
     private final PlayerInputService playerInputService;
 
-    private final TriggerCollectionService triggerCollectionService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     private final CreatureControlService creatureControlService;
 
@@ -151,7 +150,7 @@ public class StackResolutionService {
                                   GameLogService gameLogService,
                                   EffectResolutionService effectResolutionService,
                                   PlayerInputService playerInputService,
-                                  TriggerCollectionService triggerCollectionService,
+                                  TriggeredAbilityQueueService triggeredAbilityQueueService,
                                   CreatureControlService creatureControlService,
                                   StateTriggerService stateTriggerService,
                                   ExileService exileService,
@@ -173,7 +172,7 @@ public class StackResolutionService {
         this.gameLogService = gameLogService;
         this.effectResolutionService = effectResolutionService;
         this.playerInputService = playerInputService;
-        this.triggerCollectionService = triggerCollectionService;
+        this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.creatureControlService = creatureControlService;
         this.stateTriggerService = stateTriggerService;
         this.exileService = exileService;
@@ -302,26 +301,26 @@ public class StackResolutionService {
         stateBasedActionService.performStateBasedActions(gameData);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
-            triggerCollectionService.processNextTriggeredModalTrigger(gameData);
+            triggeredAbilityQueueService.processNextTriggeredModalTrigger(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
         }
 
-        triggerCollectionService.beginStackDoorChoices(gameData);
+        triggeredAbilityQueueService.beginStackDoorChoices(gameData);
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
-            triggerCollectionService.processNextSagaChapterTarget(gameData);
+            triggeredAbilityQueueService.processNextSagaChapterTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
         }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterPlayerTarget.class)) {
-            triggerCollectionService.processNextSagaChapterPlayerTarget(gameData);
+            triggeredAbilityQueueService.processNextSagaChapterPlayerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
@@ -1453,7 +1452,7 @@ public class StackResolutionService {
                 && !hasLegalGraveyardCardTargetBesidesPrimary(gameData, entry);
 
         if (targetFizzled) {
-            triggerCollectionService.completeDungeonRoomIfReady(gameData, entry);
+            ActionEvents.completeDungeonRoomIfReady(gameData, entry);
             gameLogService.append(gameData, GameLog.builder()
                     .card(entry.getCard())
                     .text(" fizzles (illegal target).")

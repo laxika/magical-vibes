@@ -110,7 +110,7 @@ class EntomberExarchTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GitaxianProbe()));
 
         harness.enterBattlefieldAndReturn(player1, new EntomberExarch());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().processNextTriggeredModalTrigger(gd));
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.ColorChoice.class);

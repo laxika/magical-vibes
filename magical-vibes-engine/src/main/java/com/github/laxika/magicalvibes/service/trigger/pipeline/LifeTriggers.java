@@ -23,9 +23,9 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -68,18 +68,18 @@ public class LifeTriggers {
     private final GameOutcomeService gameOutcomeService;
     private final GameLogService gameLogService;
     private final TriggeredAbilityStackService stackService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     public LifeTriggers(EventAbilitySupport abilities, @Lazy PredicateEvaluationService predicateEvaluationService,
                         @Lazy GameOutcomeService gameOutcomeService, @Lazy GameLogService gameLogService,
                         @Lazy TriggeredAbilityStackService stackService,
-                        @Lazy TriggerCollectionService triggerCollectionService) {
+                        @Lazy TriggeredAbilityQueueService triggeredAbilityQueueService) {
         this.abilities = abilities;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameOutcomeService = gameOutcomeService;
         this.gameLogService = gameLogService;
         this.stackService = stackService;
-        this.triggerCollectionService = triggerCollectionService;
+        this.triggeredAbilityQueueService = triggeredAbilityQueueService;
     }
 
     /** Triggers the abilities {@code event} triggers. */
@@ -356,7 +356,7 @@ public class LifeTriggers {
                 log.info("Game {} - {} triggers on life gain ({} life)", gameData.id, description, lifeGainedAmount);
             }
         }
-        triggerCollectionService.beginStackDoorChoices(gameData);
+        triggeredAbilityQueueService.beginStackDoorChoices(gameData);
     }
 
     /**

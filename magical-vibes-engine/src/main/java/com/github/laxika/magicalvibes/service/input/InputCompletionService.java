@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
@@ -66,6 +67,9 @@ public class InputCompletionService {
     @Autowired
     @Lazy
     private com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
+    @Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final PlayerInputService playerInputService;
     private final GameMutationCoordinator mutationCoordinator;
     private final TurnProgressionService turnProgressionService;
@@ -280,7 +284,7 @@ public class InputCompletionService {
             if (gameData.pendingEffectResolutionEntry == null && triggerCollectionService != null) {
                 // An ability a resolution finished by this answer made ("when you do", CR 603.12) has its mode and
                 // targets chosen at the stack door before anyone gets priority (CR 603.3c, 603.3d).
-                triggerCollectionService.beginStackDoorChoices(gameData);
+                triggeredAbilityQueueService.beginStackDoorChoices(gameData);
                 if (gameData.interaction.isAwaitingInput()) {
                     return;
                 }

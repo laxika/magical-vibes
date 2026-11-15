@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -59,6 +60,10 @@ class AutoPassServiceTest {
 
     @Mock
     private TriggerCollectionService triggerCollectionService;
+    @Mock
+    private com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService etbTokenTargetService;
+    @Mock
+    private TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     @Mock
     private StackResolutionService stackResolutionService;
@@ -337,11 +342,11 @@ class AutoPassServiceTest {
                 gd.clearPendingInteractions(PermanentChoiceContext.AttackTriggerTarget.class);
                 gd.status = GameStatus.FINISHED;
                 return null;
-            }).when(triggerCollectionService).processNextAttackTriggerTarget(gd);
+            }).when(triggeredAbilityQueueService).processNextAttackTriggerTarget(gd);
 
             sut.resolveAutoPass(gd, ignored -> {});
 
-            verify(triggerCollectionService).processNextAttackTriggerTarget(gd);
+            verify(triggeredAbilityQueueService).processNextAttackTriggerTarget(gd);
         }
 
         @Test
@@ -354,11 +359,11 @@ class AutoPassServiceTest {
                 gd.clearPendingInteractions(PermanentChoiceContext.EntersTriggerTarget.class);
                 gd.status = GameStatus.FINISHED;
                 return null;
-            }).when(triggerCollectionService).processNextEntersTriggerTarget(gd);
+            }).when(triggeredAbilityQueueService).processNextEntersTriggerTarget(gd);
 
             sut.resolveAutoPass(gd, ignored -> {});
 
-            verify(triggerCollectionService).processNextEntersTriggerTarget(gd);
+            verify(triggeredAbilityQueueService).processNextEntersTriggerTarget(gd);
         }
 
         @Test

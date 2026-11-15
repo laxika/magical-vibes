@@ -98,7 +98,7 @@ class StateTriggerServiceTest {
         gd.playerManaPools.put(player1Id, new ManaPool());
         gd.playerManaPools.put(player2Id, new ManaPool());
         sut = new StateTriggerService(gameLogService, predicateEvaluationService, null,
-                triggeredAbilityStackService, null, triggerIndex);
+                triggeredAbilityStackService, null, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class), triggerIndex);
         // A permanent's abilities as the layers leave it: its card's, unless a test says otherwise.
         lenient().when(triggerIndex.permanentAbilities(eq(gd), any())).thenAnswer(invocation ->
                 invocation.<Permanent>getArgument(1).getCard().getTriggeredAbilities());
@@ -139,7 +139,7 @@ class StateTriggerServiceTest {
                             org.mockito.ArgumentMatchers.any()))
                     .thenAnswer(invocation -> invocation.<java.util.function.Supplier<?>>getArgument(1).get());
             StateTriggerService service = new StateTriggerService(gameLogService, predicateEvaluationService,
-                    gameQueryService, triggeredAbilityStackService, null, triggerIndex);
+                    gameQueryService, triggeredAbilityStackService, null, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class), triggerIndex);
             Card card = new Card();
             card.setName("Returned Creature");
             card.setType(CardType.CREATURE);

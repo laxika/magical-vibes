@@ -110,7 +110,7 @@ class StateBasedActionServiceTest {
                 permanentRemovalService, graveyardService, creatureControlService, stateTriggerService,
                 triggerCollectionService, legendRuleService, battleDefeatSupport,
                 new DepartureService(gameQueryService, permanentRemovalService, graveyardService,
-                        triggerCollectionService, gameLogService));
+                        triggerCollectionService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class), gameLogService));
         ReflectionTestUtils.setField(sut, "storiedEffectHandler", storiedEffectHandler);
         ReflectionTestUtils.setField(sut, "triggeredAbilityStackService", triggeredAbilityStackService);
         // The stack door puts a delayed ability that names its object as it was made.

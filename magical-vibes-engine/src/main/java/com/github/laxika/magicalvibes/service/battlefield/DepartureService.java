@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.context.annotation.Lazy;
@@ -124,17 +125,20 @@ public class DepartureService {
     private final PermanentRemovalService permanentRemovalService;
     private final GraveyardService graveyardService;
     private final TriggerCollectionService triggerCollectionService;
+    private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final GameLogService gameLogService;
 
     public DepartureService(@Lazy GameQueryService gameQueryService,
                             @Lazy PermanentRemovalService permanentRemovalService,
                             @Lazy GraveyardService graveyardService,
                             @Lazy TriggerCollectionService triggerCollectionService,
+                            @Lazy GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
                             GameLogService gameLogService) {
         this.gameQueryService = gameQueryService;
         this.permanentRemovalService = permanentRemovalService;
         this.graveyardService = graveyardService;
         this.triggerCollectionService = triggerCollectionService;
+        this.grantedTriggeredAbilitySupport = grantedTriggeredAbilitySupport;
         this.gameLogService = gameLogService;
     }
 
@@ -847,7 +851,7 @@ public class DepartureService {
         lastKnown.setCard(permanentRemovalService.snapshotEffectivePermanentCard(gameData, permanent));
         permanentRemovalService.snapshotEffectiveSubtypes(gameData, lastKnown);
         List<TriggeredAbility> grantedAbilities =
-                triggerCollectionService.grantedZoneChangeAbilities(gameData, permanent);
+                grantedTriggeredAbilitySupport.grantedZoneChangeAbilities(gameData, permanent);
         boolean creature = gameQueryService.isCreature(gameData, permanent);
         if (!creature) {
             return new DepartureSnapshot(lastKnown, departing.controllerId(), false, Map.of(), grantedAbilities);

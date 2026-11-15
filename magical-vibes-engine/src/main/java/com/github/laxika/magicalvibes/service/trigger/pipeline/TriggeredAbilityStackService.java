@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -57,7 +58,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -89,7 +89,7 @@ import org.springframework.stereotype.Service;
  * An ability that watches another object's zone change ("whenever a creature you control dies", a relation other
  * than {@code THIS}), and one of a card's own move out of a graveyard ("when this card leaves your graveyard", "when
  * this is put onto the battlefield from your graveyard", which is recorded as such a move is), goes through
- * {@link #triggerOnce}: {@link TriggerCollectionService#zoneChangeRequest} records the event from the ability's trigger
+ * {@link #triggerOnce}: {@link ZoneChangeRequests#zoneChangeRequest} records the event from the ability's trigger
  * and it goes through {@link #put}.
  * APNAP ordering (CR 603.3b) happens later, in {@code TriggeredAbilityQueueService.beginTriggerOrder}.
  */
@@ -104,7 +104,11 @@ public class TriggeredAbilityStackService extends StackDoor {
 
     private final GameLogService gameLogService;
 
-    private final TriggerCollectionService triggerCollectionService;
+    private final ZoneChangeRequests zoneChangeRequests;
+
+    private final TargetTriggers targetTriggers;
+
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     private final AmountEvaluationService amountEvaluationService;
 
@@ -124,13 +128,17 @@ public class TriggeredAbilityStackService extends StackDoor {
                                         @Lazy GameQueryService gameQueryService,
                                         @Lazy GraveyardTargetingSupport graveyardTargetingSupport,
                                         @Lazy GameLogService gameLogService,
-                                        @Lazy TriggerCollectionService triggerCollectionService,
+                                        @Lazy ZoneChangeRequests zoneChangeRequests,
+                                        @Lazy TargetTriggers targetTriggers,
+                                        @Lazy TriggeredAbilityQueueService triggeredAbilityQueueService,
                                         @Lazy AmountEvaluationService amountEvaluationService,
                                         @Lazy PredicateEvaluationService predicateEvaluationService,
                                         @Lazy TriggerTargetCollector triggerTargetCollector) {
         this.predicateEvaluationService = predicateEvaluationService;
         this.triggerTargetCollector = triggerTargetCollector;
-        this.triggerCollectionService = triggerCollectionService;
+        this.zoneChangeRequests = zoneChangeRequests;
+        this.targetTriggers = targetTriggers;
+        this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.conditionEvaluationService = conditionEvaluationService;
         this.gameQueryService = gameQueryService;
         this.graveyardTargetingSupport = graveyardTargetingSupport;
@@ -257,7 +265,7 @@ public class TriggeredAbilityStackService extends StackDoor {
      * Triggers {@code candidate}'s ability of another object's zone change once for {@code events}, the zone changes of
      * one batch that met its trigger condition {@code trigger}: once for the one event of an ability that triggers for
      * each, once for all of them for "one or more" (CR 603.2c). Its event condition is judged here;
-     * {@link TriggerCollectionService#zoneChangeRequest} judges what the trigger adds to the match and records the
+     * {@link ZoneChangeRequests#zoneChangeRequest} judges what the trigger adds to the match and records the
      * event, and it goes on the stack through {@link #put}.
      */
     public void triggerOnce(GameData gameData, TriggerCandidate candidate, List<ZoneChangeEvent> events,
@@ -269,7 +277,7 @@ public class TriggeredAbilityStackService extends StackDoor {
                 && !conditionEvaluationService.isMet(gameData, options.eventCondition(), context)) {
             return;
         }
-        TriggeredAbilityRequest request = triggerCollectionService.zoneChangeRequest(gameData, candidate, trigger,
+        TriggeredAbilityRequest request = zoneChangeRequests.zoneChangeRequest(gameData, candidate, trigger,
                 events, context);
         if (request != null && put(gameData, request)) {
             gameLogService.append(gameData, GameLog.abilityTriggers(candidate.sourceCard()));
@@ -281,7 +289,7 @@ public class TriggeredAbilityStackService extends StackDoor {
      * turned face up in one batch that met its trigger condition {@code trigger}: one event for an ability that
      * triggers for each, all of them for "one or more". Its event condition is judged here, with the permanent that
      * changed as the event's object ("if it's a creature", Trail of Mystery); its collector records the event
-     * ({@link TriggerCollectionService#permanentChangeRequest}), and it goes on the stack through {@link #put}.
+     * ({@link ZoneChangeRequests#permanentChangeRequest}), and it goes on the stack through {@link #put}.
      */
     public void triggerPermanentChange(GameData gameData, TriggerCandidate candidate, List<PermanentChangeEvent> events,
                                        PermanentChangeTrigger trigger) {
@@ -293,7 +301,7 @@ public class TriggeredAbilityStackService extends StackDoor {
                 && !conditionEvaluationService.isMet(gameData, options.eventCondition(), context)) {
             return;
         }
-        if (put(gameData, triggerCollectionService.permanentChangeRequest(gameData, candidate, trigger, events,
+        if (put(gameData, zoneChangeRequests.permanentChangeRequest(gameData, candidate, trigger, events,
                 context))) {
             gameLogService.append(gameData, GameLog.abilityTriggers(candidate.sourceCard()));
         }
@@ -1243,7 +1251,7 @@ public class TriggeredAbilityStackService extends StackDoor {
         List<CardEffect> randomlyTargeting = effects.stream().filter(CardEffect::targetChosenAtRandom).toList();
         // The ability's own target filter, else the one the card declares for its effects.
         TargetFilter targetFilter = entry.getTargetFilter() != null ? entry.getTargetFilter()
-                : triggerCollectionService.targetFilterForTriggeredEffects(card, randomlyTargeting);
+                : triggeredAbilityQueueService.targetFilterForTriggeredEffects(card, randomlyTargeting);
         List<UUID> candidates = triggerTargetCollector.collect(gameData, randomlyTargeting, targetFilter,
                 entry.getControllerId(), card, TriggerTargetCollector.Options.END_STEP,
                 sourcePermanent).validTargets();
@@ -1488,7 +1496,7 @@ public class TriggeredAbilityStackService extends StackDoor {
         choice.accept(entry);
         enqueue(gameData, entry);
         if (entry.hasAnyTarget() &&!gameData.stack.isEmpty() && gameData.stack.getLast() == entry) {
-            triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
+            targetTriggers.checkBecomesTargetOfAbilityTriggers(gameData);
             ActionEvents.crimeCommitted(gameData, entry);
         }
         notifyAttackingSourceTriggered(gameData, entry);

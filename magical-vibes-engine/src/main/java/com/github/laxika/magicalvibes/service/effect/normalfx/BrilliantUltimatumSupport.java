@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -40,7 +40,6 @@ public class BrilliantUltimatumSupport {
 
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
-    private final TriggerCollectionService triggerCollectionService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
     private final InputCompletionService inputCompletionService;
@@ -49,14 +48,12 @@ public class BrilliantUltimatumSupport {
     // @Lazy mirrors ExileFreeCastSupport: breaks cycles through the interaction registry / input services.
     public BrilliantUltimatumSupport(GameLogService gameLogService,
                                      BattlefieldEntryService battlefieldEntryService,
-                                     TriggerCollectionService triggerCollectionService,
                                      InteractionHandlerRegistry interactionHandlerRegistry,
                                      @Lazy ExileFreeCastQueueSupport exileFreeCastQueueSupport,
                                      @Lazy InputCompletionService inputCompletionService,
                                      com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator) {
         this.gameLogService = gameLogService;
         this.battlefieldEntryService = battlefieldEntryService;
-        this.triggerCollectionService = triggerCollectionService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.exileFreeCastQueueSupport = exileFreeCastQueueSupport;
         this.inputCompletionService = inputCompletionService;
@@ -167,7 +164,7 @@ public class BrilliantUltimatumSupport {
         log.info("Game {} - {} plays land {} from exile", gameData.id, playerName, card.getName());
         battlefieldEntryService.processLandETBEffects(gameData, playerId, card);
         if (!gameData.interaction.isAwaitingInput()) {
-            triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, card, true);
+            ActionEvents.landPlayed(gameData, playerId, card, true);
         }
     }
 

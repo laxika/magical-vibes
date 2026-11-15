@@ -106,6 +106,9 @@ class AbilityActivationServiceTest {
     @Mock private PlayerInputService playerInputService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private TriggerCollectionService triggerCollectionService;
+    @Mock private com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService triggeredAbilityQueueService;
+    @Mock private com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers targetTriggers;
+    @Mock private com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService etbTokenTargetService;
     @Mock private ExileService exileService;
     @Mock private AmountEvaluationService amountEvaluationService;
     @Mock private PredicateEvaluationService predicateEvaluationService;

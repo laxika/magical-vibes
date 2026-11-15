@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -24,14 +24,14 @@ public class DayNightService {
     private com.github.laxika.magicalvibes.service.battlefield.GameQueryService gameQueryService;
 
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final AnimationSupport animationSupport;
 
     public DayNightService(GameLogService gameLogService,
-                           TriggerCollectionService triggerCollectionService,
+                           TriggeredAbilityQueueService triggeredAbilityQueueService,
                            AnimationSupport animationSupport) {
         this.gameLogService = gameLogService;
-        this.triggerCollectionService = triggerCollectionService;
+        this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.animationSupport = animationSupport;
     }
 
@@ -105,7 +105,7 @@ public class DayNightService {
         // "As this transforms into [an Aura that enchants a player], attach it to a player" is chosen as it transforms
         // (Curse of Leeches), not by a later choice pump.
         if (!gameData.interaction.isAwaitingInput()) {
-            triggerCollectionService.beginDayNightTransformAttachment(gameData);
+            triggeredAbilityQueueService.processNextDayNightTriggerTarget(gameData);
         }
     }
 

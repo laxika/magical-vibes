@@ -83,7 +83,7 @@ class DreadPresenceTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
 
         harness.enterBattlefieldAndReturn(player1, new Swamp());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1, DRAW);
         harness.passBothPriorities();
 

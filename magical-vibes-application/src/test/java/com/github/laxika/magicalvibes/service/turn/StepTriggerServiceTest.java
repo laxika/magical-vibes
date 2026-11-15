@@ -123,6 +123,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -212,6 +213,8 @@ class StepTriggerServiceTest {
 
     @Mock
     private TriggerCollectionService triggerCollectionService;
+    @Mock
+    private TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     @Mock
     private ParadigmService paradigmService;
@@ -284,6 +287,7 @@ class StepTriggerServiceTest {
                 graveyardTransformedReturnService,
                 graveyardService,
                 triggerCollectionService,
+                triggeredAbilityQueueService,
                 triggerTargetCollector,
                 paradigmService,
                 epicService,
@@ -293,11 +297,10 @@ class StepTriggerServiceTest {
                 amountEvaluationService,
                 sagaChapterService,
                 effectResolutionService);
-        TriggeredAbilityStackService stackService = new TriggeredAbilityStackService(
-                new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
+        TriggeredAbilityStackService stackService = new TriggeredAbilityStackService(new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
                 gameQueryService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport.class),
-                gameLogService, triggerCollectionService, amountEvaluationService,
+                gameLogService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.ZoneChangeRequests.class), org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers.class), triggeredAbilityQueueService, amountEvaluationService,
                 predicateEvaluationService, triggerTargetCollector);
         org.springframework.test.util.ReflectionTestUtils.setField(sut, "triggeredAbilityStackService", stackService);
         // The step abilities are the trigger pipeline's: a step's beginning is a rules event it matches.
@@ -653,7 +656,7 @@ class StepTriggerServiceTest {
                         assertThat(trigger.sourcePermanentId()).isEqualTo(source.getId());
                         assertThat(trigger.effects()).containsExactly(effect);
                     });
-            verify(triggerCollectionService).processNextAttackTriggerTarget(gd);
+            verify(triggeredAbilityQueueService).processNextAttackTriggerTarget(gd);
         }
 
         @Test
@@ -858,7 +861,7 @@ class StepTriggerServiceTest {
             // Its player target is chosen as it goes on the stack (CR 603.3d).
             assertThat(gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class).choosingPlayerId())
                     .isEqualTo(player1Id);
-            verify(triggerCollectionService).processNextAttackTriggerTarget(gd);
+            verify(triggeredAbilityQueueService).processNextAttackTriggerTarget(gd);
         }
 
         @Test
@@ -881,7 +884,7 @@ class StepTriggerServiceTest {
             PermanentChoiceContext.AttackTriggerTarget choice =
                     gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
             assertThat(choice.triggerRecord().getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-            verify(triggerCollectionService).processNextAttackTriggerTarget(gd);
+            verify(triggeredAbilityQueueService).processNextAttackTriggerTarget(gd);
         }
 
         @Test
@@ -1203,7 +1206,7 @@ class StepTriggerServiceTest {
             assertThat(trigger.controllerId()).isEqualTo(player1Id);
             assertThat(trigger.choosingPlayerId()).isEqualTo(player1Id);
             assertThat(trigger.sourcePermanentId()).isEqualTo(source.getId());
-            verify(triggerCollectionService).processNextAttackTriggerTarget(gd);
+            verify(triggeredAbilityQueueService).processNextAttackTriggerTarget(gd);
             assertThat(gd.stack).isEmpty();
         }
 
@@ -1700,7 +1703,7 @@ class StepTriggerServiceTest {
             // Its target is chosen as it goes on the stack (CR 603.3d): the stack door's target choice is begun.
             assertThat(gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class).choosingPlayerId())
                     .isEqualTo(player1Id);
-            verify(triggerCollectionService).processNextAttackTriggerTarget(gd);
+            verify(triggeredAbilityQueueService).processNextAttackTriggerTarget(gd);
             assertThat(gd.stack).isEmpty();
         }
 
@@ -1987,7 +1990,7 @@ class StepTriggerServiceTest {
             // One group of up to four targets is announced in one choice (CR 601.2c).
             assertThat(gd.stack).isEmpty();
             assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isTrue();
-            verify(triggerCollectionService).processNextAttackTriggerTarget(gd);
+            verify(triggeredAbilityQueueService).processNextAttackTriggerTarget(gd);
         }
 
         @Test
@@ -2334,7 +2337,7 @@ class StepTriggerServiceTest {
                     gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
             assertThat(trigger).isNotNull();
             assertThat(trigger.choosingPlayerId()).isEqualTo(player1Id);
-            verify(triggerCollectionService).processNextAttackTriggerTarget(gd);
+            verify(triggeredAbilityQueueService).processNextAttackTriggerTarget(gd);
         }
 
         @Test
@@ -2999,7 +3002,7 @@ class StepTriggerServiceTest {
             assertThat(gd.stack).isEmpty();
             assertThat(gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)
                     .sourcePermanentId()).isEqualTo(source.getId());
-            verify(triggerCollectionService).processNextAttackTriggerTarget(gd);
+            verify(triggeredAbilityQueueService).processNextAttackTriggerTarget(gd);
         }
 
     }

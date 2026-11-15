@@ -14,10 +14,11 @@ import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.trigger.StackedDividedDamageTriggerService;
 import com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
@@ -52,7 +53,8 @@ public class AutoPassService {
 
     private final GameQueryService gameQueryService;
     private final GameActionAvailabilityService actionAvailabilityService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final ETBTokenTargetService etbTokenTargetService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final StackResolutionService stackResolutionService;
     private final StepTriggerService stepTriggerService;
     private final CombatAttackService combatAttackService;
@@ -64,7 +66,8 @@ public class AutoPassService {
     public AutoPassService(
             GameQueryService gameQueryService,
             GameActionAvailabilityService actionAvailabilityService,
-            TriggerCollectionService triggerCollectionService,
+            ETBTokenTargetService etbTokenTargetService,
+            TriggeredAbilityQueueService triggeredAbilityQueueService,
             StackResolutionService stackResolutionService,
             StepTriggerService stepTriggerService,
             CombatAttackService combatAttackService,
@@ -74,7 +77,8 @@ public class AutoPassService {
             StackedDividedDamageTriggerService stackedDividedDamageTriggerService) {
         this.gameQueryService = gameQueryService;
         this.actionAvailabilityService = actionAvailabilityService;
-        this.triggerCollectionService = triggerCollectionService;
+        this.etbTokenTargetService = etbTokenTargetService;
+        this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.stackResolutionService = stackResolutionService;
         this.stepTriggerService = stepTriggerService;
         this.combatAttackService = combatAttackService;
@@ -141,7 +145,7 @@ public class AutoPassService {
 
         if (!gameData.interaction.isAwaitingInput()
                 && gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
-            triggerCollectionService.processNextTriggeredModalTrigger(gameData);
+            triggeredAbilityQueueService.processNextTriggeredModalTrigger(gameData);
         }
 
         if (!gameData.interaction.isAwaitingInput()
@@ -152,17 +156,17 @@ public class AutoPassService {
         // Process any pending spell-target triggers (e.g. Livewire Lash)
 
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)) {
-            triggerCollectionService.processNextETBSpellTargetTrigger(gameData);
+            etbTokenTargetService.processNextETBSpellTargetTrigger(gameData);
         }
 
         // Process any pending multi-target triggers (ETB copies / Triggers.youCastThisSpell() up-to-N, e.g. Elder Deep-Fiend)
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
-            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+            etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
         }
 
         // Process any pending spell-cast graveyard-target triggers (e.g. Teshar, Ancestor's Apostle)
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
-            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+            triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
         }
 
         // Process any pending discard self-triggers before death triggers
@@ -171,17 +175,17 @@ public class AutoPassService {
 
         // Process any pending targeted attack triggers before death triggers
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
-            triggerCollectionService.processNextAttackTriggerTarget(gameData);
+            triggeredAbilityQueueService.processNextAttackTriggerTarget(gameData);
         }
 
         // Process any pending two-target attack counter-move triggers (Decimator Beetle)
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.AttackCounterMoveFirstTarget.class)) {
-            triggerCollectionService.processNextAttackCounterMoveFirstTarget(gameData);
+            triggeredAbilityQueueService.processNextAttackCounterMoveFirstTarget(gameData);
         }
 
         // Process any pending targeted enter triggers (e.g. Reaper King's "destroy target permanent")
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
-            triggerCollectionService.processNextEntersTriggerTarget(gameData);
+            triggeredAbilityQueueService.processNextEntersTriggerTarget(gameData);
         }
 
         // Process any pending targeted death triggers before auto-passing
@@ -198,18 +202,18 @@ public class AutoPassService {
 
         // Process any pending saga chapter targeted triggers
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
-            triggerCollectionService.processNextSagaChapterTarget(gameData);
+            triggeredAbilityQueueService.processNextSagaChapterTarget(gameData);
         }
 
         if (!gameData.interaction.isAwaitingInput()
                 && gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterPlayerTarget.class)) {
-            triggerCollectionService.processNextSagaChapterPlayerTarget(gameData);
+            triggeredAbilityQueueService.processNextSagaChapterPlayerTarget(gameData);
         }
 
         // Process any pending phase-in targeted triggers (queued during untap-step phasing)
 
         if (!gameData.interaction.isAwaitingInput() && gameData.pendingInteractions.isEmpty()) {
-            triggerCollectionService.beginTriggerOrder(gameData);
+            triggeredAbilityQueueService.beginTriggerOrder(gameData);
         }
 
         boolean checkAfterStepAdvance = false;
@@ -343,7 +347,7 @@ public class AutoPassService {
             if (stackedModalTriggerService.announceNextMode(gameData)) return;
             if (stackedDividedDamageTriggerService.announceNextDivision(gameData)) return;
             if (gameData.stack.isEmpty()) return;
-            if (triggerCollectionService.beginTriggerOrder(gameData)) return;
+            if (triggeredAbilityQueueService.beginTriggerOrder(gameData)) return;
 
             UUID stackPriorityHolder = gameQueryService.getPriorityPlayerId(gameData);
             if (stackPriorityHolder == null) {

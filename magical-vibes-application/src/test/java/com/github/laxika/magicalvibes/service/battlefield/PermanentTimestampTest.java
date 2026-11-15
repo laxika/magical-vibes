@@ -74,7 +74,9 @@ class PermanentTimestampTest {
         battlefieldEntryService = new BattlefieldEntryService(
                 placementService, asEntersInteractionService, etbTriggerService);
         equipSupport = new EquipSupport(gameQueryService, gameLogService, permanentRemovalService,
-                predicateEvaluationService, unattachTriggerSupport, triggerCollectionService, auraCopyService);
+                predicateEvaluationService, unattachTriggerSupport,
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.AttachmentTriggers.class),
+                auraCopyService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.service.spell;
 
+import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -154,6 +156,8 @@ class SpellCastingServiceTest {
 
     @Mock
     private TriggerCollectionService triggerCollectionService;
+    @Mock
+    private TargetTriggers targetTriggers;
 
     @Mock
     private GraveyardService graveyardService;
@@ -308,7 +312,7 @@ class SpellCastingServiceTest {
                 gameQueryService, predicateEvaluationService, actionAvailabilityService, gameLogService,
                 castingCostService, castingPermissionService, turnProgressionService,
                 targetLegalityService, new TargetGroupAssignmentService(gameQueryService, predicateEvaluationService),
-                permanentRemovalService, triggerCollectionService,
+                permanentRemovalService, triggerCollectionService, targetTriggers, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class),
                 graveyardService, exileService, amountEvaluationService, conditionEvaluationService,
                 new AdditionalSpellCostService(gameQueryService, predicateEvaluationService),
                 waterbendPaymentService,
@@ -316,7 +320,7 @@ class SpellCastingServiceTest {
                 playerInputService);
         org.springframework.test.util.ReflectionTestUtils.setField(svc, "departureService",
                 new com.github.laxika.magicalvibes.service.battlefield.DepartureService(gameQueryService,
-                        permanentRemovalService, graveyardService, triggerCollectionService, gameLogService));
+                        permanentRemovalService, graveyardService, triggerCollectionService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class), gameLogService));
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");
@@ -834,7 +838,8 @@ class SpellCastingServiceTest {
 
             assertThat(gd.landsPlayedThisTurn.get(player1Id)).isEqualTo(beforeCount + 1);
             // Land-play special action fires "when you play a land" triggers, not spell-cast ones
-            verify(triggerCollectionService).checkControllerPlaysLandTriggers(eq(gd), eq(player1Id), any());
+            assertThat(rulesEvents(gd)).anySatisfy(event -> assertThat(event)
+                    .isEqualTo(new SpellEvent.LandPlayed(player1Id, land, Zone.HAND, null)));
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any());
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any(), anyBoolean());
         }
@@ -879,7 +884,7 @@ class SpellCastingServiceTest {
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(mutationCoordinator).invalidateAllPlayerViews(gd);
             verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(creature), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
-            verify(triggerCollectionService).checkBecomesTargetOfSpellTriggers(gd);
+            verify(targetTriggers).checkBecomesTargetOfSpellTriggers(gd);
             verify(turnProgressionService).resolveAutoPass(gd);
         }
 
@@ -1669,7 +1674,7 @@ class SpellCastingServiceTest {
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(mutationCoordinator).invalidateAllPlayerViews(gd);
             verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(dummy), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
-            verify(triggerCollectionService).checkBecomesTargetOfSpellTriggers(gd);
+            verify(targetTriggers).checkBecomesTargetOfSpellTriggers(gd);
             verify(stateBasedActionService).performStateBasedActions(gd);
             verify(turnProgressionService).resolveAutoPass(gd);
         }
@@ -1789,8 +1794,8 @@ class SpellCastingServiceTest {
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(turnProgressionService).resolveAutoPass(gd);
             // Land-play special action from exile fires land-play triggers, not spell-cast ones
-            verify(triggerCollectionService).checkControllerPlaysLandTriggers(
-                    eq(gd), eq(player1Id), eq(land), eq(Zone.EXILE), isNull());
+            assertThat(rulesEvents(gd)).anySatisfy(event -> assertThat(event)
+                    .isEqualTo(new SpellEvent.LandPlayed(player1Id, land, Zone.EXILE, null)));
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any());
             verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any(), anyBoolean());
         }
@@ -1838,7 +1843,7 @@ class SpellCastingServiceTest {
             verify(mutationCoordinator).invalidateAllPlayerViews(gd);
             verify(triggerCollectionService).checkSpellCastTriggers(
                     eq(gd), eq(creature), eq(player1Id), eq(Zone.EXILE), isNull());
-            verify(triggerCollectionService).checkBecomesTargetOfSpellTriggers(gd);
+            verify(targetTriggers).checkBecomesTargetOfSpellTriggers(gd);
             verify(turnProgressionService).resolveAutoPass(gd);
         }
 

@@ -91,7 +91,7 @@ public class TriggerTargetCollector {
             return true;
         }
         StackEntryPredicate filter = spellTargetFilter(option);
-        boolean includeAbilities = filter != null && TriggerCollectionService.predicateContainsHasTarget(filter);
+        boolean includeAbilities = filter != null && predicateContainsHasTarget(filter);
         return gameData.stack.stream().anyMatch(entry -> {
             boolean ability = entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                     || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
@@ -672,5 +672,24 @@ public class TriggerTargetCollector {
 
     private static boolean hasTargetingSpec(CardEffect effect) {
         return effect != null && !TargetSpec.NONE.equals(effect.targetSpec());
+    }
+
+    public static boolean predicateContainsHasTarget(com.github.laxika.magicalvibes.model.filter.StackEntryPredicate predicate) {
+        if (predicate instanceof com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate) {
+            return true;
+        }
+        if (predicate instanceof com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate typeIn) {
+            return typeIn.spellTypes().stream().anyMatch(StackEntryType::isAbility);
+        }
+        if (predicate instanceof com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate allOf) {
+            return allOf.predicates().stream().anyMatch(TriggerTargetCollector::predicateContainsHasTarget);
+        }
+        if (predicate instanceof com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate anyOf) {
+            return anyOf.predicates().stream().anyMatch(TriggerTargetCollector::predicateContainsHasTarget);
+        }
+        if (predicate instanceof com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate not) {
+            return predicateContainsHasTarget(not.predicate());
+        }
+        return false;
     }
 }

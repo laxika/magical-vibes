@@ -100,7 +100,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
         gd.activePlayerId = player1Id;
         destroyTargetAndEachPlayerSearchesBasicLandHandler = new DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandler(gameQueryService, support,
                 new StepDepartureSupport(new DepartureService(gameQueryService, permanentRemovalService,
-                        graveyardService, triggerCollectionService, gameLogService), null));
+                        graveyardService, triggerCollectionService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class), gameLogService), null));
         lenient().when(permanentRemovalService.departToGraveyard(any(), any(), any(), any())).thenReturn(true);
 
     }

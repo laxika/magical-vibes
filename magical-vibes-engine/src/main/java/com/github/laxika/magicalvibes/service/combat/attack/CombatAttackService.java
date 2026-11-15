@@ -88,7 +88,6 @@ import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectCondit
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
@@ -164,7 +163,6 @@ public class CombatAttackService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final GameLogService gameLogService;
     private final CastingCostService castingCostService;
-    private final TriggerCollectionService triggerCollectionService;
     private final CombatTriggerService combatTriggerService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PlayerInputService playerInputService;
@@ -948,7 +946,7 @@ public class CombatAttackService {
         }
 
         // Mark creatures as attacking and tap them unless vigilance or a combat permission skips it.
-        triggerCollectionService.beginPermanentTapTriggerBatch(gameData);
+        gameData.beginPermanentTapTriggerBatch();
         for (int idx : committedIndices) {
             Permanent attacker = battlefield.get(idx);
             attacker.setAttacking(true);
@@ -992,7 +990,7 @@ public class CombatAttackService {
                 gameData.rulesEvents.occur(new TapEvent.BecameTapped(attacker, null, true));
             }
         }
-        triggerCollectionService.endPermanentTapTriggerBatch(gameData);
+        gameData.endPermanentTapTriggerBatch();
 
         // Assign band membership (CR 702.22): every member of a band shares one band id, which
         // persists for the rest of combat even if banding is later removed (CR 702.22e).

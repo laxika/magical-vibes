@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -32,7 +33,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.RevealUntilCardPre
 import com.github.laxika.magicalvibes.service.effect.normalfx.TheMasterGallifreysEndEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseAttackTargetsForCreatedTokensEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
@@ -56,7 +56,7 @@ public class PermanentChoiceTriggerHandlerService {
     private final GameQueryService gameQueryService;
     private final AttackLegalityService attackLegalityService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
@@ -94,7 +94,7 @@ public class PermanentChoiceTriggerHandlerService {
             }
         }
         TargetFilter declaredFilter = context == null ? null : switch (context) {
-            case PermanentChoiceContext.AttackTriggerTarget att -> triggerCollectionService.targetFilterOf(att);
+            case PermanentChoiceContext.AttackTriggerTarget att -> triggeredAbilityQueueService.targetFilterOf(att);
             case PermanentChoiceContext.EntersTriggerTarget enters -> enters.targetFilter();
             case PermanentChoiceContext.ETBTokenMultiTargetTrigger multi ->
                     multi.currentGroupIndex() < multi.sourceCard().getTargetGroups().size()
@@ -146,7 +146,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
         gameData.queueInteractionFirst(target.withChoosingPlayer(opponentId));
-        triggerCollectionService.processNextAttackTriggerTarget(gameData);
+        triggeredAbilityQueueService.processNextAttackTriggerTarget(gameData);
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }
@@ -191,7 +191,7 @@ public class PermanentChoiceTriggerHandlerService {
                                                    PermanentChoiceContext.AttackCounterMoveFirstTarget ctx) {
         List<UUID> validSecondTargets = ctx.defendingPlayerId() == null
                 ? List.of()
-                : triggerCollectionService.targetableCreaturesControlledBy(
+                : triggeredAbilityQueueService.targetableCreaturesControlledBy(
                         gameData, ctx.defendingPlayerId(), ctx.sourceCard(), ctx.controllerId());
 
         if (validSecondTargets.isEmpty()) {
@@ -317,7 +317,7 @@ public class PermanentChoiceTriggerHandlerService {
         boolean spell = target == null && !exiledCard && !player && !graveyardCard
                 && gameData.stack.stream().anyMatch(stacked -> chosenId.equals(stacked.getTargetableId()));
         boolean declined = player && chosenId.equals(att.controllerId())
-                && triggerCollectionService.isOptionalSingleTarget(att.sourceCard(), att.effects());
+                && triggeredAbilityQueueService.isOptionalSingleTarget(att.sourceCard(), att.effects());
         if (declined) {
             triggeredAbilityStackService.finishParked(gameData, att.triggerRecord(), entry -> {
                 entry.replaceEffectsToResolve(att.effects());
@@ -332,7 +332,7 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
         TargetFilter targetFilter = exiledCard || graveyardCard || spell ? null
-                : triggerCollectionService.targetFilterOf(att);
+                : triggeredAbilityQueueService.targetFilterOf(att);
         triggeredAbilityStackService.finishParked(gameData, att.triggerRecord(), entry -> {
             entry.replaceEffectsToResolve(att.effects());
             entry.setTargetId(chosenId);
@@ -353,12 +353,12 @@ public class PermanentChoiceTriggerHandlerService {
     /** What follows an attack trigger's target choice: the next queued target choice, then the may abilities. */
     private void continueAfterAttackTrigger(GameData gameData) {
         if (gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
-            triggerCollectionService.processNextAttackTriggerTarget(gameData);
+            triggeredAbilityQueueService.processNextAttackTriggerTarget(gameData);
             return;
         }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
-            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+            etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
@@ -498,7 +498,7 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
-            triggerCollectionService.processNextEntersTriggerTarget(gameData);
+            triggeredAbilityQueueService.processNextEntersTriggerTarget(gameData);
             return;
         }
 
@@ -795,7 +795,8 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DayNightTransformAttachment.class)) {
-            triggerCollectionService.processNextDayNightTriggerTarget(gameData);
+            triggeredAbilityQueueService.processNextDayNightTriggerTarget(gameData);
+            triggeredAbilityQueueService.beginStackDoorChoices(gameData);
             return;
         }
 
@@ -843,7 +844,7 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
-            triggerCollectionService.processNextSagaChapterTarget(gameData);
+            triggeredAbilityQueueService.processNextSagaChapterTarget(gameData);
             return;
         }
 
@@ -864,11 +865,11 @@ public class PermanentChoiceTriggerHandlerService {
                 scpt.sourceCard().getName(), scpt.chapterName(), gameData.playerIdToName.get(chosenId));
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterPlayerTarget.class)) {
-            triggerCollectionService.processNextSagaChapterPlayerTarget(gameData);
+            triggeredAbilityQueueService.processNextSagaChapterPlayerTarget(gameData);
             return;
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
-            triggerCollectionService.processNextSagaChapterTarget(gameData);
+            triggeredAbilityQueueService.processNextSagaChapterTarget(gameData);
             return;
         }
 
@@ -896,12 +897,12 @@ public class PermanentChoiceTriggerHandlerService {
                 repeatVariableLastGroup
                         ? sct.completedGroupTargetCounts()
                         : sct.closeCurrentGroup(chosenTargets.size())));
-        triggerCollectionService.processNextSagaChapterTarget(gameData);
+        triggeredAbilityQueueService.processNextSagaChapterTarget(gameData);
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
-            triggerCollectionService.processNextSagaChapterTarget(gameData);
+            triggeredAbilityQueueService.processNextSagaChapterTarget(gameData);
             return;
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

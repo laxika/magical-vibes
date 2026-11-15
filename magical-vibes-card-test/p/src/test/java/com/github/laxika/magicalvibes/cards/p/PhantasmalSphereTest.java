@@ -148,6 +148,6 @@ class PhantasmalSphereTest extends BaseCardTest {
 
     private void queueLeaveTriggerTarget() {
         harness.inMutationScope(() ->
-                harness.getTriggerCollectionService().beginStackDoorChoices(gd));
+                harness.getTriggeredAbilityQueueService().beginStackDoorChoices(gd));
     }
 }

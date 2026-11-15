@@ -155,7 +155,7 @@ class DamageControlCrewTest extends BaseCardTest {
 
     private void enterAndChooseImpound() {
         harness.enterBattlefieldAndReturn(player1, new DamageControlCrew());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1, IMPOUND_MODE);
     }
 

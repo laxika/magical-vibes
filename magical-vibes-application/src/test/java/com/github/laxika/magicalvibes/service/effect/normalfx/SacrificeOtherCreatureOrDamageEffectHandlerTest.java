@@ -100,7 +100,7 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
         lenient().when(permanentRemovalService.departToGraveyard(any(), any(), any(), any())).thenReturn(true);
         lenient().when(gameQueryService.triggeredAbilityCanMoveCreatureToken(any(), any())).thenReturn(true);
         ReflectionTestUtils.setField(destructionSupport, "departureService", new DepartureService(gameQueryService,
-                permanentRemovalService, graveyardService, triggerCollectionService, gameLogService));
+                permanentRemovalService, graveyardService, triggerCollectionService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class), gameLogService));
         sacrificeOtherOrDamageHandler = new SacrificeOtherCreatureOrDamageEffectHandler(
                 destructionSupport, gameOutcomeService, gameQueryService, playerInputService);
 

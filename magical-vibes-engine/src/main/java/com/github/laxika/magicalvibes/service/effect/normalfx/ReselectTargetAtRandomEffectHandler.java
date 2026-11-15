@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReselectTargetAtRandomEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +23,7 @@ public class ReselectTargetAtRandomEffectHandler implements NormalEffectHandlerB
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final TargetRedirectionSupport targetRedirectionSupport;
-    private final TriggerCollectionService triggerCollectionService;
+    private final TargetTriggers targetTriggers;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -61,9 +61,9 @@ public class ReselectTargetAtRandomEffectHandler implements NormalEffectHandlerB
 
         if (targetEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || targetEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
-            triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, targetEntry);
+            targetTriggers.checkBecomesTargetOfAbilityTriggers(gameData, targetEntry);
         } else {
-            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, targetEntry);
+            targetTriggers.checkBecomesTargetOfSpellTriggers(gameData, targetEntry);
         }
     }
 }

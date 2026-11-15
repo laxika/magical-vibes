@@ -121,7 +121,7 @@ class DailyBugleReportersTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(eligibleCreature));
 
         harness.enterBattlefieldAndReturn(player1, new DailyBugleReporters());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1, JOURNALISM_MODE);
         harness.handleMultipleCardsChosen(player1, List.of(eligibleCreature.getId()));
         harness.passBothPriorities();

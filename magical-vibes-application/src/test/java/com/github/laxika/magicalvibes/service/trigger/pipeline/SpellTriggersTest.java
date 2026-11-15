@@ -168,9 +168,7 @@ class SpellTriggersTest {
                         getArgument(1).eventCondition() == null);
         // The collector hands every ability to the stack door, which builds its entry.
         org.springframework.test.util.ReflectionTestUtils.setField(sut, "triggeredAbilityStackService",
-                new com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService(
-                        conditionEvaluationService, gameQueryService, graveyardTargetingSupport, gameLogService,
-                        triggerCollectionService, amountEvaluationService, predicateEvaluationService,
+                new com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService(conditionEvaluationService, gameQueryService, graveyardTargetingSupport, gameLogService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.ZoneChangeRequests.class), org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers.class), org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class), amountEvaluationService, predicateEvaluationService,
                         triggerTargetCollector));
     }
 

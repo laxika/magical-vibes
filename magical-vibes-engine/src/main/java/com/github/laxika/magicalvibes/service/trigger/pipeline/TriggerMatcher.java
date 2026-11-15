@@ -57,7 +57,6 @@ import com.github.laxika.magicalvibes.service.trigger.pipeline.StepMatch.StepGro
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
 import java.util.UUID;
 
@@ -378,7 +377,7 @@ final class TriggerMatcher {
                     yield predicates.matchesPermanentPredicate(departed, predicate, null);
                 }
                 Boolean stats = departed.getLastKnownToughness() == null ? null
-                        : TriggerCollectionService.matchesDyingStats(predicate, departed.getLastKnownPower() != null
+                        : matchesDyingStats(predicate, departed.getLastKnownPower() != null
                         ? departed.getLastKnownPower() : departed.getEffectivePower(),
                         departed.getLastKnownToughness());
                 yield stats != null ? stats : predicates.matchesPermanentPredicate(departed, predicate, context);
@@ -452,7 +451,7 @@ final class TriggerMatcher {
                     !attachments.equipmentPermanentIds().isEmpty();
             default -> {
                 Boolean stats = moved.getLastKnownToughness() == null ? null
-                        : TriggerCollectionService.matchesDyingStats(predicate, moved.getLastKnownPower() != null
+                        : matchesDyingStats(predicate, moved.getLastKnownPower() != null
                         ? moved.getLastKnownPower() : moved.getEffectivePower(), moved.getLastKnownToughness());
                 yield stats != null ? stats : predicates.matchesPermanentPredicate(moved, predicate, context);
             }
@@ -659,6 +658,23 @@ final class TriggerMatcher {
                     && (zone == null || condition.zones().functionsIn(zone))) {
                 return damage;
             }
+        }
+        return null;
+    }
+
+    /** Evaluates a power or toughness predicate against last-known stats, or null for any other predicate. */
+    private static Boolean matchesDyingStats(PermanentPredicate predicate, int power, int toughness) {
+        if (predicate instanceof com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate p) {
+            return toughness >= p.minToughness();
+        }
+        if (predicate instanceof com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate p) {
+            return toughness <= p.maxToughness();
+        }
+        if (predicate instanceof com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate p) {
+            return power >= p.minPower();
+        }
+        if (predicate instanceof com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate p) {
+            return power <= p.maxPower();
         }
         return null;
     }

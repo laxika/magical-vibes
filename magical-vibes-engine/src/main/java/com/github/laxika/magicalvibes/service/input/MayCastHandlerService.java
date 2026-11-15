@@ -69,6 +69,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -502,7 +503,7 @@ public class MayCastHandlerService {
 
             battlefieldEntryService.processLandETBEffects(gameData, player.getId(), cardToPlay);
             if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, player.getId(), cardToPlay,
+                ActionEvents.landPlayed(gameData, player.getId(), cardToPlay,
                         Zone.LIBRARY);
             }
         } else if (SplitCardCastSupport.isSplitCard(cardToPlay)) {
@@ -1612,7 +1613,7 @@ public class MayCastHandlerService {
 
             battlefieldEntryService.processLandETBEffects(gameData, player.getId(), cardToPlay);
             if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, player.getId(), cardToPlay,
+                ActionEvents.landPlayed(gameData, player.getId(), cardToPlay,
                         Zone.GRAVEYARD);
             }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -1750,7 +1751,7 @@ public class MayCastHandlerService {
                     GameLog.playerPlays(playerName, cardToPlay, " without paying its mana cost."));
             battlefieldEntryService.processLandETBEffects(gameData, player.getId(), cardToPlay);
             if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, player.getId(), cardToPlay, true);
+                ActionEvents.landPlayed(gameData, player.getId(), cardToPlay, true);
             }
             log.info("Game {} - {} plays imprinted land {} from exile", gameData.id, playerName, cardToPlay.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -2223,14 +2224,14 @@ public class MayCastHandlerService {
                 .toList();
         // Tap triggers wait until the spell is on the stack, as with any convoke payment.
         int stackBeforeTriggers = gameData.stack.size();
-        triggerCollectionService.beginPermanentTapTriggerBatch(gameData);
+        gameData.beginPermanentTapTriggerBatch();
         try {
             for (Permanent convoker : convokers) {
                 convoker.tap();
                 gameData.rulesEvents.occur(new TapEvent.BecameTapped(convoker, null, true));
             }
         } finally {
-            triggerCollectionService.endPermanentTapTriggerBatch(gameData);
+            gameData.endPermanentTapTriggerBatch();
         }
         if (gameData.stack.size() > stackBeforeTriggers) {
             List<StackEntry> deferred = new ArrayList<>(

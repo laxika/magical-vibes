@@ -198,8 +198,11 @@ class EntersAndZoneChangeAbilityStackObjectTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.inMutationScope(() -> removal().removePermanentToHand(gd, leaving));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
-                .processNextSpellTargetTrigger(gd));
+        harness.inMutationScope(() -> {
+            var queue = GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class);
+            queue.processNextSpellTargetTrigger(gd);
+            queue.beginStackDoorChoices(gd);
+        });
 
         assertThat(entriesOf("Leave Avenger")).isEmpty();
         harness.handlePermanentChosen(player1, victim.getId());

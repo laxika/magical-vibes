@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
+import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerCause;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -51,6 +53,8 @@ public class EtbTriggerService {
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
+    private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final EtbEffectResolver etbEffectResolver;
     private LegendRuleService legendRuleService;
     private DraftProteanWarEngineSpellbookEffectHandler proteanWarEngineSpellbookDraft;
@@ -62,11 +66,15 @@ public class EtbTriggerService {
                              GameLogService gameLogService,
                              PlayerInputService playerInputService,
                              @Lazy TriggerCollectionService triggerCollectionService,
+                             @Lazy GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
+                             @Lazy TriggeredAbilityQueueService triggeredAbilityQueueService,
                              EtbEffectResolver etbEffectResolver) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.triggerCollectionService = triggerCollectionService;
+        this.grantedTriggeredAbilitySupport = grantedTriggeredAbilitySupport;
+        this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.etbEffectResolver = etbEffectResolver;
     }
 
@@ -345,7 +353,7 @@ public class EtbTriggerService {
             // entering permanent causes is settled first; the auto-pass that follows the legend rule choice begins the
             // held-back choices.
             if (legendRuleService == null || !legendRuleService.hasLegendRuleViolation(gameData, controllerId)) {
-                triggerCollectionService.beginStackDoorChoices(gameData);
+                triggeredAbilityQueueService.beginStackDoorChoices(gameData);
             }
         }
 
@@ -378,7 +386,7 @@ public class EtbTriggerService {
         }
         if (enteringPermanent != null && gameData.playerBattlefields.getOrDefault(controllerId, List.of())
                 .contains(enteringPermanent)) {
-            abilities.addAll(triggerCollectionService.grantedOwnEntryAbilities(gameData, enteringPermanent));
+            abilities.addAll(grantedTriggeredAbilitySupport.grantedOwnEntryAbilities(gameData, enteringPermanent));
         }
         if (!printedAbilitiesRemoved) {
             abilities.addAll(card.getOwnEntryAbilities());

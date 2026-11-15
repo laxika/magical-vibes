@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Card;
@@ -16,7 +17,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -35,7 +35,7 @@ public class EarthbendTargetLandThenFightEffectHandler implements NormalEffectHa
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
     private final TargetLegalityService targetLegalityService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final TargetTriggers targetTriggers;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -106,7 +106,7 @@ public class EarthbendTargetLandThenFightEffectHandler implements NormalEffectHa
                 : List.of(TargetFilters.creatureYouControl(), TargetFilters.creatureAnOpponentControls()));
         // Its targets were chosen as it went on the stack (CR 603.3d): the door puts it there with them.
         triggeredAbilityStackService.putMade(gameData, fightEntry);
-        triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
+        targetTriggers.checkBecomesTargetOfAbilityTriggers(gameData);
         finish(gameData);
     }
 

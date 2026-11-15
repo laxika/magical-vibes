@@ -807,7 +807,7 @@ protection pairs) once per damage step; the dealing loop then runs on that pre-d
 (CR 510.4 simultaneity), while casualty determination stays on live queries so it sees infect
 counters placed during the step. `GameQueryService.getEffectiveCombatDamage` also opens a scope
 internally to share one pass across its power/toughness/battlefield-scan reads.
-`TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers`
+`TargetTriggers.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers`
 detect every becomes-the-target trigger of one targeting event inside one scope (CR 603.2: they
 all trigger on the same event). Each target runs ~20 collectors that each scan the controller's
 battlefield, so unscoped this was targets × collectors × permanents fingerprints of an O(board)

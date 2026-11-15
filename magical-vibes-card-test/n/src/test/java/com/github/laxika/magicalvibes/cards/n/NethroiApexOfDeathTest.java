@@ -217,7 +217,7 @@ class NethroiApexOfDeathTest extends BaseCardTest {
     private void triggerMutation(Permanent nethroi) {
         harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, nethroi, List.of(nethroi.getCard()), player1.getId()));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService()
                 .beginStackDoorChoices(gd));
     }
 }

@@ -526,6 +526,10 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Doublers judge a `TriggerCause` (`TriggeredAbilityRequest.withCause`; CR 603.2d): entered, creature died, became the target, spell cast or copied, turned face up, drew, damage (combat damage to a player, permanents dealt damage, looked up as counted). The rules events are too coarse for it (a `TargetEvent` is the whole targeting spell, the damage events aggregate sources). Each judgment and lookup is the old one; the doubler card ledger is unchanged.
 - `DamageTriggers` keeps the four damage records its matchers read (`SourceDealsDamage`, `SourceDealsCombatDamage`, `DamageToCreature`, `SourceDamageToYouOrYourPermanent`), each with its `cause()`; the variants no doubler read hand the door none. Deleted: `TriggerContext`, `TriggerCollectorRegistry`, `TriggerCollectorHandler`, `@CollectsTrigger(s)`.
 
+**F (part 3: `TriggerCollectionService` split, mechanical).**
+- Moved to their owners, no behaviour change: the door's choice pumps (`TriggeredAbilityQueueService.beginStackDoorChoices`; callers call the queue and `ETBTokenTargetService` pumps directly), the zone-change and permanent-change requests and records (`ZoneChangeRequests`), the becomes-the-target and target-choice events (`TargetTriggers`), land play (`ActionEvents.landPlayed`, a special action, CR 116.2a) and dungeon completion (`ActionEvents`), equipment becoming attached (`AttachmentTriggers`), clash (`ClashSupport`), the tap batch (`GameData`), the `granted…` lookups (`GrantedTriggeredAbilitySupport`), two static filters (`TriggerMatcher`, `TriggerTargetCollector`).
+- Left: the engine-made cast and activation abilities (`checkSpellCastTriggers`, whose cast bookkeeping is interleaved with the abilities it puts, so moving it reorders them), the delayed, temporary, emblem and boon zone-change abilities, `recordSacrifice`'s boons. About 250 classes still inject the service without calling it.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

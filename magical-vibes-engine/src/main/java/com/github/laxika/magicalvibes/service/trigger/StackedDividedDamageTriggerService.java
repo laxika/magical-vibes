@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.DistributeCounters
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -67,7 +68,7 @@ public class StackedDividedDamageTriggerService {
     private final AmountEvaluationService amountEvaluationService;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final TargetTriggers targetTriggers;
 
     public StackedDividedDamageTriggerService(TriggerTargetCollector triggerTargetCollector,
                                               GameQueryService gameQueryService,
@@ -75,14 +76,14 @@ public class StackedDividedDamageTriggerService {
                                               AmountEvaluationService amountEvaluationService,
                                               @Lazy PlayerInputService playerInputService,
                                               @Lazy InputCompletionService inputCompletionService,
-                                              @Lazy TriggerCollectionService triggerCollectionService) {
+                                              @Lazy TargetTriggers targetTriggers) {
         this.triggerTargetCollector = triggerTargetCollector;
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.amountEvaluationService = amountEvaluationService;
         this.playerInputService = playerInputService;
         this.inputCompletionService = inputCompletionService;
-        this.triggerCollectionService = triggerCollectionService;
+        this.targetTriggers = targetTriggers;
     }
 
     /**
@@ -184,7 +185,7 @@ public class StackedDividedDamageTriggerService {
                 ? "'s ability chooses no targets." : "'s ability divides its amount: " + division + "."));
         log.info("Game {} - {} divided-damage trigger announced {}", gameData.id, entry.getCard().getName(), division);
         ActionEvents.crimeCommitted(gameData, entry);
-        triggerCollectionService.checkTargetChoiceTriggers(gameData, entry);
+        targetTriggers.checkTargetChoiceTriggers(gameData, entry);
     }
 
     private List<UUID> validTargets(GameData gameData, StackEntry entry, Permanent source, Division divided,

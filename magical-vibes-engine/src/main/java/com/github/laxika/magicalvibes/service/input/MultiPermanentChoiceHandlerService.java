@@ -58,8 +58,8 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnUpToNControl
 import com.github.laxika.magicalvibes.service.effect.normalfx.WormsOfTheEarthEffectHandler;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -121,7 +121,7 @@ public class MultiPermanentChoiceHandlerService {
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final TargetTriggers targetTriggers;
     private final VotingFinishedSupport votingFinishedSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.VotingSupport votingSupport;
     private final PermanentChoiceTriggerHandlerService triggerHandler;
@@ -1440,7 +1440,7 @@ public class MultiPermanentChoiceHandlerService {
             parked.setNonTargeting(false);
             parked.chooseTargetIds(new ArrayList<>(targetIds));
         });
-        triggerCollectionService.checkTargetChoiceTriggers(gameData, entry);
+        targetTriggers.checkTargetChoiceTriggers(gameData, entry);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

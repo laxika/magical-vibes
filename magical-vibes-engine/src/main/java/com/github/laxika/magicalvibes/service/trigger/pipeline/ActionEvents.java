@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.VotingResult;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.rules.ActionEvent;
+import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 
 import java.util.List;
 import java.util.UUID;
@@ -277,5 +279,62 @@ public final class ActionEvents {
                                UUID controllerId) {
         mutatedPermanent.recordMutation();
         gameData.rulesEvents.occur(new ActionEvent.Mutated(mutatedPermanent, mutatedCards, controllerId));
+    }
+
+    /**
+     * Completes the controller's dungeon when {@code departedEntry} is a bottom-room ability and no
+     * other room ability of that dungeon is still on the stack (CR 309.6, CR 309.7). Called when the
+     * ability resolves, is countered, or is removed for having no legal target, so the dungeon is
+     * completed however its last room ability leaves the stack. Then fires the battlefield and
+     * graveyard abilities that trigger when a player completes a dungeon.
+     */
+    public static void completeDungeonRoomIfReady(GameData gameData, StackEntry departedEntry) {
+        var completion = departedEntry.getEffectsToResolve().stream()
+                .filter(com.github.laxika.magicalvibes.model.effect.CompleteDungeonEffect.class::isInstance)
+                .map(com.github.laxika.magicalvibes.model.effect.CompleteDungeonEffect.class::cast)
+                .findFirst().orElse(null);
+        if (completion == null) return;
+        var progress = gameData.playerDungeonProgress.get(departedEntry.getControllerId());
+        if (progress == null || progress.dungeon() != completion.dungeon() || !progress.isBottomRoom()) return;
+        boolean anotherRoomAbility = gameData.stack.stream().anyMatch(entry ->
+                entry.getControllerId().equals(departedEntry.getControllerId())
+                        && entry.getEffectsToResolve().stream().anyMatch(effect ->
+                        effect instanceof com.github.laxika.magicalvibes.model.effect.CompleteDungeonEffect other
+                                && other.dungeon() == completion.dungeon()));
+        if (anotherRoomAbility) return;
+        gameData.playerDungeonProgress.remove(departedEntry.getControllerId());
+        gameData.recordCompletedDungeon(departedEntry.getControllerId(), completion.dungeon());
+        dungeonCompleted(gameData, departedEntry.getControllerId());
+    }
+
+    /**
+     * {@code playingPlayerId} played {@code landCard} (a special action, CR 116.2a): a {@link SpellEvent.LandPlayed} the
+     * "whenever you play a land" and "whenever an opponent plays a land" abilities trigger on (Search the City,
+     * Dirtcowl Wurm). Called from the land-play sites only, so a land put onto the battlefield by an effect triggers
+     * neither.
+     */
+    public static void landPlayed(GameData gameData, UUID playingPlayerId, Card landCard) {
+        landPlayed(gameData, playingPlayerId, landCard, false);
+    }
+
+    public static void landPlayed(GameData gameData, UUID playingPlayerId, Card landCard,
+                                                 boolean fromExile) {
+        landPlayed(gameData, playingPlayerId, landCard,
+                fromExile ? Zone.EXILE : Zone.HAND);
+    }
+
+    public static void landPlayed(GameData gameData, UUID playingPlayerId, Card landCard,
+                                                 Zone playZone) {
+        landPlayed(gameData, playingPlayerId, landCard, playZone, null);
+    }
+
+    public static void landPlayed(GameData gameData, UUID playingPlayerId, Card landCard,
+                                                 Zone playZone, UUID exiledSourcePermanentId) {
+        if (playZone != Zone.HAND) {
+            gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.add(playingPlayerId);
+        }
+        SpellEvent.LandPlayed event = new SpellEvent.LandPlayed(playingPlayerId, landCard, playZone,
+                exiledSourcePermanentId);
+        gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(event));
     }
 }

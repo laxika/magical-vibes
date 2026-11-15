@@ -138,7 +138,7 @@ class TormentorExarchTest extends BaseCardTest {
     }
 
     private void chooseTriggeredMode(String mode) {
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1, mode);
     }
 

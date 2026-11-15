@@ -158,6 +158,7 @@ import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.ability.cost.AllMatchingPermanentSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.BlightXCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.CreatureSacrificeCostHandler;
@@ -183,6 +184,7 @@ import com.github.laxika.magicalvibes.service.ability.cost.TapCostSupport;
 import com.github.laxika.magicalvibes.service.ability.cost.TapCreatureCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.TapTwoSharingCreatureTypeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.UnattachEquipmentFromSourceCostHandler;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
@@ -206,6 +208,7 @@ import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -280,6 +283,9 @@ public class AbilityActivationService {
     private final com.github.laxika.magicalvibes.service.battlefield.DepartureService departureService;
 
     private final TriggerCollectionService triggerCollectionService;
+    private final TargetTriggers targetTriggers;
+    private final ETBTokenTargetService etbTokenTargetService;
+    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     private final ExileService exileService;
 
@@ -1787,7 +1793,7 @@ public class AbilityActivationService {
         UUID playerId = player.getId();
         boolean tapBatch = handler.costEffect() instanceof TapMultiplePermanentsCost;
         if (tapBatch) {
-            triggerCollectionService.beginPermanentTapTriggerBatch(gameData);
+            gameData.beginPermanentTapTriggerBatch();
         }
         if (handler.shouldAutoPayAll(gameData, playerId, required)) {
             try {
@@ -1799,7 +1805,7 @@ public class AbilityActivationService {
                 }
             } finally {
                 if (tapBatch) {
-                    triggerCollectionService.endPermanentTapTriggerBatch(gameData);
+                    gameData.endPermanentTapTriggerBatch();
                 }
             }
             deferActivatedAbilityCostTriggers(gameData, stackSizeBeforeCosts);
@@ -1910,7 +1916,7 @@ public class AbilityActivationService {
         UUID playerId = player.getId();
         boolean tapBatch = context.costEffect() instanceof TapMultiplePermanentsCost;
         if (tapBatch && gameData.permanentTapTriggerBatchDepth == 0) {
-            triggerCollectionService.beginPermanentTapTriggerBatch(gameData);
+            gameData.beginPermanentTapTriggerBatch();
         }
         List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null || hand.stream().noneMatch(card -> card.getId().equals(context.handCard().getId()))) {
@@ -1965,7 +1971,7 @@ public class AbilityActivationService {
         }
 
         if (tapBatch) {
-            triggerCollectionService.endPermanentTapTriggerBatch(gameData);
+            gameData.endPermanentTapTriggerBatch();
         }
 
         if (context.ability().isSourceStaysInHand()) {
@@ -2614,7 +2620,7 @@ public class AbilityActivationService {
         int insertionIndex = Math.min(Math.max(stackSizeBeforeCosts, 0), gameData.stack.size());
         if (!ability.isDiscardSourceAsSpecialAction()) {
             gameData.stack.add(insertionIndex, stackEntry);
-            triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, stackEntry);
+            targetTriggers.checkBecomesTargetOfAbilityTriggers(gameData, stackEntry);
         }
         ActionEvents.crimeCommitted(gameData, stackEntry);
         collectHandActivationTriggers(gameData, playerId, stackEntry, ability);
@@ -2717,7 +2723,7 @@ public class AbilityActivationService {
         int insertionIndex = Math.min(Math.max(stackSizeBeforeCosts, 0), gameData.stack.size());
         if (!ability.isDiscardSourceAsSpecialAction()) {
             gameData.stack.add(insertionIndex, stackEntry);
-            triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, stackEntry);
+            targetTriggers.checkBecomesTargetOfAbilityTriggers(gameData, stackEntry);
         }
         ActionEvents.crimeCommitted(gameData, stackEntry);
         collectHandActivationTriggers(gameData, playerId, stackEntry, ability);
@@ -2725,12 +2731,12 @@ public class AbilityActivationService {
             gameData.discarded(playerId, card, ability.isCyclingAbility());
             if (ability.isCyclingAbility()) {
                 gameData.rulesEvents.occur(new LibraryEvent.Cycled(playerId, card, xValue, ability.isCyclingTriggerTargets() ? ability : null, targetIds == null && targetId != null ? List.of(targetId) : targetIds));
-                triggerCollectionService.beginStackDoorChoices(gameData);
+                triggeredAbilityQueueService.beginStackDoorChoices(gameData);
                 if (!gameData.interaction.isAwaitingInput()) {
-                    triggerCollectionService.processNextETBSpellTargetTrigger(gameData);
+                    etbTokenTargetService.processNextETBSpellTargetTrigger(gameData);
                 }
                 if (!gameData.interaction.isAwaitingInput()) {
-                    triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+                    triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
                 }
             }
         }
@@ -3224,7 +3230,7 @@ public class AbilityActivationService {
                 null
         );
         if (!gameData.interaction.isAwaitingInput()) {
-            triggerCollectionService.beginStackDoorChoices(gameData);
+            triggeredAbilityQueueService.beginStackDoorChoices(gameData);
         }
     }
 
@@ -6074,7 +6080,7 @@ public class AbilityActivationService {
         UUID playerId = player.getId();
         boolean tapBatch = handler.costEffect() instanceof TapMultiplePermanentsCost;
         if (tapBatch) {
-            triggerCollectionService.beginPermanentTapTriggerBatch(gameData);
+            gameData.beginPermanentTapTriggerBatch();
         }
         boolean counterKindChoice = handler instanceof RemoveCounterFromPermanentCostHandler counterHandler
                 && required == 1 && gameData.chosenCostCounterType == null
@@ -6111,7 +6117,7 @@ public class AbilityActivationService {
                 }
             } finally {
                 if (tapBatch) {
-                    triggerCollectionService.endPermanentTapTriggerBatch(gameData);
+                    gameData.endPermanentTapTriggerBatch();
                 }
             }
             return false;
@@ -6213,7 +6219,7 @@ public class AbilityActivationService {
         }
         boolean tapBatch = context.costEffect() instanceof TapMultiplePermanentsCost;
         if (tapBatch && gameData.permanentTapTriggerBatchDepth == 0) {
-            triggerCollectionService.beginPermanentTapTriggerBatch(gameData);
+            gameData.beginPermanentTapTriggerBatch();
         }
 
         int effectiveIndex = effectiveAbilityIndex(context.abilityIndex());
@@ -6404,7 +6410,7 @@ public class AbilityActivationService {
             }
         }
         if (tapBatch) {
-            triggerCollectionService.endPermanentTapTriggerBatch(gameData);
+            gameData.endPermanentTapTriggerBatch();
         }
 
         int finalXValue = updatedXValue != null ? updatedXValue : (context.xValue() != null ? context.xValue() : 0);

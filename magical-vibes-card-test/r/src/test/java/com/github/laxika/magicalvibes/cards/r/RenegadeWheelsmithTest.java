@@ -168,6 +168,6 @@ class RenegadeWheelsmithTest extends BaseCardTest {
     private void tapAndQueueTrigger(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true)));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
+        harness.inMutationScope(() -> harness.getTriggeredAbilityQueueService().beginStackDoorChoices(gd));
     }
 }
