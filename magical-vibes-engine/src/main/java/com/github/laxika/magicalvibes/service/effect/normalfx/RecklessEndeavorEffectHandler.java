@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RecklessEndeavorEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,7 +22,6 @@ public class RecklessEndeavorEffectHandler implements NormalEffectHandlerBean {
 
     private final D12RollService d12RollService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
 
     @Override

@@ -56,7 +56,7 @@ class CreateTokenForTargetPlayerEffectHandlerTest {
         gameData.playerBattlefields.put(controllerId, Collections.synchronizedList(new ArrayList<>()));
         gameData.playerBattlefields.put(targetPlayerId, Collections.synchronizedList(new ArrayList<>()));
         handler = new CreateTokenForTargetPlayerEffectHandler(
-                permanentControlSupport, gameQueryService, amountEvaluationService, triggerCollectionService);
+                permanentControlSupport, gameQueryService, amountEvaluationService);
     }
 
     @Test

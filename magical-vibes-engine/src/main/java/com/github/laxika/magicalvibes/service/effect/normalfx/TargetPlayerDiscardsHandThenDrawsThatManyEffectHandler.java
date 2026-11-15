@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsHandThenD
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -31,7 +30,6 @@ public class TargetPlayerDiscardsHandThenDrawsThatManyEffectHandler implements N
     private final DrawService drawService;
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

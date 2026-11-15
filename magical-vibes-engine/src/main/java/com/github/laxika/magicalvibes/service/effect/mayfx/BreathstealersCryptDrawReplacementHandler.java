@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +37,6 @@ public class BreathstealersCryptDrawReplacementHandler implements MayEffectHandl
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
-    private final TriggerCollectionService triggerCollectionService;
     private final InputCompletionService inputCompletionService;
 
     private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;

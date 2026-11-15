@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTwoCreaturesSharingTypeCost;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,18 +31,15 @@ public class TapTwoSharingCreatureTypeCostHandler implements PermanentChoiceCost
     private final TapTwoCreaturesSharingTypeCost cost;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final List<UUID> alreadyChosen;
 
     public TapTwoSharingCreatureTypeCostHandler(TapTwoCreaturesSharingTypeCost cost,
                                                 GameQueryService gameQueryService,
                                                 GameLogService gameLogService,
-                                                TriggerCollectionService triggerCollectionService,
                                                 List<UUID> alreadyChosen) {
         this.cost = cost;
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
-        this.triggerCollectionService = triggerCollectionService;
         this.alreadyChosen = new ArrayList<>(alreadyChosen == null ? List.of() : alreadyChosen);
     }
 

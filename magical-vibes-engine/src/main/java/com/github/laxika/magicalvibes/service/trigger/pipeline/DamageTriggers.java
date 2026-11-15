@@ -49,7 +49,6 @@ import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import java.util.ArrayList;
@@ -235,8 +234,6 @@ public class DamageTriggers {
     private TargetLegalityService targetLegalityService;
     @Autowired @Lazy
     private TriggerIndex triggerIndex;
-    @Autowired @Lazy
-    private TriggerCollectionService triggerCollectionService;
 
     /**
      * Triggers the damage abilities {@code event} triggers (CR 603.2), each handed whole to the stack door: for each
@@ -2833,7 +2830,6 @@ public class DamageTriggers {
             enqueueTemporaryGlobalTrigger(gameData, watcher, temporaryEffects(watcher), targetId, eventValue);
         }
     }
-
 
     private void enqueueTemporaryGlobalTrigger(GameData gameData,
                                                 TemporaryGlobalTriggeredAbility watcher,

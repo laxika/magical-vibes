@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +33,6 @@ public class DiscoverEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final TriggerCollectionService triggerCollectionService;
     private final ExileService exileService;
 
     @Override

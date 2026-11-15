@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -32,7 +31,6 @@ public class DefendingPlayerDiscardsHandThenDrawsThatManyEffectHandler implement
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final GraveyardService graveyardService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

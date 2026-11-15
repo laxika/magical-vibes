@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -22,17 +21,14 @@ public class EachOtherPlayerDrawsCardEffectHandler implements NormalEffectHandle
     private final PlayerInteractionSupport playerInteractionSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
-    private final TriggerCollectionService triggerCollectionService;
 
     public EachOtherPlayerDrawsCardEffectHandler(
             PlayerInteractionSupport playerInteractionSupport,
             GameQueryService gameQueryService,
-            AmountEvaluationService amountEvaluationService,
-            @Lazy TriggerCollectionService triggerCollectionService) {
+            AmountEvaluationService amountEvaluationService) {
         this.playerInteractionSupport = playerInteractionSupport;
         this.gameQueryService = gameQueryService;
         this.amountEvaluationService = amountEvaluationService;
-        this.triggerCollectionService = triggerCollectionService;
     }
 
     @Override

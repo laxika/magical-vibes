@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 
 import java.util.HashSet;
@@ -23,7 +22,6 @@ public class AirbendAllOtherCreaturesEffectHandler implements NormalEffectHandle
 
     private final GameQueryService gameQueryService;
     private final AirbendSupport airbendSupport;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

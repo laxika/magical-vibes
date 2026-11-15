@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EntryReplacementHandlerBean;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DiceRollService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -29,7 +28,6 @@ public class RollDiceAndEnterWithCountersEffectHandler implements EntryReplaceme
     private final DiceRollService diceRollService;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

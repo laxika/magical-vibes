@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +24,6 @@ public class ShuffleGraveyardIntoLibraryEffectHandler implements NormalEffectHan
 
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
-    @Autowired
-    private TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

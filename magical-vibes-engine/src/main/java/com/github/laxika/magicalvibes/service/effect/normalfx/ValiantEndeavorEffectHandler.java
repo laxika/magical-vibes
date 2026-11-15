@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -30,7 +29,6 @@ public class ValiantEndeavorEffectHandler implements NormalEffectHandlerBean {
 
     private final DiceRollService diceRollService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
 
     @Override

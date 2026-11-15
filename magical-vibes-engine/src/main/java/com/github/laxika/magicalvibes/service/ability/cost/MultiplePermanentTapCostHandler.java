@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
 import java.util.List;
 import java.util.UUID;
@@ -31,19 +30,16 @@ public class MultiplePermanentTapCostHandler implements PermanentChoiceCostHandl
     private final int requiredCount;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final UUID sourcePermanentId;
 
     public MultiplePermanentTapCostHandler(TapMultiplePermanentsCost cost, int requiredCount,
                                            PredicateEvaluationService predicateEvaluationService,
                                            GameLogService gameLogService,
-                                           TriggerCollectionService triggerCollectionService,
                                            UUID sourcePermanentId) {
         this.cost = cost;
         this.requiredCount = requiredCount;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameLogService = gameLogService;
-        this.triggerCollectionService = triggerCollectionService;
         this.sourcePermanentId = sourcePermanentId;
     }
 

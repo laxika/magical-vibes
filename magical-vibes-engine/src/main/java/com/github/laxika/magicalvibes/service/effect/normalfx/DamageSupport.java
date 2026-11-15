@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.model.Card;
@@ -96,7 +95,6 @@ public class DamageSupport {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
-    private final TriggerCollectionService triggerCollectionService;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers damageTriggers;
@@ -2019,7 +2017,6 @@ public class DamageSupport {
         gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(dealt));
     }
 
-
     private List<TriggeredAbility> snapshotSelfDealsDamageAbilities(GameData gameData, Card sourceCard,
                                                                     UUID sourcePermanentId) {
         if (sourcePermanentId == null) return null;
@@ -2030,7 +2027,6 @@ public class DamageSupport {
 
         return damageTriggers.selfDealsDamageAbilities(gameData, sourceCard, sourcePermanent);
     }
-
 
     /**
      * Immortal Coil: "If damage would be dealt to you, prevent that damage. Exile a card from your

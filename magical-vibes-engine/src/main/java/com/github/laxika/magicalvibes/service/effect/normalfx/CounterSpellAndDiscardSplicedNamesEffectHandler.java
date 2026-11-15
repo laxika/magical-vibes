@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellAndDiscardSpliced
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -32,7 +31,6 @@ public class CounterSpellAndDiscardSplicedNamesEffectHandler implements NormalEf
     private final CardRevealService cardRevealService;
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

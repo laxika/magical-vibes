@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.List;
 import java.util.UUID;
@@ -38,7 +37,6 @@ public class AmuletOfQuozAnteEffectHandler implements NormalEffectHandlerBean, C
     private final GameOutcomeService gameOutcomeService;
     private final GameLogService gameLogService;
     private final CoinFlipService coinFlipService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

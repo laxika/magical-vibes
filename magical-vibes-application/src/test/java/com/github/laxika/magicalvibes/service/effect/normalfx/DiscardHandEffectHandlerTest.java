@@ -50,7 +50,7 @@ class DiscardHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
         Card handCard2 = createCard("Forest");
         gd.playerHands.get(player1Id).addAll(List.of(handCard1, handCard2));
 
-        int discardCount = new DiscardHandEffectHandler(gameLogService, graveyardService, triggerCollectionService)
+        int discardCount = new DiscardHandEffectHandler(gameLogService, graveyardService)
                 .discardHand(gd, player1Id, player1Id, "One with Nothing");
 
         assertThat(discardCount).isEqualTo(2);

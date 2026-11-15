@@ -29,7 +29,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,9 +62,6 @@ public class LibrarySearchSupport {
     private final GameQueryService gameQueryService;
     @Autowired
     private ReverseMiracleSupport reverseMiracleSupport;
-    @Autowired
-    @Lazy
-    private TriggerCollectionService triggerCollectionService;
 
     /**
      * Starts the next pending "each player searches for a basic land" search from the

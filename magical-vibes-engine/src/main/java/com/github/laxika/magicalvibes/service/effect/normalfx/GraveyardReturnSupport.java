@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -118,7 +117,6 @@ public class GraveyardReturnSupport {
     private final EquipSupport equipSupport;
     private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     private final com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport graveyardTargetingSupport;
-    private final TriggerCollectionService triggerCollectionService;
     private final MakeChosenPermanentAttackingEffectHandler makeChosenPermanentAttackingEffectHandler;
 
     /**

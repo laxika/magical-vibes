@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -41,7 +40,6 @@ public class ReturnTwoExiledCardsWithSourceToBattlefieldAndBottomRestEffectHandl
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final ReturnAllCardsExiledWithSourceEffectHandler returnAllHandler;
     private final ReturnCardExiledWithSourceToBattlefieldEffectHandler returnCardHandler;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

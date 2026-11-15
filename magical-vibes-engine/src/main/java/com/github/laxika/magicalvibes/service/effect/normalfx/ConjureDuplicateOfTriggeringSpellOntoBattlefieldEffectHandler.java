@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLib
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -30,7 +29,6 @@ public class ConjureDuplicateOfTriggeringSpellOntoBattlefieldEffectHandler
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -43,7 +42,6 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
     private final AmountEvaluationService amountEvaluationService;
     private final ExileService exileService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private TriggerCollectionService triggerCollectionService;
 
     @Autowired
     public ExileTopCardsToSourceEffectHandler(GameQueryService gameQueryService,
@@ -62,11 +60,6 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
                                               GameLogService gameLogService,
                                               ExileService exileService) {
         this(gameQueryService, gameLogService, null, exileService, null);
-    }
-
-    @Autowired(required = false)
-    void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
-        this.triggerCollectionService = triggerCollectionService;
     }
 
     @Override

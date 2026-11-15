@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -31,7 +30,6 @@ public class SpellbookCardChoiceInteractionHandler
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<PendingInteraction.SpellbookCardChoice> handledType() {

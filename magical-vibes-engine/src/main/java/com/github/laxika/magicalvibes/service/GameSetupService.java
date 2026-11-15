@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.RulesEventPipeline;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -50,7 +49,6 @@ public class GameSetupService {
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
 
-
     private final Random random = new Random();
 
     private final GameRegistry gameRegistry;
@@ -59,7 +57,6 @@ public class GameSetupService {
     private final GameLogService gameLogService;
     private final CardCatalog cardCatalog;
     private final RandomDeckGenerator randomDeckGenerator;
-    private final TriggerCollectionService triggerCollectionService;
     private final RulesEventPipeline rulesEventPipeline;
 
     public GameSetupService(GameRegistry gameRegistry,
@@ -68,7 +65,6 @@ public class GameSetupService {
                             GameLogService gameLogService,
                             CardCatalog cardCatalog,
                             RandomDeckGenerator randomDeckGenerator,
-                            @Lazy TriggerCollectionService triggerCollectionService,
                             @Lazy RulesEventPipeline rulesEventPipeline) {
         this.gameRegistry = gameRegistry;
         this.customDeckSourceProvider = customDeckSourceProvider;
@@ -76,7 +72,6 @@ public class GameSetupService {
         this.gameLogService = gameLogService;
         this.cardCatalog = cardCatalog;
         this.randomDeckGenerator = randomDeckGenerator;
-        this.triggerCollectionService = triggerCollectionService;
         this.rulesEventPipeline = rulesEventPipeline;
     }
 

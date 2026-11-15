@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,7 +35,6 @@ public class DestroySelfThenRevealUntilCreatureAndAttachGrantingAuraEffectHandle
     private final GameQueryService gameQueryService;
     private final AuraAttachmentService auraAttachmentService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

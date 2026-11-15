@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.TemptTheRingEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,10 +25,6 @@ public class TemptTheRingEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
-
-    @Autowired
-    @Lazy
-    private TriggerCollectionService triggerCollectionService;
 
     @Autowired
     @Lazy

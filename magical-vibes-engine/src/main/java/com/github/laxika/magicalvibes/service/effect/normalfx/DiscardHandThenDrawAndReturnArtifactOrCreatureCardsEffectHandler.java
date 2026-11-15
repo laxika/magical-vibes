@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -28,7 +27,6 @@ public class DiscardHandThenDrawAndReturnArtifactOrCreatureCardsEffectHandler im
     private final DrawService drawService;
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
-    private final TriggerCollectionService triggerCollectionService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final GraveyardReturnSupport graveyardReturnSupport;
 

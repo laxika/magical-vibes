@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.service.ability.cost.TapCostSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.ObjectProvider;
@@ -33,7 +32,6 @@ public class MayAbilityTapCostService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
     private final EffectResolutionService effectResolutionService;
@@ -49,7 +47,7 @@ public class MayAbilityTapCostService {
                                        UUID sourcePermanentId, PendingMayAbility ability) {
         PermanentChoiceCostHandler handler = new MultiplePermanentTapCostHandler(
                 tapCost, tapCostSupport.requiredCount(gameData, tapCost, sourcePermanentId, 0),
-                predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
+                predicateEvaluationService, gameLogService, sourcePermanentId);
         UUID playerId = player.getId();
 
         try {
@@ -91,7 +89,7 @@ public class MayAbilityTapCostService {
         PermanentChoiceCostHandler handler = new MultiplePermanentTapCostHandler(
                 context.costEffect(),
                 tapCostSupport.requiredCount(gameData, context.costEffect(), context.sourcePermanentId(), 0),
-                predicateEvaluationService, gameLogService, triggerCollectionService,
+                predicateEvaluationService, gameLogService,
                 context.sourcePermanentId());
 
         Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);

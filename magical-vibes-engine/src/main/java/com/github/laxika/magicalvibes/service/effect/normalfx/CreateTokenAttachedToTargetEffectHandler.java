@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +26,6 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final AuraAttachmentService auraAttachmentService;
-    private final TriggerCollectionService triggerCollectionService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override

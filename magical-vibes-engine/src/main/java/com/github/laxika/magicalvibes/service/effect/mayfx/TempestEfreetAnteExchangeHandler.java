@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TempestEfreetAnteExchangeEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +34,6 @@ public class TempestEfreetAnteExchangeHandler implements MayEffectHandlerBean {
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
     private final TempestEfreetAnteExchangeEffectHandler exchangeEffectHandler;
-    private final TriggerCollectionService triggerCollectionService;
     private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Autowired @Lazy

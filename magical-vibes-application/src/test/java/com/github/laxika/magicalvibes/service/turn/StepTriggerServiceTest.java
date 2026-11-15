@@ -306,7 +306,7 @@ class StepTriggerServiceTest {
         // The step abilities are the trigger pipeline's: a step's beginning is a rules event it matches.
         pipeline = new RulesEventPipeline(
                 new TriggerIndex(gameQueryService, grantedTriggeredAbilitySupport, predicateEvaluationService),
-                stackService, predicateEvaluationService, permanentRemovalService, triggerCollectionService,
+                stackService, predicateEvaluationService, permanentRemovalService,
                 gameQueryService, new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
                 gameLogService, null, null, null, null);
         // The counter, tap and life events a step causes (a Saga's lore counter) trigger nothing these tests watch.

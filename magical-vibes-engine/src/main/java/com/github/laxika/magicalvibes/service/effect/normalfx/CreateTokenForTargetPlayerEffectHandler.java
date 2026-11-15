@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEff
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +22,6 @@ public class CreateTokenForTargetPlayerEffectHandler implements NormalEffectHand
     private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

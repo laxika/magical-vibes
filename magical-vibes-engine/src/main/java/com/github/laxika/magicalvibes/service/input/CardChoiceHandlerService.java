@@ -92,7 +92,6 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
@@ -104,7 +103,6 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
 
 @Slf4j
 @Service
@@ -144,8 +142,6 @@ public class CardChoiceHandlerService {
     private final PlayerInputService playerInputService;
 
     private final com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService attackLegalityService;
-
-    private final TriggerCollectionService triggerCollectionService;
 
     private final TurnProgressionService turnProgressionService;
 

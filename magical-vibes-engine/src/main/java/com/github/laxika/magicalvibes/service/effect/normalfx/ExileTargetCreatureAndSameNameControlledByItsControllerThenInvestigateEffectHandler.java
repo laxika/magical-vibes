@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndSameNam
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,19 +27,16 @@ public class ExileTargetCreatureAndSameNameControlledByItsControllerThenInvestig
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final PermanentControlSupport permanentControlSupport;
-    private final TriggerCollectionService triggerCollectionService;
 
     public ExileTargetCreatureAndSameNameControlledByItsControllerThenInvestigateEffectHandler(
             GameQueryService gameQueryService,
             GameLogService gameLogService,
             PermanentRemovalService permanentRemovalService,
-            PermanentControlSupport permanentControlSupport,
-            @Lazy TriggerCollectionService triggerCollectionService) {
+            PermanentControlSupport permanentControlSupport) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.permanentRemovalService = permanentRemovalService;
         this.permanentControlSupport = permanentControlSupport;
-        this.triggerCollectionService = triggerCollectionService;
     }
 
     @Override

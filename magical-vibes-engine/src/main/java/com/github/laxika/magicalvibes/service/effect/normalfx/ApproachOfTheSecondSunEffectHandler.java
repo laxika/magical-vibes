@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import lombok.RequiredArgsConstructor;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -25,7 +24,6 @@ public class ApproachOfTheSecondSunEffectHandler implements NormalEffectHandlerB
 
     private final WinGameEffectHandler winGameEffectHandler;
     private final LifeSupport lifeSupport;
-    private final TriggerCollectionService triggerCollectionService;
     private final GameLogService gameLogService;
 
     @Override

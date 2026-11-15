@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -28,7 +27,6 @@ public class ProliferateEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final GameQueryService gameQueryService;
-    private final TriggerCollectionService triggerCollectionService;
     private final AmountEvaluationService amountEvaluationService;
 
     @Override

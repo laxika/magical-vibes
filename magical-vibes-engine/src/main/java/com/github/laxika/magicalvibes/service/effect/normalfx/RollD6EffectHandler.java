@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -26,7 +25,6 @@ import java.util.List;
 public class RollD6EffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final DiceRollService diceRollService;
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;

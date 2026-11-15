@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -28,7 +27,6 @@ public class GraveEndeavorEffectHandler implements NormalEffectHandlerBean {
 
     private final DiceRollService diceRollService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
 
     @Override

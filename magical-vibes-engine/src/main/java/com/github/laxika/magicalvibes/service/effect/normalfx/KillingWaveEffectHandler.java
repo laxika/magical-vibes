@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -49,8 +48,6 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean, AsksDe
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final DestructionSupport destructionSupport;
-    @Autowired @Lazy
-    private TriggerCollectionService triggerCollectionService;
     @Autowired @Lazy
     private LifeSupport lifeSupport;
 

@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -46,7 +45,6 @@ public class MutationSupport {
     private final GameQueryService gameQueryService;
     private final TargetLegalityService targetLegalityService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final TriggerCollectionService triggerCollectionService;
     private final GameLogService gameLogService;
 
     /** Validates the mutate target before any casting costs are paid. */

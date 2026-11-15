@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -32,16 +31,13 @@ import org.springframework.stereotype.Component;
 public class RemoveTimeCounterFromExiledCardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final GameQueryService gameQueryService;
     private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     public RemoveTimeCounterFromExiledCardEffectHandler(GameLogService gameLogService,
-            @Lazy TriggerCollectionService triggerCollectionService,
             GameQueryService gameQueryService,
             @Lazy TriggeredAbilityStackService triggeredAbilityStackService) {
         this.gameLogService = gameLogService;
-        this.triggerCollectionService = triggerCollectionService;
         this.gameQueryService = gameQueryService;
         this.triggeredAbilityStackService = triggeredAbilityStackService;
     }

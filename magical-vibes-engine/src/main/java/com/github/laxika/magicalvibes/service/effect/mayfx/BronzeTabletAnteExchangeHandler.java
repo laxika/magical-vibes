@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +38,6 @@ public class BronzeTabletAnteExchangeHandler implements MayEffectHandlerBean {
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final InputCompletionService inputCompletionService;
-    private final TriggerCollectionService triggerCollectionService;
     private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Autowired @Lazy

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +25,6 @@ public class CreateTokenAttachedToDefendingPlayerEffectHandler implements Normal
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final AuraAttachmentService auraAttachmentService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

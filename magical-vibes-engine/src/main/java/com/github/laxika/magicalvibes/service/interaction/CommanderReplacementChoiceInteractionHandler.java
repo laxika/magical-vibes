@@ -8,8 +8,7 @@ import java.util.*;
 public class CommanderReplacementChoiceInteractionHandler implements InteractionHandler<PendingInteraction.CommanderReplacementChoice> {
     private final InputCompletionService completion;
     private final CommanderZoneMoveService moves;
-    private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggers;
-    public CommanderReplacementChoiceInteractionHandler(InputCompletionService completion, CommanderZoneMoveService moves, com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggers) { this.completion = completion; this.moves = moves; this.triggers = triggers; }
+    public CommanderReplacementChoiceInteractionHandler(InputCompletionService completion, CommanderZoneMoveService moves) { this.completion = completion; this.moves = moves; }
     public Class<PendingInteraction.CommanderReplacementChoice> handledType() { return PendingInteraction.CommanderReplacementChoice.class; }
     public Class<? extends InteractionAnswer> answerType() { return InteractionAnswer.MayAbilityChosen.class; }
     public void handleAnswer(GameData game, Player player, PendingInteraction.CommanderReplacementChoice choice, InteractionAnswer answer) {

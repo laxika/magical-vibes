@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekCreatureAndManifestEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.stereotype.Component;
 
@@ -21,15 +20,12 @@ import java.util.concurrent.ThreadLocalRandom;
 public class SeekCreatureAndManifestEffectHandler implements NormalEffectHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
-    private final TriggerCollectionService triggerCollectionService;
     private final ManifestService manifestService;
 
     public SeekCreatureAndManifestEffectHandler(
             PredicateEvaluationService predicateEvaluationService,
-            TriggerCollectionService triggerCollectionService,
             ManifestService manifestService) {
         this.predicateEvaluationService = predicateEvaluationService;
-        this.triggerCollectionService = triggerCollectionService;
         this.manifestService = manifestService;
     }
 

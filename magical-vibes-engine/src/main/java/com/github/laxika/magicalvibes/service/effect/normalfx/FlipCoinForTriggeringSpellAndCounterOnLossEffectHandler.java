@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinForTriggeringSpellAnd
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,6 @@ public class FlipCoinForTriggeringSpellAndCounterOnLossEffectHandler implements 
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameLogService gameLogService;
     private final CoinFlipService coinFlipService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

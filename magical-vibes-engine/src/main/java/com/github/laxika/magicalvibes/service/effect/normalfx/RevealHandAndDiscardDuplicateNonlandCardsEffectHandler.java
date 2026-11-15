@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.RevealHandAndDiscardDuplicate
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -41,7 +40,6 @@ public class RevealHandAndDiscardDuplicateNonlandCardsEffectHandler implements N
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinCopyTriggeringSpellOrDealDamageEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -29,7 +28,6 @@ public class FlipCoinCopyTriggeringSpellOrDealDamageEffectHandler implements Nor
     private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final TriggerCollectionService triggerCollectionService;
 
     /** "When you win the flip, copy that spell. You may choose new targets for the copy." */
     private static final List<CardEffect> WON_FLIP = List.of(new CopyTriggeringSpellEffect());

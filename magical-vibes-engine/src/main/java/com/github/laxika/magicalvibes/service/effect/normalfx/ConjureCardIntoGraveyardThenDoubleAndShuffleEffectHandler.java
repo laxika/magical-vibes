@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.stereotype.Component;
 
@@ -29,19 +28,16 @@ public class ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler implement
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final PermanentRemovalService permanentRemovalService;
-    private final TriggerCollectionService triggerCollectionService;
 
     public ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler(
             GameQueryService gameQueryService,
             GameLogService gameLogService,
             GraveyardService graveyardService,
-            PermanentRemovalService permanentRemovalService,
-            TriggerCollectionService triggerCollectionService) {
+            PermanentRemovalService permanentRemovalService) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.graveyardService = graveyardService;
         this.permanentRemovalService = permanentRemovalService;
-        this.triggerCollectionService = triggerCollectionService;
     }
 
     @Override

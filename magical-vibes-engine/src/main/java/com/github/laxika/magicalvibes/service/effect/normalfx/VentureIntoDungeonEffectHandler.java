@@ -28,7 +28,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -48,7 +47,6 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
 
     private final GameQueryService gameQueryService;
     private final TriggeredAbilityStackService triggeredAbilityStackService;
-    private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector triggerTargetCollector;
 

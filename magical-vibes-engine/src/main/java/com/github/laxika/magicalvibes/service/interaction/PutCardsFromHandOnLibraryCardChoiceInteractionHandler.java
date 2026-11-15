@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -34,7 +33,6 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final InputCompletionService inputCompletionService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private EffectResolutionService effectResolutionService;

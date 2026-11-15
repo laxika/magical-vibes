@@ -32,7 +32,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSu
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -55,7 +54,6 @@ public class TurnFaceUpCopyService {
     private final PlayerInputService playerInputService;
     private final PermanentCopierService permanentCopierService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final TurnProgressionService turnProgressionService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final PermanentCounterSupport permanentCounterSupport;

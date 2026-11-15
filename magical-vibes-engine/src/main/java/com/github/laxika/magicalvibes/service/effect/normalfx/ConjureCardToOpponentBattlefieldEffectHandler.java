@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.ConjureCardToOpponentBattlefi
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -28,21 +27,17 @@ public class ConjureCardToOpponentBattlefieldEffectHandler implements NormalEffe
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    @Lazy
-    private final TriggerCollectionService triggerCollectionService;
 
     public ConjureCardToOpponentBattlefieldEffectHandler(
             CardCatalog cardCatalog,
             BattlefieldEntryService battlefieldEntryService,
             GameQueryService gameQueryService,
-            GameLogService gameLogService,
-            @Lazy TriggerCollectionService triggerCollectionService
+            GameLogService gameLogService
     ) {
         this.cardCatalog = cardCatalog;
         this.battlefieldEntryService = battlefieldEntryService;
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
-        this.triggerCollectionService = triggerCollectionService;
     }
 
     @Override

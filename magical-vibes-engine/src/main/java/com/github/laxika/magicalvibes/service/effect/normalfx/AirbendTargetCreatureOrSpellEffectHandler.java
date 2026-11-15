@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 
 import java.util.UUID;
@@ -33,7 +32,6 @@ public class AirbendTargetCreatureOrSpellEffectHandler implements NormalEffectHa
     private final ExileService exileService;
     private final ExileSupport exileSupport;
     private final StateTriggerService stateTriggerService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

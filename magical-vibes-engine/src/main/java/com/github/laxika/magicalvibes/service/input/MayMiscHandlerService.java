@@ -52,7 +52,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryEffec
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -64,7 +63,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
 
 @Slf4j
 @Service
@@ -110,11 +108,6 @@ public class MayMiscHandlerService {
     @Autowired @Lazy
     private PermanentCounterSupport permanentCounterSupport;
 
-    // @Lazy to break circular dependency:
-    // MayMiscHandlerService → TriggerCollectionService → TriggeredAbilityQueueService → PlayerInputService → MayAbilityHandlerService → MayMiscHandlerService
-    @Autowired @Lazy
-    private TriggerCollectionService triggerCollectionService;
-
     @Autowired @Lazy
     private GraveyardService graveyardService;
 
@@ -128,9 +121,6 @@ public class MayMiscHandlerService {
     private PermanentChoiceHandlerService permanentChoiceHandlerService;
 
     /** Setter for manual (non-Spring) construction (tests, AI simulator). */
-    public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
-        this.triggerCollectionService = triggerCollectionService;
-    }
 
     public void setGraveyardService(GraveyardService graveyardService) {
         this.graveyardService = graveyardService;

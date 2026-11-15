@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellboo
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -30,7 +29,6 @@ public class ConjureRandomCardFromSpellbookToBattlefieldEffectHandler
     private final CardCatalog cardCatalog;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

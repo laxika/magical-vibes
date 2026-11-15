@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.List;
 import java.util.UUID;
@@ -29,12 +28,6 @@ public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBe
     private final PlayerInteractionSupport playerInteractionSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
-    private TriggerCollectionService triggerCollectionService;
-
-    @Autowired
-    void setTriggerCollectionService(@Lazy TriggerCollectionService triggerCollectionService) {
-        this.triggerCollectionService = triggerCollectionService;
-    }
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

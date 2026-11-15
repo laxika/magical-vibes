@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -47,7 +46,6 @@ public class TargetPlayerDiscardsAndDestroysCreaturesOfChosenTypeEffectHandler i
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final BattlefieldEntryService battlefieldEntryService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

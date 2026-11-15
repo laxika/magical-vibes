@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.AddAnotherCounterOfEachKindTo
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,7 +27,6 @@ public class AddAnotherCounterOfEachKindToTargetEffectHandler implements NormalE
     private final PermanentCounterSupport permanentCounterSupport;
     private final LifeSupport lifeSupport;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

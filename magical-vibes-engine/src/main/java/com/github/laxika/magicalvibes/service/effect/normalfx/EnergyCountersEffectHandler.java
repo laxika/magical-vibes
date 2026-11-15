@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -18,16 +17,13 @@ import org.springframework.stereotype.Component;
 public class EnergyCountersEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
 
     public EnergyCountersEffectHandler(GameLogService gameLogService,
-                                       @Lazy TriggerCollectionService triggerCollectionService,
                                        AmountEvaluationService amountEvaluationService,
                                        GameQueryService gameQueryService) {
         this.gameLogService = gameLogService;
-        this.triggerCollectionService = triggerCollectionService;
         this.amountEvaluationService = amountEvaluationService;
         this.gameQueryService = gameQueryService;
     }

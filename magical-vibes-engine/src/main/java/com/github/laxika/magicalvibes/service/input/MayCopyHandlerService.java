@@ -38,7 +38,6 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +61,6 @@ public class MayCopyHandlerService {
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final TargetLegalityService targetLegalityService;
-    private final TriggerCollectionService triggerCollectionService;
     private final ValidTargetService validTargetService;
     private final TargetRedirectionSupport targetRedirectionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PsychicBattleSupport psychicBattleSupport;

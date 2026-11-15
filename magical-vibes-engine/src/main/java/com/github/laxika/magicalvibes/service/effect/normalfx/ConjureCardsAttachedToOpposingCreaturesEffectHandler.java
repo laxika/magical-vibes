@@ -9,14 +9,12 @@ import com.github.laxika.magicalvibes.model.effect.ConjureCardsAttachedToOpposin
 import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
 
 /** Conjures one full card copy attached to each opposing creature. */
 @Component
@@ -28,8 +26,6 @@ public class ConjureCardsAttachedToOpposingCreaturesEffectHandler implements Nor
     private final GameQueryService gameQueryService;
 
     private final AuraAttachmentService auraAttachmentService;
-
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,17 +16,10 @@ import org.springframework.stereotype.Component;
 public class ShuffleIntoLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Autowired
-    public ShuffleIntoLibraryEffectHandler(GameLogService gameLogService,
-                                          TriggerCollectionService triggerCollectionService) {
-        this.gameLogService = gameLogService;
-        this.triggerCollectionService = triggerCollectionService;
-    }
-
     public ShuffleIntoLibraryEffectHandler(GameLogService gameLogService) {
-        this(gameLogService, null);
+        this.gameLogService = gameLogService;
     }
 
     @Override

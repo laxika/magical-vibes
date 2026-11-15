@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsHandThenConjuresFromAdjacentPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +25,6 @@ public class EachPlayerDiscardsHandThenConjuresFromAdjacentPlayerLibraryEffectHa
 
     private final DiscardHandEffectHandler discardHandEffectHandler;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

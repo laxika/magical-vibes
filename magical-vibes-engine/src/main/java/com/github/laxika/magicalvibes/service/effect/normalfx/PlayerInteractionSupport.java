@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -67,7 +66,6 @@ public class PlayerInteractionSupport {
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final CardRevealService cardRevealService;
-    private final TriggerCollectionService triggerCollectionService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void applyOpponentMayPlayCreature(GameData gameData, UUID controllerId) {

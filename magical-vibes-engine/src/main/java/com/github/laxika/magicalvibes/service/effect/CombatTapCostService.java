@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CombatTapCostEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +25,6 @@ import java.util.UUID;
 public class CombatTapCostService {
 
     private final GameQueryService gameQueryService;
-    private final TriggerCollectionService triggerCollectionService;
 
     public boolean canPayAttackCost(GameData gameData, Permanent attacker) {
         Set<UUID> declaredIds = Set.of(attacker.getId());

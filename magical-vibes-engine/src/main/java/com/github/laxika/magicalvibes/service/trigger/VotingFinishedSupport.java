@@ -16,8 +16,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class VotingFinishedSupport {
 
-    private final TriggerCollectionService triggerCollectionService;
-
     public void recordVote(GameData gameData, UUID controllerId, UUID voterId, String choice) {
         gameData.votingChoicesByController
                 .computeIfAbsent(controllerId, ignored -> new LinkedHashMap<>())

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryAndPerpetuallyReduceSoughtCardEffect;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.stereotype.Component;
 
@@ -22,13 +21,10 @@ import java.util.concurrent.ThreadLocalRandom;
 public class SeekLibraryAndPerpetuallyReduceSoughtCardEffectHandler implements NormalEffectHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
-    private final TriggerCollectionService triggerCollectionService;
 
     public SeekLibraryAndPerpetuallyReduceSoughtCardEffectHandler(
-            PredicateEvaluationService predicateEvaluationService,
-            TriggerCollectionService triggerCollectionService) {
+            PredicateEvaluationService predicateEvaluationService) {
         this.predicateEvaluationService = predicateEvaluationService;
-        this.triggerCollectionService = triggerCollectionService;
     }
 
     @Override

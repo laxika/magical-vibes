@@ -96,7 +96,6 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
@@ -140,7 +139,6 @@ public class DrawService {
     private final EachPlayerReturnsPermanentToHandEffectHandler eachPlayerReturnsPermanentToHandEffectHandler;
     private final DamageSupport damageSupport;
     private final PermanentControlSupport permanentControlSupport;
-    private final TriggerCollectionService triggerCollectionService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     private static final CreateTokenEffect WORDS_OF_WILDING_BEAR = new CreateTokenEffect(
@@ -175,7 +173,6 @@ public class DrawService {
                        GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
                        DredgeSupport dredgeSupport,
                        ExileBottomRandomSupport exileBottomRandomSupport,
-                       @Lazy TriggerCollectionService triggerCollectionService,
                        @Lazy PredicateEvaluationService predicateEvaluationService) {
         this.gameQueryService = gameQueryService;
         this.exileService = exileService;
@@ -194,7 +191,6 @@ public class DrawService {
         this.grantedTriggeredAbilitySupport = grantedTriggeredAbilitySupport;
         this.dredgeSupport = dredgeSupport;
         this.exileBottomRandomSupport = exileBottomRandomSupport;
-        this.triggerCollectionService = triggerCollectionService;
         this.predicateEvaluationService = predicateEvaluationService;
     }
 

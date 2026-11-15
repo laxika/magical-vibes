@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,7 +42,6 @@ public class ExileAndReturnTransformedService {
     private final GameLogService gameLogService;
     private final SagaChapterService sagaChapterService;
     private final CreatureControlService creatureControlService;
-    private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
 
     /**

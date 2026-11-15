@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEff
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.List;
 import java.util.UUID;
@@ -25,17 +24,14 @@ public class TargetOpponentCreatesTokenEffectHandler implements NormalEffectHand
     private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
-    private final TriggerCollectionService triggerCollectionService;
 
     public TargetOpponentCreatesTokenEffectHandler(
             PermanentControlSupport permanentControlSupport,
             GameQueryService gameQueryService,
-            AmountEvaluationService amountEvaluationService,
-            @Lazy TriggerCollectionService triggerCollectionService) {
+            AmountEvaluationService amountEvaluationService) {
         this.permanentControlSupport = permanentControlSupport;
         this.gameQueryService = gameQueryService;
         this.amountEvaluationService = amountEvaluationService;
-        this.triggerCollectionService = triggerCollectionService;
     }
 
     @Override

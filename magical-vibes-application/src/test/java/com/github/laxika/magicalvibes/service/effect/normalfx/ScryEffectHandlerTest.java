@@ -97,8 +97,7 @@ class ScryEffectHandlerTest {
                 gameLogService,
                 interactionHandlerRegistry,
                 new AmountEvaluationService(mock(PredicateEvaluationService.class), gameQueryService),
-                gameQueryService,
-                triggerCollectionService);
+                gameQueryService);
 
     }
 

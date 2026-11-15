@@ -7,9 +7,7 @@ import java.util.ArrayList;
 public class CommanderReturnChoiceInteractionHandler implements InteractionHandler<PendingInteraction.CommanderReturnChoice> {
     private final InputCompletionService completion;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyards;
-    private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggers;
-    public CommanderReturnChoiceInteractionHandler(InputCompletionService completion, com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyards,
-                                                   com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggers) { this.completion = completion; this.graveyards = graveyards; this.triggers = triggers; }
+    public CommanderReturnChoiceInteractionHandler(InputCompletionService completion, com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyards) { this.completion = completion; this.graveyards = graveyards; }
     public Class<PendingInteraction.CommanderReturnChoice> handledType() { return PendingInteraction.CommanderReturnChoice.class; }
     public Class<? extends InteractionAnswer> answerType() { return InteractionAnswer.MayAbilityChosen.class; }
     public void handleAnswer(GameData game, Player player, PendingInteraction.CommanderReturnChoice choice, InteractionAnswer answer) {

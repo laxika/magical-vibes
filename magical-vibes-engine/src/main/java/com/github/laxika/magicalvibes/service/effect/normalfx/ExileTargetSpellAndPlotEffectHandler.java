@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetSpellAndPlotEffect
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +25,6 @@ public class ExileTargetSpellAndPlotEffectHandler implements NormalEffectHandler
     private final ExileService exileService;
     private final GameLogService gameLogService;
     private final StateTriggerService stateTriggerService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

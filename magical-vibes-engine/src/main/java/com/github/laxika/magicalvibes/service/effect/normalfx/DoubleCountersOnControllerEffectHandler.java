@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnControllerEff
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +22,6 @@ public class DoubleCountersOnControllerEffectHandler implements NormalEffectHand
     private final GameQueryService gameQueryService;
     private final LifeSupport lifeSupport;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

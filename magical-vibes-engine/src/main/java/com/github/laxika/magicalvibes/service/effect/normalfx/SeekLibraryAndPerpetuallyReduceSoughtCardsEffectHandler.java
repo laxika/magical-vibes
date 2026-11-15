@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.service.cast.PerpetualCardCastCostSupport;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.stereotype.Component;
 
@@ -25,15 +24,12 @@ public class SeekLibraryAndPerpetuallyReduceSoughtCardsEffectHandler
 
     private final PredicateEvaluationService predicateEvaluationService;
     private final AmountEvaluationService amountEvaluationService;
-    private final TriggerCollectionService triggerCollectionService;
 
     public SeekLibraryAndPerpetuallyReduceSoughtCardsEffectHandler(
             PredicateEvaluationService predicateEvaluationService,
-            AmountEvaluationService amountEvaluationService,
-            TriggerCollectionService triggerCollectionService) {
+            AmountEvaluationService amountEvaluationService) {
         this.predicateEvaluationService = predicateEvaluationService;
         this.amountEvaluationService = amountEvaluationService;
-        this.triggerCollectionService = triggerCollectionService;
     }
 
     @Override

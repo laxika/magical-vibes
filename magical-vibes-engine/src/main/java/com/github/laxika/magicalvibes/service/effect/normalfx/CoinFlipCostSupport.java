@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +24,6 @@ public class CoinFlipCostSupport {
 
     private final CoinFlipService coinFlipService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
 
     public void pay(GameData gameData, UUID playerId, Card sourceCard, int count) {
         String playerName = gameData.playerIdToName.get(playerId);

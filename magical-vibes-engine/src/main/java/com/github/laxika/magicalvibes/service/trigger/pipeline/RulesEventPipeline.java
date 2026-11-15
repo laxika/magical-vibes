@@ -55,7 +55,6 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.StepMatch.StepGroup;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import java.util.ArrayList;
@@ -70,7 +69,6 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
 
 /**
  * The generic trigger pipeline: {@code GameData} hands it each rules event batch as the batch closes, it asks the
@@ -113,8 +111,6 @@ public class RulesEventPipeline {
     private final PredicateEvaluationService predicateEvaluationService;
 
     private final PermanentRemovalService permanentRemovalService;
-
-    private final TriggerCollectionService triggerCollectionService;
 
     private final GameQueryService gameQueryService;
 
@@ -189,7 +185,6 @@ public class RulesEventPipeline {
     public RulesEventPipeline(TriggerIndex triggerIndex, TriggeredAbilityStackService stackService,
                               @Lazy PredicateEvaluationService predicateEvaluationService,
                               @Lazy PermanentRemovalService permanentRemovalService,
-                              @Lazy TriggerCollectionService triggerCollectionService,
                               @Lazy GameQueryService gameQueryService,
                               @Lazy ConditionEvaluationService conditionEvaluationService,
                               @Lazy GameLogService gameLogService,
@@ -201,7 +196,6 @@ public class RulesEventPipeline {
         this.stackService = stackService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.permanentRemovalService = permanentRemovalService;
-        this.triggerCollectionService = triggerCollectionService;
         this.gameQueryService = gameQueryService;
         this.conditionEvaluationService = conditionEvaluationService;
         this.gameLogService = gameLogService;

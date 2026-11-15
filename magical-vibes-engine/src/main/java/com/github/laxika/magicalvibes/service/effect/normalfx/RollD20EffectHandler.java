@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -28,7 +27,6 @@ public class RollD20EffectHandler implements NormalEffectHandlerBean, ChoosesCoi
 
     private final GameLogService gameLogService;
     private final D20RollService d20RollService;
-    private final TriggerCollectionService triggerCollectionService;
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
 

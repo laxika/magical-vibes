@@ -43,7 +43,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import lombok.RequiredArgsConstructor;
@@ -78,7 +77,6 @@ public class AnimationSupport {
     private final TriggerTargetCollector triggerTargetCollector;
     private final com.github.laxika.magicalvibes.service.target.ValidTargetService validTargetService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
-    private final TriggerCollectionService triggerCollectionService;
     private final UnattachTriggerSupport unattachTriggerSupport;
     private final LudevicCopySupport ludevicCopySupport;
     private final CreateEmblemEffectHandler createEmblemEffectHandler;

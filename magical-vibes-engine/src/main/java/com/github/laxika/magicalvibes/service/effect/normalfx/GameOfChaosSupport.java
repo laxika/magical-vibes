@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.GameOfChaosFlipAgainEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +27,6 @@ public class GameOfChaosSupport {
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final CoinFlipService coinFlipService;
-    private final TriggerCollectionService triggerCollectionService;
 
     /**
      * Performs one Game of Chaos coin flip from the spell controller's perspective at the given life

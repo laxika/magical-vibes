@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.List;
 import java.util.UUID;
@@ -30,8 +29,6 @@ public class PutTargetCardExiledWithSourceIntoOwnersGraveyardThenInvestigateEffe
     private final GraveyardService graveyardService;
     private final PermanentControlSupport permanentControlSupport;
     private final PredicateEvaluationService predicateEvaluationService;
-    @Lazy
-    private final TriggerCollectionService triggerCollectionService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override

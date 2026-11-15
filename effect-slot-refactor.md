@@ -26,6 +26,11 @@ grep its `^#### Run` headings and read that range. The invariants those runs est
 | M1 | Rules events: attacks, blocks, steps and phases | done |
 | M2 | Rules events: spells, targets, damage (combat damage too), counters, life, tap | done but: C45, C46 |
 | M3 | Rules events: library, actions, sagas, the rest | done but: C47 |
+| R0 | Delete the dead `TriggerCollectionService` injections | done |
+| R1 | Emblems' and temporary-global abilities are zone-change candidates | open |
+| R2 | Keyword abilities and departed sources are candidates; abilities as the layers leave them | open |
+| R3 | One delayed-ability model, matched by the pipeline | open |
+| R4 | Cast bookkeeping at the cast's completion; `TriggerCollectionService` deleted | open |
 | F | Delete the legacy types; docs | open |
 
 A row's status is `open`, `done`, or `done but: <ids from Carried over>`. Nothing else goes in it.
@@ -278,6 +283,22 @@ Depends on S8. For each family in the sweep:
 **Done when:** the sweep's watches, readers and collectors are gone and the ledger diff is
 adjudicated.
 
+### R0 to R4: what is left of `TriggerCollectionService`
+
+What is left of the class is abilities `TriggerIndex` doesn't list: ones the engine makes for keywords and rules, ones
+kept in `GameData` lists (delayed, temporary-global, boons, emblems' zone-change abilities), and the cast bookkeeping
+around them. Each sweep makes one kind an ability the pipeline lists and matches, and deletes its hand-written reader
+and drain; nothing is relocated to keep the class alive elsewhere. M sweep steps apply (ledger before and after, the
+moment kept or a rule cited for moving it).
+
+| Sweep | What |
+|---|---|
+| R0 | Delete the injections of `TriggerCollectionService` that call nothing (about 280 main classes), and their tests' constructor arguments. No behaviour change. |
+| R1 | List emblems' and `TemporaryGlobalTriggeredAbility` zone-change abilities in `TriggerIndex.observerCandidates` (CR 114.4 for emblems); delete the emblem enters, death and graveyard readers and the temporary-global zone-change readers. Close C48. |
+| R2 | Prowess, increment and evolve are keyword abilities `TriggerIndex` lists for a permanent with the keyword (CR 702.108a, 702.100); a departed permanent's snapshot abilities are listed as it last existed (C46); becomes-the-target abilities are read as the layers leave them (C45). |
+| R3 | One `DelayedTriggeredAbility` in `GameData` (trigger condition, the objects its maker named, duration, once only, source and controller; CR 603.7) that `TriggerIndex` lists and `TriggerMatcher` matches. Convert every delayed list family by family (deaths and leaves, cast and activation copies, the rest); delete each drain as its family moves. Deep-copy test for the new state. |
+| R4 | The cast bookkeeping of `checkSpellCastTriggers` moves to the cast's completion (CR 601.2i), the ledger confirming the abilities' order; what is left (boons, sacrifice records) moves to the family that owns it; delete `TriggerCollectionService`. |
+
 ### F: delete the legacy types; docs
 
 - Delete `EffectSlot`, `LegacySlotTrigger`, `LegacySlotTriggers`, the `addEffect(slot, …)` adapter,
@@ -365,10 +386,10 @@ named, with the Oracle text of the cards involved read first.
 | C43 | S8 (closed) | An ability a resolution makes with target groups of its own that its card can't declare: Earth Rumble's "up to one target creature you control fights target creature an opponent controls" (a sorcery, whose card groups are its spell's) is still asked by `EarthbendThenFightTarget` under `ReflexiveAbilitySupport.route`; only its finished entry goes through `putMade`. Also left: Espers to Magicite's "up to one target creature card exiled this way" (`EspersToMagiciteCreatureChoiceInteractionHandler` builds its entry), `PermanentChoiceTriggerHandlerService`'s and `GraveyardChoiceHandlerService`'s triggered-entry continuations, still fed by ETB, Saga and spell routes (C34, C35, C41) |
 | C44 | S8 (closed) | D2's open case: a "create N tokens. When you do" (N > 1 as written: Diregraf Horde, Faebloom Trick) under a doubler still triggers once; Ajani, Nacatl Avenger's ruling covers a one-token action only, and no ruling or rule says whether doubled multi-token actions trigger once or once per written batch |
 | C38 | S8 (closed) | "As this Equipment becomes attached" choices (a color, a name and a type, an exiled creature to copy) are written as trigger effects and read by class in `checkEquipmentAttachedTriggers`: they are static abilities |
-| C45 | M2 | `TargetTriggers` reads each watcher's becomes-the-target abilities as the old collectors did (`WatchedAbilities.printed`, duration and static grants, the mannequin and cloaked-ward cases), not as the layers leave them (`TriggerIndex.permanentAbilities`): an Aura's printed ability, one granted to the enchanted creature, bestow and a face-down cloaked ward are read differently, so making them uniform changes behaviour and needs its own ledger pass |
-| C46 | M2 | A damage source or watcher that may have left the battlefield before its ability is put (combat-damage dealers, departed ally watchers, Equipment, snapshotted self abilities: `CombatDamageTriggers.allWatchedAbilities` / `grantedCombatAbilities` / the ally and attached passes of `processCombatDamageToPlayerTriggers`, `DamageTriggers.dispatchSourceDealsCombatDamageTriggers` / `collectDealsDamageToCreatureAbilities` / `putEquipmentCombatDamageAbilities`) is read as it last existed by per-watch reads, not through `TriggerIndex`, which can't list a departed permanent's snapshot abilities yet |
+| C45 | R2 | `TargetTriggers` reads each watcher's becomes-the-target abilities as the old collectors did (`WatchedAbilities.printed`, duration and static grants, the mannequin and cloaked-ward cases), not as the layers leave them (`TriggerIndex.permanentAbilities`): an Aura's printed ability, one granted to the enchanted creature, bestow and a face-down cloaked ward are read differently, so making them uniform changes behaviour and needs its own ledger pass |
+| C46 | R2 | A damage source or watcher that may have left the battlefield before its ability is put (combat-damage dealers, departed ally watchers, Equipment, snapshotted self abilities: `CombatDamageTriggers.allWatchedAbilities` / `grantedCombatAbilities` / the ally and attached passes of `processCombatDamageToPlayerTriggers`, `DamageTriggers.dispatchSourceDealsCombatDamageTriggers` / `collectDealsDamageToCreatureAbilities` / `putEquipmentCombatDamageAbilities`) is read as it last existed by per-watch reads, not through `TriggerIndex`, which can't list a departed permanent's snapshot abilities yet |
 | C47 | F (closed) | Planar and scheme zone-change abilities (`TriggerCollectionService`'s planar enters, leaves, land-enters and death readers, the scheme leaves reader, the planar nonblack-card reader) still run at their old call sites, selecting abilities by their trigger's fields; `TriggerIndex` doesn't list planar or scheme candidates for zone changes, and moving them changes the moment they trigger, which needs its own ledger pass |
-| C48 | — | A battlefield departure's "put into a graveyard from anywhere" observers are read as leaves-the-battlefield abilities: `TriggerIndex.observerCandidates` lists them as they were before the event and `TriggerMatcher.filterMatches` judges their filter on the permanent as it last existed (CR 603.10a), but CR 603.6c says such an ability is never a leaves-the-battlefield ability (every observer written `Triggers.putIntoGraveyardFromAnywhere(filter, relation)`, The Dark Barony's "nonblack card" among them); changing it needs its own ledger pass over those cards |
+| C48 | R1 | A battlefield departure's "put into a graveyard from anywhere" observers are read as leaves-the-battlefield abilities: `TriggerIndex.observerCandidates` lists them as they were before the event and `TriggerMatcher.filterMatches` judges their filter on the permanent as it last existed (CR 603.10a), but CR 603.6c says such an ability is never a leaves-the-battlefield ability (every observer written `Triggers.putIntoGraveyardFromAnywhere(filter, relation)`, The Dark Barony's "nonblack card" among them); changing it needs its own ledger pass over those cards |
 
 **Fixes**
 

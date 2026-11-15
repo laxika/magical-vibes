@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -23,14 +22,11 @@ import java.util.UUID;
 public class WaterbendPaymentService {
 
     private final GameQueryService gameQueryService;
-    private final TriggerCollectionService triggerCollectionService;
     private final GameLogService gameLogService;
 
     public WaterbendPaymentService(GameQueryService gameQueryService,
-                                   @Lazy TriggerCollectionService triggerCollectionService,
                                    GameLogService gameLogService) {
         this.gameQueryService = gameQueryService;
-        this.triggerCollectionService = triggerCollectionService;
         this.gameLogService = gameLogService;
     }
 

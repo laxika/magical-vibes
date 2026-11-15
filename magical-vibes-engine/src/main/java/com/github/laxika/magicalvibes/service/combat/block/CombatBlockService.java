@@ -74,7 +74,6 @@ import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectCondit
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import java.util.*;
@@ -109,7 +108,6 @@ public class CombatBlockService {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final GraveyardTargetingService graveyardTargetingService;
     private final StaticEffectConditionResolver staticEffectConditionResolver;
-    private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
     private final PlayerInputService playerInputService;
     private final TriggeredAbilityStackService triggeredAbilityStackService;

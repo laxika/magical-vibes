@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -33,7 +32,6 @@ public class DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffectHandler
     private final GraveyardService graveyardService;
     private final PermanentRemovalService permanentRemovalService;
     private final GraveyardReturnSupport graveyardReturnSupport;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

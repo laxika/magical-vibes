@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.PutTriggeringSpellOnBottomThe
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateMayCastWithoutPayingManaEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -21,17 +20,14 @@ public class PutTriggeringSpellOnBottomThenRevealEffectHandler implements Normal
 
     private final GameLogService gameLogService;
     private final StateTriggerService stateTriggerService;
-    private final TriggerCollectionService triggerCollectionService;
     private final RevealUntilCardPredicateMayCastWithoutPayingManaEffectHandler revealHandler;
 
     public PutTriggeringSpellOnBottomThenRevealEffectHandler(
             GameLogService gameLogService,
             StateTriggerService stateTriggerService,
-            @Lazy TriggerCollectionService triggerCollectionService,
             RevealUntilCardPredicateMayCastWithoutPayingManaEffectHandler revealHandler) {
         this.gameLogService = gameLogService;
         this.stateTriggerService = stateTriggerService;
-        this.triggerCollectionService = triggerCollectionService;
         this.revealHandler = revealHandler;
     }
 

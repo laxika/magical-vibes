@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.FlipUntilLosePutCountersOnSou
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsAtCheckpoints;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -26,7 +25,6 @@ public class FlipUntilLosePutCountersOnSourceEffectHandler
     private final CoinFlipService coinFlipService;
     private final GameLogService gameLogService;
     private final PutCountersOnSourceEffectHandler putCountersOnSourceEffectHandler;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

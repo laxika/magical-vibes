@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -39,7 +38,6 @@ public class ConjureRandomCreatureWithManaValueEffectHandler implements NormalEf
     private final GameQueryService gameQueryService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final Map<Integer, List<CardPrinting>> candidatesByManaValue = new ConcurrentHashMap<>();
 
     @Override

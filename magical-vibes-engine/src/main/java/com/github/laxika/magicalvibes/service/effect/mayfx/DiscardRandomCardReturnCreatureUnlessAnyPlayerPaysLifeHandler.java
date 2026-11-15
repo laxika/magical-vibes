@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import java.util.List;
 import java.util.UUID;
@@ -33,7 +32,6 @@ public class DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeHandler
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final InputCompletionService inputCompletionService;
-    private final TriggerCollectionService triggerCollectionService;
     private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Autowired @Lazy

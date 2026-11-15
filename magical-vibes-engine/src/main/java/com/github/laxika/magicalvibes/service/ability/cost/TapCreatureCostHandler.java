@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,7 +27,6 @@ public class TapCreatureCostHandler implements PermanentChoiceCostHandler {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final UUID sourcePermanentId;
 
     /**
@@ -36,20 +34,17 @@ public class TapCreatureCostHandler implements PermanentChoiceCostHandler {
      * @param gameQueryService           used to check creature status
      * @param predicateEvaluationService used to evaluate the creature predicate
      * @param gameLogService       used to log and broadcast the tap action
-     * @param triggerCollectionService   used to fire "enchanted permanent becomes tapped" triggers
      * @param sourcePermanentId          the ability's source, excluded when {@code cost.excludeSelf()}
      *                                   ("tap an untapped creature other than this creature")
      */
     public TapCreatureCostHandler(TapCreatureCost cost, GameQueryService gameQueryService,
                                   PredicateEvaluationService predicateEvaluationService,
                                   GameLogService gameLogService,
-                                  TriggerCollectionService triggerCollectionService,
                                   UUID sourcePermanentId) {
         this.cost = cost;
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameLogService = gameLogService;
-        this.triggerCollectionService = triggerCollectionService;
         this.sourcePermanentId = sourcePermanentId;
     }
 

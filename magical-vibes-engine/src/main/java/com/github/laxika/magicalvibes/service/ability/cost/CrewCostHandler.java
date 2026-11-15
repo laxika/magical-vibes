@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.PowerBasedTapCost;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
 import java.util.List;
 import java.util.Objects;
@@ -34,18 +33,15 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
     private final PowerBasedTapCost cost;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final UUID sourcePermanentId;
     private int lastTappedCreaturePower = 1;
 
     public CrewCostHandler(PowerBasedTapCost cost, GameQueryService gameQueryService,
                            GameLogService gameLogService,
-                           TriggerCollectionService triggerCollectionService,
                            UUID sourcePermanentId) {
         this.cost = cost;
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
-        this.triggerCollectionService = triggerCollectionService;
         this.sourcePermanentId = sourcePermanentId;
     }
 

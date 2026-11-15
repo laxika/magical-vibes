@@ -37,7 +37,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -71,7 +70,6 @@ public class UntapStepService {
     private final PermanentRemovalService permanentRemovalService;
     private final UntapPreventionSupport untapPreventionSupport;
     private final PermanentCounterSupport permanentCounterSupport;
-    private final TriggerCollectionService triggerCollectionService;
     private final DayNightService dayNightService;
 
     public void snapshotUntappedLandsAtTurnStart(GameData gameData, UUID activePlayerId) {

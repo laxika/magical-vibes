@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RollTwoD20IgnoreLowerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,6 @@ public class RollTwoD20IgnoreLowerEffectHandler implements NormalEffectHandlerBe
 
     private final GameLogService gameLogService;
     private final D20RollService d20RollService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

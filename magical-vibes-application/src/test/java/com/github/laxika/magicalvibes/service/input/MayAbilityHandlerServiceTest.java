@@ -98,7 +98,6 @@ class MayAbilityHandlerServiceTest {
                 mock(BrilliantUltimatumSupport.class),
                 mock(MayAbilityTapCostService.class),
                 mayEffectHandlerRegistry,
-                mock(TriggerCollectionService.class),
                 mock(RagingRiverEffectHandler.class));
 
         player1 = new Player(PLAYER1_ID, "Alice");

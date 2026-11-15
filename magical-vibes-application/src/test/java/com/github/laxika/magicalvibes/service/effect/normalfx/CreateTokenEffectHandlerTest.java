@@ -68,8 +68,7 @@ class CreateTokenEffectHandlerTest {
         handler = new CreateTokenEffectHandler(
                 permanentControlSupport, gameQueryService, amountEvaluationService, tokenCopyHandler,
                 enchantedPermanentTokenCopyHandler,
-                chosenCreatureTokenCopyHandler,
-                triggerCollectionService, esixTokenReplacementSupport, null);
+                chosenCreatureTokenCopyHandler, esixTokenReplacementSupport, null);
     }
 
     @Test

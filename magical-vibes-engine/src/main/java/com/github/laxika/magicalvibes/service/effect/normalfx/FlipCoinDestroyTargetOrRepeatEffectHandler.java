@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinDestroyTargetOrRepeatEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.List;
 import java.util.UUID;
@@ -23,7 +22,6 @@ public class FlipCoinDestroyTargetOrRepeatEffectHandler implements NormalEffectH
     private final CoinFlipService coinFlipService;
     private final DestroyTargetPermanentEffectHandler destroyTargetPermanentEffectHandler;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveSuspendCounterFromExiledSpellEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -19,14 +18,11 @@ public class RemoveSuspendCounterFromExiledSpellEffectHandler implements NormalE
 
     private final GameLogService gameLogService;
     private final RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterHandler;
-    private final TriggerCollectionService triggerCollectionService;
 
     public RemoveSuspendCounterFromExiledSpellEffectHandler(GameLogService gameLogService,
-            RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterHandler,
-            @Lazy TriggerCollectionService triggerCollectionService) {
+            RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterHandler) {
         this.gameLogService = gameLogService;
         this.removeTimeCounterHandler = removeTimeCounterHandler;
-        this.triggerCollectionService = triggerCollectionService;
     }
 
     @Override

@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent.Kind;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.trigger.CounterTrigger;
@@ -55,14 +54,8 @@ public class PermanentCounterSupport {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
-    private TriggerCollectionService triggerCollectionService;
     private SagaChapterService sagaChapterService;
     private TriggeredAbilityStackService triggeredAbilityStackService;
-
-    @Autowired
-    void setTriggerCollectionService(@Lazy TriggerCollectionService triggerCollectionService) {
-        this.triggerCollectionService = triggerCollectionService;
-    }
 
     @Autowired
     void setSagaChapterService(@Lazy SagaChapterService sagaChapterService) {

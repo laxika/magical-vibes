@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -32,7 +31,6 @@ public class SpellbookDraftChoiceInteractionHandler
     private final CardRevealService cardRevealService;
     private final ExileService exileService;
     private final BattlefieldEntryService battlefieldEntryService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<PendingInteraction.SpellbookDraftChoice> handledType() {

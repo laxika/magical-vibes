@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -40,7 +39,6 @@ public class ReturnAurasFromGraveyardAttachedToCreaturesEffectHandler implements
     private final BattlefieldEntryService battlefieldEntryService;
     private final CreatureControlService creatureControlService;
     private final PermanentRemovalService permanentRemovalService;
-    private final TriggerCollectionService triggerCollectionService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;

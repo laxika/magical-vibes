@@ -5922,15 +5922,15 @@ public class AbilityActivationService {
         if (effect instanceof SacrificeAllMatchingPermanentsCost c) return new AllMatchingPermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction);
         if (effect instanceof SacrificePermanentsSequenceCost c) return new SequencePermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction, chosenSoFar, sourcePermanentId);
         if (effect instanceof ReturnMultiplePermanentsToHandCost c) return new MultiplePermanentReturnToHandCostHandler(c, predicateEvaluationService, bounceAction);
-        if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
-        if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, tapCostSupport.requiredCount(gameData, c, sourcePermanentId, xValue), predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
+        if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameLogService, sourcePermanentId);
+        if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, tapCostSupport.requiredCount(gameData, c, sourcePermanentId, xValue), predicateEvaluationService, gameLogService, sourcePermanentId);
         if (effect instanceof UntapMultiplePermanentsCost c) return new MultiplePermanentUntapCostHandler(
                 c, predicateEvaluationService, gameLogService, gameQueryService, sourcePermanentId,
                 abilityWithCostRequiresTap(gameData, sourcePermanentId, c), chosenSoFar);
         if (effect instanceof SacrificeXPermanentsCost c) return new SacrificeXPermanentsCostHandler(
                 c, xValue, predicateEvaluationService, gameQueryService, sacAction, sourcePermanentId);
-        if (effect instanceof TapTwoCreaturesSharingTypeCost c) return new TapTwoSharingCreatureTypeCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, chosenSoFar);
-        if (effect instanceof PowerBasedTapCost c) return new CrewCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, sourcePermanentId);
+        if (effect instanceof TapTwoCreaturesSharingTypeCost c) return new TapTwoSharingCreatureTypeCostHandler(c, gameQueryService, gameLogService, chosenSoFar);
+        if (effect instanceof PowerBasedTapCost c) return new CrewCostHandler(c, gameQueryService, gameLogService, sourcePermanentId);
         if (effect instanceof RemoveCounterFromControlledPermanentCost c) return new RemoveCounterFromPermanentCostHandler(
                 c, gameLogService, predicateEvaluationService, sourcePermanentId);
         if (effect instanceof RemoveCounterFromControlledCreatureCost c) return new RemoveCounterFromCreatureCostHandler(c, gameQueryService, gameLogService);

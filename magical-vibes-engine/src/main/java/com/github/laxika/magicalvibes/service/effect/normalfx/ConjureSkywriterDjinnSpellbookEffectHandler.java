@@ -59,7 +59,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.stereotype.Component;
 
@@ -80,14 +79,11 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
 
     private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
 
     public ConjureSkywriterDjinnSpellbookEffectHandler(AmountEvaluationService amountEvaluationService,
-                                                        GameLogService gameLogService,
-                                                        TriggerCollectionService triggerCollectionService) {
+                                                        GameLogService gameLogService) {
         this.amountEvaluationService = amountEvaluationService;
         this.gameLogService = gameLogService;
-        this.triggerCollectionService = triggerCollectionService;
     }
 
     @Override
