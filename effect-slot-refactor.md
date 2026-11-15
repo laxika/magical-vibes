@@ -559,6 +559,14 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Ledger: every line is a record gained (emblems' triggering permanent, snapshot, owner, toughness, mana value; draw records' "that player" and drawn card), random (drawn cards, discards, clashes) or a new test; no ability gained or lost in an existing test.
 - Open: C49.
 
+**R1 follow-up (found by the full card suite).**
+- R1 read "doesn't look back" as "the trigger's `from` isn't exactly the battlefield", so Reyhan's "a creature you control … is put into the command zone", written on the "from anywhere" factory, stopped seeing its own move. A leaves-the-battlefield ability is one whose text names the battlefield among the zones its object leaves (CR 603.6c); only it, a sacrifice and a move to a hand or library look back (CR 603.10a). This is now `ZoneChangeTrigger.leavesTheBattlefieldAbility` / `looksBackOnAPermanentLeaving`; `TriggerMatcher.looksBack` and the dead `leavesBattlefield` are gone.
+- "From anywhere other than …" is "from anywhere" with `excludedFrom` (`notFrom`), so it never names the battlefield (Voracious Brood, Syr Konrad).
+- Reyhan: `Triggers.putIntoCommandZoneFrom(BATTLEFIELD, creature with counters, YOU_CONTROL)`; it read `YOU_OWN`.
+- `ZoneChangeRequests` let a "put into the command zone" ability trigger only for its controller's own commander, which is Myth Unbound's "your commander" applied to every card. Myth Unbound now has that as its filter (`PermanentIsCommanderPredicate(true)`), and the matcher judges a card's filter for the ability's controller.
+- Rules fix: `ReyhanLastOfTheAbzanTest`'s commander case (the suite's one failure) and a new stolen-commander case fail before.
+- Ledger (3,568 zone-change classes): Reyhan's records gained; 12 records from the new route watch; the rest random (conjured, drafted and drawn cards, coin flips).
+
 **R2 (part 1: keyword abilities).**
 - Prowess, evolve and increment are `KeywordTriggers` abilities (CR 702.108a, 702.100a, 702.191a) that `TriggerIndex.permanentAbilities` and the zone-change listing add once per instance of the keyword the permanent has as the layers leave it (CR 702.108b, 702.100d, 702.191b); the cast reader and the trigger pipeline match them like any ability. The `TriggerCollectionService` prowess loop, `collectIncrementTriggers`, `putEvolveAbility`, `IncrementTriggerEffect` and its handler are gone.
 - Increment's "if" is `AllOf(SourceIsCreature, AnyOf(SpellManaSpentGreaterThanSourcePower, SpellManaSpentGreaterThanSourceToughness))` around `PutCountersOnSelfEffect`, judged as it triggers and as it resolves (CR 603.4) on the entry's triggering spell; the mana spent is no longer stamped as the entry's X.

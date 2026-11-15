@@ -115,9 +115,6 @@ public final class Triggers {
     public static final PermanentPredicate ARTIFACT_TOKEN = new PermanentAllOfPredicate(List.of(
             new PermanentIsArtifactPredicate(), new PermanentIsTokenPredicate()));
 
-    /** Every zone but the battlefield and the graveyard: "from anywhere other than the battlefield". */
-    private static final Set<Zone> NOT_BATTLEFIELD = EnumSet.complementOf(EnumSet.of(Zone.BATTLEFIELD, Zone.GRAVEYARD));
-
     private Triggers() {
     }
 
@@ -268,14 +265,16 @@ public final class Triggers {
     /** "Whenever [a filter card] is put into a graveyard from anywhere other than the battlefield". */
     public static ZoneChangeTrigger putIntoGraveyardFromAnywhereButBattlefield(PermanentPredicate filter,
                                                                                ObjectRelation relation) {
-        return new ZoneChangeTrigger(relation, filter, NOT_BATTLEFIELD, Zone.GRAVEYARD, Set.of());
+        return putIntoGraveyardFromAnywhereBut(Zone.BATTLEFIELD, filter, relation);
     }
 
-    /** "Whenever [a filter card] is put into a graveyard from anywhere but [zone]". */
+    /**
+     * "Whenever [a filter card] is put into a graveyard from anywhere but [zone]", still a "from anywhere" ability,
+     * never a leaves-the-battlefield one (CR 603.6c).
+     */
     public static ZoneChangeTrigger putIntoGraveyardFromAnywhereBut(Zone except, PermanentPredicate filter,
                                                                     ObjectRelation relation) {
-        return new ZoneChangeTrigger(relation, filter, EnumSet.complementOf(EnumSet.of(except, Zone.GRAVEYARD)),
-                Zone.GRAVEYARD, Set.of());
+        return putIntoGraveyardFromAnywhere(filter, relation).notFrom(Set.of(except));
     }
 
     /** "Whenever [a filter card] is milled": put into a graveyard from a library by a mill. */
@@ -326,6 +325,15 @@ public final class Triggers {
     /** "Whenever [a filter card] is put into the command zone from anywhere". */
     public static ZoneChangeTrigger putIntoCommandZone(PermanentPredicate filter, ObjectRelation relation) {
         return new ZoneChangeTrigger(relation, filter, Set.of(), Zone.COMMAND, Set.of());
+    }
+
+    /**
+     * "Whenever [a filter object] is put into the command zone from [zone]": from the battlefield for "a creature you
+     * control is put into the command zone", a leaves-the-battlefield ability (CR 603.6c).
+     */
+    public static ZoneChangeTrigger putIntoCommandZoneFrom(Zone from, PermanentPredicate filter,
+                                                           ObjectRelation relation) {
+        return new ZoneChangeTrigger(relation, filter, Set.of(from), Zone.COMMAND, Set.of());
     }
 
     /**

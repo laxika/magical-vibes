@@ -20,7 +20,10 @@ import java.util.Set;
  *                 (CR 603.10a), or {@code null} for any object: "a nontoken creature". The source of a
  *                 "this or another" relation matches whatever it was. For {@code THIS} it is a condition on
  *                 the source as it last existed: "when this creature dies, if it had a -1/-1 counter on it".
- * @param from     the zones it may leave; empty for any zone, including from outside the game
+ * @param from     the zones it may leave, as its text names them; empty for "from anywhere", including from outside
+ *                 the game
+ * @param excludedFrom the zones a "from anywhere" move must not leave: {@code BATTLEFIELD} for "from anywhere other
+ *                 than the battlefield"
  * @param to       the zone it must go to, or {@code null} for any
  * @param excludedTo the zones it must not go to: {@code GRAVEYARD} for "leaves the battlefield without dying"
  * @param causes   how it must move; empty for any way
@@ -30,15 +33,19 @@ import java.util.Set;
  * @param castingSpell what the spell its controller is casting as it moves must be, or {@code null} for a move at any
  *                 time: "when you sacrifice this while casting a spell with emerge" (CR 601.2)
  */
-public record ZoneChangeTrigger(ObjectRelation relation, PermanentPredicate filter, Set<Zone> from, Zone to,
-                                Set<Zone> excludedTo, Set<ZoneChangeCause> causes, PlayerRelation causedBy,
-                                boolean duringYourTurn, CardPredicate castingSpell)
+public record ZoneChangeTrigger(ObjectRelation relation, PermanentPredicate filter, Set<Zone> from,
+                                Set<Zone> excludedFrom, Zone to, Set<Zone> excludedTo, Set<ZoneChangeCause> causes,
+                                PlayerRelation causedBy,                                boolean duringYourTurn, CardPredicate castingSpell)
         implements Trigger {
 
     public ZoneChangeTrigger {
         Objects.requireNonNull(relation, "relation");
         Objects.requireNonNull(causedBy, "causedBy");
         from = from.isEmpty() ? Set.of() : Collections.unmodifiableSet(EnumSet.copyOf(from));
+        excludedFrom = excludedFrom.isEmpty() ? Set.of() : Collections.unmodifiableSet(EnumSet.copyOf(excludedFrom));
+        if (!from.isEmpty() && !excludedFrom.isEmpty()) {
+            throw new IllegalArgumentException("Only a move from anywhere excludes zones it leaves");
+        }
         excludedTo = excludedTo.isEmpty() ? Set.of() : Collections.unmodifiableSet(EnumSet.copyOf(excludedTo));
         causes = causes.isEmpty() ? Set.of() : Collections.unmodifiableSet(EnumSet.copyOf(causes));
         if (to != null && from.equals(Set.of(to))) {
@@ -49,41 +56,49 @@ public record ZoneChangeTrigger(ObjectRelation relation, PermanentPredicate filt
     /** A trigger for a move caused by anything, at any time. */
     public ZoneChangeTrigger(ObjectRelation relation, PermanentPredicate filter, Set<Zone> from, Zone to,
                              Set<ZoneChangeCause> causes) {
-        this(relation, filter, from, to, Set.of(), causes, PlayerRelation.ANY, false, null);
+        this(relation, filter, from, Set.of(), to, Set.of(), causes, PlayerRelation.ANY, false, null);
     }
 
     /** This trigger, for a move to any zone but {@code zones}. */
     public ZoneChangeTrigger notTo(Set<Zone> zones) {
-        return new ZoneChangeTrigger(relation, filter, from, to, zones, causes, causedBy, duringYourTurn,
-                castingSpell);
+        return new ZoneChangeTrigger(relation, filter, from, excludedFrom, to, zones, causes, causedBy,
+                duringYourTurn,                castingSpell);
+    }
+
+    /** This "from anywhere" trigger, for a move from any zone but {@code zones}: "from anywhere other than ...". */
+    public ZoneChangeTrigger notFrom(Set<Zone> zones) {
+        return new ZoneChangeTrigger(relation, filter, from, zones, to, excludedTo, causes, causedBy,
+                duringYourTurn,                castingSpell);
     }
 
     /** This trigger, for a move a resolving spell or ability that {@code player} controls caused. */
     public ZoneChangeTrigger causedBy(PlayerRelation player) {
-        return new ZoneChangeTrigger(relation, filter, from, to, excludedTo, causes, player, duringYourTurn,
-                castingSpell);
+        return new ZoneChangeTrigger(relation, filter, from, excludedFrom, to, excludedTo, causes, player,
+                duringYourTurn,                castingSpell);
     }
 
     /** This trigger with {@code moved} as what the moving object must be. */
     public ZoneChangeTrigger withFilter(PermanentPredicate moved) {
-        return new ZoneChangeTrigger(relation, moved, from, to, excludedTo, causes, causedBy, duringYourTurn,
-                castingSpell);
+        return new ZoneChangeTrigger(relation, moved, from, excludedFrom, to, excludedTo, causes, causedBy,
+                duringYourTurn,                castingSpell);
     }
 
     /** This trigger, for a move during any turn. */
     public ZoneChangeTrigger anyTurn() {
-        return new ZoneChangeTrigger(relation, filter, from, to, excludedTo, causes, causedBy, false, castingSpell);
+        return new ZoneChangeTrigger(relation, filter, from, excludedFrom, to, excludedTo, causes, causedBy, false,
+                castingSpell);
     }
 
     /** This trigger, for a move during its controller's turn only. */
     public ZoneChangeTrigger onlyDuringYourTurn() {
-        return new ZoneChangeTrigger(relation, filter, from, to, excludedTo, causes, causedBy, true, castingSpell);
+        return new ZoneChangeTrigger(relation, filter, from, excludedFrom, to, excludedTo, causes, causedBy, true,
+                castingSpell);
     }
 
     /** This trigger, for a move while its controller is casting a spell that {@code spell} matches (CR 601.2). */
     public ZoneChangeTrigger whileCasting(CardPredicate spell) {
-        return new ZoneChangeTrigger(relation, filter, from, to, excludedTo, causes, causedBy, duringYourTurn,
-                Objects.requireNonNull(spell, "spell"));
+        return new ZoneChangeTrigger(relation, filter, from, excludedFrom, to, excludedTo, causes, causedBy,
+                duringYourTurn,                Objects.requireNonNull(spell, "spell"));
     }
 
     /** A trigger whose moving object may be anything that relates to the source as {@code relation} says. */
@@ -102,9 +117,23 @@ public record ZoneChangeTrigger(ObjectRelation relation, PermanentPredicate filt
                 && !entersBattlefield();
     }
 
-    /** Whether it watches a permanent leave the battlefield, for any destination or one (CR 603.6c). */
-    public boolean leavesBattlefield() {
-        return from.equals(Set.of(Zone.BATTLEFIELD));
+    /**
+     * Whether it is a leaves-the-battlefield ability (CR 603.6c): its text names the battlefield among the zones its
+     * object leaves. One that triggers on a card put into a zone "from anywhere" names none, so it never is, even for
+     * a move from the battlefield.
+     */
+    public boolean leavesTheBattlefieldAbility() {
+        return from.contains(Zone.BATTLEFIELD);
+    }
+
+    /**
+     * Whether it looks back in time when a permanent leaving the battlefield meets it (CR 603.10a): as a
+     * leaves-the-battlefield ability, an ability that triggers on a sacrifice, or one that triggers on an object put
+     * into a hand or a library. Otherwise it is judged on the game as the move left it.
+     */
+    public boolean looksBackOnAPermanentLeaving() {
+        return leavesTheBattlefieldAbility() || causes.contains(ZoneChangeCause.SACRIFICE)
+                || to == Zone.HAND || to == Zone.LIBRARY;
     }
 
     /** Whether it watches a permanent enter the battlefield (CR 603.6a). */
@@ -137,14 +166,19 @@ public record ZoneChangeTrigger(ObjectRelation relation, PermanentPredicate filt
      * permanent's entry and which the code inspecting a card's enters abilities still reads through the legacy view.
      */
     public boolean ownEntry() {
-        return relation == ObjectRelation.THIS && filter == null && from.isEmpty() && to == Zone.BATTLEFIELD
+        return relation == ObjectRelation.THIS && filter == null && from.isEmpty() && excludedFrom.isEmpty()
+                && to == Zone.BATTLEFIELD
                 && excludedTo.isEmpty() && causes.isEmpty() && causedBy == PlayerRelation.ANY && !duringYourTurn
                 && castingSpell == null;
     }
 
-    /** Whether a move from {@code fromZone} to {@code toZone} for {@code cause} is this trigger's kind of move. */
+    /**
+     * Whether a move from {@code fromZone} ({@code null} from outside the game) to {@code toZone} for {@code cause} is
+     * this trigger's kind of move.
+     */
     public boolean matchesMove(Zone fromZone, Zone toZone, ZoneChangeCause cause) {
         return (from.isEmpty() || from.contains(fromZone))
+                && (fromZone == null || !excludedFrom.contains(fromZone))
                 && (to == null || to == toZone)
                 && !excludedTo.contains(toZone)
                 && (causes.isEmpty() || causes.contains(cause));

@@ -189,20 +189,14 @@ public class ZoneChangeRequests {
 
     /**
      * Whether the zone changes {@code events} are {@code candidate}'s ability's event beyond what the trigger pipeline
-     * judged, as its trigger {@code trigger} reads: a card of yours put into the command zone is "your commander" only
-     * when it is one of your commanders (Myth Unbound), and "for the first time each turn" counts the events of
+     * judged, as its trigger {@code trigger} reads: "for the first time each turn" counts the events of
      * its kind this turn (the tokens you created, Akim, the Soaring Wind; the land cards put into your graveyard,
      * Crawling Sensation): only an event that holds all of them triggers it. Entering permanents a static ability
      * keeps from triggering abilities (Elesh Norn, Mother of Machines) are the stack door's to judge.
      */
     private boolean zoneChangeEventMatches(GameData gameData, ZoneChangeTrigger trigger, TriggerCandidate candidate,
                                            List<ZoneChangeEvent> events) {
-        ZoneChangeEvent event = events.getFirst();
         UUID controllerId = candidate.controllerId();
-        if (trigger.to() == Zone.COMMAND && (candidate.sourcePermanent() == null
-                || !isCommanderOf(gameData, event.card(), controllerId))) {
-            return false;
-        }
         if (candidate.ability().options().limit() != TriggerLimit.FIRST_TIME_EACH_TURN) {
             return true;
         }
@@ -405,14 +399,6 @@ public class ZoneChangeRequests {
         Permanent named = new Permanent(perm);
         named.setCard(candidate.sourceCard());
         return named;
-    }
-
-    /** Whether {@code card} is one of {@code ownerId}'s commanders, either face of it. */
-    private static boolean isCommanderOf(GameData gameData, Card card, UUID ownerId) {
-        return gameData.playerCommanders.getOrDefault(ownerId, List.of()).stream()
-                .anyMatch(commander -> commander.getId().equals(card.getId())
-                        || commander.getBackFaceCard() != null
-                        && commander.getBackFaceCard().getId().equals(card.getId()));
     }
 
     /** {@code ability} of {@code perm} read through its text changes (Layer 3, CR 612.1). */

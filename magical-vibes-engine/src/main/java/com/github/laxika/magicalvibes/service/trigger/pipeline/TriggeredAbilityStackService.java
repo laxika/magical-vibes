@@ -1549,7 +1549,7 @@ public class TriggeredAbilityStackService extends StackDoor {
     private static boolean exileOnly(TriggeredAbility ability) {
         return ability.conditions().stream().map(TriggerCondition::trigger)
                 .filter(ZoneChangeTrigger.class::isInstance).map(ZoneChangeTrigger.class::cast)
-                .filter(ZoneChangeTrigger::leavesBattlefield)
+                .filter(ZoneChangeTrigger::leavesTheBattlefieldAbility)
                 .allMatch(trigger -> trigger.to() == Zone.EXILE);
     }
 

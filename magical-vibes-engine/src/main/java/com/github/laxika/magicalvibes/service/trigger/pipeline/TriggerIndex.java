@@ -259,7 +259,7 @@ public class TriggerIndex {
     /** Whether one of {@code ability}'s zone-change trigger conditions looks back in time (CR 603.10a). */
     private static boolean looksBackOnAZoneChange(TriggeredAbility ability) {
         return ability.conditions().stream().anyMatch(condition ->
-                condition.trigger() instanceof ZoneChangeTrigger trigger && TriggerMatcher.looksBack(trigger));
+                condition.trigger() instanceof ZoneChangeTrigger trigger && trigger.looksBackOnAPermanentLeaving());
     }
 
     /**

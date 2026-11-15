@@ -1662,6 +1662,16 @@ class TriggerRouteRecordTest extends BaseCardTest {
                             test.gd.playerCommanders.put(test.player1.getId(), new ArrayList<>(List.of(commander)));
                             test.removal(removal -> removal.removePermanentToCommandZone(test.gd, permanent));
                         }),
+                watch("a creature you control is put into the command zone", "putIntoCommandZoneFrom",
+                        () -> Triggers.putIntoCommandZoneFrom(Zone.BATTLEFIELD, Triggers.CREATURE,
+                                ObjectRelation.YOU_CONTROL), CardType.ENCHANTMENT,
+                        (test, cards) -> {
+                            test.fixturePermanents(cards);
+                            Card commander = card("Commander", CardType.CREATURE);
+                            Permanent permanent = test.addCreatureReady(test.player1, commander);
+                            test.gd.playerCommanders.put(test.player1.getId(), new ArrayList<>(List.of(commander)));
+                            test.removal(removal -> removal.removePermanentToCommandZone(test.gd, permanent));
+                        }),
                 watch("this enters from a graveyard", "entersFrom",
                         () -> Triggers.entersFrom(Zone.GRAVEYARD, null, ObjectRelation.THIS), CardType.CREATURE,
                         TriggerRouteRecordTest::fixturesEnterFromGraveyard),

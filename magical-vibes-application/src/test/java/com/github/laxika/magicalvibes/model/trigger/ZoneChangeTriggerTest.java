@@ -32,6 +32,28 @@ class ZoneChangeTriggerTest {
     private static final CardEffect GAIN = new GainLifeEffect(2);
 
     @Test
+    void aTriggerThatNamesTheBattlefieldLooksBackOnAPermanentLeavingAndFromAnywhereDoesNot() {
+        assertThat(Triggers.putIntoCommandZoneFrom(Zone.BATTLEFIELD, null, ObjectRelation.YOU_CONTROL)
+                .looksBackOnAPermanentLeaving()).isTrue();
+        assertThat(Triggers.exiledFrom(Set.of(Zone.GRAVEYARD, Zone.BATTLEFIELD), null, ObjectRelation.ANY)
+                .looksBackOnAPermanentLeaving()).isTrue();
+        assertThat(Triggers.putIntoGraveyardFromAnywhere(null, ObjectRelation.ANY).looksBackOnAPermanentLeaving())
+                .isFalse();
+        assertThat(Triggers.putIntoCommandZone(null, ObjectRelation.YOU_OWN).looksBackOnAPermanentLeaving()).isFalse();
+    }
+
+    @Test
+    void fromAnywhereButAZoneIsStillFromAnywhere() {
+        ZoneChangeTrigger trigger = Triggers.putIntoGraveyardFromAnywhereBut(Zone.LIBRARY, null, ObjectRelation.ANY);
+
+        assertThat(trigger.looksBackOnAPermanentLeaving()).isFalse();
+        assertThat(trigger.matchesMove(Zone.BATTLEFIELD, Zone.GRAVEYARD, null)).isTrue();
+        assertThat(trigger.matchesMove(Zone.HAND, Zone.GRAVEYARD, null)).isTrue();
+        assertThat(trigger.matchesMove(Zone.LIBRARY, Zone.GRAVEYARD, null)).isFalse();
+        assertThat(trigger.matchesMove(null, Zone.GRAVEYARD, null)).isTrue();
+    }
+
+    @Test
     void aSourcesOwnLookBackMoveFunctionsFromTheZoneItLeft() {
         assertThat(Triggers.dies(ObjectRelation.THIS).looksBack()).isTrue();
         assertThat(Triggers.dies(ObjectRelation.THIS).defaultZones()).isEqualTo(AbilityZones.BATTLEFIELD);

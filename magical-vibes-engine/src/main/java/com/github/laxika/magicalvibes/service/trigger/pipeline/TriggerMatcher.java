@@ -59,7 +59,6 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
-import java.util.Set;
 import java.util.UUID;
 
 /** Decides whether a rules event meets a candidate ability's trigger condition. No per-slot code. */
@@ -276,15 +275,17 @@ final class TriggerMatcher {
         if (trigger.filter() == null) {
             return true;
         }
+        // A card is judged in the game for the ability's controller: "your commander" (Myth Unbound).
+        FilterContext cardContext = FilterContext.of(gameData).withSourceControllerId(candidate.controllerId());
         if (event.permanent() == null) {
-            return predicates.matchesPermanentPredicate(new Permanent(event.card()), trigger.filter(), null);
+            return predicates.matchesPermanentPredicate(new Permanent(event.card()), trigger.filter(), cardContext);
         }
-        if (event.leftBattlefield() && !looksBack(trigger)) {
+        if (event.leftBattlefield() && !trigger.looksBackOnAPermanentLeaving()) {
             // "Whenever a nonblack card is put into a graveyard from anywhere" is never a leaves-the-battlefield
             // ability (CR 603.6c), so it doesn't look back (CR 603.10a): the card is judged as it is in its new zone.
             Card arrived = event.permanent().getOriginalCard() != null ? event.permanent().getOriginalCard()
                     : event.card();
-            return predicates.matchesPermanentPredicate(new Permanent(arrived), trigger.filter(), null);
+            return predicates.matchesPermanentPredicate(new Permanent(arrived), trigger.filter(), cardContext);
         }
         Permanent watcher = candidate.sourceAsPermanent();
         FilterContext context = FilterContext.of(gameData)
@@ -300,18 +301,6 @@ final class TriggerMatcher {
                     live != null ? live : event.permanent(), context);
         }
         return departedMatches(predicates, trigger.filter(), event.permanent(), event.attachments(), context);
-    }
-
-    /**
-     * Whether {@code trigger}, met by a permanent leaving the battlefield, looks back in time (CR 603.10a): a
-     * leaves-the-battlefield ability (CR 603.6c), one that triggers on a sacrifice, or one that triggers on an object
-     * put into a hand or a library. An ability that triggers on a card put into a zone "from anywhere" is never a
-     * leaves-the-battlefield ability (CR 603.6c), so it is judged on the game as the event left it.
-     */
-    static boolean looksBack(ZoneChangeTrigger trigger) {
-        return trigger.from().equals(Set.of(Zone.BATTLEFIELD))
-                || trigger.causes().contains(ZoneChangeCause.SACRIFICE)
-                || trigger.to() == Zone.HAND || trigger.to() == Zone.LIBRARY;
     }
 
     private static Permanent onBattlefield(GameData gameData, UUID permanentId) {

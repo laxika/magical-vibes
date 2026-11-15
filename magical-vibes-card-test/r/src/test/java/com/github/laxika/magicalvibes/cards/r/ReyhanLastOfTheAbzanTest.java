@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -81,6 +82,29 @@ class ReyhanLastOfTheAbzanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A commander its owner's opponent controls put into the command zone triggers the controller's Reyhan")
+    void triggersForACreatureYouControlButDontOwn() {
+        gd.format = DeckFormat.COMMANDER;
+        GrizzlyBears commander = new GrizzlyBears();
+        commander.setOwnerId(player2.getId());
+        commander.freeze();
+        gd.makeCommander(player2.getId(), commander);
+        gd.playerCommandZones.put(player2.getId(), new ArrayList<>());
+
+        Permanent reyhan = addCreatureReady(player1, new ReyhanLastOfTheAbzan());
+        reyhan.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent stolen = addCreatureReady(player1, commander);
+        stolen.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToCommandZone(gd, stolen));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
+                .validIds()).contains(target.getId());
     }
 
     private void destroyWithFlameJavelin(Permanent target) {
