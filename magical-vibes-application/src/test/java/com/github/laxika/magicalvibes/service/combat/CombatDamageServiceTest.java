@@ -1435,7 +1435,6 @@ class CombatDamageServiceTest {
             Permanent equipment = new Permanent(equipmentCard);
             equipment.setAttachedTo(creature.getId());
             gameData.playerBattlefields.get(player2Id).add(equipment);
-            when(triggerCollectionService.needsSlotBySlotTargetSelection(equipmentCard)).thenReturn(true);
 
             combatDamageService.resolveCombatDamage(gameData);
 

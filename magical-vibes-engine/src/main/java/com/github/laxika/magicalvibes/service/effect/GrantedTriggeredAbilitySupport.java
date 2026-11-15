@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -21,40 +19,13 @@ import org.springframework.stereotype.Component;
 /**
  * Collects triggered abilities granted continuously via {@link GrantTriggeredAbilityEffect}
  * (e.g. Tandem Lookout granting its soulbond pair "Whenever this creature deals damage to an
- * opponent, draw a card"). Trigger-collection sites append these next to the permanent's own
- * {@code EffectSlot} effects.
+ * opponent, draw a card"). The trigger pipeline lists these next to the permanent's own abilities.
  */
 @Component
 @RequiredArgsConstructor
 public class GrantedTriggeredAbilitySupport {
 
     private final GameQueryService gameQueryService;
-
-    public List<CardEffect> grantedTriggeredEffects(GameData gameData, Permanent permanent, EffectSlot slot) {
-        return grantedTriggeredEffects(gameData, permanent, (UUID) null, slot);
-    }
-
-    /**
-     * Controller-aware form for collecting abilities from a permanent snapshot after it has left
-     * the battlefield.
-     */
-    public List<CardEffect> grantedTriggeredEffects(
-            GameData gameData, Permanent permanent, UUID controllerId, EffectSlot slot) {
-        return grantedTriggeredEffects(gameData, permanent,
-                gameQueryService.computeStaticBonus(gameData, permanent, controllerId), slot);
-    }
-
-    /**
-     * Form for callers that already hold the permanent's static bonus for the current game state,
-     * sparing a second layered query.
-     */
-    public List<CardEffect> grantedTriggeredEffects(
-            GameData gameData, Permanent permanent, GameQueryService.StaticBonus staticBonus, EffectSlot slot) {
-        return grantedTriggeredAbilities(gameData, permanent, staticBonus,
-                ability -> LegacySlots.slotOf(ability) == slot).stream()
-                .map(ability -> ability.effects().getFirst().effect())
-                .toList();
-    }
 
     /**
      * The "when this enters" abilities ({@link TriggeredAbility#hasOwnEntry()}) that other permanents' static abilities

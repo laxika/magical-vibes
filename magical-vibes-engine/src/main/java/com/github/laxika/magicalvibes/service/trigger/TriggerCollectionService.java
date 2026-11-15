@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.BendingType;
 import com.github.laxika.magicalvibes.model.Boon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -14,7 +13,6 @@ import com.github.laxika.magicalvibes.model.DelayedEffectOnDeath;
 import com.github.laxika.magicalvibes.model.DelayedReturnOnDeath;
 import com.github.laxika.magicalvibes.model.DelayedSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -109,7 +107,6 @@ import com.github.laxika.magicalvibes.model.rules.PermanentChange;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
-import com.github.laxika.magicalvibes.model.rules.RulesObserver;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.rules.TargetEvent;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
@@ -124,16 +121,12 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
-import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
-import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachedCreatureBecomesCopyOfExiledCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardNameAtResolutionEffectHandler;
@@ -141,9 +134,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.TargetRedirectionS
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellTriggers;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerCandidate;
@@ -151,15 +142,12 @@ import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityR
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -191,10 +179,6 @@ public class TriggerCollectionService {
     private static final TriggeredAbility INCREMENT_ABILITY = new TriggeredAbility(Triggers.youCastSpell(),
             new IncrementTriggerEffect());
 
-    private final TriggerCollectorRegistry registry;
-
-    private final GameOutcomeService gameOutcomeService;
-
     private final PlayerInputService playerInputService;
 
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
@@ -205,19 +189,13 @@ public class TriggerCollectionService {
 
     private final TargetLegalityService targetLegalityService;
 
-    private final ValidTargetService validTargetService;
-
     private final ConditionEvaluationService conditionEvaluationService;
-
-    private final AmountEvaluationService amountEvaluationService;
 
     private final GameLogService gameLogService;
 
     private final ETBTokenTargetService etbTokenTargetService;
 
     private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
-
-    private final GraveyardTargetingSupport graveyardTargetingSupport;
 
     @Autowired
     @Lazy
@@ -226,9 +204,6 @@ public class TriggerCollectionService {
     @Autowired
     @Lazy
     private TriggeredAbilityStackService triggeredAbilityStackService;
-
-    @Autowired
-    private ObjectProvider<StateTriggerService> stateTriggerService;
 
     @Autowired
     private ObjectProvider<VisualCueService> visualCueService;
@@ -244,10 +219,6 @@ public class TriggerCollectionService {
     @Autowired
     @Lazy
     private SpellTriggers spellTriggers;
-
-    public List<CardEffect> grantedTriggeredEffects(GameData gameData, Permanent permanent, EffectSlot slot) {
-        return grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, permanent, slot);
-    }
 
     /** {@link GrantedTriggeredAbilitySupport#grantedOwnEntryAbilities}. */
     public List<TriggeredAbility> grantedOwnEntryAbilities(GameData gameData, Permanent permanent) {
@@ -1223,25 +1194,6 @@ public class TriggerCollectionService {
     }
 
     /**
-     * The graveyard, hand and command-zone cast readers judge no limit, and the hand and command-zone readers and the
-     * graveyard exhaust reader no intervening "if" either; a card with one there fails loudly instead of triggering
-     * wrongly.
-     */
-    private static void requireNoOptions(TriggeredAbility ability, Card card) {
-        if (!ability.options().equals(TriggerOptions.DEFAULT)) {
-            throw new IllegalStateException(card.getName() + "'s triggered ability has options its zone's reader "
-                    + "doesn't judge: " + ability.options());
-        }
-    }
-
-    private static void requireNoLimit(TriggeredAbility ability, Card card) {
-        if (ability.options().limit() != TriggerLimit.NONE) {
-            throw new IllegalStateException(card.getName() + "'s triggered ability has a limit its reader doesn't "
-                    + "judge: " + ability.options());
-        }
-    }
-
-    /**
      * Completes the controller's dungeon when {@code departedEntry} is a bottom-room ability and no
      * other room ability of that dungeon is still on the stack (CR 309.6, CR 309.7). Called when the
      * ability resolves, is countered, or is removed for having no legal target, so the dungeon is
@@ -1671,17 +1623,6 @@ public class TriggerCollectionService {
                         && commander.getBackFaceCard().getId().equals(card.getId()));
     }
 
-    /** Whether one of {@code effects}, an ability's, declares a target of its own. */
-    private static boolean declaresTarget(List<CardEffect> effects) {
-        return effects.stream().anyMatch(effect -> effect.targetSpec().declaredTarget() != null);
-    }
-
-    /** Whether every effect of {@code effects} that declares a target admits no permanent: a player alone is offered. */
-    private static boolean declaredTargetsArePlayers(List<CardEffect> effects) {
-        return effects.stream().filter(effect -> effect.targetSpec().declaredTarget() != null)
-                .noneMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-    }
-
     public void checkBecomesTargetOfSpellTriggers(GameData gameData) {
         if (gameData.stack.isEmpty()) return;
         StackEntry spellEntry = null;
@@ -1772,10 +1713,6 @@ public class TriggerCollectionService {
         etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
     }
 
-    public boolean needsSlotBySlotTargetSelection(Card card) {
-        return etbTokenTargetService.needsSlotBySlotTargetSelection(card);
-    }
-
     /**
      * Checks becomes-target triggers for activated/triggered abilities that target permanents.
      * Must be called after an ability is pushed onto the stack with a target permanent.
@@ -1841,10 +1778,6 @@ public class TriggerCollectionService {
         gameLogService.append(gameData, GameLog.cardTextCard(
                 randomizer[0].getCard(), " chooses the target of ", entry.getCard(), " at random."));
     }
-
-    /** Fires triggers watching a creature controlled by a player's creatures fighting. */
-
-    /** Records that {@code exertedCreatureId} was exerted this turn and fires its controller's exert triggers. */
 
     /**
      * Puts {@code watcher}'s ability, a delayed triggered ability with a stated duration (CR 603.7b), on the stack as
@@ -1915,15 +1848,6 @@ public class TriggerCollectionService {
     private void consumeLinkedXAbilityCopies(GameData gameData, UUID playerId, int count) {
         gameData.pendingNextXActivatedAbilityCopyThisTurnCount.computeIfPresent(playerId,
                 (id, pendingCount) -> pendingCount - count > 0 ? pendingCount - count : null);
-    }
-
-    /** The filter context of a predicate {@code watcher}, a permanent with a triggered ability, judges. */
-    private static FilterContext watcherFilterContext(GameData gameData, Permanent watcher, UUID watcherControllerId) {
-        return FilterContext.of(gameData)
-                .withSourceCardId(watcher.getOriginalCard().getId())
-                .withSourceControllerId(watcherControllerId)
-                .withSourcePermanentId(watcher.getId())
-                .withSourcePermanentSnapshot(watcher);
     }
 
     /**
@@ -2084,8 +2008,6 @@ public class TriggerCollectionService {
         }
     }
 
-    /** Fires triggers when an opponent pays mana imposed by a spell or permanent controlled by a player. */
-
     public void processNextAttackTriggerTarget(GameData gameData) {
         triggeredAbilityQueueService.processNextAttackTriggerTarget(gameData);
     }
@@ -2160,8 +2082,6 @@ public class TriggerCollectionService {
     public void processNextSagaChapterGraveyardTarget(GameData gameData) {
         triggeredAbilityQueueService.processNextSagaChapterGraveyardTarget(gameData);
     }
-
-    /** Fires triggers for a creature controlled by a player conniving. */
 
     public static boolean predicateContainsHasTarget(com.github.laxika.magicalvibes.model.filter.StackEntryPredicate predicate) {
         if (predicate instanceof com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate) {
@@ -2242,16 +2162,6 @@ public class TriggerCollectionService {
     private Card topCard(GameData gameData, UUID playerId) {
         List<Card> deck = gameData.playerDecks.get(playerId);
         return (deck == null || deck.isEmpty()) ? null : deck.getFirst();
-    }
-
-    /**
-     * Whether an ability of {@code effects} has a target to choose as it goes on the stack (CR 603.3d): a player or a
-     * permanent, or with {@code graveyardCard} a card in a graveyard.
-     */
-    private static boolean hasDeathTriggerTarget(List<CardEffect> effects, boolean graveyardCard) {
-        return effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || graveyardCard && effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
     }
 
     /**
@@ -2363,22 +2273,6 @@ public class TriggerCollectionService {
             }
         }
         return null;
-    }
-
-    /**
-     * The mana value limit of the graveyard target of {@code effect} ({@code ReturnCardFromGraveyardEffect
-     * .dynamicMaxManaValue()}), evaluated as the ability triggers with {@code lastKnown}, the object that died as it
-     * last existed, as the amount's source, so it looks back at the others that died with it (CR 603.10a): Soulshift X
-     * counts the Kodama, "with lesser mana value" is the dying object's. The choice carries it to the stack entry.
-     * {@code null} when the ability's effects have no such limit.
-     */
-    private Integer graveyardTargetMaxManaValueAtDeath(GameData gameData, UUID controllerId,
-                                                       List<CardEffect> effects, Permanent lastKnown) {
-        var target = graveyardTargetingSupport.findTarget(effects);
-        if (target == null || target.maximumManaValue() == null || lastKnown == null) {
-            return null;
-        }
-        return amountEvaluationService.evaluateAtDeath(gameData, target.maximumManaValue(), controllerId, lastKnown);
     }
 
     /**
@@ -2515,8 +2409,6 @@ public class TriggerCollectionService {
                 card.getName());
     }
 
-    /** Fires "whenever you win a coin flip" triggers for the winning player's battlefield. */
-
     /**
      * Queues one "copy that spell" delayed trigger per unit of instant/sorcery copy-rider mana
      * (Primal Wellspring, Pyromancer's Goggles) spent on this matching spell (CR 106.6a); the copy
@@ -2583,10 +2475,6 @@ public class TriggerCollectionService {
             pool.discardSpentCopyGrantingMana();
         }
     }
-
-    /** Fires "whenever you lose a coin flip" triggers for the losing player's battlefield. */
-
-    /** Fires effects that care when the given player foretells a card. */
 
     private void collectCreatureDeathTriggerWatchers(GameData gameData, Permanent dyingPermanent) {
         for (CreatureDeathTriggerWatcher watcher : List.copyOf(gameData.creatureDeathTriggerWatchers)) {
@@ -3754,14 +3642,6 @@ public class TriggerCollectionService {
             transformed.add(new EffectRegistration(effect, registration.simultaneousWithPrevious()));
         }
         return changed ? ability.withEffects(transformed) : ability;
-    }
-
-    /**
-     * The effects each of {@code abilities} puts on the stack, one list per ability that has any, as {@code read}
-     * reads an ability's: the flat readers' list of one ability.
-     */
-    private static List<CardEffect> effectsOf(List<EffectRegistration> registrations) {
-        return registrations.stream().map(EffectRegistration::effect).toList();
     }
 
     /**

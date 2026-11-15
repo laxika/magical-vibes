@@ -24,7 +24,6 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -34,7 +33,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -71,18 +69,15 @@ class EnterTriggerCollectorServiceTest {
             0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(),
             Set.of(), false, false, false, false, Set.of(), false, 0, 0, false, false);
 
-    @Mock private GameOutcomeService gameOutcomeService;
     @Mock private PlayerInputService playerInputService;
     @Mock private TriggeredAbilityQueueService triggeredAbilityQueueService;
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private TargetLegalityService targetLegalityService;
-    @Mock private ValidTargetService validTargetService;
     @Mock private GameLogService gameLogService;
     @Mock private ETBTokenTargetService etbTokenTargetService;
 
     private TriggerCollectionService service;
-    private TriggerCollectorRegistry registry;
     private GameData gd;
     private UUID player1Id;
 
@@ -91,17 +86,12 @@ class EnterTriggerCollectorServiceTest {
     void setUp() {
         lenient().when(gameQueryService.computeStaticBonus(any(GameData.class), any(Permanent.class), isNull()))
                 .thenReturn(EMPTY_BONUS);
-        registry = new TriggerCollectorRegistry();
-
-        service = new TriggerCollectionService(registry, gameOutcomeService, playerInputService,
+        service = new TriggerCollectionService(playerInputService,
                 triggeredAbilityQueueService, gameQueryService, predicateEvaluationService,
                 targetLegalityService,
-                validTargetService,
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
-                new AmountEvaluationService(predicateEvaluationService, gameQueryService),
                 gameLogService, etbTokenTargetService,
-                new GrantedTriggeredAbilitySupport(gameQueryService),
-                new GraveyardTargetingSupport());
+                new GrantedTriggeredAbilitySupport(gameQueryService));
         // The emblems' abilities go on the stack through the stack door.
         org.springframework.test.util.ReflectionTestUtils.setField(service, "triggeredAbilityStackService",
                 new com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService(
