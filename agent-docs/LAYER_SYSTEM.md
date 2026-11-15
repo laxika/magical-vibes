@@ -818,6 +818,11 @@ markers); the pending-target prompts it queues are started after the scope close
 `LibraryTriggers` (a draw), `TapTriggers` (a permanent becoming tapped) and `RulesEventPipeline` (a zone-change
 batch's observer and moving-object candidates) detect in one scope each on the same terms. The tapped-for-mana events
 stay unscoped: a triggered mana ability resolves as it triggers (CR 605.4a), and a later scan must see what it changed.
+A pass also memoizes each permanent's active static effects (`Pass.activeStaticEffects`, on the bonus memo's terms)
+and answers `findPermanentController` from a battlefield index it builds after a few lookups, each answer checked
+against the battlefield it names. A scan over the board's static abilities uses
+`GameQueryService.activeStaticEffects(gameData[, controllerId], type)` rather than looping over the battlefields:
+it gives each effect with its permanent and that permanent's controller, never searched for.
 `ReplacementOrderService` collects each event's applicable replacement and prevention effects, previews the
 pure ones and decides whether their order matters inside one scope (a candidate source's `applicable` and
 `transform` change nothing): each `DamageCandidateSource` rule scans the battlefield, so unscoped every damage

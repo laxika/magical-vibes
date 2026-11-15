@@ -10933,21 +10933,20 @@ public class AbilityActivationService {
             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName()
                     + " can't be activated (detained)");
         }
-        for (UUID pid : gameData.playerIds) {
-            for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, p, pid)) {
-                    if (effect instanceof ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect lock
-                            && (lock.blocksManaAbilities() || !manaAbility)) {
-                        FilterContext filterContext = FilterContext.of(gameData)
-                                .withSourceCardId(p.getCard().getId())
-                                .withSourceControllerId(pid)
-                                .withSourcePermanentId(p.getId());
-                        if (predicateEvaluationService.matchesPermanentPredicate(
-                                permanent, lock.predicate(), filterContext)) {
-                            throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName()
-                                    + " can't be activated (" + p.getCard().getName() + ")");
-                        }
-                    }
+        for (GameQueryService.ActiveStaticEffect<ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect> active
+                : gameQueryService.activeStaticEffects(gameData,
+                ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect.class)) {
+            ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect lock = active.effect();
+            Permanent p = active.source();
+            if (lock.blocksManaAbilities() || !manaAbility) {
+                FilterContext filterContext = FilterContext.of(gameData)
+                        .withSourceCardId(p.getCard().getId())
+                        .withSourceControllerId(active.controllerId())
+                        .withSourcePermanentId(p.getId());
+                if (predicateEvaluationService.matchesPermanentPredicate(
+                        permanent, lock.predicate(), filterContext)) {
+                    throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName()
+                            + " can't be activated (" + p.getCard().getName() + ")");
                 }
             }
         }

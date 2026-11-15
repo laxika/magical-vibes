@@ -934,53 +934,51 @@ public class LibrarySearchSupport {
             return false;
         }
 
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
-                    if (effect instanceof OpponentsCantSearchLibrariesAtAllEffect) {
-                        if (pid.equals(searchingPlayerId)) {
-                            continue;
-                        }
-                        String playerName = gameData.playerIdToName.get(searchingPlayerId);
-                        String sourceName = perm.getCard().getName();
-                        gameLogService.append(gameData, GameLog.text(
-                                playerName + "'s library search is prevented by " + sourceName + "."));
-                        log.info("Game {} - {} search prevented by {}",
-                                gameData.id, playerName, sourceName);
-                        return false;
-                    }
-                    if (effect instanceof OpponentsCantSearchLibrariesEffect) {
-                        if (causingControllerId == null
-                                || !libraryOwnerId.equals(causingControllerId)
-                                || pid.equals(causingControllerId)) {
-                            continue;
-                        }
-                        String playerName = gameData.playerIdToName.get(searchingPlayerId);
-                        String sourceName = perm.getCard().getName();
-                        gameLogService.append(gameData, GameLog.text(
-                                playerName + "'s library search is prevented by " + sourceName + "."));
-                        log.info("Game {} - {} search prevented by {}",
-                                gameData.id, playerName, sourceName);
-                        return false;
-                    }
-                    if (effect instanceof CantSearchLibrariesEffect restriction) {
-                        boolean paid = false;
-                        if (restriction.payableToIgnore()) {
-                            Set<UUID> paidSet = gameData.paidSearchTaxPermanentIds.get(searchingPlayerId);
-                            paid = paidSet != null && paidSet.contains(perm.getId());
-                        }
-                        if (!paid) {
-                            String playerName = gameData.playerIdToName.get(searchingPlayerId);
-                            String sourceName = perm.getCard().getName();
-                            String logMsg = playerName + "'s library search is prevented by " + sourceName + ".";
-                            gameLogService.append(gameData, GameLog.text(logMsg));
-                            log.info("Game {} - {} search prevented by {}",
-                                    gameData.id, playerName, sourceName);
-                            return false;
-                        }
-                    }
+        for (GameQueryService.ActiveStaticEffect<CardEffect> active
+                : gameQueryService.activeStaticEffects(gameData, CardEffect.class)) {
+            Permanent perm = active.source();
+            UUID pid = active.controllerId();
+            CardEffect effect = active.effect();
+            if (effect instanceof OpponentsCantSearchLibrariesAtAllEffect) {
+                if (pid.equals(searchingPlayerId)) {
+                    continue;
+                }
+                String playerName = gameData.playerIdToName.get(searchingPlayerId);
+                String sourceName = perm.getCard().getName();
+                gameLogService.append(gameData, GameLog.text(
+                        playerName + "'s library search is prevented by " + sourceName + "."));
+                log.info("Game {} - {} search prevented by {}",
+                        gameData.id, playerName, sourceName);
+                return false;
+            }
+            if (effect instanceof OpponentsCantSearchLibrariesEffect) {
+                if (causingControllerId == null
+                        || !libraryOwnerId.equals(causingControllerId)
+                        || pid.equals(causingControllerId)) {
+                    continue;
+                }
+                String playerName = gameData.playerIdToName.get(searchingPlayerId);
+                String sourceName = perm.getCard().getName();
+                gameLogService.append(gameData, GameLog.text(
+                        playerName + "'s library search is prevented by " + sourceName + "."));
+                log.info("Game {} - {} search prevented by {}",
+                        gameData.id, playerName, sourceName);
+                return false;
+            }
+            if (effect instanceof CantSearchLibrariesEffect restriction) {
+                boolean paid = false;
+                if (restriction.payableToIgnore()) {
+                    Set<UUID> paidSet = gameData.paidSearchTaxPermanentIds.get(searchingPlayerId);
+                    paid = paidSet != null && paidSet.contains(perm.getId());
+                }
+                if (!paid) {
+                    String playerName = gameData.playerIdToName.get(searchingPlayerId);
+                    String sourceName = perm.getCard().getName();
+                    String logMsg = playerName + "'s library search is prevented by " + sourceName + ".";
+                    gameLogService.append(gameData, GameLog.text(logMsg));
+                    log.info("Game {} - {} search prevented by {}",
+                            gameData.id, playerName, sourceName);
+                    return false;
                 }
             }
         }

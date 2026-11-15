@@ -972,29 +972,26 @@ public class CastingPermissionService {
      */
     public boolean isLandPlayForbiddenByChosenName(GameData gameData, Card card) {
         Set<String> nontokenPermanentNames = null;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
-                    if (effect instanceof SpellsAndLandsWithChosenNamesCantBePlayedEffect
-                            && (card.hasName(perm.getChosenName())
-                                || card.hasName(perm.getSecondChosenName()))) {
-                        return true;
-                    }
-                    if (effect instanceof CardNameRestrictionEffect restriction) {
-                        if (nontokenPermanentNames == null) {
-                            nontokenPermanentNames = getNontokenPermanentNames(gameData);
-                        }
-                        boolean nonbasicLandRestricted = !card.getSupertypes().contains(CardSupertype.BASIC)
-                                && restriction.forbiddenNonbasicLandNames(nontokenPermanentNames)
-                                .contains(card.getName());
-                        boolean landRestricted = restriction.forbiddenLandNames(nontokenPermanentNames)
-                                .contains(card.getName());
-                        if (nonbasicLandRestricted || landRestricted) {
-                            return true;
-                        }
-                    }
+        for (GameQueryService.ActiveStaticEffect<CardEffect> active
+                : gameQueryService.activeStaticEffects(gameData, CardEffect.class)) {
+            Permanent perm = active.source();
+            CardEffect effect = active.effect();
+            if (effect instanceof SpellsAndLandsWithChosenNamesCantBePlayedEffect
+                    && (card.hasName(perm.getChosenName())
+                        || card.hasName(perm.getSecondChosenName()))) {
+                return true;
+            }
+            if (effect instanceof CardNameRestrictionEffect restriction) {
+                if (nontokenPermanentNames == null) {
+                    nontokenPermanentNames = getNontokenPermanentNames(gameData);
+                }
+                boolean nonbasicLandRestricted = !card.getSupertypes().contains(CardSupertype.BASIC)
+                        && restriction.forbiddenNonbasicLandNames(nontokenPermanentNames)
+                        .contains(card.getName());
+                boolean landRestricted = restriction.forbiddenLandNames(nontokenPermanentNames)
+                        .contains(card.getName());
+                if (nonbasicLandRestricted || landRestricted) {
+                    return true;
                 }
             }
         }

@@ -105,6 +105,7 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageDoesNotCauseLifeLossEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -136,6 +137,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
@@ -668,6 +672,107 @@ class GameQueryServiceTest {
         @DisplayName("returns null when permanent not found")
         void returnsNullWhenNotFound() {
             assertThat(gqs.findPermanentController(gd, UUID.randomUUID())).isNull();
+        }
+
+        @Test
+        @DisplayName("inside a query scope, follows a permanent that moved to another battlefield after the index was built")
+        void scopedLookupFollowsMovedPermanent() {
+            Permanent bears = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            Permanent other = addPermanent(player2Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+
+            UUID controllerAfterMove = gqs.withQueryScope(gd, () -> {
+                // Enough questions for the pass to answer from its index rather than by searching.
+                for (int i = 0; i < 32; i++) {
+                    assertThat(gqs.findPermanentController(gd, bears.getId())).isEqualTo(player1Id);
+                    assertThat(gqs.findPermanentController(gd, other.getId())).isEqualTo(player2Id);
+                }
+                gd.playerBattlefields.get(player1Id).remove(bears);
+                gd.playerBattlefields.get(player2Id).add(0, bears);
+                return gqs.findPermanentController(gd, bears.getId());
+            });
+
+            assertThat(controllerAfterMove).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("inside a query scope, finds a permanent that entered after the index was built")
+        void scopedLookupFindsEnteredPermanent() {
+            Permanent first = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+
+            UUID enteredController = gqs.withQueryScope(gd, () -> {
+                // Enough questions for the pass to answer from its index rather than by searching.
+                for (int i = 0; i < 32; i++) {
+                    gqs.findPermanentController(gd, first.getId());
+                }
+                Permanent entered = addPermanent(player2Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+                return gqs.findPermanentController(gd, entered.getId());
+            });
+
+            assertThat(enteredController).isEqualTo(player2Id);
+        }
+    }
+
+    @Nested
+    @DisplayName("activeStaticEffects")
+    class ActiveStaticEffects {
+
+        @Test
+        @DisplayName("lists each matching effect with the permanent that has it and its controller, in turn order")
+        void listsMatchingEffectsWithSourceAndController() {
+            Permanent first = addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Solemnity", new PlayerCantGetPoisonCountersEffect()));
+            addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Platinum Emperion", new DamageDoesNotCauseLifeLossEffect()));
+            Permanent second = addPermanent(player2Id, createEnchantmentWithStaticEffect(
+                    "Solemnity", new PlayerCantGetPoisonCountersEffect()));
+
+            assertThat(gqs.activeStaticEffects(gd, PlayerCantGetPoisonCountersEffect.class))
+                    .extracting(GameQueryService.ActiveStaticEffect::source, GameQueryService.ActiveStaticEffect::controllerId)
+                    .containsExactly(tuple(first, player1Id), tuple(second, player2Id));
+            assertThat(gqs.activeStaticEffects(gd, player2Id, PlayerCantGetPoisonCountersEffect.class))
+                    .extracting(GameQueryService.ActiveStaticEffect::source)
+                    .containsExactly(second);
+        }
+
+        @Test
+        @DisplayName("leaves out a conditional effect whose condition doesn't hold")
+        void leavesOutUnmetConditionalEffect() {
+            ControllerTurn condition = new ControllerTurn();
+            addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Conditional Ward", new ConditionalEffect(condition, new PlayerCantGetPoisonCountersEffect())));
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any())).thenReturn(false);
+
+            assertThat(gqs.activeStaticEffects(gd, PlayerCantGetPoisonCountersEffect.class)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("inside a query scope, a permanent's static abilities are judged once")
+        void scopedScansJudgeEachPermanentOnce() {
+            ControllerTurn condition = new ControllerTurn();
+            addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Conditional Ward", new ConditionalEffect(condition, new PlayerCantGetPoisonCountersEffect())));
+            lenient().when(conditionEvaluationService.isMet(eq(gd), eq(condition), any())).thenReturn(true);
+
+            gqs.withQueryScope(gd, () -> {
+                assertThat(gqs.activeStaticEffects(gd, PlayerCantGetPoisonCountersEffect.class)).hasSize(1);
+                clearInvocations(conditionEvaluationService);
+                assertThat(gqs.activeStaticEffects(gd, PlayerCantGetPoisonCountersEffect.class)).hasSize(1);
+                verify(conditionEvaluationService, never()).isMet(eq(gd), eq(condition), any());
+                return null;
+            });
+        }
+
+        @Test
+        @DisplayName("outside a query scope, each scan judges the static abilities again")
+        void unscopedScansJudgeAgain() {
+            ControllerTurn condition = new ControllerTurn();
+            addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Conditional Ward", new ConditionalEffect(condition, new PlayerCantGetPoisonCountersEffect())));
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any())).thenReturn(true);
+
+            assertThat(gqs.activeStaticEffects(gd, PlayerCantGetPoisonCountersEffect.class)).hasSize(1);
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any())).thenReturn(false);
+            assertThat(gqs.activeStaticEffects(gd, PlayerCantGetPoisonCountersEffect.class)).isEmpty();
         }
     }
 

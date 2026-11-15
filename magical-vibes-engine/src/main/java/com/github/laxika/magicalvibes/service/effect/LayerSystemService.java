@@ -420,10 +420,16 @@ public class LayerSystemService {
         private boolean boardReady;
         private final Map<Permanent, GameQueryService.StaticBonus> bonusMemo = new IdentityHashMap<>();
         private final Map<UUID, GameQueryService.StaticBonus> preliminaryBonusMemo = new HashMap<>();
+        private final Map<Permanent, ControlledStaticEffects> activeStaticEffectsMemo = new IdentityHashMap<>();
+        private ControllerIndex controllerIndex;
+        private int controllerLookups;
 
         private Pass(GameData gameData, Pass parent) {
             this.gameData = gameData;
             this.parent = parent;
+            if (parent != null && parent.gameData == gameData) {
+                this.controllerIndex = parent.controllerIndex;
+            }
         }
 
         public LayeredBoardState board() {
@@ -458,6 +464,82 @@ public class LayerSystemService {
          */
         public Map<UUID, GameQueryService.StaticBonus> preliminaryBonusMemo() {
             return preliminaryBonusMemo;
+        }
+
+        /**
+         * The active static effects of {@code permanent} under {@code controllerId}, computed by {@code compute} the
+         * first time this pass is asked and answered from the memo after: a scan that judges every permanent's static
+         * abilities (an activation tax, a lock, a cost reduction) judges each one once per pass however many scans run
+         * in it. Memoized only once the board is finished, like {@link #bonusMemo}, and on the same terms: the queries of
+         * a pass change nothing the static abilities' conditions read. Keyed by the queried object, as a last-known
+         * snapshot shares its permanent's id, and by the controller it is judged for.
+         */
+        public List<CardEffect> activeStaticEffects(Permanent permanent, UUID controllerId,
+                                                    java.util.function.Supplier<List<CardEffect>> compute) {
+            if (!boardReady) {
+                return compute.get();
+            }
+            ControlledStaticEffects memo = activeStaticEffectsMemo.get(permanent);
+            if (memo != null && Objects.equals(memo.controllerId(), controllerId)) {
+                return memo.effects();
+            }
+            List<CardEffect> effects = List.copyOf(compute.get());
+            activeStaticEffectsMemo.put(permanent, new ControlledStaticEffects(controllerId, effects));
+            return effects;
+        }
+
+        /**
+         * The controller of the battlefield permanent {@code permanentId}, the player whose battlefield holds it, from an
+         * index of every battlefield built once a pass has asked {@link #CONTROLLER_INDEX_THRESHOLD} times (building it
+         * costs about as much as that many searches, so a pass that asks a few questions keeps searching) and shared with
+         * the passes nested in it. Each answer is checked against the battlefield it names, so a permanent that
+         * moved or entered after the index was built is never given a stale controller: {@code null} tells the caller to
+         * search the battlefields itself, as it does for an id that isn't on the battlefield.
+         */
+        public UUID controllerOf(UUID permanentId) {
+            if (controllerIndex == null) {
+                if (++controllerLookups < CONTROLLER_INDEX_THRESHOLD) {
+                    return null;
+                }
+                controllerIndex = ControllerIndex.of(gameData);
+            }
+            return controllerIndex.controllerOf(gameData, permanentId);
+        }
+    }
+
+    /** How many controller questions a pass answers by searching before it builds its {@link ControllerIndex}. */
+    private static final int CONTROLLER_INDEX_THRESHOLD = 16;
+
+    private record ControlledStaticEffects(UUID controllerId, List<CardEffect> effects) {
+    }
+
+    /** Where each battlefield permanent was when the index was built: its controller and its position there. */
+    private record ControllerIndex(Map<UUID, Slot> slots) {
+
+        private record Slot(UUID playerId, int index) {
+        }
+
+        static ControllerIndex of(GameData gameData) {
+            Map<UUID, Slot> slots = new HashMap<>();
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield == null) continue;
+                for (int i = 0; i < battlefield.size(); i++) {
+                    slots.putIfAbsent(battlefield.get(i).getId(), new Slot(playerId, i));
+                }
+            }
+            return new ControllerIndex(slots);
+        }
+
+        UUID controllerOf(GameData gameData, UUID permanentId) {
+            Slot slot = slots.get(permanentId);
+            if (slot == null) return null;
+            List<Permanent> battlefield = gameData.playerBattlefields.get(slot.playerId());
+            if (battlefield == null || slot.index() >= battlefield.size()
+                    || !battlefield.get(slot.index()).getId().equals(permanentId)) {
+                return null;
+            }
+            return slot.playerId();
         }
     }
 
