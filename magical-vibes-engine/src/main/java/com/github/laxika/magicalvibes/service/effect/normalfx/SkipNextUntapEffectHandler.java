@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -65,9 +66,9 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
         if (e.controllerStepOnly()) {
             // Exert (CR 701.43a): the creature is exerted now, which is what "whenever you exert a creature" watches.
             source.setSkipUntapControllerId(entry.getControllerId());
-            triggerCollectionService.checkExertTriggers(gameData, entry.getControllerId(), source.getId());
+            ActionEvents.exerted(gameData, entry.getControllerId(), source.getId());
             if (e.exertsAsItAttacks()) {
-                triggerCollectionService.checkExertedAsItAttacksTriggers(gameData, entry.getControllerId(), source);
+                ActionEvents.exertedAsItAttacks(gameData, entry.getControllerId(), source);
             }
         }
 

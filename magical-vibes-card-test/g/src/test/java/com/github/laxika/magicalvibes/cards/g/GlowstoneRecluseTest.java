@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -63,7 +64,7 @@ class GlowstoneRecluseTest extends BaseCardTest {
     @DisplayName("A mutation trigger cannot put counters on a replacement permanent")
     void sourceLeavingBeforeResolutionDoesNotAffectAnotherRecluse() {
         Permanent recluse = addCreatureReady(player1, new GlowstoneRecluse());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, recluse, List.of(recluse.getCard()), player1.getId()));
         gd.playerBattlefields.get(player1.getId()).remove(recluse);
         Permanent replacement = addCreatureReady(player1, new GlowstoneRecluse());
@@ -74,7 +75,7 @@ class GlowstoneRecluseTest extends BaseCardTest {
     }
 
     private void mutate(Permanent recluse) {
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, recluse, List.of(recluse.getCard()), player1.getId()));
         resolveAllTriggers();
     }

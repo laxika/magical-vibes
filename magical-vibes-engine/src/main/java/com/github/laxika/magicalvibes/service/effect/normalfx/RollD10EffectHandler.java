@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD10Effect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -33,9 +34,9 @@ public class RollD10EffectHandler implements NormalEffectHandlerBean {
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(entry.getControllerId())
                 + " rolls a d10 for " + entry.getCard().getName() + ": " + result + "."));
         entry.setEventValue(result);
-        triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
+        ActionEvents.diceRolled(
                 gameData, entry.getControllerId(), 1, result);
-        triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
+        ActionEvents.dieResults(
                 gameData, entry.getControllerId(), 10, result);
 
         int effectIndex = -1;

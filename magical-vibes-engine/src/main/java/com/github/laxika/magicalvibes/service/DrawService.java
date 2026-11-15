@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -8,14 +10,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.Emblem;
-import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.trigger.LibraryTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
-import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -97,13 +95,8 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
-import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
-import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
@@ -2679,10 +2672,9 @@ public class DrawService {
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} draws a card from effect", gameData.id, gameData.playerIdToName.get(playerId));
 
-        checkControllerDrawTriggers(gameData, playerId, drawn);
-        checkOpponentDrawTriggers(gameData, playerId, drawn);
-        checkPlanarDrawTriggers(gameData, playerId, drawn);
-        checkEnchantedPlayerDrawTriggers(gameData, playerId);
+        gameData.rulesEvents.occur(new LibraryEvent.Drew(playerId, drawn,
+                Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(playerId)),
+                gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0)));
         revealDrawnCardByStaticAbilities(gameData, playerId, drawn);
         breathstealersCryptDrawReplacementHandler.afterDraw(gameData, playerId, drawn);
         checkMiracleReveal(gameData, playerId, drawn);
@@ -2803,251 +2795,7 @@ public class DrawService {
      */
     public void revealDrawnCard(GameData gameData, Permanent source, UUID revealingPlayerId, Card drawn) {
         logDrawReveal(gameData, revealingPlayerId, drawn, source.getCard());
-        UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
-        if (!revealingPlayerId.equals(controllerId) || gameQueryService.hasLostAllAbilities(gameData, source)) {
-            return;
-        }
-        LibraryWatch watch = LibraryWatch.ON_CONTROLLER_REVEALS_CARD_THIS_WAY;
-        for (TriggeredAbility ability : LibraryAbilityReader.printed(source.getCard(), watch)) {
-            LibraryAbilityReader.LibraryEffect read = LibraryAbilityReader.read(ability, watch.trigger()).getFirst();
-            LibraryAbilityReader.requireNoCount(read, watch.trigger());
-            if (drawnCardMatches(gameData, source, read, drawn, revealingPlayerId)) {
-                putDrawAbility(gameData, ability, source.getCard(), source, revealingPlayerId, revealingPlayerId,
-                        drawn, null);
-            }
-        }
-    }
-
-    /**
-     * Whether {@code drawn} is the card {@code read}'s ability is about ({@code withFilter}: "whenever you draw a Dragon
-     * card", "whenever you reveal a basic land card this way"), judged as it is drawn, with {@code source} as the
-     * filter's source: any card when the ability has no filter, and none when the draw has no card.
-     */
-    private boolean drawnCardMatches(GameData gameData, Permanent source, LibraryAbilityReader.LibraryEffect read,
-                                     Card drawn, UUID drawingPlayerId) {
-        if (read.filter() == null) {
-            return true;
-        }
-        return drawn != null && predicateEvaluationService.matchesCardPredicate(drawn, read.filter(),
-                source.getCard().getId(), gameData, drawingPlayerId, source.getId(), null, null, source);
-    }
-
-    /** Records {@code drawn} as {@code entry}'s triggering card ("it", "that card"), as it was drawn. */
-    private static void recordDrawnCard(StackEntry entry, Card drawn) {
-        if (drawn != null) {
-            entry.setTriggeringCard(drawn.getId(), -1);
-            entry.setTriggeringCards(List.of(drawn));
-        }
-    }
-
-    public void checkControllerDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn) {
-        checkControllerDrawTriggerSlot(gameData, drawingPlayerId, LibraryWatch.ON_CONTROLLER_DRAWS, drawn);
-        checkGraveyardControllerDrawTriggerSlot(gameData, drawingPlayerId, LibraryWatch.GRAVEYARD_ON_CONTROLLER_DRAWS);
-
-        // Emblem draw triggers (e.g. Teferi, Hero of Dominaria emblem)
-        checkEmblemDrawTriggers(gameData, drawingPlayerId);
-    }
-
-    private void checkControllerDrawTriggerSlot(GameData gameData, UUID drawingPlayerId,
-                                                LibraryWatch watch, Card drawn) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(drawingPlayerId);
-        if (battlefield == null) return;
-        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
-
-        for (Permanent perm : List.copyOf(battlefield)) {
-            List<TriggeredAbility> abilities = gameQueryService.hasLostAllAbilities(gameData, perm)
-                    ? new ArrayList<>() : new ArrayList<>(LibraryAbilityReader.printed(perm.getCard(), watch));
-            abilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, watch.trigger()));
-            for (TriggeredAbility ability : abilities) {
-                LibraryAbilityReader.LibraryEffect read = LibraryAbilityReader.read(ability, watch.trigger()).getFirst();
-                if (drawEventMatches(gameData, drawingPlayerId, read, cardsDrawnThisTurn)
-                        && drawnCardMatches(gameData, perm, read, drawn, drawingPlayerId)) {
-                    putDrawAbility(gameData, ability, perm.getCard(), perm, drawingPlayerId, drawingPlayerId, drawn,
-                            null);
-                }
-            }
-        }
-    }
-
-    /**
-     * Hands {@code ability} of {@code sourceCard} ({@code source} on the battlefield, or {@code null} for a card in a
-     * graveyard or a face-up plane, {@code planarSource}), controlled by {@code controllerId}, to the stack door for
-     * {@code drawingPlayerId}'s draw of {@code drawn}: its event condition is judged as it triggers (CR 603.2), with the
-     * drawing player as "that player"; the door judges its intervening "if" (CR 603.4) and limit, counts the additional
-     * times it triggers (those of draws among them) and chooses its targets as it goes on the stack (CR 603.3d). The
-     * entry records the draw whatever its effects are ({@link #drawRecord}).
-     *
-     * @return whether it triggered
-     */
-    private boolean putDrawAbility(GameData gameData, TriggeredAbility ability, Card sourceCard, Permanent source,
-                                   UUID controllerId, UUID drawingPlayerId, Card drawn, PlanarObject planarSource) {
-        ConditionContext context = (source != null ? ConditionContext.forPermanent(source, controllerId)
-                : ConditionContext.forCard(sourceCard, controllerId)).withTargetId(drawingPlayerId);
-        if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), context)) {
-            return false;
-        }
-        boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
-                sourceCard, source, controllerId, sourceCard.getName() + "'s ability", context,
-                drawRecord(source, drawingPlayerId, drawn, planarSource))
-                .withEvent(new TriggerContext.Draw(drawingPlayerId)));
-        if (triggered) {
-            gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        }
-        return triggered;
-    }
-
-    /**
-     * The record of {@code drawingPlayerId}'s draw on an ability's entry, whatever its effects: the drawing player as
-     * its triggering player and as its non-targeting "that player" (CR 115.10a), so a printed "target player" beside it
-     * is declared by the card; {@code drawn} as its triggering card ({@link #recordDrawnCard}); the
-     * source as it was, or the face-up plane whose ability it is.
-     */
-    private static TriggerRecord drawRecord(Permanent source, UUID drawingPlayerId, Card drawn,
-                                            PlanarObject planarSource) {
-        Permanent snapshot = source == null ? null : new Permanent(source);
-        PlanarObject plane = planarSource == null ? null : planarSource.copy();
-        return entry -> {
-            entry.setNonTargeting(true);
-            entry.setTargetId(drawingPlayerId);
-            entry.setTriggeringPlayerId(drawingPlayerId);
-            recordDrawnCard(entry, drawn);
-            if (snapshot != null) {
-                entry.setSourcePermanentSnapshot(snapshot);
-            }
-            if (plane != null) {
-                entry.setSourcePlanarObject(plane);
-            }
-        };
-    }
-
-    private void checkGraveyardControllerDrawTriggerSlot(GameData gameData, UUID drawingPlayerId,
-                                                         LibraryWatch watch) {
-        if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) return;
-        List<Card> graveyard = gameData.playerGraveyards.get(drawingPlayerId);
-        if (graveyard == null) return;
-
-        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
-        for (Card card : new ArrayList<>(graveyard)) {
-            for (TriggeredAbility ability : LibraryAbilityReader.printed(card, watch)) {
-                LibraryAbilityReader.LibraryEffect read = LibraryAbilityReader.read(ability, watch.trigger()).getFirst();
-                LibraryAbilityReader.requireNoFilter(read, watch.trigger());
-                if (drawEventMatches(gameData, drawingPlayerId, read, cardsDrawnThisTurn)) {
-                    putGraveyardDrawAbility(gameData, ability, card, drawingPlayerId, drawingPlayerId, true);
-                }
-            }
-        }
-    }
-
-    /**
-     * {@link #putDrawAbility} for {@code ability} of {@code card} in its owner {@code ownerId}'s graveyard: the record
-     * names the drawing player as its triggering player and, for "whenever you draw", this graveyard incarnation of the
-     * card as its triggering card (CR 400.7).
-     */
-    private void putGraveyardDrawAbility(GameData gameData, TriggeredAbility ability, Card card, UUID ownerId,
-                                         UUID drawingPlayerId, boolean recordsItself) {
-        ConditionContext context = ConditionContext.forCard(card, ownerId).withTargetId(drawingPlayerId);
-        if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), context)) {
-            return;
-        }
-        long graveyardEntryVersion = gameData.graveyardEntryVersion(card.getId());
-        boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability, card,
-                null, ownerId, card.getName() + "'s ability", context, entry -> {
-                    entry.setNonTargeting(true);
-                    entry.setTriggeringPlayerId(drawingPlayerId);
-                    if (recordsItself) {
-                        entry.setTriggeringCardId(card.getId());
-                        entry.setTriggeringCardGraveyardEntryVersion(graveyardEntryVersion);
-                    }
-                }).withEvent(new TriggerContext.Draw(drawingPlayerId)));
-        if (triggered) {
-            gameLogService.append(gameData, GameLog.abilityTriggers(card));
-        }
-    }
-
-    private void checkGraveyardOpponentDrawTriggerSlot(GameData gameData, UUID drawingPlayerId) {
-        if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) return;
-        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
-
-        for (UUID graveyardOwnerId : gameData.playerGraveyards.keySet()) {
-            if (graveyardOwnerId.equals(drawingPlayerId)) continue;
-
-            List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
-            if (graveyard == null) continue;
-
-            for (Card card : new ArrayList<>(graveyard)) {
-                LibraryWatch watch = LibraryWatch.GRAVEYARD_ON_OPPONENT_DRAWS;
-                for (TriggeredAbility ability : LibraryAbilityReader.printed(card, watch)) {
-                    LibraryAbilityReader.LibraryEffect read = LibraryAbilityReader.read(ability, watch.trigger())
-                            .getFirst();
-                    LibraryAbilityReader.requireNoFilter(read, watch.trigger());
-                    if (drawEventMatches(gameData, drawingPlayerId, read, cardsDrawnThisTurn)) {
-                        putGraveyardDrawAbility(gameData, ability, card, graveyardOwnerId, drawingPlayerId, false);
-                    }
-                }
-            }
-        }
-    }
-
-    public void checkControllerDrawTriggers(GameData gameData, UUID drawingPlayerId) {
-        checkControllerDrawTriggers(gameData, drawingPlayerId, null);
-    }
-
-    /**
-     * The emblems' "whenever [a player / you / an opponent] draws a card" abilities (Ob Nixilis Reignited's "whenever a
-     * player draws a card, you lose 2 life", Teferi, Hero of Dominaria's "whenever you draw a card, exile target
-     * permanent an opponent controls"), which function in the command zone (CR 114.4): each goes on the stack as one
-     * object of its effects, the emblem as its source. A targeted one's target is chosen as it goes on the stack
-     * (CR 603.3d), restricted by the ability's own target filter, and the ability is removed when there is no legal
-     * target; any other one is a non-targeting entry with the drawing player as its triggering player.
-     */
-    private void checkEmblemDrawTriggers(GameData gameData, UUID drawingPlayerId) {
-        for (Emblem emblem : gameData.emblems) {
-            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
-                boolean triggers = ability.conditions().stream()
-                        .anyMatch(condition -> condition.trigger() instanceof LibraryTrigger draw
-                                && draw.event() == LibraryTrigger.LibraryEvent.DRAWS
-                                && drawnByRelatedPlayer(draw, emblem.controllerId(), drawingPlayerId));
-                if (!triggers) continue;
-                requireOnlyPlainTriggers(ability, emblem);
-                Card source = emblem.sourceCard();
-                String description = source.getName() + "'s emblem";
-                // An emblem's ability functions in the command zone (CR 114.4): the stack door puts it on the stack,
-                // its target ("exile target permanent an opponent controls", its own filter) chosen as it goes there
-                // (CR 603.3d).
-                triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability, source, null,
-                        emblem.controllerId(), description, ConditionContext.forCard(source, emblem.controllerId()),
-                        entry -> {
-                            entry.setMadeByResolution(true);
-                            entry.setNonTargeting(true);
-                            entry.setTriggeringPlayerId(drawingPlayerId);
-                        }).ofEmblem());
-                gameLogService.append(gameData, GameLog.text(description + " triggers."));
-                log.info("Game {} - {} triggers when a player draws", gameData.id, description);
-            }
-        }
-    }
-
-    /** Whether {@code drawingPlayerId} is the player {@code draw} names, relative to {@code controllerId}. */
-    private static boolean drawnByRelatedPlayer(LibraryTrigger draw, UUID controllerId, UUID drawingPlayerId) {
-        return switch (draw.player()) {
-            case ANY -> true;
-            case YOU -> controllerId.equals(drawingPlayerId);
-            case OPPONENT -> !controllerId.equals(drawingPlayerId);
-        };
-    }
-
-    /**
-     * The emblem draw reader judges no qualifier, count or option; an ability with one fails loudly instead of
-     * triggering wrongly.
-     */
-    private static void requireOnlyPlainTriggers(TriggeredAbility ability, Emblem emblem) {
-        boolean plainTrigger = ability.conditions().stream()
-                .allMatch(condition -> !(condition.trigger() instanceof LibraryTrigger draw)
-                        || draw.qualifier() == null && draw.nth() == 0);
-        if (!plainTrigger || !ability.options().equals(TriggerOptions.DEFAULT)) {
-            throw new IllegalStateException(emblem.sourceCard().getName() + "'s emblem has a draw ability its reader "
-                    + "doesn't judge: " + ability);
-        }
+        gameData.rulesEvents.occur(new LibraryEvent.RevealedDrawnCard(revealingPlayerId, source, drawn));
     }
 
     private boolean hasWinOnEmptyLibraryDraw(GameData gameData, UUID playerId) {
@@ -3069,85 +2817,6 @@ public class DrawService {
         return null;
     }
 
-    public void checkOpponentDrawTriggers(GameData gameData, UUID drawingPlayerId) {
-        checkOpponentDrawTriggers(gameData, drawingPlayerId, null);
-    }
-
-    /**
-     * The "whenever an opponent draws a card" abilities of the permanents of each player but {@code drawingPlayerId},
-     * and of the cards in their graveyards: each ability that triggers goes toward the stack as one object of its
-     * effects (CR 603.3), once and once more for each effect that makes it trigger an additional time: a player or
-     * any target chosen first, else on the stack as written, a "you may" asked as it resolves (CR 603.5), with the
-     * drawing player as "that player" and {@code drawn} as its triggering card ({@link #drawRecord}).
-     */
-    private void checkOpponentDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn) {
-        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
-        gameData.forEachBattlefield((playerId, battlefield) -> {
-            if (playerId.equals(drawingPlayerId)) return;
-
-            for (Permanent perm : List.copyOf(battlefield)) {
-                if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                for (TriggeredAbility ability : LibraryAbilityReader.printed(perm.getCard(),
-                        LibraryWatch.ON_OPPONENT_DRAWS)) {
-                    LibraryAbilityReader.LibraryEffect read = LibraryAbilityReader.read(ability,
-                            LibraryWatch.ON_OPPONENT_DRAWS.trigger()).getFirst();
-                    if (drawEventMatches(gameData, drawingPlayerId, read, cardsDrawnThisTurn)
-                            && drawnCardMatches(gameData, perm, read, drawn, drawingPlayerId)) {
-                        putDrawAbility(gameData, ability, perm.getCard(), perm, playerId, drawingPlayerId, drawn, null);
-                    }
-                }
-            }
-        });
-        checkGraveyardOpponentDrawTriggerSlot(gameData, drawingPlayerId);
-    }
-
-    /**
-     * The face-up planes' "whenever [you / an opponent] draws a card" abilities, the planar controller's: each that
-     * triggers goes on the stack as one object of its effects (CR 603.3), as written, a "you may" asked as it resolves
-     * (CR 603.5), with the drawing player as "that player", {@code drawn} as its triggering card and the plane as it
-     * was.
-     */
-    private void checkPlanarDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn) {
-        if (gameData.planechase == null || drawn == null || gameData.planechase.controllerId == null) {
-            return;
-        }
-
-        UUID planarControllerId = gameData.planechase.controllerId;
-        LibraryWatch watch = planarControllerId.equals(drawingPlayerId)
-                ? LibraryWatch.ON_CONTROLLER_DRAWS : LibraryWatch.ON_OPPONENT_DRAWS;
-        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
-
-        for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            Card card = object.getCard();
-            for (TriggeredAbility ability : LibraryAbilityReader.printed(card, watch)) {
-                LibraryAbilityReader.LibraryEffect read = LibraryAbilityReader.read(ability, watch.trigger()).getFirst();
-                if (drawEventMatches(gameData, drawingPlayerId, read, cardsDrawnThisTurn)
-                        && (read.filter() == null || predicateEvaluationService.matchesCardPredicate(
-                        drawn, read.filter(), card.getId(), gameData, drawingPlayerId))) {
-                    putDrawAbility(gameData, ability, card, null, planarControllerId, drawingPlayerId, drawn, object);
-                }
-            }
-        }
-    }
-
-    /**
-     * Whether the draw by {@code drawingPlayerId} is the event of {@code read}'s ability: any draw, every draw but the
-     * player's first in their draw step, or only that one, and, for "your Nth card each turn", the player's
-     * {@code cardsDrawnThisTurn}th draw this turn (CR 121.1).
-     */
-    private static boolean drawEventMatches(GameData gameData, UUID drawingPlayerId,
-                                            LibraryAbilityReader.LibraryEffect read, int cardsDrawnThisTurn) {
-        boolean firstDrawStepDraw = Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(drawingPlayerId));
-        boolean eventMatches = switch (read.event()) {
-            case DRAWS, ENCHANTED_PLAYER_DRAWS -> true;
-            case DRAWS_EXCEPT_FIRST_IN_DRAW_STEP -> !firstDrawStepDraw;
-            case DRAWS_FIRST_IN_DRAW_STEP -> firstDrawStepDraw;
-            default -> throw new IllegalStateException("The draw collectors read no " + read.event() + ": "
-                    + read.ability());
-        };
-        return eventMatches && read.countMatches(cardsDrawnThisTurn);
-    }
-
     private void logDrawReveal(GameData gameData, UUID drawingPlayerId, Card drawn, Card sourceCard) {
         String drawerName = gameData.playerIdToName.get(drawingPlayerId);
         gameLogService.append(gameData, GameLog.builder()
@@ -3157,32 +2826,6 @@ public class DrawService {
                 .card(sourceCard)
                 .text(".")
                 .build());
-    }
-
-    /**
-     * The Curses' "whenever enchanted player draws a card" abilities: each goes on the stack as one object of its
-     * effects (CR 603.3), as written, a "you may" asked as it resolves (CR 603.5), once and once more for each effect
-     * that makes it trigger an additional time, with the drawing player as "that player" and the Aura as it was
-     * ({@link #drawRecord}).
-     */
-    public void checkEnchantedPlayerDrawTriggers(GameData gameData, UUID drawingPlayerId) {
-        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
-        gameData.forEachBattlefield((auraControllerId, battlefield) -> {
-            for (Permanent perm : battlefield) {
-                if (!perm.isAttached() || !drawingPlayerId.equals(perm.getAttachedTo())) continue;
-
-                for (TriggeredAbility ability : LibraryAbilityReader.printed(perm.getCard(),
-                        LibraryWatch.ON_ENCHANTED_PLAYER_DRAWS)) {
-                    LibraryAbilityReader.LibraryEffect read = LibraryAbilityReader.read(ability,
-                            LibraryWatch.ON_ENCHANTED_PLAYER_DRAWS.trigger()).getFirst();
-                    LibraryAbilityReader.requireNothingToJudge(read, LibraryWatch.ON_ENCHANTED_PLAYER_DRAWS.trigger());
-                    if (drawEventMatches(gameData, drawingPlayerId, read, cardsDrawnThisTurn)) {
-                        putDrawAbility(gameData, ability, perm.getCard(), perm, auraControllerId, drawingPlayerId,
-                                null, null);
-                    }
-                }
-            }
-        });
     }
 
     private Permanent findExileTopCardsMayPlayThisTurnDrawReplacementSource(GameData gameData,

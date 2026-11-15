@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +21,7 @@ class VulpikeetTest extends BaseCardTest {
     void mutatingPutsCounterOnIt() {
         Permanent vulpikeet = addCreatureReady(player1, new Vulpikeet());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, vulpikeet, List.of(vulpikeet.getCard()), player1.getId()));
         resolveAllTriggers();
 

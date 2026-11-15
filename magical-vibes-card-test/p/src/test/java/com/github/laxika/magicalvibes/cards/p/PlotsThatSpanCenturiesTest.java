@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.m.MyLaughterEchoes;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,7 @@ class PlotsThatSpanCenturiesTest extends BaseCardTest {
         PlotsThatSpanCenturies firstScheme = new PlotsThatSpanCenturies();
         StackEntry firstEntry = schemeEntry(firstScheme);
         gd.stack.add(firstEntry);
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, firstEntry));
+        harness.inMutationScope(() -> ActionEvents.schemeSetInMotion(gd, firstEntry));
         resolveAllTriggers();
 
         gd.playerBattlefields.get(player1.getId()).remove(plots);
@@ -31,7 +32,7 @@ class PlotsThatSpanCenturiesTest extends BaseCardTest {
         Card nextScheme = new ICallForSlaughter();
         StackEntry nextEntry = schemeEntry(nextScheme);
         gd.stack.add(nextEntry);
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, nextEntry));
+        harness.inMutationScope(() -> ActionEvents.schemeSetInMotion(gd, nextEntry));
 
         assertThat(gd.stack).filteredOn(entry -> entry.getCard() instanceof MyLaughterEchoes)
                 .hasSize(3);
@@ -39,7 +40,7 @@ class PlotsThatSpanCenturiesTest extends BaseCardTest {
         gd.stack.clear();
         StackEntry finalEntry = schemeEntry(new ICallForSlaughter());
         gd.stack.add(finalEntry);
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, finalEntry));
+        harness.inMutationScope(() -> ActionEvents.schemeSetInMotion(gd, finalEntry));
 
         assertThat(gd.stack).filteredOn(entry -> entry.getCard() instanceof MyLaughterEchoes)
                 .hasSize(1);

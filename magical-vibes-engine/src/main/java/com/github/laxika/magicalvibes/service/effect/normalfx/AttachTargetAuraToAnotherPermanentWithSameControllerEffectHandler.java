@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -126,7 +127,7 @@ public class AttachTargetAuraToAnotherPermanentWithSameControllerEffectHandler
         aura.setAttachedTo(target.getId());
         aura.setTimestamp(gameData.nextTimestamp());
         gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", target.getCard(), "."));
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, target.getId());
+        gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, target.getId()));
         if (oldHost != null) {
             creatureControlService.recomputeControl(gameData, oldHost);
         }

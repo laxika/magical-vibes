@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -60,7 +61,7 @@ public class ExileTargetSpellAndPlotEffectHandler implements NormalEffectHandler
         gameData.plottedCardIds.add(card.getId());
         gameData.exilePlayPermissions.put(card.getId(), target.getOwnerId());
         gameData.exilePlayWithoutPayingManaCost.add(card.getId());
-        triggerCollectionService.checkPlotTriggers(gameData, target.getOwnerId(), card);
+        ActionEvents.plotted(gameData, target.getOwnerId(), card);
 
         gameLogService.append(gameData,
                 GameLog.cardTextCard(card, " becomes plotted by ", entry.getCard(), "."));

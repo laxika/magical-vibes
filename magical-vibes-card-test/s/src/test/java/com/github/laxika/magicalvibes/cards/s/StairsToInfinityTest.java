@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.service.planar.PlanarDieRoller;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -124,9 +125,7 @@ class StairsToInfinityTest extends BaseCardTest {
     @Test
     void rollingAnOrdinaryDieDoesNotDrawACard() {
         int before = gd.playerHands.get(player1.getId()).size();
-        harness.inMutationScope(() -> GameTestEngineContext.get()
-                .getBean(TriggerCollectionService.class)
-                .checkControllerRollsOneOrMoreDiceTriggers(gd, player1.getId(), 1, 6));
+        harness.inMutationScope(() -> ActionEvents.diceRolled(gd, player1.getId(), 1, 6));
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(before);

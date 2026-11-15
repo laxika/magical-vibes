@@ -76,11 +76,11 @@ public class CounterSpellAndDiscardSplicedNamesEffectHandler implements NormalEf
         if (toDiscard.isEmpty()) {
             return;
         }
-        triggerCollectionService.beginDiscardEvent(gameData, controllerId);
+        gameData.beginDiscardEvent(controllerId);
         for (Card card : toDiscard) {
             discardCard(gameData, controllerId, card, entry);
         }
-        triggerCollectionService.finishDiscardEvent(gameData);
+        gameData.finishDiscardEvent();
     }
 
     private void discardCard(GameData gameData, UUID playerId, Card card, StackEntry source) {
@@ -95,6 +95,6 @@ public class CounterSpellAndDiscardSplicedNamesEffectHandler implements NormalEf
                 gameData.playerIdToName.get(playerId) + " discards ", card, "."));
         log.info("Game {} - {} discards {} ({})", gameData.id,
                 gameData.playerIdToName.get(playerId), card.getName(), sourceCard.getName());
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+        gameData.discarded(playerId, card);
     }
 }

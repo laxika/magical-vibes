@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTriggeringC
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -58,6 +59,6 @@ public class ConjureDuplicateOfTriggeringCreatureToHandEffectHandler implements 
         gameLogService.append(gameData,
                 GameLog.cardThen(entry.getCard(), " conjures a duplicate of "
                         + triggeringCard.getName() + " into their hand."));
-        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
+        ActionEvents.conjured(gameData, entry.getControllerId(), 1);
     }
 }

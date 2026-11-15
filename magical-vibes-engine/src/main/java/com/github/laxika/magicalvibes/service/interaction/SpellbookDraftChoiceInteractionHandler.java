@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -93,7 +94,7 @@ public class SpellbookDraftChoiceInteractionHandler
                         + (interaction.conjure() ? " conjures " : " drafts "), chosen,
                 " from " + interaction.sourceCardName() + "'s spellbook" + destination + "."));
         if (interaction.conjure()) {
-            triggerCollectionService.checkConjureTriggers(gameData, interaction.playerId(), 1);
+            ActionEvents.conjured(gameData, interaction.playerId(), 1);
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

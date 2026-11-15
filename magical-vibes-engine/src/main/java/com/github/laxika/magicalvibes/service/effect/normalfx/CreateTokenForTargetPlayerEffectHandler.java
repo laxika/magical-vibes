@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +54,7 @@ public class CreateTokenForTargetPlayerEffectHandler implements NormalEffectHand
             return;
         }
         if (e.tokenEffect().investigate()) {
-            triggerCollectionService.checkInvestigateTriggers(gameData, targetPlayerId);
+            ActionEvents.investigated(gameData, targetPlayerId);
         }
         int power = amountEvaluationService.evaluate(gameData, e.tokenEffect().power(), context);
         int toughness = amountEvaluationService.evaluate(gameData, e.tokenEffect().toughness(), context);

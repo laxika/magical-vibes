@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -55,17 +56,17 @@ public class RollD20ForEachPlayerAndRestrictSourceAttacksEffectHandler implement
                     + (roll.wasD20Roll() ? " rolls a d20 for " : " flips a coin for ")
                     + entry.getCard().getName() + ": " + result + "."));
             if (roll.wasD20Roll()) {
-                triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
+                ActionEvents.diceRolled(
                         gameData, playerId, 1, result);
-                triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
+                ActionEvents.dieResults(
                         gameData, playerId, 20, result);
                 if (result == 20) {
-                    triggerCollectionService.checkControllerRollsNaturalTwentyTriggers(gameData, playerId);
+                    ActionEvents.natural20Rolled(gameData, playerId);
                 }
             } else if (result == 20) {
-                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, playerId);
+                ActionEvents.coinFlipWon(gameData, playerId);
             } else {
-                triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, playerId);
+                ActionEvents.coinFlipLost(gameData, playerId);
             }
         }
 

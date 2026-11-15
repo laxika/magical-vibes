@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.service.JacksonConfig;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -160,7 +161,7 @@ class MindleecherTest extends BaseCardTest {
     }
 
     private void triggerMutation(Permanent mindleecher) {
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, mindleecher, List.of(mindleecher.getCard()), player1.getId()));
         resolveAllTriggers();
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -164,7 +165,7 @@ public class InventoryManagementEffectHandler implements NormalEffectHandlerBean
             gameData.expireFloatingEffectsForUnattachedSource(attachment.getId());
             attachment.setAttachedTo(creature.getId());
             attachment.setTimestamp(gameData.nextTimestamp());
-            triggerCollectionService.checkAuraAttachedTriggers(gameData, attachment, creature.getId());
+            gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(attachment, creature.getId()));
             logAttachment(gameData, attachment, creature);
         } else if (equipSupport.attachEquipment(gameData, attachment, creature)) {
             logAttachment(gameData, attachment, creature);

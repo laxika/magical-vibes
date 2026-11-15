@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 
 import java.util.UUID;
 
@@ -52,7 +53,7 @@ public class AirbendTargetCreatureOrSpellEffectHandler implements NormalEffectHa
         Permanent permanent = gameQueryService.findPermanentById(gameData, targetId);
         if (permanent != null) {
             airbendSupport.airbend(gameData, entry, permanent);
-            triggerCollectionService.checkBendingTriggers(gameData, entry.getControllerId(), BendingType.AIRBEND);
+            ActionEvents.bent(gameData, entry.getControllerId(), BendingType.AIRBEND);
             return;
         }
 
@@ -75,7 +76,7 @@ public class AirbendTargetCreatureOrSpellEffectHandler implements NormalEffectHa
         UUID ownerId = spell.getOwnerId();
         exileService.exileCard(gameData, ownerId, card);
         exileSupport.grantCastWhileExiledForGenericCost(gameData, card.getId(), ownerId, 2);
-        triggerCollectionService.checkBendingTriggers(gameData, entry.getControllerId(), BendingType.AIRBEND);
+        ActionEvents.bent(gameData, entry.getControllerId(), BendingType.AIRBEND);
         gameLogService.append(gameData, GameLog.cardTextCard(card,
                 " is airbent by ", entry.getCard(), "."));
         log.info("Game {} - {} airbent the spell {}", gameData.id, entry.getCard().getName(), card.getName());

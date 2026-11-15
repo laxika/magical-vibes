@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.a.AlmightyBrushwagg;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -103,7 +104,7 @@ class RegalLeosaurTest extends BaseCardTest {
     void triggerResolvesWithoutSource() {
         Permanent leosaur = addCreatureReady(player1, new RegalLeosaur());
         Permanent other = addCreatureReady(player1, new AlmightyBrushwagg());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, leosaur, List.of(leosaur.getCard()), player1.getId()));
         gd.playerBattlefields.get(player1.getId()).remove(leosaur);
         gd.playerGraveyards.get(player1.getId()).add(leosaur.getCard());
@@ -115,7 +116,7 @@ class RegalLeosaurTest extends BaseCardTest {
     }
 
     private void mutate(Permanent creature) {
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, creature, List.of(creature.getCard()), player1.getId()));
         resolveAllTriggers();
     }

@@ -5116,12 +5116,12 @@ public class ChoiceHandlerService {
         }
         if (!toDiscard.isEmpty()) {
             hand.removeAll(toDiscard);
-            triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
+            gameData.beginDiscardEvent(targetPlayerId);
             for (Card card : toDiscard) {
                 graveyardService.discardCard(gameData, targetPlayerId, card);
-                triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+                gameData.discarded(targetPlayerId, card);
             }
-            triggerCollectionService.finishDiscardEvent(gameData);
+            gameData.finishDiscardEvent();
             gameLogService.append(gameData, GameLog.text(targetName + " discards " + toDiscard.size()
                     + " " + colorLabel.toLowerCase() + " card" + (toDiscard.size() != 1 ? "s" : "") + "."));
             log.info("Game {} - {} discards {} {} card(s) to Persecute-style effect",
@@ -7320,14 +7320,14 @@ public class ChoiceHandlerService {
                 .filter(card -> card.getName().equals(cardName))
                 .toList();
         gameData.discardCausedByOpponent = true;
-        triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
+        gameData.beginDiscardEvent(targetPlayerId);
         for (Card card : toDiscard) {
             hand.remove(card);
             graveyardService.discardCard(gameData, targetPlayerId, card);
             gameLogService.append(gameData, GameLog.textCardText(targetName + " discards ", card, "."));
-            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+            gameData.discarded(targetPlayerId, card);
         }
-        triggerCollectionService.finishDiscardEvent(gameData);
+        gameData.finishDiscardEvent();
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
@@ -7395,13 +7395,13 @@ public class ChoiceHandlerService {
 
         hand.removeAll(toDiscard);
         gameData.discardCausedByOpponent = !targetPlayerId.equals(controllerId);
-        triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
+        gameData.beginDiscardEvent(targetPlayerId);
         for (Card card : toDiscard) {
             graveyardService.discardCard(gameData, targetPlayerId, card);
             gameLogService.append(gameData, GameLog.textCardText(targetName + " discards ", card, "."));
-            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+            gameData.discarded(targetPlayerId, card);
         }
-        triggerCollectionService.finishDiscardEvent(gameData);
+        gameData.finishDiscardEvent();
 
         gameLogService.append(gameData, GameLog.text(targetName + " discards " + toDiscard.size()
                 + " card" + (toDiscard.size() == 1 ? "" : "s") + " named \"" + cardName + "\"."));

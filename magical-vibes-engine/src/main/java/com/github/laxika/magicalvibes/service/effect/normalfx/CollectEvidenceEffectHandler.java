@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -50,7 +51,7 @@ public class CollectEvidenceEffectHandler implements NormalEffectHandlerBean {
             gameData.chosenXValue = null;
             entry.setEventValue(minimumManaValue);
             if (minimumManaValue == 0) {
-                triggerCollectionService.checkCollectEvidenceTriggers(gameData, entry.getControllerId());
+                ActionEvents.evidenceCollected(gameData, entry.getControllerId());
                 queueReflexiveAbility(gameData, entry, collectEvidence.thenEffect());
                 return;
             }
@@ -63,7 +64,7 @@ public class CollectEvidenceEffectHandler implements NormalEffectHandlerBean {
 
         if (minimumManaValue == 0 && (graveyard == null || graveyard.isEmpty())) {
             entry.setEventValue(0);
-            triggerCollectionService.checkCollectEvidenceTriggers(gameData, entry.getControllerId());
+            ActionEvents.evidenceCollected(gameData, entry.getControllerId());
             queueReflexiveAbility(gameData, entry, collectEvidence.thenEffect());
             return;
         }

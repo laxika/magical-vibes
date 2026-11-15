@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AlmightyBrushwagg;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +28,7 @@ class DreamtailHeronTest extends BaseCardTest {
         Permanent heron = addCreatureReady(player1, new DreamtailHeron());
         harness.setLibrary(player1, List.of(new AlmightyBrushwagg()));
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, heron, List.of(heron.getCard()), player1.getId()));
         resolveAllTriggers();
 
@@ -55,7 +56,7 @@ class DreamtailHeronTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new AlmightyBrushwagg(), new AlmightyBrushwagg()));
 
         for (int i = 1; i <= 2; i++) {
-            harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+            harness.inMutationScope(() -> ActionEvents.mutated(
                     gd, heron, List.of(heron.getCard()), player1.getId()));
             resolveAllTriggers();
             assertThat(gd.playerHands.get(player1.getId())).hasSize(i);
@@ -68,7 +69,7 @@ class DreamtailHeronTest extends BaseCardTest {
         Permanent heron = addCreatureReady(player2, new DreamtailHeron());
         harness.setLibrary(player2, List.of(new AlmightyBrushwagg()));
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, heron, List.of(heron.getCard()), player2.getId()));
         gd.playerBattlefields.get(player2.getId()).remove(heron);
         gd.playerGraveyards.get(player2.getId()).add(heron.getCard());

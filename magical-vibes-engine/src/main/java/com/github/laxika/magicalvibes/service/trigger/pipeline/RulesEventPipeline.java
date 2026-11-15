@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -14,45 +14,50 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.rules.ActionEvent;
+import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.rules.AttackEvent;
 import com.github.laxika.magicalvibes.model.rules.BlockEvent;
 import com.github.laxika.magicalvibes.model.rules.CombatDamageStepEvent;
-import com.github.laxika.magicalvibes.model.rules.DamageDealtEvent;
+import com.github.laxika.magicalvibes.model.rules.ControlChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
-import com.github.laxika.magicalvibes.model.rules.LifeEvent;
-import com.github.laxika.magicalvibes.model.rules.TapEvent;
+import com.github.laxika.magicalvibes.model.rules.CrewEvent;
+import com.github.laxika.magicalvibes.model.rules.DamageDealtEvent;
+import com.github.laxika.magicalvibes.model.rules.DayNightEvent;
+import com.github.laxika.magicalvibes.model.rules.EntryCausedTriggerEvent;
 import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
+import com.github.laxika.magicalvibes.model.rules.LifeEvent;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
+import com.github.laxika.magicalvibes.model.rules.RoomEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
 import com.github.laxika.magicalvibes.model.rules.RulesObserver;
+import com.github.laxika.magicalvibes.model.rules.SagaEvent;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.rules.StepEvent;
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.rules.TargetEvent;
-import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
-import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
-import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
-import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.StepMatch.StepGroup;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.trigger.ZoneChangeWatch;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
-
+import com.github.laxika.magicalvibes.service.trigger.pipeline.StepMatch.StepGroup;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -62,6 +67,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
 
 /**
  * The generic trigger pipeline: {@code GameData} hands it each rules event batch as the batch closes, it asks the
@@ -98,32 +107,84 @@ public class RulesEventPipeline {
     private static final ZoneChangeTrigger OWN_ENTRY = Triggers.enters(ObjectRelation.THIS);
 
     private final TriggerIndex triggerIndex;
+
     private final TriggeredAbilityStackService stackService;
+
     private final PredicateEvaluationService predicateEvaluationService;
+
     private final PermanentRemovalService permanentRemovalService;
+
     private final TriggerCollectionService triggerCollectionService;
+
     private final GameQueryService gameQueryService;
+
     private final ConditionEvaluationService conditionEvaluationService;
+
     private final GameLogService gameLogService;
+
     private final AttackTriggers attackTriggers;
+
     private final BlockTriggers blockTriggers;
+
     private final SpellTriggers spellTriggers;
+
     private final TargetTriggers targetTriggers;
+
     @Autowired
     @Lazy
     private DamageTriggers damageTriggers;
+
     @Autowired
     @Lazy
     private CombatDamageTriggers combatDamageTriggers;
+
     @Autowired
     @Lazy
     private CounterTriggers counterTriggers;
+
     @Autowired
     @Lazy
     private TapTriggers tapTriggers;
+
     @Autowired
     @Lazy
     private LifeTriggers lifeTriggers;
+
+    @Autowired
+    @Lazy
+    private ControlChangeTriggers controlChangeTriggers;
+
+    @Autowired
+    @Lazy
+    private AttachmentTriggers attachmentTriggers;
+
+    @Autowired
+    @Lazy
+    private CrewTriggers crewTriggers;
+
+    @Autowired
+    @Lazy
+    private DayNightTriggers dayNightTriggers;
+
+    @Autowired
+    @Lazy
+    private RoomTriggers roomTriggers;
+
+    @Autowired
+    @Lazy
+    private SagaTriggers sagaTriggers;
+
+    @Autowired
+    @Lazy
+    private EntryCausedTriggerTriggers entryCausedTriggerTriggers;
+
+    @Autowired
+    @Lazy
+    private ActionTriggers actionTriggers;
+
+    @Autowired
+    @Lazy
+    private LibraryTriggers libraryTriggers;
 
     public RulesEventPipeline(TriggerIndex triggerIndex, TriggeredAbilityStackService stackService,
                               @Lazy PredicateEvaluationService predicateEvaluationService,
@@ -370,7 +431,7 @@ public class RulesEventPipeline {
             } else if (event instanceof PermanentChangeEvent permanentChange) {
                 permanentChanges.add(permanentChange);
             } else if (event instanceof LibraryEvent library) {
-                triggerLibraryEvent(gameData, library);
+                libraryTriggers.trigger(gameData, library);
             } else if (event instanceof StepEvent step) {
                 triggerStep(gameData, step);
             } else if (event instanceof AttackEvent attack) {
@@ -391,6 +452,22 @@ public class RulesEventPipeline {
                 tapTriggers.trigger(gameData, tap);
             } else if (event instanceof LifeEvent life) {
                 lifeTriggers.trigger(gameData, life);
+            } else if (event instanceof ActionEvent action) {
+                actionTriggers.trigger(gameData, action);
+            } else if (event instanceof ControlChangeEvent controlChange) {
+                controlChangeTriggers.trigger(gameData, controlChange);
+            } else if (event instanceof AttachmentEvent attachment) {
+                attachmentTriggers.trigger(gameData, attachment);
+            } else if (event instanceof CrewEvent crew) {
+                crewTriggers.trigger(gameData, crew);
+            } else if (event instanceof DayNightEvent dayNight) {
+                dayNightTriggers.trigger(gameData, dayNight);
+            } else if (event instanceof RoomEvent room) {
+                roomTriggers.trigger(gameData, room);
+            } else if (event instanceof SagaEvent saga) {
+                sagaTriggers.trigger(gameData, saga);
+            } else if (event instanceof EntryCausedTriggerEvent entryCausedTrigger) {
+                entryCausedTriggerTriggers.trigger(gameData, entryCausedTrigger);
             }
         }
         if (!permanentChanges.isEmpty()) {
@@ -420,19 +497,6 @@ public class RulesEventPipeline {
             if (event.to() == Zone.GRAVEYARD) {
                 gameData.stampGraveyardEntryOnPendingTriggers(event.card().getId());
             }
-        }
-    }
-
-    /**
-     * The abilities a library search or shuffle triggers, collected by their library collectors
-     * ({@link TriggerCollectionService#checkLibrarySearchTriggers}, {@link TriggerCollectionService#checkLibraryShuffleTriggers}),
-     * which hand each to the stack door.
-     */
-    private void triggerLibraryEvent(GameData gameData, LibraryEvent event) {
-        switch (event.kind()) {
-            case SEARCHED -> triggerCollectionService.checkLibrarySearchTriggers(gameData, event.playerId());
-            case SHUFFLED -> triggerCollectionService.checkLibraryShuffleTriggers(gameData, event.playerId(),
-                    event.causingControllerId());
         }
     }
 
@@ -498,16 +562,19 @@ public class RulesEventPipeline {
 
     /**
      * Whether an ability that sees another permanent enter is matched as the entering permanent's enters abilities
-     * are processed ({@link #triggerEnteringObservers}) rather than as its entry's batch closes: every one but the
-     * token watches, which see a token creation as one event.
+     * are processed ({@link #triggerEnteringObservers}) rather than as its entry's batch closes: every one but those
+     * about tokens ("whenever you create one or more tokens", "whenever a token you control enters", a filter of
+     * tokens and their narrowings), which see a token creation as one event.
      */
     private static boolean matchedAsItsEntryIsProcessed(TriggerCandidate candidate, ZoneChangeTrigger trigger) {
-        if (!trigger.entersBattlefield()) {
-            return false;
-        }
-        ZoneChangeWatch watch = ZoneChangeWatch.of(candidate.ability(), trigger, candidate.zone());
-        return watch != ZoneChangeWatch.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD
-                && watch != ZoneChangeWatch.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD;
+        return trigger.entersBattlefield() && !trigger.causes().contains(ZoneChangeCause.CREATE)
+                && !Triggers.TOKEN.equals(narrowedFrom(trigger.filter()));
+    }
+
+    /** The filter {@code filter} narrows: the first of an all-of filter's parts, or the filter itself. */
+    private static PermanentPredicate narrowedFrom(PermanentPredicate filter) {
+        return filter instanceof PermanentAllOfPredicate allOf && !allOf.predicates().isEmpty()
+                ? allOf.predicates().getFirst() : filter;
     }
 
     /**

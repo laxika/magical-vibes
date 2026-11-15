@@ -132,13 +132,6 @@ class EnterTriggerCollectorServiceTest {
         });
     }
 
-    /** Gives {@code card} a triggered ability of {@code effect} with the first trigger condition {@code watch} accepts. */
-    private static void addWatched(Card card, ZoneChangeWatch watch, CardEffect effect) {
-        ZoneChangeWatch.Key key = watch.keys().getFirst();
-        card.addTrigger(new TriggerCondition(key.trigger(), AbilityZones.of(key.zone())),
-                TriggerOptions.DEFAULT.withMultiplicity(key.multiplicity()), effect);
-    }
-
     private static Card enteringCreature(int power, int toughness) {
         Card entering = new Card();
         entering.setName("Entering Creature");

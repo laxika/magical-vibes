@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Registry that maps (EffectSlot, {@link ZoneChangeWatch}, CardEffect class) pairs to trigger collector handlers.
+ * Registry that maps (EffectSlot, CardEffect class) pairs to trigger collector handlers.
  * The library, player and keyword action, misc and Saga watches have none: their collectors hand
  * each ability to the stack door.
  * <p>
@@ -105,17 +105,6 @@ public class TriggerCollectorRegistry {
             if (container != null) {
                 for (CollectsTrigger ct : container.value()) {
                     registerMethod(bean, method, ct, registry);
-                }
-            }
-
-            CollectsWatchTrigger singleWatch = method.getAnnotation(CollectsWatchTrigger.class);
-            if (singleWatch != null) {
-                registerMethod(bean, method, singleWatch.watch(), singleWatch.value(), registry);
-            }
-            CollectsWatchTriggers watchContainer = method.getAnnotation(CollectsWatchTriggers.class);
-            if (watchContainer != null) {
-                for (CollectsWatchTrigger cwt : watchContainer.value()) {
-                    registerMethod(bean, method, cwt.watch(), cwt.value(), registry);
                 }
             }
 

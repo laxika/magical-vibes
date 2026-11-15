@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD8Effect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -34,9 +35,9 @@ public class RollD8EffectHandler implements NormalEffectHandlerBean {
                 + " rolls a d8 for " + entry.getCard().getName() + ": " + result + "."));
         entry.setEventValue(result);
         entry.setXValue(result);
-        triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
+        ActionEvents.diceRolled(
                 gameData, entry.getControllerId(), 1, result);
-        triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
+        ActionEvents.dieResults(
                 gameData, entry.getControllerId(), 8, result);
 
         int effectIndex = -1;

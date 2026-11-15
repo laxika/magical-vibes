@@ -1,15 +1,10 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
-import com.github.laxika.magicalvibes.model.rules.RulesEvent;
-import com.github.laxika.magicalvibes.model.rules.SpellEvent;
-import com.github.laxika.magicalvibes.model.rules.LifeEvent;
-import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
-import com.github.laxika.magicalvibes.model.rules.TapEvent;
-import com.github.laxika.magicalvibes.testutil.TestStackDoor;
-
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.AbilityZones;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.BendingType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -17,8 +12,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DayNight;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,112 +27,112 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.VotingResult;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.EvolveEffect;
+import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
+import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.GoadSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.RenownEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
+import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.TrainEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
+import com.github.laxika.magicalvibes.model.rules.CrewEvent;
+import com.github.laxika.magicalvibes.model.rules.LifeEvent;
+import com.github.laxika.magicalvibes.model.rules.RoomEvent;
+import com.github.laxika.magicalvibes.model.rules.RulesEvent;
+import com.github.laxika.magicalvibes.model.rules.SagaEvent;
+import com.github.laxika.magicalvibes.model.rules.SpellEvent;
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TransformChosenPermanentEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
-import com.github.laxika.magicalvibes.service.turn.DayNightService;
-import com.github.laxika.magicalvibes.service.turn.UntapStepService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsCardEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.ManaAbilities;
-import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
-import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
-import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
-import com.github.laxika.magicalvibes.service.state.StateTriggerService;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
-import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
-import com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
-import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
-import com.github.laxika.magicalvibes.model.effect.RenownEffect;
-import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TrainEffectHandler;
-import com.github.laxika.magicalvibes.model.effect.TrainEffect;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ClassLevelUpEffectHandler;
-import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.service.effect.normalfx.EvolveEffectHandler;
-import com.github.laxika.magicalvibes.model.effect.EvolveEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.model.Emblem;
-import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
+import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ClassLevelUpEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EvolveEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TrainEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TransformChosenPermanentEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
+import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
+import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
+import com.github.laxika.magicalvibes.service.state.StateTriggerService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
+import com.github.laxika.magicalvibes.service.turn.DayNightService;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
-import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.GoadSourceCreatureEffect;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.service.turn.UntapStepService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
-import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -159,9 +157,16 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+
+
+
 
 /**
  * Guards the rule that every route by which a triggered ability reaches the stack records the trigger event as the
@@ -196,6 +201,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
     private static final String MEASURE_VARIABLE = "MV_ROUTE_PROBE_OUT";
 
     private static final String GAIN_LABEL = "You gain 1 life";
+
     private static final String DESTROY_LABEL = "Destroy target creature";
 
     private static final Pattern RECORD_FIELD_NAME = Pattern.compile("^(triggering|event)[A-Z].*|.*AtTrigger$");
@@ -278,7 +284,6 @@ class TriggerRouteRecordTest extends BaseCardTest {
         excluded.put("a player chooses targets / " + Variant.GRAVE, targetRetriggers);
         return Map.copyOf(excluded);
     }
-
 
     /**
      * The {@link Triggers} methods no watch measures, each with the specific reason a fixture card on that trigger
@@ -772,8 +777,8 @@ class TriggerRouteRecordTest extends BaseCardTest {
     }
 
     /**
-     * The player-action triggers: each is collected by one {@link TriggerCollectionService} method the engine calls
-     * as the action is taken, which the scenario calls for player1 with the fixtures on the battlefield.
+     * The player-action triggers: each is an {@code ActionEvent} the engine emits as the action is taken (through
+     * {@link ActionEvents}), which the scenario emits for player1 with the fixtures on the battlefield.
      */
     private static List<Watch> playerActionWatches() {
         return List.of(
@@ -781,90 +786,90 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         Triggers::youUntapPermanentsDuringUntapStep, CardType.ENCHANTMENT,
                         TriggerRouteRecordTest::untapStepFinishes),
                 collected("you set a scheme in motion", "youSetSchemeInMotion", Triggers::youSetSchemeInMotion,
-                        (test, collection) -> collection.checkSchemeSetInMotionTriggers(test.gd, TestStackDoor.triggered(card("Fixture Scheme", CardType.SCHEME),
+                        (test, collection) -> ActionEvents.schemeSetInMotion(test.gd, TestStackDoor.triggered(card("Fixture Scheme", CardType.SCHEME),
                                 test.player1.getId(), "Fixture Scheme's ability",
                                 new ArrayList<>(List.of(new GainLifeEffect(1)))))),
                 collected("you give a gift", "youGiveGift", Triggers::youGiveGift,
-                        (test, collection) -> collection.checkControllerGivesGiftTriggers(test.gd,
+                        (test, collection) -> ActionEvents.giftGiven(test.gd,
                                 test.player1.getId())),
                 collected("you solve a Case", "youSolveCase", Triggers::youSolveCase,
-                        (test, collection) -> collection.checkAllyCaseSolvesTriggers(test.gd,
+                        (test, collection) -> ActionEvents.caseSolved(test.gd,
                                 test.addCreatureReady(test.player1, new GrizzlyBears()), test.player1.getId())),
                 collected("you foretell a card", "youForetell", Triggers::youForetell,
-                        (test, collection) -> collection.checkControllerForetellTriggers(test.gd,
+                        (test, collection) -> ActionEvents.foretold(test.gd,
                                 test.player1.getId(), new GrizzlyBears())),
                 collected("you forage", "youForage", Triggers::youForage,
-                        (test, collection) -> collection.checkForageTriggers(test.gd, test.player1.getId())),
+                        (test, collection) -> ActionEvents.foraged(test.gd, test.player1.getId())),
                 collected("players finish voting", "playersFinishVoting", Triggers::playersFinishVoting,
-                        (test, collection) -> collection.checkVotingFinishedTriggers(test.gd, new VotingResult(
+                        (test, collection) -> ActionEvents.votingFinished(test.gd, new VotingResult(
                                 Map.of(test.player1.getId(), Set.of("first"),
                                         test.player2.getId(), Set.of("second"))))),
                 collected("the Ring tempts you and you choose a Ring-bearer", "ringTemptsYouAndYouChooseRingBearer",
                         Triggers::ringTemptsYouAndYouChooseRingBearer,
-                        (test, collection) -> collection.checkRingTemptTriggers(test.gd, test.player1.getId(),
+                        (test, collection) -> ActionEvents.ringBearerChosen(test.gd, test.player1.getId(),
                                 test.addCreatureReady(test.player1, new GrizzlyBears()).getId())),
                 collected("you investigate for the first time each turn", "youInvestigateFirstTimeEachTurn",
                         Triggers::youInvestigateFirstTimeEachTurn,
-                        (test, collection) -> collection.checkInvestigateTriggers(test.gd, test.player1.getId())),
+                        (test, collection) -> ActionEvents.investigated(test.gd, test.player1.getId())),
                 collected("you investigate", "youInvestigate", Triggers::youInvestigate,
-                        (test, collection) -> collection.checkInvestigateTriggers(test.gd, test.player1.getId())),
+                        (test, collection) -> ActionEvents.investigated(test.gd, test.player1.getId())),
                 collected("you manifest dread", "youManifestDread", Triggers::youManifestDread,
-                        (test, collection) -> collection.checkManifestDreadTriggers(test.gd, test.player1.getId(),
+                        (test, collection) -> ActionEvents.manifestedDread(test.gd, test.player1.getId(),
                                 test.gd.playerGraveyards.get(test.player1.getId()).getFirst())),
                 collected("you complete a dungeon", "youCompleteDungeon", Triggers::youCompleteDungeon,
-                        (test, collection) -> collection.checkDungeonCompletionTriggers(test.gd,
+                        (test, collection) -> ActionEvents.dungeonCompleted(test.gd,
                                 test.player1.getId())),
                 collected("you roll one or more dice", "youRollOneOrMoreDice", Triggers::youRollOneOrMoreDice,
-                        (test, collection) -> collection.checkControllerRollsOneOrMoreDiceTriggers(test.gd,
+                        (test, collection) -> ActionEvents.diceRolled(test.gd,
                                 test.player1.getId(), 1, 4)),
                 collected("you roll the highest natural result", "youRollHighestNaturalResult",
                         Triggers::youRollHighestNaturalResult,
-                        (test, collection) -> collection.checkControllerRollsHighestNaturalResultTriggers(test.gd,
+                        (test, collection) -> ActionEvents.dieResults(test.gd,
                                 test.player1.getId(), 6, 6)),
                 watch("you roll a natural 20", "youRollNatural20", Triggers::youRollNatural20, CardType.CREATURE,
                         (test, cards) -> test.fixturesInGraveyard(cards, collection ->
-                                collection.checkControllerRollsNaturalTwentyTriggers(test.gd, test.player1.getId())))
+                                ActionEvents.natural20Rolled(test.gd, test.player1.getId())))
                         .in(AbilityZones.GRAVEYARD),
                 collected("you bend", "youBend", Triggers::youBend,
-                        (test, collection) -> collection.checkBendingTriggers(test.gd, test.player1.getId(),
+                        (test, collection) -> ActionEvents.bent(test.gd, test.player1.getId(),
                                 BendingType.EARTHBEND)),
                 collected("you exert a creature", "youExertCreature", Triggers::youExertCreature,
-                        (test, collection) -> collection.checkExertTriggers(test.gd, test.player1.getId(),
+                        (test, collection) -> ActionEvents.exerted(test.gd, test.player1.getId(),
                                 test.addCreatureReady(test.player1, new GrizzlyBears()).getId())),
                 collected("you collect evidence", "youCollectEvidence", Triggers::youCollectEvidence,
-                        (test, collection) -> collection.checkCollectEvidenceTriggers(test.gd,
+                        (test, collection) -> ActionEvents.evidenceCollected(test.gd,
                                 test.player1.getId())),
                 collected("you discover", "youDiscover", Triggers::youDiscover,
-                        (test, collection) -> collection.checkDiscoverTriggers(test.gd, test.player1.getId(), 3)),
+                        (test, collection) -> ActionEvents.discovered(test.gd, test.player1.getId(), 3)),
                 collected("you seek", "youSeek", Triggers::youSeek,
-                        (test, collection) -> collection.checkSeekTriggers(test.gd, test.player1.getId(),
+                        (test, collection) -> ActionEvents.sought(test.gd, test.player1.getId(),
                                 List.of(new GrizzlyBears()))),
                 collected("you conjure", "youConjure", Triggers::youConjure,
-                        (test, collection) -> collection.checkConjureTriggers(test.gd, test.player1.getId(), 1)),
+                        (test, collection) -> ActionEvents.conjured(test.gd, test.player1.getId(), 1)),
                 collected("you become the monarch", "youBecomeMonarch", Triggers::youBecomeMonarch,
                         (test, collection) -> {
                             test.gd.monarchPlayerId = test.player1.getId();
-                            collection.checkBecomesMonarchTriggers(test.gd, test.player1.getId());
+                            ActionEvents.becameMonarch(test.gd, test.player1.getId());
                         }),
                 collected("an opponent becomes the monarch", "opponentBecomesMonarch",
                         Triggers::opponentBecomesMonarch,
                         (test, collection) -> {
                             test.gd.monarchPlayerId = test.player2.getId();
-                            collection.checkBecomesMonarchTriggers(test.gd, test.player2.getId());
+                            ActionEvents.becameMonarch(test.gd, test.player2.getId());
                         }),
                 collected("the Ring tempts you", "ringTemptsYou", Triggers::ringTemptsYou,
-                        (test, collection) -> collection.checkRingTemptsYouTriggers(test.gd, test.player1.getId())),
+                        (test, collection) -> ActionEvents.temptedByRing(test.gd, test.player1.getId())),
                 collected("you win a coin flip", "youWinCoinFlip", Triggers::youWinCoinFlip,
-                        (test, collection) -> collection.checkControllerWinsCoinFlipTriggers(test.gd,
+                        (test, collection) -> ActionEvents.coinFlipWon(test.gd,
                                 test.player1.getId())),
                 collected("a player wins a coin flip", "playerWinsCoinFlip", Triggers::playerWinsCoinFlip,
-                        (test, collection) -> collection.checkControllerWinsCoinFlipTriggers(test.gd,
+                        (test, collection) -> ActionEvents.coinFlipWon(test.gd,
                                 test.player2.getId())),
                 collected("you lose a coin flip", "youLoseCoinFlip", Triggers::youLoseCoinFlip,
-                        (test, collection) -> collection.checkControllerLosesCoinFlipTriggers(test.gd,
+                        (test, collection) -> ActionEvents.coinFlipLost(test.gd,
                                 test.player1.getId())),
                 collected("an opponent pays a tax", "opponentPaysTax", Triggers::opponentPaysTax,
-                        (test, collection) -> collection.checkTaxPaymentTriggers(test.gd, test.player2.getId(),
+                        (test, collection) -> ActionEvents.taxPaid(test.gd, test.player2.getId(),
                                 test.player1.getId(), 2)),
                 collected("you clash", "youClash", Triggers::youClash,
                         (test, collection) -> collection.performClash(test.gd, test.player1.getId())));
@@ -995,12 +1000,10 @@ class TriggerRouteRecordTest extends BaseCardTest {
         return List.of(
                 collected("a final chapter ability triggers", "finalChapterAbilityTriggers",
                         Triggers::finalChapterAbilityTriggers,
-                        (test, collection) -> collection.checkSagaFinalChapterAbilityTriggers(test.gd,
-                                test.player1.getId(), 3)),
+                        (test, collection) -> test.gd.rulesEvents.occur(new SagaEvent(SagaEvent.Kind.FINAL_CHAPTER_TRIGGERED, test.player1.getId(), 3))),
                 collected("a final chapter ability resolves", "finalChapterAbilityResolves",
                         Triggers::finalChapterAbilityResolves,
-                        (test, collection) -> collection.checkSagaFinalChapterAbilityResolutionTriggers(test.gd,
-                                test.player1.getId(), 3)),
+                        (test, collection) -> test.gd.rulesEvents.occur(new SagaEvent(SagaEvent.Kind.FINAL_CHAPTER_RESOLVED, test.player1.getId(), 3))),
                 watch("you gain control of this", "youGainControlOfThis", Triggers::youGainControlOfThis,
                         CardType.CREATURE, (test, cards) -> {
                             for (Card card : cards) {
@@ -1149,7 +1152,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         }),
                 collected("a creature you control fights", "creatureYouControlFights",
                         Triggers::creatureYouControlFights,
-                        (test, collection) -> collection.checkAllyCreatureFightsTriggers(test.gd,
+                        (test, collection) -> ActionEvents.fought(test.gd,
                                 test.addCreatureReady(test.player1, new GrizzlyBears()), test.player1.getId())),
                 watch("a creature you control explores", "creatureYouControlExplores",
                         Triggers::creatureYouControlExplores, CardType.ENCHANTMENT,
@@ -1169,7 +1172,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         CardType.CREATURE, (test, cards) -> {
                             test.mainPhaseOf(test.player1);
                             for (Permanent permanent : test.fixtureCreatures(cards)) {
-                                test.collect(collection -> collection.checkExertedAsItAttacksTriggers(test.gd,
+                                test.collect(collection -> ActionEvents.exertedAsItAttacks(test.gd,
                                         test.player1.getId(), permanent));
                                 test.answerAll();
                             }
@@ -1178,8 +1181,9 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         (test, cards) -> {
                             test.mainPhaseOf(test.player1);
                             for (Permanent permanent : test.fixtureCreatures(cards)) {
-                                test.collect(collection -> collection.checkExploitTriggers(test.gd,
-                                        permanent.getCard(), test.player1.getId(), permanent.getId()));
+                                test.collect(collection -> ActionEvents.exploited(test.gd, permanent.getCard(),
+                                        test.player1.getId(), permanent.getId(), test.player1.getId(), permanent,
+                                        null, 0));
                                 test.answerAll();
                             }
                         }),
@@ -1211,7 +1215,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                                 test.collect(collection -> {
                                     test.gd.addToExile(test.player1.getId(), card);
                                     test.gd.plottedCardIds.add(card.getId());
-                                    collection.checkPlotTriggers(test.gd, test.player1.getId(), card);
+                                    ActionEvents.plotted(test.gd, test.player1.getId(), card);
                                 });
                                 test.answerAll();
                             }
@@ -1220,7 +1224,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         (test, cards) -> {
                             test.mainPhaseOf(test.player1);
                             for (Permanent permanent : test.fixtureCreatures(cards)) {
-                                test.collect(collection -> collection.checkMutateTriggers(test.gd, permanent,
+                                test.collect(collection -> ActionEvents.mutated(test.gd, permanent,
                                         List.of(permanent.getCard()), test.player1.getId()));
                                 test.answerAll();
                             }
@@ -1229,7 +1233,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         Triggers::creatureYouControlMutates,
                         (test, collection) -> {
                             Permanent mutated = test.addCreatureReady(test.player1, new GrizzlyBears());
-                            collection.checkMutateTriggers(test.gd, mutated, List.of(mutated.getCard()),
+                            ActionEvents.mutated(test.gd, mutated, List.of(mutated.getCard()),
                                     test.player1.getId());
                         }),
                 watch("this crews a Vehicle", "crewsVehicle", Triggers::crewsVehicle, CardType.CREATURE,
@@ -1245,20 +1249,20 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         TriggerRouteRecordTest::fixturesCrewAVehicle),
                 watch("this becomes crewed", "becomesCrewed", Triggers::becomesCrewed, CardType.ARTIFACT,
                         (test, cards) -> test.fixturesAreCollected(cards, (collection, vehicle) ->
-                                collection.checkBecomesCrewedTriggers(test.gd, vehicle, test.player1.getId())),
+                                test.gd.rulesEvents.occur(new CrewEvent.BecameCrewed(vehicle, test.player1.getId()))),
                         CardSubtype.VEHICLE),
                 watch("this becomes crewed for the first time each turn", "becomesCrewedForFirstTimeEachTurn",
                         Triggers::becomesCrewedForFirstTimeEachTurn, CardType.ARTIFACT,
                         (test, cards) -> test.fixturesAreCollected(cards, (collection, vehicle) ->
-                                collection.checkBecomesCrewedTriggers(test.gd, vehicle, test.player1.getId())),
+                                test.gd.rulesEvents.occur(new CrewEvent.BecameCrewed(vehicle, test.player1.getId()))),
                         CardSubtype.VEHICLE),
                 watch("this becomes saddled", "becomesSaddled", Triggers::becomesSaddled, CardType.CREATURE,
                         (test, cards) -> test.fixturesAreCollected(cards, (collection, mount) ->
-                                collection.checkBecomesSaddledTriggers(test.gd, mount, test.player1.getId()))),
+                                test.gd.rulesEvents.occur(new CrewEvent.BecameSaddled(mount, test.player1.getId())))),
                 watch("this becomes saddled for the first time each turn", "becomesSaddledForFirstTimeEachTurn",
                         Triggers::becomesSaddledForFirstTimeEachTurn, CardType.CREATURE,
                         (test, cards) -> test.fixturesAreCollected(cards, (collection, mount) ->
-                                collection.checkBecomesSaddledTriggers(test.gd, mount, test.player1.getId()))),
+                                test.gd.rulesEvents.occur(new CrewEvent.BecameSaddled(mount, test.player1.getId())))),
                 watch("this becomes stationed", "becomesStationed", Triggers::becomesStationed, CardType.ARTIFACT,
                         TriggerRouteRecordTest::fixturesAreStationed),
                 watch("a permanent entering causes an ability to trigger", "permanentEnteringCausesAbilityToTrigger",
@@ -1273,7 +1277,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                 watch("you unlock this door", "doorUnlocked", () -> Triggers.doorUnlocked(0), CardType.ENCHANTMENT,
                         (test, cards) -> test.fixturesAreCollected(cards, (collection, room) -> {
                             room.unlockRoomDoor(0);
-                            collection.checkSelfRoomDoorUnlockedTriggers(test.gd, test.player1.getId(), room, 0);
+                            test.gd.rulesEvents.occur(new RoomEvent.DoorUnlocked(room, test.player1.getId(), 0));
                         }), CardSubtype.ROOM),
                 collected("you fully unlock a Room", "youFullyUnlockRoom", Triggers::youFullyUnlockRoom,
                         (test, collection) -> {
@@ -1281,7 +1285,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                                     card("Fixture Room", CardType.ENCHANTMENT, CardSubtype.ROOM));
                             room.unlockRoomDoor(0);
                             room.unlockRoomDoor(1);
-                            collection.checkAllyRoomFullyUnlockedTriggers(test.gd, test.player1.getId(), room);
+                            test.gd.rulesEvents.occur(new RoomEvent.FullyUnlocked(room, test.player1.getId()));
                         }));
     }
 
@@ -1946,10 +1950,15 @@ class TriggerRouteRecordTest extends BaseCardTest {
     }
 
     private Variant variant;
+
     private Permanent firstTarget;
+
     private Permanent secondTarget;
+
     private List<String> fixtureNames = List.of();
+
     private final List<String> refusals = new ArrayList<>();
+
     private final Map<UUID, UUID> cardOfPermanent = new HashMap<>();
 
     @ParameterizedTest(name = "{0} / {1}")
@@ -2274,7 +2283,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
     private void auraBecomesAttachedTo(Permanent enchanted) {
         Permanent aura = addCreatureReady(player1, card("Fixture Aura", CardType.ENCHANTMENT, CardSubtype.AURA));
         aura.setAttachedTo(enchanted.getId());
-        collect(collection -> collection.checkAuraAttachedTriggers(gd, aura, enchanted.getId()));
+        collect(collection -> gd.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, enchanted.getId())));
     }
 
     private void fixtureEquipmentBecomesAttached(List<Card> cards) {
@@ -2283,7 +2292,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
             Permanent equipment = addCreatureReady(player1, card);
             rememberPermanents();
             equipment.setAttachedTo(creature.getId());
-            collect(collection -> collection.checkEquipmentAttachedTriggers(gd, equipment, null));
+            collect(collection -> collection.equipmentBecameAttached(gd, equipment, null));
             answerAll();
         }
     }

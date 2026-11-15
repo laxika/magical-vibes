@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.t.TitansNest;
 import com.github.laxika.magicalvibes.cards.c.CrystallineGiant;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -114,7 +115,7 @@ class GemrazerTest extends BaseCardTest {
     }
 
     private void triggerMutation(Permanent gemrazer) {
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, gemrazer, List.of(gemrazer.getCard()), player1.getId()));
         harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
     }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -63,7 +64,7 @@ public class TemptTheRingEffectHandler implements NormalEffectHandlerBean {
         if (eligibleIds.size() == 1) {
             UUID bearerId = eligibleIds.getFirst();
             setBearer(gameData, controllerId, bearerId);
-            triggerCollectionService.checkRingTemptTriggers(gameData, controllerId, bearerId);
+            ActionEvents.ringBearerChosen(gameData, controllerId, bearerId);
             return;
         }
 
@@ -86,7 +87,7 @@ public class TemptTheRingEffectHandler implements NormalEffectHandlerBean {
             throw new IllegalStateException("Choose a creature you control to be your Ring-bearer");
         }
         setBearer(gameData, context.controllerId(), chosenPermanentId);
-        triggerCollectionService.checkRingTemptTriggers(gameData, context.controllerId(), chosenPermanentId);
+        ActionEvents.ringBearerChosen(gameData, context.controllerId(), chosenPermanentId);
         if (gameData.pendingEffectResolutionEntry != null) {
             effectResolutionService.resolveEffectsFrom(gameData,
                     gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);

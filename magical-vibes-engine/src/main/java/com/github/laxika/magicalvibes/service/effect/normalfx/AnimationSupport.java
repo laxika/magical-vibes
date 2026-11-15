@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.CrewEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -313,7 +314,7 @@ public class AnimationSupport {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), self.getId(), entry.getControllerId(), effect,
                     self.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
-            triggerCollectionService.checkBecomesCrewedTriggers(gameData, self, entry.getControllerId());
+            gameData.rulesEvents.occur(new CrewEvent.BecameCrewed(self, entry.getControllerId()));
         }
 
         log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), power, toughness);

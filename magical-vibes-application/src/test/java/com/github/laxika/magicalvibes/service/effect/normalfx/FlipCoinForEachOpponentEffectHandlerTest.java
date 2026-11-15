@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.rules.RulesEvent;
+import com.github.laxika.magicalvibes.model.rules.ActionEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -40,7 +43,7 @@ class FlipCoinForEachOpponentEffectHandlerTest extends AbstractPlayerInteraction
 
         verify(winHandler).resolve(gd, entry, win);
         verify(lossHandler, never()).resolve(gd, entry, loss);
-        verify(triggerCollectionService).checkControllerWinsCoinFlipTriggers(gd, player1Id);
+        assertThat(emitted(gd)).contains(new ActionEvent.CoinFlipWon(player1Id));
     }
 
     @Test
@@ -65,11 +68,16 @@ class FlipCoinForEachOpponentEffectHandlerTest extends AbstractPlayerInteraction
 
         verify(lossHandler).resolve(gd, entry, loss);
         verify(winHandler, never()).resolve(gd, entry, win);
-        verify(triggerCollectionService).checkControllerLosesCoinFlipTriggers(gd, player1Id);
+        assertThat(emitted(gd)).contains(new ActionEvent.CoinFlipLost(player1Id));
         assertThat(entry.getTargetId()).isNull();
     }
 
     private java.util.UUID entryTarget(Object argument) {
         return ((StackEntry) argument).getTargetId();
+    }
+
+    /** The rules events emitted into {@code gameData} and not yet matched. */
+    private static List<RulesEvent> emitted(GameData gameData) {
+        return gameData.rulesEvents.pending().stream().flatMap(batch -> batch.events().stream()).toList();
     }
 }

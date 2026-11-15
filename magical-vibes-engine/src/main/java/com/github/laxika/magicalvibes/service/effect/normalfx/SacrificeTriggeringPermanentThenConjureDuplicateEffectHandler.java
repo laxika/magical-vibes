@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -94,7 +95,7 @@ public class SacrificeTriggeringPermanentThenConjureDuplicateEffectHandler imple
         entry.getCreatedPermanentIds().add(duplicate.getId());
         gameLogService.append(gameData, GameLog.textCardText(
                 "A duplicate of ", duplicateCard, " is conjured onto the battlefield."));
-        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
+        ActionEvents.conjured(gameData, entry.getControllerId(), 1);
 
         if (duplicateCard.hasType(CardType.LAND)) {
             battlefieldEntryService.processLandETBEffects(gameData, entry.getControllerId(), duplicateCard);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.rules.SagaEvent;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -197,8 +198,7 @@ public class SagaChapterService {
             }
         }
         if (!copied && loreCount == card.getSagaFinalChapter()) {
-            triggerCollectionService.checkSagaFinalChapterAbilityTriggers(gameData, controllerId,
-                    card.getManaValue());
+            gameData.rulesEvents.occur(new SagaEvent(SagaEvent.Kind.FINAL_CHAPTER_TRIGGERED, controllerId, card.getManaValue()));
         }
     }
 

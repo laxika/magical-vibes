@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -64,7 +65,7 @@ public class AttachTargetAuraOrEquipmentToTargetCreatureEffectHandler implements
             attachment.setTimestamp(gameData.nextTimestamp());
             gameLogService.append(gameData, GameLog.cardTextCard(attachment.getCard(), " is now attached to ",
                     destination.getCard(), "."));
-            triggerCollectionService.checkAuraAttachedTriggers(gameData, attachment, destination.getId());
+            gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(attachment, destination.getId()));
         } else if (attachment.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
                 && equipSupport.canAttachEquipment(gameData, attachment, destination)) {
             UUID oldAttachedTo = attachment.getAttachedTo();

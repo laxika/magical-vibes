@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -320,7 +321,7 @@ public class PermanentChoiceSpellHandlerService {
 
     private void checkDiscoverTriggers(GameData gameData, PermanentChoiceContext.LibraryCastSpellTarget context) {
         if (context.discoverValue() != null) {
-            triggerCollectionService.checkDiscoverTriggers(gameData, context.controllerId(),
+            ActionEvents.discovered(gameData, context.controllerId(),
                     context.discoverValue());
         }
     }

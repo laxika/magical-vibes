@@ -13,13 +13,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToExileEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftProteanWarEngineSpellbookEffect;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
-import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
+import com.github.laxika.magicalvibes.model.rules.EntryCausedTriggerEvent;
 import com.github.laxika.magicalvibes.service.effect.entryfx.FlipCoinOnEnterEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DraftCardFromSpellbookToExileEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DraftProteanWarEngineSpellbookEffectHandler;
@@ -465,15 +463,16 @@ public class EtbTriggerService {
 
     /**
      * Taxes each triggered ability the entering permanent caused, its own and the others' (constellation, landfall,
-     * ...): the abilities that trigger when a permanent entering causes a triggered ability to trigger
-     * ({@link #queueTriggeredAbilityCounters}), for each that reached the stack since {@code stackSizeBefore}.
+     * ...): each that reached the stack since {@code stackSizeBefore} is an {@link EntryCausedTriggerEvent} of its
+     * own, which "whenever a permanent entering causes a triggered ability to trigger" abilities (Strict Proctor)
+     * trigger on, after the ability that caused them.
      */
     private void taxTriggeredAbilitiesTheEntryCaused(GameData gameData, int stackSizeBefore) {
         List<StackEntry> causedTriggers = new ArrayList<>(gameData.stack.subList(
                 Math.min(stackSizeBefore, gameData.stack.size()), gameData.stack.size()));
         for (StackEntry causedTrigger : causedTriggers) {
             if (causedTrigger.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
-                queueTriggeredAbilityCounters(gameData, causedTrigger);
+                gameData.rulesEvents.occur(new EntryCausedTriggerEvent(causedTrigger));
             }
         }
     }
@@ -502,41 +501,6 @@ public class EtbTriggerService {
             triggerCollectionService.checkAllyLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkPlanarLandEntersTriggers(gameData, controllerId, card);
         }
-    }
-
-    /**
-     * Collects the abilities that trigger when a permanent entering causes a triggered ability to trigger ("whenever a
-     * permanent entering causes a triggered ability to trigger, counter that ability unless its controller pays {2}",
-     * Strict Proctor), once {@code triggeredAbility} is on the stack: each goes on the stack as written, after the
-     * ability that caused it, recording that ability as its triggering spell, its controller as the triggering player
-     * and its stack object as the non-targeting referent "that ability", whatever the effects are. A permanent that
-     * lost its abilities or is face down doesn't trigger.
-     */
-    public void queueTriggeredAbilityCounters(GameData gameData, StackEntry triggeredAbility) {
-        gameData.forEachBattlefield((controllerId, battlefield) -> {
-            for (Permanent permanent : List.copyOf(battlefield)) {
-                if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
-                    continue;
-                }
-                // Each ability is one object of all its effects (CR 603.3), through the stack door.
-                for (TriggeredAbility ability : MiscAbilityReader.printed(permanent.getCard(),
-                        MiscWatch.ON_PERMANENT_ENTERING_CAUSES_ABILITY_TO_TRIGGER)) {
-                    boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
-                            permanent.getCard(), permanent, controllerId, permanent.getCard().getName() + "'s ability",
-                            ConditionContext.forPermanent(permanent, controllerId), entry -> {
-                                entry.setNonTargeting(true);
-                                entry.setTargetId(triggeredAbility.getTargetableId());
-                                entry.setTargetZone(Zone.STACK);
-                                entry.setTriggeringCardId(triggeredAbility.getTargetableId());
-                                entry.setTriggeringSpell(triggeredAbility);
-                                entry.setTriggeringPlayerId(triggeredAbility.getControllerId());
-                            }));
-                    if (triggered) {
-                        gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
-                    }
-                }
-            }
-        });
     }
 
     private Permanent findEnteringPermanent(GameData gameData, Card card) {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsAtChe
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -56,10 +57,10 @@ public class FlipCoinForEachOpponentEffectHandler implements NormalEffectHandler
                     + coinFlipService.replacementDetails(result) + "."));
 
             if (won) {
-                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+                ActionEvents.coinFlipWon(gameData, controllerId);
                 dispatch(gameData, entry, flipEffect.winEffect());
             } else {
-                triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
+                ActionEvents.coinFlipLost(gameData, controllerId);
                 UUID previousTargetId = entry.getTargetId();
                 entry.setTargetIdForEffectResolution(opponentId);
                 try {

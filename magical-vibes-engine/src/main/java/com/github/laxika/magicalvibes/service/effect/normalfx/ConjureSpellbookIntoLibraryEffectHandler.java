@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -60,7 +61,7 @@ public class ConjureSpellbookIntoLibraryEffectHandler implements NormalEffectHan
             return;
         }
 
-        triggerCollectionService.checkConjureTriggers(gameData, controllerId, conjuredCount);
+        ActionEvents.conjured(gameData, controllerId, conjuredCount);
         LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures " + conjuredCount + " cards from its spellbook into "

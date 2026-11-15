@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
-import com.github.laxika.magicalvibes.service.trigger.ZoneChangeWatch;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -64,8 +64,9 @@ public class BecomeCopyOfEnteringCreatureEffectHandler implements NormalEffectHa
         }
 
         String originalName = source.getCard().getName();
-        List<TriggeredAbility> copyAbilities = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD
-                .abilitiesOf(source.getCard()).stream()
+        List<TriggeredAbility> copyAbilities = source.getCard().getTriggeredAbilities().stream()
+                .filter(ability -> ability.conditions().stream().anyMatch(condition ->
+                        condition.trigger() instanceof ZoneChangeTrigger trigger && trigger.entersBattlefield()))
                 .filter(ability -> ability.effects().stream()
                         .anyMatch(registration -> registration.effect() instanceof BecomeCopyOfEnteringCreatureEffect))
                 .toList();

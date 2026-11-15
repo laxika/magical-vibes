@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -75,7 +76,7 @@ public class AttachTargetAuraToTargetCreatureEffectHandler implements NormalEffe
         gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", destination.getCard(), "."));
         log.info("Game {} - {} attached to {} via {}", gameData.id, aura.getCard().getName(), destination.getCard().getName(), entry.getCard().getName());
 
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, destination.getId());
+        gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, destination.getId()));
     }
 
     private void fizzle(GameData gameData, StackEntry entry, String reason) {

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.p.Porcuparrot;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +22,7 @@ class MysteriousEggTest extends BaseCardTest {
     void mutatingPutsCounterOnIt() {
         Permanent egg = addCreatureReady(player1, new MysteriousEgg());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, egg, List.of(egg.getCard()), player1.getId()));
         resolveAllTriggers();
 
@@ -35,7 +36,7 @@ class MysteriousEggTest extends BaseCardTest {
         Permanent opposing = addCreatureReady(player2, new MysteriousEgg());
 
         for (int i = 0; i < 2; i++) {
-            harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+            harness.inMutationScope(() -> ActionEvents.mutated(
                     gd, egg, List.of(egg.getCard()), player1.getId()));
             resolveAllTriggers();
         }
@@ -57,7 +58,7 @@ class MysteriousEggTest extends BaseCardTest {
     @Test
     void sourceLeavingBeforeResolutionDoesNotAddCountersToAnotherEgg() {
         Permanent egg = addCreatureReady(player1, new MysteriousEgg());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, egg, List.of(egg.getCard()), player1.getId()));
         gd.playerBattlefields.get(player1.getId()).remove(egg);
         Permanent replacement = addCreatureReady(player1, new MysteriousEgg());

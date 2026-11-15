@@ -66,7 +66,7 @@ public class DefendingPlayerDiscardsHandThenDrawsThatManyEffectHandler implement
 
         for (Card card : discarded) {
             graveyardService.discardCard(gameData, playerId, card);
-            triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+            gameData.discarded(playerId, card);
         }
 
         gameLogService.append(gameData, GameLog.text(playerName + " discards their hand (" + discardCount

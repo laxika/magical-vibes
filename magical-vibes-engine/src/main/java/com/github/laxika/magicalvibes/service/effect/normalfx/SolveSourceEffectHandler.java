@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -35,7 +36,7 @@ public class SolveSourceEffectHandler implements NormalEffectHandlerBean {
             source.setSolved(true);
             UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
             if (controllerId != null) {
-                triggerCollectionService.checkAllyCaseSolvesTriggers(gameData, source, controllerId);
+                ActionEvents.caseSolved(gameData, source, controllerId);
             }
         }
     }

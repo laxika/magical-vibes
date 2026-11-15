@@ -95,6 +95,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -243,7 +244,7 @@ public class MayPenaltyChoiceHandlerService {
                 StackEntry paidFor = targetEntry;
                 Runnable payment = () -> {
                     cost.payResolutionCost(pool);
-                    triggerCollectionService.checkTaxPaymentTriggers(
+                    ActionEvents.taxPaid(
                             gameData, player.getId(), ability.sourceControllerId(), cost.getManaValue());
                     if (lifeCost > 0) {
                         lifeSupport.applyLifePayment(gameData, player.getId(), lifeCost,
@@ -1176,7 +1177,7 @@ public class MayPenaltyChoiceHandlerService {
                         taxingPlayerId = gameQueryService.findPermanentController(
                                 gameData, ability.sourcePermanentId());
                     }
-                    triggerCollectionService.checkTaxPaymentTriggers(
+                    ActionEvents.taxPaid(
                             gameData, ability.controllerId(), taxingPlayerId, cost.getManaValue());
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " pays " + ability.manaCost() + ". (", ability.sourceCard(), ")"));

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryForOwnerOfCardExiledWithSourceBelowManaValueEffect;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -60,6 +61,6 @@ public class SeekLibraryForOwnerOfCardExiledWithSourceBelowManaValueEffectHandle
         Card chosen = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
         library.removeIf(card -> card.getId().equals(chosen.getId()));
         gameData.addCardToHand(exiled.ownerId(), chosen);
-        triggerCollectionService.checkSeekTriggers(gameData, exiled.ownerId(), List.of(chosen));
+        ActionEvents.sought(gameData, exiled.ownerId(), List.of(chosen));
     }
 }

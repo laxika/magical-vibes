@@ -119,7 +119,7 @@ public class ZyymRevealHandEffectMayHandler implements MayEffectHandlerBean {
         }
 
         hand.remove(card);
-        triggerCollectionService.beginDiscardEvent(gameData, playerId);
+        gameData.beginDiscardEvent(playerId);
 
         boolean replacedByBattlefield = gameData.discardCausedByOpponent
                 && card.getStaticEffects(Zone.HAND).stream()
@@ -136,8 +136,8 @@ public class ZyymRevealHandEffectMayHandler implements MayEffectHandlerBean {
                     gameData.playerIdToName.get(playerId), card));
         }
 
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
-        triggerCollectionService.finishDiscardEvent(gameData);
+        gameData.discarded(playerId, card);
+        gameData.finishDiscardEvent();
         if (replacedByBattlefield && card.hasType(CardType.CREATURE)) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(
                     gameData, playerId, card, null, false);

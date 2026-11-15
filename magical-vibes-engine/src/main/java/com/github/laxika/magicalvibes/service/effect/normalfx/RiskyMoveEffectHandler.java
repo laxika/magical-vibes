@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -142,13 +143,13 @@ public class RiskyMoveEffectHandler implements NormalEffectHandlerBean, ChoosesC
 
         if (result.heads()) {
             if (result.isActualCoinFlip()) {
-                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+                ActionEvents.coinFlipWon(gameData, controllerId);
             }
             return;
         }
 
         if (result.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
+            ActionEvents.coinFlipLost(gameData, controllerId);
         }
         Permanent creature = creatureId == null ? null : gameQueryService.findPermanentById(gameData, creatureId);
         if (creature != null) {

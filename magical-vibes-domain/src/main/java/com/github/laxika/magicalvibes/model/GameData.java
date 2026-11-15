@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.action.CyclopeanTombUpkeepCleanup;
+import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
 import com.github.laxika.magicalvibes.model.rules.RulesEventLog;
 import com.github.laxika.magicalvibes.model.rules.RulesObserver;
@@ -831,7 +832,7 @@ public class GameData {
     /** Players whose noncreature permanents were destroyed by an opponent's spell or ability this turn. */
     public final Set<UUID> playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn = ConcurrentHashMap.newKeySet();
     /** Tracks card IDs each player cycled or discarded this turn (populated in the central discard hook
-     *  {@code TriggerCollectionService.checkDiscardTriggers}; cycling is a discard). Used by Shadow of the Grave. */
+     *  {@link #discarded(UUID, Card, boolean)}; cycling is a discard). Used by Shadow of the Grave. */
     public final Map<UUID, Set<UUID>> cardsDiscardedOrCycledThisTurn = new ConcurrentHashMap<>();
     /** Players whose hands received a permanent from the battlefield this turn. */
     public final Set<UUID> playersWhoReceivedPermanentFromBattlefieldToHandThisTurn =
@@ -6966,6 +6967,90 @@ public class GameData {
     }
 
     /** Records a card cycled by the given player during this game. */
+    /**
+     * Opens a discard event of {@code playerId}: the cards they discard until {@link #finishDiscardEvent} are one
+     * occurrence of "one or more cards" discarded at once ({@link LibraryEvent.DiscardedCards}).
+     */
+    public void beginDiscardEvent(UUID playerId) {
+        if (discardEventPlayerId == null) {
+            discardEventPlayerId = playerId;
+            discardEventCardCount = 0;
+            discardEventCards.clear();
+        } else if (!discardEventPlayerId.equals(playerId)) {
+            throw new IllegalStateException("A discard event is already in progress for another player");
+        }
+    }
+
+    /**
+     * Closes the discard event {@link #beginDiscardEvent} opened and emits it as one occurrence
+     * ({@link LibraryEvent.DiscardedCards}) when a card was discarded in it.
+     */
+    public void finishDiscardEvent() {
+        UUID playerId = discardEventPlayerId;
+        int count = discardEventCardCount;
+        List<Card> cards = List.copyOf(discardEventCards);
+        discardEventPlayerId = null;
+        discardEventCardCount = 0;
+        discardEventCards.clear();
+        if (playerId != null && count > 0) {
+            rulesEvents.occur(new LibraryEvent.DiscardedCards(playerId, cards));
+        }
+    }
+
+    /** {@link #discarded(UUID, Card, boolean)} of a discard that isn't a cycling. */
+    public void discarded(UUID playerId, Card card) {
+        discarded(playerId, card, false);
+    }
+
+    /**
+     * Records that {@code playerId} discarded {@code card} (CR 701.9a), {@code cycled} when to pay a cycling cost
+     * (CR 702.29a), in this turn's discard counts and the last-discarded card's values, and emits the discard as an
+     * occurrence of its own ({@link LibraryEvent.Discarded}). Every discard path calls this after moving the card.
+     */
+    public void discarded(UUID playerId, Card card, boolean cycled) {
+        if (cycled) {
+            recordCardCycled(playerId, card);
+        }
+        cardsDiscardedThisTurn.merge(playerId, 1, Integer::sum);
+        if (card != null && !card.hasType(CardType.LAND)) {
+            nonlandCardsDiscardedThisTurn.merge(playerId, 1, Integer::sum);
+        }
+        if (card != null) {
+            lastDiscardedCardManaValue = card.getManaValue();
+            greatestDiscardedCardManaValue = Math.max(greatestDiscardedCardManaValue, card.getManaValue());
+            EnumSet<CardType> cardTypes = EnumSet.noneOf(CardType.class);
+            if (card.getType() != null) {
+                cardTypes.add(card.getType());
+            }
+            cardTypes.addAll(card.getAdditionalTypes());
+            lastDiscardedCardTypes = Set.copyOf(cardTypes);
+        } else {
+            lastDiscardedCardTypes = Set.of();
+        }
+        if (card != null && !card.isToken()) {
+            cardsDiscardedOrCycledThisTurn.computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet())
+                    .add(card.getId());
+            if (discardCausedByOpponent) {
+                cardsDiscardedByOpponentThisTurn.computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet())
+                        .add(card.getId());
+            }
+        }
+        if (card != null && discardEventPlayerId != null) {
+            discardEventCardCount++;
+            discardEventCards.add(card);
+        }
+        rulesEvents.occur(new LibraryEvent.Discarded(playerId, card, cycled, discardCausedByOpponent,
+                discardEventPlayerId == null));
+    }
+
+    /**
+     * Records that {@code playerId} surveilled (CR 701.25a) and emits it as an occurrence of its own
+     * ({@link LibraryEvent.Surveilled}), the first of the turn when they hadn't surveilled yet.
+     */
+    public void surveilled(UUID playerId) {
+        rulesEvents.occur(new LibraryEvent.Surveilled(playerId, playersWhoSurveilledThisTurn.add(playerId)));
+    }
+
     public void recordCardCycled(UUID playerId, Card card) {
         if (card == null) return;
         cardsCycledThisTurn.merge(playerId, 1, Integer::sum);

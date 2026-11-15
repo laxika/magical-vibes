@@ -6,17 +6,13 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
-
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Finds the triggered abilities a {@link TriggerWatch}'s collectors read, by the watched trigger (a condition whose
- * {@link Trigger#watchKey()} is it): a card's printed abilities, the abilities granted to a permanent for a duration
- * and those of any list (a graveyard card's own and perpetual ones, the abilities a static ability grants). The
- * family readers ({@link LibraryAbilityReader}, {@link SagaAbilityReader}, {@link ActionAbilityReader},
- * {@link MiscAbilityReader}) read
- * the options and filters of what these find.
+ * Finds triggered abilities by a watched trigger (a condition whose {@link Trigger#watchKey()} is it): a card's printed
+ * abilities, the abilities granted to a permanent for a duration and those of any list (a graveyard card's own and
+ * perpetual ones, the abilities a static ability grants). The matchers that read them judge their options and filters.
  */
 public final class WatchedAbilities {
 
@@ -29,11 +25,6 @@ public final class WatchedAbilities {
      */
     public static List<TriggeredAbility> printed(Card card, Trigger watched, Zone zone) {
         return withWatchedTrigger(card.getTriggeredAbilities(), watched, zone);
-    }
-
-    /** The abilities of {@code card} that {@code watch} reads, as {@link #printed(Card, Trigger, Zone)} says. */
-    public static List<TriggeredAbility> printed(Card card, TriggerWatch watch) {
-        return printed(card, watch.trigger(), watch.zone());
     }
 
     /**

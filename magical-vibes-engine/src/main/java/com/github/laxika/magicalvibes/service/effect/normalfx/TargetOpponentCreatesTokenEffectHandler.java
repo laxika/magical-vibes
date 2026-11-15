@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.context.annotation.Lazy;
@@ -74,7 +75,7 @@ public class TargetOpponentCreatesTokenEffectHandler implements NormalEffectHand
                 amount, entry.getCard().getSetCode(), power, toughness);
         entry.getCreatedPermanentIds().addAll(createdIds);
         if (e.gift()) {
-            triggerCollectionService.checkControllerGivesGiftTriggers(gameData, controllerId);
+            ActionEvents.giftGiven(gameData, controllerId);
         }
     }
 }

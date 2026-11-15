@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandOnCoinFlipLossEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -62,9 +63,9 @@ public class ReturnSelfToHandOnCoinFlipLossEffectHandler implements NormalEffect
         gameLogService.append(gameData, GameLog.text(flipLog));
 
         if (wonFlip && result.isActualCoinFlip() && triggerCollectionService != null) {
-            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+            ActionEvents.coinFlipWon(gameData, controllerId);
         } else if (!wonFlip && result.isActualCoinFlip() && triggerCollectionService != null) {
-            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
+            ActionEvents.coinFlipLost(gameData, controllerId);
         }
 
         if (wonFlip) {

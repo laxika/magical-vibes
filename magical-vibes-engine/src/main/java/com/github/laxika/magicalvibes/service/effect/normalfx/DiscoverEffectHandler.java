@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -55,7 +56,7 @@ public class DiscoverEffectHandler implements NormalEffectHandlerBean {
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) {
             entry.setEventValue(discoverValue);
-            triggerCollectionService.checkDiscoverTriggers(gameData, controllerId, discoverValue);
+            ActionEvents.discovered(gameData, controllerId, discoverValue);
             return;
         }
 
@@ -82,7 +83,7 @@ public class DiscoverEffectHandler implements NormalEffectHandlerBean {
                     + " (Discover " + discoverValue + "): no qualifying nonland card was found;"
                     + " the revealed cards go to the bottom of " + playerName
                     + "'s library in a random order."));
-            triggerCollectionService.checkDiscoverTriggers(gameData, controllerId, discoverValue);
+            ActionEvents.discovered(gameData, controllerId, discoverValue);
             return;
         }
 

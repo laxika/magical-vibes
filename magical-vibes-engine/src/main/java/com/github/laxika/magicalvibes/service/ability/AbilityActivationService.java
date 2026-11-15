@@ -1,8 +1,5 @@
 package com.github.laxika.magicalvibes.service.ability;
 
-import com.github.laxika.magicalvibes.model.rules.SpellEvent;
-import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
-import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -41,33 +38,30 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivationCostModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeSacrificedLandCouldProduceEffect;
+import com.github.laxika.magicalvibes.model.effect.BlightXCost;
 import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
-import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfManaValueEqualsXEffect;
+import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
+import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsCost;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentAbilityLockEffect;
-import com.github.laxika.magicalvibes.model.effect.BlightXCost;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileArtifactsWithTotalManaValueCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
@@ -83,15 +77,18 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.FirstCardCycledFreeEffect;
+import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.FreeCyclingEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLandToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.HandCardCost;
 import com.github.laxika.magicalvibes.model.effect.HandRevealCost;
 import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryNinjutsuEffect;
+import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryNinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -119,8 +116,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromPermanen
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealHandCost;
 import com.github.laxika.magicalvibes.model.effect.RevealChosenPlayerCost;
+import com.github.laxika.magicalvibes.model.effect.RevealHandCost;
 import com.github.laxika.magicalvibes.model.effect.RevealTwoCardsSharingColorCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllMatchingPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
@@ -148,14 +145,17 @@ import com.github.laxika.magicalvibes.model.effect.UntapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.replacement.LandManaEvent;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.replacement.LandManaEvent;
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
+import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
+import com.github.laxika.magicalvibes.model.rules.SpellEvent;
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.service.CardRevealService;
-import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.ability.cost.AllMatchingPermanentSacrificeCostHandler;
@@ -196,6 +196,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -204,6 +205,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -250,28 +252,51 @@ public class AbilityActivationService {
     private final CardRevealService cardRevealService;
 
     private final GraveyardService graveyardService;
+
     private final GameQueryService gameQueryService;
+
     private final PredicateEvaluationService predicateEvaluationService;
+
     private final ConditionEvaluationService conditionEvaluationService;
+
     private final AmountEvaluationService amountEvaluationService;
+
     private final GameLogService gameLogService;
+
     private final CastingCostService castingCostService;
+
     private final com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
+
     private final TargetLegalityService targetLegalityService;
+
     private final ValidTargetService validTargetService;
+
     private final ActivatedAbilityExecutionService activatedAbilityExecutionService;
+
     private final PlayerInputService playerInputService;
+
     private final PermanentRemovalService permanentRemovalService;
+
     private final com.github.laxika.magicalvibes.service.battlefield.DepartureService departureService;
+
     private final TriggerCollectionService triggerCollectionService;
+
     private final ExileService exileService;
+
     private final LifeSupport lifeSupport;
+
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+
     private final GameMutationCoordinator mutationCoordinator;
+
     private final TapCostSupport tapCostSupport;
+
     private final PermanentCounterSupport permanentCounterSupport;
+
     private final EquipSupport equipSupport;
+
     private final RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterFromExiledCardEffectHandler;
+
     private final LandManaReplacementService landManaReplacementService;
 
     /** The mana types a land's basic land types make it produce before any replacement applies. */
@@ -2094,7 +2119,7 @@ public class AbilityActivationService {
         }
         gameData.stack.add(stackEntry);
         gameData.recordActivatedAbilityOfGraveyardCard(playerId);
-        triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
+        ActionEvents.crimeCommitted(gameData, stackEntry);
         stateBasedActionService.performStateBasedActions(gameData);
         flushActivatedAbilityCostTriggers(gameData);
         if (!ability.isManaAbility()) {
@@ -2591,7 +2616,7 @@ public class AbilityActivationService {
             gameData.stack.add(insertionIndex, stackEntry);
             triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, stackEntry);
         }
-        triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
+        ActionEvents.crimeCommitted(gameData, stackEntry);
         collectHandActivationTriggers(gameData, playerId, stackEntry, ability);
 
         gameLogService.append(gameData, GameLog.textCardText(
@@ -2694,14 +2719,12 @@ public class AbilityActivationService {
             gameData.stack.add(insertionIndex, stackEntry);
             triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, stackEntry);
         }
-        triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
+        ActionEvents.crimeCommitted(gameData, stackEntry);
         collectHandActivationTriggers(gameData, playerId, stackEntry, ability);
         if (discarded) {
-            triggerCollectionService.checkDiscardTriggers(gameData, playerId, card, ability.isCyclingAbility());
+            gameData.discarded(playerId, card, ability.isCyclingAbility());
             if (ability.isCyclingAbility()) {
-                triggerCollectionService.checkCycleTriggers(gameData, playerId, card, xValue,
-                        ability.isCyclingTriggerTargets() ? ability : null,
-                        targetIds == null && targetId != null ? List.of(targetId) : targetIds);
+                gameData.rulesEvents.occur(new LibraryEvent.Cycled(playerId, card, xValue, ability.isCyclingTriggerTargets() ? ability : null, targetIds == null && targetId != null ? List.of(targetId) : targetIds));
                 triggerCollectionService.beginStackDoorChoices(gameData);
                 if (!gameData.interaction.isAwaitingInput()) {
                     triggerCollectionService.processNextETBSpellTargetTrigger(gameData);
@@ -2800,7 +2823,7 @@ public class AbilityActivationService {
         );
         gameData.stack.add(stackEntry);
         collectHandActivationTriggers(gameData, playerId, stackEntry, ability);
-        triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
+        ActionEvents.crimeCommitted(gameData, stackEntry);
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates ninjutsu on ", card, "."));
         log.info("Game {} - {} activates ninjutsu on {}", gameData.id, player.getUsername(), card.getName());
@@ -2857,7 +2880,7 @@ public class AbilityActivationService {
                 false, manaCost, List.of(resolutionEffect), card.getName() + "'s library ninjutsu")
                 .withNinjutsu();
         collectHandActivationTriggers(gameData, playerId, stackEntry, libraryNinjutsuAbility);
-        triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
+        ActionEvents.crimeCommitted(gameData, stackEntry);
 
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " activates library ninjutsu on ", card, "."));
@@ -3045,7 +3068,7 @@ public class AbilityActivationService {
         stackEntry.setCyclingAbility(ability.isCyclingAbility());
         gameData.stack.add(stackEntry);
         recordHandAbilityActivationUse(gameData, card, idx);
-        triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
+        ActionEvents.crimeCommitted(gameData, stackEntry);
         flushActivatedAbilityCostTriggers(gameData);
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from their hand."));
@@ -5092,7 +5115,7 @@ public class AbilityActivationService {
 
         castingCostService.getActivatedAbilityTaxByController(
                         gameData, playerId, permanent, ability, ability.isManaAbility())
-                .forEach((taxingPlayerId, amount) -> triggerCollectionService.checkTaxPaymentTriggers(
+                .forEach((taxingPlayerId, amount) -> ActionEvents.taxPaid(
                         gameData, playerId, taxingPlayerId, amount));
 
         Card paidExiledCardSnapshot = null;
@@ -5186,7 +5209,7 @@ public class AbilityActivationService {
 
         if (forageCost != null && exileNGraveyardCostToPay != null) {
             int stackSizeBeforeForage = gameData.stack.size();
-            triggerCollectionService.checkForageTriggers(gameData, playerId);
+            ActionEvents.foraged(gameData, playerId);
             deferActivatedAbilityCostTriggers(gameData, stackSizeBeforeForage);
         }
 
@@ -5857,7 +5880,7 @@ public class AbilityActivationService {
         return new MultiplePermanentSacrificeCostHandler(foodCost, predicateEvaluationService,
                 gameQueryService, (data, player, food) -> {
                     chooseSacrificeAsCost(data, player, food);
-                    triggerCollectionService.checkForageTriggers(data, player.getId());
+                    ActionEvents.foraged(data, player.getId());
                 }, sourcePermanentId) {
             @Override public CardEffect costEffect() { return ForageOrPayManaCost.forageOnly(); }
             @Override public boolean shouldAutoPayAll(GameData data, UUID playerId, int remaining) {
@@ -9202,7 +9225,7 @@ public class AbilityActivationService {
                     artifactContext, myrContext, subtypeSpellOrAbilityContext,
                     subtypeCreatureSourceSpellOrAbilityContext, 0, null);
         }
-        triggerCollectionService.checkBendingTriggers(gameData, playerId, BendingType.WATERBEND);
+        ActionEvents.bent(gameData, playerId, BendingType.WATERBEND);
         if (gameData.stack.size() > stackBeforeWaterbendTriggers) {
             gameData.pendingActivatedAbilityCostTriggers.addAll(new ArrayList<>(
                     gameData.stack.subList(stackBeforeWaterbendTriggers, gameData.stack.size())));
@@ -9764,9 +9787,9 @@ public class AbilityActivationService {
     private void collectDiscardTriggersAsAbilityCost(GameData gameData, UUID playerId, Card discardedCard,
                                                      boolean cycled) {
         int stackBefore = gameData.stack.size();
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, discardedCard, cycled);
+        gameData.discarded(playerId, discardedCard, cycled);
         if (cycled) {
-            triggerCollectionService.checkCycleTriggers(gameData, playerId, discardedCard);
+            gameData.rulesEvents.occur(new LibraryEvent.Cycled(playerId, discardedCard));
         }
         if (gameData.stack.size() > stackBefore) {
             gameData.pendingActivatedAbilityCostTriggers.addAll(
@@ -10412,7 +10435,7 @@ public class AbilityActivationService {
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " exiles "
                 + toExile.size() + " cards from their graveyard as an activation cost."));
         if (cost.triggersCollectEvidence()) {
-            triggerCollectionService.checkCollectEvidenceTriggers(gameData, player.getId());
+            ActionEvents.evidenceCollected(gameData, player.getId());
             if (gameData.stack.size() > stackBefore) {
                 gameData.pendingActivatedAbilityCostTriggers.addAll(
                         new ArrayList<>(gameData.stack.subList(stackBefore, gameData.stack.size())));

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -125,7 +126,7 @@ public class MutationSupport {
         }
         UUID hostControllerId = gameQueryService.findPermanentController(gameData, host.getId());
         if (!host.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, host)) {
-            triggerCollectionService.checkMutateTriggers(gameData, host, List.of(merged), hostControllerId);
+            ActionEvents.mutated(gameData, host, List.of(merged), hostControllerId);
         } else {
             host.recordMutation();
         }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SeekCardSharingCardTypeWithDi
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -55,7 +56,7 @@ public class SeekCardSharingCardTypeWithDiscardedCardsEffectHandler implements N
         Card sought = matching.get(ThreadLocalRandom.current().nextInt(matching.size()));
         library.removeIf(card -> card.getId().equals(sought.getId()));
         gameData.addCardToHand(playerId, sought);
-        triggerCollectionService.checkSeekTriggers(gameData, playerId, List.of(sought));
+        ActionEvents.sought(gameData, playerId, List.of(sought));
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                 .text("seeks a card into their hand.").build());
     }

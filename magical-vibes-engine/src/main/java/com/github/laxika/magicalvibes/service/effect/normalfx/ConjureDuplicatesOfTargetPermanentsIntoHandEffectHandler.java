@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -55,7 +56,7 @@ public class ConjureDuplicatesOfTargetPermanentsIntoHandEffectHandler implements
                     + gameData.playerIdToName.get(entry.getControllerId()) + "'s hand."));
         }
 
-        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), conjuredCards.size());
+        ActionEvents.conjured(gameData, entry.getControllerId(), conjuredCards.size());
         if (entry.getXValue() < 5 || conjuredCards.isEmpty()) {
             return;
         }

@@ -27,7 +27,7 @@ public class TarriansSoulcleaver extends Card {
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentIsCreaturePredicate())),
-                        ObjectRelation.ANY),
+                        ObjectRelation.ANOTHER),
                 new PutCounterOnReferencedPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

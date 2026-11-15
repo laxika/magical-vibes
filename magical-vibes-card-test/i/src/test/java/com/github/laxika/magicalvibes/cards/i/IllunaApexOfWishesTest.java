@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -131,7 +132,7 @@ class IllunaApexOfWishesTest extends BaseCardTest {
         Card pacifism = new Pacifism();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(pacifism));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, illuna, List.of(illuna.getCard()), player1.getId()));
         gd.playerBattlefields.get(player1.getId()).clear();
 
@@ -147,7 +148,7 @@ class IllunaApexOfWishesTest extends BaseCardTest {
     }
 
     private void triggerMutation(Permanent illuna) {
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, illuna, List.of(illuna.getCard()), player1.getId()));
         resolveAllTriggers();
     }

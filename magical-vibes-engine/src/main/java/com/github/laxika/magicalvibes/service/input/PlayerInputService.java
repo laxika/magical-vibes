@@ -3249,12 +3249,7 @@ public class PlayerInputService {
                 && !gameData.creepingDread.active
                 && !playerId.equals(gameData.deferredDiscardChooserId)
                 && !(gameData.eachPlayerRummage.active && gameData.eachPlayerRummage.deferDiscards)) {
-            if (gameData.discardEventPlayerId == null) {
-                gameData.discardEventPlayerId = playerId;
-                gameData.discardEventCardCount = 0;
-            } else if (!gameData.discardEventPlayerId.equals(playerId)) {
-                throw new IllegalStateException("A discard event is already in progress for another player");
-            }
+            gameData.beginDiscardEvent(playerId);
         }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardChoice(
                 playerId, new ArrayList<>(validIndices), remainingCount, followUp, prompt,

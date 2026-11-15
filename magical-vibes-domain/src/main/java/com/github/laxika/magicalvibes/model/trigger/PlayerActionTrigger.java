@@ -12,8 +12,8 @@ import java.util.Objects;
  * @param player who, relative to the ability's controller
  * @param filter what the card the action is taken with must be, or {@code null} for any card: only the scheme set in
  *               motion ("whenever you set a non-ongoing scheme in motion" is
- *               {@code Triggers.youSetSchemeInMotion().withFilter(nonOngoingScheme)}). The scheme collector judges it
- *               from the ability ({@code ActionAbilityReader}), so {@link #watchKey()} drops it
+ *               {@code Triggers.youSetSchemeInMotion().withFilter(nonOngoingScheme)}). The scheme matcher judges it
+ *               from the ability ({@code ActionTriggers}), so {@link #watchKey()} drops it
  */
 public record PlayerActionTrigger(PlayerAction action, PlayerRelation player, CardPredicate filter)
         implements Trigger {
@@ -40,7 +40,7 @@ public record PlayerActionTrigger(PlayerAction action, PlayerRelation player, Ca
         return new PlayerActionTrigger(action, player, filter);
     }
 
-    /** The trigger the collectors read this one's abilities by: without its {@link #filter}. */
+    /** The trigger the matcher reads this one's abilities by: without its {@link #filter}. */
     @Override
     public Trigger watchKey() {
         return filter == null ? this : new PlayerActionTrigger(action, player);

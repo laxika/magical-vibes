@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinDestroyTargetOrRepeat
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -46,14 +47,14 @@ public class FlipCoinDestroyTargetOrRepeatEffectHandler implements NormalEffectH
 
         if (wonFlip) {
             if (result.isActualCoinFlip()) {
-                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+                ActionEvents.coinFlipWon(gameData, controllerId);
             }
             destroyTargetPermanentEffectHandler.resolve(
                     gameData, entry, DestroyTargetPermanentEffect.forTargetGroup(1));
             return;
         }
         if (result.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
+            ActionEvents.coinFlipLost(gameData, controllerId);
         }
 
         MayPayManaEffect repeat = new MayPayManaEffect(

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -46,10 +47,10 @@ public class FlipCoinsWithResultEffectsEffectHandler implements NormalEffectHand
             if (won) {
                 wins++;
                 if (result.isActualCoinFlip()) {
-                    triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
+                    ActionEvents.coinFlipWon(gameData, entry.getControllerId());
                 }
             } else if (result.isActualCoinFlip()) {
-                triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, entry.getControllerId());
+                ActionEvents.coinFlipLost(gameData, entry.getControllerId());
             }
             gameLogService.append(gameData, GameLog.text(playerName
                     + (won ? " wins" : " loses") + " the coin flip for " + entry.getCard().getName()

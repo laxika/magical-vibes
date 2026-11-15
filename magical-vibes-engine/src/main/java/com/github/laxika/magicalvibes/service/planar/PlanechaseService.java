@@ -12,37 +12,48 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler;
-import com.github.laxika.magicalvibes.service.turn.PhasingService;
-import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
+import com.github.laxika.magicalvibes.service.turn.PhasingService;
+import java.util.*;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
 
 /** Shared-deck Planechase actions. Callers own the game mutation and priority boundaries. */
 @Service
 public class PlanechaseService {
+
     @org.springframework.beans.factory.annotation.Autowired
     @Lazy
     private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactions;
+
     @org.springframework.beans.factory.annotation.Autowired
     @Lazy
     private com.github.laxika.magicalvibes.service.cast.PotentialManaService potentialMana;
+
     @org.springframework.beans.factory.annotation.Autowired
     @Lazy
     private AscendEffectHandler ascendEffectHandler;
+
     @org.springframework.beans.factory.annotation.Autowired
     @Lazy
     private PhasingService phasingService;
+
     private final CardCatalog catalog;
+
     private final PlanarDieRoller die;
+
     private final GameQueryService query;
+
     private final GameLogService logs;
+
     private final TriggerCollectionService triggers;
+
     private final ConditionEvaluationService conditionEvaluationService;
+
     private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     public PlanechaseService(PlanarDieRoller die, @Lazy GameQueryService query,
@@ -179,7 +190,7 @@ public class PlanechaseService {
         state.rollSequence++;
         logs.append(game, GameLogEntry.text(game.playerIdToName.get(playerId)
                 + " rolls the planar die: " + state.lastRoll.name().toLowerCase(Locale.ROOT) + "."));
-        triggers.checkControllerRollsPlanarDieTriggers(game, playerId,
+        ActionEvents.planarDieRolled(game, playerId,
                 state.lastRoll == PlanarDieResult.BLANK ? 0 : 1);
         switch (state.lastRoll) {
             case BLANK -> { }
@@ -361,7 +372,7 @@ public class PlanechaseService {
      * Hands the planar object's abilities with {@code trigger} to the stack door under {@code controller}, each one whole,
      * in the order they were written: the door judges its intervening "if" (CR 603.4) and puts it on the stack as one
      * object of its effects (CR 603.3), choosing its targets as it goes there (CR 603.3d), with the planar object it is
-     * of. A planar ability's event condition is judged as it triggers ({@link MiscAbilityReader}, CR 603.2); the step
+     * of. A planar ability's event condition is judged as it triggers (CR 603.2); the step
      * and phase abilities are the trigger pipeline's.
      */
     public void trigger(GameData game, PlanarObject object, Trigger trigger, UUID controller) {
@@ -379,7 +390,7 @@ public class PlanechaseService {
                                                       ConditionContext context) {
         List<TriggeredAbility> abilities = new ArrayList<>();
         for (TriggeredAbility ability : card.getTriggeredAbilities(trigger)) {
-            if (!MiscAbilityReader.effects(List.of(ability), trigger).isEmpty()
+            if (!ability.effects().isEmpty()
                     && conditionEvaluationService.eventConditionMet(game, ability.options(), context)) {
                 abilities.add(ability);
             }

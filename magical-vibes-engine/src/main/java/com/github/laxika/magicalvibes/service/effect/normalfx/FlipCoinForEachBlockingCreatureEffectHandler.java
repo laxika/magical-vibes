@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinForEachBlockingCreatu
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsAtCheckpoints;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -53,14 +54,14 @@ public class FlipCoinForEachBlockingCreatureEffectHandler
 
             if (wonFlip) {
                 if (result.isActualCoinFlip()) {
-                    triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
+                    ActionEvents.coinFlipWon(gameData, entry.getControllerId());
                 }
                 gameData.creaturesPreventedFromDealingCombatDamage.add(blocker.getId());
                 gameLogService.append(gameData,
                         GameLog.cardThen(blocker.getCard(), " will deal no combat damage this turn."));
             } else {
                 if (result.isActualCoinFlip()) {
-                    triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, entry.getControllerId());
+                    ActionEvents.coinFlipLost(gameData, entry.getControllerId());
                 }
             }
             coinFlipService.checkpoint(gameData, effect, index + 1);

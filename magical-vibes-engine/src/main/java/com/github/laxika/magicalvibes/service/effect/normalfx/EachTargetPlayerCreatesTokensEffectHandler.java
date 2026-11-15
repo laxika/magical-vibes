@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -58,7 +59,7 @@ public class EachTargetPlayerCreatesTokensEffectHandler implements NormalEffectH
                 continue;
             }
             if (e.tokenEffect().subtypes().contains(CardSubtype.CLUE)) {
-                triggerCollectionService.checkInvestigateTriggers(gameData, targetPlayerId);
+                ActionEvents.investigated(gameData, targetPlayerId);
             }
             entry.getCreatedPermanentIds().addAll(permanentControlSupport.applyCreateToken(
                     gameData, targetPlayerId, e.tokenEffect(), amount,

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -59,6 +60,6 @@ public class ConjureDuplicateOfTargetCreatureIntoExileEffectHandler implements N
         gameData.addToExile(entry.getControllerId(), duplicate, entry.getSourcePermanentId());
         gameLogService.append(gameData, GameLog.textCardText(
                 entry.getCard().getName() + " conjures a duplicate of ", target.getCard(), " into exile."));
-        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
+        ActionEvents.conjured(gameData, entry.getControllerId(), 1);
     }
 }

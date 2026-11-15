@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.t.TranquilThicket;
+import com.github.laxika.magicalvibes.cards.y.YixlidJailer;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KrosanTusker.class, Forest.class, GlorySeeker.class, TranquilThicket.class})
+@CardUsed({KrosanTusker.class, Forest.class, GlorySeeker.class, TranquilThicket.class, YixlidJailer.class})
 class KrosanTuskerTest extends BaseCardTest {
 
     @Test
@@ -152,5 +153,21 @@ class KrosanTuskerTest extends BaseCardTest {
         assertThat(search.params().cards()).containsExactly(forest);
         harness.handleCardChosen(player1, 0);
         harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Cycled under Yixlid Jailer, its cycling trigger doesn't trigger from the graveyard")
+    void cyclingTriggerDoesNotTriggerWhileGraveyardCardsLoseAbilities() {
+        harness.addToBattlefield(player2, new YixlidJailer());
+        harness.setHand(player1, List.of(new KrosanTusker()));
+        harness.setLibrary(player1, List.of(new Forest(), new GlorySeeker()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Krosan Tusker");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
 }

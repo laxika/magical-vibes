@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -151,7 +152,8 @@ class ScryEffectHandlerTest {
 
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("scries") && logEntry.plainText().contains("library is empty")));
-                verify(triggerCollectionService).checkScryTriggers(gd, player1Id, 0);
+                assertThat(gd.rulesEvents.pending().stream().flatMap(batch -> batch.events().stream()))
+                        .containsExactly(new LibraryEvent.Scried(player1Id, 0, 0));
             }
 
             @Test

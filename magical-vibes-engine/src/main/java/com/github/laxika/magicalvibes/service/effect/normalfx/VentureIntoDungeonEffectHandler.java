@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -71,7 +72,7 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
         } else if (progress.isBottomRoom()) {
             gameData.recordCompletedDungeon(playerId, progress.dungeon());
             gameData.playerDungeonProgress.remove(playerId);
-            triggerCollectionService.checkDungeonCompletionTriggers(gameData, playerId);
+            ActionEvents.dungeonCompleted(gameData, playerId);
             startDungeon(gameData, entry, playerId, venture.dungeon());
         } else {
             List<Integer> rooms = progress.dungeon().nextRooms(progress.roomIndex());

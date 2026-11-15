@@ -41,14 +41,14 @@ public class DiscardSpecificCardEffectHandler implements NormalEffectHandlerBean
 
         hand.remove(card);
         gameData.discardCausedByOpponent = false;
-        triggerCollectionService.beginDiscardEvent(gameData, entry.getControllerId());
+        gameData.beginDiscardEvent(entry.getControllerId());
         try {
             graveyardService.discardCard(gameData, entry.getControllerId(), card);
             gameLogService.append(gameData, GameLog.textCardText(
                     gameData.playerIdToName.get(entry.getControllerId()) + " discards ", card, "."));
-            triggerCollectionService.checkDiscardTriggers(gameData, entry.getControllerId(), card);
+            gameData.discarded(entry.getControllerId(), card);
         } finally {
-            triggerCollectionService.finishDiscardEvent(gameData);
+            gameData.finishDiscardEvent();
         }
 
     }

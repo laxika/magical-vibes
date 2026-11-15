@@ -20,14 +20,14 @@ import java.util.Objects;
  *                  discard a creature card" is
  *                  {@code Triggers.youDiscardCard().withFilter(new CardTypePredicate(CardType.CREATURE))}, "whenever you
  *                  draw a Dragon card" {@code Triggers.youDrawCard().withFilter(new CardSubtypePredicate(DRAGON))}.
- *                  For "one or more cards" it is enough that one of them matches. The collectors judge it from the
- *                  ability ({@code LibraryAbilityReader}), so {@link #watchKey()} drops it
+ *                  For "one or more cards" it is enough that one of them matches. The trigger pipeline's library
+ *                  matcher judges it from the ability, so {@link #watchKey()} drops it
  * @param nth       which of the player's events of this kind this turn triggers the ability, or {@code 0} for every
  *                  one: "whenever you draw your second card each turn" is {@code 2}, "whenever you cycle a card for
  *                  the first time each turn" {@code 1}. The count includes the events before the source was on the
  *                  battlefield. With a {@link #qualifier} it counts the matching events ("whenever you discard one or
- *                  more nonland cards for the first time each turn"). The collectors judge it from the ability
- *                  ({@code LibraryAbilityReader}), so {@link #watchKey()} drops it
+ *                  more nonland cards for the first time each turn"). The trigger pipeline's library matcher
+ *                  judges it from the ability, so {@link #watchKey()} drops it
  */
 public record LibraryTrigger(LibraryEvent event, PlayerRelation player, CardPredicate qualifier, int nth)
         implements Trigger {
@@ -98,11 +98,10 @@ public record LibraryTrigger(LibraryEvent event, PlayerRelation player, CardPred
     }
 
     /**
-     * The trigger the {@code LibraryWatch} collectors read this one's abilities by: without its {@link #qualifier} and
-     * {@link #nth}, and, for the events no collector of their own reads, with the event whose collector reads them.
-     * "You cycle a card" and "an opponent's spell or ability causes you to discard a card" are read by the "you discard
-     * a card" collector, and a draw in or out of a draw step by the collector of every draw. Those collectors judge the
-     * ability's own event ({@code LibraryAbilityReader}).
+     * The trigger the library matcher finds this one's abilities by: without its {@link #qualifier} and {@link #nth},
+     * and, for the events the matcher reads with another, with that event. "You cycle a card" and "an opponent's spell
+     * or ability causes you to discard a card" are found as "you discard a card", and a draw in or out of a draw step as
+     * every draw; the matcher judges the ability's own event.
      */
     @Override
     public Trigger watchKey() {
@@ -113,7 +112,7 @@ public record LibraryTrigger(LibraryEvent event, PlayerRelation player, CardPred
         return new LibraryTrigger(watched, player);
     }
 
-    /** The event of {@link #watchKey()}: {@link #event}, or the event whose collector reads this one's abilities. */
+    /** The event of {@link #watchKey()}: {@link #event}, or the event its abilities are found by. */
     public LibraryEvent watchedEvent() {
         return switch (event) {
             case CYCLES -> player == PlayerRelation.YOU ? LibraryEvent.DISCARDS : event;

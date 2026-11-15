@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -82,7 +83,7 @@ public class PutTargetCardExiledWithSourceIntoOwnersGraveyardThenInvestigateEffe
 
         permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(),
                 CreateTokenEffect.ofClueToken(1), entry.getCard().getSetCode());
-        triggerCollectionService.checkInvestigateTriggers(gameData, entry.getControllerId());
+        ActionEvents.investigated(gameData, entry.getControllerId());
     }
 
     private UUID sourcePermanentId(StackEntry entry) {

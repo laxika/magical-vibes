@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -150,7 +151,7 @@ class KarplusanMinotaurTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KarplusanMinotaur());
 
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkControllerLosesCoinFlipTriggers(gd, player1.getId());
+            ActionEvents.coinFlipLost(gd, player1.getId());
             harness.beginTriggerChoices();
         });
 

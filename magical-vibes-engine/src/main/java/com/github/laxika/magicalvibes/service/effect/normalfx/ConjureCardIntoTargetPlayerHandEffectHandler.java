@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -41,6 +42,6 @@ public class ConjureCardIntoTargetPlayerHandEffectHandler implements NormalEffec
         gameData.addCardToHand(targetPlayerId, conjured);
         gameLogService.append(gameData, GameLog.textCardText(
                 "A card named ", conjured, " is conjured into their hand."));
-        triggerCollectionService.checkConjureTriggers(gameData, targetPlayerId, 1);
+        ActionEvents.conjured(gameData, targetPlayerId, 1);
     }
 }

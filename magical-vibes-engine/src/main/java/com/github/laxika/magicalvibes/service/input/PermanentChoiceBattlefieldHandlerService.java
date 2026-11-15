@@ -1,154 +1,152 @@
 package com.github.laxika.magicalvibes.service.input;
 
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
-import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.DelayedEffectOnDeath;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureCause;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.service.outcome.ExquisiteArchangelLossReplacer;
-import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
-import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
-import com.github.laxika.magicalvibes.model.action.UnattachEquipmentAtNextEndStep;
-import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield;
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
-import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.action.UnattachEquipmentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
-import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.rules.ActionEvent;
+import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
-import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.trigger.ActionAbilityReader;
-import com.github.laxika.magicalvibes.service.trigger.ActionWatch;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
-import com.github.laxika.magicalvibes.model.DepartureBatch;
-import com.github.laxika.magicalvibes.model.DepartureCause;
-import com.github.laxika.magicalvibes.model.DepartureIntent;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.CipherSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TeachSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
+import com.github.laxika.magicalvibes.service.effect.entryfx.UpgradeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeNontokenCreatureTapAndSeekLandSourceEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeCreatureToCounterSpellEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachOneOfEquipmentToCreatureSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachOneOfEquipmentToSamuraiSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraToAnotherPermanentWithSameControllerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AuspiciousStarrixSupport;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.entryfx.UpgradeSupport;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PopulateSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SoulbondSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentCreatureAndPerpetuallyBoostEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CipherSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokensAndAttachEquipmentSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileAnotherCreatureAndConjureRandomCreatureEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileControlledCreatureWithTakeoverCounterEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentThenExileMatchingPermanentsEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentYouControlAndTrackWithSourceEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentYouControlThenCreateTokenEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSelfAndReturnUnderOpponentControlEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileTwoPermanentsThenSearchLibraryEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GainControlOfDefendingPlayerCreatureAndAttackEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.MayReturnPermanentToHandAndEnterWithCountersEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToSacrificeEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.OtherControlledTokensBecomeCopyOfChosenTokenUntilEndOfTurnEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PopulateSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PutCounterOnEitherTargetPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnPermanentControlledByPlayerToHandAndPerpetuallyBecomeAngelEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeCreatureThenMassDamageEqualToPowerEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLandEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SoulbondSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughnessEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureOrCreatesTokenEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenCreateTokensIfToughnessAtLeastEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenDrawsPowerEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureOrCreatesTokenEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeCreatureThenMassDamageEqualToPowerEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeCreatureToCounterSpellEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeNontokenCreatureTapAndSeekLandSourceEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLandEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.OtherControlledTokensBecomeCopyOfChosenTokenUntilEndOfTurnEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraToAnotherPermanentWithSameControllerEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TeachSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TransformChosenPermanentEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PutCounterOnEitherTargetPermanentEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToSacrificeEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentYouControlAndTrackWithSourceEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentYouControlThenCreateTokenEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileControlledCreatureWithTakeoverCounterEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentThenExileMatchingPermanentsEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileTwoPermanentsThenSearchLibraryEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileAnotherCreatureAndConjureRandomCreatureEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.GainControlOfDefendingPlayerCreatureAndAttackEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSelfAndReturnUnderOpponentControlEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.MayReturnPermanentToHandAndEnterWithCountersEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnPermanentControlledByPlayerToHandAndPerpetuallyBecomeAngelEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentCreatureAndPerpetuallyBoostEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-
+import com.github.laxika.magicalvibes.service.outcome.ExquisiteArchangelLossReplacer;
+import com.github.laxika.magicalvibes.service.outcome.LossReason;
+import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+
 
 /**
  * Handles permanent choice contexts related to battlefield manipulation.
@@ -161,37 +159,64 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchS
 @Service
 @RequiredArgsConstructor
 public class PermanentChoiceBattlefieldHandlerService {
+
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
             triggeredAbilityStackService;
+
     private final CreateTokensAndAttachEquipmentSupport createTokensAndAttachEquipmentSupport;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenEffectHandler createTokenEffectHandler;
+
     private final PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler sacrificedEquipmentSupport;
 
     private final InputCompletionService inputCompletionService;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.VillainousChoiceSupport villainousChoiceSupport;
+
     private final ExquisiteArchangelLossReplacer exquisiteArchangelLossReplacer;
+
     private final GameQueryService gameQueryService;
+
     private final AuraAttachmentService auraAttachmentService;
+
     private final EquipSupport equipSupport;
+
     private final AttachOneOfEquipmentToCreatureSupport attachOneOfEquipmentToCreatureSupport;
+
     private final AttachOneOfEquipmentToSamuraiSupport attachOneOfEquipmentToSamuraiSupport;
+
     private final BattlefieldEntryService battlefieldEntryService;
+
     private final CloneService cloneService;
+
     private final TurnFaceUpCopyService turnFaceUpCopyService;
+
     private final CipherSupport cipherSupport;
+
     private final TeachSupport teachSupport;
+
     private final WarpWorldService warpWorldService;
+
     private final GameLogService gameLogService;
+
     private final AuraCopyService auraCopyService;
+
     private final AbilityActivationService abilityActivationService;
+
     private final PermanentRemovalService permanentRemovalService;
+
     private final PermanentControlSupport permanentControlSupport;
+
     private final UpgradeSupport upgradeSupport;
+
     private final PlayerInputService playerInputService;
+
     private final GraveyardReturnSupport graveyardReturnSupport;
+
     private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
+
     private final ChooseOpponentCreatureAndPerpetuallyBoostEffectHandler chooseOpponentCreatureAndPerpetuallyBoostEffectHandler;
 
     public void handleAuraEntryBatchChoice(GameData gameData, UUID permanentId,
@@ -199,114 +224,214 @@ public class PermanentChoiceBattlefieldHandlerService {
         battlefieldEntryBatchSupport.completeChoice(gameData, permanentId, choice);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
+
     private final AuspiciousStarrixSupport auspiciousStarrixSupport;
+
     private final StateBasedActionService stateBasedActionService;
+
     private final TriggerCollectionService triggerCollectionService;
+
     private final TriggerTargetCollector triggerTargetCollector;
+
     private final PredicateEvaluationService predicateEvaluationService;
+
     private final CreatureControlService creatureControlService;
+
     private final PopulateSupport populateSupport;
+
     private final DamageSupport damageSupport;
+
     private final DestructionSupport destructionSupport;
+
     private final DepartureService departureService;
+
     private final LandEquilibriumSupport landEquilibriumSupport;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport exileSupport;
+
     private final ExileAnotherCreatureAndConjureRandomCreatureEffectHandler
             exileAnotherCreatureAndConjureRandomCreatureHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MaySacrificeForCounterSupport maySacrificeForCounterSupport;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GargantuanGorillaUpkeepSupport gargantuanGorillaUpkeepSupport;
+
     private final LifeSupport lifeSupport;
+
     private final com.github.laxika.magicalvibes.service.DrawService drawService;
+
     private final LibrarySearchSupport librarySearchSupport;
+
     private final SoulbondSupport soulbondSupport;
+
     private final CoinFlipService coinFlipService;
+
     private final MayAbilityTapCostService mayAbilityTapCostService;
+
     private final TargetPlayerSacrificesAttackingCreatureThenCreateTokensEqualToToughnessEffectHandler
             targetPlayerSacrificesAttackingCreatureThenCreateTokensHandler;
+
     private final TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler sacrificeCreatureCreateTokensIfSubtypeHandler;
+
     private final TargetPlayerSacrificesCreatureThenCreateTokensIfToughnessAtLeastEffectHandler
             targetPlayerSacrificesCreatureThenCreateTokensIfToughnessAtLeastHandler;
+
     private final TargetPlayerSacrificesCreatureThenDrawsPowerEffectHandler targetPlayerSacrificesCreatureThenDrawsPowerHandler;
+
     private final TargetPlayerSacrificesCreatureOrCreatesTokenEffectHandler targetPlayerSacrificesCreatureOrCreatesTokenHandler;
+
     private final TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffectHandler targetPlayerSacrificesPermanentThenDealsManaValueDamageHandler;
+
     private final TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHandler
             targetPlayerSacrificesNontokenCreatureThenConjuresDuplicateHandler;
+
     private final SacrificeCreatureThenMassDamageEqualToPowerEffectHandler sacrificeCreatureThenMassDamageHandler;
+
     private final SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler sacrificeOtherCreatureThenRevealHandler;
+
     private final SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler
             sacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeHandler;
+
     private final SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler sacrificeAnotherCreatureDrawAndMayPutPermanentHandler;
+
     private final SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler sacrificePermanentAndReturnHandler;
+
     private final AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler anyPlayerMaySacrificeLandHandler;
+
     private final AnyPlayerMaySacrificeCreatureToCounterSpellEffectHandler anyPlayerMaySacrificeCreatureToCounterSpellHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseControlledArtifactOrCreatureTokenCopyEffectHandler chooseControlledArtifactOrCreatureTokenCopyEffectHandler;
+
     private final AnimationSupport animationSupport;
+
     private final SearchLibraryForUpToTwoBasicLandsWithSameNameAsChosenLandEffectHandler sameNameBasicLandSearchHandler;
+
     private final BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler deepfathomEchoHandler;
+
     private final OtherControlledTokensBecomeCopyOfChosenTokenUntilEndOfTurnEffectHandler brudicladTokenHandler;
+
     private final AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler attachTargetAuraHandler;
+
     private final AttachTargetAuraToAnotherPermanentWithSameControllerEffectHandler attachTargetAuraWithSameControllerHandler;
+
     private final PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler guardDogsHandler;
+
     private final TransformChosenPermanentEffectHandler transformChosenPermanentEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.JuxtaposeSupport juxtaposeSupport;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport counterSupport;
+
     private final PutCounterOnEitherTargetPermanentEffectHandler putCounterOnEitherTargetEffectHandler;
+
     private final MayReturnPermanentToHandAndEnterWithCountersEffectHandler mayReturnPermanentToHandAndEnterWithCountersEffectHandler;
+
     private final ReturnPermanentControlledByPlayerToHandAndPerpetuallyBecomeAngelEffectHandler
             returnPermanentControlledByPlayerToHandAndPerpetuallyBecomeAngelEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BlightEffectHandler blightEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentBlightsEffectHandler eachOpponentBlightsEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesGreatestPowerCreatureToDestroyEffectHandler eachOpponentChoosesGreatestPowerCreatureToDestroyEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesPermanentToDestroyEffectHandler eachOpponentChoosesPermanentToDestroyEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesGreatestManaValueCreatureToReturnToHandEffectHandler eachOpponentChoosesGreatestManaValueCreatureToReturnToHandEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesCreatureToDestroyEffectHandler eachPlayerChoosesCreatureToDestroyEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandomEffectHandler chooseNonlandPermanentForEachOpponentThenDestroyOneAtRandomEffectHandler;
+
     private final EachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler eachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler eachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureYouGainControlEffectHandler eachOpponentChoosesCreatureYouGainControlEffectHandler;
+
     private final GainControlOfDefendingPlayerCreatureAndAttackEffectHandler gainControlOfDefendingPlayerCreatureAndAttackEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SeizeTheSpotlightEffectHandler seizeTheSpotlightEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OrderOfSuccessionEffectHandler orderOfSuccessionEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesCreatureToLeftThenCreatesMenaceCopyEffectHandler eachPlayerChoosesCreatureToLeftThenCreatesMenaceCopyEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureToExileWithSourceEffectHandler eachOpponentChoosesCreatureToExileWithSourceEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamageEffectHandler olorinSearingLightEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureToTapAndGoadEffectHandler fellBeastsShriekEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler benthicAnomalyEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentDrawAndUntapEffectHandler chooseOpponentDrawAndUntapEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentForTargetingRelayEffectHandler chooseOpponentForTargetingRelayEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentEachCreatesTokensEffectHandler chooseOpponentEachCreatesTokensEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentThenSearchLandDifferenceEffectHandler chooseOpponentThenSearchLandDifferenceEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentReturnsCardFromGraveyardToHandEffectHandler chooseOpponentReturnsCardFromGraveyardToHandEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffectHandler eachPlayerMayPutCountersAndRestrictAttacksHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseAnotherPlayerGainsControlOfTargetPermanentEffectHandler chooseAnotherPlayerGainsControlOfTargetPermanentEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TapAndChooseOpponentGainsControlOfSourceAndMatchingPermanentsEffectHandler tapAndChooseOpponentGainsControlHandler;
+
     private final OpponentChoosesPermanentToSacrificeEffectHandler opponentChoosesPermanentToSacrificeEffectHandler;
+
     private final OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler opponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
+
     private final ExilePermanentYouControlAndTrackWithSourceEffectHandler exilePermanentYouControlHandler;
+
     private final ExilePermanentYouControlThenCreateTokenEffectHandler exilePermanentYouControlThenCreateTokenHandler;
+
     private final ExileControlledCreatureWithTakeoverCounterEffectHandler exileControlledCreatureWithTakeoverCounterHandler;
+
     private final ExilePermanentThenExileMatchingPermanentsEffectHandler
             exilePermanentThenExileMatchingPermanentsHandler;
+
     private final ExileTwoPermanentsThenSearchLibraryEffectHandler
             exileTwoPermanentsThenSearchLibraryHandler;
+
     private final ExileSelfAndReturnUnderOpponentControlEffectHandler exileSelfAndReturnUnderOpponentControlHandler;
+
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler anyOpponentSacrificeForTapAndCounterHandler;
+
     private final AnyOpponentMaySacrificeNontokenCreatureTapAndSeekLandSourceEffectHandler anyOpponentSacrificeForTapAndSeekLandHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureOrTransformSourceEffectHandler anyOpponentSacrificeForTransformHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndGainLifeAndDrawSourceEffectHandler anyOpponentSacrificeForTapAndGainLifeAndDrawHandler;
+
     private final AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffectHandler anyOpponentMayTapCreatureHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCreatureTheyControlTokenCopyEffectHandler opponentChoosesCreatureTheyControlTokenCopyEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentCreatureThenBoostOthersEffectHandler chooseOpponentCreatureThenBoostOthersEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfChosenPermanentYouControlEffectHandler createTokenCopyOfChosenPermanentYouControlEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DefendingPlayerChoosesCreatureToBlockEffectHandler defendingPlayerChoosesCreatureToBlockEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AttackingPlayerChoosesCreatureToBoostEffectHandler attackingPlayerChoosesCreatureToBoostEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MeldWithNamedCreatureEffectHandler meldWithNamedCreatureEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BalduvianWarlordEffectHandler balduvianWarlordEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler makeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler;
 
     /**
@@ -623,7 +748,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", newTarget.getCard(), "."));
         log.info("Game {} - {} reattached to {}", gameData.id, aura.getCard().getName(), newTarget.getCard().getName());
 
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, permanentId);
+        gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, permanentId));
 
         // Begun mid-resolution (Aura Graft's own spell entry is parked) — canonical epilogue resumes it.
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -646,7 +771,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
             aura.setTimestamp(gameData.nextTimestamp());
             gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", newTarget.getCard(), "."));
-            triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, permanentId);
+            gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, permanentId));
         }
 
         // A moved control Aura (e.g. Control Magic) grants control of its new host to the Aura's controller.
@@ -694,7 +819,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} reattached to {} after sacrifice", gameData.id,
                 aura.getCard().getName(), newTarget.getCard().getName());
 
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, permanentId);
+        gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, permanentId));
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -713,7 +838,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         aura.setAttachedTo(target.getId());
         aura.setTimestamp(gameData.nextTimestamp());
         gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", target.getCard(), "."));
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, target.getId());
+        gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, target.getId()));
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1915,22 +2040,9 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        // "When a creature is championed with this permanent, ..." (e.g. Mistbind Clique): each ability goes on the
-        // stack through the stack door, whole (CR 603.3), its target chosen as it goes there (CR 603.3d), with the
-        // active player as the ability triggered.
+        // "When a creature is championed with this permanent" (Mistbind Clique).
         if (source != null) {
-            UUID activePlayerId = gameData.activePlayerId;
-            for (TriggeredAbility ability : ActionAbilityReader.printed(source.getCard(), ActionWatch.ON_CHAMPIONED)) {
-                boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
-                        source.getCard(), source, context.controllerId(), source.getCard().getName() + "'s ability",
-                        ConditionContext.forPermanent(source, context.controllerId()), entry -> {
-                            entry.setNonTargeting(true);
-                            entry.setActivePlayerId(activePlayerId);
-                        }));
-                if (triggered) {
-                    gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
-                }
-            }
+            gameData.rulesEvents.occur(new ActionEvent.Championed(source, context.controllerId()));
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -2541,9 +2653,9 @@ public class PermanentChoiceBattlefieldHandlerService {
                         + coinFlipService.replacementDetails(result) + "."));
 
         if (wonFlip && result.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, ctx.controllerId());
+            ActionEvents.coinFlipWon(gameData, ctx.controllerId());
         } else if (result.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, ctx.controllerId());
+            ActionEvents.coinFlipLost(gameData, ctx.controllerId());
         }
 
         gameData.sourceNextDamageToAnyTargetShields.add(wonFlip
@@ -2693,11 +2805,9 @@ public class PermanentChoiceBattlefieldHandlerService {
             // The exploit ability belongs to the exploiting permanent's controller when the exploit happens,
             // which can differ from the player who chose the sacrifice (Profaner of the Dead under Illusory Gains).
             UUID exploitController = gameQueryService.findPermanentController(gameData, ctx.sourcePermanentId());
-            triggerCollectionService.checkExploitTriggers(
-                    gameData, ctx.sourceCard(), exploitController != null ? exploitController : ctx.controllerId(),
-                    ctx.sourcePermanentId());
-            triggerCollectionService.checkAllyCreatureExploitTriggers(
-                    gameData, ctx.controllerId(), ctx.sourcePermanent(), exploitedCard, sacrificedPower);
+            ActionEvents.exploited(gameData, ctx.sourceCard(),
+                    exploitController != null ? exploitController : ctx.controllerId(), ctx.sourcePermanentId(),
+                    ctx.controllerId(), ctx.sourcePermanent(), exploitedCard, sacrificedPower);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
@@ -3448,6 +3558,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         // whose own entry is parked while the choices run) — the epilogue resumes the parked entry.
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
+
     /** Trial of Agony: the targeted creatures' controller has chosen which creature receives the
      * damage; the other target can't block this turn. */
     public void handleDealDamageToOneOfTwoThenOtherCantBlock(GameData gameData, UUID permanentId,

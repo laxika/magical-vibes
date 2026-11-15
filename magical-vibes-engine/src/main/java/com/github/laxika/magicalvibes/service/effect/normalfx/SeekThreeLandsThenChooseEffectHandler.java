@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -78,7 +79,7 @@ public class SeekThreeLandsThenChooseEffectHandler implements NormalEffectHandle
         for (Card soughtCard : soughtCards) {
             gameData.addCardToHand(controllerId, soughtCard);
         }
-        triggerCollectionService.checkSeekTriggers(gameData, controllerId, soughtCards);
+        ActionEvents.sought(gameData, controllerId, soughtCards);
 
         Set<UUID> soughtCardIds = soughtCards.stream().map(Card::getId).collect(java.util.stream.Collectors.toSet());
         List<Integer> validIndices = new ArrayList<>();

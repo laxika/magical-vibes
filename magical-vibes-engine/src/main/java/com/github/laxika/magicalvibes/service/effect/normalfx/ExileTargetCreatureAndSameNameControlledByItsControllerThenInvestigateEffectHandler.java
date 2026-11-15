@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -75,7 +76,7 @@ public class ExileTargetCreatureAndSameNameControlledByItsControllerThenInvestig
         for (int i = 0; i < nontokenCount; i++) {
             permanentControlSupport.applyCreateToken(gameData, controllerId,
                     CreateTokenEffect.ofClueToken(1), entry.getCard().getSetCode());
-            triggerCollectionService.checkInvestigateTriggers(gameData, controllerId);
+            ActionEvents.investigated(gameData, controllerId);
         }
     }
 

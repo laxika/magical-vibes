@@ -86,12 +86,12 @@ public class RevealRandomCardsFromTargetHandDiscardMatchingEffectHandler impleme
         }
 
         hand.removeAll(discarded);
-        triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
+        gameData.beginDiscardEvent(targetPlayerId);
         for (Card card : discarded) {
             graveyardService.discardCard(gameData, targetPlayerId, card);
-            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+            gameData.discarded(targetPlayerId, card);
         }
-        triggerCollectionService.finishDiscardEvent(gameData);
+        gameData.finishDiscardEvent();
 
         gameLogService.append(gameData, GameLog.text(playerName + " discards " + discarded.size()
                 + " revealed matching card" + (discarded.size() == 1 ? "" : "s") + "."));

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -68,8 +69,7 @@ class PompeiiTest extends BaseCardTest {
 
     @Test
     void nonblankRollDoesNotScryOrAddCounter() {
-        harness.inMutationScope(() -> planarTriggers()
-                .checkControllerRollsPlanarDieTriggers(gd, player1.getId(), 1));
+        harness.inMutationScope(() -> ActionEvents.planarDieRolled(gd, player1.getId(), 1));
 
         assertThat(gd.stack).isEmpty();
         assertThat(pompeii.getCounters()).doesNotContainKey(CounterType.ERUPTION);
@@ -100,10 +100,5 @@ class PompeiiTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard().getName().equals("Air Elemental"));
         assertThat(gd.planechase.faceUp).extracting(object -> object.getCard().getName())
                 .containsExactly("Panopticon");
-    }
-
-    private com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService planarTriggers() {
-        return GameTestEngineContext.get().getBean(
-                com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class);
     }
 }

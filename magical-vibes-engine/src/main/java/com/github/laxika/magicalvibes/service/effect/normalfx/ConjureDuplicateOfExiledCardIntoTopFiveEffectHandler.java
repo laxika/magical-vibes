@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfExiledCardI
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -55,6 +56,6 @@ public class ConjureDuplicateOfExiledCardIntoTopFiveEffectHandler implements Nor
         library.add(insertionIndex, duplicate);
         gameLogService.append(gameData, GameLog.textCardText(
                 "A duplicate of ", duplicate, " is conjured into the top five cards of your library."));
-        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
+        ActionEvents.conjured(gameData, entry.getControllerId(), 1);
     }
 }

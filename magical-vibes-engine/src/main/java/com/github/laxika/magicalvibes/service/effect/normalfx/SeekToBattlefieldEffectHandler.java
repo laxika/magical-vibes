@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -62,6 +63,6 @@ public class SeekToBattlefieldEffectHandler implements NormalEffectHandlerBean {
         battlefieldEntryService.processLandETBEffects(gameData, controllerId, selected);
         gameLogService.append(gameData, GameLog.entersBattlefieldTappedUnder(
                 selected, gameData.playerIdToName.get(controllerId)));
-        triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(selected));
+        ActionEvents.sought(gameData, controllerId, List.of(selected));
     }
 }

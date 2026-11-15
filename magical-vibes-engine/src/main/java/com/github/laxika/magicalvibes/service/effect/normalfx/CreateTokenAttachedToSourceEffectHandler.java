@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -72,7 +73,7 @@ public class CreateTokenAttachedToSourceEffectHandler implements NormalEffectHan
             gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
             aura.setAttachedTo(target.getId());
             aura.setTimestamp(gameData.nextTimestamp());
-            triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, target.getId());
+            gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, target.getId()));
         }
     }
 }

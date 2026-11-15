@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -148,7 +149,7 @@ class LoreDrakkisTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Lore Drakkis");
     }
     private void triggerMutation(Permanent drakkis) {
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, drakkis, List.of(drakkis.getCard()), player1.getId()));
         harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
     }

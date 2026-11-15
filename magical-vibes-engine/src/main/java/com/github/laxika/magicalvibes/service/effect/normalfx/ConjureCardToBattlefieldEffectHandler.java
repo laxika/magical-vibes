@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffec
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -43,7 +44,7 @@ public class ConjureCardToBattlefieldEffectHandler implements NormalEffectHandle
             permanent.tap();
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), permanent);
-        triggerCollectionService.checkConjureTriggers(
+        ActionEvents.conjured(
                 gameData, entry.getControllerId(), conjure.conjureEventCardCount());
 
         if (gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of()).stream()

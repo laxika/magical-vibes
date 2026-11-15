@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -87,6 +90,21 @@ class DeepmuckDesperadoTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getName).containsExactly("Shock");
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
         harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("A face-down Deepmuck Desperado has no ability to trigger")
+    void faceDownDesperadoDoesNotTrigger() {
+        Permanent desperado = harness.addToBattlefieldAndReturn(player1, new DeepmuckDesperado());
+        // A manifested Desperado is a 2/2 face-down creature with no abilities (CR 708.2).
+        desperado.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setLibrary(player2, libraryWithCards(5));
+
+        castShockAtOpponent();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
     }
 
     @Test

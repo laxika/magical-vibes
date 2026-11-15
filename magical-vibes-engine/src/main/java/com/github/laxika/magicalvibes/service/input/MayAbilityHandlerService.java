@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
@@ -429,7 +430,7 @@ public class MayAbilityHandlerService {
                         return;
                     }
                     cost.payResolutionCost(pool);
-                    triggerCollectionService.checkTaxPaymentTriggers(
+                    ActionEvents.taxPaid(
                             gameData, player.getId(), ability.sourceControllerId(), cost.getManaValue());
                 }
             }

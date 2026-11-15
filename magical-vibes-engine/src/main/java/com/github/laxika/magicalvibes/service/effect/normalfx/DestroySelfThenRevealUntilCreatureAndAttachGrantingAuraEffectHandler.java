@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -87,7 +88,7 @@ public class DestroySelfThenRevealUntilCreatureAndAttachGrantingAuraEffectHandle
         aura.setTimestamp(gameData.nextTimestamp());
         gameLogService.append(gameData,
                 GameLog.cardTextCard(aura.getCard(), " is now attached to ", target.getCard(), "."));
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, target.getId());
+        gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, target.getId()));
         log.info("Game {} - {} attached to {}", gameData.id, aura.getCard().getName(), target.getCard().getName());
     }
 }

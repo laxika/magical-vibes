@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -50,9 +51,9 @@ public class ValiantEndeavorEffectHandler implements NormalEffectHandlerBean {
             gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(entry.getControllerId())
                     + " rolls two d6 for " + entry.getCard().getName() + ": "
                     + firstRoll + " and " + secondRoll + "."));
-            triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
+            ActionEvents.diceRolled(
                     gameData, entry.getControllerId(), 2, Math.max(firstRoll, secondRoll));
-            triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
+            ActionEvents.dieResults(
                     gameData, entry.getControllerId(), 6, firstRoll, secondRoll);
         }
 

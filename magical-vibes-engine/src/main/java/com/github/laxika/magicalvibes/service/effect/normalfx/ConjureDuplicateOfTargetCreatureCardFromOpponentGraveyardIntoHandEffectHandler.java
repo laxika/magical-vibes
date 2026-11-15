@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PerpetualAnyManaTypeToCastSel
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -54,6 +55,6 @@ public class ConjureDuplicateOfTargetCreatureCardFromOpponentGraveyardIntoHandEf
         gameData.addCardToHand(entry.getControllerId(), duplicate);
         gameLogService.append(gameData, GameLog.textCardText(
                 "A duplicate of ", duplicate, " is conjured into your hand."));
-        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
+        ActionEvents.conjured(gameData, entry.getControllerId(), 1);
     }
 }

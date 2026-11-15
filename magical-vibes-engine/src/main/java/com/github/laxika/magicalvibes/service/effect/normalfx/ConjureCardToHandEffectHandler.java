@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -46,7 +47,7 @@ public class ConjureCardToHandEffectHandler implements NormalEffectHandlerBean {
         gameData.addCardToHand(entry.getControllerId(), conjuredCard);
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures " + conjuredCard.getName() + " into their hand."));
-        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
+        ActionEvents.conjured(gameData, entry.getControllerId(), 1);
     }
 
     private Card findPrinting(String setCode, String collectorNumber) {

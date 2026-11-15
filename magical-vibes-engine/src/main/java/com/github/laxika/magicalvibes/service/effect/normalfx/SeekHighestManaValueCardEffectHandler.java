@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -61,7 +62,7 @@ public class SeekHighestManaValueCardEffectHandler implements NormalEffectHandle
         Card selected = highestManaValueCards.get(ThreadLocalRandom.current().nextInt(highestManaValueCards.size()));
         library.remove(selected);
         gameData.addCardToHand(controllerId, selected);
-        triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(selected));
+        ActionEvents.sought(gameData, controllerId, List.of(selected));
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(controllerId) + " seeks ", selected, " into their hand."));
     }

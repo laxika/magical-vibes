@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -73,7 +74,7 @@ public class DestroyTargetArtifactsThenConjurePerpetualCopiesIntoHandEffectHandl
                     + gameData.playerIdToName.get(entry.getControllerId()) + "'s hand."));
             conjuredCount++;
         }
-        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), conjuredCount);
+        ActionEvents.conjured(gameData, entry.getControllerId(), conjuredCount);
     }
 
     private void addPerpetualEndStepSacrifice(GameData gameData, UUID cardId) {

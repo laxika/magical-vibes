@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.CrewEvent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -59,7 +60,7 @@ public class BecomeSaddledUntilEndOfTurnEffectHandler implements NormalEffectHan
             if (becameSaddled) {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
                 if (controllerId != null) {
-                    triggerCollectionService.checkBecomesSaddledTriggers(gameData, target, controllerId);
+                    gameData.rulesEvents.occur(new CrewEvent.BecameSaddled(target, controllerId));
                 }
             }
             gameLogService.append(gameData, GameLog.builder().card(target.getCard())

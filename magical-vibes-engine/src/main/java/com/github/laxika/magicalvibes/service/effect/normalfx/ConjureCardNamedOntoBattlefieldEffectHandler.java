@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -46,7 +47,7 @@ public class ConjureCardNamedOntoBattlefieldEffectHandler implements NormalEffec
         Permanent permanent = new Permanent(card);
         battlefieldEntryService.putPermanentOntoBattlefield(
                 gameData, entry.getControllerId(), permanent, conjure.enterTappedTypes());
-        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
+        ActionEvents.conjured(gameData, entry.getControllerId(), 1);
         if (gameQueryService.findPermanentById(gameData, permanent.getId()) == null) {
             return;
         }

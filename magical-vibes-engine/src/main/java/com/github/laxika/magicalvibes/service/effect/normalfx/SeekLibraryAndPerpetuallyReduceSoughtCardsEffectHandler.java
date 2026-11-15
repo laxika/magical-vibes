@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -72,6 +73,6 @@ public class SeekLibraryAndPerpetuallyReduceSoughtCardsEffectHandler
             PerpetualCardCastCostSupport.remember(gameData, sought, reduction);
             soughtCards.add(sought);
         }
-        triggerCollectionService.checkSeekTriggers(gameData, controllerId, soughtCards);
+        ActionEvents.sought(gameData, controllerId, soughtCards);
     }
 }

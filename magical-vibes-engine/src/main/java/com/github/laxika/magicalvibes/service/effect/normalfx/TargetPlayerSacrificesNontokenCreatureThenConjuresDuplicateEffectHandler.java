@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -116,7 +117,7 @@ public class TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHa
         duplicate.freeze();
         gameData.perpetualAnyColorManaForCastCardIds.add(duplicate.getId());
         gameData.addCardToHand(recipientId, duplicate);
-        triggerCollectionService.checkConjureTriggers(gameData, recipientId, 1);
+        ActionEvents.conjured(gameData, recipientId, 1);
         gameLogService.append(gameData, GameLog.cardThen(duplicate, " is conjured into "
                 + gameData.playerIdToName.get(recipientId) + "'s hand."));
     }

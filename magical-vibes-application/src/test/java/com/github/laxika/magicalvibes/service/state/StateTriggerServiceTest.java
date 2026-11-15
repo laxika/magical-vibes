@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import static org.mockito.Mockito.mock;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerIndex;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -71,6 +71,9 @@ class StateTriggerServiceTest {
     @Mock
     private TriggeredAbilityStackService triggeredAbilityStackService;
 
+    @Mock
+    private TriggerIndex triggerIndex;
+
     private StateTriggerService sut;
 
     private GameData gd;
@@ -95,7 +98,10 @@ class StateTriggerServiceTest {
         gd.playerManaPools.put(player1Id, new ManaPool());
         gd.playerManaPools.put(player2Id, new ManaPool());
         sut = new StateTriggerService(gameLogService, predicateEvaluationService, null,
-                triggeredAbilityStackService, null);
+                triggeredAbilityStackService, null, triggerIndex);
+        // A permanent's abilities as the layers leave it: its card's, unless a test says otherwise.
+        lenient().when(triggerIndex.permanentAbilities(eq(gd), any())).thenAnswer(invocation ->
+                invocation.<Permanent>getArgument(1).getCard().getTriggeredAbilities());
         lenient().when(triggeredAbilityStackService.put(eq(gd), any()))
                 .thenAnswer(invocation -> putOnStack(invocation.getArgument(1)));
     }
@@ -126,14 +132,14 @@ class StateTriggerServiceTest {
     class CheckStateTriggers {
 
         @Test
-        @DisplayName("Fires a state-triggered ability a static ability grants the permanent")
+        @DisplayName("Fires a state-triggered ability the permanent has as the layers leave it, a granted one")
         void firesGrantedStateTriggeredAbility() {
             GameQueryService gameQueryService = mock(GameQueryService.class);
             lenient().when(gameQueryService.withQueryScope(org.mockito.ArgumentMatchers.any(),
                             org.mockito.ArgumentMatchers.any()))
                     .thenAnswer(invocation -> invocation.<java.util.function.Supplier<?>>getArgument(1).get());
             StateTriggerService service = new StateTriggerService(gameLogService, predicateEvaluationService,
-                    gameQueryService, triggeredAbilityStackService, null);
+                    gameQueryService, triggeredAbilityStackService, null, triggerIndex);
             Card card = new Card();
             card.setName("Returned Creature");
             card.setType(CardType.CREATURE);
@@ -141,8 +147,7 @@ class StateTriggerServiceTest {
             gd.playerBattlefields.get(player1Id).add(perm);
             TriggeredAbility granted = new TriggeredAbility(Triggers.state((gameData, p, controllerId) -> true),
                     new GainLifeEffect(1));
-            when(gameQueryService.getGrantedEffects(gd, perm))
-                    .thenReturn(List.of(new GrantTriggeredAbilityEffect(granted, GrantScope.TARGET)));
+            when(triggerIndex.permanentAbilities(gd, perm)).thenReturn(List.of(granted));
 
             service.checkStateTriggers(gd);
 
@@ -561,5 +566,21 @@ class StateTriggerServiceTest {
             sut.checkStateTriggers(gd);
             assertThat(gd.stack).hasSize(1);
         }
+    }
+
+    @Test
+    @DisplayName("Reads a state-triggered ability as one StateTriggerEffect of its game state, its intervening \"if\" around each effect")
+    void readsAStateTriggerAsOneStateTriggerEffect() {
+        PermanentHasKeywordPredicate flying = new PermanentHasKeywordPredicate(Keyword.FLYING);
+        TriggeredAbility counting = new TriggeredAbility(Triggers.battlefieldHasAtMost(0, flying).referencing(flying),
+                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()), new GainLifeEffect(1),
+                new GainLifeEffect(2));
+        TriggeredAbility sourceState = new TriggeredAbility(Triggers.sourceState(flying), new GainLifeEffect(1));
+
+        assertThat(StateTriggerService.stateTrigger(counting)).isEqualTo(new StateTriggerEffect(null, null, flying,
+                0, 0, flying, List.of(new ConditionalEffect(new ControllerTurn(), new GainLifeEffect(1)),
+                new ConditionalEffect(new ControllerTurn(), new GainLifeEffect(2))), null));
+        assertThat(StateTriggerService.stateTrigger(sourceState)).isEqualTo(new StateTriggerEffect(null, flying,
+                null, 0, 0, null, List.of(new GainLifeEffect(1)), null));
     }
 }

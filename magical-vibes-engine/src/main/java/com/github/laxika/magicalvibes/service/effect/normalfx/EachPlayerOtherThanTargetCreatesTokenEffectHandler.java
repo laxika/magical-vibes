@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -57,7 +58,7 @@ public class EachPlayerOtherThanTargetCreatesTokenEffectHandler implements Norma
                 continue;
             }
             if (e.token().subtypes().contains(CardSubtype.CLUE)) {
-                triggerCollectionService.checkInvestigateTriggers(gameData, playerId);
+                ActionEvents.investigated(gameData, playerId);
             }
             int power = amountEvaluationService.evaluate(gameData, e.token().power(), playerContext);
             int toughness = amountEvaluationService.evaluate(gameData, e.token().toughness(), playerContext);

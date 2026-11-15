@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -56,7 +57,7 @@ public class ConjureRandomCardFromSpellbookToBattlefieldEffectHandler
 
         Permanent permanent = new Permanent(conjuredCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), permanent);
-        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
+        ActionEvents.conjured(gameData, entry.getControllerId(), 1);
         if (gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of()).stream()
                 .anyMatch(candidate -> candidate.getId().equals(permanent.getId()))) {
             entry.getCreatedPermanentIds().add(permanent.getId());

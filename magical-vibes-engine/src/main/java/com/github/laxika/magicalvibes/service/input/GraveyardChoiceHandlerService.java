@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.SpellweaverVoluteS
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -1102,7 +1103,7 @@ public class GraveyardChoiceHandlerService {
                 gameLogService.append(gameData, GameLog.text(player.getUsername() + " exiles "
                         + exiledCards.size() + " cards from their graveyard to collect evidence."));
             }
-            triggerCollectionService.checkCollectEvidenceTriggers(gameData, player.getId());
+            ActionEvents.evidenceCollected(gameData, player.getId());
             if (collectEvidence != null && pendingEntry != null) {
                 collectEvidenceEffectHandler.queueReflexiveAbility(
                         gameData, pendingEntry, collectEvidence.thenEffect());

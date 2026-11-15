@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsAtCheckpoints;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -45,7 +46,7 @@ public class FlipUntilLosePutCountersOnSourceEffectHandler
 
             if (!won) {
                 if (result.isActualCoinFlip()) {
-                    triggerCollectionService.checkControllerLosesCoinFlipTriggers(
+                    ActionEvents.coinFlipLost(
                             gameData, entry.getControllerId());
                 }
                 break;
@@ -53,7 +54,7 @@ public class FlipUntilLosePutCountersOnSourceEffectHandler
 
             wins++;
             if (result.isActualCoinFlip()) {
-                triggerCollectionService.checkControllerWinsCoinFlipTriggers(
+                ActionEvents.coinFlipWon(
                         gameData, entry.getControllerId());
             }
             coinFlipService.checkpoint(gameData, effect, wins);

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfEnlistedCre
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -64,7 +65,7 @@ public class ConjureDuplicateOfEnlistedCreatureIntoTopFiveEffectHandler implemen
         int insertionBound = Math.min(4, library.size());
         int insertionIndex = ThreadLocalRandom.current().nextInt(insertionBound + 1);
         library.add(insertionIndex, duplicate);
-        triggerCollectionService.checkConjureTriggers(gameData, controllerId, 1);
+        ActionEvents.conjured(gameData, controllerId, 1);
         gameLogService.append(gameData, GameLog.textCardText(
                 "A duplicate of ", duplicate, " is conjured into the top five cards of your library."));
     }

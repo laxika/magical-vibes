@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
-import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LivingDeath;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,24 +7,27 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+
 
 /**
  * The collectors outside the trigger registry put each triggered ability on the stack as one object of all its effects
@@ -150,8 +152,7 @@ class CollectorAbilityStackObjectTest extends BaseCardTest {
         card.addTrigger(Triggers.youCycleThisCard(), new GainLifeEffect(1));
         harness.setGraveyard(player1, List.of(card));
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkCycleTriggers(gd, player1.getId(),
-                card));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new LibraryEvent.Cycled(player1.getId(), card)));
 
         assertThat(entriesOf("Cycle Watcher")).hasSize(2)
                 .allSatisfy(entry -> assertThat(entry.getEffectsToResolve()).hasSize(1));
@@ -194,8 +195,7 @@ class CollectorAbilityStackObjectTest extends BaseCardTest {
         card.addTrigger(Triggers.youDiscardThisCard(), new GainLifeEffect(1));
         harness.setGraveyard(player1, List.of(card));
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkDiscardTriggers(gd, player1.getId(),
-                card));
+        harness.inMutationScope(() -> gd.discarded(player1.getId(), card));
 
         assertThat(entriesOf("Discard Watcher")).hasSize(2)
                 .allSatisfy(entry -> assertThat(entry.getEffectsToResolve()).hasSize(1));
@@ -209,8 +209,8 @@ class CollectorAbilityStackObjectTest extends BaseCardTest {
         card.addTrigger(Triggers.exploits(), new GainLifeEffect(1));
         Permanent watcher = addCreatureReady(player1, card);
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkExploitTriggers(gd, card,
-                player1.getId(), watcher.getId()));
+        harness.inMutationScope(() -> ActionEvents.exploited(gd, card, player1.getId(), watcher.getId(),
+                player1.getId(), watcher, null, 0));
 
         assertThat(entriesOf("Exploit Watcher")).hasSize(2)
                 .allSatisfy(entry -> assertThat(entry.getEffectsToResolve()).hasSize(1));

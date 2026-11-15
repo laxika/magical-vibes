@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SeekCreatureAndManifestEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -57,7 +58,7 @@ public class SeekCreatureAndManifestEffectHandler implements NormalEffectHandler
 
         Card selected = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
         library.remove(selected);
-        triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(selected));
+        ActionEvents.sought(gameData, controllerId, List.of(selected));
         manifestService.manifestCard(gameData, controllerId, entry.getCard(), selected);
     }
 }

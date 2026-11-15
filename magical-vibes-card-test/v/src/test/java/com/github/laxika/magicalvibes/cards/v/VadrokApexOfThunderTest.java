@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -152,7 +153,7 @@ class VadrokApexOfThunderTest extends BaseCardTest {
     }
 
     private void triggerMutation(Permanent vadrok) {
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, vadrok, List.of(vadrok.getCard()), player1.getId()));
         harness.inMutationScope(() -> harness.getTriggerCollectionService()
                 .beginStackDoorChoices(gd));

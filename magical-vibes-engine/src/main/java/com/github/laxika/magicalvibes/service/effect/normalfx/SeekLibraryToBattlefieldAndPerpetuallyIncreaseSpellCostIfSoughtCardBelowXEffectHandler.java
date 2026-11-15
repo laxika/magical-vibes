@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PerpetualCardCastCostSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -69,7 +70,7 @@ public class SeekLibraryToBattlefieldAndPerpetuallyIncreaseSpellCostIfSoughtCard
                 battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                 .text("seeks and puts " + sought.getName() + " onto the battlefield.").build());
-        triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(sought));
+        ActionEvents.sought(gameData, controllerId, List.of(sought));
 
         boolean enteredBattlefield = gameQueryService.findPermanentById(gameData, permanent.getId()) != null;
         if (enteredBattlefield && sought.getManaValue() < xValue) {

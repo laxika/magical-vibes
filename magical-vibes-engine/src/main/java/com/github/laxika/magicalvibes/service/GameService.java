@@ -4,56 +4,54 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ForetellCast;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.LifeCastingCost;
+import com.github.laxika.magicalvibes.model.ManaActivation;
+import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingManaActivation;
-import com.github.laxika.magicalvibes.model.ManaCost;
-import com.github.laxika.magicalvibes.model.ManaActivation;
-import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.ManaPool;
-import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
+import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
-import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.TurnFaceUpReplacementEffect;
-import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.model.rules.RoomEvent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
-import com.github.laxika.magicalvibes.service.cast.ManaChoiceNarrowingService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.ManaChoiceNarrowingService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
+import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -61,37 +59,61 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 
 @Slf4j
 @Service
 public class GameService {
+
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
+
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.turn.StepTriggerService stepTriggerService;
 
-
     private final GameQueryService gameQueryService;
+
     private final GameLogService gameLogService;
+
     private final CombatService combatService;
+
     private final TurnProgressionService turnProgressionService;
+
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+
     private final SpellCastingService spellCastingService;
+
     private final StackResolutionService stackResolutionService;
+
     private final AbilityActivationService abilityActivationService;
+
     private final MulliganService mulliganService;
+
     private final GameOutcomeService gameOutcomeService;
+
     private final GameMutationCoordinator mutationCoordinator;
+
     private final ManaChoiceNarrowingService manaChoiceNarrowingService;
+
     private final CardRevealService cardRevealService;
+
     private final PredicateEvaluationService predicateEvaluationService;
+
     private final AmountEvaluationService amountEvaluationService;
+
     private final PermanentCounterSupport permanentCounterSupport;
+
     private final TriggerCollectionService triggerCollectionService;
+
     private final CastingCostService castingCostService;
+
     private final PotentialManaService potentialManaService;
+
     private final TurnFaceUpCopyService turnFaceUpCopyService;
 
     @Autowired
@@ -176,6 +198,7 @@ public class GameService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.planar.PlanarAbilityService planarAbilities;
+
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.state.StateBasedActionService stateBasedActionService;
@@ -538,7 +561,7 @@ public class GameService {
             hand.remove(cardIndex);
             gameData.addForetoldCardToExile(player.getId(), card, foretellCost);
             gameData.playersWhoForetoldThisTurn.add(player.getId());
-            triggerCollectionService.checkControllerForetellTriggers(gameData, player.getId(), card);
+            ActionEvents.foretold(gameData, player.getId(), card);
             gameData.priorityPassedBy.clear();
             gameLogService.append(gameData,
                     GameLog.textCardText(player.getUsername() + " foretells ", card, "."));
@@ -613,11 +636,9 @@ public class GameService {
             boolean wasFullyUnlocked = room.isRoomFullyUnlocked();
             room.unlockRoomDoor(doorIndex);
             room.setTimestamp(gameData.nextTimestamp());
-            triggerCollectionService.checkSelfRoomDoorUnlockedTriggers(
-                    gameData, player.getId(), room, doorIndex);
+            gameData.rulesEvents.occur(new RoomEvent.DoorUnlocked(room, player.getId(), doorIndex));
             if (!wasFullyUnlocked && room.isRoomFullyUnlocked()) {
-                triggerCollectionService.checkAllyRoomFullyUnlockedTriggers(
-                        gameData, player.getId(), room);
+                gameData.rulesEvents.occur(new RoomEvent.FullyUnlocked(room, player.getId()));
             }
             triggerCollectionService.beginStackDoorChoices(gameData);
             if (!gameData.interaction.isAwaitingInput()) {
@@ -1904,6 +1925,7 @@ public class GameService {
                 player.getId(), permanent.getId(), morphCost, maxX, prompt,
                 permanent.getCard().getName()));
     }
+
     private String morphRevealLabel(RevealCardsFromHandCastingCost cost) {
         return cost.label() != null ? cost.label() + " card" : "a card";
     }
@@ -2618,7 +2640,6 @@ public class GameService {
         }
     }
 
-
     /**
      * Applies a player's answer to the active pending interaction. The single entry point for
      * every interaction kind: the {@link InteractionAnswer} shape identifies the payload and the
@@ -2658,7 +2679,6 @@ public class GameService {
             }
         }
     }
-
 
     public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
         declareAttackers(gameData, player, attackerIndices, null, null);
@@ -2745,7 +2765,6 @@ public class GameService {
                 || answer instanceof InteractionAnswer.BlockersDeclared
                 || answer instanceof InteractionAnswer.CombatDamageAssigned;
     }
-
 }
 
 

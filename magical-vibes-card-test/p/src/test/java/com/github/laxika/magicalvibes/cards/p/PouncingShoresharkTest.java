@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AlmightyBrushwagg;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -129,7 +130,7 @@ class PouncingShoresharkTest extends BaseCardTest {
     }
 
     private void triggerMutation(Permanent shark) {
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, shark, List.of(shark.getCard()), player1.getId()));
         harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
     }

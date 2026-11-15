@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedIntoHandEffec
 import com.github.laxika.magicalvibes.model.effect.DiscardSpecificCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -47,7 +48,7 @@ public class ConjureCardNamedIntoHandEffectHandler implements NormalEffectHandle
             }
             gameLogService.append(gameData, GameLog.cardThen(card, " is conjured into "
                     + gameData.playerIdToName.get(entry.getControllerId()) + "'s hand."));
-            triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
+            ActionEvents.conjured(gameData, entry.getControllerId(), 1);
         } while (conjure.repeatUntilHandSize() > 0
                 && gameData.playerHands.getOrDefault(entry.getControllerId(), java.util.List.of()).size()
                 < conjure.repeatUntilHandSize());

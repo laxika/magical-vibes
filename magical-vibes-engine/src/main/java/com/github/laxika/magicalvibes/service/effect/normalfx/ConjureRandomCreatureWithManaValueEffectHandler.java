@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -75,7 +76,7 @@ public class ConjureRandomCreatureWithManaValueEffectHandler implements NormalEf
             permanent.getGrantedKeywords().add(Keyword.HASTE);
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), permanent);
-        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
+        ActionEvents.conjured(gameData, entry.getControllerId(), 1);
         battlefieldEntryService.handleCreatureEnteredBattlefield(
                 gameData, entry.getControllerId(), card, null, false);
         entry.getCreatedPermanentIds().add(permanent.getId());

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -94,7 +95,7 @@ class TenWizardsMountainTest extends BaseCardTest {
     void rollingAnOrdinaryDieDoesNotTriggerThePlane() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new BurnishedHart());
 
-        harness.inMutationScope(() -> triggers.checkControllerRollsOneOrMoreDiceTriggers(
+        harness.inMutationScope(() -> ActionEvents.diceRolled(
                 gd, player1.getId(), 1, 20));
         harness.beginTriggerChoices();
 

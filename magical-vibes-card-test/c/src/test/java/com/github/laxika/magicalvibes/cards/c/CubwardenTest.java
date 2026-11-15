@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +23,7 @@ class CubwardenTest extends BaseCardTest {
     void mutatingCreatesTwoLifelinkCats() {
         Permanent cubwarden = addCreatureReady(player1, new Cubwarden());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, cubwarden, List.of(cubwarden.getCard()), player1.getId()));
         resolveAllTriggers();
 
@@ -68,7 +69,7 @@ class CubwardenTest extends BaseCardTest {
         Permanent cubwarden = addCreatureReady(player1, new Cubwarden());
 
         for (int mutation = 1; mutation <= 3; mutation++) {
-            harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+            harness.inMutationScope(() -> ActionEvents.mutated(
                     gd, cubwarden, List.of(cubwarden.getCard()), player1.getId()));
             resolveAllTriggers();
 
@@ -80,7 +81,7 @@ class CubwardenTest extends BaseCardTest {
     void mutationCreatesCatsForTheCreatureController() {
         Permanent cubwarden = addCreatureReady(player2, new Cubwarden());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, cubwarden, List.of(cubwarden.getCard()), player2.getId()));
         resolveAllTriggers();
 
@@ -93,7 +94,7 @@ class CubwardenTest extends BaseCardTest {
         Permanent cubwarden = addCreatureReady(player1, new Cubwarden());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, cubwarden, List.of(cubwarden.getCard()), player1.getId()));
         resolveAllTriggers();
         findPermanents(player1, "Cat").forEach(cat -> cat.setSummoningSick(false));

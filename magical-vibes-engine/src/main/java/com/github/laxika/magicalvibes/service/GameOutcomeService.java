@@ -1,8 +1,5 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingLossReplacement;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,14 +11,12 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.outcome.LossReplacer;
-import com.github.laxika.magicalvibes.service.trigger.ActionAbilityReader;
-import com.github.laxika.magicalvibes.service.trigger.ActionWatch;
+import com.github.laxika.magicalvibes.model.rules.ActionEvent;
 import com.github.laxika.magicalvibes.service.trigger.TriggerJudge;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,10 +36,6 @@ public class GameOutcomeService {
     private final List<LossReplacer> lossReplacers;
     private final GameMutationCoordinator mutationCoordinator;
     private ConditionEvaluationService conditionEvaluationService;
-
-    @Autowired
-    @Lazy
-    private TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Autowired
     void setConditionEvaluationService(@Lazy ConditionEvaluationService conditionEvaluationService) {
@@ -225,38 +216,15 @@ public class GameOutcomeService {
     }
 
     /**
-     * Puts {@link ActionWatch#ON_PLAYER_LOSES_GAME} triggers (e.g. Withengar Unbound's
-     * "Whenever a player loses the game, put thirteen +1/+1 counters on it") onto the stack
-     * for every permanent on the battlefield that has such a trigger.
-     *
-     * <p>This engine is strictly 2-player and the game ends the instant a player loses, so
-     * these triggers go onto the stack but the game finishes before they can resolve. The
-     * wiring is kept so the ability is modeled correctly should multiplayer ever exist.
+     * {@code losingPlayerId} lost the game: the "whenever a player loses the game" abilities (Withengar Unbound) trigger
+     * on the event. This engine is two-player and the game ends as a player loses, so they go on the stack but the game
+     * finishes before they can resolve; a simulation doesn't emit the event.
      */
     private void firePlayerLosesGameTriggers(GameData gameData, UUID losingPlayerId) {
         if (gameData.simulation || losingPlayerId == null) {
             return;
         }
-
-        gameData.forEachPermanent((controllerId, perm) -> {
-            // "Whenever a player loses the game, if ..." (CR 603.4): the ability's intervening "if" is judged by the
-            // stack door as the player loses, "that player" being the player who lost, the non-targeting player its
-            // entry records.
-            for (TriggeredAbility ability : ActionAbilityReader.printed(perm.getCard(),
-                    ActionWatch.ON_PLAYER_LOSES_GAME)) {
-                boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
-                        perm.getCard(), perm, controllerId, perm.getCard().getName() + "'s triggered ability",
-                        ConditionContext.forPermanent(perm, controllerId).withTargetId(losingPlayerId), entry -> {
-                            entry.setTargetId(losingPlayerId);
-                            entry.setNonTargeting(true);
-                        }));
-                if (triggered) {
-                    gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
-                            "'s triggered ability goes on the stack ("
-                                    + gameData.playerIdToName.get(losingPlayerId) + " loses the game)."));
-                }
-            }
-        });
+        gameData.rulesEvents.occur(new ActionEvent.LostGame(losingPlayerId));
     }
 
     /**

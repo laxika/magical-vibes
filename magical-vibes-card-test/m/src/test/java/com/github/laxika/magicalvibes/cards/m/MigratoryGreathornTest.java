@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +28,7 @@ class MigratoryGreathornTest extends BaseCardTest {
         Forest forest = new Forest();
         harness.setLibrary(player1, List.of(new GrizzlyBears(), forest));
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, greathorn, List.of(greathorn.getCard()), player1.getId()));
         resolveAllTriggers();
 
@@ -51,7 +52,7 @@ class MigratoryGreathornTest extends BaseCardTest {
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new Forest()));
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, bear, List.of(bear.getCard()), player1.getId()));
 
         assertThat(gd.stack).isEmpty();
@@ -92,7 +93,7 @@ class MigratoryGreathornTest extends BaseCardTest {
         Permanent greathorn = addCreatureReady(player1, new MigratoryGreathorn());
         Forest forest = new Forest();
         harness.setLibrary(player1, List.of(forest));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, greathorn, List.of(greathorn.getCard()), player1.getId()));
         resolveAllTriggers();
 
@@ -111,7 +112,7 @@ class MigratoryGreathornTest extends BaseCardTest {
         Permanent greathorn = addCreatureReady(player1, new MigratoryGreathorn());
         MigratoryGreathorn other = new MigratoryGreathorn();
         harness.setLibrary(player1, List.of(other));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, greathorn, List.of(greathorn.getCard()), player1.getId()));
         resolveAllTriggers();
 
@@ -133,7 +134,7 @@ class MigratoryGreathornTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(opponentsLand));
 
         for (int mutation = 0; mutation < 2; mutation++) {
-            harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+            harness.inMutationScope(() -> ActionEvents.mutated(
                     gd, greathorn, List.of(greathorn.getCard()), player2.getId()));
             resolveAllTriggers();
             harness.handleCardChosen(player2, 0);
@@ -158,7 +159,7 @@ class MigratoryGreathornTest extends BaseCardTest {
         Forest forest = new Forest();
         harness.setLibrary(player1, List.of(forest));
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkMutateTriggers(
+            ActionEvents.mutated(
                     gd, greathorn, List.of(greathorn.getCard()), player1.getId());
             gd.playerBattlefields.get(player1.getId()).remove(greathorn);
             gd.playerGraveyards.get(player1.getId()).add(greathorn.getCard());
@@ -182,7 +183,7 @@ class MigratoryGreathornTest extends BaseCardTest {
         JungleHollow nonbasic = new JungleHollow();
         Forest forest = new Forest();
         harness.setLibrary(player1, List.of(nonbasic, forest));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, greathorn, List.of(greathorn.getCard()), player1.getId()));
         resolveAllTriggers();
 
@@ -203,7 +204,7 @@ class MigratoryGreathornTest extends BaseCardTest {
     void emptyLibraryDoesNotWaitForInput() {
         Permanent greathorn = addCreatureReady(player1, new MigratoryGreathorn());
         harness.setLibrary(player1, List.of());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, greathorn, List.of(greathorn.getCard()), player1.getId()));
         resolveAllTriggers();
 

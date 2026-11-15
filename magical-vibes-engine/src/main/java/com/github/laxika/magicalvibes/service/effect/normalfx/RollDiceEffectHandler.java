@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -58,9 +59,9 @@ public class RollDiceEffectHandler implements NormalEffectHandlerBean {
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(entry.getControllerId())
                 + " rolls " + diceCount + " d" + rollEffect.sides() + " for "
                 + entry.getCard().getName() + ": " + results + "."));
-        triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
+        ActionEvents.diceRolled(
                 gameData, entry.getControllerId(), diceCount);
-        triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
+        ActionEvents.dieResults(
                 gameData, entry.getControllerId(), rollEffect.sides(),
                 results.stream().mapToInt(Integer::intValue).toArray());
 

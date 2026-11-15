@@ -22,10 +22,10 @@ public sealed interface Trigger permits AbilityTrigger, AttachTrigger, ChapterTr
     }
 
     /**
-     * The trigger the old collectors read this one's abilities by (a {@code TriggerWatch}'s trigger): this trigger
-     * without the filters they judge from the ability (a filter, a Room door, a state trigger's game state), and for
-     * some the trigger of the event whose collector reads it (a counter or tap trigger, "becomes crewed for the first
-     * time each turn"). A trigger without such filters is its own key.
+     * The trigger the matchers find this one's abilities by: this trigger without the filters they judge from the
+     * ability (a filter, a Room door, a state trigger's game state), and for some the trigger of the event whose
+     * matcher reads it (a counter or tap trigger, "becomes crewed for the first time each turn"). A trigger without
+     * such filters is its own key.
      */
     default Trigger watchKey() {
         return this;

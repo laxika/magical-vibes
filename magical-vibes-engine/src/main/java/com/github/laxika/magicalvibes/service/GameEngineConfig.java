@@ -15,9 +15,10 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.CollectsTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsTriggers;
-import com.github.laxika.magicalvibes.service.trigger.CollectsWatchTrigger;
-import com.github.laxika.magicalvibes.service.trigger.CollectsWatchTriggers;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
@@ -26,9 +27,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Single Spring configuration for the game engine object graph: services, support beans,
@@ -51,12 +49,19 @@ import java.util.List;
 public class GameEngineConfig implements SmartInitializingSingleton {
 
     private final ApplicationContext applicationContext;
+
     private final EffectHandlerRegistry effectHandlerRegistry;
+
     private final MayEffectHandlerRegistry mayEffectHandlerRegistry;
+
     private final StaticEffectHandlerRegistry staticEffectHandlerRegistry;
+
     private final TargetValidatorRegistry targetValidatorRegistry;
+
     private final TriggerCollectorRegistry triggerCollectorRegistry;
+
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+
     private final CostModificationHandlerRegistry costModificationHandlerRegistry;
 
     public GameEngineConfig(ApplicationContext applicationContext) {
@@ -175,20 +180,6 @@ public class GameEngineConfig implements SmartInitializingSingleton {
                     }
                 }
 
-                CollectsWatchTrigger watchSingle = method.getAnnotation(CollectsWatchTrigger.class);
-                if (watchSingle != null) {
-                    registerTriggerHandler(bean, method, watchSingle.watch(), watchSingle.value());
-                    count++;
-                }
-
-                CollectsWatchTriggers watchContainer = method.getAnnotation(CollectsWatchTriggers.class);
-                if (watchContainer != null) {
-                    for (CollectsWatchTrigger cwt : watchContainer.value()) {
-                        registerTriggerHandler(bean, method, cwt.watch(), cwt.value());
-                        count++;
-                    }
-                }
-
             }
         }
 
@@ -200,12 +191,10 @@ public class GameEngineConfig implements SmartInitializingSingleton {
     }
 
     /**
-     * Registers a handler for {@code key}, an {@code EffectSlot}, a {@code ZoneChangeWatch}, a
-     * {@code LibraryWatch}, a {@code SagaWatch} or an {@code ActionWatch}.
+     * Registers a handler for {@code key}, an {@code EffectSlot}.
      */
     private void registerTriggerHandler(Object bean, Method method, Object key, Class<? extends CardEffect> effectClass) {
         triggerCollectorRegistry.register(key, effectClass, TriggerCollectorRegistry.handlerOf(bean, method,
                 effectClass));
     }
-
 }

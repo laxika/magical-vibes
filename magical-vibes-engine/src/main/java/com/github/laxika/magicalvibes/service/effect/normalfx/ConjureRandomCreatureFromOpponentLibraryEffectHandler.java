@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureRandomCreatureFromOppo
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -49,6 +50,6 @@ public class ConjureRandomCreatureFromOpponentLibraryEffectHandler implements No
         gameData.addCardToHand(entry.getControllerId(), copy);
         gameLogService.append(gameData, GameLog.cardThen(copy, " is conjured into "
                 + gameData.playerIdToName.get(entry.getControllerId()) + "'s hand."));
-        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
+        ActionEvents.conjured(gameData, entry.getControllerId(), 1);
     }
 }

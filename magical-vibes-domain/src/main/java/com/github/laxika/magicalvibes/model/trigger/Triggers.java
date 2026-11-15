@@ -2242,7 +2242,7 @@ public final class Triggers {
         return new AttachTrigger(AttachTrigger.AttachEvent.THIS_EQUIPMENT_FROM_PERMANENT);
     }
 
-    /** "Whenever day becomes night or night becomes day" (CR 731.1a) */
+    /** "Whenever day becomes night or night becomes day" (CR 732.1a) */
     public static DayNightTrigger dayBecomesNightOrNightBecomesDay() {
         return new DayNightTrigger();
     }

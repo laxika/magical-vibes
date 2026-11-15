@@ -77,11 +77,11 @@ public class RevealHandAndDiscardDuplicateNonlandCardsEffectHandler implements N
                 toDiscard.add(card);
             }
         }
-        triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
+        gameData.beginDiscardEvent(targetPlayerId);
         for (Card card : toDiscard) {
             discardCard(gameData, targetPlayerId, card, entry.getCard());
         }
-        triggerCollectionService.finishDiscardEvent(gameData);
+        gameData.finishDiscardEvent();
     }
 
     private void discardCard(GameData gameData, UUID playerId, Card card, Card sourceCard) {
@@ -102,7 +102,7 @@ public class RevealHandAndDiscardDuplicateNonlandCardsEffectHandler implements N
                 gameData.playerIdToName.get(playerId) + " discards ", card, "."));
         log.info("Game {} - {} discards {} ({})", gameData.id,
                 gameData.playerIdToName.get(playerId), card.getName(), sourceCard.getName());
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+        gameData.discarded(playerId, card);
         if (entersBattlefield && card.hasType(CardType.CREATURE)) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
         }

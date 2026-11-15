@@ -159,12 +159,12 @@ public class EachPlayerChoosesOneCardOfEachColorThenDiscardsRestEffectHandler
 
             hand.removeAll(discarded);
             gameData.discardCausedByOpponent = !playerId.equals(controllerId);
-            triggerCollectionService.beginDiscardEvent(gameData, playerId);
+            gameData.beginDiscardEvent(playerId);
             for (Card card : discarded) {
                 graveyardService.discardCard(gameData, playerId, card);
-                triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+                gameData.discarded(playerId, card);
             }
-            triggerCollectionService.finishDiscardEvent(gameData);
+            gameData.finishDiscardEvent();
 
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + " discards " + discarded.size()

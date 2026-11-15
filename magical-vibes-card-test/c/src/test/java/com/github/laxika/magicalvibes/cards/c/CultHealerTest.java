@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.rules.RoomEvent;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -68,8 +69,7 @@ class CultHealerTest extends BaseCardTest {
         Permanent healer = harness.addToBattlefieldAndReturn(player1, new CultHealer());
         Permanent room = harness.addToBattlefieldAndReturn(player1, testRoom());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkAllyRoomFullyUnlockedTriggers(gd, player1.getId(), room));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new RoomEvent.FullyUnlocked(room, player1.getId())));
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, healer, Keyword.LIFELINK)).isTrue();

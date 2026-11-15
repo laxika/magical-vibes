@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinCopyTriggeringSpellOr
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -61,7 +62,7 @@ public class FlipCoinCopyTriggeringSpellOrDealDamageEffectHandler implements Nor
         }
 
         if (wonFlip && result.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+            ActionEvents.coinFlipWon(gameData, controllerId);
             triggeredAbilityStackService.putMade(gameData, coinFlipRecord(gameData, entry, WON_FLIP, triggeringSpell));
             return;
         }

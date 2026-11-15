@@ -52,12 +52,12 @@ public class DiscardOwnHandThenDrawThatManyEffectHandler implements NormalEffect
         hand.clear();
         gameData.discardCausedByOpponent = false;
 
-        triggerCollectionService.beginDiscardEvent(gameData, controllerId);
+        gameData.beginDiscardEvent(controllerId);
         for (Card card : discarded) {
             graveyardService.discardCard(gameData, controllerId, card);
-            triggerCollectionService.checkDiscardTriggers(gameData, controllerId, card);
+            gameData.discarded(controllerId, card);
         }
-        triggerCollectionService.finishDiscardEvent(gameData);
+        gameData.finishDiscardEvent();
 
         String discardLog = playerName + " discards their hand (" + discardCount
                 + " card" + (discardCount != 1 ? "s" : "") + ") (" + cardName + ").";

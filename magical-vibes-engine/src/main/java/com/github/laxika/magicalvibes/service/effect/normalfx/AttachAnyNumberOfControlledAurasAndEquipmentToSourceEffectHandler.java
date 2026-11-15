@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -111,7 +112,7 @@ public class AttachAnyNumberOfControlledAurasAndEquipmentToSourceEffectHandler
         gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
         aura.setAttachedTo(source.getId());
         aura.setTimestamp(gameData.nextTimestamp());
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, source.getId());
+        gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, source.getId()));
         logAttachment(gameData, aura, source);
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -281,299 +282,34 @@ class DrawServiceTest {
         return card;
     }
 
-    @Nested
-    @DisplayName("checkControllerDrawTriggers — the abilities as written")
-    class ControllerDrawAbilities {
+    @Test
+    @DisplayName("a card revealed by a permanent's reveal ability is logged and emitted as the reveal event")
+    void aRevealedCardIsLoggedAndEmitted() {
+        Card rowenCard = createCard("Rowen", CardType.ENCHANTMENT);
+        Permanent rowen = new Permanent(rowenCard);
+        Card forest = createCard("Forest", CardType.LAND);
 
-        @Test
-        @DisplayName("an ability of two effects is one stack entry recording the draw")
-        void abilityOfTwoEffectsIsOneEntry() {
-            Card card = createCard("Gixian Puppeteer", CardType.CREATURE);
-            LoseLifeEffect loss = new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT);
-            GainLifeEffect gain = new GainLifeEffect(2);
-            card.addTrigger(Triggers.youDrawCard(), loss, gain);
-            Permanent puppeteer = new Permanent(card);
-            gd.playerBattlefields.get(player1Id).add(puppeteer);
-            Card drawn = createCard("Island", CardType.LAND);
+        sut.revealDrawnCard(gd, rowen, player1Id, forest);
 
-            sut.checkControllerDrawTriggers(gd, player1Id, drawn);
-
-            assertThat(gd.stack).singleElement().satisfies(entry -> {
-                assertThat(entry.getEffectsToResolve()).containsExactly(loss, gain);
-                assertThat(entry.getSourcePermanentId()).isEqualTo(puppeteer.getId());
-                assertThat(entry.getTargetId()).isEqualTo(player1Id);
-                assertThat(entry.isNonTargeting()).isTrue();
-                assertThat(entry.getTriggeringPlayerId()).isEqualTo(player1Id);
-                assertThat(entry.getTriggeringCards()).containsExactly(drawn);
-                assertThat(entry.getSourcePermanentSnapshot()).isNotNull();
-            });
-        }
-
-        @Test
-        @DisplayName("a \"you may\" goes on the stack as written with the reader's record")
-        void mayAbilityGoesOnTheStackWithTheRecord() {
-            Card card = createCard("Hoofprints of the Stag", CardType.ENCHANTMENT);
-            MayEffect may = new MayEffect(new BoostSelfEffect(1, 1), "Do it?");
-            card.addTrigger(Triggers.youDrawCard(), may);
-            Permanent hoofprints = new Permanent(card);
-            gd.playerBattlefields.get(player1Id).add(hoofprints);
-
-            sut.checkControllerDrawTriggers(gd, player1Id);
-
-            assertThat(gd.stack).singleElement().satisfies(entry -> {
-                assertThat(entry.getEffectsToResolve()).containsExactly(may);
-                assertThat(entry.getSourcePermanentId()).isEqualTo(hoofprints.getId());
-                assertThat(entry.getTargetId()).isEqualTo(player1Id);
-                assertThat(entry.isNonTargeting()).isTrue();
-                assertThat(entry.getTriggeringPlayerId()).isEqualTo(player1Id);
-                assertThat(entry.getSourcePermanentSnapshot()).isNotNull();
-            });
-        }
-
-        @Test
-        @DisplayName("a draw ability fires whoever else is on the battlefield")
-        void drawTriggerFires() {
-            Card crawlerCard = createCard("Psychosis Crawler", CardType.CREATURE);
-            crawlerCard.addTrigger(Triggers.youDrawCard(), new BoostSelfEffect(1, 1));
-            Permanent crawler = new Permanent(crawlerCard);
-            gd.playerBattlefields.get(player1Id).add(crawler);
-
-            sut.checkControllerDrawTriggers(gd, player1Id);
-
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(crawler.getId());
-            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Psychosis Crawler's ability triggers.")));
-        }
-
-        @Test
-        @DisplayName("hands the door the draw as the event the additional-trigger effects of draws judge")
-        void handsTheDoorTheDrawEvent() {
-            Card crawlerCard = createCard("Psychosis Crawler", CardType.CREATURE);
-            crawlerCard.addTrigger(Triggers.youDrawCard(), new BoostSelfEffect(1, 1));
-            Permanent crawler = new Permanent(crawlerCard);
-            gd.playerBattlefields.get(player1Id).add(crawler);
-
-            sut.checkControllerDrawTriggers(gd, player1Id);
-
-            assertThat(doorRequests).singleElement().satisfies(request -> {
-                assertThat(request.sourcePermanent()).isSameAs(crawler);
-                assertThat(request.event()).isEqualTo(new TriggerContext.Draw(player1Id));
-            });
-        }
-    }
-
-    @Nested
-    @DisplayName("the drawn card's filter and the reveal abilities")
-    class DrawnCardFilter {
-
-        @Test
-        @DisplayName("judges a draw ability's filter on the drawn card and records the card as the triggering card")
-        void judgesTheFilterOnTheDrawnCardAndRecordsIt() {
-            CardPredicate creature = new CardTypePredicate(CardType.CREATURE);
-            Card whelpCard = createCard("Whelp", CardType.CREATURE);
-            whelpCard.addTrigger(Triggers.youDrawCard().withFilter(creature), new BoostSelfEffect(1, 1));
-            Permanent whelp = new Permanent(whelpCard);
-            gd.playerBattlefields.get(player1Id).add(whelp);
-            Card bears = createCard("Grizzly Bears", CardType.CREATURE);
-            Card forest = createCard("Forest", CardType.LAND);
-            lenient().when(predicateEvaluationService.matchesCardPredicate(eq(bears), eq(creature), eq(whelpCard.getId()),
-                    eq(gd), eq(player1Id), eq(whelp.getId()), any(), any(), eq(whelp))).thenReturn(true);
-
-            sut.checkControllerDrawTriggers(gd, player1Id, forest);
-            sut.checkControllerDrawTriggers(gd, player1Id);
-            assertThat(gd.stack).isEmpty();
-
-            sut.checkControllerDrawTriggers(gd, player1Id, bears);
-
-            assertThat(gd.stack).singleElement().satisfies(entry -> {
-                assertThat(entry.getSourcePermanentId()).isEqualTo(whelp.getId());
-                assertThat(entry.getTriggeringCards()).containsExactly(bears);
-                assertThat(entry.getTriggeringCardId()).isEqualTo(bears.getId());
-            });
-        }
-
-        @Test
-        @DisplayName("a card revealed by a permanent triggers that permanent's matching reveal abilities")
-        void aRevealedCardTriggersTheSourcesRevealAbilities() {
-            CardPredicate land = new CardTypePredicate(CardType.LAND);
-            Card rowenCard = createCard("Rowen", CardType.ENCHANTMENT);
-            rowenCard.addTrigger(Triggers.youRevealCardThisWay().withFilter(land), new DrawCardEffect(1));
-            Permanent rowen = new Permanent(rowenCard);
-            gd.playerBattlefields.get(player1Id).add(rowen);
-            Card forest = createCard("Forest", CardType.LAND);
-            Card bears = createCard("Grizzly Bears", CardType.CREATURE);
-            when(gameQueryService.findPermanentController(gd, rowen.getId())).thenReturn(player1Id);
-            lenient().when(predicateEvaluationService.matchesCardPredicate(eq(forest), eq(land), eq(rowenCard.getId()),
-                    eq(gd), eq(player1Id), eq(rowen.getId()), any(), any(), eq(rowen))).thenReturn(true);
-
-            sut.revealDrawnCard(gd, rowen, player1Id, bears);
-            sut.revealDrawnCard(gd, rowen, player2Id, forest);
-            assertThat(gd.stack).isEmpty();
-
-            sut.revealDrawnCard(gd, rowen, player1Id, forest);
-
-            assertThat(gd.stack).singleElement().satisfies(entry -> {
-                assertThat(entry.getEffectsToResolve()).containsExactly(new DrawCardEffect(1));
-                assertThat(entry.getTriggeringCards()).containsExactly(forest);
-            });
-            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) ->
-                    e.plainText().equals("Player1 reveals Forest with Rowen.")));
-        }
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) ->
+                e.plainText().equals("Player1 reveals Forest with Rowen.")));
+        assertThat(gd.rulesEvents.pending().stream().flatMap(batch -> batch.events().stream()))
+                .containsExactly(new LibraryEvent.RevealedDrawnCard(player1Id, rowen, forest));
     }
 
     @Test
-    @DisplayName("pushes a graveyard second-draw may-pay trigger onto the stack")
-    void graveyardSecondDrawTriggerPushesMayPayAbility() {
-        Card wolfbat = createCard("Wolfbat", CardType.CREATURE);
-        wolfbat.addTrigger(new TriggerCondition(Triggers.youDrawSecondCardEachTurn(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new MayPayManaEffect("{B}", new BoostSelfEffect(1, 1), "Pay {B}?"));
-        gd.playerGraveyards.put(player1Id, new ArrayList<>(List.of(wolfbat)));
-        gd.cardsDrawnThisTurn.put(player1Id, 2);
+    @DisplayName("a draw is emitted with the drawn card, whether it is the draw step's first and the turn's count")
+    void aDrawIsEmitted() {
+        Card top = createCard("Top", CardType.CREATURE);
+        gd.playerDecks.put(player1Id, new ArrayList<>(List.of(top)));
+        gd.playerHands.put(player1Id, new ArrayList<>());
+        gd.cardsDrawnThisTurn.put(player1Id, 1);
 
-        sut.checkControllerDrawTriggers(gd, player1Id);
+        sut.resolveDrawCard(gd, player1Id);
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard()).isEqualTo(wolfbat);
-        assertThat(gd.stack.getFirst().getEffectsToResolve())
-                .singleElement().isInstanceOf(MayPayManaEffect.class);
-    }
-
-    @Test
-    @DisplayName("pushes a graveyard opponent second-draw may trigger onto the stack")
-    void graveyardOpponentSecondDrawTriggerPushesMayAbility() {
-        Card detective = createCard("Dogged Detective", CardType.CREATURE);
-        detective.addTrigger(new TriggerCondition(Triggers.opponentDrawsSecondCardEachTurn(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new MayEffect(new BoostSelfEffect(1, 1), "Do it?"));
-        gd.playerGraveyards.put(player1Id, new ArrayList<>(List.of(detective)));
-        gd.cardsDrawnThisTurn.put(player2Id, 2);
-
-        sut.checkOpponentDrawTriggers(gd, player2Id);
-
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard()).isEqualTo(detective);
-        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
-        assertThat(gd.stack.getFirst().getEffectsToResolve())
-                .singleElement().isInstanceOf(MayEffect.class);
-    }
-
-    @Test
-    @DisplayName("hands a targeted second-draw ability to the door whole, which chooses its target")
-    void targetedSecondDrawAbilityGoesToTheDoorWhole() {
-        Card card = createCard("Mantle of Tides", CardType.ARTIFACT);
-        AttachSourceEquipmentToTargetCreatureEffect effect = new AttachSourceEquipmentToTargetCreatureEffect();
-        card.target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.youDrawSecondCardEachTurn(), effect);
-        Permanent equipment = new Permanent(card);
-        gd.playerBattlefields.get(player1Id).add(equipment);
-        gd.cardsDrawnThisTurn.put(player1Id, 2);
-
-        sut.checkControllerDrawTriggers(gd, player1Id);
-
-        assertThat(doorRequests).singleElement().satisfies(request -> {
-            assertThat(request.ability()).isEqualTo(card.getTriggeredAbilities().getFirst());
-            assertThat(request.sourcePermanent()).isSameAs(equipment);
-        });
-    }
-
-    @Test
-    @DisplayName("an opponent's draw names the drawing player as the non-targeting \"that player\"")
-    void opponentDrawNamesTheDrawingPlayer() {
-        Card card = createCard("Fate Unraveler", CardType.ENCHANTMENT);
-        card.addTrigger(Triggers.opponentDrawsCard(), new BoostSelfEffect(1, 1));
-        Permanent source = new Permanent(card);
-        gd.playerBattlefields.get(player1Id).add(source);
-
-        sut.checkOpponentDrawTriggers(gd, player2Id);
-
-        assertThat(gd.stack).singleElement().satisfies(entry -> {
-            assertThat(entry.getControllerId()).isEqualTo(player1Id);
-            assertThat(entry.getTargetId()).isEqualTo(player2Id);
-            assertThat(entry.isNonTargeting()).isTrue();
-            assertThat(entry.getTriggeringPlayerId()).isEqualTo(player2Id);
-        });
-    }
-
-    @Test
-    void opponentDrawTriggerHonorsItsOncePerTurnLimit() {
-        Card card = createCard("Tataru Taru", CardType.CREATURE);
-        card.addTrigger(Triggers.opponentDrawsCard(), TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                new BoostSelfEffect(1, 1));
-        Permanent source = new Permanent(card);
-        gd.playerBattlefields.get(player1Id).add(source);
-
-        sut.checkOpponentDrawTriggers(gd, player2Id);
-        sut.checkOpponentDrawTriggers(gd, player2Id);
-
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEffectsToResolve())
-                .containsExactly(new BoostSelfEffect(1, 1));
-        assertThat(gd.keyedOncePerTurnTriggersFiredThisTurn.get(source.getId()))
-                .containsExactly(card.getTriggeredAbilities().getFirst().limitKey());
-    }
-
-    @Test
-    void emblemAnyPlayerDrawTriggerQueuesLifeLossForItsController() {
-        Card source = createCard("Ob Nixilis Reignited", CardType.ENCHANTMENT);
-        gd.emblems.add(new Emblem(player1Id, List.of(), source, List.of(), 0L,
-                List.of(new TriggeredAbility(Triggers.playerDrawsCard(),
-                        new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER)))));
-
-        sut.checkControllerDrawTriggers(gd, player2Id);
-        sut.checkControllerDrawTriggers(gd, player1Id);
-
-        assertThat(gd.stack).hasSize(2);
-        assertThat(gd.stack).allSatisfy(entry -> {
-            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-            assertThat(entry.getControllerId()).isEqualTo(player1Id);
-            assertThat(entry.isNonTargeting()).isTrue();
-            assertThat(entry.getEffectsToResolve())
-                    .containsExactly(new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER));
-        });
-        assertThat(gd.stack).extracting(StackEntry::getTriggeringPlayerId).containsExactly(player2Id, player1Id);
-    }
-
-    @Test
-    void emblemOpponentDrawTriggerIgnoresItsControllersDraw() {
-        Card source = createCard("Emblem source", CardType.ENCHANTMENT);
-        gd.emblems.add(new Emblem(player1Id, List.of(), source, List.of(), 0L,
-                List.of(new TriggeredAbility(Triggers.opponentDrawsCard(),
-                        new LoseLifeEffect(1, LoseLifeRecipient.CONTROLLER)))));
-
-        sut.checkControllerDrawTriggers(gd, player1Id);
-        assertThat(gd.stack).isEmpty();
-
-        sut.checkControllerDrawTriggers(gd, player2Id);
-        assertThat(gd.stack).singleElement()
-                .satisfies(entry -> assertThat(entry.getTriggeringPlayerId()).isEqualTo(player2Id));
-    }
-
-    @Test
-    void emblemTargetedDrawTriggerGoesToTheStackDoorWithTheAbilitysTargetFilter() {
-        Card source = createCard("Teferi, Hero of Dominaria", CardType.PLANESWALKER);
-        TargetFilter opponentsPermanent = TargetFilters.permanentAnOpponentControls();
-        TriggeredAbility ability = new TriggeredAbility(Triggers.youDrawCard(), new ExileTargetPermanentEffect())
-                .withTargetFilter(opponentsPermanent);
-        gd.emblems.add(new Emblem(player1Id, List.of(), source, List.of(), 0L, List.of(ability)));
-
-        sut.checkControllerDrawTriggers(gd, player2Id);
-        assertThat(doorRequests).isEmpty();
-
-        sut.checkControllerDrawTriggers(gd, player1Id);
-
-        // The door chooses the target, with the ability's own filter, as it goes on the stack (CR 603.3d).
-        assertThat(doorRequests).singleElement().satisfies(request -> {
-            assertThat(request.ability()).isEqualTo(ability);
-            assertThat(request.sourceCard()).isEqualTo(source);
-            assertThat(request.sourcePermanent()).isNull();
-            assertThat(request.controllerId()).isEqualTo(player1Id);
-            assertThat(request.emblemAbility()).isTrue();
-        });
-        assertThat(gd.stack).singleElement().satisfies(entry -> {
-            assertThat(entry.getTriggeringPlayerId()).isEqualTo(player1Id);
-            assertThat(entry.isMadeByResolution()).isTrue();
-        });
+        assertThat(gd.rulesEvents.pending().stream().flatMap(batch -> batch.events().stream()))
+                .filteredOn(LibraryEvent.Drew.class::isInstance)
+                .containsExactly(new LibraryEvent.Drew(player1Id, top, false, 2));
     }
 
     @Test

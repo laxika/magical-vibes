@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -55,7 +56,7 @@ public class ConjureDuplicatesOfDyingCreatureIntoLibraryEffectHandler implements
             library.add(duplicate);
         }
 
-        triggerCollectionService.checkConjureTriggers(
+        ActionEvents.conjured(
                 gameData, entry.getControllerId(), oilCounterCount);
         LibraryShuffleHelper.shuffleLibrary(gameData, entry.getControllerId());
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),

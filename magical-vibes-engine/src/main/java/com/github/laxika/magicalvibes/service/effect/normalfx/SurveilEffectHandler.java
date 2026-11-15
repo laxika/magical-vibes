@@ -71,7 +71,7 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
         if (deck.isEmpty()) {
             String logEntry = playerName + "'s library is empty (" + sourceName + " surveil).";
             gameLogService.append(gameData, GameLog.text(logEntry));
-            triggerCollectionService.checkSurveilTriggers(gameData, controllerId);
+            gameData.surveilled(controllerId);
             return;
         }
 

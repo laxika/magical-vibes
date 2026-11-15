@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -88,8 +89,8 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
         }
 
         if (fight.requiresSourceOnBattlefield() && sourceIsCreature && targetIsCreature) {
-            triggerCollectionService.checkAllyCreatureFightsTriggers(gameData, source, sourceControllerId);
-            triggerCollectionService.checkAllyCreatureFightsTriggers(gameData, target, targetControllerId);
+            ActionEvents.fought(gameData, source, sourceControllerId);
+            ActionEvents.fought(gameData, target, targetControllerId);
         }
 
         gameOutcomeService.checkWinCondition(gameData);

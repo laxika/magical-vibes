@@ -25,7 +25,7 @@ grep its `^#### Run` headings and read that range. The invariants those runs est
 | S8 | Engine-made abilities; the door is the only route | done |
 | M1 | Rules events: attacks, blocks, steps and phases | done |
 | M2 | Rules events: spells, targets, damage (combat damage too), counters, life, tap | done but: C45, C46 |
-| M3 | Rules events: library, actions, sagas, the rest | open |
+| M3 | Rules events: library, actions, sagas, the rest | done but: C47 |
 | F | Delete the legacy types; docs | open |
 
 A row's status is `open`, `done`, or `done but: <ids from Carried over>`. Nothing else goes in it.
@@ -362,6 +362,7 @@ named, with the Oracle text of the cards involved read first.
 | C38 | S8 (closed) | "As this Equipment becomes attached" choices (a color, a name and a type, an exiled creature to copy) are written as trigger effects and read by class in `checkEquipmentAttachedTriggers`: they are static abilities |
 | C45 | M2 | `TargetTriggers` reads each watcher's becomes-the-target abilities as the old collectors did (`WatchedAbilities.printed`, duration and static grants, the mannequin and cloaked-ward cases), not as the layers leave them (`TriggerIndex.permanentAbilities`): an Aura's printed ability, one granted to the enchanted creature, bestow and a face-down cloaked ward are read differently, so making them uniform changes behaviour and needs its own ledger pass |
 | C46 | M2 | A damage source or watcher that may have left the battlefield before its ability is put (combat-damage dealers, departed ally watchers, Equipment, snapshotted self abilities: `CombatDamageTriggers.allWatchedAbilities` / `grantedCombatAbilities` / the ally and attached passes of `processCombatDamageToPlayerTriggers`, `DamageTriggers.dispatchSourceDealsCombatDamageTriggers` / `collectDealsDamageToCreatureAbilities` / `putEquipmentCombatDamageAbilities`) is read as it last existed by per-watch reads, not through `TriggerIndex`, which can't list a departed permanent's snapshot abilities yet |
+| C47 | M3 | Planar and scheme zone-change abilities (`TriggerCollectionService`'s planar enters, leaves, land-enters and death readers, the scheme leaves reader, the planar nonblack-card reader) still run at their old call sites, selecting abilities by their trigger's fields; `TriggerIndex` doesn't list planar or scheme candidates for zone changes, and moving them changes the moment they trigger, which needs its own ledger pass |
 
 **Fixes**
 
@@ -496,6 +497,17 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Regression fixed on the way: the combat matcher still called the old temporary-global collector (Surge to Victory, Mistway Spy).
 - Ledger: 68 baseline tests differ, all random (route fixtures' drawn, discarded, clashed or revealed cards and die rolls; Volatile Rig's, Creepy Doll's, Setzer's and Breeches's coin flips; Strax's random player; Outlaws' Merriment's random token; Consuming Oni's random card). No ability is gained or lost.
 - Open: C45, C46. The counter-removal event is emitted on every state-based-action check, removed or not; the tap matcher keeps `creatureTapCountsThisTurn` and `playersWhoTappedLandForManaThisTurn` while matching, at the old moment. `BreathOfFuryTest`'s unsuccessful-sacrifice case fails run alone at HEAD too.
+
+**M3.**
+- Rules events: `LibraryEvent` (drew, revealed a drawn card, discarded, a discard event's cards, cycled, scried, surveilled, searched, shuffled), `ActionEvent` (emitted through `ActionEvents`, which keep the collectors' bookkeeping), `ControlChangeEvent`, `AttachmentEvent`, `CrewEvent`, `DayNightEvent`, `RoomEvent`, `SagaEvent`, `EntryCausedTriggerEvent`, each occurring where its collector ran and matched by its `…Triggers` class from `TriggerIndex`; state triggers have no event (CR 603.8) and stay checked by `StateTriggerService`, candidates from `TriggerIndex`.
+- Deleted: every watch (`Library`, `Action`, `Misc`, `Saga`, `ZoneChange`, `CreatureDeath`, `TriggerWatch`), every family reader, `DiscardRecords`, `MiscTriggerCollectorService`, `@CollectsWatchTrigger(s)`, the family collectors and helpers of `TriggerCollectionService` and its registry dispatch chain, the `TriggerContext` variants nothing read (the doublers' stay).
+- Zone changes: the door's routing and `zoneChangeRequest` read the matched trigger, "that player" by its relation (`triggers.md`). Cards declare what the relation doesn't give: Liability `TRIGGERING_CARD_OWNER`, Lucy MacLean "target player other than its controller"; Last Laugh, Yomiji, Tarrian's Soulcleaver are `ANOTHER`, Dredging Claw and Flayer of the Hatebound `YOU_OWN` (CR 400.3), Prized Amalgam's condition its trigger filter.
+- Rules fixes (test fails before): a face-down or ability-less permanent's action abilities don't trigger (CR 708.2, 613.1f; `DeepmuckDesperadoTest`); "when you cycle this card" is read as the card has it where it wound up (CR 702.29c), so Krosan Tusker doesn't trigger under Yixlid Jailer (its ruling; `KrosanTuskerTest`); Siona sees an enchantment that becomes an Aura attached to your creature (`SionaCaptainOfThePyleasTest`).
+- Now uniform, no card test failing before: grants, text changes and lost abilities apply to the draw, search, shuffle, discard, crew, station, attach, control-change, champion, exploit and lose-game readers; Strict Proctor and Equipment unattach judge their event condition.
+- Moment kept: every event occurs at its collector's call site; a shuffle ability goes on the stack unlogged (a shuffle can happen outside a mutation scope); state triggers are checked as a discard event that discarded a card closes.
+- Ledger: every difference is "that player" gained or lost by the relation rule (no lost one was read; no gained one binds a declared target), random (drawn and discarded cards, coin flips, dice, a clash's top cards: route reruns flip it), or a new test.
+- Regression fixed: a land played from outside the game entered "from exile" (the dropped watch check had read `Permanent.isEnteredFromExile`); it now enters from `OUTSIDE_GAME` (CR 400.11a), so Fire Lord Zuko doesn't see it (`FrontierExplorerTest`).
+- Open: C47. F must drop the ~267 unused `TriggerCollectionService` fields of handlers; `TriggerCollectorRegistry` has no handler left; Saga chapter abilities are still read by chapter in `SagaChapterService`.
 
 ## Prompt
 

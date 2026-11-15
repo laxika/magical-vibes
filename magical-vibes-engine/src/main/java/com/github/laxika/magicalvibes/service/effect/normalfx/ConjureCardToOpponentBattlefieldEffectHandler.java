@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -73,9 +74,9 @@ public class ConjureCardToOpponentBattlefieldEffectHandler implements NormalEffe
         String opponentName = gameData.playerIdToName.get(opponentId);
         gameLogService.append(gameData, GameLog.textCardText(
                 opponentName + " receives a conjured ", conjuredCard, "."));
-        triggerCollectionService.checkConjureTriggers(gameData, opponentId, 1);
+        ActionEvents.conjured(gameData, opponentId, 1);
         if (conjure.gift()) {
-            triggerCollectionService.checkControllerGivesGiftTriggers(gameData, entry.getControllerId());
+            ActionEvents.giftGiven(gameData, entry.getControllerId());
         }
     }
 }

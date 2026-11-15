@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -55,7 +56,7 @@ public class RollD6EffectHandler implements NormalEffectHandlerBean {
             if (rollEffect.trackedResult() != null && result == rollEffect.trackedResult()) {
                 trackedResultCount++;
             }
-            triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
+            ActionEvents.dieResults(
                     gameData, entry.getControllerId(), 6, result);
             if (!rollEffect.branches().isEmpty()) {
                 CardEffect branch = rollEffect.branches().get(result - 1);
@@ -64,7 +65,7 @@ public class RollD6EffectHandler implements NormalEffectHandlerBean {
                 }
             }
         }
-        triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
+        ActionEvents.diceRolled(
                 gameData, entry.getControllerId(), diceCount, results.get(results.size() - 1));
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(entry.getControllerId())
                 + " rolls " + diceCount + " d6 for " + entry.getCard().getName() + ": " + results + "."));

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellboo
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -58,7 +59,7 @@ public class ConjureRandomCardFromSpellbookToExileMayCastFreeUntilEndOfTurnEffec
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures a " + conjuredCard.getName()
                         + " card into exile (may cast without paying its mana cost until end of turn)."));
-        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
+        ActionEvents.conjured(gameData, entry.getControllerId(), 1);
     }
 
     private Card createCardIfImplemented(

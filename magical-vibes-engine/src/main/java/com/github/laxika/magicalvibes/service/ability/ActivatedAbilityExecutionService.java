@@ -147,6 +147,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -949,7 +950,7 @@ public class ActivatedAbilityExecutionService {
                     && skip.scope() == TapUntapScope.SELF && skip.activationCost()) {
                 permanent.setSkipUntapCount(Math.max(permanent.getSkipUntapCount(), skip.untapSteps()));
                 permanent.setSkipUntapControllerId(playerId);
-                triggerCollectionService.checkExertTriggers(gameData, playerId, permanent.getId());
+                ActionEvents.exerted(gameData, playerId, permanent.getId());
             }
         }
 
@@ -1149,7 +1150,7 @@ public class ActivatedAbilityExecutionService {
         }
         StackEntry abilityEntry = abilityStackIndex < gameData.stack.size() ? gameData.stack.get(abilityStackIndex) : null;
         triggerCollectionService.checkManaLinkedAbilityCopyTrigger(gameData, playerId, abilityEntry, ability);
-        triggerCollectionService.checkCrimeTriggers(gameData, abilityEntry);
+        ActionEvents.crimeCommitted(gameData, abilityEntry);
         // CR 602.2b, CR 601.2i: "whenever [a player] activates an ability" abilities trigger now that the ability
         // is on the stack and its costs are paid, so they go on the stack above it and one that copies it has its
         // targets and X.

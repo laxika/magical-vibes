@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class LastLaugh extends Card {
 
     public LastLaugh() {
-        addTrigger(Triggers.dies(null, ObjectRelation.ANY),
+        // Whenever a permanent other than this enchantment is put into a graveyard from the battlefield, ...
+        addTrigger(Triggers.dies(null, ObjectRelation.ANOTHER),
                 new MassDamageEffect(1, true));
 
         addTrigger(Triggers.battlefieldHasAtMost(0, new PermanentIsCreaturePredicate()), new SacrificeSelfEffect());

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.model.rules.ControlChangeEvent;
 import java.util.UUID;
 import java.util.ArrayList;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
@@ -164,8 +165,8 @@ class ZidaneTantalusThiefTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ZidaneTantalusThief());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkOpponentGainsControlTriggers(gd, target, player1.getId(), player3.getId()));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(
+                new ControlChangeEvent.OpponentGains(target, player1.getId(), player3.getId())));
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);

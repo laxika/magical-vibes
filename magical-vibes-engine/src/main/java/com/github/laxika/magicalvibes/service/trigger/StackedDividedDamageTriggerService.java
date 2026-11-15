@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DistributeCountersAmongCreaturesOnDeathEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -182,7 +183,7 @@ public class StackedDividedDamageTriggerService {
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), assignments.isEmpty()
                 ? "'s ability chooses no targets." : "'s ability divides its amount: " + division + "."));
         log.info("Game {} - {} divided-damage trigger announced {}", gameData.id, entry.getCard().getName(), division);
-        triggerCollectionService.checkCrimeTriggers(gameData, entry);
+        ActionEvents.crimeCommitted(gameData, entry);
         triggerCollectionService.checkTargetChoiceTriggers(gameData, entry);
     }
 

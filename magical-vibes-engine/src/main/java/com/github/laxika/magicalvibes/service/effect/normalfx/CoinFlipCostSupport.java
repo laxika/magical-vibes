@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -36,9 +37,9 @@ public class CoinFlipCostSupport {
                     playerName + (won ? " wins" : " loses") + " the coin flip for ", sourceCard,
                     coinFlipService.replacementDetails(result) + "."));
             if (won && result.isActualCoinFlip()) {
-                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, playerId);
+                ActionEvents.coinFlipWon(gameData, playerId);
             } else if (result.isActualCoinFlip()) {
-                triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, playerId);
+                ActionEvents.coinFlipLost(gameData, playerId);
             }
         }
     }

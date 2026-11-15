@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureGoblinInfluxArraySpellbookEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -64,7 +65,7 @@ public class ConjureGoblinInfluxArraySpellbookEffectHandler implements NormalEff
         hand.add(createSpellbookCard(cardName, entry.getControllerId()));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures a random card from its spellbook into their hand."));
-        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
+        ActionEvents.conjured(gameData, entry.getControllerId(), 1);
     }
 
     private Card createSpellbookCard(String name, UUID ownerId) {

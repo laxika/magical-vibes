@@ -39,7 +39,7 @@ public class EquipSupport {
     }
 
     public void notifyEquipmentAttached(GameData gameData, Permanent equipment, UUID oldAttachedTo) {
-        triggerCollectionService.checkEquipmentAttachedTriggers(gameData, equipment, oldAttachedTo);
+        triggerCollectionService.equipmentBecameAttached(gameData, equipment, oldAttachedTo);
     }
 
     public Permanent findEquipmentByCardId(GameData gameData, UUID cardId) {

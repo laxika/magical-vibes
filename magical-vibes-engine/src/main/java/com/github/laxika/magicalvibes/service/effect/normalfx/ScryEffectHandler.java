@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -84,7 +86,7 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
                             + " but their library is empty.";
             gameLogService.append(gameData, GameLog.text(logMsg));
             if (e.causesScryTriggers()) {
-                triggerCollectionService.checkScryTriggers(gameData, scryingPlayerId, 0);
+                gameData.rulesEvents.occur(new LibraryEvent.Scried(scryingPlayerId, 0, 0));
             }
             return;
         }

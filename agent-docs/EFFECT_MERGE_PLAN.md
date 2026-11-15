@@ -548,7 +548,7 @@ in, hence `PutCounterOnReferencedPermanentEffect`.
 
 **What the audit missed — `@CollectsTrigger` is class-keyed.** `TriggerCollectorRegistry` keys on
 the exact `(EffectSlot, effect.getClass())` pair, so two collector annotations had to be re-keyed to
-the merged class: `MiscTriggerCollectorService:238` (`Triggers.enchantedPermanentBecomesTapped()`, Spirit Shackle)
+the merged class: `TapTriggers` (`Triggers.enchantedPermanentBecomesTapped()`, Spirit Shackle)
 and `DeathTriggerCollectorService:1149` (`Triggers.creatureDies(ANY)`, Sadistic Glee). Both stay
 slot-scoped, and no card puts a `TRIGGERING` reference in either slot, so the re-key is inert; had it
 been missed, both cards' triggers would have silently stopped firing. Neither trigger-collection
@@ -616,7 +616,7 @@ dead code.
 
 **What the audit missed — `@CollectsTrigger` is class-keyed, three times.** As in Step 8, the
 collector annotations key on the exact `(EffectSlot, effect.getClass())` pair, so three had to be
-re-keyed to the merged class: `MiscTriggerCollectorService:199` (`Triggers.enchantedPermanentBecomesTapped()`),
+re-keyed to the merged class: `TapTriggers` (`Triggers.enchantedPermanentBecomesTapped()`),
 `DeathTriggerCollectorService:1133` (`Triggers.creatureDies(ANY)`) and `DamageTriggerCollectorService:295`
 (`Triggers.enchantedCreatureDealtDamage()`). Two of those slots now hold **two** merged-class collectors
 each — Step 8's `PutCounterOnReferencedPermanentEffect` and this one — which is fine because the

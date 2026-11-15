@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -95,7 +96,7 @@ public class WaterbendPaymentService {
         if (remainingMana > 0) {
             new ManaCost("{" + remainingMana + "}").payAsGeneric(manaPool);
         }
-        triggerCollectionService.checkBendingTriggers(gameData, playerId, BendingType.WATERBEND);
+        ActionEvents.bent(gameData, playerId, BendingType.WATERBEND);
     }
 
     private Permanent validateSelectedPermanent(GameData gameData, UUID playerId, UUID permanentId) {

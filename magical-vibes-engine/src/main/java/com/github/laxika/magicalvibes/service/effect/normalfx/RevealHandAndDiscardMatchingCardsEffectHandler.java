@@ -66,12 +66,12 @@ public class RevealHandAndDiscardMatchingCardsEffectHandler implements NormalEff
 
         hand.removeAll(discarded);
         gameData.discardCausedByOpponent = !targetPlayerId.equals(controllerId);
-        triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
+        gameData.beginDiscardEvent(targetPlayerId);
         for (Card card : discarded) {
             graveyardService.discardCard(gameData, targetPlayerId, card);
-            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+            gameData.discarded(targetPlayerId, card);
         }
-        triggerCollectionService.finishDiscardEvent(gameData);
+        gameData.finishDiscardEvent();
 
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         gameLogService.append(gameData, GameLog.text(playerName + " discards " + discarded.size()

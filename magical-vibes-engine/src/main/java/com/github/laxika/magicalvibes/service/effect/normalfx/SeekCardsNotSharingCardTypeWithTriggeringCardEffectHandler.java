@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -67,7 +68,7 @@ public class SeekCardsNotSharingCardTypeWithTriggeringCardEffectHandler implemen
         if (soughtCards.isEmpty()) {
             return;
         }
-        triggerCollectionService.checkSeekTriggers(gameData, playerId, soughtCards);
+        ActionEvents.sought(gameData, playerId, soughtCards);
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(playerId) + " seeks " + soughtCards.size() + " cards into their hand."));
     }

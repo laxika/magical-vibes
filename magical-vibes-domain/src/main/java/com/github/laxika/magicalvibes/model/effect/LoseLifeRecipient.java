@@ -29,8 +29,9 @@ package com.github.laxika.magicalvibes.model.effect;
  *       controller loses that much life" of an enchanted creature that dealt damage (Visions of Brutality). The
  *       effect chooses no target.</li>
  *   <li>{@link #TRIGGERING_CARD_OWNER} — the owner of the card a "whenever you play a card" event was about (the
- *       triggering spell's card, or the land played): "that card's owner loses 3 life" (The Matrix of Time). The
- *       effect chooses no target.</li>
+ *       triggering spell's card, or the land played): "that card's owner loses 3 life" (The Matrix of Time); for a
+ *       permanent put into a graveyard, its owner, whose graveyard it went to: "that player loses 1 life"
+ *       (Liability). The effect chooses no target.</li>
  *   <li>{@link #DEFENDING_PLAYER} — the player being attacked by the source (or the controller of
  *       the attacked planeswalker), captured as the trigger's {@code attackedTargetId}; used by
  *       combat triggers such as "whenever this creature becomes blocked, defending player loses N

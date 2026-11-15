@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryAndPerpetuallyReduceSoughtCardEffect;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -59,6 +60,6 @@ public class SeekLibraryAndPerpetuallyReduceSoughtCardEffectHandler implements N
         Card modified = sought.createRuntimeCopy();
         modified.addStaticEffect(new ReduceOwnCastCostEffect(new Fixed(1)));
         gameData.addCardToHand(controllerId, modified);
-        triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(modified));
+        ActionEvents.sought(gameData, controllerId, List.of(modified));
     }
 }

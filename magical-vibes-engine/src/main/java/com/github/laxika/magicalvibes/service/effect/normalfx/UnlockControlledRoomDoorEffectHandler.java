@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.RoomEvent;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -91,11 +92,9 @@ public class UnlockControlledRoomDoorEffectHandler implements NormalEffectHandle
         boolean wasFullyUnlocked = room.isRoomFullyUnlocked();
         room.unlockRoomDoor(choice.doorIndex());
         room.setTimestamp(gameData.nextTimestamp());
-        triggerCollectionService.checkSelfRoomDoorUnlockedTriggers(
-                gameData, context.controllerId(), room, choice.doorIndex());
+        gameData.rulesEvents.occur(new RoomEvent.DoorUnlocked(room, context.controllerId(), choice.doorIndex()));
         if (!wasFullyUnlocked && room.isRoomFullyUnlocked()) {
-            triggerCollectionService.checkAllyRoomFullyUnlockedTriggers(
-                    gameData, context.controllerId(), room);
+            gameData.rulesEvents.occur(new RoomEvent.FullyUnlocked(room, context.controllerId()));
         }
 
         gameData.interaction.clearAwaitingInput();

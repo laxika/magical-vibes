@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardsIntoTopOfLibrariesEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -63,7 +64,7 @@ public class ConjureCardsIntoTopOfLibrariesEffectHandler implements NormalEffect
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures " + e.amount() + " " + cardName + " card(s) into the top "
                         + e.depth() + " cards of each player's library."));
-        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), totalConjured);
+        ActionEvents.conjured(gameData, entry.getControllerId(), totalConjured);
         log.info("Game {} - {} conjures {} {} card(s) into the top {} cards of each library",
                 gameData.id, entry.getCard().getName(), totalConjured, cardName, e.depth());
     }

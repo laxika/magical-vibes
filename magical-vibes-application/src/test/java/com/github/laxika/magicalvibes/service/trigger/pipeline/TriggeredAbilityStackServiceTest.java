@@ -885,7 +885,6 @@ class TriggeredAbilityStackServiceTest {
                 entry -> entry.setTargetCardIds(List.of(graveyardCardId)));
 
         verify(triggerCollectionService).checkBecomesTargetOfAbilityTriggers(gd);
-        verify(triggerCollectionService).checkCrimeTriggers(gd, finished);
     }
 
     /** A combat damage record naming the damaged player PLAYER2 as "that player", as the combat collector stamps it. */

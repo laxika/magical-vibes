@@ -1,16 +1,13 @@
 package com.github.laxika.magicalvibes.service.input;
 
-import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -20,24 +17,20 @@ import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
-import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
-import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
-import com.github.laxika.magicalvibes.model.PendingGuildFeud;
-import com.github.laxika.magicalvibes.model.PendingLibraryRevealRemainder;
 import com.github.laxika.magicalvibes.model.PendingAllureOfTheUnknownChoice;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SeekTwoCardsToBattlefieldEffectHandler;
-import com.github.laxika.magicalvibes.model.PendingManifoldInsightsChoice;
-import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
-import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
 import com.github.laxika.magicalvibes.model.PendingAnimalMagnetismChoice;
-import com.github.laxika.magicalvibes.model.PendingMemoriesReturningChoice;
+import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
+import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
+import com.github.laxika.magicalvibes.model.PendingGuildFeud;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
-import com.github.laxika.magicalvibes.model.PendingStudyCounterExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
+import com.github.laxika.magicalvibes.model.PendingLibraryRevealRemainder;
+import com.github.laxika.magicalvibes.model.PendingManifoldInsightsChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PendingMemoriesReturningChoice;
+import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
+import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
 import com.github.laxika.magicalvibes.model.PendingOpponentExileChoice;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
@@ -45,143 +38,195 @@ import com.github.laxika.magicalvibes.model.PendingPsychoticEpisodeChoice;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.PendingReturnTwoExiledWithSourceCards;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
-import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingStudyCounterExileReturn;
 import com.github.laxika.magicalvibes.model.PendingValkiCopyChoice;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetType;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardInGraveyardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardInGraveyardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryNinjutsuEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithoutPayingManaCostOrPutIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithNormalCostEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithoutPayingManaCostOrPutIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
-import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
+import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
-import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SeekTwoCardsToBattlefieldEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
+import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
-import com.github.laxika.magicalvibes.model.CounterType;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class LibraryChoiceHandlerService {
+
     public static final String HELD_TO_BATTLEFIELD = "Put the chosen cards onto the battlefield";
+
     public static final String HELD_TO_HAND = "Put the chosen cards into your hand";
 
     private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     private final GameQueryService gameQueryService;
+
     private final com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService permanentCopierService;
+
     private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
+
     private final PredicateEvaluationService predicateEvaluationService;
+
     private final GraveyardService graveyardService;
+
     private final BattlefieldEntryService battlefieldEntryService;
+
     private final LegendRuleService legendRuleService;
+
     private final StateBasedActionService stateBasedActionService;
+
     private final GameLogService gameLogService;
+
     private final InputCompletionService inputCompletionService;
+
     private final PlayerInputService playerInputService;
+
     private final EffectResolutionService effectResolutionService;
+
     private final ExileService exileService;
+
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+
     private final TriggerCollectionService triggerCollectionService;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport lifeSupport;
+
     private final DrawService drawService;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport animationSupport;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MurmursFromBeyondEffectHandler murmursFromBeyondEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnimalMagnetismEffectHandler animalMagnetismEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningEffectHandler memoriesReturningEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ManifoldInsightsEffectHandler manifoldInsightsEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport basicLandSearchQueueSupport;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport guildFeudSupport;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler returnCardExiledWithSourceToBattlefieldEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnTwoExiledCardsWithSourceToBattlefieldAndBottomRestEffectHandler returnTwoExiledCardsWithSourceHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SeekTwoCardsToBattlefieldEffectHandler seekTwoCardsToBattlefieldEffectHandler;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
+
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService manifestService;
+
     private final com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
 
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService triggeredAbilityStackService;
+
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.battlefield.BattlefieldPlacementService battlefieldPlacementService;
+
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.battlefield.AsEntersInteractionService asEntersInteractionService;
+
     @Autowired @Lazy
     private SpellCastingService spellCastingService;
+
     @Autowired @Lazy
     private TargetLegalityService targetLegalityService;
+
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport landEquilibriumSupport;
+
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknownEffectHandler allureOfTheUnknownEffectHandler;
+
     @Autowired @Lazy
     private AbilityActivationService abilityActivationService;
+
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport exileFreeCastQueueSupport;
+
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport exileFreeCastSupport;
+
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
+
     @Autowired @Lazy
     private PermanentChoiceHandlerService permanentChoiceHandlerService;
-
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
         if (gameData.interaction.activeInteraction(PendingInteraction.LibrarySearch.class) == null) {
@@ -692,11 +737,11 @@ public class LibraryChoiceHandlerService {
                     }
                     if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT && librarySearch.attachToPermanentId() != null) {
                         perm.setAttachedTo(librarySearch.attachToPermanentId());
-                        triggerCollectionService.checkEquipmentAttachedTriggers(
+                        triggerCollectionService.equipmentBecameAttached(
                                 gameData, perm, librarySearch.attachToPermanentId());
                     }
                     if (!perm.getCard().isAura()) {
-                        triggerCollectionService.checkEquipmentAttachedTriggers(gameData, perm, null);
+                        triggerCollectionService.equipmentBecameAttached(gameData, perm, null);
                     }
                     if (chosenCard.hasType(CardType.CREATURE)) {
                         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, battlefieldControllerId, chosenCard, null, false);
@@ -1865,7 +1910,7 @@ public class LibraryChoiceHandlerService {
                 perm.setAttachedTo(librarySearch.attachToPlayerId());
             }
             if (!perm.getCard().isAura()) {
-                triggerCollectionService.checkEquipmentAttachedTriggers(gameData, perm, null);
+                triggerCollectionService.equipmentBecameAttached(gameData, perm, null);
             }
         } else if (destination == LibrarySearchDestination.BATTLEFIELD && (selectedFromGraveyard || selectedFromHand)) {
             Permanent perm = new Permanent(chosenCard, selectedFromGraveyard ? Zone.GRAVEYARD : Zone.HAND);
@@ -1884,11 +1929,11 @@ public class LibraryChoiceHandlerService {
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             if (librarySearch.attachToPermanentId() != null) {
                 perm.setAttachedTo(librarySearch.attachToPermanentId());
-                triggerCollectionService.checkEquipmentAttachedTriggers(
+                triggerCollectionService.equipmentBecameAttached(
                         gameData, perm, librarySearch.attachToPermanentId());
             }
             if (!perm.getCard().isAura()) {
-                triggerCollectionService.checkEquipmentAttachedTriggers(gameData, perm, null);
+                triggerCollectionService.equipmentBecameAttached(gameData, perm, null);
             }
             battlefieldEntryService.handleCreatureEnteredBattlefield(
                     gameData, playerId, perm.getCard(), null, false);
@@ -2754,7 +2799,7 @@ public class LibraryChoiceHandlerService {
 
         if (remainingCards.isEmpty()) {
             if (remainingToGraveyard) {
-                triggerCollectionService.checkManifestDreadTriggers(gameData, controllerId, null);
+                ActionEvents.manifestedDread(gameData, controllerId, null);
             }
             performStateBasedActionsIfResolutionComplete(gameData);
             finishSearchAndResume(gameData);
@@ -2765,7 +2810,7 @@ public class LibraryChoiceHandlerService {
         if (remainingToGraveyard) {
             boolean enteredGraveyard = graveyardService.addCardToGraveyard(
                     gameData, controllerId, remainingCard, Zone.LIBRARY);
-            triggerCollectionService.checkManifestDreadTriggers(gameData, controllerId,
+            ActionEvents.manifestedDread(gameData, controllerId,
                     enteredGraveyard ? remainingCard : null);
             performStateBasedActionsIfResolutionComplete(gameData);
             finishSearchAndResume(gameData);
@@ -3115,7 +3160,6 @@ public class LibraryChoiceHandlerService {
                     gameData, gameData.pendingEffectResolutionEntry, permanent, counterType, 1);
         }
     }
-
 
     /**
      * If a pending basic-land-to-hand search is queued (e.g. Cultivate second pick),
@@ -4111,7 +4155,6 @@ public class LibraryChoiceHandlerService {
         finishSearchAndResume(gameData);
     }
 
-
     /**
      * Opening of the "puts … onto the battlefield" log line. A cloaked selection enters face down, so the
      * cards' identities stay out of the public log.
@@ -4988,7 +5031,6 @@ public class LibraryChoiceHandlerService {
         performStateBasedActionsIfResolutionComplete(gameData);
         finishSearchAndResume(gameData);
     }
-
 
     /**
      * Handles the player's choice from a Sunbird's Invocation (or cascade) "cast without paying"
@@ -5924,7 +5966,7 @@ public class LibraryChoiceHandlerService {
 
     private void checkDiscoverTriggers(GameData gameData, UUID playerId, Integer discoverValue) {
         if (discoverValue != null) {
-            triggerCollectionService.checkDiscoverTriggers(gameData, playerId, discoverValue);
+            ActionEvents.discovered(gameData, playerId, discoverValue);
         }
     }
 
@@ -6001,5 +6043,4 @@ public class LibraryChoiceHandlerService {
     }
 
     private record LegalModalOptions(ChooseOneEffect effect, List<Integer> modeIndices) {}
-
 }

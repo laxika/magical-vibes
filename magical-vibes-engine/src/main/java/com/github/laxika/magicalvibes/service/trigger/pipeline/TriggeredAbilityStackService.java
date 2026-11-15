@@ -1,79 +1,76 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
-import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
-import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
-import java.util.LinkedHashSet;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
-import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
-import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.StackDoor;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TargetGroup;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.condition.EventFactCondition;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
-import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.EntryFactCondition;
+import com.github.laxika.magicalvibes.model.condition.EventFactCondition;
+import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
+import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EntryFacts;
-import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
-import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.TargetGroup;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
+import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
+import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.CreatureDeath;
-import com.github.laxika.magicalvibes.service.trigger.CreatureDeathWatch;
+import com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
-import com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
-import com.github.laxika.magicalvibes.service.trigger.ZoneChangeWatch;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 
 /**
  * Puts a triggered ability that the pipeline matched on the stack, for every family moved off {@code EffectSlot}:
@@ -87,27 +84,34 @@ import java.util.function.Consumer;
  *       copies.</li>
  * </ul>
  * An ability of the source's own zone change ("when this dies", "leaves the battlefield", "is put into a graveyard
- * from anywhere", "when you sacrifice this") goes on the stack through one default, {@link #triggerOwn}, that records
- * the event whatever its effects are; its options are the only trigger-level properties read (step 14 of
- * effect-slot-refactor.md). It is one stack object (CR 603.3): a modal one waits for its mode (CR 603.3c), one that
+ * from anywhere", "when you sacrifice this") goes on the stack through {@link #trigger}, which records the event
+ * whatever its effects are ({@code ownZoneChangeRecord}) and hands it to {@link #put}. It is one stack object (CR 603.3): a modal one waits for its mode (CR 603.3c), one that
  * targets for its targets as it goes on the stack and is removed if none is legal (CR 603.3d), and any other goes on
  * the stack through {@link StackDoor#enqueue}.
  * An ability that watches another object's zone change ("whenever a creature you control dies", a relation other
- * than {@code THIS}, its {@link ZoneChangeWatch} or {@link CreatureDeathWatch}) goes through {@link #triggerOnce}:
- * its collector records the event ({@link TriggerCollectionService#zoneChangeRequest}) and it goes through
- * {@link #put}.
+ * than {@code THIS}), and one of a card's own move out of a graveyard ("when this card leaves your graveyard", "when
+ * this is put onto the battlefield from your graveyard", which is recorded as such a move is), goes through
+ * {@link #triggerOnce}: {@link TriggerCollectionService#zoneChangeRequest} records the event from the ability's trigger
+ * and it goes through {@link #put}.
  * APNAP ordering (CR 603.3b) happens later, in {@code TriggeredAbilityQueueService.beginTriggerOrder}.
  */
 @Service
 public class TriggeredAbilityStackService extends StackDoor {
 
     private final ConditionEvaluationService conditionEvaluationService;
+
     private final GameQueryService gameQueryService;
+
     private final GraveyardTargetingSupport graveyardTargetingSupport;
+
     private final GameLogService gameLogService;
+
     private final TriggerCollectionService triggerCollectionService;
+
     private final AmountEvaluationService amountEvaluationService;
+
     private final PredicateEvaluationService predicateEvaluationService;
+
     private final TriggerTargetCollector triggerTargetCollector;
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -168,8 +172,7 @@ public class TriggeredAbilityStackService extends StackDoor {
      */
     public void trigger(GameData gameData, TriggerCandidate candidate, ZoneChangeEvent event,
                         ZoneChangeTrigger trigger) {
-        if (trigger.relation() != ObjectRelation.THIS
-                || ZoneChangeWatch.of(candidate.ability(), trigger, candidate.zone()) != null) {
+        if (trigger.relation() != ObjectRelation.THIS || trigger.from().equals(Set.of(Zone.GRAVEYARD))) {
             triggerOnce(gameData, candidate, List.of(event), trigger);
             return;
         }
@@ -256,16 +259,12 @@ public class TriggeredAbilityStackService extends StackDoor {
     /**
      * Triggers {@code candidate}'s ability of another object's zone change once for {@code events}, the zone changes of
      * one batch that met its trigger condition {@code trigger}: once for the one event of an ability that triggers for
-     * each, once for all of them for "one or more" (CR 603.2c). Its event condition is judged here; its collector
-     * judges what its watch adds and records the event ({@link TriggerCollectionService#zoneChangeRequest}), and it
-     * goes on the stack through {@link #put}.
+     * each, once for all of them for "one or more" (CR 603.2c). Its event condition is judged here;
+     * {@link TriggerCollectionService#zoneChangeRequest} judges what the trigger adds to the match and records the
+     * event, and it goes on the stack through {@link #put}.
      */
     public void triggerOnce(GameData gameData, TriggerCandidate candidate, List<ZoneChangeEvent> events,
                             ZoneChangeTrigger trigger) {
-        ZoneChangeWatch zoneChangeWatch = ZoneChangeWatch.of(candidate.ability(), trigger, candidate.zone());
-        if (zoneChangeWatch == null && ownZoneChangeOf(trigger) != OwnZoneChange.DIES) {
-            return;
-        }
         TriggerOptions options = candidate.ability().options();
         ConditionContext context = triggeringContext(gameData, candidate.sourceAsPermanent(),
                 candidate.controllerId(), events.getFirst());
@@ -273,10 +272,8 @@ public class TriggeredAbilityStackService extends StackDoor {
                 && !conditionEvaluationService.isMet(gameData, options.eventCondition(), context)) {
             return;
         }
-        CreatureDeathWatch deathWatch = zoneChangeWatch == null ? CreatureDeathWatch.of(trigger, candidate.zone())
-                : null;
-        TriggeredAbilityRequest request = triggerCollectionService.zoneChangeRequest(gameData, candidate,
-                zoneChangeWatch, deathWatch, events, context);
+        TriggeredAbilityRequest request = triggerCollectionService.zoneChangeRequest(gameData, candidate, trigger,
+                events, context);
         if (request != null && put(gameData, request)) {
             gameLogService.append(gameData, GameLog.abilityTriggers(candidate.sourceCard()));
         }
@@ -291,10 +288,6 @@ public class TriggeredAbilityStackService extends StackDoor {
      */
     public void triggerPermanentChange(GameData gameData, TriggerCandidate candidate, List<PermanentChangeEvent> events,
                                        PermanentChangeTrigger trigger) {
-        ZoneChangeWatch watch = ZoneChangeWatch.of(candidate.ability(), trigger, candidate.zone());
-        if (watch == null) {
-            return;
-        }
         TriggerOptions options = candidate.ability().options();
         UUID changedId = events.getFirst().permanent().getId();
         ConditionContext context = ConditionContext.forPermanent(candidate.sourceAsPermanent(), candidate.controllerId())
@@ -303,7 +296,7 @@ public class TriggeredAbilityStackService extends StackDoor {
                 && !conditionEvaluationService.isMet(gameData, options.eventCondition(), context)) {
             return;
         }
-        if (put(gameData, triggerCollectionService.permanentChangeRequest(gameData, candidate, watch, events,
+        if (put(gameData, triggerCollectionService.permanentChangeRequest(gameData, candidate, trigger, events,
                 context))) {
             gameLogService.append(gameData, GameLog.abilityTriggers(candidate.sourceCard()));
         }
@@ -1499,7 +1492,7 @@ public class TriggeredAbilityStackService extends StackDoor {
         enqueue(gameData, entry);
         if (entry.hasAnyTarget() &&!gameData.stack.isEmpty() && gameData.stack.getLast() == entry) {
             triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
-            triggerCollectionService.checkCrimeTriggers(gameData, entry);
+            ActionEvents.crimeCommitted(gameData, entry);
         }
         notifyAttackingSourceTriggered(gameData, entry);
         return entry;

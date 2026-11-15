@@ -341,7 +341,7 @@ public class PlayerInteractionSupport {
         gameData.discardCausedByOpponent = false;
         graveyardService.discardCard(gameData, playerId, drawn);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " discards ", drawn, "."));
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, drawn);
+        gameData.discarded(playerId, drawn);
 
     }
     public void resolveDiscardCards(GameData gameData, UUID playerId, int amount) {
@@ -420,7 +420,7 @@ public class PlayerInteractionSupport {
             return;
         }
 
-        triggerCollectionService.beginDiscardEvent(gameData, playerId);
+        gameData.beginDiscardEvent(playerId);
         Card replacementSource = graveyardService.findDiscardToLibraryReplacementSource(gameData, playerId);
         List<Card> awaitingReplacementChoice = new ArrayList<>();
         for (int i = 0; i < amount; i++) {
@@ -453,12 +453,12 @@ public class PlayerInteractionSupport {
             }
             gameLogService.append(gameData, GameLog.textCardText(playerName + " discards " , discarded, " at random."));
             log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
-            triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
+            gameData.discarded(playerId, discarded);
             if (entersBattlefield && discarded.hasType(CardType.CREATURE)) {
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, discarded, null, false);
             }
         }
-        triggerCollectionService.finishDiscardEvent(gameData);
+        gameData.finishDiscardEvent();
 
         // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
     
@@ -515,7 +515,7 @@ public class PlayerInteractionSupport {
         }
         gameLogService.append(gameData, GameLog.textCardText(playerName + " discards ", discarded, " at random."));
         log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
+        gameData.discarded(playerId, discarded);
         if (entersBattlefield && discarded.hasType(CardType.CREATURE)) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, discarded, null, false);
         }

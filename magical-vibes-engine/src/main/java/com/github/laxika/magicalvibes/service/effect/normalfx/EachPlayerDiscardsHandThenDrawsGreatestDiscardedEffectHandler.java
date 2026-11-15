@@ -90,12 +90,12 @@ public class EachPlayerDiscardsHandThenDrawsGreatestDiscardedEffectHandler imple
         hand.clear();
         gameData.discardCausedByOpponent = !playerId.equals(controllerId);
 
-        triggerCollectionService.beginDiscardEvent(gameData, playerId);
+        gameData.beginDiscardEvent(playerId);
         for (Card card : discarded) {
             graveyardService.discardCard(gameData, playerId, card);
-            triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+            gameData.discarded(playerId, card);
         }
-        triggerCollectionService.finishDiscardEvent(gameData);
+        gameData.finishDiscardEvent();
 
         gameLogService.append(gameData, GameLog.text(playerName + " discards their hand (" + discardCount
                 + " card" + (discardCount != 1 ? "s" : "") + ") (" + cardName + ")."));

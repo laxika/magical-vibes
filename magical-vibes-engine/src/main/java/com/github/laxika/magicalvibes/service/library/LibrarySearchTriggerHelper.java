@@ -2,20 +2,24 @@ package com.github.laxika.magicalvibes.service.library;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
-import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
-import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.UUID;
 
 /** Records library searches at the unified library-search choke point. */
 public final class LibrarySearchTriggerHelper {
 
+    private static final Trigger YOU_SEARCH = Triggers.youSearchYourLibrary();
+    private static final Trigger OPPONENT_SEARCHES = Triggers.opponentSearchesTheirLibrary();
+
     private LibrarySearchTriggerHelper() {}
 
     /**
      * Records that a player searched their library, and emits the search as a rules event, which the "whenever ...
      * searches a library" abilities trigger on (CR 603.2): the trigger pipeline hands them to the stack door
-     * ({@code TriggerCollectionService.checkLibrarySearchTriggers}) as the event's batch closes. Call this once per
+     * ({@code LibraryTriggers}) as the event's batch closes. Call this once per
      * search, including searches that find nothing, since those still count as searching.
      *
      * @param gameData          the game being mutated
@@ -36,9 +40,9 @@ public final class LibrarySearchTriggerHelper {
         boolean[] found = {false};
         gameData.forEachBattlefield((controllerId, battlefield) -> {
             for (var perm : battlefield) {
-                if (!LibraryAbilityReader.printed(perm.getCard(), LibraryWatch.ON_CONTROLLER_SEARCHES_LIBRARY).isEmpty()
-                        || !LibraryAbilityReader.printed(perm.getCard(), LibraryWatch.ON_OPPONENT_SEARCHES_LIBRARY)
-                        .isEmpty()) {
+                if (perm.getCard().getTriggeredAbilities().stream().anyMatch(ability ->
+                        ability.hasWatchedTrigger(YOU_SEARCH, Zone.BATTLEFIELD)
+                                || ability.hasWatchedTrigger(OPPONENT_SEARCHES, Zone.BATTLEFIELD))) {
                     found[0] = true;
                 }
             }

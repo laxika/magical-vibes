@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinDoubleOrPreventNextCo
 import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -44,9 +45,9 @@ public class FlipCoinDoubleOrPreventNextCombatDamageFromAttackingCreatureEffectH
                 : gameData.playerIdToName.get(controllerId) + " loses the coin flip for " + sourceName
                         + coinFlipService.replacementDetails(result) + "."));
         if (wonFlip && result.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+            ActionEvents.coinFlipWon(gameData, controllerId);
         } else if (result.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
+            ActionEvents.coinFlipLost(gameData, controllerId);
         }
 
         gameData.sourceNextDamageToAnyTargetShields.add(wonFlip

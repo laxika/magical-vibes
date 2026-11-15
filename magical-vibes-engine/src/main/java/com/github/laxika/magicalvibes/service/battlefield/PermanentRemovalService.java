@@ -79,7 +79,6 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.DyingCreatureAttachmentSnapshot;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.trigger.ZoneChangeWatch;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -3614,8 +3613,10 @@ public class PermanentRemovalService {
             }
         }
         if (pendingReturns != null
-                && ZoneChangeWatch.ON_ANY_CREATURE_ENTERS_BATTLEFIELD.effectsOf(removedPermanent.getCard())
-                .stream().anyMatch(com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesEffect.class::isInstance)) {
+                && removedPermanent.getCard().getTriggeredAbilities().stream()
+                .flatMap(ability -> ability.effects().stream())
+                .map(com.github.laxika.magicalvibes.model.EffectRegistration::effect)
+                .anyMatch(com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesEffect.class::isInstance)) {
             // Portcullis: each exile created its own delayed "return that card when this leaves the
             // battlefield" ability, so every exiled card returns through its own triggered ability.
             for (PendingExileReturn delayed : pendingReturns) {

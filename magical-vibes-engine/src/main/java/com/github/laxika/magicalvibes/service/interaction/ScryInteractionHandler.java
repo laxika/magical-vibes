@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
+import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ClashPlacementState;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -153,15 +155,14 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
                         .add(card.getId());
             }
             setDirectSurveilEventValue(gameData, topCardOrder.size());
-            triggerCollectionService.checkSurveilTriggers(gameData, player.getId());
+            gameData.surveilled(player.getId());
         } else {
             // Scry: the reject pile goes to the bottom of the library in order.
             for (int idx : bottomCardOrder) {
                 deck.add(scryCards.get(idx));
             }
             if (interaction.causesScryTriggers()) {
-                triggerCollectionService.checkScryTriggers(
-                        gameData, player.getId(), bottomCardOrder.size(), count);
+                gameData.rulesEvents.occur(new LibraryEvent.Scried(player.getId(), bottomCardOrder.size(), count));
             }
         }
 

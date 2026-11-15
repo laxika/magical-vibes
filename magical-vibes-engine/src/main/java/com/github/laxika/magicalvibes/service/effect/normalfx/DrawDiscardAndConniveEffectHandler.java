@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -88,9 +89,9 @@ public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBe
         gameData.discardCausedByOpponent = false;
         playerInteractionSupport.resolveDiscardCards(gameData, controllerId, discardAmount);
         if (discardAmount == 0 && source != null) {
-            triggerCollectionService.checkAllyCreatureConniveTriggers(gameData, source);
+            ActionEvents.connived(gameData, source);
         } else if (discardAmount == 0 && lastKnownSource != null) {
-            triggerCollectionService.checkAllyCreatureConniveTriggers(gameData, lastKnownSource, controllerId);
+            ActionEvents.connived(gameData, lastKnownSource, controllerId);
         }
     }
 

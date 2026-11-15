@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -105,7 +106,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         }
         if (e.investigate() && gameData.pendingTokenCreationReplacement == null) {
             for (int action = 0; action < amount; action++) {
-                triggerCollectionService.checkInvestigateTriggers(gameData, controllerId);
+                ActionEvents.investigated(gameData, controllerId);
             }
         }
         int power = amountEvaluationService.evaluate(gameData, e.power(), context);

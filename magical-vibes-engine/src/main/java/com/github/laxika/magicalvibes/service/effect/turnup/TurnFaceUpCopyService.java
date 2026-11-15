@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.turnup;
 
+import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -140,7 +141,7 @@ public class TurnFaceUpCopyService {
                     && auraAttachmentService.canEnchant(gameData, source.getCard(), controllerId, target)) {
                 source.setAttachedTo(target.getId());
                 source.setTimestamp(gameData.nextTimestamp());
-                triggerCollectionService.checkAuraAttachedTriggers(gameData, source, target.getId());
+                gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(source, target.getId()));
             }
             TurnFaceUpCopyEffect effect = findCopyEffect(source.getCard());
             if (target != null && effect != null && gameQueryService.isCreature(gameData, target)) {

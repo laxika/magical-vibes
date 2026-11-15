@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -269,7 +270,7 @@ public class CoinFlipService {
                 record(gameData, rolls);
             }
             if (triggerCollectionService != null) {
-                triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
+                ActionEvents.diceRolled(
                         gameData, playerId, count, rolls.getLast().pokeyD20Result());
             }
             return rolls;

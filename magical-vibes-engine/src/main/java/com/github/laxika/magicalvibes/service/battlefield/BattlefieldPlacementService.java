@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
@@ -556,7 +557,7 @@ public class BattlefieldPlacementService {
             }
         }
         if (permanent.getCard().isAura() && permanent.getAttachedTo() != null) {
-            triggerCollectionService.checkAuraAttachedTriggers(gameData, permanent, permanent.getAttachedTo());
+            gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(permanent, permanent.getAttachedTo()));
         }
         if (ascendEffectHandler != null) {
             ascendEffectHandler.checkPermanentAscend(gameData, controllerId);
@@ -2253,7 +2254,7 @@ public class BattlefieldPlacementService {
                 gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
                 aura.setAttachedTo(permanent.getId());
                 aura.setTimestamp(gameData.nextTimestamp());
-                triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, permanent.getId());
+                gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, permanent.getId()));
             }
         }
     }

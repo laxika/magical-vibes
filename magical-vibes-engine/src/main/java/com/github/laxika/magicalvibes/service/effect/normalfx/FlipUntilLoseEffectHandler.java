@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsAtChe
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -51,7 +52,7 @@ public class FlipUntilLoseEffectHandler implements NormalEffectHandlerBean, Choo
             }
 
             if (result.isActualCoinFlip()) {
-                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
+                ActionEvents.coinFlipWon(gameData, entry.getControllerId());
             }
             if (flipEffect.perWin() != null) {
                 dispatch(gameData, entry, flipEffect.perWin());

@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
-import com.github.laxika.magicalvibes.service.trigger.ZoneChangeAbilityReader;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -24,9 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * {@link ZoneChangeTrigger}'s matching and zones, and how its abilities and {@link PermanentChangeTrigger}'s are read
- * (step 14, run 16p of effect-slot-refactor.md): only "when this enters" has a legacy view, the trigger pipeline reads
- * the others' options, and the readers outside it read them through {@link ZoneChangeAbilityReader}.
+ * {@link ZoneChangeTrigger}'s matching and zones, and how its abilities and {@link PermanentChangeTrigger}'s are read:
+ * only "when this enters" has a legacy view, and the trigger pipeline reads the others' options.
  */
 class ZoneChangeTriggerTest {
 
@@ -173,29 +171,5 @@ class ZoneChangeTriggerTest {
                 new TriggerCondition(Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN))), oneOrMore,
                 List.of(new EffectRegistration(DRAW)));
         assertThat(withAnother.hasOwnEntry()).isTrue();
-    }
-
-    @Test
-    void theReadersOutsideThePipelineTakeAnAbilityWithoutOptionsAndRejectAnyOther() {
-        Card plane = new Card();
-        plane.addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.ANY), AbilityZones.COMMAND),
-                TriggerOptions.DEFAULT, DRAW, GAIN);
-        plane.addTrigger(Triggers.dies(ObjectRelation.THIS), GAIN);
-        TriggeredAbility once = new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
-        TriggeredAbility conditioned = new TriggeredAbility(Triggers.enters(Triggers.CREATURE,
-                ObjectRelation.YOU_CONTROL), TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()), DRAW);
-        TriggeredAbility two = new TriggeredAbility(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), DRAW, GAIN);
-
-        assertThat(ZoneChangeAbilityReader.printed(plane, Triggers.creatureDies(ObjectRelation.ANY))).hasSize(1);
-        assertThat(ZoneChangeAbilityReader.strictEffects(ZoneChangeAbilityReader.printed(plane,
-                Triggers.creatureDies(ObjectRelation.ANY)))).containsExactly(DRAW, GAIN);
-        assertThat(ZoneChangeAbilityReader.strictEffect(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), DRAW)))
-                .isEqualTo(DRAW);
-        assertThatThrownBy(() -> ZoneChangeAbilityReader.strictEffects(List.of(once)))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> ZoneChangeAbilityReader.strictEffect(conditioned))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> ZoneChangeAbilityReader.strictEffect(two)).isInstanceOf(IllegalStateException.class);
     }
 }

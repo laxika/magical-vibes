@@ -82,7 +82,7 @@ public class ReturnThisSpellToHandThenDiscardAtRandomEffectHandler implements No
         gameLogService.append(gameData, GameLog.textCardText(playerName + " discards ", discarded, " at random."));
         log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(),
                 spellCard.getName());
-        triggerCollectionService.checkDiscardTriggers(gameData, controllerId, discarded);
+        gameData.discarded(controllerId, discarded);
 
         // Process any pending self-discard triggers (e.g. Guerrilla Tactics).
     }

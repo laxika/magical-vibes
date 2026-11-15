@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureCardToGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -47,6 +48,6 @@ public class ConjureCardToGraveyardEffectHandler implements NormalEffectHandlerB
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures a " + conjuredCard.getName() + " card into their graveyard."));
-        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
+        ActionEvents.conjured(gameData, entry.getControllerId(), 1);
     }
 }

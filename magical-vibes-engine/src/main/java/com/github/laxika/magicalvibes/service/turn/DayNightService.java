@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.rules.DayNightEvent;
 import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -99,7 +100,7 @@ public class DayNightService {
         gameLogService.append(gameData, GameLog.text("It becomes " + next.name().toLowerCase() + "."));
         transformDayNightPermanents(gameData, next);
         if (previous != DayNight.NEITHER && previous != next) {
-            triggerCollectionService.checkDayNightChangeTriggers(gameData, previous, next);
+            gameData.rulesEvents.occur(new DayNightEvent(previous, next));
         }
         // "As this transforms into [an Aura that enchants a player], attach it to a player" is chosen as it transforms
         // (Curse of Leeches), not by a later choice pump.

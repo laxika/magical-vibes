@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.service.spell;
 
-import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
-import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
@@ -14,6 +12,8 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CastingCost;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
 import com.github.laxika.magicalvibes.model.DiscardXCardsCastingCost;
 import com.github.laxika.magicalvibes.model.DisturbCast;
@@ -30,10 +30,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.FlashforwardCast;
 import com.github.laxika.magicalvibes.model.ForetellCast;
-import com.github.laxika.magicalvibes.model.DepartureBatch;
-import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
@@ -49,6 +46,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.OmenCast;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -60,113 +58,109 @@ import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.SacrificeXPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.SpellTarget;
-import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
-import com.github.laxika.magicalvibes.model.effect.FatalLoreEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOfLatNamEffect;
-import com.github.laxika.magicalvibes.model.effect.MisfortuneEffect;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
+import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
+import com.github.laxika.magicalvibes.model.effect.AlternativeSpellCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.BlightCost;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CostEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.AlternativeSpellCost;
 import com.github.laxika.magicalvibes.model.effect.CastTimeCreatureTypeChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeXValueModifierEffect;
-import com.github.laxika.magicalvibes.model.effect.DelveCost;
-import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToKickedSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostUnlessRevealSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DivisionMode;
-import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromGraveyardOrExileToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGraveyardExileEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
-import com.github.laxika.magicalvibes.model.effect.DeliverUntoEvilEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ExileCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromHandCost;
-import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOrRevealCreatureCardCost;
 import com.github.laxika.magicalvibes.model.effect.CasualtyCost;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOrRevealCreatureCardCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DeliverUntoEvilEffect;
+import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
-import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.DivisionMode;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateDiscardCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateSacrificeCost;
 import com.github.laxika.magicalvibes.model.effect.EscalateTapCost;
+import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromHandCost;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.FatalLoreEffect;
 import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToKickedSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSourceActivatedAbilitiesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostUnlessRevealSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryOfLatNamEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
+import com.github.laxika.magicalvibes.model.effect.MisfortuneEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBecomeCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PayLifeInsteadOfCommanderTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToSpellManaValueCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeInsteadOfCommanderTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeOrSacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBecomeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnControlledCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutOpponentOwnedExiledCardIntoGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
-import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
-import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
-import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForCostReductionEffect;
+import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromGraveyardOrExileToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeFractionRoundedUpCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
@@ -181,15 +175,20 @@ import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesForManaCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGraveyardExileEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.WebSlingingEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -198,38 +197,40 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
-import com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService;
 import com.github.laxika.magicalvibes.service.effect.HandCastCardCharacteristicsService;
+import com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
+import com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
@@ -290,32 +291,57 @@ public class SpellCastingService {
     private static final Set<CardSubtype> SEANCE_BOARD_SUBTYPES = Set.of(CardSubtype.DEMON, CardSubtype.SPIRIT);
 
     private final CardRevealService cardRevealService;
+
     private final BattlefieldEntryService battlefieldEntryService;
+
     @Lazy private final CloneService cloneService;
+
     private final GraveyardTargetingService graveyardTargetingService;
+
     private final GameQueryService gameQueryService;
+
     private final PredicateEvaluationService predicateEvaluationService;
+
     private final GameActionAvailabilityService actionAvailabilityService;
+
     private final GameLogService gameLogService;
+
     private final CastingCostService castingCostService;
+
     private final CastingPermissionService castingPermissionService;
+
     private final TurnProgressionService turnProgressionService;
+
     private final TargetLegalityService targetLegalityService;
+
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.battlefield.MutationSupport mutationSupport;
+
     private final com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService targetGroupAssignmentService;
+
     private final PermanentRemovalService permanentRemovalService;
+
     private final TriggerCollectionService triggerCollectionService;
+
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
+
     private final ExileService exileService;
+
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
+
     private final com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
+
     private final AdditionalSpellCostService additionalSpellCostService;
+
     private final WaterbendPaymentService waterbendPaymentService;
+
     private final GameMutationCoordinator mutationCoordinator;
+
     private final StateBasedActionService stateBasedActionService;
+
     private final LifeSupport lifeSupport;
+
     @Lazy private final PlayerInputService playerInputService;
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -677,7 +703,7 @@ public class SpellCastingService {
                 .card(card)
                 .text(".")
                 .build());
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+        gameData.discarded(playerId, toDiscard);
     }
 
     /**
@@ -770,7 +796,7 @@ public class SpellCastingService {
                     .card(card)
                     .text(".")
                     .build());
-            triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+            gameData.discarded(playerId, toDiscard);
         }
     }
 
@@ -848,7 +874,7 @@ public class SpellCastingService {
                 .card(card)
                 .text(".")
                 .build());
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
+        gameData.discarded(playerId, discarded);
     }
 
     /**
@@ -884,7 +910,7 @@ public class SpellCastingService {
                         .card(card)
                         .text(".")
                         .build());
-                triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+                gameData.discarded(playerId, toDiscard);
             }
             return cost.trackManaValue() ? discardedManaValue : 0;
         }
@@ -907,7 +933,7 @@ public class SpellCastingService {
                     .card(card)
                     .text(".")
                     .build());
-            triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+            gameData.discarded(playerId, toDiscard);
         }
         return cost.trackManaValue() ? discardedManaValue : 0;
     }
@@ -936,7 +962,7 @@ public class SpellCastingService {
                     .card(card)
                     .text(".")
                     .build());
-            triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+            gameData.discarded(playerId, toDiscard);
         }
     }
 
@@ -2433,7 +2459,7 @@ public class SpellCastingService {
         gameData.plottedCardIds.add(card.getId());
         gameData.exilePlayPermissions.put(card.getId(), playerId);
         gameData.exilePlayWithoutPayingManaCost.add(card.getId());
-        triggerCollectionService.checkPlotTriggers(gameData, playerId, card);
+        ActionEvents.plotted(gameData, playerId, card);
         // Plotting is a special action, not a resolution: the plotted card's "when this card becomes plotted"
         // target choice begins here (Longhorn Sharpshooter).
         triggerCollectionService.beginStackDoorChoices(gameData);
@@ -3250,7 +3276,7 @@ public class SpellCastingService {
                 .card(card)
                 .text(" face up.")
                 .build());
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+        gameData.discarded(playerId, toDiscard);
     }
 
     /** Validates the life component of a morph face-up cost before any cost is paid. */
@@ -8962,7 +8988,7 @@ public class SpellCastingService {
                     .text(".")
                     .build());
         }
-        triggerCollectionService.checkBendingTriggers(gameData, player.getId(), BendingType.WATERBEND);
+        ActionEvents.bent(gameData, player.getId(), BendingType.WATERBEND);
         return java.util.Collections.nCopies(toTap.size(), null);
     }
 
@@ -9583,12 +9609,12 @@ public class SpellCastingService {
         List<Card> discarded = new ArrayList<>(hand);
         hand.clear();
         gameData.discardCausedByOpponent = false;
-        triggerCollectionService.beginDiscardEvent(gameData, playerId);
+        gameData.beginDiscardEvent(playerId);
         for (Card discardedCard : discarded) {
             graveyardService.addCardToGraveyard(gameData, playerId, discardedCard, Zone.HAND);
-            triggerCollectionService.checkDiscardTriggers(gameData, playerId, discardedCard);
+            gameData.discarded(playerId, discardedCard);
         }
-        triggerCollectionService.finishDiscardEvent(gameData);
+        gameData.finishDiscardEvent();
         gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " discards their hand (" + discarded.size()
                         + " card" + (discarded.size() != 1 ? "s" : "") + ") to cast "
@@ -9655,7 +9681,7 @@ public class SpellCastingService {
             paySingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
                     "a Food", permanent -> predicateEvaluationService.matchesPermanentPredicate(
                             gameData, permanent, cost.consumedPermanentFilter()));
-            triggerCollectionService.checkForageTriggers(gameData, player.getId());
+            ActionEvents.foraged(gameData, player.getId());
             return;
         }
         List<Integer> graveyardIndices = selection.exileGraveyardCardIndices();
@@ -9663,7 +9689,7 @@ public class SpellCastingService {
             payExileNCardsFromGraveyardCost(gameData, player, card,
                     new ExileNCardsFromGraveyardCost(cost.consumedGraveyardCardCount(), null),
                     graveyardIndices);
-            triggerCollectionService.checkForageTriggers(gameData, player.getId());
+            ActionEvents.foraged(gameData, player.getId());
             return;
         }
         if (cost.manaCost() == null) {
@@ -10044,7 +10070,7 @@ public class SpellCastingService {
             graveyardService.endGraveyardLeaveBatch(gameData);
         }
         if (cost.triggersCollectEvidence()) {
-            triggerCollectionService.checkCollectEvidenceTriggers(gameData, playerId);
+            ActionEvents.evidenceCollected(gameData, playerId);
         }
     }
 
@@ -12790,7 +12816,9 @@ public class SpellCastingService {
                 gameData.cloneOperation.preparedPermanent = permanent;
                 return;
             }
-            battlefieldEntryService.putLandOntoBattlefield(gameData, playerId, permanent, Zone.EXILE);
+            // A sideboard card is outside the game (CR 400.11a): it enters from there, not from exile.
+            battlefieldEntryService.putLandOntoBattlefield(gameData, playerId, permanent,
+                    fromOutsideGame ? Zone.OUTSIDE_GAME : Zone.EXILE);
 
             if (!gameData.interaction.isAwaitingInput()) {
                 battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
@@ -14615,7 +14643,7 @@ public class SpellCastingService {
         castingCostService.getTargetingSubtypeTaxByController(
                         gameData, payingPlayerId, null, castTargetIds, false)
                 .forEach((taxingPlayerId, amount) -> taxes.merge(taxingPlayerId, amount, Integer::sum));
-        taxes.forEach((taxingPlayerId, amount) -> triggerCollectionService.checkTaxPaymentTriggers(
+        taxes.forEach((taxingPlayerId, amount) -> ActionEvents.taxPaid(
                 gameData, payingPlayerId, taxingPlayerId, amount));
     }
 
@@ -16053,12 +16081,12 @@ public class SpellCastingService {
         if (hand == null || hand.size() < count) {
             throw new IllegalStateException("Must discard a card at random to pay buyback cost");
         }
-        triggerCollectionService.beginDiscardEvent(gameData, playerId);
+        gameData.beginDiscardEvent(playerId);
         for (int i = 0; i < count; i++) {
             Card discarded = hand.remove(ThreadLocalRandom.current().nextInt(hand.size()));
             graveyardService.addCardToGraveyard(gameData, playerId, discarded, Zone.HAND);
             gameData.discardCausedByOpponent = false;
-            triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
+            gameData.discarded(playerId, discarded);
             gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " discards ")
                     .card(discarded)
@@ -16067,7 +16095,7 @@ public class SpellCastingService {
                     .text(".")
                     .build());
         }
-        triggerCollectionService.finishDiscardEvent(gameData);
+        gameData.finishDiscardEvent();
     }
 
     /**
@@ -16858,7 +16886,7 @@ public class SpellCastingService {
                 .card(card)
                 .text(".")
                 .build());
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+        gameData.discarded(playerId, toDiscard);
     }
 
     /**
@@ -17188,7 +17216,7 @@ public class SpellCastingService {
                     .card(card)
                     .text(" from the graveyard.")
                     .build());
-            triggerCollectionService.checkDiscardTriggers(gameData, player.getId(), discarded);
+            gameData.discarded(player.getId(), discarded);
         }
     }
 
@@ -17881,7 +17909,7 @@ public class SpellCastingService {
                 .card(card)
                 .text(".")
                 .build());
-        triggerCollectionService.checkDiscardTriggers(gameData, player.getId(), toDiscard);
+        gameData.discarded(player.getId(), toDiscard);
     }
 
     /**
@@ -18087,7 +18115,7 @@ public class SpellCastingService {
                     .card(card)
                     .text(".")
                     .build());
-            triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+            gameData.discarded(playerId, toDiscard);
         }
 
         var revealHandCost = altCast.getCost(RevealCardsFromHandCastingCost.class);
@@ -18635,7 +18663,7 @@ public class SpellCastingService {
                     .anyMatch(permanent -> gameQueryService.effectiveCreatureSubtypes(gameData, permanent)
                             .contains(CardSubtype.FAERIE));
             castEntry.setControlledFaerieAsCast(controlledFaerie);
-            triggerCollectionService.checkCrimeTriggers(gameData, castEntry);
+            ActionEvents.crimeCommitted(gameData, castEntry);
             queueOpponentModeChoice(gameData, castEntry, playerId);
         }
         if (commandCast) {

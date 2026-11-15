@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -68,7 +69,7 @@ public class ConjureDarigaazShivanChampionSpellbookEffectHandler implements Norm
         gameData.exiledCardEggCounters.put(card.getId(), 3);
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures a random card from its spellbook into exile face down with three egg counters."));
-        triggerCollectionService.checkConjureTriggers(gameData, ownerId, 1);
+        ActionEvents.conjured(gameData, ownerId, 1);
     }
 
     private Card createSpellbookCard(String name, UUID ownerId) {

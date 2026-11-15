@@ -100,7 +100,7 @@ public class VoidEffectHandler implements NormalEffectHandlerBean {
                 .toList();
         boolean discardCausedByOpponent = !targetPlayerId.equals(entry.getControllerId());
         gameData.discardCausedByOpponent = discardCausedByOpponent;
-        triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
+        gameData.beginDiscardEvent(targetPlayerId);
         for (Card card : matchingCards) {
             if (!hand.remove(card)) {
                 continue;
@@ -122,9 +122,9 @@ public class VoidEffectHandler implements NormalEffectHandlerBean {
                 gameLogService.append(gameData, GameLog.textCardText(
                         gameData.playerIdToName.get(targetPlayerId) + " discards ", card, "."));
             }
-            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+            gameData.discarded(targetPlayerId, card);
         }
-        triggerCollectionService.finishDiscardEvent(gameData);
+        gameData.finishDiscardEvent();
     }
 
     private boolean hasEnterBattlefieldOnDiscardEffect(Card card) {

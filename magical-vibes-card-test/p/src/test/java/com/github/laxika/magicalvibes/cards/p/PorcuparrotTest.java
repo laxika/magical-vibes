@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.l.LukkaCoppercoatOutcast;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -32,9 +33,9 @@ class PorcuparrotTest extends BaseCardTest {
     @DisplayName("Deals damage equal to the number of times Porcuparrot mutated")
     void damageScalesWithMutations() {
         Permanent porcuparrot = addCreatureReady(player1, new Porcuparrot());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, porcuparrot, List.of(porcuparrot.getCard()), player1.getId()));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, porcuparrot, List.of(porcuparrot.getCard()), player1.getId()));
         harness.setLife(player2, 20);
 
@@ -72,7 +73,7 @@ class PorcuparrotTest extends BaseCardTest {
     void dealsOneDamageToCreatureAfterOneMutation() {
         Permanent porcuparrot = addCreatureReady(player1, new Porcuparrot());
         Permanent target = addCreatureReady(player2, new Porcuparrot());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, porcuparrot, List.of(porcuparrot.getCard()), player1.getId()));
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -87,7 +88,7 @@ class PorcuparrotTest extends BaseCardTest {
     @DisplayName("Porcuparrot can target itself")
     void canDamageItself() {
         Permanent porcuparrot = addCreatureReady(player1, new Porcuparrot());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, porcuparrot, List.of(porcuparrot.getCard()), player1.getId()));
 
         harness.activateAbility(player1, 0, null, porcuparrot.getId());
@@ -102,7 +103,7 @@ class PorcuparrotTest extends BaseCardTest {
         Permanent porcuparrot = addCreatureReady(player1, new Porcuparrot());
         Permanent lukka = harness.addToBattlefieldAndReturn(player2, new LukkaCoppercoatOutcast());
         lukka.setCounterCount(CounterType.LOYALTY, 5);
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, porcuparrot, List.of(porcuparrot.getCard()), player1.getId()));
 
         harness.activateAbility(player1, 0, null, lukka.getId());
@@ -117,7 +118,7 @@ class PorcuparrotTest extends BaseCardTest {
     void mutationsOfOtherCreaturesDoNotIncreaseDamage() {
         addCreatureReady(player1, new Porcuparrot());
         Permanent other = addCreatureReady(player1, new Porcuparrot());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, other, List.of(other.getCard()), player1.getId()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -130,7 +131,7 @@ class PorcuparrotTest extends BaseCardTest {
     @DisplayName("Ability retains the mutation count when its source leaves the battlefield")
     void usesLastKnownMutationCountAfterSourceLeaves() {
         Permanent porcuparrot = addCreatureReady(player1, new Porcuparrot());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, porcuparrot, List.of(porcuparrot.getCard()), player1.getId()));
 
         harness.activateAbility(player1, 0, null, player2.getId());

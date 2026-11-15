@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.Cloudform;
 import com.github.laxika.magicalvibes.cards.n.NyxbornCourser;
 import com.github.laxika.magicalvibes.cards.i.Ichthyomorphosis;
 import com.github.laxika.magicalvibes.model.Card;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SionaCaptainOfThePyleas.class, SentinelsEyes.class, NyxbornCourser.class,
-        Ichthyomorphosis.class})
+        Ichthyomorphosis.class, Cloudform.class})
 class SionaCaptainOfThePyleasTest extends BaseCardTest {
 
     @Test
@@ -152,6 +153,19 @@ class SionaCaptainOfThePyleasTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An enchantment that becomes an Aura and attaches to a creature you control creates a Human Soldier")
+    void enchantmentBecomingAnAuraAttachedToYourCreatureCreatesSoldier() {
+        addCreatureReady(player1, new SionaCaptainOfThePyleas());
+        harness.setLibrary(player1, List.of(new NyxbornCourser()));
+
+        harness.castFromHand(player1, new Cloudform(), "{1}{U}{U}");
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Cloudform");
+        assertThat(findPermanents(player1, "Human Soldier")).hasSize(1);
     }
 
     @Test

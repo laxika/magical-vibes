@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RollTwoD20IgnoreLowerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -38,12 +39,12 @@ public class RollTwoD20IgnoreLowerEffectHandler implements NormalEffectHandlerBe
                 + " rolls two d20 for " + entry.getCard().getName() + " and keeps the higher result: "
                 + result + "."));
         entry.setEventValue(result);
-        triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
+        ActionEvents.diceRolled(
                 gameData, entry.getControllerId(), 1, result);
-        triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
+        ActionEvents.dieResults(
                 gameData, entry.getControllerId(), 20, result);
         if (result == 20) {
-            triggerCollectionService.checkControllerRollsNaturalTwentyTriggers(gameData, entry.getControllerId());
+            ActionEvents.natural20Rolled(gameData, entry.getControllerId());
         }
 
         int effectIndex = -1;

@@ -1,69 +1,70 @@
 package com.github.laxika.magicalvibes.service.input;
 
-import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.PendingGemstoneCavernsChoice;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseLegacyWordEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
-import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseLegacyWordEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterOpeningHandUpkeepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.StartInGraveyardEffect;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
+import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.MulliganService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.UntapLockReleaseService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryEffectHandler;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
+import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
+import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -71,36 +72,58 @@ import java.util.UUID;
 public class MayMiscHandlerService {
 
     private final InputCompletionService inputCompletionService;
+
     private final GameQueryService gameQueryService;
+
     private final DrawService drawService;
+
     private final GameLogService gameLogService;
+
     private final MulliganService mulliganService;
+
     private final PlayerInputService playerInputService;
+
     private final TurnProgressionService turnProgressionService;
+
     private final BattlefieldEntryService battlefieldEntryService;
+
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
+
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+
     private final LifeSupport lifeSupport;
+
     private final EquipSupport equipSupport;
+
     private final AuraAttachmentService auraAttachmentService;
+
     private final CreatureControlService creatureControlService;
+
     private final UntapLockReleaseService untapLockReleaseService;
+
     private final SearchLibraryEffectHandler searchLibraryEffectHandler;
+
     private final ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffectHandler exileSourceCardFromOpeningHandHandler;
+
     @Autowired @Lazy
     private PermanentCounterSupport permanentCounterSupport;
+
     // @Lazy to break circular dependency:
     // MayMiscHandlerService → TriggerCollectionService → TriggeredAbilityQueueService → PlayerInputService → MayAbilityHandlerService → MayMiscHandlerService
     @Autowired @Lazy
     private TriggerCollectionService triggerCollectionService;
+
     @Autowired @Lazy
     private GraveyardService graveyardService;
+
     @Autowired @Lazy
     private StepTriggerService stepTriggerService;
+
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.turn.UntapStepService untapStepService;
+
     @Autowired @Lazy
     private PermanentChoiceHandlerService permanentChoiceHandlerService;
 
@@ -478,7 +501,7 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} leaves card on top (surveil)", gameData.id, player.getUsername());
         }
 
-        triggerCollectionService.checkSurveilTriggers(gameData, controllerId);
+        gameData.surveilled(controllerId);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -534,7 +557,7 @@ public class MayMiscHandlerService {
         }
 
         // Explore is complete — check for "whenever a creature you control explores" triggers
-        triggerCollectionService.checkExploreTriggers(gameData, controllerId, exploredCard);
+        ActionEvents.explored(gameData, controllerId, exploredCard);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

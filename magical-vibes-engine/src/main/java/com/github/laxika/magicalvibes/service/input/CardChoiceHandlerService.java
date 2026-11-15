@@ -1,16 +1,12 @@
 package com.github.laxika.magicalvibes.service.input;
 
-import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
-import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.EachPlayerRummageState;
@@ -19,91 +15,96 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
-import com.github.laxika.magicalvibes.model.PendingGainLifeOnDiscardType;
 import com.github.laxika.magicalvibes.model.PendingBoostSourceByDiscardedManaValue;
 import com.github.laxika.magicalvibes.model.PendingConnive;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
-import com.github.laxika.magicalvibes.model.PlaguecrafterState;
-import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
-import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
-import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
-import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
+import com.github.laxika.magicalvibes.model.PendingGainLifeOnDiscardType;
+import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
 import com.github.laxika.magicalvibes.model.PendingTransformOnCreatureDiscard;
 import com.github.laxika.magicalvibes.model.PendingUntapOnDiscardType;
 import com.github.laxika.magicalvibes.model.PendingValkiHandExileChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PlaguecrafterState;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StagedHandExile;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.StagedHandExile;
 import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
+import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.InlineDiscardFollowUpEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
-import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardFromHandToPerpetuallyGrantEnterExileEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardFromHandToPerpetuallyReduceCastCostEffectHandler;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.InlineDiscardFollowUpEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.MulliganService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardFromHandToPerpetuallyGrantEnterExileEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardFromHandToPerpetuallyReduceCastCostEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
-import lombok.RequiredArgsConstructor;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
 
 @Slf4j
 @Service
@@ -113,48 +114,83 @@ public class CardChoiceHandlerService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.battlefield.AsEntersDiscardSupport asEntersDiscardSupport;
+
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport destructionSupport;
+
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.StepDepartureSupport stepDepartureSupport;
+
     private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     private final DrawService drawService;
+
     private final AmountEvaluationService amountEvaluationService;
+
     private final GameQueryService gameQueryService;
+
     private final AuraAttachmentService auraAttachmentService;
+
     private final GraveyardService graveyardService;
+
     private final BattlefieldEntryService battlefieldEntryService;
+
     private final CombatBlockService combatBlockService;
+
     private final GameLogService gameLogService;
+
     private final PlayerInputService playerInputService;
+
     private final com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService attackLegalityService;
+
     private final TriggerCollectionService triggerCollectionService;
+
     private final TurnProgressionService turnProgressionService;
+
     private final EffectResolutionService effectResolutionService;
+
     private final InputCompletionService inputCompletionService;
+
     private final PlayerInteractionSupport playerInteractionSupport;
+
     private final TapUntapSupport tapUntapSupport;
+
     private final PermanentCounterSupport permanentCounterSupport;
+
     private final LifeSupport lifeSupport;
+
     private final GraveyardReturnSupport graveyardReturnSupport;
+
     private final EquipSupport equipSupport;
+
     private final ExileSupport exileSupport;
+
     private final ExileService exileService;
+
     private final MulliganService mulliganService;
+
     private final com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService permanentRemovalService;
+
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+
     private final EffectHandlerRegistry effectHandlerRegistry;
+
     private final PredicateEvaluationService predicateEvaluationService;
+
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
+
     private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
+
     private final GraveyardTargetingSupport graveyardTargetingSupport;
+
     private final com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService triggeredAbilityStackService;
+
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
+
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.battlefield.SagaChapterService sagaChapterService;
@@ -1068,7 +1104,7 @@ public class CardChoiceHandlerService {
 
         followUp = followUp.withDiscardedCard(card.getId());
 
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+        gameData.discarded(playerId, card);
         if (putOnLibraryHidden) {
             // CR 701.9c: a card put into a hidden zone without being revealed has undefined mana value.
             gameData.lastDiscardedCardManaValue = 0;
@@ -1204,7 +1240,7 @@ public class CardChoiceHandlerService {
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " discards ", card, suffix));
             }
-            triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+            gameData.discarded(playerId, card);
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
@@ -1469,8 +1505,8 @@ public class CardChoiceHandlerService {
             }
 
             if (!selection.playerId().equals(gameData.discardEventPlayerId)) {
-                triggerCollectionService.finishDiscardEvent(gameData);
-                triggerCollectionService.beginDiscardEvent(gameData, selection.playerId());
+                gameData.finishDiscardEvent();
+                gameData.beginDiscardEvent(selection.playerId());
             }
 
             boolean causedByOpponent = !selection.playerId().equals(sourceControllerId);
@@ -1491,7 +1527,7 @@ public class CardChoiceHandlerService {
                         gameData.playerIdToName.get(selection.playerId()), card));
             }
 
-            triggerCollectionService.checkDiscardTriggers(gameData, selection.playerId(), card);
+            gameData.discarded(selection.playerId(), card);
             if (replacedByBattlefield && card.hasType(CardType.CREATURE)) {
                 battlefieldEntryService.handleCreatureEnteredBattlefield(
                         gameData, selection.playerId(), card, null, false);
@@ -1503,14 +1539,14 @@ public class CardChoiceHandlerService {
             checkPendingConniveOnDiscard(gameData, card);
             discardedCounts.merge(selection.playerId(), 1, Integer::sum);
         }
-        triggerCollectionService.finishDiscardEvent(gameData);
+        gameData.finishDiscardEvent();
         return discardedCounts;
     }
 
     private void finishDiscardChoice(GameData gameData, Player player, UUID playerId,
                                     DiscardFollowUp followUp, Card discardedCard) {
         gameData.interaction.clearAwaitingInput();
-        triggerCollectionService.finishDiscardEvent(gameData);
+        gameData.finishDiscardEvent();
         finalizePendingReturnToHandOnDiscard(gameData);
         applyPendingGainLifeOnDiscardType(gameData);
 
@@ -2312,11 +2348,11 @@ public class CardChoiceHandlerService {
                 log.info("Game {} - {} discards {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
             }
 
-            triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
+            gameData.beginDiscardEvent(targetPlayerId);
             for (Card discarded : discardedCards) {
-                triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, discarded);
+                gameData.discarded(targetPlayerId, discarded);
             }
-            triggerCollectionService.finishDiscardEvent(gameData);
+            gameData.finishDiscardEvent();
 
             for (Card replaced : replacedCards) {
                 if (replaced.hasType(CardType.CREATURE)) {
@@ -2345,7 +2381,7 @@ public class CardChoiceHandlerService {
                     gameData.plottedCardIds.add(exiled.getId());
                     gameData.exilePlayPermissions.put(exiled.getId(), targetPlayerId);
                     gameData.exilePlayWithoutPayingManaCost.add(exiled.getId());
-                    triggerCollectionService.checkPlotTriggers(gameData, targetPlayerId, exiled);
+                    ActionEvents.plotted(gameData, targetPlayerId, exiled);
                 }
                 if (revealedHandChoice.imprintOnSource()) {
                     if (sourcePermanentId != null) {
@@ -2756,7 +2792,7 @@ public class CardChoiceHandlerService {
                     targetName + " discards ", card, " — it enters the battlefield instead."));
             log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield",
                     gameData.id, targetName, card.getName());
-            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+            gameData.discarded(targetPlayerId, card);
             if (card.hasType(CardType.CREATURE)) {
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetPlayerId, card, null, false);
             }
@@ -2765,7 +2801,7 @@ public class CardChoiceHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(
                     controllerName + " chooses ", card, "; " + targetName + " discards it."));
             log.info("Game {} - {} discards {} (chosen by {})", gameData.id, targetName, card.getName(), controllerName);
-            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+            gameData.discarded(targetPlayerId, card);
         }
     }
 
@@ -3394,7 +3430,7 @@ public class CardChoiceHandlerService {
         Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
         if (source == null) {
             if (lastDiscard && pending.lastKnownSource() != null) {
-                triggerCollectionService.checkAllyCreatureConniveTriggers(
+                ActionEvents.connived(
                         gameData, pending.lastKnownSource(), pending.lastKnownControllerId());
             }
             return;
@@ -3403,7 +3439,7 @@ public class CardChoiceHandlerService {
             if (nonlandDiscards > 0) {
                 permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, nonlandDiscards);
             }
-            triggerCollectionService.checkAllyCreatureConniveTriggers(gameData, source);
+            ActionEvents.connived(gameData, source);
         }
     }
 

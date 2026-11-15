@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.rules.RulesEvent;
+import com.github.laxika.magicalvibes.model.rules.ActionEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -109,7 +112,7 @@ class CreateTokenEffectHandlerTest {
 
         handler.resolve(gd, entry, effect);
 
-        verify(triggerCollectionService).checkInvestigateTriggers(gd, playerId);
+        assertThat(emitted(gd)).contains(new ActionEvent.Investigated(playerId, true));
     }
 
     @Test
@@ -137,5 +140,10 @@ class CreateTokenEffectHandlerTest {
         handler.resolve(gd, entry, effect);
 
         verify(enchantedPermanentTokenCopyHandler).resolve(eq(gd), eq(entry), any());
+    }
+
+    /** The rules events emitted into {@code gameData} and not yet matched. */
+    private static List<RulesEvent> emitted(GameData gameData) {
+        return gameData.rulesEvents.pending().stream().flatMap(batch -> batch.events().stream()).toList();
     }
 }

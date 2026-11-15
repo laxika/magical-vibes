@@ -4,15 +4,12 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
-import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
@@ -21,24 +18,19 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
-import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.tuple;
 
 /**
  * The triggers of the last slots to leave {@code EffectSlot}: {@link PlanarTrigger}, {@link ControlChangeTrigger},
  * {@link AttachTrigger}, {@link DayNightTrigger}, {@link StateTrigger}, and the crew, saddle, station, door and Room
- * actions of {@link ObjectActionTrigger} and {@link PlayerActionTrigger}; and how their collectors read their
- * abilities ({@link MiscAbilityReader}, step 14, run 16o): none of them has a legacy view. The explore and scheme
- * filters are read from the ability too (run 16n, {@code ActionTriggerTest}).
+ * actions of {@link ObjectActionTrigger} and {@link PlayerActionTrigger}: what each names, what its watch key drops
+ * for its matcher to judge, and that none of them has a legacy view.
  */
 class MiscTriggerTest {
 
@@ -131,16 +123,11 @@ class MiscTriggerTest {
         });
         Card card = new Card();
         card.addTrigger(Triggers.doorUnlocked(1), DRAW);
-        card.addTrigger(Triggers.becomesCrewedForFirstTimeEachTurn(), GAIN);
-        assertThat(MiscWatch.values()).allSatisfy(watch -> {
-            assertThatThrownBy(() -> watch.effectsOf(card)).isInstanceOf(UnsupportedOperationException.class);
-            assertThatThrownBy(() -> watch.registrationsOf(card)).isInstanceOf(UnsupportedOperationException.class);
-        });
         assertThat(card.getTriggerEffects(Triggers.doorUnlocked(1))).containsExactly(DRAW);
     }
 
     @Test
-    void anEerieAbilityHasNoLegacyViewAndIsReadAsAnAbilityForTheUnlock() {
+    void anEerieAbilityHasNoLegacyViewAndIsWatchedForTheUnlock() {
         TriggeredAbility eerie = new TriggeredAbility(List.of(
                 new TriggerCondition(Triggers.enters(ObjectRelation.ANOTHER_YOU_CONTROL)),
                 new TriggerCondition(Triggers.youFullyUnlockRoom())), TriggerOptions.DEFAULT,
@@ -148,24 +135,14 @@ class MiscTriggerTest {
 
         assertThat(eerie.hasOwnEntry()).isFalse();
         assertThatThrownBy(eerie::ownEntryEffects).isInstanceOf(IllegalStateException.class);
-        assertThat(MiscAbilityReader.effects(List.of(eerie), MiscWatch.ON_ALLY_ROOM_FULLY_UNLOCKED.trigger()))
-                .containsExactly(DRAW);
+        assertThat(eerie.hasWatchedTrigger(Triggers.youFullyUnlockRoom())).isTrue();
     }
 
     @Test
-    void aStateTriggerIsWatchedWithoutItsGameStateAndReadAsOneStateTriggerEffect() {
-        StateTrigger state = Triggers.battlefieldHasAtMost(0, FLYING).referencing(FLYING);
-        Card card = new Card();
-        card.addTriggeredAbility(new TriggeredAbility(state,
-                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()), DRAW, GAIN));
-        card.addTrigger(Triggers.sourceState(FLYING), DRAW);
-
-        assertThat(state.watchKey()).isEqualTo(Triggers.state());
-        assertThat(MiscAbilityReader.stateTriggers(card)).containsExactly(
-                new StateTriggerEffect(null, null, FLYING, 0, 0, FLYING,
-                        List.of(new ConditionalEffect(new ControllerTurn(), DRAW),
-                                new ConditionalEffect(new ControllerTurn(), GAIN)), null),
-                new StateTriggerEffect(null, FLYING, null, 0, 0, null, List.of(DRAW), null));
+    void aStateTriggerIsWatchedWithoutItsGameState() {
+        assertThat(Triggers.battlefieldHasAtMost(0, FLYING).referencing(FLYING).watchKey())
+                .isEqualTo(Triggers.state());
+        assertThat(Triggers.sourceState(FLYING).watchKey()).isEqualTo(Triggers.state());
     }
 
     @Test
@@ -184,20 +161,8 @@ class MiscTriggerTest {
     }
 
     @Test
-    void aDoorIsDroppedFromTheWatchKeyAndReadFromTheAbility() {
+    void aDoorAndAnExploreFilterAreDroppedFromTheWatchKey() {
         assertThat(Triggers.doorUnlocked(1).watchKey()).isEqualTo(Triggers.doorUnlocked());
-        Card room = new Card();
-        room.addTrigger(Triggers.doorUnlocked(0), GAIN);
-        room.addTrigger(Triggers.doorUnlocked(1), DRAW);
-
-        assertThat(MiscAbilityReader.read(MiscAbilityReader.printed(room, MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED),
-                MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED.trigger()))
-                .extracting(MiscAbilityReader.MiscEffect::effect, MiscAbilityReader.MiscEffect::door)
-                .containsExactly(tuple(GAIN, 0),
-                        tuple(DRAW, 1));
-        assertThatThrownBy(() -> MiscAbilityReader.printedEffects(room, MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED))
-                .isInstanceOf(IllegalStateException.class).hasMessageContaining("judges no door");
-
         ObjectActionTrigger landExplored = Triggers.creatureYouControlExplores().withFilter(LAND);
         assertThat(landExplored.watchKey()).isEqualTo(Triggers.creatureYouControlExplores());
     }
@@ -214,84 +179,27 @@ class MiscTriggerTest {
     }
 
     @Test
-    void aCrewObjectFilterIsDroppedFromTheWatchKeyAndReadFromTheAbility() {
+    void aCrewObjectFilterIsDroppedFromTheWatchKey() {
         ObjectActionTrigger flyingCrews = Triggers.creatureYouControlCrewsVehicle().withObjectFilter(FLYING);
 
         assertThat(flyingCrews.watchKey()).isEqualTo(Triggers.creatureYouControlCrewsVehicle());
-        assertThat(MiscAbilityReader.read(new TriggeredAbility(flyingCrews, DRAW),
-                MiscWatch.ON_ALLY_CREATURE_CREWS_VEHICLE.trigger()))
-                .extracting(MiscAbilityReader.MiscEffect::effect, MiscAbilityReader.MiscEffect::objectFilter)
-                .containsExactly(tuple(DRAW, FLYING));
-        assertThatThrownBy(() -> MiscAbilityReader.effects(List.of(new TriggeredAbility(flyingCrews, DRAW)),
-                MiscWatch.ON_ALLY_CREATURE_CREWS_VEHICLE.trigger()))
-                .isInstanceOf(IllegalStateException.class).hasMessageContaining("object filter");
         assertThatThrownBy(() -> Triggers.becomesCrewed().withObjectFilter(FLYING))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> flyingCrews.withObjectFilter(FLYING)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    void theFirstCrewOrSaddleEachTurnIsWatchedByItsEventAndJudgedByTheUnkeyedMark() {
+    void theFirstCrewOrSaddleEachTurnIsWatchedByItsEvent() {
         assertThat(Triggers.becomesCrewedForFirstTimeEachTurn().watchKey()).isEqualTo(Triggers.becomesCrewed());
         assertThat(Triggers.becomesSaddledForFirstTimeEachTurn().watchKey()).isEqualTo(Triggers.becomesSaddled());
-        MiscAbilityReader.MiscEffect read = MiscAbilityReader.read(
-                new TriggeredAbility(Triggers.becomesCrewedForFirstTimeEachTurn(), DRAW),
-                Triggers.becomesCrewed()).getFirst();
-        GameData gameData = new GameData(UUID.randomUUID(), "test", UUID.randomUUID(), "owner");
-        UUID vehicleId = UUID.randomUUID();
-
-        assertThat(read.effect()).isSameAs(DRAW);
-        assertThat(read.firstTimeEachTurn()).isTrue();
-        assertThat(read.firstTimeReached(gameData, vehicleId)).isFalse();
-
-        read.markFirstTime(gameData, vehicleId);
-
-        assertThat(read.firstTimeReached(gameData, vehicleId)).isTrue();
-        assertThat(MiscAbilityReader.read(new TriggeredAbility(Triggers.becomesCrewed(), DRAW),
-                Triggers.becomesCrewed()).getFirst().firstTimeReached(gameData, vehicleId)).isFalse();
-        assertThatThrownBy(() -> MiscAbilityReader.read(new TriggeredAbility(
-                Triggers.becomesSaddledForFirstTimeEachTurn(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW), Triggers.becomesSaddled()))
-                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    void theReaderGivesTheAbilityWhoseLimitTheDoorJudges() {
-        Card equipment = new Card();
-        equipment.addTrigger(Triggers.becomesAttachedToCreature(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
-        MiscAbilityReader.MiscEffect read = MiscAbilityReader.read(
-                MiscAbilityReader.printed(equipment, MiscWatch.ON_EQUIPMENT_ATTACHED),
-                MiscWatch.ON_EQUIPMENT_ATTACHED.trigger()).getFirst();
-
-        assertThat(read.limit()).isEqualTo(TriggerLimit.ONCE_EACH_TURN);
-        assertThat(read.ability()).isEqualTo(equipment.getTriggeredAbilities().getFirst());
-        assertThatThrownBy(() -> MiscAbilityReader.printedEffects(equipment, MiscWatch.ON_EQUIPMENT_ATTACHED))
-                .isInstanceOf(IllegalStateException.class).hasMessageContaining("judges no door, first time or limit");
-    }
-
-    @Test
-    void theReaderWrapsOnlyTheInterveningIfAndLeavesTheEventConditionToTheCollector() {
-        TriggeredAbility ability = new TriggeredAbility(Triggers.chaosEnsues(), TriggerOptions.DEFAULT
-                .withInterveningIf(new ControllerTurn()).withEventCondition(new EventValueAtLeast(4)), DRAW);
-
-        assertThat(MiscAbilityReader.effects(List.of(ability), Triggers.chaosEnsues()))
-                .containsExactly(new ConditionalEffect(new ControllerTurn(),
-                        DRAW));
-    }
-
-    @Test
-    void whatTheMiscCollectorsCannotReadIsRejected() {
+    void noAbilityOfTheseTriggersTakesOneOrMore() {
         assertThat(otherFactories().stream().filter(trigger -> !trigger.equals(Triggers.state())).toList())
                 .allSatisfy(trigger -> assertThatThrownBy(() -> new TriggeredAbility(trigger,
                         TriggerOptions.ONE_OR_MORE, DRAW)).as(trigger.toString())
                         .isInstanceOf(IllegalArgumentException.class));
-        assertThat(List.of(TriggerLimit.DO_ONLY_ONCE_EACH_TURN, TriggerLimit.ONCE)).allSatisfy(limit ->
-                assertThatThrownBy(() -> MiscAbilityReader.read(new TriggeredAbility(Triggers.becomesCrewed(),
-                        TriggerOptions.DEFAULT.withLimit(limit), DRAW), Triggers.becomesCrewed()))
-                        .as(limit.toString()).isInstanceOf(IllegalStateException.class));
-        assertThatThrownBy(() -> MiscAbilityReader.read(new TriggeredAbility(Triggers.chaosEnsues(), DRAW),
-                Triggers.encounterThis())).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

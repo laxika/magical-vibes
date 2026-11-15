@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -75,7 +76,7 @@ public class SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffectHandler
             gameData.queueDelayedAction(new DiscardSpecificCardAtNextEndStep(
                     controllerId, soughtCards.stream().map(Card::getId).toList(), entry.getCard()));
         }
-        triggerCollectionService.checkSeekTriggers(gameData, controllerId, soughtCards);
+        ActionEvents.sought(gameData, controllerId, soughtCards);
     }
 
     private void logNoMatch(GameData gameData, StackEntry entry) {

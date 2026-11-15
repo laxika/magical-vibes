@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -76,7 +77,7 @@ public class ConjureRandomCardFromSpellbookToHandEffectHandler implements Normal
                     com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND,
                     conjuredCards);
         }
-        triggerCollectionService.checkConjureTriggers(
+        ActionEvents.conjured(
                 gameData, entry.getControllerId(), conjuredCards.size());
     }
 }

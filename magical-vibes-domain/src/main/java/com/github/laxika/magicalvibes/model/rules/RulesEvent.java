@@ -9,8 +9,9 @@ package com.github.laxika.magicalvibes.model.rules;
  * into one {@link RulesEventBatch} (CR 603.2c).
  */
 public sealed interface RulesEvent
-        permits AttackEvent, BlockEvent, CombatDamageStepEvent, CounterChangeEvent, DamageDealtEvent, LibraryEvent,
-        LifeEvent, PermanentChangeEvent, SpellEvent, StepEvent, TapEvent, TargetEvent, ZoneChangeEvent {
+        permits ActionEvent, AttachmentEvent, AttackEvent, BlockEvent, CombatDamageStepEvent, ControlChangeEvent,
+        CounterChangeEvent, CrewEvent, DamageDealtEvent, DayNightEvent, EntryCausedTriggerEvent, LibraryEvent, LifeEvent,
+        PermanentChangeEvent, RoomEvent, SagaEvent, SpellEvent, StepEvent, TapEvent, TargetEvent, ZoneChangeEvent {
 
     /** A copy that shares nothing mutable with this event, for simulation copies of the game. */
     RulesEvent deepCopy();

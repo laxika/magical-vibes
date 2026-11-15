@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SeekEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -53,7 +54,7 @@ public class SeekEffectHandler implements NormalEffectHandlerBean {
         if (seekEffect.storeSelectedCard()) {
             entry.setChosenObjectCard(selected);
         }
-        triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(selected));
+        ActionEvents.sought(gameData, controllerId, List.of(selected));
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(controllerId) + " seeks a card into their hand."));
     }

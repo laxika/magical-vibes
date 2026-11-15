@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -62,7 +63,7 @@ public class ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler implement
         duplicate.freeze();
         boolean duplicateEnteredGraveyard = graveyardService.addCardToGraveyard(
                 gameData, controllerId, duplicate);
-        triggerCollectionService.checkConjureTriggers(gameData, controllerId, 1);
+        ActionEvents.conjured(gameData, controllerId, 1);
 
         rememberDouble(gameData, dyingCardId, duplicate);
         rememberDouble(gameData, duplicate.getId(), duplicate);

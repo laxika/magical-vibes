@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AbandonSchemeAndSetTriggering
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -54,6 +55,6 @@ public class AbandonSchemeAndSetTriggeringSchemeInMotionAgainEffectHandler
                 (UUID) null,
                 schemeSnapshot.getSourcePermanentId());
         triggeredAbilityStackService.putMade(gameData, replay);
-        triggerCollectionService.checkSchemeSetInMotionTriggers(gameData, replay);
+        ActionEvents.schemeSetInMotion(gameData, replay);
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryAndPerpetuallyBoostSoughtCardEffect;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -51,6 +52,6 @@ public class SeekLibraryAndPerpetuallyBoostSoughtCardEffectHandler
         gameData.addCardToHand(controllerId, sought);
         PerpetualCardPowerToughnessSupport.remember(
                 gameData, sought, seek.powerBoost(), seek.toughnessBoost());
-        triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(sought));
+        ActionEvents.sought(gameData, controllerId, List.of(sought));
     }
 }

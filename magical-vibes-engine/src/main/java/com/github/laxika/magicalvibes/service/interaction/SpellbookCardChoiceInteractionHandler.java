@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingM
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -79,7 +80,7 @@ public class SpellbookCardChoiceInteractionHandler
                     + String.join(", ", selectedCards.stream().map(Card::getName).toList())
                     + " into their hand."));
             if (interaction.conjure()) {
-                triggerCollectionService.checkConjureTriggers(
+                ActionEvents.conjured(
                         gameData, player.getId(), selectedCards.size());
             }
             if (interaction.chosenCardThenEffect() != null) {
@@ -129,7 +130,7 @@ public class SpellbookCardChoiceInteractionHandler
                             + (interaction.conjure() ? " conjures " : " drafts "), drafted,
                     " from a spellbook into their hand."));
             if (interaction.conjure()) {
-                triggerCollectionService.checkConjureTriggers(gameData, player.getId(), 1);
+                ActionEvents.conjured(gameData, player.getId(), 1);
             }
         } else {
             gameLogService.append(gameData, GameLog.textCardText(

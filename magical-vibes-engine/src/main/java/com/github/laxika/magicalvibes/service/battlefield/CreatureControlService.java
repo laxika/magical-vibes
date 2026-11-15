@@ -35,8 +35,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
-import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
+import com.github.laxika.magicalvibes.model.rules.ControlChangeEvent;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
@@ -114,7 +113,7 @@ public class CreatureControlService {
     }
 
     public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService) {
-        this(gameLogService, gameQueryService, new UnattachTriggerSupport(gameLogService, gameQueryService), null);
+        this(gameLogService, gameQueryService, new UnattachTriggerSupport(), null);
     }
 
     /**
@@ -290,11 +289,9 @@ public class CreatureControlService {
             }
             changes.add(new ControlChange(permanent, current, derived));
         }
-        if (triggerCollectionService != null) {
-            for (ControlChange change : changes) {
-                triggerCollectionService.checkOpponentGainsControlTriggers(
-                        gameData, change.permanent(), change.previousControllerId(), change.newControllerId());
-            }
+        for (ControlChange change : changes) {
+            gameData.rulesEvents.occur(new ControlChangeEvent.OpponentGains(change.permanent(),
+                    change.previousControllerId(), change.newControllerId()));
         }
         for (ControlChange change : changes) {
             moveControl(gameData, change.permanent(), change.previousControllerId(), change.newControllerId());
@@ -474,20 +471,12 @@ public class CreatureControlService {
     }
 
     private void queueSelfControlChangeTriggers(GameData gameData, Permanent permanent, UUID controllerId) {
-        if (triggerCollectionService == null) {
-            return;
-        }
-        triggerCollectionService.checkSelfControlChangeTriggers(gameData, permanent, controllerId,
-                MiscWatch.ON_SELF_BECOMES_CONTROLLED);
+        gameData.rulesEvents.occur(new ControlChangeEvent.Gained(permanent, controllerId));
     }
 
     private void queueSelfControlLossTriggers(GameData gameData, Permanent permanent,
                                               UUID controllerId) {
-        if (triggerCollectionService == null) {
-            return;
-        }
-        triggerCollectionService.checkSelfControlChangeTriggers(gameData, permanent, controllerId,
-                MiscWatch.ON_SELF_LOSES_CONTROL);
+        gameData.rulesEvents.occur(new ControlChangeEvent.Lost(permanent, controllerId));
     }
 
     private void removeFromCombat(GameData gameData, Permanent permanent) {

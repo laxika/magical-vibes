@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -172,7 +173,7 @@ public class ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffectHand
                 }
             }
         }
-        triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(soughtForTriggers));
+        ActionEvents.sought(gameData, controllerId, List.of(soughtForTriggers));
     }
 
     private Card perpetuallyBecomeCreature(Card card,

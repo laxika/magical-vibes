@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.model.trigger;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-
 import java.util.Objects;
 
 /**
@@ -26,9 +25,9 @@ import java.util.Objects;
  *               creature that crews ("when this or another legendary creature you control crews a Vehicle" is
  *               {@code Triggers.creatureYouControlCrewsVehicle().withObjectFilter(...)}), judged from the ability's
  *               source as the action is taken. Only {@link ObjectAction#CREWS_VEHICLE} takes one. The explore and
- *               exploit collectors judge the filter from the ability ({@code ActionAbilityReader}), and the door and
- *               crew collectors the door and the object filter ({@code MiscAbilityReader}), so {@link #watchKey()}
- *               drops them
+ *               exploit matchers judge the filter from the ability ({@code ActionTriggers}), and the Room and
+ *               crew matchers the door and the object filter ({@code RoomTriggers}, {@code CrewTriggers}), so
+ *               {@link #watchKey()} drops them
  */
 public record ObjectActionTrigger(ObjectAction action, ObjectRelation object, CardPredicate filter, Integer door,
                                   PermanentPredicate objectFilter)
@@ -86,7 +85,7 @@ public record ObjectActionTrigger(ObjectAction action, ObjectRelation object, Ca
     /**
      * The trigger the collectors read this one's abilities by: without its {@link #filter}, {@link #door} and
      * {@link #objectFilter}, and, for "becomes crewed / saddled for the first time each turn", the "becomes crewed /
-     * saddled" trigger, whose collector judges the first time from the ability's trigger ({@code MiscAbilityReader}).
+     * saddled" trigger, whose matcher judges the first time from the ability's trigger ({@code CrewTriggers}).
      */
     @Override
     public Trigger watchKey() {

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.m.MosscoatGoriak;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +23,7 @@ class ArchipelagoreTest extends BaseCardTest {
         Permanent bear = addCreatureReady(player2, new MosscoatGoriak());
         Permanent elves = addCreatureReady(player2, new AlmightyBrushwagg());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, archipelagore, List.of(archipelagore.getCard()), player1.getId()));
         harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
 
@@ -39,7 +40,7 @@ class ArchipelagoreTest extends BaseCardTest {
         assertThat(bear.getSkipUntapCount()).isEqualTo(1);
         assertThat(elves.isTapped()).isFalse();
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, archipelagore, List.of(archipelagore.getCard()), player1.getId()));
         harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
 
@@ -73,7 +74,7 @@ class ArchipelagoreTest extends BaseCardTest {
         Permanent archipelagore = addCreatureReady(player1, new Archipelagore());
         Permanent creature = addCreatureReady(player2, new MosscoatGoriak());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, archipelagore, List.of(archipelagore.getCard()), player1.getId()));
         harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
         harness.handlePermanentChosen(player1, player1.getId());
@@ -91,7 +92,7 @@ class ArchipelagoreTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new MosscoatGoriak());
         creature.tap();
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, archipelagore, List.of(archipelagore.getCard()), player1.getId()));
         harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
         harness.handlePermanentChosen(player1, creature.getId());

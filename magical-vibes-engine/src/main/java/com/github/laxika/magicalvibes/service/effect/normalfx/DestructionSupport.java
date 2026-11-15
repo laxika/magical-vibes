@@ -72,6 +72,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -1113,7 +1114,7 @@ public class DestructionSupport {
                                        String sourceName, String sourceSetCode) {
         if (token.investigate()) {
             for (int action = 0; action < tokenCount; action++) {
-                triggerCollectionService.checkInvestigateTriggers(gameData, controllerId);
+                ActionEvents.investigated(gameData, controllerId);
             }
         }
         List<UUID> createdIds = permanentControlSupportProvider.getObject()

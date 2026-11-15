@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability.cost;
 
+import com.github.laxika.magicalvibes.model.rules.CrewEvent;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -97,7 +98,7 @@ public class TapCreatureCostHandler implements PermanentChoiceCostHandler {
                 ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
         chosen.tap();
         if (cost.stationCost() && sourcePermanent != null) {
-            triggerCollectionService.checkStationedTriggers(gameData, sourcePermanent, chosen, player.getId());
+            gameData.rulesEvents.occur(new CrewEvent.CreatureStations(sourcePermanent, chosen, player.getId()));
         }
         gameData.rulesEvents.occur(new TapEvent.BecameTapped(chosen, null, true));
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " taps " , chosen.getCard(),

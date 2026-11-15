@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GameOfChaosFlipAgainEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -77,9 +78,9 @@ public class GameOfChaosSupport {
                 + coinFlipService.replacementDetails(result) + "."));
 
         if (controllerWins && result.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+            ActionEvents.coinFlipWon(gameData, controllerId);
         } else if (result.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
+            ActionEvents.coinFlipLost(gameData, controllerId);
         }
         return controllerWins;
     }

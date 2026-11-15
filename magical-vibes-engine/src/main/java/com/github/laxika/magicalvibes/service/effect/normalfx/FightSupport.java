@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -49,8 +50,8 @@ public class FightSupport {
         int secondPower = gameQueryService.getPowerBasedDamage(gameData, second);
         dealMutualDamage(gameData, entry, first, second, firstPower);
         dealMutualDamage(gameData, entry, second, first, secondPower);
-        triggerCollectionService.checkAllyCreatureFightsTriggers(gameData, first, firstControllerId);
-        triggerCollectionService.checkAllyCreatureFightsTriggers(gameData, second, secondControllerId);
+        ActionEvents.fought(gameData, first, firstControllerId);
+        ActionEvents.fought(gameData, second, secondControllerId);
     }
 
     /** Has {@code first} and {@code second} deal damage equal to their power to each other, without fighting. */

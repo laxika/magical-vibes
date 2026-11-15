@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +20,7 @@ class MajesticAuricornTest extends BaseCardTest {
         Permanent auricorn = addCreatureReady(player1, new MajesticAuricorn());
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, auricorn, List.of(auricorn.getCard()), player1.getId()));
         resolveAllTriggers();
 
@@ -45,7 +46,7 @@ class MajesticAuricornTest extends BaseCardTest {
         int firstLife = gd.getLife(player1.getId());
         int secondLife = gd.getLife(player2.getId());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, auricorn, List.of(auricorn.getCard()), player2.getId()));
 
         harness.assertLife(player1, firstLife);
@@ -63,7 +64,7 @@ class MajesticAuricornTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         for (int mutation = 1; mutation <= 3; mutation++) {
-            harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+            harness.inMutationScope(() -> ActionEvents.mutated(
                     gd, auricorn, List.of(auricorn.getCard()), player1.getId()));
             resolveAllTriggers();
 
@@ -77,7 +78,7 @@ class MajesticAuricornTest extends BaseCardTest {
         Permanent auricorn = addCreatureReady(player1, new MajesticAuricorn());
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, auricorn, List.of(auricorn.getCard()), player1.getId()));
         harness.inMutationScope(() -> {
             gd.playerBattlefields.get(player1.getId()).remove(auricorn);

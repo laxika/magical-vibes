@@ -13,9 +13,8 @@ public class YomijiWhoBarsTheWay extends Card {
 
     public YomijiWhoBarsTheWay() {
         // Whenever a legendary permanent other than Yomiji is put into a graveyard from the
-        // battlefield, return that card to its owner's hand. Yomiji has already left the
-        // battlefield when its own death is processed, so "other than Yomiji" needs no extra gate.
-        addTrigger(Triggers.dies(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY), ObjectRelation.ANY),
+        // battlefield, return that card to its owner's hand.
+        addTrigger(Triggers.dies(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY), ObjectRelation.ANOTHER),
                 new ReturnTriggeringCardToOwnerHandEffect());
     }
 }

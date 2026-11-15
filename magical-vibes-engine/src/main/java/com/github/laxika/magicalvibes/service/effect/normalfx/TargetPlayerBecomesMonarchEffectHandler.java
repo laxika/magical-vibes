@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerBecomesMonarchEff
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -48,7 +49,7 @@ public class TargetPlayerBecomesMonarchEffectHandler implements NormalEffectHand
                     gameData.playerIdToName.getOrDefault(targetPlayerId, "A player")
                             + " becomes the monarch."));
             permanentRemovalService.returnExileReturnsOnOpponentBecomesMonarch(gameData, targetPlayerId);
-            triggerCollectionService.checkBecomesMonarchTriggers(gameData, targetPlayerId);
+            ActionEvents.becameMonarch(gameData, targetPlayerId);
             return;
         }
     }

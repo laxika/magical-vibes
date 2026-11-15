@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -170,7 +171,7 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
             registerOneShotPermissionGroup(gameData, soughtCards, persistentPermissions);
         }
         if (!soughtCards.isEmpty() && seek.triggersSeekAbilities()) {
-            triggerCollectionService.checkSeekTriggers(gameData, controllerId, soughtCards);
+            ActionEvents.sought(gameData, controllerId, soughtCards);
         }
     }
 

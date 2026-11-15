@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -46,17 +47,17 @@ public class RollD20EffectHandler implements NormalEffectHandlerBean, ChoosesCoi
                 + entry.getCard().getName() + ": " + rawResult + "."));
         entry.setEventValue(rawResult);
         if (rollResult.wasD20Roll()) {
-            triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
+            ActionEvents.diceRolled(
                     gameData, entry.getControllerId(), 1, rawResult);
-            triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
+            ActionEvents.dieResults(
                     gameData, entry.getControllerId(), 20, rawResult);
             if (rawResult == 20) {
-                triggerCollectionService.checkControllerRollsNaturalTwentyTriggers(gameData, entry.getControllerId());
+                ActionEvents.natural20Rolled(gameData, entry.getControllerId());
             }
         } else if (rawResult == 20) {
-            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
+            ActionEvents.coinFlipWon(gameData, entry.getControllerId());
         } else {
-            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, entry.getControllerId());
+            ActionEvents.coinFlipLost(gameData, entry.getControllerId());
         }
 
         int result = rawResult;

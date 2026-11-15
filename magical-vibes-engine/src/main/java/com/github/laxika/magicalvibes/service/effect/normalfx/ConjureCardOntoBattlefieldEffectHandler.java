@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -44,7 +45,7 @@ public class ConjureCardOntoBattlefieldEffectHandler implements NormalEffectHand
                     gameData, entry.getControllerId(), card, null, false);
         }
         if (conjure.conjure()) {
-            triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
+            ActionEvents.conjured(gameData, entry.getControllerId(), 1);
         }
     }
 }

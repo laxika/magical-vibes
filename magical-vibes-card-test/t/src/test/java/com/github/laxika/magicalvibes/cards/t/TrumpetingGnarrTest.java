@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +22,7 @@ class TrumpetingGnarrTest extends BaseCardTest {
     void mutatingCreatesBeastToken() {
         Permanent gnarr = addCreatureReady(player1, new TrumpetingGnarr());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, gnarr, List.of(gnarr.getCard()), player1.getId()));
         resolveAllTriggers();
 
@@ -66,7 +67,7 @@ class TrumpetingGnarrTest extends BaseCardTest {
         Permanent gnarr = addCreatureReady(player2, new TrumpetingGnarr());
 
         for (int mutation = 0; mutation < 2; mutation++) {
-            harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+            harness.inMutationScope(() -> ActionEvents.mutated(
                     gd, gnarr, List.of(gnarr.getCard()), player2.getId()));
             assertThat(findPermanents(player2, "Beast")).hasSize(mutation);
             resolveAllTriggers();
@@ -81,12 +82,12 @@ class TrumpetingGnarrTest extends BaseCardTest {
     @DisplayName("Mutating another creature does not trigger an unmerged Gnarr")
     void anotherCreatureMutatingDoesNotTrigger() {
         Permanent gnarr = addCreatureReady(player1, new TrumpetingGnarr());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, gnarr, List.of(gnarr.getCard()), player1.getId()));
         resolveAllTriggers();
         Permanent beast = findPermanents(player1, "Beast").getFirst();
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, beast, List.of(beast.getCard()), player1.getId()));
         resolveAllTriggers();
 
@@ -99,7 +100,7 @@ class TrumpetingGnarrTest extends BaseCardTest {
     void tokenIsCreatedAfterSourceLeaves() {
         Permanent gnarr = addCreatureReady(player1, new TrumpetingGnarr());
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkMutateTriggers(
+            ActionEvents.mutated(
                     gd, gnarr, List.of(gnarr.getCard()), player1.getId());
             harness.getPermanentRemovalService().removePermanentToGraveyard(gd, gnarr);
         });

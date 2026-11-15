@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +53,6 @@ public class AirbendTargetPermanentEffectHandler implements NormalEffectHandlerB
 
             airbendSupport.airbend(gameData, entry, target);
         }
-        triggerCollectionService.checkBendingTriggers(gameData, entry.getControllerId(), BendingType.AIRBEND);
+        ActionEvents.bent(gameData, entry.getControllerId(), BendingType.AIRBEND);
     }
 }

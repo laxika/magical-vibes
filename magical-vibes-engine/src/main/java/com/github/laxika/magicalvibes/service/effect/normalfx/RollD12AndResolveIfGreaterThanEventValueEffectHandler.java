@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DiceRollService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -39,9 +40,9 @@ public class RollD12AndResolveIfGreaterThanEventValueEffectHandler implements No
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         gameLogService.append(gameData,
                 GameLog.text(playerName + " rolls a d12 for " + sourceName + ": " + result + "."));
-        triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
+        ActionEvents.diceRolled(
                 gameData, entry.getControllerId(), 1, result);
-        triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
+        ActionEvents.dieResults(
                 gameData, entry.getControllerId(), 12, result);
 
         if (result <= entry.getEventValue() && result != 12) {

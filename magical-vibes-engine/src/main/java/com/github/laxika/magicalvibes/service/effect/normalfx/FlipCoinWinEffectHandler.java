@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,9 +53,9 @@ public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean, Choose
         // Heads-or-tails flips are neither won nor lost (CR 705.2), so no coin-flip triggers fire.
         if (e.countsAsWinOrLoss() && result.isActualCoinFlip()) {
             if (wonFlip) {
-                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+                ActionEvents.coinFlipWon(gameData, controllerId);
             } else {
-                triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
+                ActionEvents.coinFlipLost(gameData, controllerId);
             }
         }
 

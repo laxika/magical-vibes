@@ -134,7 +134,7 @@ public class RevealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler implement
                 gameData.playerIdToName.get(playerId) + " discards ", card, "."));
         log.info("Game {} - {} discards {} ({})", gameData.id,
                 gameData.playerIdToName.get(playerId), card.getName(), sourceCard.getName());
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+        gameData.discarded(playerId, card);
     }
 
     private Card findInHand(GameData gameData, UUID playerId, UUID cardId) {

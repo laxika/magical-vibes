@@ -97,7 +97,7 @@ public class TargetPlayerDiscardsAndDestroysCreaturesOfChosenTypeEffectHandler i
         gameData.discardCausedByOpponent = discardCausedByOpponent;
         List<Card> normallyDiscarded = new ArrayList<>();
         String targetName = gameData.playerIdToName.get(targetPlayerId);
-        triggerCollectionService.beginDiscardEvent(gameData, targetPlayerId);
+        gameData.beginDiscardEvent(targetPlayerId);
         for (Card card : matchingCards) {
             if (discardCausedByOpponent && hasEnterBattlefieldOnDiscardEffect(card)) {
                 Permanent permanent = new Permanent(card);
@@ -112,9 +112,9 @@ public class TargetPlayerDiscardsAndDestroysCreaturesOfChosenTypeEffectHandler i
                 graveyardService.discardCard(gameData, targetPlayerId, card);
                 normallyDiscarded.add(card);
             }
-            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+            gameData.discarded(targetPlayerId, card);
         }
-        triggerCollectionService.finishDiscardEvent(gameData);
+        gameData.finishDiscardEvent();
 
         if (!normallyDiscarded.isEmpty()) {
             GameLog.Builder discardLog = GameLog.builder().text(targetName + " discards ");

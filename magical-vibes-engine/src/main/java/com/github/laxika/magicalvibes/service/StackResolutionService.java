@@ -1,15 +1,51 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
+import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
+import com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.TwoPlayerChoiceOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.YouAndOpponentChooseCardNamesOnEnterEffect;
+import com.github.laxika.magicalvibes.model.event.VisualCueType;
+import com.github.laxika.magicalvibes.model.rules.RoomEvent;
+import com.github.laxika.magicalvibes.model.rules.SagaEvent;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.state.StateTriggerService;
-
-import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
-import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
@@ -17,100 +53,90 @@ import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.CardAdvantagePostResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
-import com.github.laxika.magicalvibes.service.event.VisualCueService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SpellweaverVoluteSupport;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
-import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
-import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.YouAndOpponentChooseCardNamesOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
-import com.github.laxika.magicalvibes.model.effect.TwoPlayerChoiceOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
-import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
+import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.event.VisualCueService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
-import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
-import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
-import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
+import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
+import com.github.laxika.magicalvibes.service.state.StateTriggerService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
-
+import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.event.VisualCueType;
-import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
+
 
 @Slf4j
 @Service
 public class StackResolutionService {
 
     private final BattlefieldEntryService battlefieldEntryService;
+
     private final SagaChapterService sagaChapterService;
+
     private final CloneService cloneService;
+
     private final GraveyardService graveyardService;
+
     private final LegendRuleService legendRuleService;
+
     private final StateBasedActionService stateBasedActionService;
+
     private final GameQueryService gameQueryService;
+
     private final TargetLegalityService targetLegalityService;
+
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.battlefield.MutationSupport mutationSupport;
+
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+
     private final GameLogService gameLogService;
+
     private final EffectResolutionService effectResolutionService;
+
     private final PlayerInputService playerInputService;
+
     private final TriggerCollectionService triggerCollectionService;
+
     private final CreatureControlService creatureControlService;
+
     private final StateTriggerService stateTriggerService;
+
     private final ExileService exileService;
+
     private final ParadigmService paradigmService;
+
     private final GraveyardReturnSupport graveyardReturnSupport;
+
     private final PermanentCounterSupport permanentCounterSupport;
+
     private final GameMutationCoordinator mutationCoordinator;
+
     private final CardRevealService cardRevealService;
+
     private final AuraCopyService auraCopyService;
+
     private final SpellweaverVoluteSupport spellweaverVoluteSupport;
+
     @org.springframework.beans.factory.annotation.Autowired
     private VisualCueService visualCueService;
 
@@ -1088,8 +1114,9 @@ public class StackResolutionService {
                 enteringCharacteristics = characteristics.createRuntimeCopy();
                 // The door abilities' effects as the card bound them to their target groups.
                 enteringCharacteristics.appendSpellTargetingForEffectsFrom(entry.getPhysicalCard(),
-                        WatchedAbilities.rawEffects(MiscAbilityReader.printed(entry.getPhysicalCard(),
-                                MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED)));
+                        WatchedAbilities.rawEffects(entry.getPhysicalCard().getTriggeredAbilities().stream()
+                                .filter(ability -> ability.hasWatchedTrigger(Triggers.doorUnlocked()))
+                                .toList()));
             }
             Permanent enchPerm = createEnteringPermanent(entry, card, enteringCharacteristics);
             if (card.getSelectedRoomDoor() != null) {
@@ -1099,8 +1126,7 @@ public class StackResolutionService {
             // read XValue (e.g. The Meathook Massacre) see the paid X.
             putResolvedPermanentOntoBattlefield(gameData, controllerId, enchPerm, entry);
             if (card.getSelectedRoomDoor() != null) {
-                triggerCollectionService.checkSelfRoomDoorUnlockedTriggers(
-                        gameData, controllerId, enchPerm, card.getSelectedRoomDoor());
+                gameData.rulesEvents.occur(new RoomEvent.DoorUnlocked(enchPerm, controllerId, card.getSelectedRoomDoor()));
             }
             queueWarpExileIfPresent(gameData, entry, enchPerm);
             Card enteredCard = enchPerm.getCard();
@@ -1606,8 +1632,7 @@ public class StackResolutionService {
                 sagaControllerId = currentController;
             }
         }
-        triggerCollectionService.checkSagaFinalChapterAbilityResolutionTriggers(
-                gameData, sagaControllerId, card.getManaValue());
+        gameData.rulesEvents.occur(new SagaEvent(SagaEvent.Kind.FINAL_CHAPTER_RESOLVED, sagaControllerId, card.getManaValue()));
     }
 
     /**
@@ -1835,7 +1860,7 @@ public class StackResolutionService {
         gameData.plottedCardIds.add(physicalCard.getId());
         gameData.exilePlayPermissions.put(physicalCard.getId(), ownerId);
         gameData.exilePlayWithoutPayingManaCost.add(physicalCard.getId());
-        triggerCollectionService.checkPlotTriggers(gameData, ownerId, physicalCard);
+        ActionEvents.plotted(gameData, ownerId, physicalCard);
         gameLogService.append(gameData, GameLog.cardThen(physicalCard, " becomes plotted."));
     }
 
@@ -1944,5 +1969,4 @@ public class StackResolutionService {
                 || entry.getEntryType() == StackEntryType.INSTANT_SPELL)
                 && !entry.isCopy();
     }
-
 }

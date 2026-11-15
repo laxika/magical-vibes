@@ -61,12 +61,12 @@ public class TargetPlayerDiscardsHandThenDrawsThatManyEffectHandler implements N
         hand.clear();
         gameData.discardCausedByOpponent = !playerId.equals(entry.getControllerId());
 
-        triggerCollectionService.beginDiscardEvent(gameData, playerId);
+        gameData.beginDiscardEvent(playerId);
         for (Card card : discarded) {
             graveyardService.discardCard(gameData, playerId, card);
-            triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+            gameData.discarded(playerId, card);
         }
-        triggerCollectionService.finishDiscardEvent(gameData);
+        gameData.finishDiscardEvent();
 
         String discardLog = playerName + " discards their hand (" + discardCount
                 + " card" + (discardCount != 1 ? "s" : "") + ") (" + cardName + ").";

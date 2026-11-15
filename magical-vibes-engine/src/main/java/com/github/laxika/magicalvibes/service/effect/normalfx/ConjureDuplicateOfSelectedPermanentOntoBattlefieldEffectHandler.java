@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -53,7 +54,7 @@ public class ConjureDuplicateOfSelectedPermanentOntoBattlefieldEffectHandler imp
         Permanent permanent = new Permanent(conjuredCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent,
                 battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of());
-        triggerCollectionService.checkConjureTriggers(gameData, controllerId, 1);
+        ActionEvents.conjured(gameData, controllerId, 1);
         if (gameQueryService.findPermanentById(gameData, permanent.getId()) == null) {
             return;
         }

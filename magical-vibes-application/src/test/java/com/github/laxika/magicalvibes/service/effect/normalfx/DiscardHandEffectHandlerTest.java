@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+
+import com.github.laxika.magicalvibes.model.rules.LibraryEvent;import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -31,8 +32,15 @@ class DiscardHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
         assertThat(entry.getEventValue()).isEqualTo(2);
         verify(graveyardService).discardCard(gd, player1Id, handCard1);
         verify(graveyardService).discardCard(gd, player1Id, handCard2);
-        verify(triggerCollectionService).checkDiscardTriggers(gd, player1Id, handCard1);
-        verify(triggerCollectionService).checkDiscardTriggers(gd, player1Id, handCard2);
+        assertThat(gd.rulesEvents.pending().stream().flatMap(batch -> batch.events().stream()))
+                .filteredOn(LibraryEvent.Discarded.class::isInstance)
+                .extracting(event -> ((LibraryEvent.Discarded) event).card())
+                .containsExactly(handCard1, handCard2);
+        assertThat(gd.rulesEvents.pending().stream().flatMap(batch -> batch.events().stream()))
+                .filteredOn(LibraryEvent.DiscardedCards.class::isInstance)
+                .singleElement()
+                .satisfies(event -> assertThat(((LibraryEvent.DiscardedCards) event).cards())
+                        .containsExactly(handCard1, handCard2));
     }
 
     @Test

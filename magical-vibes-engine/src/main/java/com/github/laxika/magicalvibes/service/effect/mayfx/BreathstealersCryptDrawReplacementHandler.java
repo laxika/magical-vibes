@@ -150,7 +150,7 @@ public class BreathstealersCryptDrawReplacementHandler implements MayEffectHandl
                 gameData.playerIdToName.get(playerId) + " discards ", card, "."));
         log.info("Game {} - {} discards {} ({})", gameData.id,
                 gameData.playerIdToName.get(playerId), card.getName(), sourceCard.getName());
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+        gameData.discarded(playerId, card);
     }
 
     private List<CryptSource> findCryptSources(GameData gameData) {

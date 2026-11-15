@@ -43,7 +43,7 @@ public final class LibraryShuffleHelper {
      * Emits the shuffle of {@code shufflingPlayerId}'s library as a rules event, with the controller of the spell or
      * ability resolving now as the one that caused it: the "whenever a player shuffles their library" abilities trigger
      * on it (CR 603.2), and the trigger pipeline hands them to the stack door
-     * ({@code TriggerCollectionService.checkLibraryShuffleTriggers}) as the event's batch closes.
+     * ({@code LibraryTriggers}) as the event's batch closes.
      */
     private static void emitShuffle(GameData gameData, UUID shufflingPlayerId) {
         UUID causingControllerId = gameData.currentlyResolvingControllerId != null

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EntryReplacementHandlerBean;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DiceRollService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -56,9 +57,9 @@ public class RollDiceAndEnterWithCountersEffectHandler implements EntryReplaceme
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId)
                 + " rolls " + diceCount + " d" + rollEffect.sides() + " for "
                 + enteringPermanent.getCard().getName() + ": " + results + "."));
-        triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
+        ActionEvents.diceRolled(
                 gameData, controllerId, diceCount);
-        triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
+        ActionEvents.dieResults(
                 gameData, controllerId, rollEffect.sides(),
                 results.stream().mapToInt(Integer::intValue).toArray());
 

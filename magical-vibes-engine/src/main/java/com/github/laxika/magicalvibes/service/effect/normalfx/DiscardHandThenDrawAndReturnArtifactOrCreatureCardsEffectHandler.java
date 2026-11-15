@@ -58,7 +58,7 @@ public class DiscardHandThenDrawAndReturnArtifactOrCreatureCardsEffectHandler im
             for (Card card : discarded) {
                 state.discardedCardIds.add(card.getId());
                 graveyardService.discardCard(gameData, controllerId, card);
-                triggerCollectionService.checkDiscardTriggers(gameData, controllerId, card);
+                gameData.discarded(controllerId, card);
             }
 
             String discardLog = playerName + " discards their hand (" + discarded.size()

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -57,9 +58,9 @@ class InsatiableHemophageTest extends BaseCardTest {
     void pendingTriggersUseCurrentMutationCount() {
         Permanent hemophage = addCreatureReady(player1, new InsatiableHemophage());
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkMutateTriggers(
+            ActionEvents.mutated(
                     gd, hemophage, List.of(hemophage.getCard()), player1.getId());
-            harness.getTriggerCollectionService().checkMutateTriggers(
+            ActionEvents.mutated(
                     gd, hemophage, List.of(hemophage.getCard()), player1.getId());
         });
 
@@ -74,7 +75,7 @@ class InsatiableHemophageTest extends BaseCardTest {
     void drainUsesLastKnownMutationCount() {
         Permanent hemophage = addCreatureReady(player1, new InsatiableHemophage());
         mutate(hemophage);
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, hemophage, List.of(hemophage.getCard()), player1.getId()));
         harness.inMutationScope(() -> {
             gd.playerBattlefields.get(player1.getId()).remove(hemophage);
@@ -88,7 +89,7 @@ class InsatiableHemophageTest extends BaseCardTest {
     }
 
     private void mutate(Permanent hemophage) {
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, hemophage, List.of(hemophage.getCard()), player1.getId()));
         resolveAllTriggers();
     }

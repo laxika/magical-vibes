@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -90,7 +91,7 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
             gameLogService.append(gameData, GameLog.text(playerName + "'s library is empty (" + sourceName + " explores)."));
             putExploreCounter(gameData, entry, exploringPermanent, controllerId);
             gameData.playersWhoControlledPermanentThatExploredThisTurn.add(controllerId);
-            triggerCollectionService.checkExploreTriggers(gameData, controllerId, null);
+            ActionEvents.explored(gameData, controllerId, null);
             return;
         }
 
@@ -112,7 +113,7 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
             log.info("Game {} - {} explores, reveals land {} — to hand",
                     gameData.id, sourceName, topCard.getName());
             // Explore is complete — check for "whenever a creature you control explores" triggers
-            triggerCollectionService.checkExploreTriggers(gameData, controllerId, topCard);
+            ActionEvents.explored(gameData, controllerId, topCard);
         } else {
             // Not a land — put a +1/+1 counter on the exploring creature
             putExploreCounter(gameData, entry, exploringPermanent, controllerId);

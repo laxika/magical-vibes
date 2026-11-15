@@ -97,6 +97,6 @@ public class RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeEffectHand
                 gameData.playerIdToName.get(playerId) + " discards ", card, "."));
         log.info("Game {} - {} discards {} ({})", gameData.id,
                 gameData.playerIdToName.get(playerId), card.getName(), sourceCard.getName());
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+        gameData.discarded(playerId, card);
     }
 }

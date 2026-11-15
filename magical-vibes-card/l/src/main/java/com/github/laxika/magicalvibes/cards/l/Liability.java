@@ -12,6 +12,7 @@ public class Liability extends Card {
 
     public Liability() {
         addTrigger(Triggers.dies(Triggers.NONTOKEN, ObjectRelation.ANY),
-                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
+                // "That player" is the graveyard's owner, the dying permanent's card's owner.
+                new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_CARD_OWNER));
     }
 }

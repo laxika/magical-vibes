@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -45,7 +46,7 @@ public class RingTemptsYouEffectHandler implements NormalEffectHandlerBean {
         gameData.ringLevels.put(controllerId, Math.min(4, previousLevel + 1));
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(controllerId) + " is tempted by the Ring."));
-        triggerCollectionService.checkRingTemptsYouTriggers(gameData, controllerId);
+        ActionEvents.temptedByRing(gameData, controllerId);
 
         List<UUID> creatureIds = gameData.playerBattlefields
                 .getOrDefault(controllerId, List.of())

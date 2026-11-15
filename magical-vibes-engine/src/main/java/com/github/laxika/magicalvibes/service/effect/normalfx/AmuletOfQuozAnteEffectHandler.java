@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -82,9 +83,9 @@ public class AmuletOfQuozAnteEffectHandler implements NormalEffectHandlerBean, C
                 coinFlipService.replacementDetails(result) + "."));
 
         if (wonFlip && result.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+            ActionEvents.coinFlipWon(gameData, controllerId);
         } else if (result.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
+            ActionEvents.coinFlipLost(gameData, controllerId);
         }
 
         UUID losingPlayerId = wonFlip ? opponentId : controllerId;

@@ -102,6 +102,7 @@ import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -877,7 +878,7 @@ public class CombatAttackService {
                     gameData.playerManaPools.get(playerId), totalTax, phyrexianPayments, phyrexianTaxedAttackerCount);
         }
         if (defenderTaxTotal > 0) {
-            triggerCollectionService.checkTaxPaymentTriggers(
+            ActionEvents.taxPaid(
                     gameData, playerId, gameQueryService.getOpponentId(gameData, playerId), defenderTaxTotal);
         }
 
@@ -889,7 +890,7 @@ public class CombatAttackService {
             // is the symbol count minus the symbols paid with life (Tax Taker counts only that mana).
             int manaPaid = phyrexianTaxedAttackerCount * phyrexianPayments.size() - lifeCost / 2;
             if (manaPaid > 0) {
-                triggerCollectionService.checkTaxPaymentTriggers(
+                ActionEvents.taxPaid(
                         gameData, playerId, gameQueryService.getOpponentId(gameData, playerId), manaPaid);
             }
             if (lifeCost > 0) {

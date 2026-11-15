@@ -80,7 +80,7 @@ public class DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffectHandler
                 gameData.playerIdToName.get(controllerId) + " discards ", discarded, " at random."));
         log.info("Game {} - {} discards {} at random ({})", gameData.id,
                 gameData.playerIdToName.get(controllerId), discarded.getName(), sourceCard.getName());
-        triggerCollectionService.checkDiscardTriggers(gameData, controllerId, discarded);
+        gameData.discarded(controllerId, discarded);
 
         if (!enteredGraveyard || !gameQueryService.cardHasType(discarded, CardType.CREATURE, gameData, controllerId)) {
             return;

@@ -1,4 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.rules.RulesEvent;
+import com.github.laxika.magicalvibes.model.rules.ActionEvent;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -39,9 +43,9 @@ class FlipCoinWinEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
         verify(drawHandler).resolve(gd, entry, won ? winEffect : lossEffect);
         verify(drawHandler, never()).resolve(gd, entry, won ? lossEffect : winEffect);
         if (won) {
-            verify(triggerCollectionService).checkControllerWinsCoinFlipTriggers(gd, player2Id);
+            assertThat(emitted(gd)).contains(new ActionEvent.CoinFlipWon(player2Id));
         } else {
-            verify(triggerCollectionService).checkControllerLosesCoinFlipTriggers(gd, player2Id);
+            assertThat(emitted(gd)).contains(new ActionEvent.CoinFlipLost(player2Id));
         }
     }
 
@@ -86,5 +90,10 @@ class FlipCoinWinEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
 
         verify(drawHandler).resolve(gd, entry, step1);
         verify(drawHandler).resolve(gd, entry, step2);
+    }
+
+    /** The rules events emitted into {@code gameData} and not yet matched. */
+    private static List<RulesEvent> emitted(GameData gameData) {
+        return gameData.rulesEvents.pending().stream().flatMap(batch -> batch.events().stream()).toList();
     }
 }

@@ -19,7 +19,8 @@ public class DredgingClaw extends Card {
     public DredgingClaw() {
         addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
-        addTrigger(Triggers.entersFrom(Zone.GRAVEYARD, Triggers.CREATURE, ObjectRelation.ANY),
+        // Whenever a creature enters from your graveyard: a card in your graveyard is yours (CR 400.3).
+        addTrigger(Triggers.entersFrom(Zone.GRAVEYARD, Triggers.CREATURE, ObjectRelation.YOU_OWN),
                 new MayEffect(AttachSourceEquipmentToTargetCreatureEffect.forTriggeringCreature(),
                         "Attach this Equipment to it?"));
         addActivatedAbility(new EquipActivatedAbility("{1}{B}"));

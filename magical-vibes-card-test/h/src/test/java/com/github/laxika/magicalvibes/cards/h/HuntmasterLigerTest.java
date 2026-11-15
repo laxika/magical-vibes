@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +23,7 @@ class HuntmasterLigerTest extends BaseCardTest {
         Permanent ownBear = addCreatureReady(player1, new GrizzlyBears());
         Permanent opposingBear = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, liger, List.of(liger.getCard()), player1.getId()));
         resolveAllTriggers();
 
@@ -33,7 +34,7 @@ class HuntmasterLigerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, opposingBear)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opposingBear)).isEqualTo(2);
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, liger, List.of(liger.getCard()), player1.getId()));
         resolveAllTriggers();
 
@@ -91,7 +92,7 @@ class HuntmasterLigerTest extends BaseCardTest {
     }
 
     private void triggerMutation(Permanent source) {
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
+        harness.inMutationScope(() -> ActionEvents.mutated(
                 gd, source, List.of(source.getCard()), player1.getId()));
     }
 }
