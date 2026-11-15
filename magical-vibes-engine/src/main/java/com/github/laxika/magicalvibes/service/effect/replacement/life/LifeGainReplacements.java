@@ -60,7 +60,7 @@ public class LifeGainReplacements implements ReplacementCandidateSource<LifeGain
         }
         List<ReplacementOption> options = new ArrayList<>();
         for (Permanent source : gameData.playerBattlefields.getOrDefault(event.playerId(), List.of())) {
-            List<CardEffect> statics = gameQueryService.getActiveStaticEffects(gameData, source);
+            List<CardEffect> statics = gameQueryService.getActiveStaticEffects(gameData, source, event.playerId());
             for (int i = 0; i < statics.size(); i++) {
                 if (statics.get(i) instanceof NefariousLichLifeGainReplacementEffect) {
                     options.add(new ReplacementOption(LICH_KEY + source.getId() + ":" + i,
@@ -72,7 +72,7 @@ public class LifeGainReplacements implements ReplacementCandidateSource<LifeGain
         for (UUID opponentId : gameData.playerBattlefields.keySet()) {
             if (opponentId.equals(event.playerId())) continue;
             for (Permanent source : gameData.playerBattlefields.getOrDefault(opponentId, List.of())) {
-                List<CardEffect> statics = gameQueryService.getActiveStaticEffects(gameData, source);
+                List<CardEffect> statics = gameQueryService.getActiveStaticEffects(gameData, source, opponentId);
                 for (int i = 0; i < statics.size(); i++) {
                     if (statics.get(i) instanceof OpponentLifeGainBecomesLifeLossEffect) {
                         options.add(new ReplacementOption(LOSS_KEY + source.getId() + ":" + i,
@@ -119,7 +119,7 @@ public class LifeGainReplacements implements ReplacementCandidateSource<LifeGain
     private List<SourcedEffect> activeEffects(GameData gameData, LifeGainEvent event) {
         List<SourcedEffect> effects = new ArrayList<>();
         for (Permanent source : gameData.playerBattlefields.getOrDefault(event.playerId(), List.of())) {
-            List<CardEffect> statics = gameQueryService.getActiveStaticEffects(gameData, source);
+            List<CardEffect> statics = gameQueryService.getActiveStaticEffects(gameData, source, event.playerId());
             for (int i = 0; i < statics.size(); i++) {
                 if (statics.get(i) instanceof LifeGainReplacementEffect replacement) {
                     effects.add(new SourcedEffect(source, i, replacement));

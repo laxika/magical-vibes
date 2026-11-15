@@ -3865,21 +3865,22 @@ public class DamagePreventionService {
             Permanent chosen = gameQueryService.findPermanentById(gameData, gameData.combatDamageRedirectTarget);
             if (chosen != null) absorbers.add(chosen);
         }
-        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+        for (GameQueryService.ActiveStaticEffect<CardEffect> active
+                : gameQueryService.activeStaticEffects(gameData, playerId, CardEffect.class)) {
+            Permanent permanent = active.source();
             if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {
-                if (effect instanceof RedirectUnblockedCombatDamageToSelfEffect
-                        && unblockedSource && !permanent.isTapped()) {
-                    absorbers.add(permanent);
-                } else if (effect instanceof RedirectPlayerDamageToSelfEffect redirect
-                        && !(redirect.requiresUntapped() && permanent.isTapped())
-                        && (!redirect.onlyFromUnblockedCreatures() || !permanent.isTapped()
-                        && gameQueryService.isCreature(gameData, permanent)
-                        && isUnblockedCreatureSource(gameData, sourcePermanentId))
-                        && gameQueryService.matchesDamageSourcePredicate(
-                        gameData, sourceEntry, sourceCard, sourcePermanent, redirect.sourcePredicate())) {
-                    absorbers.add(permanent);
-                }
+            CardEffect effect = active.effect();
+            if (effect instanceof RedirectUnblockedCombatDamageToSelfEffect
+                    && unblockedSource && !permanent.isTapped()) {
+                absorbers.add(permanent);
+            } else if (effect instanceof RedirectPlayerDamageToSelfEffect redirect
+                    && !(redirect.requiresUntapped() && permanent.isTapped())
+                    && (!redirect.onlyFromUnblockedCreatures() || !permanent.isTapped()
+                    && gameQueryService.isCreature(gameData, permanent)
+                    && isUnblockedCreatureSource(gameData, sourcePermanentId))
+                    && gameQueryService.matchesDamageSourcePredicate(
+                    gameData, sourceEntry, sourceCard, sourcePermanent, redirect.sourcePredicate())) {
+                absorbers.add(permanent);
             }
         }
         absorbers.removeIf(absorber -> !isRedirectDestination(gameData, absorber.getId()));

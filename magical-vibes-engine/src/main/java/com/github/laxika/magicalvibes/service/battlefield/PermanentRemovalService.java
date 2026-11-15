@@ -2913,20 +2913,9 @@ public class PermanentRemovalService {
         if (isToken(gameData, card)) {
             return false;
         }
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (playerId.equals(ownerId)) {
-                continue;
-            }
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) {
-                continue;
-            }
-            for (Permanent permanent : battlefield) {
-                if (gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
-                        .anyMatch(OpponentCreatureCardExileReplacement.class::isInstance)) {
-                    return true;
-                }
-            }
+        if (gameQueryService.activeStaticEffects(gameData, OpponentCreatureCardExileReplacement.class).stream()
+                .anyMatch(active -> !active.controllerId().equals(ownerId))) {
+            return true;
         }
         for (Map.Entry<UUID, Permanent> entry : gameData.simultaneousDyingPermanents.entrySet()) {
             UUID controllerId = gameData.simultaneousDyingPermanentControllers.get(entry.getKey());

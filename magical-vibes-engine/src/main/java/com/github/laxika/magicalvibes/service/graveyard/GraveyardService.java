@@ -1906,36 +1906,13 @@ public class GraveyardService {
         if (sourceZone == Zone.BATTLEFIELD || isToken(gameData, card) || !card.hasType(CardType.CREATURE)) {
             return false;
         }
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (playerId.equals(ownerId)) {
-                continue;
-            }
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) {
-                continue;
-            }
-            for (Permanent permanent : battlefield) {
-                if (gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
-                        .anyMatch(OpponentCreatureCardExileReplacement.class::isInstance)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return gameQueryService.activeStaticEffects(gameData, OpponentCreatureCardExileReplacement.class).stream()
+                .anyMatch(active -> !active.controllerId().equals(ownerId));
     }
 
     private boolean anyPlayerHasInstantSorceryExileReplacement(GameData gameData) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent p : bf) {
-                if (gameQueryService.getActiveStaticEffects(gameData, p).stream()
-                        .anyMatch(ExileInstantSorceryCardsInsteadOfGraveyardEffect.class::isInstance)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return !gameQueryService.activeStaticEffects(gameData, ExileInstantSorceryCardsInsteadOfGraveyardEffect.class)
+                .isEmpty();
     }
 
     private boolean tryApplyBattlefieldExilePermanentsReplacement(GameData gameData, UUID ownerId, Card card,

@@ -114,13 +114,9 @@ public class GameResetLossReplacer implements LossReplacer {
     }
 
     private Permanent findMirror(GameData gameData, UUID playerId) {
-        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-            if (gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
-                    .anyMatch(ReplaceControllerLossWithGameResetEffect.class::isInstance)) {
-                return permanent;
-            }
-        }
-        return null;
+        List<GameQueryService.ActiveStaticEffect<ReplaceControllerLossWithGameResetEffect>> mirrors =
+                gameQueryService.activeStaticEffects(gameData, playerId, ReplaceControllerLossWithGameResetEffect.class);
+        return mirrors.isEmpty() ? null : mirrors.getFirst().source();
     }
 
     /**

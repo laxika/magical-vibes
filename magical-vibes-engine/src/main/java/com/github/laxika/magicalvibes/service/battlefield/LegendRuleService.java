@@ -132,19 +132,16 @@ public class LegendRuleService {
     private boolean allExempt(GameData gameData, List<Permanent> battlefield, String name,
                               UUID controllerId) {
         int totalWithName = countOnBattlefield(gameData, name);
-        if (gameData.playerBattlefields.values().stream().flatMap(List::stream)
-                .filter(permanent -> name.equals(gameQueryService.getEffectiveName(gameData, permanent)))
-                .flatMap(permanent -> gameQueryService.getActiveStaticEffects(gameData, permanent).stream())
-                .anyMatch(effect -> effect instanceof IgnoreLegendRuleWhenExactlyTwoSameNameEffect exemption
-                        && exemption.exemptFromLegendRule(totalWithName))) {
+        if (gameQueryService.activeStaticEffects(gameData, IgnoreLegendRuleWhenExactlyTwoSameNameEffect.class).stream()
+                .anyMatch(active -> name.equals(gameQueryService.getEffectiveName(gameData, active.source()))
+                        && active.effect().exemptFromLegendRule(totalWithName))) {
             return true;
         }
         int controlledWithName = countControlledOnBattlefield(gameData, controllerId, name);
-        if (battlefield.stream()
-                .filter(perm -> name.equals(gameQueryService.getEffectiveName(gameData, perm)))
-                .flatMap(perm -> gameQueryService.getActiveStaticEffects(gameData, perm).stream())
-                .anyMatch(effect -> effect instanceof ControlledNameCountLegendRuleExemptionEffect exemption
-                        && exemption.exemptFromLegendRule(controlledWithName))) {
+        if (gameQueryService.activeStaticEffects(gameData, controllerId,
+                        ControlledNameCountLegendRuleExemptionEffect.class).stream()
+                .anyMatch(active -> name.equals(gameQueryService.getEffectiveName(gameData, active.source()))
+                        && active.effect().exemptFromLegendRule(controlledWithName))) {
             return true;
         }
         return battlefield.stream()

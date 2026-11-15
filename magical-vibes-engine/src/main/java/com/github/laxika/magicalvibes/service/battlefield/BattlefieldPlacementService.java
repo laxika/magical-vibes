@@ -988,20 +988,18 @@ public class BattlefieldPlacementService {
                 ? (int) permanent.getCard().getStaticEffects().stream()
                 .filter(RiotEffect.class::isInstance).count() : 0;
         int battlefieldRiot = creature && !permanent.getCard().isToken()
-                ? (int) gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
-                .filter(source -> !source.getId().equals(permanent.getId()))
-                .filter(source -> simultaneouslyEntered.stream()
-                        .noneMatch(batchMember -> batchMember.getId().equals(source.getId())))
-                .flatMap(source -> gameQueryService.getActiveStaticEffects(gameData, source).stream())
-                .filter(ControlledCreaturesHaveRiotEffect.class::isInstance).count() : 0;
+                ? (int) gameQueryService.activeStaticEffects(gameData, controllerId,
+                        ControlledCreaturesHaveRiotEffect.class).stream()
+                .filter(active -> !active.source().getId().equals(permanent.getId()))
+                .filter(active -> simultaneouslyEntered.stream()
+                        .noneMatch(batchMember -> batchMember.getId().equals(active.source().getId())))
+                .count() : 0;
         int filteredBattlefieldRiot = creature
-                ? (int) gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
-                .filter(source -> !source.getId().equals(permanent.getId()))
-                .filter(source -> simultaneouslyEntered.stream()
-                        .noneMatch(batchMember -> batchMember.getId().equals(source.getId())))
-                .flatMap(source -> gameQueryService.getActiveStaticEffects(gameData, source).stream())
-                .filter(GrantKeywordEffect.class::isInstance)
-                .map(GrantKeywordEffect.class::cast)
+                ? (int) gameQueryService.activeStaticEffects(gameData, controllerId, GrantKeywordEffect.class).stream()
+                .filter(active -> !active.source().getId().equals(permanent.getId()))
+                .filter(active -> simultaneouslyEntered.stream()
+                        .noneMatch(batchMember -> batchMember.getId().equals(active.source().getId())))
+                .map(GameQueryService.ActiveStaticEffect::effect)
                 .filter(grant -> grant.keywords().contains(Keyword.RIOT)
                         && (grant.scope() == GrantScope.OWN_CREATURES
                         || grant.scope() == GrantScope.ALL_OWN_CREATURES)
@@ -1604,25 +1602,25 @@ public class BattlefieldPlacementService {
     public Set<CardType> snapshotEnterTappedTypes(GameData gameData) {
         Set<CardType> enterTappedTypes = EnumSet.noneOf(CardType.class);
 
-        gameData.forEachPermanent((playerId, source) -> {
-            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
-                EnterPermanentsOfTypesTappedEffect enterTapped;
-                if (effect instanceof EnterPermanentsOfTypesTappedEffect direct) {
-                    enterTapped = direct;
-                } else if (effect instanceof ConditionalReplacementEffect conditional
-                        && conditional.upgradedEffect() instanceof EnterPermanentsOfTypesTappedEffect conditionalEffect
-                        && conditionEvaluationService.isMet(
-                        gameData, conditional.condition(), ConditionContext.forStaticEffect(source, playerId))) {
-                    enterTapped = conditionalEffect;
-                } else {
-                    continue;
-                }
-                if (enterTapped.opponentsOnly() || enterTapped.castOnly()) {
-                    continue;
-                }
-                enterTappedTypes.addAll(enterTapped.cardTypes());
+        for (GameQueryService.ActiveStaticEffect<CardEffect> active
+                : gameQueryService.activeStaticEffects(gameData, CardEffect.class)) {
+            CardEffect effect = active.effect();
+            EnterPermanentsOfTypesTappedEffect enterTapped;
+            if (effect instanceof EnterPermanentsOfTypesTappedEffect direct) {
+                enterTapped = direct;
+            } else if (effect instanceof ConditionalReplacementEffect conditional
+                    && conditional.upgradedEffect() instanceof EnterPermanentsOfTypesTappedEffect conditionalEffect
+                    && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    ConditionContext.forStaticEffect(active.source(), active.controllerId()))) {
+                enterTapped = conditionalEffect;
+            } else {
+                continue;
             }
-        });
+            if (enterTapped.opponentsOnly() || enterTapped.castOnly()) {
+                continue;
+            }
+            enterTappedTypes.addAll(enterTapped.cardTypes());
+        }
         if (gameData.planechase != null) {
             gameData.planechase.faceUp.forEach(planar -> planar.getCard().getStaticEffects().stream()
                     .filter(EnterPermanentsOfTypesTappedEffect.class::isInstance)
@@ -1664,91 +1662,68 @@ public class BattlefieldPlacementService {
         if (!enteringPermanent.getCard().hasType(CardType.LAND)) {
             return;
         }
-        gameData.forEachBattlefield((sourcePlayerId, battlefield) -> {
-            if (!sourcePlayerId.equals(enteringControllerId)) {
-                return;
-            }
-            for (Permanent source : battlefield) {
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
-                    if (effect instanceof ControlledLandsEnterUntappedEffect) {
-                        enteringPermanent.untap();
-                        return;
-                    }
-                }
-            }
-        });
+        if (!gameQueryService.activeStaticEffects(gameData, enteringControllerId,
+                ControlledLandsEnterUntappedEffect.class).isEmpty()) {
+            enteringPermanent.untap();
+        }
     }
 
     private void applyAllPermanentsEnterUntapped(GameData gameData, Permanent enteringPermanent) {
-        gameData.forEachPermanent((sourcePlayerId, source) -> {
-            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
-                AllPermanentsEnterUntappedEffect enterUntapped = null;
-                if (effect instanceof AllPermanentsEnterUntappedEffect direct) {
-                    enterUntapped = direct;
-                } else if (effect instanceof ConditionalReplacementEffect conditional
-                        && conditional.upgradedEffect() instanceof AllPermanentsEnterUntappedEffect conditionalEffect
-                        && conditionEvaluationService.isMet(
-                        gameData, conditional.condition(), ConditionContext.forStaticEffect(source, sourcePlayerId))) {
-                    enterUntapped = conditionalEffect;
-                }
-                if (enterUntapped != null
-                        && predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, enteringPermanent, enterUntapped.filter())) {
-                    enteringPermanent.enterUntapped();
-                    return;
-                }
+        for (GameQueryService.ActiveStaticEffect<CardEffect> active
+                : gameQueryService.activeStaticEffects(gameData, CardEffect.class)) {
+            CardEffect effect = active.effect();
+            AllPermanentsEnterUntappedEffect enterUntapped = null;
+            if (effect instanceof AllPermanentsEnterUntappedEffect direct) {
+                enterUntapped = direct;
+            } else if (effect instanceof ConditionalReplacementEffect conditional
+                    && conditional.upgradedEffect() instanceof AllPermanentsEnterUntappedEffect conditionalEffect
+                    && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    ConditionContext.forStaticEffect(active.source(), active.controllerId()))) {
+                enterUntapped = conditionalEffect;
             }
-        });
+            if (enterUntapped != null
+                    && predicateEvaluationService.matchesPermanentPredicate(
+                    gameData, enteringPermanent, enterUntapped.filter())) {
+                enteringPermanent.enterUntapped();
+                return;
+            }
+        }
     }
 
     private void applyOpponentOnlyEnterTappedEffects(GameData gameData, UUID enteringControllerId, Permanent enteringPermanent) {
-        gameData.forEachBattlefield((sourcePlayerId, battlefield) -> {
-            if (sourcePlayerId.equals(enteringControllerId)) return;
-
-            for (Permanent source : battlefield) {
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
-                    if (!(effect instanceof EnterPermanentsOfTypesTappedEffect enterTapped)) {
-                        continue;
-                    }
-                    if (!enterTapped.opponentsOnly()) {
-                        continue;
-                    }
-                    if (matchesEnterTappedEffect(gameData, enteringPermanent, enterTapped)) {
-                        enteringPermanent.tap();
-                    }
-                }
+        for (GameQueryService.ActiveStaticEffect<EnterPermanentsOfTypesTappedEffect> active
+                : gameQueryService.activeStaticEffects(gameData, EnterPermanentsOfTypesTappedEffect.class)) {
+            if (active.controllerId().equals(enteringControllerId) || !active.effect().opponentsOnly()) {
+                continue;
             }
-        });
+            if (matchesEnterTappedEffect(gameData, enteringPermanent, active.effect())) {
+                enteringPermanent.tap();
+            }
+        }
     }
 
     private void applyControlledPermanentsEnterUntapped(GameData gameData, UUID enteringControllerId,
                                                         Permanent enteringPermanent) {
-        gameData.forEachPermanent((sourcePlayerId, source) -> {
-            if (!sourcePlayerId.equals(enteringControllerId)) {
+        for (GameQueryService.ActiveStaticEffect<PermanentsEnterUntappedEffect> active
+                : gameQueryService.activeStaticEffects(gameData, enteringControllerId, PermanentsEnterUntappedEffect.class)) {
+            if (predicateEvaluationService.matchesPermanentPredicate(
+                    gameData, enteringPermanent, active.effect().filter())) {
+                enteringPermanent.enterUntapped();
                 return;
             }
-            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
-                if (effect instanceof PermanentsEnterUntappedEffect enterUntapped
-                        && predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, enteringPermanent, enterUntapped.filter())) {
-                    enteringPermanent.enterUntapped();
-                    return;
-                }
-            }
-        });
+        }
     }
 
     private void applyGlobalFilteredEnterTappedEffects(GameData gameData, Permanent enteringPermanent) {
-        gameData.forEachPermanent((sourcePlayerId, source) -> {
-            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
-                if (effect instanceof EnterPermanentsOfTypesTappedEffect enterTapped
-                        && !enterTapped.opponentsOnly()
-                        && (enterTapped.filter() != null || enterTapped.castOnly())
-                        && matchesEnterTappedEffect(gameData, enteringPermanent, enterTapped)) {
-                    enteringPermanent.tap();
-                }
+        for (GameQueryService.ActiveStaticEffect<EnterPermanentsOfTypesTappedEffect> active
+                : gameQueryService.activeStaticEffects(gameData, EnterPermanentsOfTypesTappedEffect.class)) {
+            EnterPermanentsOfTypesTappedEffect enterTapped = active.effect();
+            if (!enterTapped.opponentsOnly()
+                    && (enterTapped.filter() != null || enterTapped.castOnly())
+                    && matchesEnterTappedEffect(gameData, enteringPermanent, enterTapped)) {
+                enteringPermanent.tap();
             }
-        });
+        }
     }
 
     private boolean matchesEnterTappedEffect(GameData gameData, Permanent enteringPermanent,
@@ -1777,17 +1752,13 @@ public class BattlefieldPlacementService {
             return;
         }
         int manaValue = enteringPermanent.isFaceDown() ? 0 : enteringPermanent.getCard().getManaValue();
-        gameData.forEachPermanent((playerId, source) -> {
-            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
-                if (!(effect instanceof CreaturesOfUnchosenParityEnterTappedEffect)) {
-                    continue;
-                }
-                ManaValueParity chosen = source.getChosenManaValueParity();
-                if (chosen != null && !chosen.matches(manaValue)) {
-                    enteringPermanent.tap();
-                }
+        for (GameQueryService.ActiveStaticEffect<CreaturesOfUnchosenParityEnterTappedEffect> active
+                : gameQueryService.activeStaticEffects(gameData, CreaturesOfUnchosenParityEnterTappedEffect.class)) {
+            ManaValueParity chosen = active.source().getChosenManaValueParity();
+            if (chosen != null && !chosen.matches(manaValue)) {
+                enteringPermanent.tap();
             }
-        });
+        }
     }
 
     /**
@@ -2698,30 +2669,32 @@ public class BattlefieldPlacementService {
 
         record SourcedCounters(Permanent source, CardSubtype subtype, DynamicAmount count,
                                boolean allCreatures) {}
-        List<SourcedCounters> effects = battlefield.stream()
-                .filter(source -> source != permanent)
-                .filter(source -> !gameQueryService.hasLostAllAbilities(gameData, source))
-                .flatMap(source -> gameQueryService.getActiveStaticEffects(gameData, source).stream()
-                        .flatMap(effect -> {
-                            ControlledCreaturesEnterWithAdditionalCountersEffect countersEffect = null;
-                            if (effect instanceof ControlledCreaturesEnterWithAdditionalCountersEffect direct) {
-                                countersEffect = direct;
-                            } else if (effect instanceof ConditionalEffect conditional
-                                    && conditional.wrapped() instanceof ControlledCreaturesEnterWithAdditionalCountersEffect wrapped
-                                    && conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                    ConditionContext.forStaticEffect(source, controllerId))) {
-                                countersEffect = wrapped;
-                            }
-                            if (countersEffect == null) {
-                                return java.util.stream.Stream.empty();
-                            }
-                            return java.util.stream.Stream.of(new SourcedCounters(
-                                    source,
-                                    countersEffect.subtype() != null
-                                            ? countersEffect.subtype() : source.getChosenSubtype(),
-                                    countersEffect.count(),
-                                    countersEffect.allCreatures()));
-                        }))
+        List<SourcedCounters> effects = gameQueryService.activeStaticEffects(gameData, controllerId, CardEffect.class)
+                .stream()
+                .filter(active -> active.source() != permanent)
+                .filter(active -> !gameQueryService.hasLostAllAbilities(gameData, active.source()))
+                .flatMap(active -> {
+                    Permanent source = active.source();
+                    CardEffect effect = active.effect();
+                    ControlledCreaturesEnterWithAdditionalCountersEffect countersEffect = null;
+                    if (effect instanceof ControlledCreaturesEnterWithAdditionalCountersEffect direct) {
+                        countersEffect = direct;
+                    } else if (effect instanceof ConditionalEffect conditional
+                            && conditional.wrapped() instanceof ControlledCreaturesEnterWithAdditionalCountersEffect wrapped
+                            && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forStaticEffect(source, controllerId))) {
+                        countersEffect = wrapped;
+                    }
+                    if (countersEffect == null) {
+                        return java.util.stream.Stream.empty();
+                    }
+                    return java.util.stream.Stream.of(new SourcedCounters(
+                            source,
+                            countersEffect.subtype() != null
+                                    ? countersEffect.subtype() : source.getChosenSubtype(),
+                            countersEffect.count(),
+                            countersEffect.allCreatures()));
+                })
                 .filter(sourced -> sourced.allCreatures() ? enteringIsCreature : sourced.subtype() != null)
                 .toList();
         if (effects.isEmpty()) return;
@@ -2766,40 +2739,37 @@ public class BattlefieldPlacementService {
                                                            Permanent permanent) {
         if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
 
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null || battlefield.isEmpty()) return;
-
         Map<CounterType, Integer> additionalCounters = new EnumMap<>(CounterType.class);
-        for (Permanent source : battlefield) {
+        for (GameQueryService.ActiveStaticEffect<CardEffect> active
+                : gameQueryService.activeStaticEffects(gameData, controllerId, CardEffect.class)) {
+            Permanent source = active.source();
+            CardEffect activeEffect = active.effect();
+            if (activeEffect instanceof ConditionalEffect conditional) {
+                if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forStaticEffect(source, controllerId))) {
+                    continue;
+                }
+                activeEffect = conditional.wrapped();
+            }
+            if (!(activeEffect instanceof ControlledPermanentEntryReplacementEffect replacement)) continue;
             FilterContext sourceContext = FilterContext.of(gameData)
                     .withSourceCardId(source.getCard().getId())
                     .withSourceControllerId(controllerId)
                     .withSourcePermanentSnapshot(source)
                     .withSourcePermanentId(source.getId());
-            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
-                CardEffect activeEffect = effect;
-                if (effect instanceof ConditionalEffect conditional) {
-                    if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                            ConditionContext.forStaticEffect(source, controllerId))) {
-                        continue;
-                    }
-                    activeEffect = conditional.wrapped();
-                }
-                if (!(activeEffect instanceof ControlledPermanentEntryReplacementEffect replacement)) continue;
-                if (predicateEvaluationService.matchesPermanentPredicate(
-                        permanent, replacement.enteringPermanentPredicate(), sourceContext)) {
-                    DynamicAmount dynamicAmount = replacement.additionalCounterAmount();
-                    if (dynamicAmount == null) {
-                        replacement.additionalCounters(gameData, source, permanent).forEach(
-                                (counterType, replacementCount) -> additionalCounters.merge(
-                                        counterType, Math.max(0, replacementCount), Integer::sum));
-                    } else {
-                        CounterType counterType = replacement.counterType();
-                        int replacementCount = amountEvaluationService.evaluate(gameData, dynamicAmount,
-                                new AmountContext(controllerId, source, null, 0, 0));
-                        if (counterType != null) {
-                            additionalCounters.merge(counterType, Math.max(0, replacementCount), Integer::sum);
-                        }
+            if (predicateEvaluationService.matchesPermanentPredicate(
+                    permanent, replacement.enteringPermanentPredicate(), sourceContext)) {
+                DynamicAmount dynamicAmount = replacement.additionalCounterAmount();
+                if (dynamicAmount == null) {
+                    replacement.additionalCounters(gameData, source, permanent).forEach(
+                            (counterType, replacementCount) -> additionalCounters.merge(
+                                    counterType, Math.max(0, replacementCount), Integer::sum));
+                } else {
+                    CounterType counterType = replacement.counterType();
+                    int replacementCount = amountEvaluationService.evaluate(gameData, dynamicAmount,
+                            new AmountContext(controllerId, source, null, 0, 0));
+                    if (counterType != null) {
+                        additionalCounters.merge(counterType, Math.max(0, replacementCount), Integer::sum);
                     }
                 }
             }
@@ -2826,42 +2796,40 @@ public class BattlefieldPlacementService {
 
     private void applyControlledPermanentEntryCharacteristics(GameData gameData, UUID controllerId,
                                                                Permanent permanent) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null || battlefield.isEmpty()) return;
-
-        for (Permanent source : battlefield) {
+        for (GameQueryService.ActiveStaticEffect<ControlledPermanentEntryCharacteristicsEffect> active
+                : gameQueryService.activeStaticEffects(gameData, controllerId,
+                ControlledPermanentEntryCharacteristicsEffect.class)) {
+            Permanent source = active.source();
+            ControlledPermanentEntryCharacteristicsEffect characteristics = active.effect();
             FilterContext sourceContext = FilterContext.of(gameData)
                     .withSourceCardId(source.getCard().getId())
                     .withSourceControllerId(controllerId)
                     .withSourcePermanentSnapshot(source)
                     .withSourcePermanentId(source.getId())
                     .withEnteringControllerId(controllerId);
-            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
-                if (!(effect instanceof ControlledPermanentEntryCharacteristicsEffect characteristics)
-                        || !predicateEvaluationService.matchesPermanentPredicate(
-                        permanent, characteristics.enteringPermanentPredicate(), sourceContext)) {
-                    continue;
-                }
+            if (!predicateEvaluationService.matchesPermanentPredicate(
+                    permanent, characteristics.enteringPermanentPredicate(), sourceContext)) {
+                continue;
+            }
 
-                permanent.getCopiableEntryCharacteristics().add(characteristics);
-                permanent.getPersistentGrantedCardTypes().addAll(characteristics.addedCardTypes());
-                characteristics.addedSubtypes().forEach(subtype -> {
-                    if (!permanent.getGrantedSubtypes().contains(subtype)) {
-                        permanent.getGrantedSubtypes().add(subtype);
-                    }
-                });
+            permanent.getCopiableEntryCharacteristics().add(characteristics);
+            permanent.getPersistentGrantedCardTypes().addAll(characteristics.addedCardTypes());
+            characteristics.addedSubtypes().forEach(subtype -> {
+                if (!permanent.getGrantedSubtypes().contains(subtype)) {
+                    permanent.getGrantedSubtypes().add(subtype);
+                }
+            });
 
-                long timestamp = gameData.nextTimestamp();
-                if (characteristics.basePower() != null) {
-                    permanent.setBasePowerOverriddenPermanently(true);
-                    permanent.setPermanentBasePowerOverride(characteristics.basePower());
-                    permanent.setPermanentBasePowerOverrideTimestamp(timestamp);
-                }
-                if (characteristics.baseToughness() != null) {
-                    permanent.setBaseToughnessOverriddenPermanently(true);
-                    permanent.setPermanentBaseToughnessOverride(characteristics.baseToughness());
-                    permanent.setPermanentBaseToughnessOverrideTimestamp(timestamp);
-                }
+            long timestamp = gameData.nextTimestamp();
+            if (characteristics.basePower() != null) {
+                permanent.setBasePowerOverriddenPermanently(true);
+                permanent.setPermanentBasePowerOverride(characteristics.basePower());
+                permanent.setPermanentBasePowerOverrideTimestamp(timestamp);
+            }
+            if (characteristics.baseToughness() != null) {
+                permanent.setBaseToughnessOverriddenPermanently(true);
+                permanent.setPermanentBaseToughnessOverride(characteristics.baseToughness());
+                permanent.setPermanentBaseToughnessOverrideTimestamp(timestamp);
             }
         }
     }
@@ -2932,19 +2900,16 @@ public class BattlefieldPlacementService {
                                                                       Permanent permanent) {
         if (!gameQueryService.isCreature(gameData, permanent)) return;
 
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null || battlefield.isEmpty()) return;
-
         boolean noCounters = gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId);
         int additionalCounters = 0;
-        for (Permanent source : battlefield) {
-            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
-                if (!(effect instanceof ControlledCreaturesEnterWithSourcePowerCountersEffect e)) continue;
-                if (!permanent.getGrantedSubtypes().contains(e.addedSubtype())) {
-                    permanent.getGrantedSubtypes().add(e.addedSubtype());
-                }
-                additionalCounters += Math.max(0, gameQueryService.getEffectivePower(gameData, source));
+        for (GameQueryService.ActiveStaticEffect<ControlledCreaturesEnterWithSourcePowerCountersEffect> active
+                : gameQueryService.activeStaticEffects(gameData, controllerId,
+                ControlledCreaturesEnterWithSourcePowerCountersEffect.class)) {
+            ControlledCreaturesEnterWithSourcePowerCountersEffect e = active.effect();
+            if (!permanent.getGrantedSubtypes().contains(e.addedSubtype())) {
+                permanent.getGrantedSubtypes().add(e.addedSubtype());
             }
+            additionalCounters += Math.max(0, gameQueryService.getEffectivePower(gameData, active.source()));
         }
 
         if (additionalCounters > 0 && !noCounters) {

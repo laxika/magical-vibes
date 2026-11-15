@@ -10435,8 +10435,7 @@ public class GameQueryService {
      */
     public int countETBExtraTriggers(GameData gameData, UUID sourceControllerId,
                                      UUID enteringControllerId, Card enteringPermanent) {
-        List<Permanent> bf = gameData.playerBattlefields.get(sourceControllerId);
-        if (bf == null) return 0;
+        if (gameData.playerBattlefields.get(sourceControllerId) == null) return 0;
         Permanent entering = gameData.playerBattlefields.values().stream()
                 .flatMap(List::stream)
                 .filter(permanent -> permanent.getCard().getId().equals(enteringPermanent.getId()))
@@ -10455,13 +10454,12 @@ public class GameQueryService {
             enteringCharacteristics.setSubtypes(effectiveSubtypes);
         }
         int count = 0;
-        for (Permanent perm : bf) {
-            for (CardEffect e : getActiveStaticEffects(gameData, perm)) {
-                if (e instanceof ETBDoubleTriggerEffect etb
-                        && (!etb.requiresEnteringControllerMatch() || sourceControllerId.equals(enteringControllerId))
-                        && predicateEvaluationService.matchesCardPredicate(enteringCharacteristics, etb.predicate(), null)) {
-                    count++;
-                }
+        for (ActiveStaticEffect<ETBDoubleTriggerEffect> active
+                : activeStaticEffects(gameData, sourceControllerId, ETBDoubleTriggerEffect.class)) {
+            ETBDoubleTriggerEffect etb = active.effect();
+            if ((!etb.requiresEnteringControllerMatch() || sourceControllerId.equals(enteringControllerId))
+                    && predicateEvaluationService.matchesCardPredicate(enteringCharacteristics, etb.predicate(), null)) {
+                count++;
             }
         }
         return count;
@@ -12338,7 +12336,7 @@ public class GameQueryService {
         UUID effectiveControllerId = resolveTokenCreationController(gameData, controllerId, creatureToken);
         List<TokenCreationReplacement> replacements = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
-            List<CardEffect> statics = getActiveStaticEffects(gameData, p);
+            List<CardEffect> statics = getActiveStaticEffects(gameData, p, playerId);
             for (int i = 0; i < statics.size(); i++) {
                 if (statics.get(i) instanceof TokenCreationReplacementEffect replacement
                         && applicableReplacements.test(replacement)

@@ -312,15 +312,14 @@ public class CombatAttackService {
     private int getMaximumAttackers(GameData gameData, UUID attackTargetId,
                                     boolean filterByAttackTarget) {
         int[] maximum = {Integer.MAX_VALUE};
-        gameData.forEachPermanent((sourceControllerId, permanent) -> {
-            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {
-                if (effect instanceof CombatCreatureLimitEffect limit
-                        && (!filterByAttackTarget
-                        || limit.appliesToAttackTarget(sourceControllerId, permanent.getId(), attackTargetId))) {
-                    maximum[0] = Math.min(maximum[0], limit.maxAttackers());
-                }
+        for (GameQueryService.ActiveStaticEffect<CombatCreatureLimitEffect> active
+                : gameQueryService.activeStaticEffects(gameData, CombatCreatureLimitEffect.class)) {
+            CombatCreatureLimitEffect limit = active.effect();
+            if (!filterByAttackTarget
+                    || limit.appliesToAttackTarget(active.controllerId(), active.source().getId(), attackTargetId)) {
+                maximum[0] = Math.min(maximum[0], limit.maxAttackers());
             }
-        });
+        }
         if (gameData.planechase != null) {
             for (var planar : gameData.planechase.faceUp) {
                 for (CardEffect effect : planar.getCard().getStaticEffects()) {

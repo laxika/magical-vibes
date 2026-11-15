@@ -36,7 +36,8 @@ public class LandPlayPermissionService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                List<CardEffect> activeStatics = gameQueryService.getActiveStaticEffects(gameData, permanent);
+                List<CardEffect> activeStatics =
+                        gameQueryService.getActiveStaticEffects(gameData, permanent, controllerId);
                 for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     if (!(effect instanceof ConditionalEffect) && !activeStatics.contains(effect)) {
                         if (effect instanceof EachPlayerPlaysAdditionalLandEffect) conditionalExtra--;

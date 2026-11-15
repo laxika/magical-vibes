@@ -1179,16 +1179,10 @@ public class LibrarySearchSupport {
      */
     public int opponentSearchTopCardsLimit(GameData gameData, UUID searchingPlayerId) {
         int limit = Integer.MAX_VALUE;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            if (pid.equals(searchingPlayerId)) continue;
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
-                    if (effect instanceof OpponentSearchesTopCardsInsteadEffect restriction) {
-                        limit = Math.min(limit, restriction.count());
-                    }
-                }
+        for (GameQueryService.ActiveStaticEffect<OpponentSearchesTopCardsInsteadEffect> active
+                : gameQueryService.activeStaticEffects(gameData, OpponentSearchesTopCardsInsteadEffect.class)) {
+            if (!active.controllerId().equals(searchingPlayerId)) {
+                limit = Math.min(limit, active.effect().count());
             }
         }
         return limit;

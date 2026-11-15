@@ -324,40 +324,40 @@ public class CombatDamageService {
                                                            Map<UUID, Integer> assignedDamage) {
         if (!gameQueryService.isDamagePreventable(gameData, true)
                 || gameQueryService.damageCantBePreventedFromSource(gameData, damageSource, true)) return false;
-        for (UUID controllerId : gameData.orderedPlayerIds) {
-            for (Permanent preventionSource : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, preventionSource)) {
-                    if (!(effect instanceof com.github.laxika.magicalvibes.model.effect.PreventXDamagePerSourceToControllerAndCreaturesEffect prevention)) continue;
-                    if (prevention.creatureSourcesOnly() && !gameQueryService.isCreature(gameData, damageSource)) continue;
-                    var preventionSources = gameData.combatSharedDamagePreventionAllocations
-                            .computeIfAbsent(damageSource.getId(), ignored -> new LinkedHashMap<>());
-                    if (preventionSources.containsKey(preventionSource.getId())) continue;
-                    Map<UUID, Integer> eligible = new LinkedHashMap<>();
-                    assignedDamage.forEach((recipientId, amount) -> {
-                        Permanent recipient = gameQueryService.findPermanentById(gameData, recipientId);
-                        if (amount > 0 && (recipientId.equals(controllerId)
-                                || recipient != null && gameQueryService.isCreature(gameData, recipient)
-                                && controllerId.equals(gameQueryService.findPermanentController(gameData, recipientId))
-                                && !recipient.isDamageCantBePreventedOrRedirectedThisTurn())) {
-                            eligible.put(recipientId, amount);
-                        }
-                    });
-                    int total = eligible.values().stream().mapToInt(Integer::intValue).sum();
-                    int amount = Math.min(total, Math.max(0, amountEvaluationService.evaluate(gameData,
-                            prevention.amount(), AmountContext.forStaticEffect(preventionSource, controllerId))));
-                    if (eligible.size() < 2 || amount <= 0) continue;
-                    Map<UUID, Integer> allocations = new LinkedHashMap<>();
-                    preventionSources.put(preventionSource.getId(), allocations);
-                    if (amount >= total) {
-                        allocations.putAll(eligible);
-                    } else {
-                        beginSharedCombatPreventionChoice(gameData,
-                                new com.github.laxika.magicalvibes.model.ChoiceContext.CombatSharedDamagePreventionChoice(
-                                        preventionSource.getId(), damageSource.getId(), controllerId, amount,
-                                        new ArrayList<>(eligible.keySet()), eligible));
-                        return true;
-                    }
+        for (GameQueryService.ActiveStaticEffect<com.github.laxika.magicalvibes.model.effect.PreventXDamagePerSourceToControllerAndCreaturesEffect> active
+                : gameQueryService.activeStaticEffects(gameData,
+                com.github.laxika.magicalvibes.model.effect.PreventXDamagePerSourceToControllerAndCreaturesEffect.class)) {
+            UUID controllerId = active.controllerId();
+            Permanent preventionSource = active.source();
+            var prevention = active.effect();
+            if (prevention.creatureSourcesOnly() && !gameQueryService.isCreature(gameData, damageSource)) continue;
+            var preventionSources = gameData.combatSharedDamagePreventionAllocations
+                    .computeIfAbsent(damageSource.getId(), ignored -> new LinkedHashMap<>());
+            if (preventionSources.containsKey(preventionSource.getId())) continue;
+            Map<UUID, Integer> eligible = new LinkedHashMap<>();
+            assignedDamage.forEach((recipientId, amount) -> {
+                Permanent recipient = gameQueryService.findPermanentById(gameData, recipientId);
+                if (amount > 0 && (recipientId.equals(controllerId)
+                        || recipient != null && gameQueryService.isCreature(gameData, recipient)
+                        && controllerId.equals(gameQueryService.findPermanentController(gameData, recipientId))
+                        && !recipient.isDamageCantBePreventedOrRedirectedThisTurn())) {
+                    eligible.put(recipientId, amount);
                 }
+            });
+            int total = eligible.values().stream().mapToInt(Integer::intValue).sum();
+            int amount = Math.min(total, Math.max(0, amountEvaluationService.evaluate(gameData,
+                    prevention.amount(), AmountContext.forStaticEffect(preventionSource, controllerId))));
+            if (eligible.size() < 2 || amount <= 0) continue;
+            Map<UUID, Integer> allocations = new LinkedHashMap<>();
+            preventionSources.put(preventionSource.getId(), allocations);
+            if (amount >= total) {
+                allocations.putAll(eligible);
+            } else {
+                beginSharedCombatPreventionChoice(gameData,
+                        new com.github.laxika.magicalvibes.model.ChoiceContext.CombatSharedDamagePreventionChoice(
+                                preventionSource.getId(), damageSource.getId(), controllerId, amount,
+                                new ArrayList<>(eligible.keySet()), eligible));
+                return true;
             }
         }
         return false;

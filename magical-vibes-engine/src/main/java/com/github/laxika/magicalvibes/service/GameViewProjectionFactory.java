@@ -605,7 +605,7 @@ public class GameViewProjectionFactory {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(data, perm)) continue;
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(data, perm)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(data, perm, pid)) {
                     if (effect instanceof PlayWithTopCardRevealedEffect topCardRevealed) {
                         // Public: visible to all
                         if (topCardRevealed.allPlayers()) {

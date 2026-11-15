@@ -237,12 +237,11 @@ public final class CombatHelper {
     public static void validateMaximumAttackers(GameData gameData, List<Integer> attackerIndices,
                                                 Map<Integer, UUID> attackTargets,
                                                 GameQueryService gameQueryService) {
-        gameData.forEachPermanent((sourceControllerId, permanent) -> {
-            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {
-                validateMaximumAttackers(limitOrNull(effect), sourceControllerId, permanent.getId(),
-                        attackerIndices, attackTargets);
-            }
-        });
+        for (GameQueryService.ActiveStaticEffect<CombatCreatureLimitEffect> active
+                : gameQueryService.activeStaticEffects(gameData, CombatCreatureLimitEffect.class)) {
+            validateMaximumAttackers(active.effect(), active.controllerId(), active.source().getId(),
+                    attackerIndices, attackTargets);
+        }
         if (gameData.planechase != null) {
             for (var planar : gameData.planechase.faceUp) {
                 for (CardEffect effect : planar.getCard().getStaticEffects()) {

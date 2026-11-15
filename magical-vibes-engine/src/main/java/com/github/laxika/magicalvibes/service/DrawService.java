@@ -300,21 +300,14 @@ public class DrawService {
      * runs it in one query scope rather than fingerprinting the board for every permanent it judges.
      */
     private boolean topCardRevealedByStaticAbility(GameData gameData, UUID drawingPlayerId) {
-        for (UUID ownerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(ownerId);
-            if (battlefield == null) {
+        for (GameQueryService.ActiveStaticEffect<PlayWithTopCardRevealedEffect> active
+                : gameQueryService.activeStaticEffects(gameData, PlayWithTopCardRevealedEffect.class)) {
+            Permanent permanent = active.source();
+            if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                 continue;
             }
-            for (Permanent permanent : battlefield) {
-                if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
-                    continue;
-                }
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent, ownerId)) {
-                    if (effect instanceof PlayWithTopCardRevealedEffect topCardRevealed
-                            && (topCardRevealed.allPlayers() || ownerId.equals(drawingPlayerId))) {
-                        return true;
-                    }
-                }
+            if (active.effect().allPlayers() || active.controllerId().equals(drawingPlayerId)) {
+                return true;
             }
         }
         return false;
@@ -1097,19 +1090,9 @@ public class DrawService {
 
     public boolean isDrawPrevented(GameData gameData, UUID playerId) {
         int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0);
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-            if (battlefield == null) continue;
-            for (Permanent perm : battlefield) {
-                boolean prevents = gameQueryService.getActiveStaticEffects(gameData, perm).stream()
-                        .filter(DrawRestrictionEffect.class::isInstance)
-                        .map(DrawRestrictionEffect.class::cast)
-                        .anyMatch(effect -> effect.appliesTo(pid, playerId)
-                                && effect.preventsDraw(cardsDrawnThisTurn));
-                if (prevents) return true;
-            }
-        }
-        return false;
+        return gameQueryService.activeStaticEffects(gameData, DrawRestrictionEffect.class).stream()
+                .anyMatch(active -> active.effect().appliesTo(active.controllerId(), playerId)
+                        && active.effect().preventsDraw(cardsDrawnThisTurn));
     }
 
     private boolean resolveChainsOfMephistophelesDrawReplacement(GameData gameData, UUID playerId) {
@@ -1136,38 +1119,12 @@ public class DrawService {
 
     /** Whether a Chains of Mephistopheles effect that replaces this player's draws is controlled by another player. */
     private boolean chainsControlledByOpponent(GameData gameData, UUID drawingPlayerId) {
-        for (UUID pid : gameData.orderedPlayerIds) {
-            if (pid.equals(drawingPlayerId)) {
-                continue;
-            }
-            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-            if (battlefield == null) {
-                continue;
-            }
-            for (Permanent permanent : battlefield) {
-                if (gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
-                        .anyMatch(ChainsOfMephistophelesDrawReplacement.class::isInstance)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return gameQueryService.activeStaticEffects(gameData, ChainsOfMephistophelesDrawReplacement.class).stream()
+                .anyMatch(active -> !active.controllerId().equals(drawingPlayerId));
     }
 
     private int countChainsOfMephistopheles(GameData gameData) {
-        int count = 0;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-            if (battlefield == null) {
-                continue;
-            }
-            for (Permanent permanent : battlefield) {
-                count += gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
-                        .filter(ChainsOfMephistophelesDrawReplacement.class::isInstance)
-                        .count();
-            }
-        }
-        return count;
+        return gameQueryService.activeStaticEffects(gameData, ChainsOfMephistophelesDrawReplacement.class).size();
     }
 
     /** The mandatory exile-style replacements that currently compete for this player's draw, keyed by card name. */
@@ -1283,19 +1240,9 @@ public class DrawService {
     }
 
     private Permanent findExileTopCardFaceDownInsteadOfDrawSource(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return null;
-        }
-
-        for (Permanent permanent : battlefield) {
-            boolean hasEffect = gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
-                    .anyMatch(ExileTopCardFaceDownInsteadOfDrawReplacement.class::isInstance);
-            if (hasEffect) {
-                return permanent;
-            }
-        }
-        return null;
+        List<GameQueryService.ActiveStaticEffect<ExileTopCardFaceDownInsteadOfDrawReplacement>> sources =
+                gameQueryService.activeStaticEffects(gameData, playerId, ExileTopCardFaceDownInsteadOfDrawReplacement.class);
+        return sources.isEmpty() ? null : sources.getFirst().source();
     }
 
     private Permanent findDrawFromAnywhereSource(GameData gameData, UUID playerId) {
@@ -2832,21 +2779,12 @@ public class DrawService {
 
     private Permanent findExileTopCardsMayPlayThisTurnDrawReplacementSource(GameData gameData,
                                                                              UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return null;
-        }
-
-        for (Permanent permanent : battlefield) {
-            boolean hasEffect = gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
-                    .filter(ExileTopCardsMayPlayThisTurnDrawReplacementEffect.class::isInstance)
-                    .map(ExileTopCardsMayPlayThisTurnDrawReplacementEffect.class::cast)
-                    .anyMatch(effect -> !effect.withoutPayingManaCost());
-            if (hasEffect) {
-                return permanent;
-            }
-        }
-        return null;
+        return gameQueryService.activeStaticEffects(gameData, playerId,
+                        ExileTopCardsMayPlayThisTurnDrawReplacementEffect.class).stream()
+                .filter(active -> !active.effect().withoutPayingManaCost())
+                .map(GameQueryService.ActiveStaticEffect::source)
+                .findFirst()
+                .orElse(null);
     }
 
     private void resolveExileTopCardsMayPlayThisTurnDrawReplacement(GameData gameData, UUID playerId,

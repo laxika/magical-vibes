@@ -672,17 +672,12 @@ public class LifeSupport {
     }
 
     private boolean hasNefariousLichLifeGainReplacement(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        return battlefield != null && battlefield.stream().anyMatch(permanent ->
-                gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
-                .anyMatch(NefariousLichLifeGainReplacementEffect.class::isInstance));
+        return !gameQueryService.activeStaticEffects(gameData, playerId, NefariousLichLifeGainReplacementEffect.class)
+                .isEmpty();
     }
 
     private boolean hasOtherLifeGainReplacement(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        return battlefield != null && battlefield.stream().anyMatch(permanent ->
-                gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
-                .anyMatch(LifeGainReplacementEffect.class::isInstance));
+        return !gameQueryService.activeStaticEffects(gameData, playerId, LifeGainReplacementEffect.class).isEmpty();
     }
 
     /**
@@ -784,12 +779,11 @@ public class LifeSupport {
     }
 
     private List<Permanent> lifeLossShieldSources(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return List.of();
-        return battlefield.stream()
+        return gameQueryService.activeStaticEffects(gameData, playerId, LichDuelMasteryLifeLossReplacementEffect.class)
+                .stream()
+                .map(GameQueryService.ActiveStaticEffect::source)
                 .filter(source -> !source.isFaceDown())
-                .filter(source -> gameQueryService.getActiveStaticEffects(gameData, source).stream()
-                        .anyMatch(LichDuelMasteryLifeLossReplacementEffect.class::isInstance))
+                .distinct()
                 .toList();
     }
 

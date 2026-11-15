@@ -1044,7 +1044,7 @@ class TurnCleanupServiceTest {
             card.addStaticEffect(new NoMaximumHandSizeEffect());
             Permanent permanent = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(permanent);
-            lenient().when(gameQueryService.getActiveStaticEffects(gd, permanent))
+            lenient().when(gameQueryService.getActiveStaticEffects(gd, permanent, player1Id))
                     .thenReturn(card.getStaticEffects());
 
             assertThat(sut.hasNoMaximumHandSize(gd, player1Id)).isTrue();
@@ -1089,7 +1089,7 @@ class TurnCleanupServiceTest {
             card.addStaticEffect(new PlayersHaveNoMaximumHandSizeEffect());
             Permanent permanent = new Permanent(card);
             gd.playerBattlefields.get(player2Id).add(permanent);
-            lenient().when(gameQueryService.getActiveStaticEffects(gd, permanent))
+            lenient().when(gameQueryService.getActiveStaticEffects(gd, permanent, player2Id))
                     .thenReturn(card.getStaticEffects());
 
             assertThat(sut.hasNoMaximumHandSize(gd, player1Id)).isTrue();

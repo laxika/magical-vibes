@@ -72,7 +72,7 @@ public class MillReplacements implements ReplacementCandidateSource<MillEvent> {
                     || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
                 return;
             }
-            List<CardEffect> effects = gameQueryService.getActiveStaticEffects(gameData, permanent);
+            List<CardEffect> effects = gameQueryService.getActiveStaticEffects(gameData, permanent, controllerId);
             for (int i = 0; i < effects.size(); i++) {
                 CardEffect effect = effects.get(i);
                 String key = "Mill:" + permanent.getId() + ":" + i;

@@ -364,44 +364,42 @@ public class AttackLegalityService {
         // Restrictions come from static abilities of the protected player's permanents (Form of the
         // Dragon, Sandwurm Convergence) and from player-scoped floating effects (Island Sanctuary's
         // "until your next turn" shield, which persists independently of its source permanent).
-        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(protectedPlayerId);
-        if (defenderBattlefield != null) {
-            for (Permanent source : defenderBattlefield) {
-                FilterContext context = FilterContext.of(gameData)
-                        .withSourceCardId(source.getCard().getId())
-                        .withSourcePermanentId(source.getId())
-                        .withSourceControllerId(protectedPlayerId);
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
-                    if (effect instanceof ConditionalEffect conditional) {
-                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                                ConditionContext.forStaticEffect(source, protectedPlayerId))) {
-                            continue;
-                        }
-                        effect = conditional.wrapped();
-                    }
-                    if (effect instanceof EnchantedCreatureAttackRestrictionEffect
-                            && (targetIsPlayer || !(effect instanceof EnchantedCreatureCantAttackPlayerEffect)
-                            && targetPermanent != null
-                            && gameQueryService.isPlaneswalker(gameData, targetPermanent))
-                            && !source.isAuraEffectsIgnoredFor(
-                                    gameQueryService.findPermanentController(gameData, attacker.getId()))
-                            && source.isAttached()
-                            && attacker.getId().equals(source.getAttachedTo())) {
-                        return false;
-                    }
-                    if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
-                            && (targetIsPlayer || restriction.protectsPlaneswalkers()
-                            && gameQueryService.isPlaneswalker(gameData,
-                            gameQueryService.findPermanentById(gameData, targetId))
-                            || restriction.protectsPermanents())
-                            && (restriction.restrictedAttackerId() == null
-                            || restriction.restrictedAttackerId().equals(
-                            gameData.findControllerOf(attacker)))
-                            && !predicateEvaluationService.matchesPermanentPredicate(
-                            attacker, restriction.exemptionPredicate(), context)) {
-                        return false;
-                    }
+        for (GameQueryService.ActiveStaticEffect<CardEffect> active
+                : gameQueryService.activeStaticEffects(gameData, protectedPlayerId, CardEffect.class)) {
+            Permanent source = active.source();
+            FilterContext context = FilterContext.of(gameData)
+                    .withSourceCardId(source.getCard().getId())
+                    .withSourcePermanentId(source.getId())
+                    .withSourceControllerId(protectedPlayerId);
+            CardEffect effect = active.effect();
+            if (effect instanceof ConditionalEffect conditional) {
+                if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forStaticEffect(source, protectedPlayerId))) {
+                    continue;
                 }
+                effect = conditional.wrapped();
+            }
+            if (effect instanceof EnchantedCreatureAttackRestrictionEffect
+                    && (targetIsPlayer || !(effect instanceof EnchantedCreatureCantAttackPlayerEffect)
+                    && targetPermanent != null
+                    && gameQueryService.isPlaneswalker(gameData, targetPermanent))
+                    && !source.isAuraEffectsIgnoredFor(
+                            gameQueryService.findPermanentController(gameData, attacker.getId()))
+                    && source.isAttached()
+                    && attacker.getId().equals(source.getAttachedTo())) {
+                return false;
+            }
+            if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
+                    && (targetIsPlayer || restriction.protectsPlaneswalkers()
+                    && gameQueryService.isPlaneswalker(gameData,
+                    gameQueryService.findPermanentById(gameData, targetId))
+                    || restriction.protectsPermanents())
+                    && (restriction.restrictedAttackerId() == null
+                    || restriction.restrictedAttackerId().equals(
+                    gameData.findControllerOf(attacker)))
+                    && !predicateEvaluationService.matchesPermanentPredicate(
+                    attacker, restriction.exemptionPredicate(), context)) {
+                return false;
             }
         }
         synchronized (gameData.floatingEffects) {
@@ -469,27 +467,18 @@ public class AttackLegalityService {
                 : targetPermanent == null ? null
                 : gameQueryService.findPermanentController(gameData, targetId);
 
-        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
-            if (battlefield == null) {
+        for (GameQueryService.ActiveStaticEffect<AttackTargetDirectionRestrictionEffect> active
+                : gameQueryService.activeStaticEffects(gameData, AttackTargetDirectionRestrictionEffect.class)) {
+            Permanent source = active.source();
+            AttackDirection direction = chosenDirection(source);
+            if (direction == null || source.isFaceDown()
+                    || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
                 continue;
             }
-            for (Permanent source : battlefield) {
-                AttackDirection direction = chosenDirection(source);
-                if (direction == null || source.isFaceDown()
-                        || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
-                    continue;
-                }
-                boolean hasRestriction = gameQueryService.getActiveStaticEffects(gameData, source).stream()
-                        .anyMatch(AttackTargetDirectionRestrictionEffect.class::isInstance);
-                if (!hasRestriction) {
-                    continue;
-                }
-                UUID nearestOpponent = nearestOpponentInDirection(gameData, attackerControllerId, direction);
-                if (nearestOpponent == null || !nearestOpponent.equals(targetControllerId)
-                        || (!targetIsPlayer && !targetIsPlaneswalker)) {
-                    return true;
-                }
+            UUID nearestOpponent = nearestOpponentInDirection(gameData, attackerControllerId, direction);
+            if (nearestOpponent == null || !nearestOpponent.equals(targetControllerId)
+                    || (!targetIsPlayer && !targetIsPlaneswalker)) {
+                return true;
             }
         }
         return false;

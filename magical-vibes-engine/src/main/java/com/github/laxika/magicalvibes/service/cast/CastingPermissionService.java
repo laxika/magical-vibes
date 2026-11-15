@@ -648,26 +648,22 @@ public class CastingPermissionService {
 
         int tightestMax = Integer.MAX_VALUE;
         boolean restricted = false;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            if (pid.equals(castingPlayerId)) continue;
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
-                    if (effect instanceof OpponentsCantCastSpellsWithManaValueGreaterThanEffect restriction
-                            && (restriction.spellFilter() == null
-                            || predicateEvaluationService.matchesCardPredicate(card,
-                            restriction.spellFilter(), null, gameData, castingPlayerId))) {
-                        int limit = amountEvaluationService.evaluate(gameData,
-                                restriction.manaValueLimit(),
-                                new AmountContext(castingPlayerId, perm, castingPlayerId, 0, 0));
-                        if (manaValue > limit) return true;
-                    }
-                    if (effect instanceof OpponentsCantCastSpellsWithManaValueAtMostEffect restriction) {
-                        restricted = true;
-                        tightestMax = Math.min(tightestMax, restriction.maxManaValue());
-                    }
-                }
+        for (GameQueryService.ActiveStaticEffect<CardEffect> active
+                : gameQueryService.activeStaticEffects(gameData, CardEffect.class)) {
+            if (active.controllerId().equals(castingPlayerId)) continue;
+            CardEffect effect = active.effect();
+            if (effect instanceof OpponentsCantCastSpellsWithManaValueGreaterThanEffect restriction
+                    && (restriction.spellFilter() == null
+                    || predicateEvaluationService.matchesCardPredicate(card,
+                    restriction.spellFilter(), null, gameData, castingPlayerId))) {
+                int limit = amountEvaluationService.evaluate(gameData,
+                        restriction.manaValueLimit(),
+                        new AmountContext(castingPlayerId, active.source(), castingPlayerId, 0, 0));
+                if (manaValue > limit) return true;
+            }
+            if (effect instanceof OpponentsCantCastSpellsWithManaValueAtMostEffect restriction) {
+                restricted = true;
+                tightestMax = Math.min(tightestMax, restriction.maxManaValue());
             }
         }
         if (!restricted) return exactRestricted;
@@ -2416,7 +2412,7 @@ public class CastingPermissionService {
                 .filter(permanent -> !permanent.isFaceDown())
                 .filter(permanent -> !gameQueryService.hasLostPrintedAbilities(gameData, permanent))
                 .flatMap(permanent -> Stream.concat(
-                        gameQueryService.getActiveStaticEffects(gameData, permanent).stream(),
+                        gameQueryService.getActiveStaticEffects(gameData, permanent, playerId).stream(),
                         gameQueryService.getGrantedEffects(gameData, permanent).stream()))
                 .anyMatch(effect -> effect instanceof LookAtTopCardOfOwnLibraryEffect
                         || effect instanceof ConditionalEffect conditional

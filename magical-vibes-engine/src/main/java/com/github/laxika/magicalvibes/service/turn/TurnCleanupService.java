@@ -320,7 +320,8 @@ public class TurnCleanupService {
 
         gameData.forEachPermanent((playerId, p) -> {
             // CR 514.2 — remove all damage marked on permanents during cleanup step
-            List<CardEffect> activeStaticEffects = new ArrayList<>(gameQueryService.getActiveStaticEffects(gameData, p));
+            List<CardEffect> activeStaticEffects =
+                    new ArrayList<>(gameQueryService.getActiveStaticEffects(gameData, p, playerId));
             activeStaticEffects.addAll(gameQueryService.getGrantedEffects(gameData, p));
             activeStaticEffects.addAll(p.getPersistentStaticEffects());
             boolean damagePersists = !p.isLosesAllAbilitiesUntilEndOfTurn()
@@ -835,17 +836,9 @@ public class TurnCleanupService {
      * @param gameData the current game state to modify
      */
     public void drainManaPools(GameData gameData) {
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                if (gameQueryService.getActiveStaticEffects(gameData, perm).stream()
-                        .filter(PreventManaDrainEffect.class::isInstance)
-                        .map(PreventManaDrainEffect.class::cast)
-                        .anyMatch(effect -> effect.color() == null)) {
-                    return;
-                }
-            }
+        if (gameQueryService.activeStaticEffects(gameData, PreventManaDrainEffect.class).stream()
+                .anyMatch(active -> active.effect().color() == null)) {
+            return;
         }
 
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -872,15 +865,10 @@ public class TurnCleanupService {
 
     private Set<ManaColor> protectedManaColors(GameData gameData, UUID playerId) {
         EnumSet<ManaColor> protectedColors = EnumSet.noneOf(ManaColor.class);
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield != null) {
-            for (Permanent permanent : battlefield) {
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {
-                    if (effect instanceof PreventManaDrainEffect prevent
-                            && prevent.color() != null) {
-                        protectedColors.add(prevent.color());
-                    }
-                }
+        for (GameQueryService.ActiveStaticEffect<PreventManaDrainEffect> active
+                : gameQueryService.activeStaticEffects(gameData, playerId, PreventManaDrainEffect.class)) {
+            if (active.effect().color() != null) {
+                protectedColors.add(active.effect().color());
             }
         }
         synchronized (gameData.floatingEffects) {
@@ -949,7 +937,7 @@ public class TurnCleanupService {
                         .anyMatch(com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect.class::isInstance);
                 List<CardEffect> staticEffects = nested
                         ? unconditionalPrintedStaticEffects(gameData, perm)
-                        : gameQueryService.getActiveStaticEffects(gameData, perm);
+                        : gameQueryService.getActiveStaticEffects(gameData, perm, otherPlayerId);
                 for (CardEffect effect : staticEffects) {
                     if (effect instanceof OpponentMaxHandSizeEffect handSizeEffect) {
                         UUID affectedPlayerId = null;
@@ -1117,7 +1105,7 @@ public class TurnCleanupService {
                 }
                 List<CardEffect> staticEffects = gameQueryService == null
                         ? perm.getCard().getStaticEffects()
-                        : gameQueryService.getActiveStaticEffects(gameData, perm);
+                        : gameQueryService.getActiveStaticEffects(gameData, perm, playerId);
                 if (staticEffects.stream().anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
                     HandSizeStamp stamp = new HandSizeStamp(perm.getTimestamp(), handSizePosition(gameData, perm));
                     if (noMaximumStamp == null || stamp.isNewerThan(noMaximumStamp)) {
@@ -1150,15 +1138,15 @@ public class TurnCleanupService {
                 checkingGrantedHandSizeEffects.remove();
             }
         }
-        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-            if (battlefield == null) {
+        for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
+            if (battlefield.getValue() == null) {
                 continue;
             }
-            for (Permanent perm : battlefield) {
+            for (Permanent perm : battlefield.getValue()) {
                 // A face-down or ability-losing permanent has no printed static abilities (CR 708.2).
                 List<CardEffect> staticEffects = gameQueryService == null
                         ? perm.getCard().getStaticEffects()
-                        : gameQueryService.getActiveStaticEffects(gameData, perm);
+                        : gameQueryService.getActiveStaticEffects(gameData, perm, battlefield.getKey());
                 if (staticEffects.stream().anyMatch(PlayersHaveNoMaximumHandSizeEffect.class::isInstance)) {
                     return true;
                 }
