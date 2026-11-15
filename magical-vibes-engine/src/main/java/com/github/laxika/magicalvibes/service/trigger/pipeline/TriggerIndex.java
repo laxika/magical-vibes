@@ -71,8 +71,8 @@ import java.util.UUID;
  * last-known copies, and the cards in graveyards and face up in exile that were there before it (the haunting
  * cards among them, CR 702.55c). For another kind of move they are listed as they are after it, and a permanent
  * that entered is listed for its enters abilities (CR 603.6a); cards in command zones are listed too. The face-up
- * planes and schemes are listed for either kind of move, their abilities functioning from the command zone (CR 901.7,
- * 314.4). Abilities their
+ * planes, the emblems and the face-up schemes are listed for either kind of move, their abilities functioning from the
+ * command zone (CR 901.7, 114.4, 314.4). Abilities their
  * owner perpetually lost are left out everywhere. {@link #permanentChangeCandidates} lists the abilities that see a
  * permanent phase, transform or be turned face up.
  *
@@ -164,9 +164,9 @@ public class TriggerIndex {
     }
 
     /**
-     * The face-up planar objects' and schemes' zone-change abilities, which trigger from the command zone (CR 901.7,
-     * 314.4): a plane's under the planar controller's control (CR 901.6), a scheme's as the permanent view its steps
-     * read it as, under its owner's control. {@code departure} is as {@link #battlefieldCandidates} reads it.
+     * The face-up planar objects', emblems' and schemes' zone-change abilities, which trigger from the command zone
+     * (CR 901.7, 114.4, 314.4): a plane's under the planar controller's control (CR 901.6), an emblem's under its
+     * controller's, a scheme's as the permanent view its steps read it as, under its owner's control. {@code departure} is as {@link #battlefieldCandidates} reads it.
      */
     private void commandZoneObjectCandidates(GameData gameData, List<ZoneChangeEvent> batch, boolean departure,
                                              List<TriggerCandidate> into) {
@@ -178,6 +178,14 @@ public class TriggerIndex {
                     if (ability.conditions().stream().anyMatch(c -> c.trigger() instanceof ZoneChangeTrigger)) {
                         into.add(new TriggerCandidate(card, null, planarControllerId, Zone.COMMAND, ability, plane));
                     }
+                }
+            }
+        }
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
+                if (ability.conditions().stream().anyMatch(c -> c.trigger() instanceof ZoneChangeTrigger)) {
+                    into.add(new TriggerCandidate(emblem.sourceCard(), null, emblem.controllerId(), Zone.COMMAND,
+                            ability, null, emblem));
                 }
             }
         }
@@ -237,8 +245,19 @@ public class TriggerIndex {
             triggered(departure.grantedAbilities(), gained);
         }
         gained.addAll(lastKnown.getTemporaryTriggeredAbilities());
+        // A permanent that left in the same event sees the others leave only with an ability that looks back
+        // (CR 603.10a): "whenever another card is put into a graveyard from anywhere" doesn't see the cards put there
+        // with it (CR 603.6c; Planar Void's and Bloodchief Ascension's rulings).
+        printed.removeIf(ability -> !looksBackOnAZoneChange(ability));
+        gained.removeIf(ability -> !looksBackOnAZoneChange(ability));
         addZoneChangeCandidates(printedSource, lastKnown, departure.controllerId(), Zone.BATTLEFIELD, printed, into);
         addZoneChangeCandidates(departure.card(), lastKnown, departure.controllerId(), Zone.BATTLEFIELD, gained, into);
+    }
+
+    /** Whether one of {@code ability}'s zone-change trigger conditions looks back in time (CR 603.10a). */
+    private static boolean looksBackOnAZoneChange(TriggeredAbility ability) {
+        return ability.conditions().stream().anyMatch(condition ->
+                condition.trigger() instanceof ZoneChangeTrigger trigger && TriggerMatcher.looksBack(trigger));
     }
 
     /**

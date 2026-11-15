@@ -3292,10 +3292,6 @@ public class PermanentRemovalService {
                 triggerCollectionService.triggerDelayedReturnOnDeath(
                         gameData, target.getCard().getId(), target.getOriginalCard(), ownerId);
             }
-            if (!creatureDeathTriggersSuppressed) {
-                triggerCollectionService.checkEmblemPutIntoGraveyardFromBattlefieldTriggers(
-                        gameData, ownerId, controllerId, target.getOriginalCard(), target);
-            }
             if (destroyedBySpellOrAbility && !wasCreature) {
                 recordNoncreaturePermanentDestroyedByOpponent(gameData, target, controllerId);
             }

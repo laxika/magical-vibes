@@ -75,6 +75,60 @@ class EventAbilitySupport {
         return abilities;
     }
 
+    /**
+     * The watchers whose abilities may see an event: the permanents on the battlefield, each under its controller, then
+     * the emblems, whose abilities function in the command zone (CR 114.4).
+     */
+    List<Watcher> watchers(GameData gameData) {
+        List<Watcher> watchers = new ArrayList<>();
+        gameData.forEachPermanent((controllerId, permanent) -> watchers.add(Watcher.of(permanent, controllerId)));
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            watchers.add(Watcher.of(emblem));
+        }
+        return watchers;
+    }
+
+    /**
+     * The abilities of {@code watcher} with a trigger condition watched as {@code watched}: a permanent's as the layers
+     * leave them ({@link #abilities(GameData, Permanent, Trigger)}), an emblem's as it has them.
+     */
+    List<TriggeredAbility> abilities(GameData gameData, Watcher watcher, Trigger watched) {
+        if (watcher.emblem() == null) {
+            return abilities(gameData, watcher.permanent(), watched);
+        }
+        return watcher.emblem().triggeredAbilities().stream()
+                .filter(ability -> ability.hasWatchedTrigger(watched)).toList();
+    }
+
+    /**
+     * Hands {@code ability} of {@code watcher} to the stack door as
+     * {@link #put(GameData, TriggeredAbility, Card, Permanent, UUID, ConditionContext, TriggerRecord)} does. An emblem's
+     * ability has its emblem's card as its source and no source permanent; it is an emblem's (CR 114.4), which only the
+     * effects that count an emblem's abilities make trigger an additional time, and its targets are only those its own
+     * effects declare.
+     *
+     * @return whether it triggered
+     */
+    boolean put(GameData gameData, TriggeredAbility ability, Watcher watcher, ConditionContext context,
+                TriggerRecord record) {
+        if (watcher.emblem() == null) {
+            return put(gameData, ability, watcher.card(), watcher.permanent(), watcher.controllerId(), context, record);
+        }
+        if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), context)) {
+            return false;
+        }
+        String description = emblemName(watcher.emblem());
+        boolean triggered = stackService.put(gameData, new TriggeredAbilityRequest(ability, watcher.card(), null,
+                watcher.controllerId(), description, context, entry -> {
+                    entry.setMadeByResolution(true);
+                    record.stamp(entry);
+                }).ofEmblem());
+        if (triggered) {
+            gameLogService.append(gameData, GameLog.text(description + " triggers."));
+        }
+        return triggered;
+    }
+
     /** The abilities of {@code card} in a graveyard with a trigger condition watched as {@code watched} that functions there. */
     List<TriggeredAbility> graveyardAbilities(GameData gameData, Card card, Trigger watched) {
         List<TriggeredAbility> abilities = new ArrayList<>();

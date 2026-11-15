@@ -199,10 +199,11 @@ public class SpellTriggers {
         dispatchFaceUpSchemes(gameData, OPPONENT_CASTS, event, ownerId -> !ownerId.equals(castingPlayerId));
         dispatchSuspendedExiledCardSpellCastTriggers(gameData, castingPlayerId, event);
 
-        // The emblems' cast abilities (Ajani, Jace, Telepath Unbound, Ral, Garruk, Caller of Beasts, Venser, ...).
-        for (Emblem emblem : gameData.emblems) {
-            collectEmblemCastAbilities(gameData, emblem, event);
-        }
+        // The emblems' cast abilities (Ajani, Jace, Telepath Unbound, Ral, Garruk, Caller of Beasts, Venser, ...),
+        // functioning in the command zone (CR 114.4), read by the watches the permanents' are.
+        dispatchEmblems(gameData, PLAYER_CASTS, event, controllerId -> true);
+        dispatchEmblems(gameData, YOU_CAST, event, castingPlayerId::equals);
+        dispatchEmblems(gameData, OPPONENT_CASTS, event, controllerId -> !controllerId.equals(castingPlayerId));
 
         // The spell as it is on the stack, its mana spent recorded as it became cast: the graveyard and hand abilities
         // below judge their intervening "if" on it and keep it as their triggering spell for the check as they
@@ -462,48 +463,6 @@ public class SpellTriggers {
                 .filter(spell -> predicateEvaluationService.matchesCardPredicate(spell, filter.spell(), null))
                 .count();
         return matchingSpells == filter.nthThisTurn();
-    }
-
-    /**
-     * The readers of a card that isn't a permanent (a spell's "when you cast this spell" and "when this spell is
-     * countered" abilities, a suspended card's) judge no limit, which is kept on a permanent; a card with one there
-     * fails loudly instead of triggering wrongly.
-     */
-    /**
-     * Collects {@code emblem}'s cast abilities ("whenever you cast a creature or planeswalker spell, …", "whenever a
-     * player casts a spell, …") for the spell {@code spellCast} names. Abilities of emblems function in the command
-     * zone (CR 114.4), whatever zones their trigger conditions name. The emblem has no permanent, so the generic cast
-     * collector judges each ability's spell filter, intervening "if" and target filter with the emblem as its source,
-     * and puts it on the stack once: nothing makes an emblem's ability trigger additional times. An ability takes no
-     * limit here.
-     */
-    private void collectEmblemCastAbilities(GameData gameData, Emblem emblem, SpellEvent.Cast spellCast) {
-        for (TriggeredAbility ability : emblem.triggeredAbilities()) {
-            for (TriggerCondition condition : ability.conditions()) {
-                if (!(condition.trigger() instanceof SpellTrigger spell)
-                        || spell.event() != SpellTrigger.SpellEvent.CAST
-                        || !castByRelatedPlayer(spell.player(), emblem.controllerId(), spellCast.castingPlayerId())) {
-                    continue;
-                }
-                requireNoLimit(ability, emblem.sourceCard());
-                collectCastAbility(
-                        new TriggerMatchContext(gameData, null, emblem.controllerId(), List.of(), emblem.sourceCard(),
-                                (PlanarObject) null),
-                        CastAbility.of(ability, spell.filter() == null ? SpellFilter.ANY : spell.filter()),
-                        spellCast, false);
-                break;
-            }
-        }
-    }
-
-    /** Whether {@code castingPlayerId} is the player {@code relation} names, relative to {@code controllerId}. */
-    private static boolean castByRelatedPlayer(com.github.laxika.magicalvibes.model.trigger.PlayerRelation relation,
-                                               UUID controllerId, UUID castingPlayerId) {
-        return switch (relation) {
-            case ANY -> true;
-            case YOU -> controllerId.equals(castingPlayerId);
-            case OPPONENT -> !controllerId.equals(castingPlayerId);
-        };
     }
 
     /** As {@link #requireNoOptions}, for the graveyard and hand cast readers, which judge an intervening "if" (CR 603.4). */
@@ -1657,19 +1616,44 @@ public class SpellTriggers {
      */
     private void dispatchCardSpellAbilities(GameData gameData, Card card, UUID controllerId, Trigger watched,
                                             Zone zone, SpellEvent event, PlanarObject planarObject) {
-        for (TriggeredAbility ability : card.getTriggeredAbilities()) {
-            SpellFilter filter = collectedSpellFilter(ability, watched, zone, false);
+        dispatchCardSpellAbilities(gameData, card.getTriggeredAbilities(), card, controllerId, watched, zone, false,
+                event, planarObject);
+    }
+
+    /**
+     * The emblems' abilities watched as {@code watched} whose controller {@code related} relates to the event's player,
+     * read as a card's are ({@link #dispatchCardSpellAbilities}): an emblem's abilities function in the command zone
+     * (CR 114.4), whatever zones their conditions name.
+     */
+    private void dispatchEmblems(GameData gameData, Trigger watched, SpellEvent event, Predicate<UUID> related) {
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            if (related.test(emblem.controllerId())) {
+                dispatchCardSpellAbilities(gameData, emblem.triggeredAbilities(), emblem.sourceCard(),
+                        emblem.controllerId(), watched, Zone.COMMAND, true, event, null);
+            }
+        }
+    }
+
+    /**
+     * {@code abilities} of {@code card}, a card that isn't a permanent, watched as {@code watched} from {@code zone}
+     * (from any zone when {@code anyZone}), each read as its trigger is: a spell filter, a land play, or neither.
+     */
+    private void dispatchCardSpellAbilities(GameData gameData, List<TriggeredAbility> abilities, Card card,
+                                            UUID controllerId, Trigger watched, Zone zone, boolean anyZone,
+                                            SpellEvent event, PlanarObject planarObject) {
+        for (TriggeredAbility ability : abilities) {
+            SpellFilter filter = collectedSpellFilter(ability, watched, zone, anyZone);
             if (filter != null) {
                 collectSpellAbility(gameData, null, card, controllerId, watched, event, ability, filter,
                         planarObject);
                 continue;
             }
-            LandPlayTrigger landPlay = watchedLandPlayTrigger(ability, watched, zone, false);
+            LandPlayTrigger landPlay = watchedLandPlayTrigger(ability, watched, zone, anyZone);
             if (landPlay != null) {
                 collectLandPlayAbility(gameData, null, card, controllerId, event, ability, landPlay, planarObject);
                 continue;
             }
-            if (!ability.hasWatchedTrigger(watched, zone)) {
+            if (anyZone ? !ability.hasWatchedTrigger(watched) : !ability.hasWatchedTrigger(watched, zone)) {
                 continue;
             }
             collectUnfilteredAbility(gameData, null, card, controllerId, event, ability, UnaryOperator.identity(),

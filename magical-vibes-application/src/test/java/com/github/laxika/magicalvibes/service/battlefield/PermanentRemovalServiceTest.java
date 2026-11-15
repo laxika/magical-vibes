@@ -606,45 +606,6 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
-        @DisplayName("Collects the emblems' put-into-your-graveyard-from-the-battlefield triggers for an artifact")
-        void firesArtifactGraveyardTrigger() {
-            Permanent artifact = addPermanent(player1Id, createArtifact("Spellbook"));
-            artifact.setCounterCount(CounterType.CHARGE, 2);
-            when(gameQueryService.isCreature(gd, artifact)).thenReturn(false);
-            lenient().when(gameQueryService.isArtifact(gd, artifact)).thenReturn(true);
-            lenient().when(gameQueryService.isArtifact(artifact)).thenReturn(true);
-            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
-                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false))).thenReturn(true);
-
-            prs.removePermanentToGraveyard(gd, artifact);
-
-            verify(triggerCollectionService).checkEmblemPutIntoGraveyardFromBattlefieldTriggers(
-                    eq(gd), eq(player1Id), eq(player1Id), eq(artifact.getOriginalCard()),
-                    argThat((Permanent lastKnown) -> lastKnown.getCounterCount(CounterType.CHARGE) == 2));
-        }
-
-        @Test
-        @DisplayName("Collects the emblems' put-into-your-graveyard-from-the-battlefield triggers for a sacrificed "
-                + "artifact")
-        void artifactGraveyardTriggerForSacrifice() {
-            Permanent artifact = addPermanent(player1Id, createArtifact("Spellbook"));
-            artifact.setCounterCount(CounterType.CHARGE, 2);
-            when(gameQueryService.isCreature(gd, artifact)).thenReturn(false);
-            lenient().when(gameQueryService.isArtifact(gd, artifact)).thenReturn(true);
-            lenient().when(gameQueryService.isArtifact(artifact)).thenReturn(true);
-            when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
-                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false)))
-                    .thenReturn(true);
-
-            assertThat(prs.sacrificePermanentToGraveyard(gd, artifact)).isTrue();
-
-            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(artifact);
-            verify(triggerCollectionService).checkEmblemPutIntoGraveyardFromBattlefieldTriggers(
-                    eq(gd), eq(player1Id), eq(player1Id), eq(artifact.getOriginalCard()),
-                    argThat((Permanent lastKnown) -> lastKnown.getCounterCount(CounterType.CHARGE) == 2));
-        }
-
-        @Test
         @DisplayName("Records an enchantment put into a graveyard from the battlefield")
         void firesEnchantmentGraveyardTrigger() {
             Permanent enchantment = addPermanent(player1Id, createEnchantment("Pacifism"));

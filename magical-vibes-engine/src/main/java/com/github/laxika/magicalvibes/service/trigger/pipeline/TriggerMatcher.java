@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 
 import com.github.laxika.magicalvibes.model.trigger.DamageTrigger;
@@ -58,6 +59,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
+import java.util.Set;
 import java.util.UUID;
 
 /** Decides whether a rules event meets a candidate ability's trigger condition. No per-slot code. */
@@ -69,8 +71,8 @@ final class TriggerMatcher {
     /**
      * The first of the ability's trigger conditions that {@code event} meets, or {@code null}. A condition is met
      * when its trigger is a zone change of this kind, the moving object relates to the source as the trigger says,
-     * and the source is in a zone the condition functions from (CR 113.6); a face-up plane's abilities function from
-     * the command zone whatever zones its conditions name (CR 901.7).
+     * and the source is in a zone the condition functions from (CR 113.6); a face-up plane's and an emblem's abilities
+     * function from the command zone whatever zones its conditions name (CR 901.7, 114.4).
      *
      * @param movingObject whether the candidate's source is the object that moved, rather than another object that
      *                     sees it move
@@ -81,7 +83,7 @@ final class TriggerMatcher {
                                             boolean movingObject) {
         for (TriggerCondition condition : candidate.ability().conditions()) {
             if (condition.trigger() instanceof ZoneChangeTrigger trigger
-                    && (candidate.plane() != null || condition.zones().functionsIn(candidate.zone()))
+                    && (candidate.commandZoneObject() || condition.zones().functionsIn(candidate.zone()))
                     && trigger.matchesMove(event.from(), event.to(), event.cause())
                     && (!trigger.duringYourTurn() || gameData.activePlayerId != null
                     && gameData.activePlayerId.equals(candidate.controllerId()))
@@ -277,6 +279,13 @@ final class TriggerMatcher {
         if (event.permanent() == null) {
             return predicates.matchesPermanentPredicate(new Permanent(event.card()), trigger.filter(), null);
         }
+        if (event.leftBattlefield() && !looksBack(trigger)) {
+            // "Whenever a nonblack card is put into a graveyard from anywhere" is never a leaves-the-battlefield
+            // ability (CR 603.6c), so it doesn't look back (CR 603.10a): the card is judged as it is in its new zone.
+            Card arrived = event.permanent().getOriginalCard() != null ? event.permanent().getOriginalCard()
+                    : event.card();
+            return predicates.matchesPermanentPredicate(new Permanent(arrived), trigger.filter(), null);
+        }
         Permanent watcher = candidate.sourceAsPermanent();
         FilterContext context = FilterContext.of(gameData)
                 .withSourceControllerId(candidate.controllerId())
@@ -291,6 +300,18 @@ final class TriggerMatcher {
                     live != null ? live : event.permanent(), context);
         }
         return departedMatches(predicates, trigger.filter(), event.permanent(), event.attachments(), context);
+    }
+
+    /**
+     * Whether {@code trigger}, met by a permanent leaving the battlefield, looks back in time (CR 603.10a): a
+     * leaves-the-battlefield ability (CR 603.6c), one that triggers on a sacrifice, or one that triggers on an object
+     * put into a hand or a library. An ability that triggers on a card put into a zone "from anywhere" is never a
+     * leaves-the-battlefield ability (CR 603.6c), so it is judged on the game as the event left it.
+     */
+    static boolean looksBack(ZoneChangeTrigger trigger) {
+        return trigger.from().equals(Set.of(Zone.BATTLEFIELD))
+                || trigger.causes().contains(ZoneChangeCause.SACRIFICE)
+                || trigger.to() == Zone.HAND || trigger.to() == Zone.LIBRARY;
     }
 
     private static Permanent onBattlefield(GameData gameData, UUID permanentId) {

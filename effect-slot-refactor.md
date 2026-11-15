@@ -27,9 +27,9 @@ grep its `^#### Run` headings and read that range. The invariants those runs est
 | M2 | Rules events: spells, targets, damage (combat damage too), counters, life, tap | done but: C45, C46 |
 | M3 | Rules events: library, actions, sagas, the rest | done but: C47 |
 | R0 | Delete the dead `TriggerCollectionService` injections | done |
-| R1 | Emblems' and temporary-global abilities are zone-change candidates | open |
+| R1 | Emblems' abilities are `TriggerIndex` candidates for every family | done but: C49 |
 | R2 | Keyword abilities and departed sources are candidates; abilities as the layers leave them | open |
-| R3 | One delayed-ability model, matched by the pipeline | open |
+| R3 | One delayed-ability model (temporary-global abilities and every delayed list), listed for every family | open |
 | R4 | Cast bookkeeping at the cast's completion; `TriggerCollectionService` deleted | open |
 | F | Delete the legacy types; docs | open |
 
@@ -294,9 +294,9 @@ moment kept or a rule cited for moving it).
 | Sweep | What |
 |---|---|
 | R0 | Delete the injections of `TriggerCollectionService` that call nothing (about 280 main classes), and their tests' constructor arguments. No behaviour change. |
-| R1 | List emblems' and `TemporaryGlobalTriggeredAbility` zone-change abilities in `TriggerIndex.observerCandidates` (CR 114.4 for emblems); delete the emblem enters, death and graveyard readers and the temporary-global zone-change readers. Close C48. |
+| R1 | `TriggerIndex` lists emblems' abilities (they function in the command zone, CR 114.4) as candidates for every family, as it lists them for steps; each family's matcher judges them as it judges any other candidate, and the hand-written emblem readers go (the zone-change readers here, and those of `TapTriggers`, `LifeTriggers`, `DamageTriggers`, `LibraryTriggers`, `SpellTriggers`, `AttackTriggers`). Close C48. |
 | R2 | Prowess, increment and evolve are keyword abilities `TriggerIndex` lists for a permanent with the keyword (CR 702.108a, 702.100); a departed permanent's snapshot abilities are listed as it last existed (C46); becomes-the-target abilities are read as the layers leave them (C45). |
-| R3 | One `DelayedTriggeredAbility` in `GameData` (trigger condition, the objects its maker named, duration, once only, source and controller; CR 603.7) that `TriggerIndex` lists and `TriggerMatcher` matches. Convert every delayed list family by family (deaths and leaves, cast and activation copies, the rest); delete each drain as its family moves. Deep-copy test for the new state. |
+| R3 | An ability a resolving spell or ability creates is a delayed triggered ability (CR 603.7a), once only or for its stated duration (CR 603.7b). `TemporaryGlobalTriggeredAbility` is one already (source, controller, duration, the permanent and player it watches); make it the one delayed-ability model, listed by `TriggerIndex` for every family (deleting the hand loops over `temporaryGlobalTriggeredAbilities` in seven families and here), then convert the other delayed lists to it family by family (deaths and leaves, cast and activation copies, the rest), deleting each drain as its family moves. Deep-copy test for new state. |
 | R4 | The cast bookkeeping of `checkSpellCastTriggers` moves to the cast's completion (CR 601.2i), the ledger confirming the abilities' order; what is left (boons, sacrifice records) moves to the family that owns it; delete `TriggerCollectionService`. |
 
 ### F: delete the legacy types; docs
@@ -389,7 +389,8 @@ named, with the Oracle text of the cards involved read first.
 | C45 | R2 | `TargetTriggers` reads each watcher's becomes-the-target abilities as the old collectors did (`WatchedAbilities.printed`, duration and static grants, the mannequin and cloaked-ward cases), not as the layers leave them (`TriggerIndex.permanentAbilities`): an Aura's printed ability, one granted to the enchanted creature, bestow and a face-down cloaked ward are read differently, so making them uniform changes behaviour and needs its own ledger pass |
 | C46 | R2 | A damage source or watcher that may have left the battlefield before its ability is put (combat-damage dealers, departed ally watchers, Equipment, snapshotted self abilities: `CombatDamageTriggers.allWatchedAbilities` / `grantedCombatAbilities` / the ally and attached passes of `processCombatDamageToPlayerTriggers`, `DamageTriggers.dispatchSourceDealsCombatDamageTriggers` / `collectDealsDamageToCreatureAbilities` / `putEquipmentCombatDamageAbilities`) is read as it last existed by per-watch reads, not through `TriggerIndex`, which can't list a departed permanent's snapshot abilities yet |
 | C47 | F (closed) | Planar and scheme zone-change abilities (`TriggerCollectionService`'s planar enters, leaves, land-enters and death readers, the scheme leaves reader, the planar nonblack-card reader) still run at their old call sites, selecting abilities by their trigger's fields; `TriggerIndex` doesn't list planar or scheme candidates for zone changes, and moving them changes the moment they trigger, which needs its own ledger pass |
-| C48 | R1 | A battlefield departure's "put into a graveyard from anywhere" observers are read as leaves-the-battlefield abilities: `TriggerIndex.observerCandidates` lists them as they were before the event and `TriggerMatcher.filterMatches` judges their filter on the permanent as it last existed (CR 603.10a), but CR 603.6c says such an ability is never a leaves-the-battlefield ability (every observer written `Triggers.putIntoGraveyardFromAnywhere(filter, relation)`, The Dark Barony's "nonblack card" among them); changing it needs its own ledger pass over those cards |
+| C48 | R1 (closed) | A battlefield departure's "put into a graveyard from anywhere" observers are read as leaves-the-battlefield abilities: `TriggerIndex.observerCandidates` lists them as they were before the event and `TriggerMatcher.filterMatches` judges their filter on the permanent as it last existed (CR 603.10a), but CR 603.6c says such an ability is never a leaves-the-battlefield ability (every observer written `Triggers.putIntoGraveyardFromAnywhere(filter, relation)`, The Dark Barony's "nonblack card" among them); changing it needs its own ledger pass over those cards |
+| C49 | R2 | The combat-damage passes' emblem readers (`DamageTriggers.checkEmblemAllyCreatureCombatDamageToPlayerTriggers`, `checkEmblemCombatDamageTriggers`) are still hand-written: those passes read their watchers as `List<Permanent>` with departed watchers, batched fire marks and owner-relative passes, which C46 reworks; emblems join them as watchers there |
 
 **Fixes**
 
@@ -550,6 +551,13 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 **F (part 3: `TriggerCollectionService` split, mechanical).**
 - Moved to their owners, no behaviour change: the door's choice pumps (`TriggeredAbilityQueueService.beginStackDoorChoices`; callers call the queue and `ETBTokenTargetService` pumps directly), the zone-change and permanent-change requests and records (`ZoneChangeRequests`), the becomes-the-target and target-choice events (`TargetTriggers`), land play (`ActionEvents.landPlayed`, a special action, CR 116.2a) and dungeon completion (`ActionEvents`), equipment becoming attached (`AttachmentTriggers`), clash (`ClashSupport`), the tap batch (`GameData`), the `granted…` lookups (`GrantedTriggeredAbilitySupport`), two static filters (`TriggerMatcher`, `TriggerTargetCollector`).
 - Left: the engine-made cast and activation abilities (`checkSpellCastTriggers`, whose cast bookkeeping is interleaved with the abilities it puts, so moving it reorders them), the delayed, temporary, emblem and boon zone-change abilities, `recordSacrifice`'s boons. About 250 classes still inject the service without calling it.
+
+**R1.**
+- Emblems' zone-change abilities are observer candidates (`TriggerIndex.commandZoneObjectCandidates`, CR 114.4; `TriggerCandidate.emblem`, the request `ofEmblem` with `madeByResolution`); the enters, death, put-into-your-graveyard and graveyard readers are gone (`EmblemZoneChangeTriggersTest` replaces their unit tests).
+- `Watcher` (a permanent under its controller, or an emblem) is what the life, tap, draw and attacks-you matchers iterate (`EventAbilitySupport.watchers` / `abilities` / `put`); the spell matcher reads emblems by the cast watch keys (`dispatchEmblems`). Their emblem readers are gone; emblems now see every watch of those families (an emblem's life-loss, opponent-draw and "attacks you or your planeswalker" abilities, which no reader read before). The life matcher's guard against an ability's own target filter is gone (the door chooses it: Professor Dellian Fel's emblem).
+- C48 rules fix: "put into a graveyard from anywhere" doesn't look back (CR 603.6c, 603.10a; `TriggerMatcher.looksBack`): its filter is judged on the card in its new zone, and an observer that left in the same event doesn't see it (Planar Void's 2008-05-01 and Bloodchief Ascension's 2009-10-01 rulings). `PlanarVoidTest` (Akroma's Vengeance) and two `CompostTest` cases (Purelace, Deathlace) fail before.
+- Ledger: every line is a record gained (emblems' triggering permanent, snapshot, owner, toughness, mana value; draw records' "that player" and drawn card), random (drawn cards, discards, clashes) or a new test; no ability gained or lost in an existing test.
+- Open: C49.
 
 ## Prompt
 

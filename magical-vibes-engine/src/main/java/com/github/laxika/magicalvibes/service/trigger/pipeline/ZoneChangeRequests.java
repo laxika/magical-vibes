@@ -73,14 +73,26 @@ public class ZoneChangeRequests {
                 dies && trigger.causes().isEmpty()
                         && candidate.ability().options().multiplicity() == TriggerMultiplicity.ONE_OR_MORE,
                 dies && trigger.relation() == ObjectRelation.ENCHANTED);
-        // A plane's ability names the planar object it is an ability of, as it was when it triggered (CR 608.2h).
+        // A plane's ability names the planar object it is an ability of, as it was when it triggered (CR 608.2h). An
+        // emblem's targets are only those its own effects declare: none of its source card's groups is its.
         PlanarObject plane = candidate.plane() == null ? null : candidate.plane().copy();
-        TriggerRecord record = plane == null ? eventRecord : entry -> {
+        boolean emblem = candidate.emblem() != null;
+        TriggerRecord record = plane == null && !emblem ? eventRecord : entry -> {
+            if (emblem) {
+                entry.setMadeByResolution(true);
+            }
             eventRecord.stamp(entry);
-            entry.setSourcePlanarObject(plane);
+            if (plane != null) {
+                entry.setSourcePlanarObject(plane);
+            }
         };
         TriggeredAbilityRequest request = new TriggeredAbilityRequest(watchedAbility(gameData, candidate), sourceCard,
-                source, candidate.controllerId(), sourceCard.getName() + "'s ability", ifContext, record);
+                source, candidate.controllerId(),
+                sourceCard.getName() + (emblem ? "'s emblem" : "'s ability"), ifContext, record);
+        if (emblem) {
+            // An emblem isn't a permanent (CR 110.1): only the effects that count an emblem's abilities apply to it.
+            request = request.ofEmblem();
+        }
         if (event.enteredBattlefield() && event.permanent() != null && !createsTokens(candidate)) {
             Permanent entered = gameQueryService.findPermanentById(gameData, event.permanent().getId());
             request = request.withCause(new TriggerCause.Entered(

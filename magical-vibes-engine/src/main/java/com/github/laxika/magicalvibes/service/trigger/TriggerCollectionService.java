@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.DelayedEffectOnDeath;
 import com.github.laxika.magicalvibes.model.DelayedReturnOnDeath;
 import com.github.laxika.magicalvibes.model.DelayedSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -67,7 +66,6 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerGrant;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.VisualCueType;
@@ -85,14 +83,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
-import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
-import com.github.laxika.magicalvibes.model.rules.RulesEvent;
-import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
-import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -128,7 +121,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * The triggered abilities the trigger pipeline doesn't match yet: the abilities the engine makes for keywords and rules
- * as a spell is cast or an ability activated, and the delayed, temporary, emblem and boon abilities that watch zone
+ * as a spell is cast or an ability activated, and the delayed, temporary and boon abilities that watch zone
  * changes, each handed to the stack door; and the rules events of becoming the target, choosing targets, playing a
  * land and equipment becoming attached.
  */
@@ -1405,7 +1398,7 @@ public class TriggerCollectionService {
 
     /**
      * The creature-death triggered abilities that aren't abilities of an object the trigger pipeline indexes: the
-     * global ones a resolved spell or ability registered (CR 603.7), emblems' and the delayed "when that creature
+     * global ones a resolved spell or ability registered (CR 603.7) and the delayed "when that creature
      * dies" watchers. They trigger as {@code dyingPermanent}, which
      * {@code dyingControllerId} controlled, dies.
      */
@@ -1417,7 +1410,6 @@ public class TriggerCollectionService {
             collectRegisteredCreatureDeathTrigger(gameData, watcher, dyingControllerId, dyingPermanent,
                     dyingPowerAtDeath, dyingToughnessAtDeath);
         }
-        collectEmblemCreatureDeathTriggers(gameData, dyingCard, dyingPermanent, dyingControllerId);
         collectCreatureDeathTriggerWatchers(gameData, dyingPermanent);
     }
 
@@ -1537,113 +1529,6 @@ public class TriggerCollectionService {
                 }
             }
         }
-    }
-
-    /**
-     * The emblems' "whenever [a filter permanent] is put into your graveyard from the battlefield" abilities
-     * ({@code Triggers.putIntoGraveyardFrom(BATTLEFIELD, filter, YOU_OWN)}; Daretti, Scrap Savant's "return that card to
-     * the battlefield at the beginning of the next end step") for {@code departed}, which {@code controllerId}
-     * controlled and which was just put into {@code graveyardOwnerId}'s graveyard as {@code card}. Abilities of emblems
-     * function in the command zone (CR 114.4); a permanent goes to its owner's graveyard, so "your graveyard" is the
-     * emblem controller's own. This is a leaves-the-battlefield ability (CR 603.6c): its filter is judged on the
-     * permanent as it last existed on the battlefield (CR 603.10a), and a token triggers it too before it ceases to
-     * exist (CR 111.7). Each matching ability goes on the stack once as one object of its effects (CR 603.3), the
-     * emblem's source card as its source, the permanent's card ("that card", for this stay in the graveyard,
-     * CR 400.7) and last-known permanent as its triggering card and permanent. The reader judges no other relation,
-     * cause, option or target; an ability with one fails loudly instead of triggering wrongly. The emblems'
-     * "whenever a creature dies" abilities are {@link #collectEmblemCreatureDeathTriggers}'.
-     */
-    public void checkEmblemPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID graveyardOwnerId,
-                                                                   UUID controllerId, Card card,
-                                                                   Permanent departed) {
-        if (card == null || gameData.emblems.stream().allMatch(emblem -> emblem.triggeredAbilities().isEmpty())) {
-            return;
-        }
-        Permanent lastKnown = departedAsItLastExisted(gameData, departed);
-        for (Emblem emblem : List.copyOf(gameData.emblems)) {
-            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
-                if (emblemSeesPutIntoYourGraveyardFromBattlefield(gameData, emblem, ability, graveyardOwnerId,
-                        lastKnown)) {
-                    putEmblemGraveyardFromBattlefieldAbilityOnStack(gameData, emblem, ability, card, lastKnown,
-                            controllerId);
-                }
-            }
-        }
-    }
-
-    /**
-     * {@code departed} as the departure's rules event holds it, with the characteristics it left the battlefield
-     * with; {@code departed} itself when the log no longer holds that event.
-     */
-    private static Permanent departedAsItLastExisted(GameData gameData, Permanent departed) {
-        List<RulesEventBatch> pending = gameData.rulesEvents.pending();
-        for (int index = pending.size() - 1; index >= 0; index--) {
-            List<RulesEvent> events = pending.get(index).events();
-            for (int eventIndex = events.size() - 1; eventIndex >= 0; eventIndex--) {
-                if (events.get(eventIndex) instanceof ZoneChangeEvent zoneChange && zoneChange.leftBattlefield()
-                        && zoneChange.permanent() != null
-                        && zoneChange.permanent().getId().equals(departed.getId())) {
-                    return zoneChange.permanent();
-                }
-            }
-        }
-        return departed;
-    }
-
-    /**
-     * Whether {@code ability} of {@code emblem} triggers on {@code lastKnown} being put into {@code graveyardOwnerId}'s
-     * graveyard from the battlefield. A battlefield-to-graveyard trigger whose relation isn't an owner's is the
-     * creature-death reader's.
-     */
-    private boolean emblemSeesPutIntoYourGraveyardFromBattlefield(GameData gameData, Emblem emblem,
-                                                                  TriggeredAbility ability, UUID graveyardOwnerId,
-                                                                  Permanent lastKnown) {
-        for (TriggerCondition condition : ability.conditions()) {
-            if (!(condition.trigger() instanceof ZoneChangeTrigger trigger)
-                    || !isPutIntoYourGraveyardFromBattlefield(trigger)) {
-                continue;
-            }
-            if (!trigger.causes().isEmpty() || !trigger.excludedTo().isEmpty()
-                    || trigger.causedBy() != com.github.laxika.magicalvibes.model.trigger.PlayerRelation.ANY
-                    || trigger.duringYourTurn() || trigger.castingSpell() != null
-                    || !ability.options().equals(TriggerOptions.DEFAULT) || ability.targetFilter() != null
-                    || ability.effects().stream().anyMatch(effect -> effect.effect().targetSpec() != TargetSpec.NONE)) {
-                throw new IllegalStateException(emblemName(emblem) + " has a graveyard ability its reader doesn't "
-                        + "judge: " + ability);
-            }
-            if (emblem.controllerId().equals(graveyardOwnerId) && (trigger.filter() == null
-                    || TriggeredAbilityStackService.departedFilterMatches(predicateEvaluationService,
-                    trigger.filter(), lastKnown, DepartedAttachments.NONE, emblemFilterContext(gameData, emblem)))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** "Whenever [a permanent] is put into your graveyard from the battlefield": an owner's battlefield-to-graveyard trigger. */
-    private static boolean isPutIntoYourGraveyardFromBattlefield(ZoneChangeTrigger trigger) {
-        return trigger.relation() == ObjectRelation.YOU_OWN && trigger.from().equals(Set.of(Zone.BATTLEFIELD))
-                && trigger.to() == Zone.GRAVEYARD;
-    }
-
-    private void putEmblemGraveyardFromBattlefieldAbilityOnStack(GameData gameData, Emblem emblem,
-                                                                 TriggeredAbility ability, Card card,
-                                                                 Permanent lastKnown, UUID controllerId) {
-        Card source = emblem.sourceCard() != null ? emblem.sourceCard() : card;
-        String description = emblemName(emblem);
-        long graveyardEntryVersion = gameData.graveyardEntryVersion(card.getId());
-        putEmblemAbility(gameData, emblem, ability, source, description,
-                ConditionContext.forCard(source, emblem.controllerId()), entry -> {
-                    entry.setTriggeringCard(card.getId(), graveyardEntryVersion);
-                    entry.setTriggeringPermanentId(lastKnown.getId());
-                    entry.setTriggeringPermanent(lastKnown);
-                    entry.setTriggeringPermanentControllerId(controllerId);
-                    entry.setNonTargeting(true);
-                }, false);
-        gameLogService.append(gameData, GameLog.text(description + " triggers for " + card.getName()
-                + " put into a graveyard."));
-        log.info("Game {} - {} triggers for {} put into a graveyard from the battlefield", gameData.id, description,
-                card.getName());
     }
 
     /**
@@ -1780,62 +1665,6 @@ public class TriggerCollectionService {
             log.info("Game {} - {} triggers because a creature it damaged died",
                     gameData.id, watcher.sourceCard().getName());
         }
-    }
-
-    /**
-     * The emblems' "whenever a creature dies" abilities ({@code Triggers.creatureDies(ObjectRelation.ANY)}; Liliana,
-     * Defiant Necromancer's "return it to the battlefield under your control at the beginning of the next end step",
-     * Sephiroth, One-Winged Angel's "target opponent loses 1 life and you gain 1 life"). Abilities of emblems function
-     * in the command zone (CR 114.4), so the permanent sweep never sees them. Each ability goes on the stack once as
-     * one object of its effects (CR 603.3), the emblem's source card as its source, and records the creature that
-     * died ("it": its card, its last-known permanent and controller) whatever its effects are; a targeted one's target
-     * is chosen as it goes on the stack (CR 603.3d), restricted by the ability's own target filter. The reader judges
-     * the trigger's filter on the creature as it last existed and no options; an ability with options or another
-     * relation fails loudly instead of triggering wrongly. "Whenever [a permanent] is put into your graveyard from the
-     * battlefield" is {@link #checkEmblemPutIntoGraveyardFromBattlefieldTriggers}'.
-     */
-    private void collectEmblemCreatureDeathTriggers(GameData gameData, Card dyingCard, Permanent lastKnown,
-                                                     UUID dyingControllerId) {
-        for (Emblem emblem : List.copyOf(gameData.emblems)) {
-            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
-                if (emblemSeesCreatureDie(gameData, emblem, ability, lastKnown)) {
-                    putEmblemDeathAbilityOnStack(gameData, emblem, ability, dyingCard, lastKnown, dyingControllerId);
-                }
-            }
-        }
-    }
-
-    /** Whether {@code ability} of {@code emblem} triggers on the creature {@code lastKnown} dying. */
-    private boolean emblemSeesCreatureDie(GameData gameData, Emblem emblem, TriggeredAbility ability,
-                                          Permanent lastKnown) {
-        ZoneChangeTrigger trigger = creatureDeathTrigger(ability);
-        if (trigger == null || isPutIntoYourGraveyardFromBattlefield(trigger)) {
-            return false;
-        }
-        if (trigger.relation() != ObjectRelation.ANY || !ability.options().equals(TriggerOptions.DEFAULT)) {
-            throw new IllegalStateException(emblemName(emblem) + " has a death ability its reader doesn't judge: "
-                    + ability);
-        }
-        return trigger.filter() == null || lastKnown != null
-                && predicateEvaluationService.matchesPermanentPredicate(lastKnown, trigger.filter(),
-                FilterContext.of(gameData).withSourceControllerId(emblem.controllerId()));
-    }
-
-    private void putEmblemDeathAbilityOnStack(GameData gameData, Emblem emblem, TriggeredAbility ability,
-                                              Card dyingCard, Permanent lastKnown, UUID dyingControllerId) {
-        Card source = emblem.sourceCard() != null ? emblem.sourceCard() : dyingCard;
-        String description = emblemName(emblem);
-        // "If a creature dying causes a triggered ability of an emblem you control to trigger, it triggers an
-        // additional time": the stack door counts it for an emblem's creature-death ability.
-        putEmblemAbility(gameData, emblem, ability, source, description,
-                ConditionContext.forCard(source, emblem.controllerId()), entry -> {
-                    entry.setTriggeringCardId(dyingCard.getId());
-                    entry.setTriggeringPermanent(lastKnown);
-                    entry.setTriggeringPermanentControllerId(dyingControllerId);
-                    entry.setNonTargeting(true);
-                }, true);
-        gameLogService.append(gameData, GameLog.text(description + " triggers (a creature died)."));
-        log.info("Game {} - {} triggers for {} dying", gameData.id, description, dyingCard.getName());
     }
 
     /**
@@ -2184,7 +2013,7 @@ public class TriggerCollectionService {
 
     /**
      * What a creature entering under {@code controllerId}'s control triggers besides the card abilities the trigger
-     * pipeline matches and the emblems' abilities ({@link #checkEmblemEntersTriggers}): evolve (CR 702.100d), the
+     * pipeline matches, the emblems' among them: evolve (CR 702.100d), the
      * watchers and boons a resolved spell left, and the "whenever a creature you control enters" abilities a spell
      * registered until end of turn.
      */
@@ -2529,92 +2358,6 @@ public class TriggerCollectionService {
     }
 
     /**
-     * The emblems' "whenever [a filter permanent] you control enters" abilities for {@code enteringCard}, which entered
-     * under {@code enteringControllerId}'s control (Lukka, Wayward Bonder's, Chandra, Spark Hunter's, Koth, Fire of
-     * Resistance's, Kiora, Master of the Depths' and Nissa, Vital Force's emblems). Abilities of emblems function in
-     * the command zone (CR 114.4); an emblem isn't a permanent (CR 110.1), so an effect that makes a triggered ability
-     * of a permanent trigger an additional time (Ancient Greenwarden, Panharmonicon) doesn't apply to it. Each ability
-     * whose trigger's filter the permanent matches as it is now goes on the stack once as one object of its effects
-     * (CR 603.3), the emblem's source card as its source and the entering permanent as its triggering permanent
-     * ("it", read as the ability resolves); a targeted ability's target is chosen as it goes on the stack
-     * (CR 603.3d), and a "you may" is asked as it resolves (CR 603.5). The reader judges no options, causes, origins
-     * or turn; an ability with one fails loudly instead of triggering wrongly.
-     */
-    public void checkEmblemEntersTriggers(GameData gameData, UUID enteringControllerId, Card enteringCard) {
-        if (gameData.emblems.isEmpty()) return;
-        Permanent entering = findPermanentByCard(gameData, enteringCard);
-        if (entering == null) return;
-        for (Emblem emblem : List.copyOf(gameData.emblems)) {
-            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
-                if (emblemSeesEntering(gameData, emblem, ability, enteringControllerId, entering)) {
-                    putEmblemAbilityOnStack(gameData, emblem, ability, entering, enteringControllerId, "entering");
-                }
-            }
-        }
-    }
-
-    /**
-     * Whether {@code ability} of {@code emblem} triggers on {@code entering} entering under
-     * {@code enteringControllerId}'s control.
-     */
-    private boolean emblemSeesEntering(GameData gameData, Emblem emblem, TriggeredAbility ability,
-                                       UUID enteringControllerId, Permanent entering) {
-        for (TriggerCondition condition : ability.conditions()) {
-            if (!(condition.trigger() instanceof ZoneChangeTrigger trigger) || !trigger.entersBattlefield()) {
-                continue;
-            }
-            if (!trigger.from().isEmpty() || !trigger.excludedTo().isEmpty() || !trigger.causes().isEmpty()
-                    || trigger.causedBy() != com.github.laxika.magicalvibes.model.trigger.PlayerRelation.ANY
-                    || trigger.duringYourTurn() || !ability.options().equals(TriggerOptions.DEFAULT)) {
-                throw new IllegalStateException(emblemName(emblem) + " has an enters ability its reader doesn't "
-                        + "judge: " + ability);
-            }
-            if (controlledByRelatedPlayer(trigger.relation(), emblem, enteringControllerId)
-                    && (trigger.filter() == null || predicateEvaluationService.matchesPermanentPredicate(entering,
-                    trigger.filter(), emblemFilterContext(gameData, emblem)))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** Whether a permanent {@code controllerId} controls relates to {@code emblem} as {@code relation} says. */
-    private static boolean controlledByRelatedPlayer(ObjectRelation relation, Emblem emblem, UUID controllerId) {
-        return switch (relation) {
-            case YOU_CONTROL, ANOTHER_YOU_CONTROL -> emblem.controllerId().equals(controllerId);
-            case OPPONENT_CONTROLS -> !emblem.controllerId().equals(controllerId);
-            case ANY, ANOTHER -> true;
-            default -> throw new IllegalStateException(emblemName(emblem) + " has a trigger relation its reader "
-                    + "doesn't judge: " + relation);
-        };
-    }
-
-    private static FilterContext emblemFilterContext(GameData gameData, Emblem emblem) {
-        FilterContext context = FilterContext.of(gameData).withSourceControllerId(emblem.controllerId());
-        return emblem.sourceCard() == null ? context : context.withSourceCardId(emblem.sourceCard().getId());
-    }
-
-    private static String emblemName(Emblem emblem) {
-        return (emblem.sourceCard() != null ? emblem.sourceCard().getName() : "Emblem") + "'s emblem";
-    }
-
-    /**
-     * Puts {@code ability} of {@code emblem} on the stack through the stack door: an ability of an emblem functions in
-     * the command zone (CR 114.4), {@code source} its source, and it records the event with {@code record}. Its targets
-     * are only those its effects or its own target filter declare: no ability of the card that made the emblem is it.
-     */
-    private void putEmblemAbility(GameData gameData, Emblem emblem, TriggeredAbility ability, Card source,
-                                  String description, ConditionContext ifContext, TriggerRecord record,
-                                  boolean creatureDying) {
-        TriggeredAbilityRequest request = new TriggeredAbilityRequest(ability, source, null, emblem.controllerId(),
-                description, ifContext, entry -> {
-                    entry.setMadeByResolution(true);
-                    record.stamp(entry);
-                }).ofEmblem();
-        triggeredAbilityStackService.put(gameData, creatureDying ? request.withCreatureDying() : request);
-    }
-
-    /**
      * The effects of {@code watcher}'s ability, every one of them as written (CR 603.3), its intervening "if" wrapped
      * around each to be judged again as it resolves (CR 603.4).
      */
@@ -2624,29 +2367,6 @@ public class TriggerCollectionService {
                 .map(EffectRegistration::effect)
                 .map(effect -> interveningIf == null ? effect : (CardEffect) new ConditionalEffect(interveningIf, effect))
                 .toList();
-    }
-
-    /**
-     * Puts {@code ability} of {@code emblem} on the stack for the event {@code triggering} was about, as its triggering
-     * permanent: a targeted ability through its target choice, which keeps the triggering permanent, any other one as
-     * a non-targeting entry. An emblem without a source card (one a test built) is described as "Emblem's emblem",
-     * with the triggering permanent's card as its source.
-     */
-    private void putEmblemAbilityOnStack(GameData gameData, Emblem emblem, TriggeredAbility ability,
-                                         Permanent triggering, UUID triggeringControllerId, String event) {
-        Card source = emblem.sourceCard() != null ? emblem.sourceCard() : triggering.getCard();
-        String description = emblemName(emblem);
-        putEmblemAbility(gameData, emblem, ability, source, description,
-                ConditionContext.forCard(source, emblem.controllerId()).withTriggeringPermanentId(triggering.getId()),
-                entry -> {
-                    entry.setTriggeringPermanentId(triggering.getId());
-                    entry.setTriggeringPermanentControllerId(triggeringControllerId);
-                    entry.setTriggeringCardId(triggering.getCard().getId());
-                    entry.setNonTargeting(true);
-                }, false);
-        gameLogService.append(gameData, GameLog.text(description + " triggers for " + triggering.getCard().getName()
-                + " " + event + "."));
-        log.info("Game {} - {} triggers for {} {}", gameData.id, description, triggering.getCard().getName(), event);
     }
 
     /**

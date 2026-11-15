@@ -155,9 +155,6 @@ public class AttackTriggers {
         creaturesAttackYou(attack);
         opponentAttacksYourPlaneswalker(attack);
         for (Permanent attacker : attackers) {
-            emblemAttacksYou(attack, attacker);
-        }
-        for (Permanent attacker : attackers) {
             creatureAttacks(attack, attacker);
             graveyardCreatureAttacks(attack, attacker);
             delayedCreatureAttacks(attack, attacker);
@@ -843,30 +840,71 @@ public class AttackTriggers {
             watches.add(Triggers.creatureAttacksYou());
         }
         watches.add(Triggers.creatureAttacksWhileYouDefend());
+        // The attacked player's permanents, then their emblems, whose abilities function in the command zone
+        // (CR 114.4).
+        List<Watcher> watchers = new ArrayList<>();
         for (Permanent permanent : List.copyOf(gameData.playerBattlefields.getOrDefault(attackedPlayerId,
                 List.of()))) {
-            ConditionContext context = ConditionContext.forPermanent(permanent, attackedPlayerId)
+            watchers.add(Watcher.of(permanent, attackedPlayerId));
+        }
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            if (emblem.controllerId().equals(attackedPlayerId)) {
+                watchers.add(Watcher.of(emblem));
+            }
+        }
+        for (Watcher watcher : watchers) {
+            ConditionContext context = watcher.conditionContext()
                     .withTriggeringPermanentId(attacker.getId()).withTargetId(attackedTargetId);
             for (CombatTrigger watched : watches) {
-                for (TriggeredAbility ability : abilities(gameData, permanent, watched)) {
+                for (TriggeredAbility ability : abilities(gameData, watcher, watched)) {
                     requireNoLimitOrMultiplicity(ability, watched);
-                    PermanentPredicate filter = filter(ability, watched, Zone.BATTLEFIELD);
+                    PermanentPredicate filter = filter(ability, watched,
+                            watcher.emblem() == null ? Zone.BATTLEFIELD : null);
                     if ((filter != null && !predicateEvaluationService.matchesPermanentPredicate(attacker, filter,
-                            sourceContext(gameData, permanent, attackedPlayerId)))
+                            sourceContext(gameData, watcher)))
                             || !eventConditionMet(gameData, ability, context)) {
                         continue;
                     }
-                    put(gameData, new TriggeredAbilityRequest(ability, permanent.getCard(), permanent,
-                            attackedPlayerId, permanent.getCard().getName() + "'s trigger", context, entry -> {
+                    Permanent snapshot = watcher.permanent() == null ? null : new Permanent(watcher.permanent());
+                    boolean emblem = watcher.emblem() != null;
+                    TriggeredAbilityRequest request = new TriggeredAbilityRequest(ability, watcher.card(),
+                            watcher.permanent(), attackedPlayerId,
+                            emblem ? EventAbilitySupport.emblemName(watcher.emblem())
+                                    : watcher.card().getName() + "'s trigger", context, entry -> {
+                                if (emblem) {
+                                    entry.setMadeByResolution(true);
+                                }
                                 entry.setTargetId(attacker.getId());
                                 entry.setNonTargeting(true);
                                 entry.setTriggeringPermanentId(attacker.getId());
                                 entry.setTriggeringPermanentControllerId(playerId);
-                                entry.setSourcePermanentSnapshot(new Permanent(permanent));
-                            }).causedByAttack(), permanent.getCard(), "'s ability triggers.");
+                                if (snapshot != null) {
+                                    entry.setSourcePermanentSnapshot(snapshot);
+                                }
+                            }).causedByAttack();
+                    put(gameData, emblem ? request.ofEmblem() : request, watcher.card(), "'s ability triggers.");
                 }
             }
         }
+    }
+
+    /**
+     * {@code watcher}'s abilities with a combat trigger condition watched as {@code watched}: a permanent's as the
+     * layers leave them, functioning on the battlefield; an emblem's as it has them (CR 114.4).
+     */
+    private List<TriggeredAbility> abilities(GameData gameData, Watcher watcher, CombatTrigger watched) {
+        if (watcher.emblem() == null) {
+            return abilities(gameData, watcher.permanent(), watched);
+        }
+        return watcher.emblem().triggeredAbilities().stream()
+                .filter(ability -> TriggerMatcher.combatCondition(ability, watched, null) != null).toList();
+    }
+
+    /** The filter context a combat trigger's filter is judged in, with {@code watcher} as its source. */
+    private static FilterContext sourceContext(GameData gameData, Watcher watcher) {
+        FilterContext context = FilterContext.of(gameData).withSourceCardId(watcher.originalCardId())
+                .withSourceControllerId(watcher.controllerId());
+        return watcher.permanent() == null ? context : context.withSourcePermanentId(watcher.permanent().getId());
     }
 
     /**
@@ -972,55 +1010,6 @@ public class AttackTriggers {
                                 entry.setNonTargeting(true);
                             }).causedByAttack(), permanent.getCard(), "'s ability triggers.");
                 }
-            }
-        }
-    }
-
-    /**
-     * The emblems' "whenever a creature attacks you" (Garruk, Apex Predator's), for {@code attacker} attacking the
-     * emblem's controller directly. An emblem's ability functions in the command zone (CR 114.4); one written with a
-     * relation, filter or option its reader doesn't judge fails loudly.
-     */
-    private void emblemAttacksYou(Attack attack, Permanent attacker) {
-        GameData gameData = attack.gameData();
-        UUID attackedTargetId = attack.targetOf(attacker);
-        if (gameData.emblems.isEmpty() || attackedTargetId == null) {
-            return;
-        }
-        for (Emblem emblem : List.copyOf(gameData.emblems)) {
-            if (!emblem.controllerId().equals(attackedTargetId)) {
-                continue;
-            }
-            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
-                boolean attacksYou = false;
-                for (var condition : ability.conditions()) {
-                    if (!(condition.trigger() instanceof CombatTrigger trigger)
-                            || trigger.event() != CombatTrigger.CombatEvent.ATTACKS_YOU) {
-                        continue;
-                    }
-                    if (!trigger.equals(Triggers.creatureAttacksYou())
-                            || !ability.options().equals(TriggerOptions.DEFAULT)) {
-                        throw new IllegalStateException(emblemName(emblem) + " has an attack ability no reader "
-                                + "judges: " + ability);
-                    }
-                    attacksYou = true;
-                }
-                if (!attacksYou) {
-                    continue;
-                }
-                Card source = emblem.sourceCard() != null ? emblem.sourceCard() : attacker.getCard();
-                String description = emblemName(emblem);
-                stackService.put(gameData, new TriggeredAbilityRequest(ability, source, null, emblem.controllerId(),
-                        description, ConditionContext.forCard(source, emblem.controllerId())
-                        .withTriggeringPermanentId(attacker.getId()), entry -> {
-                            entry.setMadeByResolution(true);
-                            entry.setTriggeringPermanentId(attacker.getId());
-                            entry.setTriggeringPermanentControllerId(attack.playerId());
-                            entry.setTriggeringCardId(attacker.getCard().getId());
-                            entry.setNonTargeting(true);
-                        }).ofEmblem());
-                gameLogService.append(gameData, GameLog.text(description + " triggers for "
-                        + attacker.getCard().getName() + " attacking."));
             }
         }
     }

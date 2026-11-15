@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -21,14 +22,27 @@ import java.util.UUID;
  * @param ability         the ability
  * @param plane           the face-up plane or phenomenon whose ability it is, whose abilities function from the
  *                        command zone (CR 901.7), or {@code null}
+ * @param emblem          the emblem whose ability it is, whose abilities function from the command zone (CR 114.4),
+ *                        or {@code null}
  */
 public record TriggerCandidate(Card sourceCard, Permanent sourcePermanent, UUID controllerId, Zone zone,
-                               TriggeredAbility ability, PlanarObject plane) {
+                               TriggeredAbility ability, PlanarObject plane, Emblem emblem) {
 
-    /** A candidate whose source isn't a planar object. */
+    /** A candidate whose source is neither a planar object nor an emblem. */
     public TriggerCandidate(Card sourceCard, Permanent sourcePermanent, UUID controllerId, Zone zone,
                             TriggeredAbility ability) {
-        this(sourceCard, sourcePermanent, controllerId, zone, ability, null);
+        this(sourceCard, sourcePermanent, controllerId, zone, ability, null, null);
+    }
+
+    /** A candidate whose source is the face-up planar object {@code plane}. */
+    public TriggerCandidate(Card sourceCard, Permanent sourcePermanent, UUID controllerId, Zone zone,
+                            TriggeredAbility ability, PlanarObject plane) {
+        this(sourceCard, sourcePermanent, controllerId, zone, ability, plane, null);
+    }
+
+    /** Whether the source is a planar object or an emblem, whose abilities function from the command zone. */
+    public boolean commandZoneObject() {
+        return plane != null || emblem != null;
     }
 
     /** The source as a permanent, for conditions that read one; a card in another zone gets a stand-in. */

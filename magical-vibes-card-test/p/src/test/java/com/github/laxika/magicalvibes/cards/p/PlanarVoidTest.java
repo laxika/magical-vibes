@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.a.AkromasVengeance;
 import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
 import com.github.laxika.magicalvibes.cards.d.Duress;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.Whetstone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PlanarVoid.class, ArgothianSwine.class, Duress.class, Whetstone.class})
+@CardUsed({PlanarVoid.class, AkromasVengeance.class, ArgothianSwine.class, Duress.class, GrizzlyBears.class, Whetstone.class})
 class PlanarVoidTest extends BaseCardTest {
 
     @Test
@@ -89,6 +91,29 @@ class PlanarVoidTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(planarVoid.getCard());
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(planarVoid.getCard());
+    }
+
+    @Test
+    @DisplayName("Does not exile the cards put into a graveyard at the same time as itself, nor the spell that did it")
+    void doesNotExileCardsPutIntoAGraveyardWithIt() {
+        harness.addToBattlefield(player1, new PlanarVoid());
+        Card bears = new GrizzlyBears();
+        harness.addToBattlefield(player2, bears);
+        Card vengeance = new AkromasVengeance();
+        harness.setHand(player1, List.of(vengeance));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        // "From anywhere" isn't a leaves-the-battlefield ability (CR 603.6c), so the destroyed Planar Void doesn't look
+        // back to see the cards destroyed with it (CR 603.10a; its 2008-05-01 ruling), and it is gone by the time the
+        // spell is put into the graveyard.
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(vengeance);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(bears);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(vengeance);
     }
 
     @Test

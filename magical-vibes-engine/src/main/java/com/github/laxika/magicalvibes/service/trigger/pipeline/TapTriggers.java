@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -21,7 +20,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TriggeredManaAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -606,7 +604,6 @@ public class TapTriggers {
         }
 
         UUID controllerId = tappedPermanentControllerId;
-        emblemTapped(gameData, tappedPermanent, controllerId);
 
         // "Whenever enchanted permanent becomes tapped": the ability is the Aura's (CR 113.7); the tapped permanent's
         // controller is the non-targeting "that player" ("that player mills three cards"), and a "choose one" (Relic
@@ -626,27 +623,28 @@ public class TapTriggers {
         });
 
         // "Whenever a permanent you control becomes tapped" (Judge of Currents).
-        gameData.forEachPermanent((ownerId, perm) -> {
-            if (!ownerId.equals(controllerId)) return;
-            for (TriggeredAbility ability : abilities.abilities(gameData, perm, PERMANENT_YOU_CONTROL_TAPPED)) {
+        for (Watcher watcher : abilities.watchers(gameData)) {
+            if (!watcher.controllerId().equals(controllerId)) continue;
+            for (TriggeredAbility ability : abilities.abilities(gameData, watcher, PERMANENT_YOU_CONTROL_TAPPED)) {
                 TapRead read = read(ability, PERMANENT_YOU_CONTROL_TAPPED).getFirst();
                 // "For the first time during each of your turns": the creature's first tap this turn, during its
                 // controller's turn, counting its taps before the source was on the battlefield.
                 if (read.firstTime() && (!controllerId.equals(gameData.activePlayerId) || creatureTapCount != 1)) {
                     continue;
                 }
-                putTapAbility(gameData, perm, ownerId, read, tappedPermanent, controllerId);
+                putTapAbility(gameData, watcher, read, tappedPermanent, controllerId);
             }
-        });
+        }
 
         // "Whenever a permanent an opponent controls becomes tapped" (Thoughtleech).
-        gameData.forEachPermanent((ownerId, perm) -> {
-            if (ownerId.equals(controllerId)) return;
-            for (TriggeredAbility ability : abilities.abilities(gameData, perm, PERMANENT_OPPONENT_CONTROLS_TAPPED)) {
-                putTapAbility(gameData, perm, ownerId, read(ability, PERMANENT_OPPONENT_CONTROLS_TAPPED).getFirst(),
+        for (Watcher watcher : abilities.watchers(gameData)) {
+            if (watcher.controllerId().equals(controllerId)) continue;
+            for (TriggeredAbility ability
+                    : abilities.abilities(gameData, watcher, PERMANENT_OPPONENT_CONTROLS_TAPPED)) {
+                putTapAbility(gameData, watcher, read(ability, PERMANENT_OPPONENT_CONTROLS_TAPPED).getFirst(),
                         tappedPermanent, controllerId);
             }
-        });
+        }
 
         temporaryTapped(gameData, PERMANENT_YOU_CONTROL_TAPPED, tappedPermanent, controllerId);
         temporaryTapped(gameData, PERMANENT_OPPONENT_CONTROLS_TAPPED, tappedPermanent, controllerId);
@@ -657,13 +655,13 @@ public class TapTriggers {
             return;
         }
         UUID tapper = tappingPlayerId;
-        gameData.forEachPermanent((ownerId, perm) -> {
-            if (!ownerId.equals(tapper)) return;
-            for (TriggeredAbility ability : abilities.abilities(gameData, perm, YOU_TAP_OPPONENT_PERMANENT)) {
-                putTapAbility(gameData, perm, ownerId, read(ability, YOU_TAP_OPPONENT_PERMANENT).getFirst(),
+        for (Watcher watcher : abilities.watchers(gameData)) {
+            if (!watcher.controllerId().equals(tapper)) continue;
+            for (TriggeredAbility ability : abilities.abilities(gameData, watcher, YOU_TAP_OPPONENT_PERMANENT)) {
+                putTapAbility(gameData, watcher, read(ability, YOU_TAP_OPPONENT_PERMANENT).getFirst(),
                         tappedPermanent, controllerId);
             }
-        });
+        }
     }
 
     /**
@@ -707,16 +705,16 @@ public class TapTriggers {
      * is chosen as it goes on the stack (CR 603.3d), a "you may pay" one too (Surgespanner); a "choose one" announces
      * its mode there (CR 603.3c).
      */
-    private void putTapAbility(GameData gameData, Permanent source, UUID controllerId, TapRead read,
-                               Permanent tapped, UUID tappedControllerId) {
-        if (skipsBatchedTapTrigger(gameData, source, read)
-                || !tappedPermanentMatches(gameData, source, controllerId, tapped, read)) {
+    private void putTapAbility(GameData gameData, Watcher source, TapRead read, Permanent tapped,
+                               UUID tappedControllerId) {
+        if (skipsBatchedTapTrigger(gameData, source.id(), read)
+                || !tappedPermanentMatches(gameData, source.originalCardId(), source.controllerId(), tapped, read)) {
             return;
         }
-        if (abilities.put(gameData, read.ability(), source.getCard(), source, controllerId,
-                ConditionContext.forPermanent(source, controllerId).withTriggeringPermanentId(tapped.getId()),
-                tappedRecord(source, tapped, tappedControllerId, null))) {
-            markBatchedTapTrigger(gameData, source, read);
+        if (abilities.put(gameData, read.ability(), source,
+                source.conditionContext().withTriggeringPermanentId(tapped.getId()),
+                tappedRecord(source.permanent(), tapped, tappedControllerId, null))) {
+            markBatchedTapTrigger(gameData, source.id(), read);
         }
     }
 
@@ -725,97 +723,20 @@ public class TapTriggers {
      * together in the open tap batch ({@code TriggerCollectionService.beginPermanentTapTriggerBatch}): the mark is the
      * ability's ({@link TriggeredAbility#limitKey()}), so two "one or more" abilities of one permanent each trigger once.
      */
-    private static boolean skipsBatchedTapTrigger(GameData gameData, Permanent source, TapRead read) {
+    private static boolean skipsBatchedTapTrigger(GameData gameData, UUID sourceId, TapRead read) {
         return read.oneOrMore()
                 && gameData.permanentTapTriggerBatchDepth > 0
-                && gameData.permanentTapTriggerBatchFiredAbilities.getOrDefault(source.getId(), Set.of())
+                && gameData.permanentTapTriggerBatchFiredAbilities.getOrDefault(sourceId, Set.of())
                 .contains(read.ability().limitKey());
     }
 
-    private static void markBatchedTapTrigger(GameData gameData, Permanent source, TapRead read) {
+    private static void markBatchedTapTrigger(GameData gameData, UUID sourceId, TapRead read) {
         if (!read.oneOrMore() || gameData.permanentTapTriggerBatchDepth <= 0) {
             return;
         }
         gameData.permanentTapTriggerBatchFiredAbilities
-                .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet())
+                .computeIfAbsent(sourceId, ignored -> ConcurrentHashMap.newKeySet())
                 .add(read.ability().limitKey());
-    }
-
-    /**
-     * The emblems' "whenever a [filter] permanent you control becomes tapped" abilities for {@code tappedPermanent},
-     * which {@code tappedPermanentControllerId} controls (Tezzeret, Betrayer of Flesh's emblem). Abilities of emblems
-     * function in the command zone (CR 114.4). Each ability whose trigger's filter the permanent matches goes on the
-     * stack once as one object of its effects (CR 603.3), the tapped permanent as its triggering permanent. An ability
-     * with an option or a target fails loudly instead.
-     */
-    private void emblemTapped(GameData gameData, Permanent tappedPermanent, UUID tappedPermanentControllerId) {
-        for (Emblem emblem : List.copyOf(gameData.emblems)) {
-            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
-                if (emblemSeesTapped(gameData, emblem, ability, tappedPermanent, tappedPermanentControllerId)) {
-                    putEmblemAbility(gameData, emblem, ability, tappedPermanent, tappedPermanentControllerId);
-                }
-            }
-        }
-    }
-
-    private boolean emblemSeesTapped(GameData gameData, Emblem emblem, TriggeredAbility ability, Permanent tapped,
-                                     UUID tappedControllerId) {
-        for (TriggerCondition condition : ability.conditions()) {
-            if (!(condition.trigger() instanceof TapTrigger trigger)
-                    || trigger.event() != TapTrigger.TapEvent.BECOMES_TAPPED) {
-                continue;
-            }
-            if (!ability.options().equals(TriggerOptions.DEFAULT) || ability.effects().stream()
-                    .anyMatch(registration -> registration.effect().targetSpec() != TargetSpec.NONE)) {
-                throw new IllegalStateException(EventAbilitySupport.emblemName(emblem) + " has a tap ability its "
-                        + "reader doesn't judge: " + ability);
-            }
-            FilterContext context = FilterContext.of(gameData).withSourceControllerId(emblem.controllerId());
-            if (emblem.sourceCard() != null) {
-                context = context.withSourceCardId(emblem.sourceCard().getId());
-            }
-            if (controlledByRelatedPlayer(trigger.relation(), emblem, tappedControllerId)
-                    && (trigger.filter() == null
-                    || predicateEvaluationService.matchesPermanentPredicate(tapped, trigger.filter(), context))
-                    && (trigger.qualifier() == null
-                    || predicateEvaluationService.matchesPermanentPredicate(tapped, trigger.qualifier(), context))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean controlledByRelatedPlayer(ObjectRelation relation, Emblem emblem, UUID controllerId) {
-        return switch (relation) {
-            case YOU_CONTROL, ANOTHER_YOU_CONTROL -> emblem.controllerId().equals(controllerId);
-            case OPPONENT_CONTROLS -> !emblem.controllerId().equals(controllerId);
-            case ANY, ANOTHER -> true;
-            default -> throw new IllegalStateException(EventAbilitySupport.emblemName(emblem) + " has a trigger "
-                    + "relation its reader doesn't judge: " + relation);
-        };
-    }
-
-    /**
-     * Puts {@code ability} of {@code emblem} on the stack for {@code triggering} becoming tapped, as its triggering
-     * permanent. An emblem without a source card (one a test built) is described as "Emblem's emblem", with the
-     * triggering permanent's card as its source.
-     */
-    private void putEmblemAbility(GameData gameData, Emblem emblem, TriggeredAbility ability,
-                                  Permanent triggering, UUID triggeringControllerId) {
-        Card source = emblem.sourceCard() != null ? emblem.sourceCard() : triggering.getCard();
-        String description = EventAbilitySupport.emblemName(emblem);
-        abilities.putEmblemAbility(gameData, emblem, ability, source, description,
-                ConditionContext.forCard(source, emblem.controllerId()).withTriggeringPermanentId(triggering.getId()),
-                entry -> {
-                    entry.setTriggeringPermanentId(triggering.getId());
-                    entry.setTriggeringPermanentControllerId(triggeringControllerId);
-                    entry.setTriggeringCardId(triggering.getCard().getId());
-                    entry.setNonTargeting(true);
-                });
-        gameLogService.append(gameData, GameLog.text(description + " triggers for " + triggering.getCard().getName()
-                + " becoming tapped."));
-        log.info("Game {} - {} triggers for {} becoming tapped", gameData.id, description,
-                triggering.getCard().getName());
     }
 
     /** "Whenever this creature becomes tapped to pay a teamwork cost". */
@@ -873,7 +794,8 @@ public class TapTriggers {
                     throw new IllegalStateException("The matcher of " + PERMANENT_YOU_CONTROL_UNTAPPED
                             + " judges no limit: " + ability);
                 }
-                if (!tappedPermanentMatches(gameData, perm, ownerId, untappedPermanent, read)) continue;
+                if (!tappedPermanentMatches(gameData, perm.getOriginalCard().getId(), ownerId, untappedPermanent,
+                        read)) continue;
                 abilities.put(gameData, ability, perm.getCard(), perm, ownerId,
                         ConditionContext.forPermanent(perm, ownerId)
                                 .withTriggeringPermanentId(untappedPermanent.getId()),
@@ -884,7 +806,8 @@ public class TapTriggers {
         gameData.forEachPermanent((ownerId, perm) -> {
             for (TriggeredAbility ability : abilities.abilities(gameData, perm, PERMANENT_UNTAPPED)) {
                 TapRead read = read(ability, PERMANENT_UNTAPPED).getFirst();
-                if (!tappedPermanentMatches(gameData, perm, ownerId, untappedPermanent, read)) continue;
+                if (!tappedPermanentMatches(gameData, perm.getOriginalCard().getId(), ownerId, untappedPermanent,
+                        read)) continue;
                 TriggerRecord untapped = tappedRecord(perm, untappedPermanent, untappedControllerId, null);
                 abilities.put(gameData, ability, perm.getCard(), perm, ownerId,
                         ConditionContext.forPermanent(perm, ownerId)
@@ -924,7 +847,7 @@ public class TapTriggers {
      */
     private static TriggerRecord tappedRecord(Permanent source, Permanent tapped, UUID tappedControllerId,
                                               UUID thatPlayerId) {
-        Permanent snapshot = new Permanent(source);
+        Permanent snapshot = source == null ? null : new Permanent(source);
         return entry -> {
             entry.setNonTargeting(true);
             if (thatPlayerId != null) {
@@ -933,7 +856,9 @@ public class TapTriggers {
             entry.setTriggeringPermanentId(tapped.getId());
             entry.setTriggeringPermanent(tapped);
             entry.setTriggeringPermanentControllerId(tappedControllerId);
-            entry.setSourcePermanentSnapshot(snapshot);
+            if (snapshot != null) {
+                entry.setSourcePermanentSnapshot(snapshot);
+            }
         };
     }
 
@@ -942,13 +867,13 @@ public class TapTriggers {
      * "this permanent"), if it has one, judged with {@code source}, the ability's source controlled by
      * {@code sourceControllerId}, as the filter's source.
      */
-    private boolean tappedPermanentMatches(GameData gameData, Permanent source, UUID sourceControllerId,
+    private boolean tappedPermanentMatches(GameData gameData, UUID sourceCardId, UUID sourceControllerId,
                                            Permanent tapped, TapRead read) {
         if (read.filter() == null) {
             return true;
         }
         FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(source.getOriginalCard().getId())
+                .withSourceCardId(sourceCardId)
                 .withSourceControllerId(sourceControllerId);
         return predicateEvaluationService.matchesPermanentPredicate(tapped, read.filter(), filterContext);
     }

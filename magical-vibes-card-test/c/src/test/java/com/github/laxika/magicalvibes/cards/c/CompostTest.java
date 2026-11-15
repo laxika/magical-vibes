@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BogImp;
+import com.github.laxika.magicalvibes.cards.d.Deathlace;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HulkingOgre;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
+import com.github.laxika.magicalvibes.cards.p.Purelace;
 import com.github.laxika.magicalvibes.cards.r.RavenousRats;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TomeScour;
@@ -20,7 +22,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BogImp.class, Compost.class, CruelEdict.class, GrizzlyBears.class, HulkingOgre.class, Millstone.class, MindRot.class, RavenousRats.class, Shock.class, TomeScour.class})
+@CardUsed({BogImp.class, Compost.class, CruelEdict.class, Deathlace.class, GrizzlyBears.class, HulkingOgre.class, Millstone.class, MindRot.class, Purelace.class, RavenousRats.class, Shock.class, TomeScour.class})
 class CompostTest extends BaseCardTest {
 
     // ===== Triggering =====
@@ -349,5 +351,44 @@ class CompostTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Triggers when a black creature made white on the battlefield dies: the card in the graveyard is black")
+    void triggersOnABlackCardMadeWhiteOnTheBattlefield() {
+        harness.addToBattlefield(player1, new Compost());
+        harness.addToBattlefield(player2, new BogImp());
+        UUID bogImpId = harness.getPermanentId(player2, "Bog Imp");
+        harness.setHand(player1, List.of(new Purelace(), new Shock()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, bogImpId);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        // "From anywhere" isn't a leaves-the-battlefield ability (CR 603.6c): it doesn't look back (CR 603.10a), so the
+        // card is judged as it is in the graveyard.
+        harness.castAndResolveInstant(player1, 0, bogImpId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Bog Imp");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Does NOT trigger when a nonblack creature made black on the battlefield dies: the card isn't black")
+    void doesNotTriggerOnANonblackCardMadeBlackOnTheBattlefield() {
+        harness.addToBattlefield(player1, new Compost());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new Deathlace(), new Shock()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0, bearsId);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, bearsId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 }
