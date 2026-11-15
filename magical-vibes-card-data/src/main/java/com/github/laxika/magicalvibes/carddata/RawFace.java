@@ -10,7 +10,9 @@ import java.util.List;
  * JSON node a field lives on, provider field naming, array ordering, and syntax quirks. Every
  * *interpretation* of the values (integer parsing, colour symbols, the type line, keyword mapping,
  * text normalisation) happens once in {@link FaceOracleMapper}, so a rules decision cannot drift
- * between providers. The cost is one allocation per face on a startup-only path.
+ * between providers. A face is in this form only while a set is being converted
+ * ({@link com.github.laxika.magicalvibes.carddata.store.StoredSetConverter}); what is stored is
+ * already mapped.
  *
  * <p>Self-contained "by construction" is the load-bearing part. Scryfall ships one object per card
  * with face fields sometimes top-level and sometimes under {@code card_faces[i]}, and MTGJSON ships

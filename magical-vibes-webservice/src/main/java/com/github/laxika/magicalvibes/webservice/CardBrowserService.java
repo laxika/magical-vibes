@@ -4,12 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
-import com.github.laxika.magicalvibes.carddata.FaceOracleMapper;
-import com.github.laxika.magicalvibes.carddata.RawFace;
 import com.github.laxika.magicalvibes.carddata.store.PrintVariant;
 import com.github.laxika.magicalvibes.carddata.store.SetDataStore;
+import com.github.laxika.magicalvibes.carddata.store.StoredFaceDetails;
 import com.github.laxika.magicalvibes.carddata.store.StoredPrinting;
+import com.github.laxika.magicalvibes.carddata.store.StoredPrintingDetails;
 import com.github.laxika.magicalvibes.carddata.store.StoredSet;
+import com.github.laxika.magicalvibes.carddata.store.StoredSetDetails;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.networking.message.BrowseCardInfo;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -30,7 +32,7 @@ import java.util.stream.Collectors;
  * Every base printing of a set, implemented or not, for the card browser and the deck builder.
  *
  * <p>Built from the stored set data, so it shows the same cards whichever provider a set was
- * downloaded from, and its faces go through {@link FaceOracleMapper} exactly as the engine's do.
+ * downloaded from, and its faces were mapped by the same converter as the engine's.
  */
 @Service
 public class CardBrowserService {
@@ -68,7 +70,8 @@ public class CardBrowserService {
             return cached;
         }
         try {
-            List<BrowseCardInfo> cards = buildCards(setCode, setDataStore.get(setCode));
+            List<BrowseCardInfo> cards = buildCards(setCode, setDataStore.get(setCode),
+                    setDataStore.details(setCode));
             cache.put(setCode, cards);
             return cards;
         } catch (IOException | RuntimeException e) {
@@ -80,16 +83,23 @@ public class CardBrowserService {
         }
     }
 
-    List<BrowseCardInfo> buildCards(String setCode, StoredSet set) {
+    List<BrowseCardInfo> buildCards(String setCode, StoredSet set, StoredSetDetails setDetails) {
         CardSet cardSet = findCardSet(setCode);
         Set<String> implementedNumbers = cardSet == null ? Set.of()
                 : cardCatalog.getPrintings(cardSet).stream()
                 .map(CardPrinting::collectorNumber)
                 .collect(Collectors.toSet());
 
+        Map<String, StoredPrintingDetails> detailsByNumber = setDetails.printings().stream()
+                .collect(Collectors.toMap(StoredPrintingDetails::collectorNumber, details -> details));
+
         List<BrowseCardInfo> cards = new ArrayList<>();
         for (StoredPrinting printing : set.printings()) {
             String collectorNumber = printing.collectorNumber();
+            StoredPrintingDetails details = detailsByNumber.get(collectorNumber);
+            if (details == null) {
+                continue;
+            }
 
             // Keep base printings and multi-art lettered variants (Homelands/Alliances
             // 10a/10b, Fallen Empires a–d). Skip foil/promo/star suffixes (139s, 278★, …).
@@ -98,7 +108,7 @@ public class CardBrowserService {
             }
 
             // Skip showcase, extended art, borderless, promo, and full-art variants
-            if (isSpecialPrint(printing.variant())) {
+            if (isSpecialPrint(details.variant())) {
                 continue;
             }
 
@@ -109,21 +119,20 @@ public class CardBrowserService {
 
             // Both faces of a double-faced card are printed with the same mark.
             String watermark = printing.front().watermark();
-            if (watermark != null && watermark.isEmpty()) {
-                watermark = null;
-            }
 
             boolean implemented = implementedNumbers.contains(collectorNumber);
-            List<String> promoTypes = printing.variant().promoTypes();
+            List<String> promoTypes = details.variant().promoTypes();
 
             BrowseCardInfo secondFace = printing.back() == null ? null
-                    : buildFaceInfo(printing.back(), true, collectorNumber, setCode, rarity,
+                    : buildFaceInfo(details.back().browseOracle(printing.back()), details.back(),
+                    collectorNumber, setCode, rarity,
                     watermark, implemented, null, null, promoTypes);
             // A prepare card's second face is the spell printed inset on its front, not a
             // face you turn the card over to see. Handing it back as a back face is what
             // made prepare cards render with a flip control, like a transform DFC.
-            boolean prepare = "prepare".equals(printing.front().layout());
-            cards.add(buildFaceInfo(printing.front(), false, collectorNumber, setCode, rarity,
+            boolean prepare = "prepare".equals(details.layout());
+            cards.add(buildFaceInfo(details.front().browseOracle(printing.front()), details.front(),
+                    collectorNumber, setCode, rarity,
                     watermark, implemented,
                     prepare ? null : secondFace, prepare ? secondFace : null, promoTypes));
         }
@@ -131,20 +140,16 @@ public class CardBrowserService {
     }
 
     /**
-     * Card info for one face. The browser shows a card's halves one at a time, so a name, cost or
-     * type line spanning both ("Flotsam // Jetsam") is cut to this face's own before mapping.
+     * Card info for one face. The browser shows a card's halves one at a time, so {@code data} is
+     * {@link StoredFaceDetails#browseOracle}, where a name, cost or type line spanning both
+     * ("Flotsam // Jetsam") was cut to this face's own before mapping.
      */
-    private static BrowseCardInfo buildFaceInfo(RawFace face, boolean isBackFace,
+    private static BrowseCardInfo buildFaceInfo(OracleData data, StoredFaceDetails face,
                                                 String collectorNumber, String setCode,
                                                 String rarity, String watermark, boolean implemented,
                                                 BrowseCardInfo backFace, BrowseCardInfo prepareSpell,
                                                 List<String> promoTypes) {
-        String typeLine = firstFace(face.typeLine());
-        OracleData data = FaceOracleMapper.toOracleData(new RawFace(
-                firstFace(face.name()), firstFace(face.manaCost()), typeLine, face.text(),
-                face.colors(), face.colorIndicator(), face.colorIdentity(), face.power(),
-                face.toughness(), face.loyalty(), face.defense(), face.keywords(), face.watermark(),
-                face.layout(), null), isBackFace);
+        String typeLine = face.typeLine();
 
         return new BrowseCardInfo(
                 data.name(), collectorNumber, setCode, data.manaCost(), typeLine == null ? "" : typeLine,
@@ -168,10 +173,6 @@ public class CardBrowserService {
             return data.colorIdentity().getFirst().name();
         }
         return null;
-    }
-
-    private static String firstFace(String value) {
-        return value != null && value.contains(" // ") ? value.substring(0, value.indexOf(" // ")) : value;
     }
 
     private static List<String> names(Collection<? extends Enum<?>> values) {

@@ -22,15 +22,16 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      # The server's own set-{code}.json files, converted from the MTGJSON downloads the tests
+      # The server's own set-{code}.cbor files, converted from the MTGJSON downloads the tests
       # make on a cache miss. Every test JVM uses this repo-root directory. It is restored before
       # and saved after the run; restore-keys reuses the previous cache so only missing sets are
-      # downloaded.
+      # downloaded. StoredSet.java holds the conversion version, so a bump makes a new key and the
+      # re-downloaded sets are saved.
       - name: Cache oracle set data
         uses: actions/cache@v4
         with:
           path: card-data-cache
-          key: card-data-cache-v2-${{ hashFiles('magical-vibes-card/core/src/main/java/com/github/laxika/magicalvibes/cards/CardSet.java') }}
+          key: card-data-cache-${{ hashFiles('magical-vibes-card/core/src/main/java/com/github/laxika/magicalvibes/cards/CardSet.java', 'magical-vibes-card-data/src/main/java/com/github/laxika/magicalvibes/carddata/store/StoredSet.java') }}
           restore-keys: |
             card-data-cache-
 

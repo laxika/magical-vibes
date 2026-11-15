@@ -3,10 +3,8 @@ package com.github.laxika.magicalvibes.carddata.store;
 import com.github.laxika.magicalvibes.carddata.CardDataSupport;
 import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
 import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry.TokenImageData;
-import com.github.laxika.magicalvibes.carddata.FaceOracleMapper;
 import com.github.laxika.magicalvibes.carddata.LegalitySnapshot;
 import com.github.laxika.magicalvibes.carddata.OracleLoader;
-import com.github.laxika.magicalvibes.carddata.RawFace;
 import com.github.laxika.magicalvibes.carddata.SetOracleData;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -22,8 +20,9 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 /**
- * The {@link OracleLoader}: reads a set from the {@link SetDataStore} and maps the faces of its
- * implemented printings through {@link FaceOracleMapper}.
+ * The {@link OracleLoader}: reads a set from the {@link SetDataStore} and hands over the faces of
+ * its implemented printings. The faces were mapped when the set was converted
+ * ({@link StoredSetConverter}), so nothing is interpreted here.
  *
  * <p>Provider-neutral by construction — a {@link StoredSet} looks the same whichever provider it
  * was converted from, so nothing here knows or asks where the data came from.
@@ -46,12 +45,12 @@ public class StoredSetOracleLoader implements OracleLoader {
     @Override
     public LegalitySnapshot loadLegalities(String setCode) {
         try {
-            StoredSet set = store.get(setCode);
+            StoredSetDetails details = store.details(setCode);
             Map<String, Map<String, String>> legalities = new HashMap<>();
-            for (StoredPrinting printing : set.printings()) {
+            for (StoredPrintingDetails printing : details.printings()) {
                 legalities.put(printing.collectorNumber(), printing.legalities());
             }
-            return new LegalitySnapshot(legalities, set.fetchedAt());
+            return new LegalitySnapshot(legalities, details.fetchedAt());
         } catch (IOException e) {
             LOG.warning("Could not load legalities for " + setCode + ": " + e.getMessage());
             return LegalitySnapshot.empty();
@@ -87,7 +86,7 @@ public class StoredSetOracleLoader implements OracleLoader {
         int cardTotal = printings.size();
         CardDataSupport.applyMissingPrintingAliases(setCode, printings, rarities);
 
-        // Faces are mapped only for printings the game implements.
+        // Only the printings the game implements are handed over.
         Map<String, OracleData> frontFaces = new HashMap<>();
         Map<String, OracleData> backFaces = new HashMap<>();
         Map<String, List<String>> faceNames = new HashMap<>();
@@ -96,12 +95,12 @@ public class StoredSetOracleLoader implements OracleLoader {
             if (printing == null) {
                 continue;
             }
-            frontFaces.put(collectorNumber, frontFace(printing));
+            frontFaces.put(collectorNumber, printing.front());
             if (!printing.faceNames().isEmpty()) {
                 faceNames.put(collectorNumber, printing.faceNames());
             }
             if (printing.back() != null) {
-                backFaces.put(collectorNumber, backFace(printing));
+                backFaces.put(collectorNumber, printing.back());
             }
         }
 
@@ -122,18 +121,6 @@ public class StoredSetOracleLoader implements OracleLoader {
                 frontFaces, backFaces, faceNames, tokenImages(setCode, set));
     }
 
-    /** The printing's front face, or for a split card the whole card with its halves attached. */
-    public static OracleData frontFace(StoredPrinting printing) {
-        return printing.splitHalves().isEmpty()
-                ? FaceOracleMapper.toOracleData(printing.front(), false)
-                : FaceOracleMapper.toSplitCardOracleData(printing.front(), printing.splitHalves());
-    }
-
-    /** The printing's back face, or null when it has none. */
-    public static OracleData backFace(StoredPrinting printing) {
-        return printing.back() == null ? null : FaceOracleMapper.toOracleData(printing.back(), true);
-    }
-
     /**
      * A token a set registers a class for at the token's own collector number becomes one of the
      * set's printings, so the class gets the token's oracle data. A real printing at that number
@@ -145,37 +132,22 @@ public class StoredSetOracleLoader implements OracleLoader {
         for (StoredToken token : tokens) {
             if (implementedCollectorNumbers.contains(token.collectorNumber())) {
                 printings.putIfAbsent(token.collectorNumber(), new StoredPrinting(
-                        token.collectorNumber(), null, List.of(), token.face(), null, List.of(),
-                        null, Map.of()));
+                        token.collectorNumber(), null, List.of(), token.face(), null));
             }
         }
     }
 
     /**
-     * Token art keyed by {@link CardPrintingRegistry#buildTokenKey}, for creature and non-creature
-     * tokens (Treasure, Food, …) alike. Emblems are skipped, and so is every face of a double-faced
-     * token but its front.
+     * Token art keyed by {@link CardPrintingRegistry#buildTokenKey}. A token without an
+     * {@link StoredToken#imageKey} supplies none.
      */
     private static Map<String, TokenImageData> tokenImages(String setCode, StoredSet set) {
         Map<String, TokenImageData> tokenMap = new HashMap<>();
         for (StoredToken token : set.tokens()) {
-            RawFace face = token.face();
-            if (token.side() != null && !"a".equals(token.side())) {
-                continue;
+            if (token.imageKey() != null) {
+                tokenMap.put(token.imageKey(),
+                        new TokenImageData(set.tokenSetCode(), token.collectorNumber()));
             }
-            String typeLine = face.typeLine() == null ? "" : face.typeLine();
-            if (typeLine.contains("Emblem")) {
-                continue;
-            }
-
-            boolean isCreature = typeLine.contains("Creature");
-            Integer power = isCreature ? CardDataSupport.parseInt(face.power()) : null;
-            Integer toughness = isCreature ? CardDataSupport.parseInt(face.toughness()) : null;
-            List<CardColor> colors = FaceOracleMapper.mapColors(face.colors());
-            CardColor color = colors.isEmpty() ? null : colors.get(0);
-
-            String key = CardPrintingRegistry.buildTokenKey(face.name(), power, toughness, color);
-            tokenMap.put(key, new TokenImageData(set.tokenSetCode(), token.collectorNumber()));
         }
         if (!tokenMap.isEmpty()) {
             LOG.info("Loaded " + tokenMap.size() + " token images for set " + setCode);

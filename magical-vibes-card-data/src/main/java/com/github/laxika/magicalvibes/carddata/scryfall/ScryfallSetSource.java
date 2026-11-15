@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.carddata.OracleDataProvider;
 import com.github.laxika.magicalvibes.carddata.RawFace;
 import com.github.laxika.magicalvibes.carddata.store.PrintVariant;
 import com.github.laxika.magicalvibes.carddata.store.SetSource;
-import com.github.laxika.magicalvibes.carddata.store.StoredPrinting;
-import com.github.laxika.magicalvibes.carddata.store.StoredSet;
+import com.github.laxika.magicalvibes.carddata.store.ConvertedPrinting;
+import com.github.laxika.magicalvibes.carddata.store.ConvertedSet;
+import com.github.laxika.magicalvibes.carddata.store.StoredSetConverter;
 import com.github.laxika.magicalvibes.carddata.store.StoredToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -72,32 +73,32 @@ public class ScryfallSetSource implements SetSource {
      * token-set failure fails the download like a card-set failure would.
      */
     @Override
-    public StoredSet download(String setCode, Path tempDir) throws IOException, InterruptedException {
+    public ConvertedSet download(String setCode, Path tempDir) throws IOException, InterruptedException {
         String sourceSetCode = "MB1".equalsIgnoreCase(setCode) ? "CMB1" : setCode;
         List<JsonNode> cards = fetcher.fetch(sourceSetCode, tempDir);
         List<JsonNode> tokens = fetcher.fetch(tokenSetCode(sourceSetCode), tempDir);
         return convert(setCode, sourceSetCode, cards, tokens, Instant.now());
     }
 
-    static StoredSet convert(String setCode, String sourceSetCode, List<JsonNode> cards,
+    static ConvertedSet convert(String setCode, String sourceSetCode, List<JsonNode> cards,
                              List<JsonNode> tokenCards, Instant fetchedAt) {
         String setName = null;
-        Map<String, StoredPrinting> printings = new LinkedHashMap<>();
+        Map<String, ConvertedPrinting> printings = new LinkedHashMap<>();
         for (JsonNode card : cards) {
             if (setName == null) {
                 setName = CardDataSupport.text(card, "set_name");
             }
-            StoredPrinting printing = toPrinting(card);
-            printings.put(printing.collectorNumber(), printing);
+            ConvertedPrinting printing = toPrinting(card);
+            printings.put(printing.printing().collectorNumber(), printing);
         }
 
         List<StoredToken> tokens = new ArrayList<>();
         for (JsonNode token : tokenCards) {
-            tokens.add(new StoredToken(CardDataSupport.text(token, "collector_number"), null,
+            tokens.add(StoredSetConverter.token(CardDataSupport.text(token, "collector_number"), null,
                     toRawFrontFace(token)));
         }
 
-        return new StoredSet(StoredSet.FORMAT_VERSION, setCode, setName, OracleDataProvider.SCRYFALL,
+        return ConvertedSet.of(setCode, setName, OracleDataProvider.SCRYFALL,
                 null, fetchedAt, tokenSetCode(sourceSetCode), List.copyOf(printings.values()), tokens);
     }
 
@@ -154,9 +155,9 @@ public class ScryfallSetSource implements SetSource {
         return allCards;
     }
 
-    static StoredPrinting toPrinting(JsonNode card) {
+    static ConvertedPrinting toPrinting(JsonNode card) {
         RawFace front = toRawFrontFace(card);
-        return new StoredPrinting(
+        return StoredSetConverter.printing(
                 CardDataSupport.text(card, "collector_number"),
                 CardDataSupport.text(card, "rarity"),
                 parseFaceNames(card),

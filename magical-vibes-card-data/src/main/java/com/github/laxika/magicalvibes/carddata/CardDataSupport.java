@@ -277,10 +277,10 @@ public final class CardDataSupport {
      * Writes a cache file via temp file + atomic move, so concurrent loaders (parallel test JVMs
      * sharing one cache directory) either see a complete file or no file — never a partial write.
      */
-    public static void writeCacheFile(Path cacheFile, String content) throws IOException {
+    public static void writeCacheFile(Path cacheFile, byte[] content) throws IOException {
         Path tempFile = Files.createTempFile(cacheFile.getParent(), cacheFile.getFileName().toString(), ".tmp");
         try {
-            Files.writeString(tempFile, content);
+            Files.write(tempFile, content);
             try {
                 Files.move(tempFile, cacheFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
             } catch (AtomicMoveNotSupportedException e) {

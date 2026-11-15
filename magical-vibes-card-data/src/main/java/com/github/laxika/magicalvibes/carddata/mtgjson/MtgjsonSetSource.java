@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.carddata.OracleDataProvider;
 import com.github.laxika.magicalvibes.carddata.RawFace;
 import com.github.laxika.magicalvibes.carddata.store.PrintVariant;
 import com.github.laxika.magicalvibes.carddata.store.SetSource;
-import com.github.laxika.magicalvibes.carddata.store.StoredPrinting;
-import com.github.laxika.magicalvibes.carddata.store.StoredSet;
+import com.github.laxika.magicalvibes.carddata.store.ConvertedPrinting;
+import com.github.laxika.magicalvibes.carddata.store.ConvertedSet;
+import com.github.laxika.magicalvibes.carddata.store.StoredSetConverter;
 import com.github.laxika.magicalvibes.carddata.store.StoredToken;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
@@ -63,7 +64,7 @@ public class MtgjsonSetSource implements SetSource {
     }
 
     @Override
-    public StoredSet download(String setCode, Path tempDir) throws IOException, InterruptedException {
+    public ConvertedSet download(String setCode, Path tempDir) throws IOException, InterruptedException {
         String sourceSetCode = "MB1".equalsIgnoreCase(setCode) ? "CMB1" : setCode;
         Path file = tempDir.resolve("mtgjson-" + sourceSetCode.toLowerCase(Locale.ROOT) + ".json");
         try (HttpClient client = createHttpClient()) {
@@ -76,7 +77,7 @@ public class MtgjsonSetSource implements SetSource {
         return convert(setCode, sourceSetCode, MAPPER.readTree(Files.readString(file)), Instant.now());
     }
 
-    static StoredSet convert(String setCode, String sourceSetCode, JsonNode root, Instant fetchedAt)
+    static ConvertedSet convert(String setCode, String sourceSetCode, JsonNode root, Instant fetchedAt)
             throws IOException {
         JsonNode setData = root.get("data");
         if (setData == null) {
@@ -85,12 +86,12 @@ public class MtgjsonSetSource implements SetSource {
         JsonNode meta = root.get("meta");
 
         FaceIndex faces = indexFacesByCollectorNumber(setData.get("cards"));
-        List<StoredPrinting> printings = new ArrayList<>();
+        List<ConvertedPrinting> printings = new ArrayList<>();
         faces.frontFaces().forEach((number, front) -> {
             // A promoted meld result is its own front face, not its own back face.
             JsonNode back = faces.backFaces().get(number) == front ? null : faces.backFaces().get(number);
             List<JsonNode> halves = faces.splitHalves().get(number);
-            printings.add(new StoredPrinting(
+            printings.add(StoredSetConverter.printing(
                     number,
                     CardDataSupport.text(front, "rarity"),
                     List.copyOf(faces.faceNamesByCollectorNumber().getOrDefault(number, List.of())),
@@ -110,13 +111,13 @@ public class MtgjsonSetSource implements SetSource {
         if (tokenNodes != null && tokenNodes.isArray()) {
             for (JsonNode token : tokenNodes) {
                 if (token.has("number")) {
-                    tokens.add(new StoredToken(token.get("number").asText(),
+                    tokens.add(StoredSetConverter.token(token.get("number").asText(),
                             CardDataSupport.text(token, "side"), toRawFace(token)));
                 }
             }
         }
 
-        return new StoredSet(StoredSet.FORMAT_VERSION, setCode, CardDataSupport.text(setData, "name"),
+        return ConvertedSet.of(setCode, CardDataSupport.text(setData, "name"),
                 OracleDataProvider.MTGJSON, meta == null ? null : CardDataSupport.text(meta, "date"),
                 fetchedAt, "t" + sourceSetCode.toLowerCase(Locale.ROOT), printings, tokens);
     }

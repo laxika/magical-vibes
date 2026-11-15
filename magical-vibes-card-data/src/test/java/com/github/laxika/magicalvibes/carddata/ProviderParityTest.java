@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.carddata.mtgjson.MtgjsonSetSource;
 import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallSetSource;
 import com.github.laxika.magicalvibes.carddata.store.SetDataStore;
 import com.github.laxika.magicalvibes.carddata.store.SetSource;
+import com.github.laxika.magicalvibes.carddata.store.ConvertedPrinting;
 import com.github.laxika.magicalvibes.carddata.store.StoredPrinting;
+import com.github.laxika.magicalvibes.carddata.store.StoredPrintingDetails;
 import com.github.laxika.magicalvibes.carddata.store.StoredSet;
-import com.github.laxika.magicalvibes.carddata.store.StoredSetOracleLoader;
 import com.github.laxika.magicalvibes.model.OracleData;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
@@ -42,29 +43,29 @@ class ProviderParityTest {
     @ParameterizedTest
     @ValueSource(strings = {"ISD", "DGM", "AKH", "MB1", "M19"})
     void bothProvidersStoreTheSameSet(String setCode) throws Exception {
-        Map<String, StoredPrinting> scryfall = printings(new ScryfallSetSource(), setCode);
-        Map<String, StoredPrinting> mtgjson = printings(new MtgjsonSetSource(), setCode);
+        Map<String, ConvertedPrinting> scryfall = printings(new ScryfallSetSource(), setCode);
+        Map<String, ConvertedPrinting> mtgjson = printings(new MtgjsonSetSource(), setCode);
 
         assertThat(mtgjson.keySet()).as("collector numbers").isEqualTo(scryfall.keySet());
         List<String> differences = new ArrayList<>();
         for (String number : scryfall.keySet()) {
             compare(differences, number, "front", scryfall.get(number), mtgjson.get(number),
-                    printing -> comparable(StoredSetOracleLoader.frontFace(printing)));
+                    printing -> comparable(printing.printing().front()));
             compare(differences, number, "back", scryfall.get(number), mtgjson.get(number),
-                    printing -> comparable(StoredSetOracleLoader.backFace(printing)));
+                    printing -> comparable(printing.printing().back()));
             compare(differences, number, "rarity", scryfall.get(number), mtgjson.get(number),
-                    StoredPrinting::rarity);
+                    printing -> printing.printing().rarity());
             compare(differences, number, "face names", scryfall.get(number), mtgjson.get(number),
-                    StoredPrinting::faceNames);
+                    printing -> printing.printing().faceNames());
             compare(differences, number, "browser variant", scryfall.get(number), mtgjson.get(number),
-                    ProviderParityTest::browserVariant);
+                    printing -> browserVariant(printing.details()));
         }
         assertThat(differences).as("printings the providers store differently").isEmpty();
     }
 
     private static <T> void compare(List<String> differences, String number, String what,
-                                    StoredPrinting scryfall, StoredPrinting mtgjson,
-                                    Function<StoredPrinting, T> field) {
+                                    ConvertedPrinting scryfall, ConvertedPrinting mtgjson,
+                                    Function<ConvertedPrinting, T> field) {
         T expected = field.apply(scryfall);
         T actual = field.apply(mtgjson);
         if (!java.util.Objects.equals(expected, actual)) {
@@ -82,7 +83,7 @@ class ProviderParityTest {
     }
 
     /** What the card browser makes of a printing's variant: hidden, a deck section, or shown. */
-    private static String browserVariant(StoredPrinting printing) {
+    private static String browserVariant(StoredPrintingDetails printing) {
         Set<String> promoTypes = Set.copyOf(printing.variant().promoTypes());
         if (promoTypes.contains("planeswalkerdeck")) return "planeswalker deck";
         if (promoTypes.contains("setextension")) return "set extension";
@@ -93,12 +94,16 @@ class ProviderParityTest {
         return hidden ? "hidden" : "shown";
     }
 
-    private static Map<String, StoredPrinting> printings(SetSource source, String setCode) throws Exception {
+    private static Map<String, ConvertedPrinting> printings(SetSource source, String setCode) throws Exception {
         String cacheDir = Path.of(SharedCacheLoaders.CACHE_DIR)
                 .resolve("only-" + source.provider().name().toLowerCase()).toString();
-        StoredSet set = new SetDataStore(cacheDir, source.provider().name(), List.of(source)).get(setCode);
+        SetDataStore store = new SetDataStore(cacheDir, source.provider().name(), List.of(source));
+        StoredSet set = store.get(setCode);
         assertThat(set.source()).isEqualTo(source.provider());
+        Map<String, StoredPrintingDetails> details = store.details(setCode).printings().stream()
+                .collect(Collectors.toMap(StoredPrintingDetails::collectorNumber, printing -> printing));
         return set.printings().stream().collect(Collectors.toMap(StoredPrinting::collectorNumber,
-                printing -> printing, (first, second) -> second, java.util.LinkedHashMap::new));
+                printing -> new ConvertedPrinting(printing, details.get(printing.collectorNumber())),
+                (first, second) -> second, java.util.LinkedHashMap::new));
     }
 }

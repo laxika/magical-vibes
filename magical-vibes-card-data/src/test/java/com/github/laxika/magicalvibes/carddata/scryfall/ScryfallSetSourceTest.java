@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.carddata.scryfall;
 
 import com.github.laxika.magicalvibes.carddata.OracleDataProvider;
 import com.github.laxika.magicalvibes.carddata.store.PrintVariant;
+import com.github.laxika.magicalvibes.carddata.store.ConvertedSet;
 import com.github.laxika.magicalvibes.carddata.store.StoredPrinting;
+import com.github.laxika.magicalvibes.carddata.store.StoredPrintingDetails;
 import com.github.laxika.magicalvibes.carddata.store.StoredSet;
-import com.github.laxika.magicalvibes.carddata.store.StoredSetOracleLoader;
 import com.github.laxika.magicalvibes.carddata.store.StoredToken;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -49,11 +50,11 @@ class ScryfallSetSourceTest {
                     """));
         });
 
-        StoredSet set = source.download("CON", tempDir);
+        StoredSet set = source.download("CON", tempDir).set();
 
         assertThat(fetchedSets).containsExactly("CON", "tcon");
         assertThat(set.source()).isEqualTo(OracleDataProvider.SCRYFALL);
-        assertThat(set.formatVersion()).isEqualTo(StoredSet.FORMAT_VERSION);
+        assertThat(set.conversionVersion()).isEqualTo(StoredSet.CONVERSION_VERSION);
         assertThat(set.setCode()).isEqualTo("CON");
         assertThat(set.setName()).isEqualTo("Conflux");
         assertThat(set.tokenSetCode()).isEqualTo("tcon");
@@ -71,7 +72,7 @@ class ScryfallSetSourceTest {
             return List.of();
         });
 
-        StoredSet set = source.download("MB1", tempDir);
+        StoredSet set = source.download("MB1", tempDir).set();
 
         assertThat(fetchedSets).containsExactly("CMB1", "tcmb1");
         assertThat(set.setCode()).isEqualTo("MB1");
@@ -81,7 +82,7 @@ class ScryfallSetSourceTest {
     /** The card browser keeps every printing, so none may be dropped on the way to the store. */
     @Test
     void keepsEveryPrintingWithItsRarityVariantAndLegalities() {
-        StoredSet set = ScryfallSetSource.convert("TST", "TST", List.of(
+        ConvertedSet set = ScryfallSetSource.convert("TST", "TST", List.of(
                 MAPPER.readTree("""
                         { "name": "Grizzly Bears", "collector_number": "1", "rarity": "common",
                           "border_color": "black", "legalities": { "Modern": "Legal", "vintage": "legal" } }
@@ -92,12 +93,15 @@ class ScryfallSetSourceTest {
                           "promo_types": ["boosterfun"], "frame_effects": ["showcase"] }
                         """)), List.of(), Instant.EPOCH);
 
-        assertThat(set.printings()).extracting(StoredPrinting::collectorNumber).containsExactly("1", "300");
-        StoredPrinting base = set.printings().get(0);
+        assertThat(set.set().printings()).extracting(StoredPrinting::collectorNumber).containsExactly("1", "300");
+        assertThat(set.details().printings()).extracting(StoredPrintingDetails::collectorNumber)
+                .containsExactly("1", "300");
+        StoredPrinting base = set.set().printings().get(0);
+        StoredPrintingDetails baseDetails = set.details().printings().get(0);
         assertThat(base.rarity()).isEqualTo("common");
-        assertThat(base.variant()).isEqualTo(new PrintVariant(List.of(), List.of(), "black", false));
-        assertThat(base.legalities()).containsOnly(Map.entry("modern", "legal"), Map.entry("vintage", "legal"));
-        assertThat(set.printings().get(1).variant()).isEqualTo(
+        assertThat(baseDetails.variant()).isEqualTo(new PrintVariant(List.of(), List.of(), "black", false));
+        assertThat(baseDetails.legalities()).containsOnly(Map.entry("modern", "legal"), Map.entry("vintage", "legal"));
+        assertThat(set.details().printings().get(1).variant()).isEqualTo(
                 new PrintVariant(List.of("boosterfun"), List.of("showcase"), "borderless", true));
     }
 
@@ -115,7 +119,7 @@ class ScryfallSetSourceTest {
                 }
                 """);
 
-        assertThat(ScryfallSetSource.toPrinting(card).faceNames())
+        assertThat(ScryfallSetSource.toPrinting(card).printing().faceNames())
                 .containsExactly("Smelt", "Herd", "Saw");
     }
 
@@ -404,10 +408,10 @@ class ScryfallSetSourceTest {
     }
 
     private static OracleData parseOracleData(JsonNode card) {
-        return StoredSetOracleLoader.frontFace(ScryfallSetSource.toPrinting(card));
+        return ScryfallSetSource.toPrinting(card).printing().front();
     }
 
     private static OracleData parseBackFaceOracleData(JsonNode card) {
-        return StoredSetOracleLoader.backFace(ScryfallSetSource.toPrinting(card));
+        return ScryfallSetSource.toPrinting(card).printing().back();
     }
 }

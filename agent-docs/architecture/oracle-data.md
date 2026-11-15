@@ -11,10 +11,20 @@ How card metadata is loaded, and the layout of the card and card-data modules.
 
 ## Loading
 
-### A stored set is never refreshed
-`set-{code}.json` pins a set's data, legality included, from its first fetch; only deleting the file, or bumping `StoredSet.FORMAT_VERSION` (which needs a new CI cache key), re-downloads it.
+### A stored set is refreshed only by a version bump
+A set's two files pin its data, legality included; only a new `StoredSet.CONVERSION_VERSION`, or deleting them, re-downloads it.
 Owner: `SetDataStore`.
 Why: oracle text must not differ between runs or providers.
+
+### A set is stored already mapped
+Faces are mapped once, at conversion, and stored as `OracleData`; loading maps nothing. Any change to what conversion writes, a new `Keyword` or `CardSubtype` constant included, bumps `StoredSet.CONVERSION_VERSION`.
+Owner: `StoredSetConverter`, `StoredSet.CONVERSION_VERSION`.
+Why: mapping every face on every start was paid by each test JVM and server start; a file without the bump keeps the old mapping.
+
+### A set load reads only what it loads
+`set-{code}.cbor` (`StoredSet`) holds what loading a set reads; legalities and what only the card browser shows are in `set-{code}.details.cbor` (`StoredSetDetails`), read on demand. Both come from one download.
+Owner: `SetDataStore`, `ConvertedSet`.
+Why: legalities and display data were a large part of every set parse and no load used them.
 
 ### A loader reads; the registry registers
 `OracleLoader.loadSet` returns data and writes nothing; every registration happens in `CardRegistry.register`.
@@ -22,9 +32,9 @@ Owner: `CardRegistry`.
 Why: per-provider registration loops drift apart.
 
 ### Rules decisions about a face live in one mapper
-A `SetSource` handles provider quirks and stores uninterpreted `RawFace`s; every rules decision is made in `FaceOracleMapper`, on load.
+A `SetSource` handles provider quirks and builds uninterpreted `RawFace`s; every rules decision is made in `FaceOracleMapper`, which both sources reach through `StoredSetConverter`.
 Owner: `FaceOracleMapper`.
-Why: a rule written per provider diverges (a back face inheriting Defender could not attack), and a fix must not need a re-download.
+Why: a rule written per provider diverges (a back face inheriting Defender could not attack).
 
 ### Card data is wired by the outer context
 `GameEngineConfig` does not import `CardDataConfiguration`; the application and test contexts do, and the headless simulation context reuses the application's beans.

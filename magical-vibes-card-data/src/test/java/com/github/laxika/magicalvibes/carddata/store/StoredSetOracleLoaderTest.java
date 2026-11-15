@@ -48,7 +48,7 @@ class StoredSetOracleLoaderTest {
         RawFace back = new RawFace("Ravager of the Fells", "", "Creature — Werewolf", "Trample",
                 List.of(), List.of("G", "R"), List.of("G", "R"), "4", "4", null, null,
                 List.of("Trample", "Transform"), "watermark");
-        StoredPrinting printing = new StoredPrinting("140", "mythic", List.of(), front, back, List.of(),
+        ConvertedPrinting printing = StoredSetConverter.printing("140", "mythic", List.of(), front, back, List.of(),
                 variant(), Map.of());
 
         SetOracleData data = StoredSetOracleLoader.toSetOracleData("TST", set(List.of(printing), List.of()),
@@ -69,7 +69,7 @@ class StoredSetOracleLoaderTest {
                 List.of(), List.of(), List.of(), null, null, null, null, List.of(), null, "split", null);
         RawFace jetsam = new RawFace("Jetsam", "{4}{U/B}{U/B}", "Sorcery", "Each opponent mills three cards.",
                 List.of(), List.of(), List.of(), null, null, null, null, List.of(), null, "split", null);
-        StoredPrinting printing = new StoredPrinting("1", "uncommon", List.of("Flotsam", "Jetsam"), whole, null,
+        ConvertedPrinting printing = StoredSetConverter.printing("1", "uncommon", List.of("Flotsam", "Jetsam"), whole, null,
                 List.of(flotsam, jetsam), variant(), Map.of());
 
         OracleData data = StoredSetOracleLoader.toSetOracleData("TST", set(List.of(printing), List.of()),
@@ -82,12 +82,12 @@ class StoredSetOracleLoaderTest {
     @Test
     void keysTokenImagesUnderTheTokenSetSkippingEmblemsAndBackFaces() {
         SetOracleData data = StoredSetOracleLoader.toSetOracleData("ZZZ", set(List.of(), List.of(
-                new StoredToken("5", null, new RawFace("Wolf", null, "Token Creature — Wolf", null,
+                StoredSetConverter.token("5", null, new RawFace("Wolf", null, "Token Creature — Wolf", null,
                         List.of("G"), List.of(), List.of(), "2", "2", null, null, List.of(), null)),
-                new StoredToken("7", null, new RawFace("Treasure", null, "Token Artifact — Treasure", null,
+                StoredSetConverter.token("7", null, new RawFace("Treasure", null, "Token Artifact — Treasure", null,
                         List.of(), List.of(), List.of(), null, null, null, null, List.of(), null)),
-                new StoredToken("6", null, face("Sorin Emblem", "Emblem — Sorin")),
-                new StoredToken("8", "b", face("Phyrexian", "Token Artifact Creature — Phyrexian")))),
+                StoredSetConverter.token("6", null, face("Sorin Emblem", "Emblem — Sorin")),
+                StoredSetConverter.token("8", "b", face("Phyrexian", "Token Artifact Creature — Phyrexian")))),
                 Set.of());
 
         assertThat(data.tokenImages()).containsOnly(
@@ -99,14 +99,14 @@ class StoredSetOracleLoaderTest {
 
     @Test
     void anImplementedTokenNumberBecomesAPrintingUnlessARealPrintingHasIt() {
-        StoredToken treasure = new StoredToken("153", null, new RawFace("Treasure", null,
+        StoredToken treasure = StoredSetConverter.token("153", null, new RawFace("Treasure", null,
                 "Token Artifact — Treasure", "{T}, Sacrifice this token: Add one mana of any color.",
                 List.of(), List.of(), List.of(), null, null, null, null, List.of(), null));
-        StoredToken shadowed = new StoredToken("1", null, face("Soldier", "Token Creature — Soldier"));
+        StoredToken shadowed = StoredSetConverter.token("1", null, face("Soldier", "Token Creature — Soldier"));
 
         SetOracleData data = StoredSetOracleLoader.toSetOracleData("TST", set(
                 List.of(printing("1", "common", face("Grizzly Bears", "Creature — Bear"))),
-                List.of(treasure, shadowed, new StoredToken("154", null, face("Food", "Token Artifact — Food")))),
+                List.of(treasure, shadowed, StoredSetConverter.token("154", null, face("Food", "Token Artifact — Food")))),
                 Set.of("1", "153"));
 
         OracleData token = data.frontFaceByCollectorNumber().get("153");
@@ -119,7 +119,7 @@ class StoredSetOracleLoaderTest {
 
     @Test
     void usesMscAlternatePrintingOnlyWhileBeginnerBoxNumberIsMissing() {
-        StoredPrinting alternate = printing("834", "common", face("Ant-Man, Scott Lang", "Legendary Creature — Human Hero"));
+        ConvertedPrinting alternate = printing("834", "common", face("Ant-Man, Scott Lang", "Legendary Creature — Human Hero"));
 
         SetOracleData aliased = StoredSetOracleLoader.toSetOracleData("MSC", set(List.of(alternate), List.of()),
                 Set.of("513"));
@@ -160,9 +160,9 @@ class StoredSetOracleLoaderTest {
     @Test
     void legalitiesComeFromTheStoredSetDatedByItsDownload(@TempDir Path cacheDir)
             throws Exception {
-        StoredPrinting printing = new StoredPrinting("1", "common", List.of(), face("Grizzly Bears", "Creature — Bear"),
+        ConvertedPrinting printing = StoredSetConverter.printing("1", "common", List.of(), face("Grizzly Bears", "Creature — Bear"),
                 null, List.of(), variant(), Map.of("modern", "legal"));
-        StoredSet stored = set(List.of(printing), List.of());
+        ConvertedSet stored = converted(List.of(printing), List.of());
         SetSource source = new SetSource() {
             @Override
             public OracleDataProvider provider() {
@@ -170,7 +170,7 @@ class StoredSetOracleLoaderTest {
             }
 
             @Override
-            public StoredSet download(String setCode, Path tempDir) {
+            public ConvertedSet download(String setCode, Path tempDir) {
                 return stored;
             }
         };
@@ -183,13 +183,17 @@ class StoredSetOracleLoaderTest {
         assertThat(snapshot.cards()).containsOnly(Map.entry("1", Map.of("modern", "legal")));
     }
 
-    private static StoredSet set(List<StoredPrinting> printings, List<StoredToken> tokens) {
-        return new StoredSet(StoredSet.FORMAT_VERSION, "TST", "Test Set", OracleDataProvider.MTGJSON, null,
+    private static StoredSet set(List<ConvertedPrinting> printings, List<StoredToken> tokens) {
+        return converted(printings, tokens).set();
+    }
+
+    private static ConvertedSet converted(List<ConvertedPrinting> printings, List<StoredToken> tokens) {
+        return ConvertedSet.of("TST", "Test Set", OracleDataProvider.MTGJSON, null,
                 FETCHED_AT, "tzzz", printings, tokens);
     }
 
-    private static StoredPrinting printing(String number, String rarity, RawFace face) {
-        return new StoredPrinting(number, rarity, List.of(face.name()), face, null, List.of(), variant(), Map.of());
+    private static ConvertedPrinting printing(String number, String rarity, RawFace face) {
+        return StoredSetConverter.printing(number, rarity, List.of(face.name()), face, null, List.of(), variant(), Map.of());
     }
 
     private static RawFace face(String name, String typeLine) {

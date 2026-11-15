@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.carddata.RawFace;
 import com.github.laxika.magicalvibes.carddata.store.PrintVariant;
 import com.github.laxika.magicalvibes.carddata.store.SetDataStore;
 import com.github.laxika.magicalvibes.carddata.store.SetSource;
-import com.github.laxika.magicalvibes.carddata.store.StoredPrinting;
-import com.github.laxika.magicalvibes.carddata.store.StoredSet;
+import com.github.laxika.magicalvibes.carddata.store.ConvertedPrinting;
+import com.github.laxika.magicalvibes.carddata.store.ConvertedSet;
+import com.github.laxika.magicalvibes.carddata.store.StoredSetConverter;
 import com.github.laxika.magicalvibes.networking.message.BrowseCardInfo;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -32,7 +33,7 @@ class CardBrowserServiceTest {
 
     @Test
     void listsBasePrintingsAndSkipsVariantsAndPromos() {
-        List<BrowseCardInfo> cards = service().buildCards("M19", set(
+        List<BrowseCardInfo> cards = buildCards(service(), "M19", set(
                 printing("1", BASE),
                 printing("2a", BASE),
                 printing("3s", BASE),
@@ -49,7 +50,7 @@ class CardBrowserServiceTest {
     /** Numbered extras of the set itself, shown under their own deck-builder sections. */
     @Test
     void keepsPlaneswalkerDeckAndSetExtensionPrintingsEvenWithAShowcaseFrame() {
-        List<BrowseCardInfo> cards = service().buildCards("M19", set(
+        List<BrowseCardInfo> cards = buildCards(service(), "M19", set(
                 printing("281", new PrintVariant(List.of("planeswalkerdeck"), List.of(), "black", false)),
                 printing("250", new PrintVariant(List.of("setextension", "boosterfun"), List.of("showcase"),
                         "borderless", false))));
@@ -64,7 +65,7 @@ class CardBrowserServiceTest {
                 "{T}: Add {G}.", List.of("G"), List.of(), List.of("G"), "1", "1", null, null,
                 List.of(), null);
 
-        BrowseCardInfo card = service().buildCards("M19", set(new StoredPrinting("314", "common",
+        BrowseCardInfo card = buildCards(service(), "M19", set(StoredSetConverter.printing("314", "common",
                 List.of("Llanowar Elves"), front, null, List.of(), BASE, Map.of()))).getFirst();
 
         assertThat(card.name()).isEqualTo("Llanowar Elves");
@@ -85,7 +86,7 @@ class CardBrowserServiceTest {
         RawFace forest = new RawFace("Forest", null, "Basic Land — Forest", null, List.of(), List.of(),
                 List.of("G"), null, null, null, null, List.of(), null);
 
-        BrowseCardInfo card = service().buildCards("M19", set(new StoredPrinting("280", "common",
+        BrowseCardInfo card = buildCards(service(), "M19", set(StoredSetConverter.printing("280", "common",
                 List.of("Forest"), forest, null, List.of(), BASE, Map.of()))).getFirst();
 
         assertThat(card.colors()).isEmpty();
@@ -102,7 +103,7 @@ class CardBrowserServiceTest {
                 List.of(), List.of("G", "R"), List.of("G", "R"), "4", "4", null, null,
                 List.of("Trample", "Transform"), null, "transform", null);
 
-        BrowseCardInfo card = service().buildCards("M19", set(new StoredPrinting("140", "mythic",
+        BrowseCardInfo card = buildCards(service(), "M19", set(StoredSetConverter.printing("140", "mythic",
                 List.of(), front, back, List.of(), BASE, Map.of()))).getFirst();
 
         assertThat(card.name()).isEqualTo("Huntmaster of the Fells");
@@ -110,6 +111,25 @@ class CardBrowserServiceTest {
         assertThat(card.backFace().name()).isEqualTo("Ravager of the Fells");
         assertThat(card.backFace().colors()).containsExactly("GREEN", "RED");
         assertThat(card.backFace().power()).isEqualTo("4");
+    }
+
+    @Test
+    void showsASplitCardAsItsFirstHalf() {
+        RawFace whole = new RawFace("Flotsam // Jetsam", "{1}{G/U} // {4}{U/B}{U/B}", "Instant // Sorcery",
+                "Mill three cards.", List.of("B", "G", "U"), List.of(), List.of("B", "G", "U"),
+                null, null, null, null, List.of(), null, "split", "8.0");
+        RawFace flotsam = new RawFace("Flotsam", "{1}{G/U}", "Instant", "Mill three cards.",
+                List.of("G", "U"), List.of(), List.of("B", "G", "U"), null, null, null, null, List.of(), null);
+        RawFace jetsam = new RawFace("Jetsam", "{4}{U/B}{U/B}", "Sorcery", "Each opponent mills three cards.",
+                List.of("B", "U"), List.of(), List.of("B", "G", "U"), null, null, null, null, List.of(), null);
+
+        BrowseCardInfo card = buildCards(service(), "M19", set(StoredSetConverter.printing("200", "uncommon",
+                List.of("Flotsam", "Jetsam"), whole, null, List.of(flotsam, jetsam), BASE, Map.of()))).getFirst();
+
+        assertThat(card.name()).isEqualTo("Flotsam");
+        assertThat(card.manaCost()).isEqualTo("{1}{G/U}");
+        assertThat(card.typeLine()).isEqualTo("Instant");
+        assertThat(card.additionalTypes()).isEmpty();
     }
 
     /** The spell is printed inset on a prepare card's front, so it must not get a flip control. */
@@ -122,7 +142,7 @@ class CardBrowserServiceTest {
                 "Put a +1/+1 counter on target creature.", List.of(), List.of(), List.of("B", "W"),
                 null, null, null, null, List.of("Flying"), null, "prepare", null);
 
-        BrowseCardInfo card = service().buildCards("SOS", set(new StoredPrinting("1", "rare",
+        BrowseCardInfo card = buildCards(service(), "SOS", set(StoredSetConverter.printing("1", "rare",
                 List.of(), front, spell, List.of(), BASE, Map.of()))).getFirst();
 
         assertThat(card.backFace()).isNull();
@@ -131,8 +151,9 @@ class CardBrowserServiceTest {
 
     @Test
     void marksTheImplementedPrintings() {
-        List<BrowseCardInfo> cards = service(List.of(new CardPrinting("M19", "2", "Card", "Card", false, null)))
-                .buildCards("M19", set(printing("1", BASE), printing("2", BASE)));
+        List<BrowseCardInfo> cards = buildCards(
+                service(List.of(new CardPrinting("M19", "2", "Card", "Card", false, null))),
+                "M19", set(printing("1", BASE), printing("2", BASE)));
 
         assertThat(cards).extracting(BrowseCardInfo::implemented).containsExactly(false, true);
     }
@@ -148,7 +169,7 @@ class CardBrowserServiceTest {
             }
 
             @Override
-            public StoredSet download(String setCode, Path tempDir) throws IOException {
+            public ConvertedSet download(String setCode, Path tempDir) throws IOException {
                 if (!reachable.getLast()) {
                     throw new IOException("MTGJSON is down");
                 }
@@ -184,6 +205,11 @@ class CardBrowserServiceTest {
             }
 
             @Override
+            public java.util.Optional<CardPrinting> findLoadedPrintingByName(String cardName) {
+                return java.util.Optional.empty();
+            }
+
+            @Override
             public String getName(CardSet set) {
                 return null;
             }
@@ -200,14 +226,18 @@ class CardBrowserServiceTest {
         };
     }
 
-    private static StoredSet set(StoredPrinting... printings) {
-        return new StoredSet(StoredSet.FORMAT_VERSION, "M19", "Test Set", OracleDataProvider.MTGJSON, null,
+    private static List<BrowseCardInfo> buildCards(CardBrowserService service, String setCode, ConvertedSet set) {
+        return service.buildCards(setCode, set.set(), set.details());
+    }
+
+    private static ConvertedSet set(ConvertedPrinting... printings) {
+        return ConvertedSet.of("M19", "Test Set", OracleDataProvider.MTGJSON, null,
                 Instant.EPOCH, "tm19", List.of(printings), List.of());
     }
 
-    private static StoredPrinting printing(String number, PrintVariant variant) {
+    private static ConvertedPrinting printing(String number, PrintVariant variant) {
         RawFace face = new RawFace("Grizzly Bears", "{1}{G}", "Creature — Bear", null, List.of("G"),
                 List.of(), List.of("G"), "2", "2", null, null, List.of(), null);
-        return new StoredPrinting(number, "common", List.of("Grizzly Bears"), face, null, List.of(), variant, Map.of());
+        return StoredSetConverter.printing(number, "common", List.of("Grizzly Bears"), face, null, List.of(), variant, Map.of());
     }
 }

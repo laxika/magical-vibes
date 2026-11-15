@@ -6,11 +6,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * Downloads one set from an upstream provider and converts it into a {@link StoredSet}.
+ * Downloads one set from an upstream provider and converts it into a {@link ConvertedSet}.
  *
  * <p>Everything provider-specific stops here: HTTP, field naming, which JSON node a face lives on,
  * array ordering and syntax quirks. Rules decisions about a face do not belong here — they live in
- * {@link com.github.laxika.magicalvibes.carddata.FaceOracleMapper}, which runs on load.
+ * {@link com.github.laxika.magicalvibes.carddata.FaceOracleMapper}, which a source runs through
+ * {@link StoredSetConverter} as it converts.
  */
 public interface SetSource {
 
@@ -23,5 +24,5 @@ public interface SetSource {
      * @throws IOException if the provider is unreachable or returns something unusable; the store
      *                     retries and then falls back to the other provider
      */
-    StoredSet download(String setCode, Path tempDir) throws IOException, InterruptedException;
+    ConvertedSet download(String setCode, Path tempDir) throws IOException, InterruptedException;
 }

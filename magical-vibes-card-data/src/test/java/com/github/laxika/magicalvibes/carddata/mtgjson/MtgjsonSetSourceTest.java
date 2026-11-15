@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.carddata.mtgjson;
 import com.github.laxika.magicalvibes.carddata.FaceOracleMapper;
 import com.github.laxika.magicalvibes.carddata.OracleDataProvider;
 import com.github.laxika.magicalvibes.carddata.store.PrintVariant;
+import com.github.laxika.magicalvibes.carddata.store.ConvertedSet;
 import com.github.laxika.magicalvibes.carddata.store.StoredPrinting;
+import com.github.laxika.magicalvibes.carddata.store.StoredPrintingDetails;
 import com.github.laxika.magicalvibes.carddata.store.StoredSet;
 import com.github.laxika.magicalvibes.carddata.store.StoredToken;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -269,7 +271,7 @@ class MtgjsonSetSourceTest {
 
     @Test
     void storesEveryPrintingWithItsSourceDateRarityVariantAndLegalities() throws Exception {
-        StoredSet set = MtgjsonSetSource.convert("ZZZ", "ZZZ", MAPPER.readTree("""
+        ConvertedSet converted = MtgjsonSetSource.convert("ZZZ", "ZZZ", MAPPER.readTree("""
                 {
                   "meta": { "date": "2026-10-01" },
                   "data": {
@@ -284,15 +286,18 @@ class MtgjsonSetSourceTest {
                 }
                 """), Instant.EPOCH);
 
+        StoredSet set = converted.set();
         assertThat(set.source()).isEqualTo(OracleDataProvider.MTGJSON);
         assertThat(set.sourceDate()).isEqualTo("2026-10-01");
+        assertThat(converted.details().fetchedAt()).isEqualTo(Instant.EPOCH);
         assertThat(set.setName()).isEqualTo("Fake Set");
         assertThat(set.printings()).extracting(StoredPrinting::collectorNumber).containsExactly("1", "300");
         StoredPrinting base = set.printings().get(0);
+        StoredPrintingDetails baseDetails = converted.details().printings().get(0);
         assertThat(base.rarity()).isEqualTo("common");
-        assertThat(base.variant()).isEqualTo(new PrintVariant(List.of(), List.of(), "black", false));
-        assertThat(base.legalities()).containsOnly(Map.entry("modern", "legal"));
-        assertThat(set.printings().get(1).variant()).isEqualTo(
+        assertThat(baseDetails.variant()).isEqualTo(new PrintVariant(List.of(), List.of(), "black", false));
+        assertThat(baseDetails.legalities()).containsOnly(Map.entry("modern", "legal"));
+        assertThat(converted.details().printings().get(1).variant()).isEqualTo(
                 new PrintVariant(List.of("boosterfun"), List.of("showcase"), "borderless", true));
     }
 
@@ -305,7 +310,7 @@ class MtgjsonSetSourceTest {
                   { "faceName": "Huntmaster of the Fells", "number": "140", "side": "a", "layout": "transform" },
                   { "faceName": "Ravager of the Fells", "number": "140", "side": "b", "layout": "transform" }
                 ] } }
-                """), Instant.EPOCH);
+                """), Instant.EPOCH).set();
 
         Map<String, StoredPrinting> printings = set.printings().stream()
                 .collect(Collectors.toMap(StoredPrinting::collectorNumber, printing -> printing));
@@ -326,11 +331,12 @@ class MtgjsonSetSourceTest {
                   { "name": "Incubator // Phyrexian", "faceName": "Phyrexian", "number": "7", "side": "b",
                     "type": "Token Artifact Creature \u2014 Phyrexian" }
                 ] } }
-                """), Instant.EPOCH);
+                """), Instant.EPOCH).set();
 
         assertThat(set.tokenSetCode()).isEqualTo("tzzz");
         assertThat(set.tokens()).extracting(StoredToken::collectorNumber).containsExactly("5", "6", "7");
-        assertThat(set.tokens()).extracting(StoredToken::side).containsExactly(null, null, "b");
+        assertThat(set.tokens()).extracting(token -> token.imageKey() != null)
+                .containsExactly(true, false, false);
         assertThat(set.tokens()).extracting(token -> token.face().name())
                 .containsExactly("Wolf", "Sorin Emblem", "Phyrexian");
     }

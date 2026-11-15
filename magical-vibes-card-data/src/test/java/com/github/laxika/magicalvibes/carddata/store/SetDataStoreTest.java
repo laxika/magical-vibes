@@ -2,8 +2,11 @@ package com.github.laxika.magicalvibes.carddata.store;
 
 import com.github.laxika.magicalvibes.carddata.OracleDataProvider;
 import com.github.laxika.magicalvibes.carddata.RawFace;
+import com.github.laxika.magicalvibes.model.OracleData;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.dataformat.cbor.CBORMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,6 +29,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class SetDataStoreTest {
 
+    private static final ObjectMapper CBOR = CBORMapper.builder().build();
+
     @TempDir
     Path cacheDir;
 
@@ -41,9 +46,10 @@ class SetDataStoreTest {
 
         assertThat(set.source()).isEqualTo(OracleDataProvider.SCRYFALL);
         assertThat(downloads).containsExactly("SCRYFALL:ISD");
-        assertThat(store.fileFor("ISD")).isEqualTo(cacheDir.resolve("set-isd.json")).exists();
+        assertThat(store.fileFor("ISD")).isEqualTo(cacheDir.resolve("set-isd.cbor")).exists();
         try (var files = Files.list(cacheDir)) {
-            assertThat(files.map(path -> path.getFileName().toString())).containsExactly("set-isd.json");
+            assertThat(files.map(path -> path.getFileName().toString()))
+                    .containsExactlyInAnyOrder("set-isd.cbor", "set-isd.details.cbor");
         }
         assertThat(tempDirs).isNotEmpty().allSatisfy(dir -> assertThat(dir).doesNotExist());
     }
@@ -56,7 +62,7 @@ class SetDataStoreTest {
         StoredSet set = store(OracleDataProvider.SCRYFALL, source(OracleDataProvider.SCRYFALL, 0)).get("ISD");
 
         assertThat(downloads).isEmpty();
-        assertThat(set).isEqualTo(storedSet("ISD", OracleDataProvider.SCRYFALL));
+        assertThat(set).isEqualTo(convertedSet("ISD", OracleDataProvider.SCRYFALL).set());
     }
 
     @Test
@@ -115,9 +121,9 @@ class SetDataStoreTest {
             }
 
             @Override
-            public StoredSet download(String setCode, Path tempDir) {
+            public ConvertedSet download(String setCode, Path tempDir) {
                 downloads.add("SCRYFALL:" + setCode);
-                return new StoredSet(StoredSet.FORMAT_VERSION, setCode, null, OracleDataProvider.SCRYFALL,
+                return ConvertedSet.of(setCode, null, OracleDataProvider.SCRYFALL,
                         null, Instant.EPOCH, "t" + setCode, List.of(), List.of());
             }
         };
@@ -128,19 +134,22 @@ class SetDataStoreTest {
     }
 
     @Test
-    void aFileWithAnotherFormatVersionIsDownloadedAgain() throws Exception {
-        Files.writeString(cacheDir.resolve("set-isd.json"), "{\"formatVersion\": 0}");
+    void aFileWithAnotherConversionVersionIsDownloadedAgain() throws Exception {
+        StoredSet stale = convertedSet("ISD", OracleDataProvider.MTGJSON).set();
+        Files.write(cacheDir.resolve("set-isd.cbor"), CBOR.writeValueAsBytes(new StoredSet(
+                StoredSet.CONVERSION_VERSION - 1, stale.setCode(), stale.setName(), stale.source(),
+                stale.sourceDate(), stale.tokenSetCode(), stale.printings(), stale.tokens())));
 
         StoredSet set = store(OracleDataProvider.SCRYFALL, source(OracleDataProvider.SCRYFALL, 0)).get("ISD");
 
         assertThat(downloads).containsExactly("SCRYFALL:ISD");
-        assertThat(set.formatVersion()).isEqualTo(StoredSet.FORMAT_VERSION);
+        assertThat(set.conversionVersion()).isEqualTo(StoredSet.CONVERSION_VERSION);
         assertThat(store(OracleDataProvider.SCRYFALL).get("ISD")).isEqualTo(set);
     }
 
     @Test
     void anUnreadableFileIsDownloadedAgain() throws Exception {
-        Files.writeString(cacheDir.resolve("set-isd.json"), "{ not json");
+        Files.writeString(cacheDir.resolve("set-isd.cbor"), "{ not cbor");
 
         store(OracleDataProvider.SCRYFALL, source(OracleDataProvider.SCRYFALL, 0)).get("ISD");
 
@@ -170,25 +179,123 @@ class SetDataStoreTest {
             }
 
             @Override
-            public StoredSet download(String setCode, Path tempDir) throws IOException {
+            public ConvertedSet download(String setCode, Path tempDir) throws IOException {
                 downloads.add(provider + ":" + setCode);
                 tempDirs.add(tempDir);
                 Files.writeString(tempDir.resolve("raw.json"), "raw provider data");
                 if (attempts++ < failures) {
                     throw new IOException(provider + " is down");
                 }
-                return storedSet(setCode, provider);
+                return convertedSet(setCode, provider);
             }
         };
     }
 
-    private static StoredSet storedSet(String setCode, OracleDataProvider provider) {
+    @Test
+    void theDetailsAreStoredBesideTheSetAndReadBackWithoutDownloadingAgain() throws Exception {
+        store(OracleDataProvider.SCRYFALL, source(OracleDataProvider.SCRYFALL, 0)).get("ISD");
+        downloads.clear();
+
+        StoredSetDetails details = store(OracleDataProvider.SCRYFALL,
+                source(OracleDataProvider.SCRYFALL, 0)).details("ISD");
+
+        assertThat(downloads).isEmpty();
+        assertThat(details).isEqualTo(convertedSet("ISD", OracleDataProvider.SCRYFALL).details());
+        assertThat(details.printings().getFirst().legalities()).containsEntry("modern", "legal");
+    }
+
+    /** The two files must come from one download, so a lost details file replaces the set too. */
+    @Test
+    void missingDetailsDownloadTheWholeSetAgain() throws Exception {
+        SetDataStore first = store(OracleDataProvider.SCRYFALL, source(OracleDataProvider.SCRYFALL, 0));
+        first.get("ISD");
+        Files.delete(first.detailsFileFor("ISD"));
+        downloads.clear();
+
+        SetDataStore store = store(OracleDataProvider.MTGJSON, source(OracleDataProvider.MTGJSON, 0));
+        StoredSetDetails details = store.details("ISD");
+
+        assertThat(downloads).containsExactly("MTGJSON:ISD");
+        assertThat(details.printings()).hasSize(1);
+        assertThat(store.get("ISD").source()).isEqualTo(OracleDataProvider.MTGJSON);
+    }
+
+    @Test
+    void detailsWithAnotherConversionVersionAreDownloadedAgain() throws Exception {
+        StoredSetDetails stale = convertedSet("ISD", OracleDataProvider.SCRYFALL).details();
+        Files.write(cacheDir.resolve("set-isd.details.cbor"), CBOR.writeValueAsBytes(new StoredSetDetails(
+                StoredSet.CONVERSION_VERSION - 1, stale.setCode(), stale.fetchedAt(), stale.printings())));
+
+        StoredSetDetails details = store(OracleDataProvider.SCRYFALL,
+                source(OracleDataProvider.SCRYFALL, 0)).details("ISD");
+
+        assertThat(downloads).containsExactly("SCRYFALL:ISD");
+        assertThat(details.conversionVersion()).isEqualTo(StoredSet.CONVERSION_VERSION);
+    }
+
+    @Test
+    void mappedFacesAreReadBackAsTheyWereWritten() throws Exception {
+        RawFace front = new RawFace("Huntmaster of the Fells // Ravager of the Fells", "{2}{R}{G}",
+                "Legendary Artifact Creature — Human Werewolf",
+                "Vigilance, trample, haste\nWhen this creature enters, you gain 2 life.",
+                List.of("G", "R"), List.of(), List.of("G", "R"), "2", "2", null, null,
+                List.of("Haste", "Trample", "Vigilance"), "mirran", "transform", "4.0");
+        RawFace back = new RawFace("Ravager of the Fells", "", "Creature — Werewolf", "Trample",
+                List.of("G", "R"), List.of("G", "R"), List.of("G", "R"), "4", "4", null, null,
+                List.of("Trample"), null, "transform", "4.0");
+        RawFace whole = new RawFace("Flotsam // Jetsam", "{1}{G/U} // {4}{U/B}{U/B}", "Instant // Sorcery",
+                "Mill three cards.", List.of("B", "G", "U"), List.of(), List.of("B", "G", "U"),
+                null, null, null, null, List.of(), null, "split", "8.0");
+        RawFace flotsam = new RawFace("Flotsam", "{1}{G/U}", "Instant", "Mill three cards.",
+                List.of("G", "U"), List.of(), List.of("B", "G", "U"), null, null, null, null, List.of(), null);
+        RawFace jetsam = new RawFace("Jetsam", "{4}{U/B}{U/B}", "Sorcery", "Each opponent mills three cards.",
+                List.of("B", "U"), List.of(), List.of("B", "G", "U"), null, null, null, null, List.of(), null);
+        PrintVariant variant = new PrintVariant(List.of(), List.of(), "black", false);
+        ConvertedSet written = ConvertedSet.of("ISD", "Innistrad",
+                OracleDataProvider.SCRYFALL, null, Instant.parse("2026-10-21T10:15:30Z"), "tisd",
+                List.of(StoredSetConverter.printing("140", "mythic", List.of(), front, back, List.of(),
+                                variant, Map.of()),
+                        StoredSetConverter.printing("200", "uncommon", List.of("Flotsam", "Jetsam"), whole, null,
+                                List.of(flotsam, jetsam), variant, Map.of())),
+                List.of());
+        SetSource source = new SetSource() {
+            @Override
+            public OracleDataProvider provider() {
+                return OracleDataProvider.SCRYFALL;
+            }
+
+            @Override
+            public ConvertedSet download(String setCode, Path tempDir) {
+                return written;
+            }
+        };
+        store(OracleDataProvider.SCRYFALL, source).get("ISD");
+
+        StoredSet read = store(OracleDataProvider.SCRYFALL).get("ISD");
+        StoredSetDetails readDetails = store(OracleDataProvider.SCRYFALL).details("ISD");
+
+        assertThat(read).isEqualTo(written.set());
+        assertThat(readDetails).isEqualTo(written.details());
+        OracleData readFront = read.printings().get(0).front();
+        OracleData writtenFront = written.set().printings().get(0).front();
+        assertThat(readFront.keywords()).containsExactlyElementsOf(writtenFront.keywords());
+        assertThat(readFront.keywords()).hasSize(3);
+        assertThat(readFront.additionalTypes()).containsExactlyElementsOf(writtenFront.additionalTypes());
+        assertThat(readFront.supertypes()).containsExactlyElementsOf(writtenFront.supertypes());
+        OracleData split = read.printings().get(1).front();
+        assertThat(split.splitHalves()).extracting(OracleData::name).containsExactly("Flotsam", "Jetsam");
+        assertThat(split.combinedManaValue()).isEqualTo(8);
+        assertThat(readDetails.printings().get(1).front().browseOracle(split).name()).isEqualTo("Flotsam");
+        assertThat(readDetails.printings().get(0).front().browse()).isNull();
+    }
+
+    private static ConvertedSet convertedSet(String setCode, OracleDataProvider provider) {
         RawFace face = new RawFace("Grizzly Bears", "{1}{G}", "Creature — Bear", null,
                 List.of("G"), List.of(), List.of("G"), "2", "2", null, null, List.of(), null);
-        StoredPrinting printing = new StoredPrinting("1", "common", List.of("Grizzly Bears"), face, null,
+        ConvertedPrinting printing = StoredSetConverter.printing("1", "common", List.of("Grizzly Bears"), face, null,
                 List.of(), new PrintVariant(List.of(), List.of(), "black", false), Map.of("modern", "legal"));
-        return new StoredSet(StoredSet.FORMAT_VERSION, setCode, "Innistrad", provider, null,
+        return ConvertedSet.of(setCode, "Innistrad", provider, null,
                 Instant.parse("2026-10-21T10:15:30Z"), "t" + setCode.toLowerCase(), List.of(printing),
-                List.of(new StoredToken("2", null, face)));
+                List.of(StoredSetConverter.token("2", null, face)));
     }
 }
