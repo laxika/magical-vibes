@@ -284,6 +284,10 @@ adjudicated.
   `TriggerCollectorRegistry`, `@CollectsWatchTrigger`, `TriggerContext`, `TriggerMatchContext`,
   `TriggerWatch`, what is left of `TriggerCollectionService`, and `ShadowTriggerRecorder` with
   shadow mode.
+- C47 first, before deleting what is left of `TriggerCollectionService`: list the face-up planes' and schemes'
+  zone-change abilities as `TriggerIndex` candidates, matched by `TriggerMatcher`, and delete the planar and scheme
+  readers. Take the ledger before and after over the planar and scheme card tests and the two route tests, and
+  adjudicate the moment they now trigger as Rules correctness says (keep it, or cite the rule for moving it).
 - Delete the `scripts/step*` conversion scripts and `scripts/effect-slot-*`.
 - The legacy trigger choice types are deleted (S8). Delete `ChoiceContext.ChooseModeChoice.triggerTime` (always
   false since S8) and its readers.
@@ -294,7 +298,8 @@ adjudicated.
   abilities. Update the two card skills.
 - Delete this file.
 
-**Done when:** a grep for `EffectSlot` finds nothing and the docs describe only the new model.
+**Done when:** C47 is closed with its ledger diff adjudicated, a grep for `EffectSlot` finds nothing and the docs
+describe only the new model.
 
 ## Carried over
 
@@ -362,7 +367,7 @@ named, with the Oracle text of the cards involved read first.
 | C38 | S8 (closed) | "As this Equipment becomes attached" choices (a color, a name and a type, an exiled creature to copy) are written as trigger effects and read by class in `checkEquipmentAttachedTriggers`: they are static abilities |
 | C45 | M2 | `TargetTriggers` reads each watcher's becomes-the-target abilities as the old collectors did (`WatchedAbilities.printed`, duration and static grants, the mannequin and cloaked-ward cases), not as the layers leave them (`TriggerIndex.permanentAbilities`): an Aura's printed ability, one granted to the enchanted creature, bestow and a face-down cloaked ward are read differently, so making them uniform changes behaviour and needs its own ledger pass |
 | C46 | M2 | A damage source or watcher that may have left the battlefield before its ability is put (combat-damage dealers, departed ally watchers, Equipment, snapshotted self abilities: `CombatDamageTriggers.allWatchedAbilities` / `grantedCombatAbilities` / the ally and attached passes of `processCombatDamageToPlayerTriggers`, `DamageTriggers.dispatchSourceDealsCombatDamageTriggers` / `collectDealsDamageToCreatureAbilities` / `putEquipmentCombatDamageAbilities`) is read as it last existed by per-watch reads, not through `TriggerIndex`, which can't list a departed permanent's snapshot abilities yet |
-| C47 | M3 | Planar and scheme zone-change abilities (`TriggerCollectionService`'s planar enters, leaves, land-enters and death readers, the scheme leaves reader, the planar nonblack-card reader) still run at their old call sites, selecting abilities by their trigger's fields; `TriggerIndex` doesn't list planar or scheme candidates for zone changes, and moving them changes the moment they trigger, which needs its own ledger pass |
+| C47 | F | Planar and scheme zone-change abilities (`TriggerCollectionService`'s planar enters, leaves, land-enters and death readers, the scheme leaves reader, the planar nonblack-card reader) still run at their old call sites, selecting abilities by their trigger's fields; `TriggerIndex` doesn't list planar or scheme candidates for zone changes, and moving them changes the moment they trigger, which needs its own ledger pass |
 
 **Fixes**
 
