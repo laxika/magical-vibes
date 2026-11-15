@@ -89,6 +89,10 @@ class ExampleCardTest extends BaseCardTest {
 the annotated scope, including support cards. Put cards shared by the suite on the class and cards
 used by only one scenario on that test method.
 
+A "choose a card name" prompt offers only the cards in the game and the cards declared with
+`@CardUsed`, not every implemented card as the application does. To name a card that is not in the
+game, declare it.
+
 **Do NOT test Scryfall metadata** (name, type, mana cost, color, power, toughness, subtypes, keywords) — it is auto-loaded from Scryfall.
 
 **Do NOT write white-box "wiring" tests** (e.g. a `hasCorrectProperties` that constructs the card and asserts on `card.getEffects(EffectSlot.…)`, `EffectResolution.needsTarget(card)`, effect `instanceof`, or effect field values). They duplicate the behavioral tests and break on every effect refactor. Only test engine logic by observing behavior: effects, abilities, targeting, game interactions.

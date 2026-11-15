@@ -73,10 +73,10 @@ public class PlayerInputService {
 
     @Autowired(required = false)
     private CardCatalog cardCatalog;
-    private volatile List<CatalogCard> catalogCards;
-    private volatile List<String> catalogNonbasicLandCardNames;
-    private volatile List<String> catalogNonbasicCardNames;
-    private final Map<CardNameFilter, List<String>> catalogCardNames = new java.util.concurrent.ConcurrentHashMap<>();
+    @Autowired(required = false)
+    private CardNameCatalog cardNameCatalog;
+    private volatile List<CardPrinting> implementedPrintings;
+    private volatile CatalogNames catalogNames;
 
     private record CardNameFilter(List<CardType> excludedTypes, CardType requiredType) {}
 
@@ -100,6 +100,80 @@ public class PlayerInputService {
         boolean isNameCandidate(List<CardType> excludedTypes, CardType requiredType) {
             return type != null && !tokenOnly && excludedTypes.stream().noneMatch(this::hasType)
                     && (requiredType == null || hasType(requiredType));
+        }
+    }
+
+    /**
+     * The name lists of one set of printings, each built on first use and kept. A class registered
+     * at several printings is built once: its name and types come from its oracle data, which is
+     * the same at each of them.
+     */
+    private static final class CatalogNames {
+
+        private final List<CardPrinting> printings;
+        private volatile List<CatalogCard> cards;
+        private volatile List<String> nonbasicLandNames;
+        private volatile List<String> nonbasicNames;
+        private final Map<CardNameFilter, List<String>> filteredNames = new java.util.concurrent.ConcurrentHashMap<>();
+
+        CatalogNames(List<CardPrinting> printings) {
+            this.printings = printings;
+        }
+
+        List<String> matching(CardNameFilter filter) {
+            return filteredNames.computeIfAbsent(filter, key ->
+                    names(card -> card.isNameCandidate(key.excludedTypes(), key.requiredType())));
+        }
+
+        List<String> nonbasic() {
+            List<String> cached = nonbasicNames;
+            if (cached == null) {
+                cached = names(card -> !card.isBasicLand());
+                nonbasicNames = cached;
+            }
+            return cached;
+        }
+
+        List<String> nonbasicLands() {
+            List<String> cached = nonbasicLandNames;
+            if (cached == null) {
+                cached = names(card -> card.hasType(CardType.LAND) && !card.isBasicLand());
+                nonbasicLandNames = cached;
+            }
+            return cached;
+        }
+
+        /** The sorted, distinct names of the cards that satisfy {@code candidate}. */
+        private List<String> names(Predicate<CatalogCard> candidate) {
+            Set<String> names = new TreeSet<>();
+            for (CatalogCard card : cards()) {
+                if (candidate.test(card)) {
+                    names.addAll(card.names());
+                }
+            }
+            return List.copyOf(names);
+        }
+
+        private List<CatalogCard> cards() {
+            List<CatalogCard> cached = cards;
+            if (cached != null) {
+                return cached;
+            }
+            Set<String> seenClassNames = new HashSet<>();
+            List<CatalogCard> built = new ArrayList<>();
+            for (CardPrinting printing : printings) {
+                if (!seenClassNames.add(printing.cardClassName())) {
+                    continue;
+                }
+                Card card = printing.createCard();
+                if (card.getName() != null) {
+                    built.add(new CatalogCard(card.getNames(), card.getType(), Set.copyOf(card.getAdditionalTypes()),
+                            Set.copyOf(card.getSupertypes()), card.isToken() && !card.isTokenCard()));
+                }
+            }
+            List<CatalogCard> result = List.copyOf(built);
+            cards = result;
+            return result;
         }
     }
 
@@ -2801,10 +2875,9 @@ public class PlayerInputService {
     private List<String> collectCardNamesInGameExcluding(GameData gameData, List<CardType> excludedTypes, CardType requiredType) {
         Set<String> names = new TreeSet<>(collectCardNamesInGame(gameData,
                 card -> isNameCandidate(card, excludedTypes, requiredType)));
-        if (cardCatalog != null) {
-            names.addAll(catalogCardNames.computeIfAbsent(new CardNameFilter(List.copyOf(excludedTypes), requiredType),
-                    filter -> catalogCardNames(
-                            card -> card.isNameCandidate(filter.excludedTypes(), filter.requiredType()))));
+        CatalogNames catalog = catalogNames();
+        if (catalog != null) {
+            names.addAll(catalog.matching(new CardNameFilter(List.copyOf(excludedTypes), requiredType)));
         }
         return new ArrayList<>(names);
     }
@@ -2813,82 +2886,58 @@ public class PlayerInputService {
     private List<String> collectNonbasicCardNamesInGame(GameData gameData) {
         Set<String> names = new TreeSet<>(collectCardNamesInGame(gameData,
                 card -> !(card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))));
-        names.addAll(catalogNonbasicCardNames());
+        CatalogNames catalog = catalogNames();
+        if (catalog != null) {
+            names.addAll(catalog.nonbasic());
+        }
         return new ArrayList<>(names);
-    }
-
-    private List<String> catalogNonbasicCardNames() {
-        if (cardCatalog == null) {
-            return List.of();
-        }
-        List<String> cached = catalogNonbasicCardNames;
-        if (cached != null) {
-            return cached;
-        }
-        List<String> result = catalogCardNames(card -> !card.isBasicLand());
-        catalogNonbasicCardNames = result;
-        return result;
     }
 
     /** Names of nonbasic land cards known to the game and implemented card catalog (Alpine Moon). */
     private List<String> collectNonbasicLandCardNames(GameData gameData) {
         Set<String> names = new TreeSet<>(collectCardNamesInGame(gameData,
                 card -> card.hasType(CardType.LAND) && !card.getSupertypes().contains(CardSupertype.BASIC)));
-        names.addAll(catalogNonbasicLandCardNames());
+        CatalogNames catalog = catalogNames();
+        if (catalog != null) {
+            names.addAll(catalog.nonbasicLands());
+        }
         return new ArrayList<>(names);
     }
 
-    private List<String> catalogNonbasicLandCardNames() {
-        if (cardCatalog == null) {
-            return List.of();
-        }
-        List<String> cached = catalogNonbasicLandCardNames;
-        if (cached != null) {
-            return cached;
-        }
-        List<String> result = catalogCardNames(card -> card.hasType(CardType.LAND) && !card.isBasicLand());
-        catalogNonbasicLandCardNames = result;
-        return result;
-    }
-
-    /** The sorted, distinct names of the catalog's cards that satisfy {@code candidate}. */
-    private List<String> catalogCardNames(Predicate<CatalogCard> candidate) {
-        Set<String> names = new TreeSet<>();
-        for (CatalogCard card : catalogCards()) {
-            if (candidate.test(card)) {
-                names.addAll(card.names());
-            }
-        }
-        return List.copyOf(names);
-    }
-
     /**
-     * Every named card class of the catalog, built on first use. A class registered at several
-     * printings is built once: its name and types come from its oracle data, which is the same at
-     * each of them.
+     * The name lists of the printings a name prompt offers, or null when there is no catalog to
+     * offer from. They are the {@link CardNameCatalog}'s printings when there is one, every
+     * implemented printing otherwise, and are rebuilt when the {@link CardNameCatalog} offers a
+     * different list.
      */
-    private List<CatalogCard> catalogCards() {
-        List<CatalogCard> cached = catalogCards;
-        if (cached != null) {
-            return cached;
+    private CatalogNames catalogNames() {
+        List<CardPrinting> printings;
+        if (cardNameCatalog != null) {
+            printings = cardNameCatalog.printings();
+        } else if (cardCatalog != null) {
+            printings = implementedPrintings();
+        } else {
+            return null;
         }
-        Set<String> seenClassNames = new HashSet<>();
-        List<CatalogCard> cards = new ArrayList<>();
-        for (CardSet set : CardSet.values()) {
-            for (CardPrinting printing : cardCatalog.getPrintings(set)) {
-                if (!seenClassNames.add(printing.cardClassName())) {
-                    continue;
-                }
-                Card card = printing.createCard();
-                if (card.getName() != null) {
-                    cards.add(new CatalogCard(card.getNames(), card.getType(), Set.copyOf(card.getAdditionalTypes()),
-                            Set.copyOf(card.getSupertypes()), card.isToken() && !card.isTokenCard()));
-                }
+        CatalogNames current = catalogNames;
+        if (current == null || current.printings != printings) {
+            current = new CatalogNames(printings);
+            catalogNames = current;
+        }
+        return current;
+    }
+
+    private List<CardPrinting> implementedPrintings() {
+        List<CardPrinting> cached = implementedPrintings;
+        if (cached == null) {
+            List<CardPrinting> all = new ArrayList<>();
+            for (CardSet set : CardSet.values()) {
+                all.addAll(cardCatalog.getPrintings(set));
             }
+            cached = List.copyOf(all);
+            implementedPrintings = cached;
         }
-        List<CatalogCard> result = List.copyOf(cards);
-        catalogCards = result;
-        return result;
+        return cached;
     }
 
     /** Every distinct card name across all zones (battlefield, hand, graveyard, library, exile, stack)

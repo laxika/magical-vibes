@@ -107,7 +107,9 @@ Import `tools.jackson.databind.ObjectMapper`, not `com.fasterxml`.
 
 Card tests are in `magical-vibes-card-test/{letter}/src/test/java/.../cards/{letter}/CardNameTest.java`
 (project `:magical-vibes-card-test:{letter}`). They extend `BaseCardTest` and declare every card
-class they construct with `@CardUsed`, which preloads those cards' Oracle sets. The harness
+class they construct with `@CardUsed`, which preloads those cards' Oracle sets and is the list of
+names a "choose a card name" prompt offers beyond the cards in the game (`DeclaredCardNameCatalog`;
+the application offers every implemented card). The harness
 (`GameTestHarness`, `BaseCardTest`, `FakeConnection`, `TestGameRegistry`) is in
 `magical-vibes-engine/src/testFixtures` and is shared with the AI tests. The testing rules are in
 `AGENTS.md`.

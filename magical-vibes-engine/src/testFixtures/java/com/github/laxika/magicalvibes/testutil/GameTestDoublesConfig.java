@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.testutil;
 
 import com.github.laxika.magicalvibes.carddata.CardDataConfiguration;
+import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.service.GameEngineConfig;
 import com.github.laxika.magicalvibes.service.GameSessionTransportAdapter;
 import com.github.laxika.magicalvibes.service.GameTimeoutService;
@@ -33,6 +34,11 @@ public class GameTestDoublesConfig {
     @Primary
     TestWebSocketSessionManager webSocketSessionManager() {
         return new TestWebSocketSessionManager();
+    }
+
+    @Bean
+    DeclaredCardNameCatalog declaredCardNameCatalog(CardCatalog cardCatalog) {
+        return new DeclaredCardNameCatalog(cardCatalog);
     }
 
     @Bean
