@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.f.Frogify;
 import com.github.laxika.magicalvibes.cards.i.IcatianPriest;
 import com.github.laxika.magicalvibes.cards.i.IcatianInfantry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -7,12 +8,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ProfessorHojo.class, IcatianPriest.class, IcatianInfantry.class})
+@CardUsed({ProfessorHojo.class, IcatianPriest.class, IcatianInfantry.class, Frogify.class})
 class ProfessorHojoTest extends BaseCardTest {
 
     @Test
@@ -37,6 +39,21 @@ class ProfessorHojoTest extends BaseCardTest {
         assertThat(gameData.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
         assertThat(gameData.playerHands.get(player1.getId())).hasSize(handSize + 1);
+    }
+
+    @Test
+    @DisplayName("Doesn't trigger while an Aura has it lose all its abilities")
+    void doesNotTriggerAfterLosingItsAbilities() {
+        Permanent hojo = addCreatureReady(player1, new ProfessorHojo());
+        Permanent frogify = harness.addToBattlefieldAndReturn(player2, new Frogify());
+        frogify.setAttachedTo(hojo.getId());
+        addCreatureReady(player1, new IcatianPriest());
+        Permanent target = addCreatureReady(player1, new IcatianInfantry());
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.activateAbility(player1, 1, null, target.getId());
+
+        assertThat(harness.getGameData().stack).hasSize(1);
     }
 
     @Test

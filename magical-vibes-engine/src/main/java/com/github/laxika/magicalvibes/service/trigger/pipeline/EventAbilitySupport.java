@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,9 @@ import java.util.UUID;
  */
 @Component
 class EventAbilitySupport {
+
+    /** The snapshot the abilities are read from inside {@link #asOf}, on this thread only. */
+    private static final ThreadLocal<Scope> AS_OF = new ThreadLocal<>();
 
     private final TriggerIndex triggerIndex;
     private final TriggeredAbilityStackService stackService;
@@ -58,21 +62,111 @@ class EventAbilitySupport {
      * The abilities of {@code permanent} with a trigger condition watched as {@code watched} that functions on the
      * battlefield, as the layers leave them ({@link TriggerIndex#permanentAbilities}): its card's, read through its
      * text changes (CR 612.1: Glamerdye on Riverfall Mimic), unless it is face down or lost them; those granted it for
-     * a duration or until it leaves; those other permanents' static abilities grant it.
+     * a duration or until it leaves; those other permanents' static abilities grant it. Inside
+     * {@link #asOf(GameData, AbilitySnapshot, Runnable)}, a permanent the snapshot lists has them as it had them then.
      */
     List<TriggeredAbility> abilities(GameData gameData, Permanent permanent, Trigger watched) {
-        Card card = LayerSystemService.currentCard(gameData, permanent);
-        Map<TriggeredAbility, Boolean> printed = new IdentityHashMap<>();
-        card.getTriggeredAbilities().forEach(ability -> printed.put(ability, true));
+        return abilities(gameData, permanent, watched, null);
+    }
+
+    /**
+     * As {@link #abilities(GameData, Permanent, Trigger)}, only the ones of {@code permanent}'s card (as text changes
+     * leave them): those a reader judges by where its card is (an Aura's printed "enchanted creature" ability).
+     */
+    List<TriggeredAbility> ownAbilities(GameData gameData, Permanent permanent, Trigger watched) {
+        return abilities(gameData, permanent, watched, true);
+    }
+
+    /**
+     * As {@link #abilities(GameData, Permanent, Trigger)}, only the ones its card doesn't have: those granted it for a
+     * duration or until it leaves, those other permanents' static abilities grant it, and its keywords'.
+     */
+    List<TriggeredAbility> grantedAbilities(GameData gameData, Permanent permanent, Trigger watched) {
+        return abilities(gameData, permanent, watched, false);
+    }
+
+    private List<TriggeredAbility> abilities(GameData gameData, Permanent permanent, Trigger watched, Boolean own) {
+        List<Listed> listed = null;
+        Scope scope = AS_OF.get();
+        if (scope != null && scope.gameData() == gameData) {
+            listed = scope.snapshot().byPermanentId.get(permanent.getId());
+        }
+        if (listed == null) {
+            listed = listed(gameData, permanent);
+        }
         List<TriggeredAbility> abilities = new ArrayList<>();
-        for (TriggeredAbility ability : triggerIndex.permanentAbilities(gameData, permanent)) {
-            boolean own = printed.containsKey(ability);
+        for (Listed ability : listed) {
+            if (own != null && ability.own() != own) {
+                continue;
+            }
             // A granted ability functions where its object is; a card's own one where its condition says.
-            if (own ? ability.hasWatchedTrigger(watched, Zone.BATTLEFIELD) : ability.hasWatchedTrigger(watched)) {
-                abilities.add(own ? textChanged(gameData, permanent, ability) : ability);
+            if (ability.own() ? ability.ability().hasWatchedTrigger(watched, Zone.BATTLEFIELD)
+                    : ability.ability().hasWatchedTrigger(watched)) {
+                abilities.add(ability.ability());
             }
         }
         return abilities;
+    }
+
+    /** {@code permanent}'s triggered abilities as the layers leave it now, its card's own read through text changes. */
+    private List<Listed> listed(GameData gameData, Permanent permanent) {
+        Card card = LayerSystemService.currentCard(gameData, permanent);
+        Map<TriggeredAbility, Boolean> printed = new IdentityHashMap<>();
+        card.getTriggeredAbilities().forEach(ability -> printed.put(ability, true));
+        List<Listed> listed = new ArrayList<>();
+        for (TriggeredAbility ability : triggerIndex.permanentAbilities(gameData, permanent)) {
+            boolean own = printed.containsKey(ability);
+            listed.add(new Listed(own ? textChanged(gameData, permanent, ability) : ability, own));
+        }
+        return listed;
+    }
+
+    /** A triggered ability a permanent has, and whether it is its card's own (functioning where its condition says). */
+    private record Listed(TriggeredAbility ability, boolean own) {
+    }
+
+    /**
+     * The triggered abilities every permanent on the battlefield has at one moment, as the layers leave them, kept so
+     * the abilities an event triggered are read as their objects had them when it happened (CR 603.2) after a
+     * permanent left or changed before they are put on the stack: the combat damage step's, put after the
+     * state-based actions its damage causes (CR 510.2, 704.3).
+     */
+    static final class AbilitySnapshot {
+        private final Map<UUID, List<Listed>> byPermanentId;
+
+        private AbilitySnapshot(Map<UUID, List<Listed>> byPermanentId) {
+            this.byPermanentId = byPermanentId;
+        }
+    }
+
+    /** What every permanent on the battlefield has now, for {@link #asOf(GameData, AbilitySnapshot, Runnable)}. */
+    AbilitySnapshot snapshot(GameData gameData) {
+        Map<UUID, List<Listed>> byPermanentId = new HashMap<>();
+        gameData.forEachPermanent((controllerId, permanent) ->
+                byPermanentId.put(permanent.getId(), List.copyOf(listed(gameData, permanent))));
+        return new AbilitySnapshot(byPermanentId);
+    }
+
+    /**
+     * Runs {@code work} with {@code snapshot} as what {@link #abilities(GameData, Permanent, Trigger)} reads of a
+     * permanent it lists in {@code gameData}, whether or not that permanent is still on the battlefield.
+     */
+    void asOf(GameData gameData, AbilitySnapshot snapshot, Runnable work) {
+        Scope previous = AS_OF.get();
+        AS_OF.set(new Scope(gameData, snapshot));
+        try {
+            work.run();
+        } finally {
+            if (previous == null) {
+                AS_OF.remove();
+            } else {
+                AS_OF.set(previous);
+            }
+        }
+    }
+
+    /** A snapshot {@link #abilities(GameData, Permanent, Trigger)} reads for {@code gameData}'s permanents. */
+    private record Scope(GameData gameData, AbilitySnapshot snapshot) {
     }
 
     /**

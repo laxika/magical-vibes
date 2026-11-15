@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatDamageState;
+import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -91,13 +93,13 @@ public class CombatDamageTriggers {
     @Autowired @Lazy
     private GameLogService gameLogService;
     @Autowired @Lazy
-    private GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
-    @Autowired @Lazy
     private TriggerCollectionService triggerCollectionService;
     @Autowired @Lazy
     private DamageTriggers damageTriggers;
     @Autowired @Lazy
     private TriggerIndex triggerIndex;
+    @Autowired @Lazy
+    private EventAbilitySupport eventAbilitySupport;
 
     /**
      * One triggered ability as its collector puts it on the stack: the ability and its effects in order, the effects of
@@ -174,35 +176,6 @@ public class CombatDamageTriggers {
     }
 
     /**
-     * The abilities that {@code watch} reads of {@code permanent}: its printed ones, then those granted until end of
-     * turn, combat or next upkeep, until it leaves the battlefield, and by other permanents' static abilities, in that
-     * order.
-     */
-    private List<TriggeredAbility> allWatchedAbilities(GameData gameData, Permanent permanent, Trigger watch) {
-        Trigger watched = watch;
-        List<TriggeredAbility> abilities = new ArrayList<>(WatchedAbilities.printed(permanent.getCard(), watch, Zone.BATTLEFIELD));
-        abilities.addAll(WatchedAbilities.temporary(permanent, watched));
-        abilities.addAll(WatchedAbilities.persistent(permanent, watched));
-        abilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, permanent, watched));
-        return abilities;
-    }
-
-    /**
-     * The abilities that {@code watch} reads granted to {@code permanent}, one list of effects for each ability
-     * (CR 603.3): those until end of turn, combat or next upkeep, those until it leaves the battlefield, then those
-     * other permanents' static abilities grant it, in that order, for a collector that reads no filter, limit or
-     * multiplicity.
-     */
-    private List<TriggeredAbility> grantedCombatAbilities(GameData gameData, Permanent permanent, Trigger watch) {
-        Trigger watched = watch;
-        List<TriggeredAbility> granted = new ArrayList<>(WatchedAbilities.temporary(permanent, watched));
-        granted.addAll(WatchedAbilities.persistent(permanent, watched));
-        granted.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, permanent, watched));
-        plainAbilities(granted, watched);
-        return granted;
-    }
-
-    /**
      * The combat damage each player was dealt in this combat damage step, every source's summed (CR 510.2: it is
      * dealt simultaneously, one event): the damage assigned to a player and the damage redirected to one.
      */
@@ -246,22 +219,8 @@ public class CombatDamageTriggers {
                     damageToDefender > 0 ? Map.of(
                             state.combatDamagePlayerRecipients.getOrDefault(source, defenderId),
                             damageToDefender) : Map.of(),
-                    state.selfDealsDamageAbilities.get(source), null, damageToPermanents, true,
+                    null, null, damageToPermanents, true,
                     damagedCreatureSnapshots);
-        }
-    }
-
-    private void snapshotSelfDealsDamageAbilities(GameData gameData, CombatDamageState state) {
-        Trigger selfDealsDamage = Triggers.dealsDamage();
-        for (Permanent source : state.combatDamageDealt.keySet()) {
-            List<TriggeredAbility> abilities = new ArrayList<>();
-            if (!source.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, source)) {
-                abilities.addAll(Read.printed(source.getCard(), Triggers.dealsDamage()));
-            }
-            abilities.addAll(WatchedAbilities.temporary(source, selfDealsDamage));
-            abilities.addAll(WatchedAbilities.persistent(source, selfDealsDamage));
-            abilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, source, selfDealsDamage));
-            state.selfDealsDamageAbilities.put(source, abilities);
         }
     }
 
@@ -282,7 +241,6 @@ public class CombatDamageTriggers {
                     gameData, source.getCard(), controllerId, source.getId(), damageDealt,
                     state.combatDamageDealtToPlayer.getOrDefault(source, 0),
                     state.combatDamagePlayerRecipients.getOrDefault(source, defenderId),
-                    state.selfDealsCombatDamageAbilities.get(source),
                     allyCombatDamageWatchers.getOrDefault(controllerId, List.of()));
         }
     }
@@ -379,61 +337,30 @@ public class CombatDamageTriggers {
             // event's permanent ("if it's not a token", Semblance Scanner).
             ConditionContext damageContext = ConditionContext.forPermanent(creature, attackerId).withTargetId(defenderId)
                     .withTriggeringPermanentId(creature.getId()).withEventValue(damageDealt);
-            // A creature that has lost all abilities also loses the abilities it was permanently granted
-            // earlier (e.g. an encoded cipher spell's trigger).
-            boolean lostAllAbilities = creature.isLosesAllAbilitiesUntilEndOfTurn()
-                    || gameQueryService.computeStaticBonus(gameData, creature).losesAllAbilities();
-            // An animated noncreature Equipment that is not attached is not an equipped creature, so its
-            // printed "equipped creature deals combat damage" triggers do not apply. Equipment creatures
-            // (reconfigure) keep theirs: they read "this creature or equipped creature".
-            boolean unattachedEquipment = creature.getAttachedTo() == null
-                    && GameQueryService.permanentHasSubtype(creature, CardSubtype.EQUIPMENT)
-                    && !creature.getCard().hasType(CardType.CREATURE);
-            boolean hasPrintedAbilities = !creature.isFaceDown() && !lostAllAbilities && !unattachedEquipment;
             // Each ability of the creature, whoever gave it to it, is one object on the stack (CR 603.3); two
-            // abilities are two objects (CR 603.3b).
+            // abilities are two objects (CR 603.3b). They are the ones it had as the damage was dealt, as the layers
+            // left them: none of its card's while face down or after it lost them, and none a lost "all abilities"
+            // took from it (an encoded cipher spell's trigger among them).
             Trigger combatDamageToPlayer = Triggers.dealsCombatDamageToPlayer();
             Trigger damageToPlayer = Triggers.dealsDamageToPlayer();
             Trigger damageToOpponent = Triggers.dealsDamageToOpponent();
-            List<TriggeredAbility> triggered = new ArrayList<>();
-            if (hasPrintedAbilities) {
-                triggered.addAll(plainCombatAbilities(WatchedAbilities.printed(creature.getCard(), Triggers.dealsCombatDamageToPlayer(), Zone.BATTLEFIELD), combatDamageToPlayer));
-                triggered.addAll(plainDamageAbilities(Read.printed(creature.getCard(),
-                        Triggers.dealsDamageToPlayer()), damageToPlayer));
-            }
-            if (!attackerId.equals(defenderId)) {
-                if (hasPrintedAbilities) {
-                    triggered.addAll(plainDamageAbilities(Read.printed(creature.getCard(),
-                            Triggers.dealsDamageToOpponent()), damageToOpponent));
-                }
-                triggered.addAll(plainDamageAbilities(WatchedAbilities.temporary(creature, damageToOpponent),
-                        damageToOpponent));
-                if (!lostAllAbilities) {
-                    triggered.addAll(plainDamageAbilities(WatchedAbilities.persistent(creature, damageToOpponent),
-                            damageToOpponent));
-                }
-                triggered.addAll(plainDamageAbilities(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
-                        gameData, creature, attackerId, damageToOpponent), damageToOpponent));
-            }
-            // Combat-damage-to-player triggers granted until end of turn by one-shot effects
-            // (e.g. Open into Wonder grants "deals combat damage to a player, draw a card"), and "deals damage to a
-            // player" ones granted the same way: an ability of the creature whatever its duration.
-            triggered.addAll(plainCombatAbilities(WatchedAbilities.temporary(creature, combatDamageToPlayer),
-                    combatDamageToPlayer));
-            triggered.addAll(plainDamageAbilities(WatchedAbilities.temporary(creature, damageToPlayer),
+            List<TriggeredAbility> triggered = new ArrayList<>(plainCombatAbilities(
+                    eventAbilitySupport.abilities(gameData, creature, combatDamageToPlayer), combatDamageToPlayer));
+            triggered.addAll(plainDamageAbilities(eventAbilitySupport.abilities(gameData, creature, damageToPlayer),
                     damageToPlayer));
-            if (!lostAllAbilities) {
-                triggered.addAll(plainCombatAbilities(WatchedAbilities.persistent(creature, combatDamageToPlayer),
-                        combatDamageToPlayer));
-                triggered.addAll(plainDamageAbilities(WatchedAbilities.persistent(creature, damageToPlayer),
-                        damageToPlayer));
+            if (!attackerId.equals(defenderId)) {
+                triggered.addAll(plainDamageAbilities(eventAbilitySupport.abilities(gameData, creature,
+                        damageToOpponent), damageToOpponent));
             }
-            // Combat-damage-to-player triggers granted continuously by a static ability
-            // (e.g. Tandem Lookout's soulbond grant), recomputed by the layer system.
-            triggered.addAll(plainCombatAbilities(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
-                    gameData, creature, attackerId, combatDamageToPlayer), combatDamageToPlayer));
-            triggered.addAll(plainDamageAbilities(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
-                    gameData, creature, attackerId, damageToPlayer), damageToPlayer));
+            // An animated noncreature Equipment that is not attached is not an equipped creature, so its card's
+            // "equipped creature deals combat damage" abilities do not apply. Equipment creatures (reconfigure) keep
+            // theirs: they read "this creature or equipped creature".
+            if (creature.getAttachedTo() == null
+                    && GameQueryService.permanentHasSubtype(creature, CardSubtype.EQUIPMENT)
+                    && !creature.getCard().hasType(CardType.CREATURE)) {
+                List<TriggeredAbility> own = creature.getCard().getTriggeredAbilities();
+                triggered.removeIf(ability -> own.stream().anyMatch(printed -> printed == ability));
+            }
             TriggerCause combatDamageCause = new DamageTriggers.SourceDealsCombatDamage(
                     creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt).cause();
             for (TriggeredAbility ability : triggered) {
@@ -511,7 +438,7 @@ public class CombatDamageTriggers {
                     .withTargetId(defenderId).withTriggeringPermanentId(creature.getId()).withEventValue(damageDealt);
             // Each ability is one object of all its effects (CR 603.3); "that player" is the player dealt damage, the
             // entry's non-targeting target, and "that much" the damage, its event value.
-            for (TriggeredAbility ability : allWatchedAbilities(gameData, watcher,
+            for (TriggeredAbility ability : eventAbilitySupport.abilities(gameData, watcher,
                     Triggers.creatureWithSameNameDealsCombatDamageToPlayer())) {
                 if (ability.options().limit() != TriggerLimit.NONE
                         || ability.options().multiplicity() != TriggerMultiplicity.EACH) {
@@ -545,8 +472,7 @@ public class CombatDamageTriggers {
                                                            UUID defenderId, int damageDealt,
                                                            Map<Permanent, UUID> attachedDamageSources) {
         attachedDamageSources.forEach((perm, ownerId) -> {
-            if (!perm.isAttached() || !perm.getAttachedTo().equals(creature.getId())
-                    || gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+            if (!perm.isAttached() || !perm.getAttachedTo().equals(creature.getId())) {
                 return;
             }
             // Each ability's event condition ("deals combat damage to an opponent", Sleeper's Robe; CR 603.2) and
@@ -558,29 +484,20 @@ public class CombatDamageTriggers {
             Trigger combatDamageToPlayer = Triggers.dealsCombatDamageToPlayer();
             Trigger damageToPlayer = Triggers.dealsDamageToPlayer();
             Trigger damageToOpponent = Triggers.dealsDamageToOpponent();
-            List<TriggeredAbility> abilities = new ArrayList<>();
             // An ability that says "this creature or equipped creature deals combat damage to a player" (Komainu
             // Battle Armor) triggers for the equipped creature through that condition, which its own collector reads;
-            // read here too it would trigger twice for one event (CR 603.2c).
+            // read here too it would trigger twice for one event (CR 603.2c). The attached permanent's abilities are
+            // the ones it had as the damage was dealt, as the layers left them.
             Trigger equippedDealsCombatDamage =
                     Triggers.equippedCreatureDealsCombatDamageToPlayer();
-            abilities.addAll(plainCombatAbilities(WatchedAbilities.printed(perm.getCard(), Triggers.dealsCombatDamageToPlayer(), Zone.BATTLEFIELD).stream()
-                    .filter(ability -> !ability.hasWatchedTrigger(equippedDealsCombatDamage)).toList(),
+            List<TriggeredAbility> abilities = new ArrayList<>(plainCombatAbilities(
+                    eventAbilitySupport.abilities(gameData, perm, combatDamageToPlayer).stream()
+                            .filter(ability -> !ability.hasWatchedTrigger(equippedDealsCombatDamage)).toList(),
                     combatDamageToPlayer));
-            abilities.addAll(plainDamageAbilities(Read.printed(perm.getCard(),
-                    Triggers.dealsDamageToPlayer()), damageToPlayer));
-            abilities.addAll(plainCombatAbilities(WatchedAbilities.temporary(perm, combatDamageToPlayer),
-                    combatDamageToPlayer));
-            abilities.addAll(plainDamageAbilities(WatchedAbilities.temporary(perm, damageToPlayer), damageToPlayer));
-            abilities.addAll(plainCombatAbilities(WatchedAbilities.persistent(perm, combatDamageToPlayer),
-                    combatDamageToPlayer));
-            abilities.addAll(plainDamageAbilities(WatchedAbilities.persistent(perm, damageToPlayer), damageToPlayer));
+            abilities.addAll(plainDamageAbilities(eventAbilitySupport.abilities(gameData, perm, damageToPlayer),
+                    damageToPlayer));
             if (!ownerId.equals(defenderId)) {
-                abilities.addAll(plainDamageAbilities(Read.printed(perm.getCard(),
-                        Triggers.dealsDamageToOpponent()), damageToOpponent));
-                abilities.addAll(plainDamageAbilities(WatchedAbilities.temporary(perm, damageToOpponent),
-                        damageToOpponent));
-                abilities.addAll(plainDamageAbilities(WatchedAbilities.persistent(perm, damageToOpponent),
+                abilities.addAll(plainDamageAbilities(eventAbilitySupport.abilities(gameData, perm, damageToOpponent),
                         damageToOpponent));
             }
             TriggerCause combatDamageCause = new DamageTriggers.SourceDealsCombatDamage(
@@ -633,8 +550,7 @@ public class CombatDamageTriggers {
             // Each ability is one object of all its effects (CR 603.3). "That creature" is the creature that dealt
             // the damage (the entry's triggering permanent) and "that player" the enchanted player it was dealt to.
             for (TriggeredAbility ability : plainCombatAbilities(
-                    WatchedAbilities.printed(perm.getCard(), Triggers.dealsCombatDamageToPlayer(), Zone.BATTLEFIELD),
-                    combatDamageToPlayer)) {
+                    eventAbilitySupport.abilities(gameData, perm, combatDamageToPlayer), combatDamageToPlayer)) {
                 if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), context)) {
                     continue;
                 }
@@ -708,17 +624,35 @@ public class CombatDamageTriggers {
                                                                List<Permanent> departedWatchers) {
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerId);
         if (!battleDamage && !ownerRelativePass) {
-            damageTriggers.checkEmblemAllyCreatureCombatDamageToPlayerTriggers(
-                    gameData, creature, attackerId, defenderId, damageDealt);
             damageTriggers.collectTemporaryGlobalTriggers(
                     gameData, Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                     creature.getId(), damageDealt);
         }
-        if (attackerBattlefield == null) return;
-
-        List<Permanent> watchers = new ArrayList<>(attackerBattlefield);
-        watchers.addAll(departedWatchers);
-        for (Permanent perm : watchers) {
+        List<Watcher> watchers = new ArrayList<>();
+        if (attackerBattlefield != null) {
+            List<Permanent> permanents = new ArrayList<>(attackerBattlefield);
+            permanents.addAll(departedWatchers);
+            permanents.forEach(permanent -> watchers.add(Watcher.of(permanent, attackerId)));
+        }
+        // The player's emblems watch too, from the command zone (CR 114.4).
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            if (emblem.controllerId().equals(attackerId)) {
+                watchers.add(Watcher.of(emblem));
+            }
+        }
+        for (Watcher watcher : watchers) {
+            Permanent perm = watcher.permanent();
+            if (perm == null) {
+                if (!battleDamage) {
+                    collectAllyCombatDamageAbilities(gameData, watcher, creature, attackerId, defenderId, damageDealt,
+                            combatDamageDealtToPlayer, firedBatchedAllyAbilities, ownerRelativePass,
+                            Triggers.creatureYouControlDealsCombatDamageToPlayer());
+                }
+                collectAllyCombatDamageAbilities(gameData, watcher, creature, attackerId, defenderId, damageDealt,
+                        combatDamageDealtToPlayer, firedBatchedAllyAbilities, ownerRelativePass,
+                        Triggers.creatureYouControlDealsCombatDamageToPlayerOrBattle());
+                continue;
+            }
             if (perm.isFaceDown() || gameQueryService.computeStaticBonus(gameData, perm).losesAllAbilities()
                     || perm.isLosesAllAbilitiesUntilEndOfTurn()) {
                 if (!perm.isFaceDown() && !battleDamage && !ownerRelativePass && perm.getId().equals(creature.getId())) {
@@ -729,11 +663,11 @@ public class CombatDamageTriggers {
             // Each ability, of either watch, is one object of all its effects (CR 603.3); its limit, filter,
             // "one or more" and conditions are judged and marked once, for the ability.
             if (!battleDamage) {
-                collectAllyCombatDamageAbilities(gameData, perm, creature, attackerId, defenderId, damageDealt,
+                collectAllyCombatDamageAbilities(gameData, watcher, creature, attackerId, defenderId, damageDealt,
                         combatDamageDealtToPlayer, firedBatchedAllyAbilities, ownerRelativePass,
                         Triggers.creatureYouControlDealsCombatDamageToPlayer());
             }
-            collectAllyCombatDamageAbilities(gameData, perm, creature, attackerId, defenderId, damageDealt,
+            collectAllyCombatDamageAbilities(gameData, watcher, creature, attackerId, defenderId, damageDealt,
                     combatDamageDealtToPlayer, firedBatchedAllyAbilities, ownerRelativePass,
                     Triggers.creatureYouControlDealsCombatDamageToPlayerOrBattle());
         }
@@ -764,15 +698,16 @@ public class CombatDamageTriggers {
      * the ability triggers is the ability's one effect (CR 603.3c); a permanent, declared player or graveyard target
      * is one choice with every effect (CR 603.3d).
      */
-    private void collectAllyCombatDamageAbilities(GameData gameData, Permanent perm, Permanent creature,
+    private void collectAllyCombatDamageAbilities(GameData gameData, Watcher watcher, Permanent creature,
                                                   UUID attackerId, UUID defenderId, int damageDealt,
                                                   Map<Permanent, Integer> combatDamageDealtToPlayer,
                                                   Set<String> firedBatchedAllyAbilities, boolean ownerRelativePass,
                                                   Trigger watch) {
-        List<TriggeredAbility> abilities = allWatchedAbilities(gameData, perm, watch);
+        Permanent perm = watcher.permanent();
+        List<TriggeredAbility> abilities = eventAbilitySupport.abilities(gameData, watcher, watch);
         FilterContext triggerContext = FilterContext.of(gameData)
                 .withSourceControllerId(attackerId)
-                .withSourcePermanentId(perm.getId());
+                .withSourcePermanentId(perm == null ? null : perm.getId());
         for (int abilityIndex = 0; abilityIndex < abilities.size(); abilityIndex++) {
             TriggeredAbility ability = abilities.get(abilityIndex);
             TriggerOptions options = ability.options();
@@ -799,11 +734,11 @@ public class CombatDamageTriggers {
             }
             // "One or more ... deal combat damage" is a single event for the whole batch,
             // so a batched ability only goes on the stack for the first matching dealer.
-            if (oneOrMore && !firedBatchedAllyAbilities.add(perm.getId() + ":" + watch + ":" + abilityIndex)) {
+            if (oneOrMore && !firedBatchedAllyAbilities.add(watcher.id() + ":" + watch + ":" + abilityIndex)) {
                 continue;
             }
             // The ability's event condition (a Class level, a chosen mode; CR 603.2) as it triggers.
-            ConditionContext context = ConditionContext.forPermanent(perm, attackerId);
+            ConditionContext context = watcher.conditionContext();
             if (!conditionEvaluationService.eventConditionMet(gameData, options, context)) {
                 continue;
             }
@@ -822,22 +757,29 @@ public class CombatDamageTriggers {
             // Blackguard: "...that player discards a card"); "that many" the damage, its event value ("put that many
             // +1/+1 counters on it", Necropolis Regent); "it" / "that creature" the creature that dealt the damage,
             // which "it deals that much damage" has deal the damage, whatever the effects are.
+            TriggerRecord record = entry -> {
+                entry.setTargetId(defenderId);
+                entry.setTriggeringPlayerId(defenderId);
+                entry.setEventValue(triggerDamage);
+                entry.setTriggeringPermanentIds(dealerIds);
+                if (!oneOrMore) {
+                    entry.setTriggeringPermanentId(creature.getId());
+                    entry.setTriggeringPermanentControllerId(attackerId);
+                    entry.setTriggeringPermanent(creature);
+                    entry.setEventDamageSource(creature, attackerId);
+                }
+                entry.setNonTargeting(true);
+                if (perm != null) {
+                    entry.setSourcePermanentSnapshot(new Permanent(perm));
+                }
+            };
+            if (perm == null) {
+                eventAbilitySupport.put(gameData, ability, watcher, context, record);
+                continue;
+            }
             boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
                     perm.getCard(), perm, attackerId, perm.getCard().getName() + "'s triggered ability", context,
-                    entry -> {
-                        entry.setTargetId(defenderId);
-                        entry.setTriggeringPlayerId(defenderId);
-                        entry.setEventValue(triggerDamage);
-                        entry.setTriggeringPermanentIds(dealerIds);
-                        if (!oneOrMore) {
-                            entry.setTriggeringPermanentId(creature.getId());
-                            entry.setTriggeringPermanentControllerId(attackerId);
-                            entry.setTriggeringPermanent(creature);
-                            entry.setEventDamageSource(creature, attackerId);
-                        }
-                        entry.setNonTargeting(true);
-                        entry.setSourcePermanentSnapshot(new Permanent(perm));
-                    }).withCause(new DamageTriggers.SourceDealsCombatDamage(
+                    record).withCause(new DamageTriggers.SourceDealsCombatDamage(
                     creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt).cause()));
             if (triggered) {
                 gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
@@ -1090,8 +1032,7 @@ public class CombatDamageTriggers {
             if (controllerId == null) continue;
             damageTriggers.queueSourceDealsCombatDamageToPlayerOrPlaneswalkerTriggers(
                     gameData, source.getCard(), controllerId, source.getId(), damageDealtToPlayerOrPlaneswalker,
-                    state.combatDamageDealtToPlayer.getOrDefault(source, 0),
-                    state.selfDealsCombatDamageToPlayerOrPlaneswalkerAbilities.get(source));
+                    state.combatDamageDealtToPlayer.getOrDefault(source, 0));
         }
     }
 
@@ -1108,8 +1049,7 @@ public class CombatDamageTriggers {
             if (controllerId == null) continue;
             damageTriggers.queueSourceDealsCombatDamageToPlayerOrBattleTriggers(
                     gameData, source.getCard(), controllerId, source.getId(), totalDamage,
-                    state.combatDamageDealtToPlayer.getOrDefault(source, 0),
-                    state.selfDealsCombatDamageToPlayerOrBattleAbilities.get(source));
+                    state.combatDamageDealtToPlayer.getOrDefault(source, 0));
         }
     }
 
@@ -1163,7 +1103,6 @@ public class CombatDamageTriggers {
                                                         Map<Permanent, List<UUID>> combatDamageDealtToCreatures,
                                                         Map<Permanent, UUID> combatDamageDealerControllers,
                                                         Map<UUID, UUID> combatDamageTargetControllers,
-                                                        Map<Permanent, List<TriggeredAbility>> damageToCreatureAbilities,
                                                         CombatDamageState state,
                                                         Map<UUID, Permanent> damagedCreatureSnapshots) {
         Map<UUID, Integer> damageByCreature = new HashMap<>();
@@ -1176,10 +1115,11 @@ public class CombatDamageTriggers {
             UUID controllerId = combatDamageDealerControllers.get(source);
             if (controllerId == null) continue;
 
-            List<TriggeredAbility> abilities = damageToCreatureAbilities.getOrDefault(source, List.of());
+            Trigger watched = Triggers.dealsCombatDamageToCreature();
+            // The source's abilities as it had them as the damage was dealt.
+            List<TriggeredAbility> abilities = eventAbilitySupport.abilities(gameData, source, watched);
             if (abilities.isEmpty()) continue;
 
-            Trigger watched = Triggers.dealsCombatDamageToCreature();
             for (UUID damagedCreatureId : entry.getValue()) {
                 int excessDamage = combatExcessDamage(gameData, state, damagedCreatureId,
                         damagedCreatureSnapshots.get(damagedCreatureId),
@@ -1234,11 +1174,11 @@ public class CombatDamageTriggers {
             if (controllerId == null) {
                 continue;
             }
-            // Each ability is one object of all its effects (CR 603.3), its event condition and intervening "if"
-            // judged once as it triggers (CR 603.2, CR 603.4).
+            // Each ability, as the source had it as the damage was dealt, is one object of all its effects (CR 603.3),
+            // its event condition and intervening "if" judged once as it triggers (CR 603.2, CR 603.4).
             ConditionContext context = ConditionContext.forPermanent(source, controllerId);
             for (TriggeredAbility ability : plainCombatAbilities(
-                    WatchedAbilities.printed(source.getCard(), Triggers.dealsCombatDamageToBlockingCreature(), Zone.BATTLEFIELD),
+                    eventAbilitySupport.abilities(gameData, source, Triggers.dealsCombatDamageToBlockingCreature()),
                     Triggers.dealsCombatDamageToBlockingCreature())) {
                 if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), context)) {
                     continue;
@@ -1876,8 +1816,8 @@ public class CombatDamageTriggers {
 
     /** What the abilities this step triggers read of the step as its damage was dealt, kept for the second stage. */
     private static final class Snapshot {
+        private EventAbilitySupport.AbilitySnapshot abilities;
         private List<DealtDamageTriggerData> dealtDamageTriggerData = List.of();
-        private Map<Permanent, List<TriggeredAbility>> damageToCreatureAbilities = Map.of();
         private Map<Permanent, UUID> attachedDamageSources = Map.of();
         private Map<UUID, Permanent> damagedCreatureSnapshots = Map.of();
         private Map<UUID, List<Permanent>> allyCombatDamageWatchers = Map.of();
@@ -1894,6 +1834,9 @@ public class CombatDamageTriggers {
                 : gameData.playerBattlefields.getOrDefault(defenderId, List.of());
         Snapshot snapshot = new Snapshot();
         state.combatTriggerSnapshot = snapshot;
+        // The abilities the damage triggers are the ones their objects have as it is dealt (CR 603.2), read so after
+        // the state-based actions it causes, whatever left or changed (CR 510.2, 704.3).
+        snapshot.abilities = eventAbilitySupport.snapshot(gameData);
         snapshot.dealtDamageTriggerData = collectDealtDamageTriggerData(gameData, state);
         checkCombatExcessDamageTriggers(gameData, state, atkBf, defBf);
         processAllyDealtDamageToPlaneswalkerTriggers(gameData, state);
@@ -1914,20 +1857,6 @@ public class CombatDamageTriggers {
             }
         }
 
-        for (Permanent source : state.combatDamageDealt.keySet()) {
-            state.selfDealsCombatDamageAbilities.put(source,
-                    grantedCombatAbilities(gameData, source, Triggers.dealsCombatDamage()));
-            state.selfDealsCombatDamageToPlayerOrPlaneswalkerAbilities.put(source, grantedCombatAbilities(
-                    gameData, source, Triggers.dealsCombatDamageToPlayerOrPlaneswalker()));
-            state.selfDealsCombatDamageToPlayerOrBattleAbilities.put(source, grantedCombatAbilities(
-                    gameData, source, Triggers.dealsCombatDamageToPlayerOrBattle()));
-        }
-
-        Map<Permanent, List<TriggeredAbility>> damageToCreatureAbilities = new HashMap<>();
-        for (Permanent source : state.combatDamageDealtToCreatures.keySet()) {
-            damageToCreatureAbilities.put(source,
-                    damageTriggers.abilities(gameData, source, Triggers.dealsCombatDamageToCreature()));
-        }
         Map<Permanent, UUID> attachedDamageSources = new LinkedHashMap<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (permanent.isAttached()) {
@@ -1945,7 +1874,6 @@ public class CombatDamageTriggers {
                 gameData.stack.subList(beforeGlobalDamageTriggers, gameData.stack.size()));
         snapshotDelayedCombatDamageDrawSources(gameData, state);
         snapshotDelayedCombatDamageLookAtHandAndDrawSources(gameData, state, defenderId);
-        snapshotSelfDealsDamageAbilities(gameData, state);
         Map<UUID, List<Permanent>> allyCombatDamageWatchers =
                 damageTriggers.snapshotAllyCreatureDealsCombatDamageWatchers(gameData);
         Map<UUID, List<com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers.AllyDamageTriggerSnapshot>> allyDamageWatchers =
@@ -1970,7 +1898,6 @@ public class CombatDamageTriggers {
         processWatchersDealtDamageToCreatureReflectionTriggers(gameData, state, damagedCreatureSnapshots);
         List<StackEntry> watcherAllyDamageReflectionTriggers = new ArrayList<>(
                 gameData.stack.subList(beforeWatcherAllyDamageReflections, gameData.stack.size()));
-        snapshot.damageToCreatureAbilities = damageToCreatureAbilities;
         snapshot.attachedDamageSources = attachedDamageSources;
         snapshot.damagedCreatureSnapshots = damagedCreatureSnapshots;
         snapshot.allyCombatDamageWatchers = allyCombatDamageWatchers;
@@ -1985,12 +1912,25 @@ public class CombatDamageTriggers {
 
     private void afterStateBasedActions(GameData gameData, CombatDamageStepEvent event) {
         CombatDamageState state = event.state();
-        UUID activeId = event.activePlayerId();
-        UUID defenderId = event.defendingPlayerId();
         Snapshot snapshot = state.combatTriggerSnapshot instanceof Snapshot taken ? taken : new Snapshot();
         state.combatTriggerSnapshot = null;
+        if (snapshot.abilities == null) {
+            putAfterStateBasedActions(gameData, event, snapshot);
+            return;
+        }
+        eventAbilitySupport.asOf(gameData, snapshot.abilities, () -> putAfterStateBasedActions(gameData, event,
+                snapshot));
+    }
+
+    /**
+     * The abilities the combat damage triggered that go on the stack after the state-based actions it caused, each
+     * object's read as it had them when the damage was dealt ({@code snapshot}).
+     */
+    private void putAfterStateBasedActions(GameData gameData, CombatDamageStepEvent event, Snapshot snapshot) {
+        CombatDamageState state = event.state();
+        UUID activeId = event.activePlayerId();
+        UUID defenderId = event.defendingPlayerId();
         List<DealtDamageTriggerData> dealtDamageTriggerData = snapshot.dealtDamageTriggerData;
-        Map<Permanent, List<TriggeredAbility>> damageToCreatureAbilities = snapshot.damageToCreatureAbilities;
         Map<Permanent, UUID> attachedDamageSources = snapshot.attachedDamageSources;
         Map<UUID, Permanent> damagedCreatureSnapshots = snapshot.damagedCreatureSnapshots;
         Map<UUID, List<Permanent>> allyCombatDamageWatchers = snapshot.allyCombatDamageWatchers;
@@ -2014,8 +1954,8 @@ public class CombatDamageTriggers {
         processSelfDealsCombatDamageToPlayerOrBattleTriggers(gameData, state);
         processCombatDamageToBattleTriggers(gameData, state);
         processCombatDamageToCreatureTriggers(gameData, state.combatDamageDealtToCreatures,
-                state.combatDamageDealerControllers, state.combatDamageTargetControllers, damageToCreatureAbilities,
-                state, damagedCreatureSnapshots);
+                state.combatDamageDealerControllers, state.combatDamageTargetControllers, state,
+                damagedCreatureSnapshots);
         processCombatDamageToBlockingCreatureTriggers(gameData, state);
 
         // Acidic Dagger's delayed "destroy the non-Wall creature that creature damaged" trigger.
@@ -2076,7 +2016,7 @@ public class CombatDamageTriggers {
                     processCombatDamageToPlayerTriggers(gameData, damageBySource, controllerId, recipientId,
                             attachedDamageSources, allyDamageWatchers.getOrDefault(controllerId, List.of()),
                             departedWatchersByController, firedOncePerStepAbilities);
-                    damageTriggers.checkEmblemCombatDamageTriggers(
+                    damageTriggers.checkCreaturesYouControlDealCombatDamageToOpponentTriggers(
                             gameData, controllerId, recipientId, damageBySource);
                     processDelayedCombatDamageLootTriggers(gameData, damageBySource, controllerId);
                     processDelayedCombatDamageTokenTriggers(gameData, damageBySource, controllerId, recipientId);
