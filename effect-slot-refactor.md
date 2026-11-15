@@ -559,6 +559,12 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Ledger: every line is a record gained (emblems' triggering permanent, snapshot, owner, toughness, mana value; draw records' "that player" and drawn card), random (drawn cards, discards, clashes) or a new test; no ability gained or lost in an existing test.
 - Open: C49.
 
+**R2 (part 1: keyword abilities).**
+- Prowess, evolve and increment are `KeywordTriggers` abilities (CR 702.108a, 702.100a, 702.191a) that `TriggerIndex.permanentAbilities` and the zone-change listing add once per instance of the keyword the permanent has as the layers leave it (CR 702.108b, 702.100d, 702.191b); the cast reader and the trigger pipeline match them like any ability. The `TriggerCollectionService` prowess loop, `collectIncrementTriggers`, `putEvolveAbility`, `IncrementTriggerEffect` and its handler are gone.
+- Increment's "if" is `AllOf(SourceIsCreature, AnyOf(SpellManaSpentGreaterThanSourcePower, SpellManaSpentGreaterThanSourceToughness))` around `PutCountersOnSelfEffect`, judged as it triggers and as it resolves (CR 603.4) on the entry's triggering spell; the mana spent is no longer stamped as the entry's X.
+- Rules fix: increment counts its instances (`CharacteristicState.TRIGGER_INSTANCE_KEYWORDS`); `KeywordTriggersTest` (a granted second instance) fails before.
+- Ledger: every line is a record gained (the cast record's triggering spell and caster, the enters record's entering permanent), increment's effect renamed, or random (route-fixture discards); no ability gained or lost.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

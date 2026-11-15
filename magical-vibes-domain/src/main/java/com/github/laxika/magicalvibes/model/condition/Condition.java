@@ -430,6 +430,7 @@ public sealed interface Condition permits
         SpellManaValueEqualsSourceCounters,
         SpellManaSpentAtLeast,
         SpellManaSpentGreaterThanSourcePower,
+        SpellManaSpentGreaterThanSourceToughness,
         SpellXAtLeast,
         TargetManaValueAtMostControllerGraveyardCount,
         TargetGraveyardCardManaValueAtMost,

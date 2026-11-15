@@ -43,7 +43,7 @@ public class CharacteristicState {
 
     private static final Set<Keyword> TRIGGER_INSTANCE_KEYWORDS =
             EnumSet.of(Keyword.PERSIST, Keyword.UNDYING, Keyword.EXALTED, Keyword.DETHRONE, Keyword.BATTLE_CRY,
-                    Keyword.DOUBLE_TEAM, Keyword.EVOLVE, Keyword.PROWESS);
+                    Keyword.DOUBLE_TEAM, Keyword.EVOLVE, Keyword.PROWESS, Keyword.INCREMENT);
 
     private String name;
     private final Set<CardType> cardTypes = EnumSet.noneOf(CardType.class);
@@ -62,7 +62,10 @@ public class CharacteristicState {
     private final Set<Keyword> keywords = new HashSet<>();
     private int flankingInstances;
     private int meleeInstances;
-    /** Stackable-trigger keywords (persist, undying) each trigger once per instance the object has. */
+    /**
+     * Stackable-trigger keywords (persist, undying, evolve, prowess, increment, …) each trigger once per instance the
+     * object has.
+     */
     private final Map<Keyword, Integer> triggerKeywordInstances = new EnumMap<>(Keyword.class);
     private boolean seeded;
     /** Keywords this permanent is prohibited from having or gaining by a granted restriction. */

@@ -1,0 +1,68 @@
+package com.github.laxika.magicalvibes.model.trigger;
+
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.condition.AllOf;
+import com.github.laxika.magicalvibes.model.condition.AnyOf;
+import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
+import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourcePower;
+import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourceToughness;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasGreaterPowerOrToughnessThanSource;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.EvolveEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+
+import java.util.List;
+
+/**
+ * The triggered abilities that keywords stand for, which no card writes out. A permanent has a keyword's ability once
+ * for each instance of the keyword it has as the layers leave it, each triggering separately (CR 702.100d, 702.108b,
+ * 702.191b), and the trigger index lists them with its other triggered abilities, so they trigger, are counted by
+ * "triggers an additional time" effects and are put on the stack as any other ability is.
+ */
+public final class KeywordTriggers {
+
+    /** A keyword and the triggered ability it means. */
+    public record KeywordTrigger(Keyword keyword, TriggeredAbility ability) {
+    }
+
+    /** Prowess: "Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn" (CR 702.108a). */
+    public static final TriggeredAbility PROWESS = new TriggeredAbility(
+            Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+            new BoostSelfEffect(1, 1));
+
+    /**
+     * Evolve: "Whenever a creature you control enters, if that creature's power is greater than this creature's power
+     * and/or that creature's toughness is greater than this creature's toughness, put a +1/+1 counter on this
+     * creature" (CR 702.100a).
+     */
+    public static final TriggeredAbility EVOLVE = new TriggeredAbility(
+            Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
+            TriggerOptions.DEFAULT.withInterveningIf(new TriggeringPermanentHasGreaterPowerOrToughnessThanSource()),
+            new EvolveEffect());
+
+    /**
+     * Increment: "Whenever you cast a spell, if this permanent is a creature and the amount of mana spent to cast that
+     * spell is greater than this creature's power or this creature's toughness, put a +1/+1 counter on this creature"
+     * (CR 702.191a).
+     */
+    public static final TriggeredAbility INCREMENT = new TriggeredAbility(
+            Triggers.youCastSpell().anySpell(),
+            TriggerOptions.DEFAULT.withInterveningIf(new AllOf(List.of(new SourceIsCreature(),
+                    new AnyOf(List.of(new SpellManaSpentGreaterThanSourcePower(),
+                            new SpellManaSpentGreaterThanSourceToughness()))))),
+            new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
+
+    /** Every keyword that stands for a triggered ability the index lists, with that ability. */
+    public static final List<KeywordTrigger> ALL = List.of(
+            new KeywordTrigger(Keyword.PROWESS, PROWESS),
+            new KeywordTrigger(Keyword.EVOLVE, EVOLVE),
+            new KeywordTrigger(Keyword.INCREMENT, INCREMENT));
+
+    private KeywordTriggers() {
+    }
+}

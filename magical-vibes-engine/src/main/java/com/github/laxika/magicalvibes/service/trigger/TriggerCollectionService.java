@@ -38,7 +38,6 @@ import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
-import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasGreaterPowerOrToughnessThanSource;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.CommanderCreaturesDealPowerDamageToPreventedCreatureEffect;
@@ -51,10 +50,8 @@ import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
-import com.github.laxika.magicalvibes.model.effect.EvolveEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCastTriggerToSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -88,7 +85,6 @@ import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
-import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -102,7 +98,6 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellTriggers;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerCause;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import java.util.ArrayList;
@@ -133,17 +128,6 @@ public class TriggerCollectionService {
     /** A record that names nothing beyond what the request's own fields name. */
     private static final TriggerRecord NO_EXTRA_RECORD = entry -> {
     };
-
-    /** Prowess: "Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn" (CR 702.108a). */
-    private static final TriggeredAbility PROWESS_ABILITY = new TriggeredAbility(Triggers.youCastSpell(),
-            new com.github.laxika.magicalvibes.model.effect.BoostSelfEffect(1, 1));
-
-    /**
-     * Increment: "Whenever you cast a spell, if the amount of mana you spent to cast it is greater than this creature's
-     * power or toughness, put a +1/+1 counter on it."
-     */
-    private static final TriggeredAbility INCREMENT_ABILITY = new TriggeredAbility(Triggers.youCastSpell(),
-            new IncrementTriggerEffect());
 
     private final PlayerInputService playerInputService;
 
@@ -366,21 +350,6 @@ public class TriggerCollectionService {
             gameData.recordSpellCastFromHand(spellCard);
         }
         collectCreatureSpellBoonTriggers(gameData, spellCard, castingPlayerId, castFaceDown);
-        if (!castFaceDown && !spellCard.hasType(CardType.CREATURE)) {
-            for (Permanent source : gameData.playerBattlefields.getOrDefault(castingPlayerId, List.of())) {
-                int prowessInstances = gameQueryService.triggerKeywordInstances(gameData, source, Keyword.PROWESS);
-                // Each instance of prowess triggers on its own (CR 702.108a); the door adds the times it triggers
-                // additionally.
-                for (int instance = 0; instance < prowessInstances; instance++) {
-                    Permanent snapshot = new Permanent(source);
-                    triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(PROWESS_ABILITY,
-                            source.getCard(), source, castingPlayerId,
-                            source.getCard().getName() + "'s prowess ability",
-                            ConditionContext.forPermanent(source, castingPlayerId),
-                            entry -> entry.setSourcePermanentSnapshot(snapshot)));
-                }
-            }
-        }
         if (castZone != Zone.HAND) {
             gameData.recordSpellCastFromOutsideHand(castingPlayerId);
             gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.add(castingPlayerId);
@@ -454,12 +423,6 @@ public class TriggerCollectionService {
         gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(castEvent));
 
         processDelayedControllerSpellCastTriggers(gameData, spellCard, castingPlayerId);
-
-        // Increment keyword (CR keyword): "Whenever you cast a spell, if the amount of mana you spent
-        // is greater than this creature's power or toughness, put a +1/+1 counter on it." Driven by the
-        // Scryfall-loaded keyword (like Undying) rather than a per-card effect. Read before mana-spent
-        // is cleared below.
-        collectIncrementTriggers(gameData, spellCard, castingPlayerId);
 
         int pathOfAncestryScries = gameData.getSpellCastPathOfAncestryManaSpent(spellCard.getId());
         gameData.clearSpellCastPathOfAncestryManaSpent(spellCard.getId());
@@ -2013,28 +1976,13 @@ public class TriggerCollectionService {
 
     /**
      * What a creature entering under {@code controllerId}'s control triggers besides the card abilities the trigger
-     * pipeline matches, the emblems' among them: evolve (CR 702.100d), the
-     * watchers and boons a resolved spell left, and the "whenever a creature you control enters" abilities a spell
+     * pipeline matches, the emblems' and the keywords' among them: the watchers and boons a resolved spell left, and the "whenever a creature you control enters" abilities a spell
      * registered until end of turn.
      */
     public void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature) {
         if (!enteringPermanentHasType(gameData, enteringCreature, CardType.CREATURE)) return;
 
         Permanent enteringPermanent = findPermanentByCard(gameData, enteringCreature);
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        for (Permanent perm : new ArrayList<>(battlefield)) {
-            if (perm.isLosesAllAbilitiesUntilEndOfTurn() || perm.isFaceDown() || perm.getCard() == enteringCreature) {
-                continue;
-            }
-            if (enteringPermanent != null && gameQueryService.hasKeyword(gameData, perm, Keyword.EVOLVE)) {
-                // CR 702.100d: each instance of evolve (printed or granted) triggers separately.
-                int evolveInstances = gameQueryService.triggerKeywordInstances(gameData, perm, Keyword.EVOLVE);
-                for (int i = 0; i < evolveInstances; i++) {
-                    putEvolveAbility(gameData, controllerId, perm, enteringPermanent);
-                }
-            }
-        }
-
         for (CreatureEntersTriggerWatcher watcher
                 : List.copyOf(gameData.allyCreatureEntersTriggerWatchers)) {
             if (!watcher.controllerId().equals(controllerId) || enteringPermanent == null) {
@@ -2424,30 +2372,6 @@ public class TriggerCollectionService {
         }
     }
 
-    /**
-     * Puts one instance of {@code source}'s evolve (CR 702.100a) on the stack through the stack door for
-     * {@code enteringPermanent}, a creature that entered under its controller's control: the door judges its
-     * intervening "if" as it triggers and wraps its effect so it is checked again as it resolves (CR 603.4), and counts
-     * the additional times it triggers for the entering creature (an entering creature causing it, Panharmonicon).
-     */
-    private void putEvolveAbility(GameData gameData, UUID controllerId, Permanent source,
-                                  Permanent enteringPermanent) {
-        if (gameQueryService.areOpponentPermanentETBTriggersSuppressed(gameData, controllerId)) {
-            return;
-        }
-        UUID enteringId = enteringPermanent.getId();
-        boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(EVOLVE_ABILITY,
-                source.getCard(), source, controllerId, source.getCard().getName() + "'s ability",
-                ConditionContext.forPermanent(source, controllerId).withTriggeringPermanentId(enteringId),
-                entry -> {
-                    entry.setTriggeringPermanentId(enteringId);
-                    entry.setNonTargeting(true);
-                }).withCause(new TriggerCause.Entered(enteringPermanent.getCard(), controllerId, enteringId)));
-        if (triggered) {
-            gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
-        }
-    }
-
     private Permanent findPermanentByCard(GameData gameData, Card card) {
         Permanent[] found = new Permanent[1];
         gameData.forEachPermanent((playerId, permanent) -> {
@@ -2466,43 +2390,6 @@ public class TriggerCollectionService {
             case ENCHANTMENT -> gameQueryService.isEnchantment(gameData, permanent);
             default -> card.hasType(type);
         };
-    }
-
-    /** Evolve's intervening "if" (CR 702.100a): the entering creature is bigger in power or toughness. */
-    private static final Condition EVOLVE_COMPARISON = new TriggeringPermanentHasGreaterPowerOrToughnessThanSource();
-
-    /**
-     * Evolve (CR 702.100a): "Whenever a creature you control enters, if that creature's power is greater than this
-     * creature's power and/or that creature's toughness is greater than this creature's toughness, put a +1/+1 counter
-     * on this creature." The keyword's ability, which no card writes; each instance triggers separately (CR 702.100d).
-     */
-    private static final TriggeredAbility EVOLVE_ABILITY = new TriggeredAbility(
-            Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-            TriggerOptions.DEFAULT.withInterveningIf(EVOLVE_COMPARISON), new EvolveEffect());
-
-    /**
-     * Increment keyword. For each permanent the casting player controls with the {@link Keyword#INCREMENT}
-     * keyword, fire the trigger if the mana spent on the cast spell is greater than that creature's current
-     * power or toughness (the intervening-if; re-checked again at resolution per CR 603.4): the ability goes to the
-     * stack door whole, which counts the times it triggers additionally. The mana spent is recorded as the entry's
-     * {@code xValue} for the resolution handler.
-     */
-    private void collectIncrementTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
-        int manaSpent = gameData.getSpellCastManaSpent(spellCard.getId());
-        gameData.forEachPermanent((playerId, perm) -> {
-            if (!playerId.equals(castingPlayerId)) return;
-            if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return;
-            if (!gameQueryService.hasKeyword(gameData, perm, Keyword.INCREMENT)) return;
-            if (!gameQueryService.isCreature(gameData, perm)) return;
-            if (manaSpent <= gameQueryService.getEffectivePower(gameData, perm)
-                    && manaSpent <= gameQueryService.getEffectiveToughness(gameData, perm)) return;
-
-            triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(INCREMENT_ABILITY, perm.getCard(),
-                    perm, castingPlayerId, perm.getCard().getName() + "'s ability",
-                    ConditionContext.forPermanent(perm, castingPlayerId), entry -> entry.setXValue(manaSpent)));
-            log.info("Game {} - {} increment trigger queued (mana spent {})",
-                    gameData.id, perm.getCard().getName(), manaSpent);
-        });
     }
 
     /**

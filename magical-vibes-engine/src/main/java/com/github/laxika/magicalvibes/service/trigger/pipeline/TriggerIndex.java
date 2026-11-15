@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveRefineCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
+import com.github.laxika.magicalvibes.model.trigger.KeywordTriggers;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Emblem;
@@ -220,6 +221,7 @@ public class TriggerIndex {
             abilities.addAll(withoutLost(gameData, permanent.getCard().getId(),
                     permanent.getCard().getTriggeredAbilities()));
         }
+        keywordAbilities(gameData, permanent, staticBonus, abilities);
         if (!lostAll) {
             abilities.addAll(permanent.getPersistentTriggeredAbilities());
             abilities.addAll(grantedTriggeredAbilitySupport.grantedZoneChangeAbilities(gameData, permanent));
@@ -657,6 +659,7 @@ public class TriggerIndex {
             abilities.addAll(withoutLost(gameData, permanent.getCard().getId(),
                     permanent.getCard().getTriggeredAbilities()));
         }
+        keywordAbilities(gameData, permanent, staticBonus, abilities);
         if (!lostAll && !gameQueryService.hasLostAllAbilities(gameData, permanent)) {
             abilities.addAll(permanent.getTemporaryTriggeredAbilities());
             abilities.addAll(permanent.getPersistentTriggeredAbilities());
@@ -669,6 +672,24 @@ public class TriggerIndex {
         abilities.addAll(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(gameData, permanent,
                 staticBonus, ability -> true));
         return abilities;
+    }
+
+    /**
+     * Adds to {@code into} the abilities {@code permanent}'s keywords stand for ({@link KeywordTriggers}): one for each
+     * instance of each such keyword it has as the layers leave it, printed or granted, each triggering separately
+     * (CR 702.100d, 702.108b, 702.191b).
+     */
+    private void keywordAbilities(GameData gameData, Permanent permanent, GameQueryService.StaticBonus staticBonus,
+                                  List<TriggeredAbility> into) {
+        for (KeywordTriggers.KeywordTrigger keyword : KeywordTriggers.ALL) {
+            if (!gameQueryService.hasKeyword(permanent, staticBonus, keyword.keyword())) {
+                continue;
+            }
+            int instances = gameQueryService.triggerKeywordInstances(gameData, permanent, keyword.keyword());
+            for (int instance = 0; instance < instances; instance++) {
+                into.add(keyword.ability());
+            }
+        }
     }
 
     /**

@@ -458,6 +458,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceWasSecondSpellCastTh
 import com.github.laxika.magicalvibes.model.condition.SpellCreatureManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourcePower;
+import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourceToughness;
 import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TargetGraveyardCardManaValueAtLeast;
@@ -1654,6 +1655,12 @@ public class ConditionEvaluationService {
                 yield source != null && ctx.triggeringSpell() != null
                         && ctx.triggeringSpell().manaSpentToCastThisSpell()
                         > gameQueryService.getEffectivePower(gameData, source);
+            }
+            case SpellManaSpentGreaterThanSourceToughness ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && ctx.triggeringSpell() != null
+                        && ctx.triggeringSpell().manaSpentToCastThisSpell()
+                        > gameQueryService.getEffectiveToughness(gameData, source);
             }
             case SpellXAtLeast c ->
                     ctx.xValue() >= c.minX();
