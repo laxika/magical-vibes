@@ -469,6 +469,42 @@ class GameActionAvailabilityServiceTest {
     }
 
     @Nested
+    @DisplayName("revealed library top cards")
+    class RevealedLibraryTopCards {
+
+        private void topCard() {
+            Card top = new Card();
+            top.setName("Forest");
+            top.setType(CardType.LAND);
+            gd.playerDecks.get(player1Id).add(top);
+            when(cardViewFactory.create(top)).thenReturn(org.mockito.Mockito.mock(CardView.class));
+        }
+
+        @Test
+        @DisplayName("A permanent letting its controller play lands from the top of their library shows them that card, and not the opponent")
+        void landPlayPermissionShowsTopCardToController() {
+            Card augur = new Card();
+            augur.setName("Augur of Autumn");
+            augur.setType(CardType.CREATURE);
+            augur.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect(null));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(augur));
+            topCard();
+
+            assertThat(projectionFactory.getRevealedLibraryTopCards(gd, player1Id).getFirst()).hasSize(1);
+            assertThat(projectionFactory.getRevealedLibraryTopCards(gd, player2Id).getFirst()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("A permission to play lands from the top of the library shows the card even with no permanents")
+        void landPlayPermissionWithoutPermanentsShowsTopCard() {
+            gd.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.add(player1Id);
+            topCard();
+
+            assertThat(projectionFactory.getRevealedLibraryTopCards(gd, player1Id).getFirst()).hasSize(1);
+        }
+    }
+
+    @Nested
     @DisplayName("getPotentialPayableAbilityIndices — abilities payable after tapping mana sources")
     class GetPlayableGraveyardLandIndicesTests {
 

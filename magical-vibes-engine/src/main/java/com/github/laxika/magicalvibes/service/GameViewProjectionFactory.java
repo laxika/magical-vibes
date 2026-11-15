@@ -600,35 +600,33 @@ public class GameViewProjectionFactory {
                     && deck != null && !deck.isEmpty()) {
                 revealedPlayerIds.add(pid);
             }
+            if (pid.equals(viewerId) && castingPermissionService.canPlayLandsFromTopOfLibrary(data, pid)) {
+                revealedPlayerIds.add(pid);
+            }
 
-            List<Permanent> bf = data.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
+            for (GameQueryService.ActiveStaticEffect<CardEffect> active
+                    : gameQueryService.activeStaticEffects(data, pid, CardEffect.class)) {
+                Permanent perm = active.source();
                 if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(data, perm)) continue;
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(data, perm, pid)) {
-                    if (effect instanceof PlayWithTopCardRevealedEffect topCardRevealed) {
-                        // Public: visible to all
-                        if (topCardRevealed.allPlayers()) {
-                            revealedPlayerIds.addAll(data.orderedPlayerIds);
-                        } else {
-                            revealedPlayerIds.add(pid);
-                        }
-                    } else if (pid.equals(viewerId) && effect instanceof AllowCastFromTopOfLibraryEffect allow
-                            && allow.filter() != null && deck != null && !deck.isEmpty()
-                            && !castingPermissionService.canCastFromTopOfLibrary(data, pid, deck.getFirst())
-                            && !castingPermissionService.canCastFromTopOfLibraryAsAdventure(data, pid, deck.getFirst())) {
-                        // A filtered permission only exposes a top card it lets the player cast.
-                        continue;
-                    } else if (pid.equals(viewerId) &&
-                            (effect instanceof LookAtTopCardOfOwnLibraryEffect
-                                    || effect instanceof AllowCastFromTopOfLibraryEffect
-                                    || effect instanceof AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect)) {
-                        // Private: only visible to the controller
+                CardEffect effect = active.effect();
+                if (effect instanceof PlayWithTopCardRevealedEffect topCardRevealed) {
+                    // Public: visible to all
+                    if (topCardRevealed.allPlayers()) {
+                        revealedPlayerIds.addAll(data.orderedPlayerIds);
+                    } else {
                         revealedPlayerIds.add(pid);
                     }
-                }
-                if (pid.equals(viewerId)
-                        && castingPermissionService.canPlayLandsFromTopOfLibrary(data, pid)) {
+                } else if (pid.equals(viewerId) && effect instanceof AllowCastFromTopOfLibraryEffect allow
+                        && allow.filter() != null && deck != null && !deck.isEmpty()
+                        && !castingPermissionService.canCastFromTopOfLibrary(data, pid, deck.getFirst())
+                        && !castingPermissionService.canCastFromTopOfLibraryAsAdventure(data, pid, deck.getFirst())) {
+                    // A filtered permission only exposes a top card it lets the player cast.
+                    continue;
+                } else if (pid.equals(viewerId) &&
+                        (effect instanceof LookAtTopCardOfOwnLibraryEffect
+                                || effect instanceof AllowCastFromTopOfLibraryEffect
+                                || effect instanceof AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect)) {
+                    // Private: only visible to the controller
                     revealedPlayerIds.add(pid);
                 }
             }
