@@ -1664,7 +1664,9 @@ public class BattlefieldPlacementService {
         }
         if (!gameQueryService.activeStaticEffects(gameData, enteringControllerId,
                 ControlledLandsEnterUntappedEffect.class).isEmpty()) {
-            enteringPermanent.untap();
+            // Entering untapped changes how the land enters; it never becomes untapped, so a stun counter it enters
+            // with stays on it (CR 122.1d replaces only becoming untapped).
+            enteringPermanent.enterUntapped();
         }
     }
 

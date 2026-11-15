@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.b.BloodMoon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HiddenNursery;
 import com.github.laxika.magicalvibes.cards.r.RootMaze;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -89,6 +90,19 @@ class SpelunkingTest extends BaseCardTest {
 
         Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest.isTapped()).isFalse();
+    }
+
+    @Test
+    void landPutOntoTheBattlefieldTappedWithAStunCounterEntersUntappedAndKeepsTheCounter() {
+        harness.addToBattlefield(player1, new Spelunking());
+        Permanent forest = new Permanent(new Forest());
+        forest.tap();
+        forest.setCounterCount(CounterType.STUN, 1);
+
+        harness.getBattlefieldEntryService().putPermanentOntoBattlefield(gd, player1.getId(), forest);
+
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(forest.getCounterCount(CounterType.STUN)).isEqualTo(1);
     }
 
     @Test
