@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,7 +56,7 @@ class OmenMachineDrawStepEffectHandlerTest {
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
     @Mock private CardViewFactory cardViewFactory;
-    @Mock private TriggerCollectionService triggerCollectionService;
+    @Mock private SpellEvents spellEvents;
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private ExileService exileService;
     @Mock private CastingPermissionService castingPermissionService;
@@ -89,7 +89,7 @@ class OmenMachineDrawStepEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        omenMachineDrawStepHandler = new OmenMachineDrawStepEffectHandler(exileSupport, gameQueryService, predicateEvaluationService, gameLogService, battlefieldEntryService, exileService, playerInputService, triggerCollectionService,
+        omenMachineDrawStepHandler = new OmenMachineDrawStepEffectHandler(exileSupport, gameQueryService, predicateEvaluationService, gameLogService, battlefieldEntryService, exileService, playerInputService, spellEvents,
                 castingPermissionService, castingCostService, exileCastTargetSupport);
         lenient().when(castingPermissionService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
         lenient().when(castingCostService.canPayAdditionalSpellCosts(any(), any(), any())).thenReturn(true);
@@ -212,7 +212,7 @@ class OmenMachineDrawStepEffectHandlerTest {
 
                 assertThat(gd.stack).anyMatch(se -> se.getCard() == sorceryCard);
                 assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(1);
-                verify(triggerCollectionService).checkSpellCastTriggers(gd, sorceryCard, player1Id, false);
+                verify(spellEvents).cast(gd, sorceryCard, player1Id, false);
             }
 
             @Test

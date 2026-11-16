@@ -151,8 +151,7 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 dealDamageToAnyTargetHandler.resolve(gd, entry, effect);
 
-                verifyNoInteractions(triggerCollectionService);
-            }
+                            }
 
             @Test
             @DisplayName("XValue amount deals damage equal to the stack entry's X value")

@@ -37,7 +37,6 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -65,7 +64,6 @@ class ReturnToHandEffectHandlerTest {
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private PlayerInteractionSupport playerInteractionSupport;
-    @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private DrawService drawService;
     @Mock private com.github.laxika.magicalvibes.service.state.StateTriggerService stateTriggerService;
 
@@ -92,8 +90,7 @@ class ReturnToHandEffectHandlerTest {
 
         bounceSupport = new BounceSupport(gameQueryService, predicateEvaluationService, gameLogService,
                 permanentRemovalService, stateTriggerService);
-        LifeSupport lifeSupport = new LifeSupport(gameQueryService, gameLogService, triggerCollectionService,
-                permanentRemovalService, drawService);
+        LifeSupport lifeSupport = new LifeSupport(gameQueryService, gameLogService, permanentRemovalService, drawService);
         handler = new ReturnToHandEffectHandler(gameQueryService, gameLogService, gameOutcomeService,
                 permanentRemovalService, predicateEvaluationService, bounceSupport, playerInteractionSupport, lifeSupport);
     }

@@ -60,7 +60,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.replacement.DamageJournalService;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.model.replacement.MillEvent;
 
 import java.util.ArrayList;
@@ -90,9 +90,6 @@ public class GraveyardService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final PermanentRemovalService permanentRemovalService;
-    // @Lazy to break indirect circular dependency:
-    // GraveyardService â†’ TriggerCollectionService â†’ PermanentRemovalService â†’ GraveyardService
-    private TriggerCollectionService triggerCollectionService;
 
     @Autowired
     @Lazy
@@ -118,10 +115,9 @@ public class GraveyardService {
                             GameLogService gameLogService,
                             ExileService exileService,
                             PredicateEvaluationService predicateEvaluationService,
-                            PermanentCounterSupport permanentCounterSupport,
-                            @Lazy TriggerCollectionService triggerCollectionService) {
+                            PermanentCounterSupport permanentCounterSupport) {
         this(gameQueryService, gameLogService, exileService, predicateEvaluationService,
-                permanentCounterSupport, null, triggerCollectionService);
+                permanentCounterSupport, null);
     }
 
     @Autowired
@@ -130,23 +126,13 @@ public class GraveyardService {
                             ExileService exileService,
                             PredicateEvaluationService predicateEvaluationService,
                             PermanentCounterSupport permanentCounterSupport,
-                            @Lazy PermanentRemovalService permanentRemovalService,
-                            @Lazy TriggerCollectionService triggerCollectionService) {
+                            @Lazy PermanentRemovalService permanentRemovalService) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.exileService = exileService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.permanentCounterSupport = permanentCounterSupport;
         this.permanentRemovalService = permanentRemovalService;
-        this.triggerCollectionService = triggerCollectionService;
-    }
-
-    /**
-     * Sets the TriggerCollectionService for manual (non-Spring) construction where
-     * the circular dependency prevents passing it in the constructor.
-     */
-    public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
-        this.triggerCollectionService = triggerCollectionService;
     }
 
     /**
@@ -1270,7 +1256,7 @@ public class GraveyardService {
             return false;
         }
         if (controllerId != null) {
-            triggerCollectionService.recordSacrifice(gameData, controllerId, aura.getCard());
+            ActionEvents.sacrificed(gameData, controllerId, aura.getCard());
         }
         gameLogService.append(gameData, GameLog.cardThen(aura.getCard(), " is sacrificed."));
         permanentRemovalService.removeOrphanedAuras(gameData);

@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.interaction.ScryInteractionHandler;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -57,8 +56,6 @@ class ScryEffectHandlerTest {
     private BattlefieldEntryService battlefieldEntryService;
     @Mock
     private ExileService exileService;
-    @Mock
-    private TriggerCollectionService triggerCollectionService;
     private LibraryRevealSupport libraryRevealSupport;
     private GameData gd;
     private UUID player1Id;
@@ -92,7 +89,7 @@ class ScryEffectHandlerTest {
         InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry(
                 () -> mock(com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         interactionHandlerRegistry.register(new ScryInteractionHandler(
-                gameLogService, mock(InputCompletionService.class), triggerCollectionService));
+                gameLogService, mock(InputCompletionService.class)));
         scryEffectHandler = new ScryEffectHandler(
                 gameLogService,
                 interactionHandlerRegistry,
@@ -137,8 +134,7 @@ class ScryEffectHandlerTest {
                 scryEffectHandler.resolve(gd, entry, effect);
 
                 verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
-                verifyNoInteractions(triggerCollectionService);
-            }
+                            }
 
             @Test
             @DisplayName("Empty library logs scry with empty library")
@@ -171,8 +167,7 @@ class ScryEffectHandlerTest {
                 verifyNoInteractions(sessionManager);
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("scries 1")));
-                verifyNoInteractions(triggerCollectionService);
-            }
+                            }
 
             @Test
             @DisplayName("Scry N enters SCRY state with multiple cards")

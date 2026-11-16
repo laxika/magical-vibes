@@ -120,10 +120,6 @@ public class AsEntersInteractionService {
         handleCreatureEnteredBattlefield(gameData, controllerId, card, targetId, wasCastFromHand, 0, false, List.of());
     }
 
-    public void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId, int count) {
-        etbTriggerService.checkAllyTokenEntersTriggers(gameData, controllerId, count);
-    }
-
     public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, int etbMode) {
         handleCreatureEnteredBattlefield(gameData, controllerId, card, targetId, wasCastFromHand, etbMode, false, List.of());
     }

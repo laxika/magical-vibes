@@ -34,7 +34,7 @@ import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -64,7 +64,7 @@ public class ExileFreeCastQueueSupport {
 
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final SpellEvents spellEvents;
     private final TargetTriggers targetTriggers;
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final InputCompletionService inputCompletionService;
@@ -96,7 +96,7 @@ public class ExileFreeCastQueueSupport {
     // @Lazy mirrors ExileFreeCastSupport: breaks the cycle back through the input services.
     public ExileFreeCastQueueSupport(GameLogService gameLogService,
                                             PlayerInputService playerInputService,
-                                            TriggerCollectionService triggerCollectionService,
+                                            SpellEvents spellEvents,
                                             TargetTriggers targetTriggers,
                                             ExileCastTargetSupport exileCastTargetSupport,
                                             @Lazy InputCompletionService inputCompletionService,
@@ -109,7 +109,7 @@ public class ExileFreeCastQueueSupport {
                                             @Lazy OutsideGameNormalCostCastSupport outsideGameNormalCostCastSupport) {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
-        this.triggerCollectionService = triggerCollectionService;
+        this.spellEvents = spellEvents;
         this.targetTriggers = targetTriggers;
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.inputCompletionService = inputCompletionService;
@@ -659,7 +659,7 @@ public class ExileFreeCastQueueSupport {
         gameData.priorityPassedBy.clear();
         gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", physicalCard,
                 " without paying its mana cost."));
-        triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, playerId, Zone.EXILE);
+        spellEvents.cast(gameData, cardToCast, playerId, Zone.EXILE);
         if (asCopy && spellweaverVoluteSupport.handleSuccessfulCopyCast(gameData, physicalCard.getId())) {
             return;
         }
@@ -1129,7 +1129,7 @@ public class ExileFreeCastQueueSupport {
         gameData.stack.add(entry);
         gameData.recordSpellCast(playerId, entry.getCard());
         gameData.priorityPassedBy.clear();
-        triggerCollectionService.checkSpellCastTriggers(gameData, entry.getCard(), playerId,
+        spellEvents.cast(gameData, entry.getCard(), playerId,
                 entry.getSourceZone() != null ? entry.getSourceZone() : Zone.HAND, null);
         if (entry.isCopy() && spellweaverVoluteSupport.handleSuccessfulCopyCast(
                 gameData, entry.getCard().getId())) return;

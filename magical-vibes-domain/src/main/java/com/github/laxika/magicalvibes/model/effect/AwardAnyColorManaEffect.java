@@ -55,8 +55,7 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
     }
 
     public boolean usesCommanderColorIdentity() {
-        return restriction == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
-                || restriction == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY;
+        return restriction == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY;
     }
 
     /** Preserves the pre-recipient-choice constructor shape for existing effects. */
@@ -405,9 +404,8 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                  MANA_VALUE_AT_LEAST_FOUR,
                  CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X,
                  PARTY_SPELL_OR_ABILITY, MOUNT_OR_VEHICLE_SPELL, PLANESWALKER_SPELLS,
-                 KICKED_SPELLS, DEVOID_SPELL, COMMANDER_COLOR_IDENTITY, PATH_OF_ANCESTRY, COMMANDER_ONLY,
-                 COMMANDER_COLOR_IDENTITY_WITH_ENTRY_COUNTERS,
-                 COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY -> 0;
+                 KICKED_SPELLS, DEVOID_SPELL, COMMANDER_COLOR_IDENTITY, COMMANDER_ONLY,
+                 COMMANDER_COLOR_IDENTITY_WITH_ENTRY_COUNTERS -> 0;
         };
     }
 }

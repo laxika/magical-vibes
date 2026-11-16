@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * of your library until you exile a nonland card that costs less. You may cast it without paying its
  * mana cost. Put the exiled cards on the bottom of your library in a random order."
  *
- * <p>Placed in the {@code Triggers.youCastThisSpell()} ability, or in a cascade-granting marker slot, this is queued
- * as a plain triggered ability by {@code TriggerCollectionService.checkSpellCastTriggers} under the
- * caster, then resolved by {@code CascadeEffectHandler}: it digs the library until it exiles a
+ * <p>Placed in the {@code Triggers.youCastThisSpell()} ability, or in a "spells you cast have cascade" ability
+ * ({@code Triggers.youCastSpell()...grantedToTheSpell()}), this is put on the stack as the spell's triggered ability
+ * under the caster, then resolved by {@code CascadeEffectHandler}: it digs the library until it exiles a
  * nonland card whose mana value is less than the cascade spell's mana value, then reuses the
  * {@link com.github.laxika.magicalvibes.model.LibrarySearchDestination#CAST_WITHOUT_PAYING} flow to
  * optionally cast that card for free and put the rest on the bottom in a random order.</p>

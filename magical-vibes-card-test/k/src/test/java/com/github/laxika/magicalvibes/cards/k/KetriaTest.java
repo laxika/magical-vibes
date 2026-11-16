@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -33,12 +32,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KetriaTest extends BaseCardTest {
 
     private PlanechaseService planar;
-    private TriggerCollectionService triggers;
 
     @BeforeEach
     void preparePlane() {
         planar = GameTestEngineContext.get().getBean(PlanechaseService.class);
-        triggers = GameTestEngineContext.get().getBean(TriggerCollectionService.class);
         gd.planechase = new PlanechaseState();
         gd.planechase.controllerId = player1.getId();
         gd.planechase.faceUp.add(new PlanarObject(new Ketria(), gd.nextTimestamp()));

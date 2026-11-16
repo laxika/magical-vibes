@@ -46,7 +46,6 @@ import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -87,7 +86,6 @@ class StackResolutionServiceTest {
     @Mock private GameLogService gameLogService;
     @Mock private EffectResolutionService effectResolutionService;
     @Mock private PlayerInputService playerInputService;
-    @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private TriggeredAbilityQueueService triggeredAbilityQueueService;
     @Mock private CreatureControlService creatureControlService;
     @Mock private StateTriggerService stateTriggerService;

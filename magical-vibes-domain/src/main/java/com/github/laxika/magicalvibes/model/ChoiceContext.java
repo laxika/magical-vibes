@@ -393,10 +393,6 @@ public sealed interface ChoiceContext {
 
     record CappedCounterAmountChoice(UUID sourcePermanentId) implements ChoiceContext {}
 
-    /** Mana choice for Path of Ancestry, retaining the producing permanent for its cast trigger. */
-    record PathOfAncestryManaColorChoice(UUID playerId, UUID sourcePermanentId, int amount)
-            implements ChoiceContext {}
-
     /** A Saga chapter's counter division; {@code triggerRecord} is the entry the stack door parked. */
     record SagaChapterCounterAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                          UUID sourcePermanentId, String chapterName, CounterType counterType,

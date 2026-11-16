@@ -50,8 +50,8 @@ import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.RulesEventPipeline;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import org.springframework.context.ApplicationContext;
@@ -95,7 +95,6 @@ public class GameTestHarness {
     private static com.github.laxika.magicalvibes.service.cast.CastingPermissionService staticCastingPermissionService;
     private static BattlefieldEntryService staticBattlefieldEntryService;
     private static SagaChapterService staticSagaChapterService;
-    private static TriggerCollectionService staticTriggerCollectionService;
     private static TriggeredAbilityQueueService staticTriggeredAbilityQueueService;
     private static com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers staticDamageTriggers;
     private static SpellCastingService staticSpellCastingService;
@@ -137,7 +136,6 @@ public class GameTestHarness {
         staticCastingPermissionService = context.getBean(com.github.laxika.magicalvibes.service.cast.CastingPermissionService.class);
         staticBattlefieldEntryService = context.getBean(BattlefieldEntryService.class);
         staticSagaChapterService = context.getBean(SagaChapterService.class);
-        staticTriggerCollectionService = context.getBean(TriggerCollectionService.class);
         staticTriggeredAbilityQueueService = context.getBean(TriggeredAbilityQueueService.class);
         staticDamageTriggers = context.getBean(
                 com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers.class);
@@ -195,7 +193,6 @@ public class GameTestHarness {
     private final com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final SagaChapterService sagaChapterService;
-    private final TriggerCollectionService triggerCollectionService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final SpellCastingService spellCastingService;
     private final CombatAttackService combatAttackService;
@@ -238,7 +235,6 @@ public class GameTestHarness {
         castingPermissionService = staticCastingPermissionService;
         battlefieldEntryService = staticBattlefieldEntryService;
         sagaChapterService = staticSagaChapterService;
-        triggerCollectionService = staticTriggerCollectionService;
         triggeredAbilityQueueService = staticTriggeredAbilityQueueService;
         spellCastingService = staticSpellCastingService;
         combatAttackService = staticCombatAttackService;
@@ -479,7 +475,7 @@ public class GameTestHarness {
         inMutationScope(() -> {
             UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
             if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
-                triggerCollectionService.recordSacrifice(gameData, controllerId, permanent.getCard());
+                ActionEvents.sacrificed(gameData, controllerId, permanent.getCard());
             }
         });
     }
@@ -2715,10 +2711,6 @@ public class GameTestHarness {
 
     public com.github.laxika.magicalvibes.service.effect.normalfx.ClashSupport getClashSupport() {
         return GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.effect.normalfx.ClashSupport.class);
-    }
-
-    public TriggerCollectionService getTriggerCollectionService() {
-        return triggerCollectionService;
     }
 
     public SpellCastingService getSpellCastingService() {

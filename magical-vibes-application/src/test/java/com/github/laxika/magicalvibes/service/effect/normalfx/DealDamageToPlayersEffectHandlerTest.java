@@ -135,8 +135,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             handler.resolve(gd, entry, new DealDamageToPlayersEffect(5, DamageRecipient.TARGET_PLAYER));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
-            verifyNoInteractions(triggerCollectionService);
-        }
+                    }
 
         @Test
         @DisplayName("Deals damage equal to target player's hand size (CardsInHand(TARGET_PLAYER))")
@@ -177,8 +176,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
                     new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), DamageRecipient.TARGET_PLAYER));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
-            verifyNoInteractions(triggerCollectionService);
-        }
+                    }
     }
 
     @Nested
@@ -332,8 +330,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             handler.resolve(gd, entry, new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_SPELL_CONTROLLER));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
-            verifyNoInteractions(triggerCollectionService);
-        }
+                    }
     }
 
     @Nested

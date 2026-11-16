@@ -229,7 +229,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
@@ -323,7 +323,7 @@ public class SpellCastingService {
 
     private final PermanentRemovalService permanentRemovalService;
 
-    private final TriggerCollectionService triggerCollectionService;
+    private final SpellEvents spellEvents;
     private final TargetTriggers targetTriggers;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
 
@@ -9543,7 +9543,7 @@ public class SpellCastingService {
                             .text(".")
                             .build());
                     Card triggerCard = triggerCards.get(permanent.getId());
-                    triggerCollectionService.recordSacrifice(gameData, player.getId(), triggerCard);
+                    ActionEvents.sacrificed(gameData, player.getId(), triggerCard);
                 }));
     }
 
@@ -13172,7 +13172,7 @@ public class SpellCastingService {
 
         queueDiscordCopyAbility(gameData, playerId, exileCardId);
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, sourceZone,
+        spellEvents.cast(gameData, card, playerId, sourceZone,
                 copy || exiledEntry == null ? null : exiledEntry.sourcePermanentId());
         targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
         mutationCoordinator.invalidateAllPlayerViews(gameData);
@@ -13990,7 +13990,7 @@ public class SpellCastingService {
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " casts " , card, " from the top of their library."));
         log.info("Game {} - {} casts {} from library top", gameData.id, player.getUsername(), card.getName());
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, Zone.LIBRARY);
+        spellEvents.cast(gameData, card, playerId, Zone.LIBRARY);
         targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
         mutationCoordinator.invalidateAllPlayerViews(gameData);
         turnProgressionService.resolveAutoPass(gameData);
@@ -14111,7 +14111,7 @@ public class SpellCastingService {
         log.info("Game {} - {} casts {} from their library while searching",
                 gameData.id, player.getUsername(), castCard.getName());
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, castCard, playerId, Zone.LIBRARY);
+        spellEvents.cast(gameData, castCard, playerId, Zone.LIBRARY);
         targetTriggers.checkBecomesTargetOfSpellTriggers(gameData);
         mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
@@ -14215,13 +14215,11 @@ public class SpellCastingService {
                 + targetingTax + additionalGenericCost;
         ManaPool pool = gameData.playerManaPools.get(player.getId());
         int before = pool.getTotalAllMana();
-        int pathOfAncestryBefore = pool.getPathOfAncestryManaTotal();
         withMulticoloredSpellMana(gameData, player.getId(), card, () -> {
             cost.payWithAdditionalGenericCost(pool, 0, additionalCost);
             return null;
         });
         gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
-        applyPathOfAncestryMana(gameData, player.getId(), card, pathOfAncestryBefore);
         if (!permanentRemovalService.removePermanentToHand(gameData, toReturn)) {
             throw new IllegalStateException("Could not return the web-slinging creature to its owner's hand");
         }
@@ -14255,7 +14253,6 @@ public class SpellCastingService {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card) + targetingTax;
         ManaCost escalateOnly = new ManaCost(escalateManaSuffix);
-        int pathOfAncestryBefore = pool.getPathOfAncestryManaTotal();
         int manaSpent = withMulticoloredSpellMana(gameData, playerId, card, () -> {
             if (!escalateOnly.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
                 throw new IllegalStateException("Not enough mana to pay escalate cost");
@@ -14265,7 +14262,6 @@ public class SpellCastingService {
             return before - pool.getTotalAllMana();
         });
         gameData.addSpellCastManaSpent(card.getId(), manaSpent);
-        applyPathOfAncestryMana(gameData, playerId, card, pathOfAncestryBefore);
     }
 
     /**
@@ -14416,7 +14412,6 @@ public class SpellCastingService {
         var caveManaBefore = pool.getCaveManaTotals();
         var desertManaBefore = pool.getDesertManaTotals();
         var spellCastManaSourcesBefore = pool.getSpellCastTriggerManaTotals();
-        int pathOfAncestryBefore = pool.getPathOfAncestryManaTotal();
         int creatureManaBefore = creatureSourceManaAvailable(pool);
         int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId, card);
         int permanentHasteGrantingBefore = permanentHasteGrantingManaAvailable(gameData, playerId);
@@ -14463,7 +14458,6 @@ public class SpellCastingService {
                 creatureAdditionalCounterGrantingBefore);
         applyCommanderCounterGrantingMana(gameData, playerId, card, commanderCounterGrantingBefore);
         applyRiotGrantingMana(gameData, playerId, card, riotGrantingBefore);
-        applyPathOfAncestryMana(gameData, playerId, card, pathOfAncestryBefore);
         return payment.phyrexianManaPaidWithLife();
     }
 
@@ -14563,7 +14557,6 @@ public class SpellCastingService {
         var caveManaBefore = pool.getCaveManaTotals();
         var desertManaBefore = pool.getDesertManaTotals();
         var spellCastManaSourcesBefore = pool.getSpellCastTriggerManaTotals();
-        int pathOfAncestryBefore = pool.getPathOfAncestryManaTotal();
         int creatureManaBefore = creatureSourceManaAvailable(pool);
         int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId, card);
         int permanentHasteGrantingBefore = permanentHasteGrantingManaAvailable(gameData, playerId);
@@ -14621,7 +14614,6 @@ public class SpellCastingService {
                 creatureAdditionalCounterGrantingBefore);
         applyCommanderCounterGrantingMana(gameData, playerId, card, commanderCounterGrantingBefore);
         applyRiotGrantingMana(gameData, playerId, card, riotGrantingBefore);
-        applyPathOfAncestryMana(gameData, playerId, card, pathOfAncestryBefore);
         return payment.phyrexianManaPaidWithLife();
     }
 
@@ -14766,42 +14758,6 @@ public class SpellCastingService {
     private int riotGrantingManaAvailable(GameData gameData, UUID playerId) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         return pool != null ? pool.getRiotGrantingManaTotal() : 0;
-    }
-
-    private void applyPathOfAncestryMana(GameData gameData, UUID playerId, Card card,
-                                         int pathOfAncestryBefore) {
-        if (!sharesCreatureTypeWithCommander(gameData, playerId, card)) {
-            return;
-        }
-        ManaPool pool = gameData.playerManaPools.get(playerId);
-        if (pool == null) {
-            return;
-        }
-        int spent = pathOfAncestryBefore - pool.getPathOfAncestryManaTotal();
-        if (spent > 0) {
-            gameData.addSpellCastPathOfAncestryManaSpent(card.getId(), spent);
-        }
-    }
-
-    private boolean sharesCreatureTypeWithCommander(GameData gameData, UUID playerId, Card card) {
-        UUID cardOwnerId = card.getOwnerId() != null ? card.getOwnerId() : playerId;
-        if (!gameQueryService.cardHasType(card, CardType.CREATURE, gameData, cardOwnerId)) {
-            return false;
-        }
-        for (Card commander : gameData.playerCommanders.getOrDefault(playerId, List.of())) {
-            UUID commanderOwnerId = commander.getOwnerId() != null ? commander.getOwnerId() : playerId;
-            if (!gameQueryService.cardHasType(commander, CardType.CREATURE, gameData, commanderOwnerId)) {
-                continue;
-            }
-            for (CardSubtype subtype : CardSubtype.values()) {
-                if (gameQueryService.isCreatureSubtype(subtype)
-                        && gameQueryService.cardHasSubtype(card, subtype, gameData, cardOwnerId)
-                        && gameQueryService.cardHasSubtype(commander, subtype, gameData, commanderOwnerId)) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     private String repeatAdditionalTargetManaCost(Card card, int extraTargetCount) {
@@ -18668,10 +18624,10 @@ public class SpellCastingService {
             queueOpponentModeChoice(gameData, castEntry, playerId);
         }
         if (commandCast) {
-            triggerCollectionService.checkSpellCastTriggers(
+            spellEvents.cast(
                     gameData, castCharacteristics, playerId, Zone.COMMAND, null, false);
         } else {
-            triggerCollectionService.checkSpellCastTriggers(
+            spellEvents.cast(
                     gameData, castCharacteristics, playerId,
                     castFromHand ? Zone.HAND : Zone.GRAVEYARD, null,
                     castEntry != null && castEntry.isCastFaceDown());

@@ -4,8 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantCastTriggerToSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerGrant;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +15,6 @@ public class RainOfRiches extends Card {
 
     public RainOfRiches() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofTreasureToken(2));
-        addStaticEffect(new GrantCastTriggerToSpellsEffect(
-                SpellCastTriggerGrant.CASCADE_TO_FIRST_SPELL_USING_TREASURE_MANA, new CascadeEffect()));
+        addTrigger(Triggers.youCastSpell().paidWithTreasureMana().nthThisTurn(1).grantedToTheSpell(), new CascadeEffect());
     }
 }

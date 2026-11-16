@@ -35,7 +35,6 @@ import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
 import com.github.laxika.magicalvibes.service.trigger.StackedDividedDamageTriggerService;
 import com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

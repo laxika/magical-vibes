@@ -44,7 +44,6 @@ class PermanentTimestampTest {
     @Mock private GameLogService gameLogService;
     @Mock private com.github.laxika.magicalvibes.service.input.PlayerInputService playerInputService;
     @Mock private PermanentCopierService permanentCopierService;
-    @Mock private com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
     @Mock private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
     @Mock private com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService;
@@ -68,7 +67,7 @@ class PermanentTimestampTest {
     void setUp() {
         BattlefieldPlacementService placementService = new BattlefieldPlacementService(
                 gameQueryService, gameLogService, playerInputService, permanentCopierService,
-                triggerCollectionService, amountEvaluationService, conditionEvaluationService,
+                amountEvaluationService, conditionEvaluationService,
                 predicateEvaluationService, permanentCounterSupport, graveyardService,
                 permanentRemovalService, becomeDayAsEntersEffectHandler);
         battlefieldEntryService = new BattlefieldEntryService(

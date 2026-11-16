@@ -27,7 +27,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -52,7 +52,7 @@ public class ExileSupport {
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final SpellEvents spellEvents;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator;
     private final InputCompletionService inputCompletionService;
@@ -70,7 +70,7 @@ public class ExileSupport {
                         GameLogService gameLogService,
                         PermanentRemovalService permanentRemovalService,
                         PlayerInputService playerInputService,
-                        TriggerCollectionService triggerCollectionService,
+                        SpellEvents spellEvents,
                         com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry,
                         com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator,
                         @Lazy InputCompletionService inputCompletionService) {
@@ -80,7 +80,7 @@ public class ExileSupport {
         this.gameLogService = gameLogService;
         this.permanentRemovalService = permanentRemovalService;
         this.playerInputService = playerInputService;
-        this.triggerCollectionService = triggerCollectionService;
+        this.spellEvents = spellEvents;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.mutationCoordinator = mutationCoordinator;
         this.inputCompletionService = inputCompletionService;
@@ -462,7 +462,7 @@ public class ExileSupport {
                 " without paying its mana cost (Knowledge Pool)."));
         log.info("Game {} - {} casts {} from Knowledge Pool without paying mana", gameData.id, playerName, chosenCard.getName());
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, chosenCard, playerId, false);
+        spellEvents.cast(gameData, chosenCard, playerId, false);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

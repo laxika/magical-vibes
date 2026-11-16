@@ -240,6 +240,17 @@ public sealed interface ActionEvent extends RulesEvent {
         }
     }
 
+    /**
+     * {@code playerId} sacrificed one or more permanents (CR 701.21a): one event for the permanents a player sacrificed
+     * at once.
+     */
+    record Sacrificed(UUID playerId) implements ActionEvent {
+        @Override
+        public Sacrificed deepCopy() {
+            return this;
+        }
+    }
+
     /** {@code playerId} committed a crime (CR 700.13). */
     record CrimeCommitted(UUID playerId) implements ActionEvent {
         @Override

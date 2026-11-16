@@ -84,7 +84,7 @@ import static org.mockito.Mockito.when;
  * The tap-for-mana abilities' one default ({@link TapTriggers}): every ability's entry records the
  * tap whatever its effects are; a triggered mana ability resolves at once through its effects' handlers (CR 605.4a), a
  * targeted one has its target chosen with the same record (CR 603.3d), any other goes on the stack. The trigger, its
- * relation and its filters are judged by the caller ({@code TriggerCollectionService}), not here.
+ * relation and its filters are judged by the caller, not here.
  */
 @ExtendWith(MockitoExtension.class)
 class TapTriggersTest {

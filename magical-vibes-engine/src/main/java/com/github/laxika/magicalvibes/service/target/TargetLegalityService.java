@@ -134,6 +134,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrTou
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPowerOrToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueParityMatchesSourceChosenParityPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostAmountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesColorOrManaValueWithImprintedCardPredicate;
@@ -5841,6 +5842,11 @@ public class TargetLegalityService {
             }
             int manaValue = stackEntry.getSpellManaValue();
             return source.getChosenManaValueParity().matches(manaValue);
+        }
+        if (predicate instanceof StackEntryManaValueAtMostAmountPredicate atMostAmount) {
+            int amount = amountEvaluationService.evaluate(gameData, atMostAmount.amount(),
+                    AmountContext.forEstimation(controllerId));
+            return (stackEntry.isCastFaceDown() ? 0 : stackEntry.getSpellManaValue()) <= amount;
         }
         if (predicate instanceof StackEntryManaValueAtMostControlledCountPredicate atMostPredicate) {
             int count = countControlledMatching(gameData, controllerId, atMostPredicate.countFilter());

@@ -29,13 +29,31 @@ public sealed interface SpellEvent extends RulesEvent {
      * @param castingPlayerId         the player who cast it
      * @param castZone                the zone it was cast from
      * @param exiledSourcePermanentId for a card cast from exile, the permanent it was exiled with, or {@code null}
+     * @param castFaceDown            whether it was cast face down
+     * @param firstSpellOfGame        whether it is the first spell its caster cast this game, which the delayed abilities
+     *                                of cards revealed from an opening hand wait for ("when each opponent casts their
+     *                                first spell of the game")
+     * @param conspireCopies          how many conspire costs were paid for it, each instance of conspire triggering on
+     *                                its own (CR 702.78a)
+     * @param casualtyCopies          how many casualty costs were paid for it (CR 702.153a)
+     * @param instantOrSorceryManaCopies how much mana with "when that mana is spent to cast an instant or sorcery spell,
+     *                                copy that spell" was spent to cast it (Primal Wellspring, Pyromancer's Goggles)
+     * @param spellOrAbilityManaCopies how much mana with "when that mana is spent to cast a spell or activate an
+     *                                ability, copy that spell or ability" was spent to cast it (Sunken Palace)
      */
-    record Cast(Card spellCard, UUID castingPlayerId, Zone castZone, UUID exiledSourcePermanentId)
+    record Cast(Card spellCard, UUID castingPlayerId, Zone castZone, UUID exiledSourcePermanentId,
+                boolean castFaceDown, boolean firstSpellOfGame, int conspireCopies, int casualtyCopies,
+                int instantOrSorceryManaCopies, int spellOrAbilityManaCopies)
             implements SpellEvent {
 
         public Cast {
             Objects.requireNonNull(spellCard, "spellCard");
             Objects.requireNonNull(castingPlayerId, "castingPlayerId");
+        }
+
+        /** A spell cast face up, of no first spell of the game, with no copy cost paid and no copying mana spent. */
+        public Cast(Card spellCard, UUID castingPlayerId, Zone castZone, UUID exiledSourcePermanentId) {
+            this(spellCard, castingPlayerId, castZone, exiledSourcePermanentId, false, false, 0, 0, 0, 0);
         }
 
         @Override
@@ -122,16 +140,27 @@ public sealed interface SpellEvent extends RulesEvent {
      * @param manaAbility                    whether it is a mana ability (CR 605.1a)
      * @param lifePaid                       the life paid to activate it
      * @param treasureManaSpent              whether mana from a Treasure was spent to activate it
+     * @param manaLinkedCopies               how much mana with "when that mana is spent to cast a spell or activate an
+     *                                       ability, copy that spell or ability" was spent to activate it (Sunken Palace;
+     *                                       none for a mana ability, which can't be copied)
      */
     record Activated(UUID activatingPlayerId, StackEntry abilityEntry, ActivatedAbility ability,
                      Permanent activatedPermanent, UUID activatedPermanentControllerId, boolean manaAbility,
-                     int lifePaid, boolean treasureManaSpent) implements SpellEvent {
+                     int lifePaid, boolean treasureManaSpent, int manaLinkedCopies) implements SpellEvent {
+
+        /** An activation that spent no mana that copies it. */
+        public Activated(UUID activatingPlayerId, StackEntry abilityEntry, ActivatedAbility ability,
+                         Permanent activatedPermanent, UUID activatedPermanentControllerId, boolean manaAbility,
+                         int lifePaid, boolean treasureManaSpent) {
+            this(activatingPlayerId, abilityEntry, ability, activatedPermanent, activatedPermanentControllerId,
+                    manaAbility, lifePaid, treasureManaSpent, 0);
+        }
 
         @Override
         public Activated deepCopy() {
             return new Activated(activatingPlayerId, abilityEntry == null ? null : new StackEntry(abilityEntry),
                     ability, activatedPermanent == null ? null : new Permanent(activatedPermanent),
-                    activatedPermanentControllerId, manaAbility, lifePaid, treasureManaSpent);
+                    activatedPermanentControllerId, manaAbility, lifePaid, treasureManaSpent, manaLinkedCopies);
         }
     }
 

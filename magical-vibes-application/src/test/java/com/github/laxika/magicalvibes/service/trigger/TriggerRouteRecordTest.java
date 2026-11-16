@@ -127,6 +127,7 @@ import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import com.github.laxika.magicalvibes.service.turn.DayNightService;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
@@ -315,10 +316,10 @@ class TriggerRouteRecordTest extends BaseCardTest {
      */
     private static final Map<String, String> UNMEASURED = Map.of(
             "creatureBecomesTapped", "read only for a temporary ability registered until a player's next turn "
-                    + "(TriggerCollectionService.collectTemporaryGlobalTriggers; Don't Move): no collector reads it "
+                    + "(a delayed ability; Don't Move): no collector reads it "
                     + "on a card, so a fixture never triggers, and the temporary ability has one route",
             "playerGainsLife", "read only for a temporary ability registered until end of turn "
-                    + "(TriggerCollectionService.collectTemporaryGlobalTriggers; False Cure): no collector reads it "
+                    + "(a delayed ability; False Cure): no collector reads it "
                     + "on a card, so a fixture never triggers, and the temporary ability has one route",
             "cleanup", "only a delayed ability made by a resolving spell or ability waits for the cleanup step "
                     + "(CR 514.3a): no card's own ability has it, so a fixture never triggers, and the delayed "
@@ -1114,7 +1115,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                             for (Card card : cards) {
                                 test.gd.stack.add(new StackEntry(card, test.player1.getId()));
                                 test.collect(collection ->
-                                        collection.checkSpellCastTriggers(test.gd, card, test.player1.getId()));
+                                        collection.cast(test.gd, card, test.player1.getId()));
                                 test.answerAll();
                             }
                         }),
@@ -1977,10 +1978,10 @@ class TriggerRouteRecordTest extends BaseCardTest {
 
     /**
      * A watch on an enchantment of player1 whose event the engine reports by calling {@code collector} on
-     * {@link TriggerCollectionService}: the scenario puts the fixtures on the battlefield and makes that call.
+     * {@link SpellEvents}: the scenario puts the fixtures on the battlefield and makes that call.
      */
     private static Watch collected(String name, String factory, Supplier<Trigger> trigger,
-                                   BiConsumer<TriggerRouteRecordTest, TriggerCollectionService> collector) {
+                                   BiConsumer<TriggerRouteRecordTest, SpellEvents> collector) {
         return watch(name, factory, trigger, CardType.ENCHANTMENT, (test, cards) -> {
             test.fixturePermanents(cards);
             test.mainPhaseOf(test.player1);
@@ -2193,13 +2194,13 @@ class TriggerRouteRecordTest extends BaseCardTest {
     }
 
     /** Has the engine's trigger collection report an event, as the service that makes the event happen does. */
-    private void collect(Consumer<TriggerCollectionService> collector) {
-        TriggerCollectionService collection = bean(TriggerCollectionService.class);
+    private void collect(Consumer<SpellEvents> collector) {
+        SpellEvents collection = bean(SpellEvents.class);
         harness.inMutationScope(() -> collector.accept(collection));
     }
 
     /** The fixtures are cards in player1's graveyard, on top of the creature cards the graveyard target needs. */
-    private void fixturesInGraveyard(List<Card> cards, Consumer<TriggerCollectionService> collector) {
+    private void fixturesInGraveyard(List<Card> cards, Consumer<SpellEvents> collector) {
         gd.playerGraveyards.get(player1.getId()).addAll(cards);
         mainPhaseOf(player1);
         collect(collector);
@@ -2402,7 +2403,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
      * Each fixture is a permanent of player1 whose own event the engine reports by calling {@code collector} with
      * the permanent.
      */
-    private void fixturesAreCollected(List<Card> cards, BiConsumer<TriggerCollectionService, Permanent> collector) {
+    private void fixturesAreCollected(List<Card> cards, BiConsumer<SpellEvents, Permanent> collector) {
         mainPhaseOf(player1);
         for (Card card : cards) {
             Permanent permanent = addCreatureReady(player1, card);
@@ -2633,7 +2634,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
 
     private void fixturesEnterFromGraveyard(List<Card> cards) {
         BattlefieldEntryService entry = bean(BattlefieldEntryService.class);
-        TriggerCollectionService collection = bean(TriggerCollectionService.class);
+        SpellEvents collection = bean(SpellEvents.class);
         for (Card card : cards) {
             Permanent permanent = new Permanent(card);
             permanent.setEnteredFromZone(Zone.GRAVEYARD);
@@ -2864,7 +2865,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
     /** The fixtures enter as permanents whose spells were kicked and had their other optional costs paid. */
     private void fixturesEnterWithCostsPaid(List<Card> cards) {
         BattlefieldEntryService entry = bean(BattlefieldEntryService.class);
-        TriggerCollectionService collection = bean(TriggerCollectionService.class);
+        SpellEvents collection = bean(SpellEvents.class);
         for (Card card : cards) {
             Permanent permanent = new Permanent(card);
             permanent.setKicked(true);

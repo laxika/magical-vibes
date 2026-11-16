@@ -66,9 +66,6 @@ public class InputCompletionService {
     private com.github.laxika.magicalvibes.service.effect.normalfx.ExileBottomRandomSupport exileBottomRandomSupport;
     @Autowired
     @Lazy
-    private com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
-    @Autowired
-    @Lazy
     private com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final PlayerInputService playerInputService;
     private final GameMutationCoordinator mutationCoordinator;
@@ -281,7 +278,7 @@ public class InputCompletionService {
                     return;
                 }
             }
-            if (gameData.pendingEffectResolutionEntry == null && triggerCollectionService != null) {
+            if (gameData.pendingEffectResolutionEntry == null && triggeredAbilityQueueService != null) {
                 // An ability a resolution finished by this answer made ("when you do", CR 603.12) has its mode and
                 // targets chosen at the stack door before anyone gets priority (CR 603.3c, 603.3d).
                 triggeredAbilityQueueService.beginStackDoorChoices(gameData);

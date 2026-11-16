@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -40,7 +40,7 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
     private final BattlefieldEntryService battlefieldEntryService;
     private final ExileService exileService;
     private final PlayerInputService playerInputService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final SpellEvents spellEvents;
     private final CastingPermissionService castingPermissionService;
     private final CastingCostService castingCostService;
     private final ExileCastTargetSupport exileCastTargetSupport;
@@ -139,7 +139,7 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
                 gameLogService.append(gameData, GameLog.textCardText(playerName + " casts " , topCard, " without paying its mana cost."));
                 log.info("Game {} - {} casts {} (Omen Machine) without paying mana", gameData.id, playerName, topCard.getName());
 
-                triggerCollectionService.checkSpellCastTriggers(gameData, topCard, targetPlayerId, false);
+                spellEvents.cast(gameData, topCard, targetPlayerId, false);
             }
         }
     }

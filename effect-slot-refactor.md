@@ -30,7 +30,7 @@ grep its `^#### Run` headings and read that range. The invariants those runs est
 | R1 | Emblems' abilities are `TriggerIndex` candidates for every family | done |
 | R2 | Keyword abilities and departed sources are candidates; abilities as the layers leave them | done |
 | R3 | One delayed-ability model (temporary-global abilities and every delayed list), listed for every family | done but: C51 |
-| R4 | Cast bookkeeping at the cast's completion; `TriggerCollectionService` deleted | open |
+| R4 | Cast bookkeeping at the cast's completion; `TriggerCollectionService` deleted | done |
 | F | Delete the legacy types; docs | open |
 | D | Durations: one `Duration` on floating effects, ended by a clock on the rules events; `DelayedAction` deleted | open |
 
@@ -304,9 +304,8 @@ moment kept or a rule cited for moving it).
 
 - Delete `EffectSlot`, `LegacySlotTrigger`, `LegacySlotTriggers`, the `addEffect(slot, …)` adapter,
   `TriggerCollectorRegistry`, `@CollectsWatchTrigger`, `TriggerContext`, `TriggerMatchContext`,
-  `TriggerWatch`, what is left of `TriggerCollectionService`, and `ShadowTriggerRecorder` with
-  shadow mode.
-- C47 first, before deleting what is left of `TriggerCollectionService`: list the face-up planes' and schemes'
+  `TriggerWatch` and `ShadowTriggerRecorder` with shadow mode.
+- C47 (closed): list the face-up planes' and schemes'
   zone-change abilities as `TriggerIndex` candidates, matched by `TriggerMatcher`, and delete the planar and scheme
   readers. Take the ledger before and after over the planar and scheme card tests and the two route tests, and
   adjudicate the moment they now trigger as Rules correctness says (keep it, or cite the rule for moving it).
@@ -660,6 +659,16 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Rules fix (test fails before): echo triggers for a permanent that entered while it had lost its abilities, if it has echo as its controller's upkeep begins (`KeywordTriggersTest`; the registration had skipped it). A permanent put straight onto the battlefield now has echo too (Thran Weaponry's tests).
 - Ledger: no ability gained or lost but Thran Weaponry's echo (above); echo lines gain the step record (active player, source snapshot) and are wrapped in their "if" (CR 603.4); Siren's Call's and the Imp's gain the active player, the Imp's its maker's source permanent (CR 603.7e).
 - Open: C51.
+
+**R4.**
+- `TriggerCollectionService` is gone. `SpellEvents.cast` / `.activated` (pipeline, beside `ActionEvents`) are the cast's and activation's completion (CR 601.2i, 602.2b): they record the cast, take what its payment leaves into the event (`SpellEvent.Cast`: conspire / casualty costs paid, copying mana, first spell of the game; `Activated.manaLinkedCopies`), emit it, then clear the payment records. `SpellTriggers` puts every cast ability: boons and opening-hand reveals first, the copies and granted replicate / demonstrate last, as before.
+- Cards as printed: Maelstrom Nexus, The First Sliver, Rain of Riches, Abaddon, Prismari, Quandrix, Wildsear and The Twelfth Doctor write `youCastSpell()….grantedToTheSpell()` (CR 113.7, 702.85a, 702.40a, 702.144a). `nthThisTurn` counts honour `notCastFrom` (by subtraction: a card cast twice is two casts) and `paidWithTreasureMana`; new `StackEntryManaValueAtMostAmountPredicate`. Gone: `GrantCastTriggerToSpellsEffect`, `SpellCastTriggerGrant`.
+- "The next … spell you cast this turn has cascade / storm" (Sloppity Bilepiper, Storm, Force of Nature, Crackling Spellslinger) is a `nextThisTurn` delayed ability with a `grantedToTheSpell()` trigger, used up by the spell it applies to (CR 603.7b). Gone: `nextCreatureSpellCascadeThisTurn`, `pendingNextInstantSorceryStormThisTurnCount`, their `EndOfTurnStateField`s.
+- Moved to their families: enter boons, First Day of Class's watchers, Cosima's voyage → `EtbTriggerService`; creature-cast boons → `SpellTriggers`; sacrifice records → `ActionEvents.sacrificed`, its boons matched by `ActionTriggers` on `ActionEvent.Sacrificed` (one per simultaneous sacrifice); Judgment of Alexander → `DamagePreventionService`; the enchanted-departure record → `PermanentRemovalService`.
+- Rules fix (test fails before): a First Sliver that lost its abilities (Frogify) gives no cascade (CR 613.1f; `TheFirstSliverTest`). Now uniform, no test failing before: every grant reads abilities as the layers leave them; Sunken Palace's mana copies any activation it is spent on, hand and graveyard ones too (CR 603.7a).
+- Ledger (2,206 card classes and the route tests): no ability gained, lost or reordered; every line is the granted cascade / storm / demonstrate gaining the cast record ("that player", event value, triggering card), or random (Breeches' coin flip, route-fixture draws, discards, dice, clashes, combat damage order).
+- Gone too: Path of Ancestry's dead restrictions (`PATH_OF_ANCESTRY`, `COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY`), their mana tag, pending choices and `PathOfAncestryManaColorChoice` (the card uses `paidWithManaFromThis`).
+- Open: boons and the watcher lists aren't delayed abilities yet (D or later).
 
 ## Prompt
 

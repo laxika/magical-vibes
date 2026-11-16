@@ -698,7 +698,7 @@ public class TapTriggers {
 
     /**
      * Whether {@code read}'s "one or more" ability already triggered on {@code source} for the permanents tapped
-     * together in the open tap batch ({@code TriggerCollectionService.beginPermanentTapTriggerBatch}): the mark is the
+     * together in the open tap batch ({@link GameData#beginPermanentTapTriggerBatch}): the mark is the
      * ability's ({@link TriggeredAbility#limitKey()}), so two "one or more" abilities of one permanent each trigger once.
      */
     private static boolean skipsBatchedTapTrigger(GameData gameData, UUID sourceId, TapRead read) {

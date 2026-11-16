@@ -16,7 +16,7 @@ public class MakeshiftMannequin extends Card {
         // counter on it. For as long as that creature has a mannequin counter on it, it has
         // "When this creature becomes the target of a spell or ability, sacrifice it."
         // The mannequin counter (added on entry) drives the granted ability in
-        // TriggerCollectionService.
+        // TargetTriggers.
         addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardTypePredicate(CardType.CREATURE))

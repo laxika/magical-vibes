@@ -103,7 +103,7 @@ import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -161,7 +161,7 @@ public class LibraryChoiceHandlerService {
 
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
-    private final TriggerCollectionService triggerCollectionService;
+    private final SpellEvents spellEvents;
     private final AttachmentTriggers attachmentTriggers;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
@@ -5733,7 +5733,7 @@ public class LibraryChoiceHandlerService {
         log.info("Game {} - {} casts {} without paying mana after choosing mode",
                 gameData.id, player.getUsername(), card.getName());
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, card, ctx.controllerId(), ctx.sourceZone());
+        spellEvents.cast(gameData, card, ctx.controllerId(), ctx.sourceZone());
         checkDiscoverTriggers(gameData, ctx.controllerId(), ctx.discoverValue());
         LibraryShuffleHelper.shuffleLibraryPendingAfterFreeCast(gameData);
         finishSearchAndResume(gameData);
@@ -5794,7 +5794,7 @@ public class LibraryChoiceHandlerService {
                 playerName + " casts ", cardToCast, " by paying " + manaCost + "."));
         log.info("Game {} - {} casts {} from the top of the library by paying {}",
                 gameData.id, playerName, cardToCast.getName(), manaCost);
-        triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, controllerId, false);
+        spellEvents.cast(gameData, cardToCast, controllerId, false);
     }
 
     /**
@@ -5962,7 +5962,7 @@ public class LibraryChoiceHandlerService {
         log.info("Game {} - {} casts {} (Sunbird's Invocation) without paying mana",
                 gameData.id, playerName, castCard.getName());
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, castCard, playerId, sourceZone);
+        spellEvents.cast(gameData, castCard, playerId, sourceZone);
         checkDiscoverTriggers(gameData, playerId, discoverValue);
         LibraryShuffleHelper.shuffleLibraryPendingAfterFreeCast(gameData);
         // The free spell now sits on the stack, but the ability that cast it is still parked

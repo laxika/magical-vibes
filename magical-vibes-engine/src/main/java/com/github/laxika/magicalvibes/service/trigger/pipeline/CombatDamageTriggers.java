@@ -39,7 +39,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -76,8 +75,6 @@ public class CombatDamageTriggers {
     private ConditionEvaluationService conditionEvaluationService;
     @Autowired @Lazy
     private GameLogService gameLogService;
-    @Autowired @Lazy
-    private TriggerCollectionService triggerCollectionService;
     @Autowired @Lazy
     private DamageTriggers damageTriggers;
     @Autowired @Lazy
@@ -1294,7 +1291,7 @@ public class CombatDamageTriggers {
 
     /**
      * The combat damage step's "whenever this is dealt damage" abilities, read as the damage was dealt, go on the stack
-     * through the watch's default as noncombat damage's do ({@code TriggerCollectionService.collectDealtDamageAbilities}),
+     * through the watch's default as noncombat damage's do ({@link DamageTriggers#collectDealtDamageAbilities}),
      * with the damaged permanent as it was dealt the damage: it may have died since.
      */
     private void processDealtDamageTriggers(GameData gameData, List<DealtDamageTriggerData> triggerData) {

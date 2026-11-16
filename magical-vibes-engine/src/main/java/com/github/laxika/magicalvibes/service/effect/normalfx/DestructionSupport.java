@@ -71,7 +71,6 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import lombok.RequiredArgsConstructor;
@@ -110,7 +109,6 @@ public class DestructionSupport {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
-    private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService;
     private final LifeSupport lifeSupport;
     private final OpponentMayGainControlOfCreatureYouControlEffectHandler opponentMayGainControlHandler;
@@ -421,7 +419,7 @@ public class DestructionSupport {
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, sacrificedCard.getName());
         // Collect both ally-permanent-sacrificed and global creature-sacrificed triggers for the
         // edict / chosen / forced-sacrifice paths that funnel through this shared helper.
-        triggerCollectionService.recordSacrifice(gameData, playerId, sacrificedCard);
+        ActionEvents.sacrificed(gameData, playerId, sacrificedCard);
     }
 
     /**

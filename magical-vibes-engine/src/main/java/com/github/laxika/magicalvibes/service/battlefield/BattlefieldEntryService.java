@@ -280,10 +280,6 @@ public class BattlefieldEntryService {
                 gameData, controllerId, card, targetId, wasCastFromHand);
     }
 
-    public void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId, int count) {
-        triggerService.checkAllyTokenEntersTriggers(gameData, controllerId, count);
-    }
-
     public void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId,
                                               List<UUID> permanentIds) {
         triggerService.checkAllyTokenEntersTriggers(gameData, controllerId, permanentIds);

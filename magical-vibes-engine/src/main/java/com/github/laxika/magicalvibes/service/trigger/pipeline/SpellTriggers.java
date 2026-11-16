@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Boon;
+import com.github.laxika.magicalvibes.model.BoonTrigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
@@ -10,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -17,8 +20,15 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
+import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -92,9 +102,10 @@ import org.springframework.stereotype.Service;
  * resolution registered, face-up planes), "whenever you cast a spell" (the caster's permanents, a departed mana
  * source's "when you spend this mana" rider, face-up schemes, planes, registered abilities), "whenever an opponent
  * casts a spell" (permanents, face-up schemes, suspended cards), the emblems', the caster's graveyard, hand, exile and
- * command zone cards', and the spell's own "when you cast this spell" abilities. The engine's keyword and delayed
- * abilities of the cast ({@code TriggerCollectionService.checkSpellCastTriggers}) go on the stack around them; their
- * controllers order them all the same (CR 603.3b).
+ * command zone cards', and the spell's own "when you cast this spell" abilities. Before them come the caster's
+ * creature-spell boons and the delayed abilities of cards revealed from an opening hand; after them, the copies the
+ * cast's payment made ({@link SpellEvent.Cast}: the mana that copies the spell it is spent on, conspire and casualty)
+ * and the replicate and demonstrate a grant gave the spell. Their controllers order them all the same (CR 603.3b).
  */
 @Slf4j
 @Service
@@ -163,6 +174,8 @@ public class SpellTriggers {
         Card spellCard = event.spellCard();
         UUID castingPlayerId = event.castingPlayerId();
         Zone castZone = event.castZone();
+        putCreatureSpellBoons(gameData, event);
+        putOpeningHandRevealAbilities(gameData, event);
         gameData.forEachPermanent((playerId, perm) -> dispatchSpellWatch(gameData, perm, playerId, PLAYER_CASTS,
                 event));
         dispatchFaceUpSchemes(gameData, PLAYER_CASTS, event, ownerId -> true);
@@ -308,6 +321,167 @@ public class SpellTriggers {
             putSelfCastAbility(gameData, spellCard, castingPlayerId, castZone, selfCastSpellEntry, ability,
                     selfCastContext);
         }
+        putManaLinkedSpellCopies(gameData, event, castSpellEntry, event.instantOrSorceryManaCopies());
+        putCopyCostAbilities(gameData, event, castSpellEntry, event.conspireCopies(), "Conspire");
+        putCopyCostAbilities(gameData, event, castSpellEntry, event.casualtyCopies(), "Casualty");
+        putSpellOrAbilityManaCopies(gameData, event, castSpellEntry);
+        putGrantedSelfCastAbilities(gameData, event, castSpellEntry, selfCastContext);
+    }
+
+    /**
+     * The boons {@code event}'s caster has that a creature spell uses ("you get a one-time boon with 'when you cast a
+     * creature spell, ...'"), a face-down spell among them: each triggers once for the spell and uses one of its uses,
+     * with the spell as its triggering card.
+     */
+    private void putCreatureSpellBoons(GameData gameData, SpellEvent.Cast event) {
+        Card spellCard = event.spellCard();
+        if (!event.castFaceDown() && !spellCard.hasType(CardType.CREATURE)) return;
+        for (Boon boon : List.copyOf(gameData.boons)) {
+            if (boon.trigger() != BoonTrigger.CREATURE_CAST || !event.castingPlayerId().equals(boon.controllerId())) {
+                continue;
+            }
+            gameData.boons.remove(boon);
+            if (boon.remainingUses() > 1) {
+                gameData.boons.add(boon.withRemainingUses(boon.remainingUses() - 1));
+            }
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(boon.sourceCard(),
+                    boon.controllerId(), boon.sourceCard().getName() + "'s boon",
+                    new ArrayList<>(List.of(boon.effect())));
+            entry.setTriggeringCardId(spellCard.getId());
+            entry.setNonTargeting(true);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(boon.sourceCard()));
+        }
+    }
+
+    /**
+     * The delayed triggered abilities of the cards an opponent of {@code event}'s caster revealed from an opening hand
+     * (CR 603.7a), "when each opponent casts their first spell of the game, counter that spell unless that player pays
+     * ..." (Chancellor of the Annex): each acts on the spell, its triggering spell, without targeting it.
+     */
+    private void putOpeningHandRevealAbilities(GameData gameData, SpellEvent.Cast event) {
+        if (!event.firstSpellOfGame()) return;
+        Card spellCard = event.spellCard();
+        StackEntry firstSpell = findStackEntryByCardId(gameData, spellCard.getId());
+        for (OpeningHandRevealTrigger trigger : gameData.openingHandRevealTriggers) {
+            if (trigger.revealingPlayerId().equals(event.castingPlayerId())) continue;
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(trigger.sourceCard(),
+                    trigger.revealingPlayerId(), trigger.sourceCard().getName() + "'s ability",
+                    List.of(trigger.effect()), spellCard.getId(), Zone.STACK);
+            entry.setTriggeringCardId(spellCard.getId());
+            entry.setTriggeringSpell(firstSpell);
+            entry.setTriggeringPlayerId(event.castingPlayerId());
+            entry.setNonTargeting(true);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
+        }
+    }
+
+    /**
+     * One "copy that spell" delayed triggered ability for each mana with "when that mana is spent to cast an instant or
+     * sorcery spell, copy that spell" spent to cast it (Primal Wellspring, Pyromancer's Goggles; one each, CR 106.6a);
+     * the copy may choose new targets.
+     */
+    private void putManaLinkedSpellCopies(GameData gameData, SpellEvent.Cast event, StackEntry spellEntry, int copies) {
+        if (copies <= 0 || spellEntry == null) return;
+        Card spellCard = event.spellCard();
+        for (int copyNumber = 0; copyNumber < copies; copyNumber++) {
+            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(spellCard,
+                    event.castingPlayerId(), "Copy " + spellCard.getName(),
+                    new ArrayList<>(List.of(new CopyControllerCastSpellEffect(
+                            new StackEntry(spellEntry), event.castingPlayerId())))));
+        }
+        gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
+    }
+
+    /**
+     * Conspire's or casualty's "when you cast this spell, if its [conspire / casualty] cost was paid, copy it", the
+     * spell's own triggered ability (CR 702.78a, 702.153a), once for each such cost paid: each instance triggers on its
+     * own.
+     */
+    private void putCopyCostAbilities(GameData gameData, SpellEvent.Cast event, StackEntry spellEntry, int copies,
+                                      String keyword) {
+        if (copies <= 0 || spellEntry == null) return;
+        Card spellCard = event.spellCard();
+        UUID castingPlayerId = event.castingPlayerId();
+        for (int copyNumber = 0; copyNumber < copies; copyNumber++) {
+            CopyControllerCastSpellEffect copyEffect =
+                    new CopyControllerCastSpellEffect(new StackEntry(spellEntry), castingPlayerId);
+            triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                    new TriggeredAbility(YOU_CAST_THIS, copyEffect), spellCard, null,
+                    castingPlayerId, "Copy " + spellCard.getName() + " (" + keyword + ")",
+                    ConditionContext.forCard(spellCard, castingPlayerId), entry -> {
+                    }));
+        }
+        gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied (" + keyword + ")."));
+    }
+
+    /**
+     * One "copy that spell" delayed triggered ability of the mana ability that added it for each mana with "when that
+     * mana is spent to cast a spell or activate an ability, copy that spell or ability" spent to cast it (Sunken Palace;
+     * CR 603.7a), a copy of a permanent spell becoming a token.
+     */
+    private void putSpellOrAbilityManaCopies(GameData gameData, SpellEvent.Cast event, StackEntry spellEntry) {
+        int copies = event.spellOrAbilityManaCopies();
+        if (copies <= 0 || spellEntry == null) return;
+        Card spellCard = event.spellCard();
+        StackEntry snapshot = new StackEntry(spellEntry);
+        boolean permanentSpell = switch (spellEntry.getEntryType()) {
+            case CREATURE_SPELL, ARTIFACT_SPELL, ENCHANTMENT_SPELL, PLANESWALKER_SPELL, BATTLE_SPELL -> true;
+            default -> false;
+        };
+        for (int i = 0; i < copies; i++) {
+            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(spellCard,
+                    event.castingPlayerId(), "Copy " + spellCard.getName(),
+                    new ArrayList<>(List.of(new CopyControllerCastSpellEffect(
+                            snapshot, event.castingPlayerId(), Set.of(), Set.of(), permanentSpell, true)))));
+        }
+        gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
+    }
+
+    /**
+     * The keyword "when you cast this spell" abilities a grant to the spell gave it as it was cast, each one object
+     * (CR 603.3), recorded as {@link #putSelfCastAbility} records one: a granted replicate (CR 702.56a), its intervening
+     * "if" wrapped around its copy; the spell's own replicate with the same cost counts the same payments, so it
+     * triggers alone; and each granted instance of demonstrate (CR 702.144a), a "you may" asked as it resolves
+     * (CR 603.5).
+     */
+    private void putGrantedSelfCastAbilities(GameData gameData, SpellEvent.Cast event, StackEntry spellEntry,
+                                             ConditionContext context) {
+        Card spellCard = event.spellCard();
+        UUID castingPlayerId = event.castingPlayerId();
+        Zone castZone = event.castZone();
+        List<CardEffect> abilities = new ArrayList<>();
+        if (spellCard.getManaCost() != null) {
+            gameQueryService.getSpellCastingAbilityGrantValues(
+                            gameData, castingPlayerId, spellCard, Keyword.REPLICATE, castZone).stream()
+                    .map(value -> value > 0 ? "{" + value + "}" : spellCard.getManaCost())
+                    .distinct()
+                    .filter(replicateCost -> spellCard.getTriggerEffects(YOU_CAST_THIS, Zone.STACK).stream()
+                            .noneMatch(effect -> countsReplicatePayments(effect, replicateCost)))
+                    .filter(replicateCost -> spellEntry != null
+                            && spellEntry.getRepeatedAdditionalCosts().contains(replicateCost))
+                    .map(replicateCost -> new ConditionalEffect(new RepeatedAdditionalCostPaid(replicateCost),
+                            new CopyTriggeringSpellEffect().withCopies(new RepeatedAdditionalCostCount(replicateCost))))
+                    .forEach(abilities::add);
+        }
+        gameQueryService.getSpellCastingAbilityGrantValues(
+                        gameData, castingPlayerId, spellCard, Keyword.DEMONSTRATE, castZone)
+                .forEach(grant -> abilities.add(new MayEffect(
+                        new DemonstrateEffect(), "Copy " + spellCard.getName() + "?")));
+        for (CardEffect effect : abilities) {
+            putSelfCastAbility(gameData, spellCard, castingPlayerId, castZone, spellEntry,
+                    new TriggeredAbility(YOU_CAST_THIS, effect), context);
+        }
+    }
+
+    /** Whether {@code effect} is a replicate copy counting the payments of {@code replicateCost}. */
+    private static boolean countsReplicatePayments(CardEffect effect, String replicateCost) {
+        return switch (effect) {
+            case CopyTriggeringSpellEffect copy -> copy.dynamicCopies() instanceof RepeatedAdditionalCostCount count
+                    && replicateCost.equals(count.manaCost());
+            case ConditionalEffect conditional -> countsReplicatePayments(conditional.wrapped(), replicateCost);
+            default -> false;
+        };
     }
 
     /**
@@ -349,6 +523,7 @@ public class SpellTriggers {
      * ({@link #activationRecord}).
      */
     private void activated(GameData gameData, SpellEvent.Activated activation) {
+        putManaLinkedAbilityCopies(gameData, activation);
         int lifePaid = activation.lifePaid();
         gameData.forEachPermanent((ownerId, perm) -> {
             for (ActivationAbility watching : activationAbilities(triggerIndex.permanentAbilities(gameData, perm),
@@ -367,6 +542,24 @@ public class SpellTriggers {
         });
         collectGraveyardActivationTriggers(gameData, activation, lifePaid);
         collectDelayedActivationTriggers(gameData, activation, lifePaid);
+    }
+
+    /**
+     * One "copy that ability" delayed triggered ability of the mana ability that added it for each mana with "when that
+     * mana is spent to cast a spell or activate an ability, copy that spell or ability" spent to activate it (Sunken
+     * Palace; CR 603.7a, 106.6a).
+     */
+    private void putManaLinkedAbilityCopies(GameData gameData, SpellEvent.Activated activation) {
+        StackEntry abilityEntry = activation.abilityEntry();
+        for (int i = 0; i < activation.manaLinkedCopies(); i++) {
+            CardEffect copyEffect = new CopyControllerActivatedAbilityEffect(
+                    new StackEntry(abilityEntry), activation.ability(), activation.activatingPlayerId());
+            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
+                    abilityEntry.getCard(), activation.activatingPlayerId(),
+                    abilityEntry.getCard().getName() + "'s ability", new ArrayList<>(List.of(copyEffect))));
+            gameLogService.append(gameData,
+                    GameLog.textCardText("A copy of ", abilityEntry.getCard(), "'s ability is created."));
+        }
     }
 
     /**
@@ -981,7 +1174,8 @@ public class SpellTriggers {
                                                     Card spellCard, UUID castingPlayerId,
                                                     UUID exiledSourcePermanentId, Zone castZone) {
         // An ability the source gives the spell ("spells you cast … have cascade, cascade") is the spell's: the spell is
-        // its source (CR 113.7) and each instance triggers separately (CR 702.85c).
+        // its source (CR 113.7) and each instance triggers separately (CR 702.85c). One a resolution gave the next such
+        // spell ("the next creature spell you cast this turn has cascade") is used up by the spell it applied to.
         if (trigger.filter().grantedToTheSpell() && match.sourceCard() != spellCard) {
             boolean queued = false;
             TriggerMatchContext spellSourced = new TriggerMatchContext(match.gameData(), null,
@@ -991,6 +1185,10 @@ public class SpellTriggers {
                 queued |= handleGenericSpellCastTrigger(spellSourced,
                         CastAbility.of(trigger.ability().withEffects(List.of(cascade)), trigger.filter()),
                         spellCard, castingPlayerId, exiledSourcePermanentId, castZone);
+            }
+            TemporaryGlobalTriggeredAbility nextSpellGrant = match.delayed();
+            if (queued && nextSpellGrant != null && nextSpellGrant.triggersOnce()) {
+                match.gameData().temporaryGlobalTriggeredAbilities.removeIf(listed -> listed == nextSpellGrant);
             }
             return queued;
         }
@@ -1338,20 +1536,37 @@ public class SpellTriggers {
 
     /**
      * The spells this turn that match the trigger's spell filter: the casting player's, or every player's for "the
-     * first noncreature spell of a turn", only those cast from the trigger's cast zone when it names one.
+     * first noncreature spell of a turn", only those cast from the trigger's cast zone when it names one, those not cast
+     * from the zone it excludes ("the first spell you cast from anywhere other than your hand each turn"), and those
+     * mana from a Treasure was spent to cast when it asks for that ("the first spell you cast each turn that mana from a
+     * Treasure was spent to cast").
      */
     private long matchingSpellCount(GameData gameData, CastAbility trigger, UUID playerId) {
-        List<UUID> players = trigger.filter().everyPlayersSpells() ? List.copyOf(gameData.playerIds) : List.of(playerId);
+        SpellFilter filter = trigger.filter();
+        List<UUID> players = filter.everyPlayersSpells() ? List.copyOf(gameData.playerIds) : List.of(playerId);
         long matchingSpells = 0;
         for (UUID player : players) {
-            List<Card> spells = trigger.filter().castFrom() == null ? gameData.getSpellsCastThisTurn(player)
-                    : gameData.getSpellsCastThisTurn(player, trigger.filter().castFrom());
-            matchingSpells += spells.stream()
-                    .filter(spell -> predicateEvaluationService.matchesCardPredicate(
-                            spell, trigger.filter().spell(), null, gameData, player))
-                    .count();
+            List<Card> spells = filter.castFrom() == null ? gameData.getSpellsCastThisTurn(player)
+                    : gameData.getSpellsCastThisTurn(player, filter.castFrom());
+            matchingSpells += matchingCasts(gameData, filter, player, spells);
+            // A card cast twice in a turn (from the hand, then with flashback) is two casts: the excluded zone's
+            // casts are taken away one by one, not every cast of the card.
+            if (filter.notCastFrom() != null) {
+                matchingSpells -= matchingCasts(gameData, filter, player,
+                        gameData.getSpellsCastThisTurn(player, filter.notCastFrom()));
+            }
         }
         return matchingSpells;
+    }
+
+    /** How many of {@code spells}, {@code player}'s casts this turn, match the trigger's spell filter. */
+    private long matchingCasts(GameData gameData, SpellFilter filter, UUID player, List<Card> spells) {
+        return spells.stream()
+                .filter(spell -> !filter.paidWithTreasureMana()
+                        || gameData.wasSpellCastUsingTreasureManaThisTurn(spell.getId()))
+                .filter(spell -> predicateEvaluationService.matchesCardPredicate(
+                        spell, filter.spell(), null, gameData, player))
+                .count();
     }
 
     private StackEntry findStackEntryForCard(com.github.laxika.magicalvibes.model.GameData gameData, UUID cardId) {

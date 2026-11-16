@@ -42,7 +42,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -69,7 +68,6 @@ class EtbTriggerServiceTest {
     @Mock private GameQueryService gameQueryService;
     @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
-    @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private TriggeredAbilityQueueService triggeredAbilityQueueService;
     @Mock private AmountEvaluationService amountEvaluationService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
@@ -83,7 +81,7 @@ class EtbTriggerServiceTest {
     @BeforeEach
     void setUp() {
         service = new EtbTriggerService(gameQueryService, gameLogService, playerInputService,
-                triggerCollectionService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class), triggeredAbilityQueueService, new EtbEffectResolver(conditionEvaluationService));
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class), triggeredAbilityQueueService, new EtbEffectResolver(conditionEvaluationService));
         // A permanent's own enters abilities go on the stack through the stack door.
         ReflectionTestUtils.setField(service, "triggeredAbilityStackService", new TriggeredAbilityStackService(conditionEvaluationService, gameQueryService, new GraveyardTargetingSupport(), gameLogService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.ZoneChangeRequests.class), org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers.class), triggeredAbilityQueueService, amountEvaluationService, predicateEvaluationService,
                 new TriggerTargetCollector(gameQueryService, predicateEvaluationService, targetLegalityService)));

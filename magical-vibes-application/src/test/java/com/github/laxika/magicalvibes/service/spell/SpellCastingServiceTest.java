@@ -68,7 +68,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
@@ -155,7 +155,7 @@ class SpellCastingServiceTest {
     private PermanentRemovalService permanentRemovalService;
 
     @Mock
-    private TriggerCollectionService triggerCollectionService;
+    private SpellEvents spellEvents;
     @Mock
     private TargetTriggers targetTriggers;
 
@@ -312,7 +312,7 @@ class SpellCastingServiceTest {
                 gameQueryService, predicateEvaluationService, actionAvailabilityService, gameLogService,
                 castingCostService, castingPermissionService, turnProgressionService,
                 targetLegalityService, new TargetGroupAssignmentService(gameQueryService, predicateEvaluationService),
-                permanentRemovalService, triggerCollectionService, targetTriggers, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class),
+                permanentRemovalService, spellEvents, targetTriggers, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class),
                 graveyardService, exileService, amountEvaluationService, conditionEvaluationService,
                 new AdditionalSpellCostService(gameQueryService, predicateEvaluationService),
                 waterbendPaymentService,
@@ -320,7 +320,7 @@ class SpellCastingServiceTest {
                 playerInputService);
         org.springframework.test.util.ReflectionTestUtils.setField(svc, "departureService",
                 new com.github.laxika.magicalvibes.service.battlefield.DepartureService(gameQueryService,
-                        permanentRemovalService, graveyardService, triggerCollectionService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class), gameLogService));
+                        permanentRemovalService, graveyardService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class), gameLogService));
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");
@@ -713,7 +713,7 @@ class SpellCastingServiceTest {
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Game is not running");
 
-            verifyNoInteractions(battlefieldEntryService, turnProgressionService, triggerCollectionService);
+            verifyNoInteractions(battlefieldEntryService, turnProgressionService, spellEvents);
         }
 
         @Test
@@ -727,7 +727,7 @@ class SpellCastingServiceTest {
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("Card is not playable");
 
-            verifyNoInteractions(battlefieldEntryService, turnProgressionService, triggerCollectionService);
+            verifyNoInteractions(battlefieldEntryService, turnProgressionService, spellEvents);
         }
 
         @Test
@@ -840,8 +840,8 @@ class SpellCastingServiceTest {
             // Land-play special action fires "when you play a land" triggers, not spell-cast ones
             assertThat(rulesEvents(gd)).anySatisfy(event -> assertThat(event)
                     .isEqualTo(new SpellEvent.LandPlayed(player1Id, land, Zone.HAND, null)));
-            verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any());
-            verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any(), anyBoolean());
+            verify(spellEvents, never()).cast(any(), any(), any());
+            verify(spellEvents, never()).cast(any(), any(), any(), anyBoolean());
         }
 
         @Test
@@ -883,7 +883,7 @@ class SpellCastingServiceTest {
             assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Test Bear");
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(mutationCoordinator).invalidateAllPlayerViews(gd);
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(creature), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
+            verify(spellEvents).cast(eq(gd), eq(creature), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
             verify(targetTriggers).checkBecomesTargetOfSpellTriggers(gd);
             verify(turnProgressionService).resolveAutoPass(gd);
         }
@@ -1125,7 +1125,7 @@ class SpellCastingServiceTest {
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
             verify(targetLegalityService).validateSpellTargeting(
                     eq(gd), eq(instant), anyList(), eq(player2Id), any(), eq(player1Id), anyBoolean(), anyInt(), eq(false), eq(false), eq(false));
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(instant), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
+            verify(spellEvents).cast(eq(gd), eq(instant), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
             verify(turnProgressionService).resolveAutoPass(gd);
         }
 
@@ -1243,7 +1243,7 @@ class SpellCastingServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(sorcery), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
+            verify(spellEvents).cast(eq(gd), eq(sorcery), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
             verify(turnProgressionService).resolveAutoPass(gd);
         }
     }
@@ -1268,7 +1268,7 @@ class SpellCastingServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(enchantment), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
+            verify(spellEvents).cast(eq(gd), eq(enchantment), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
             verify(turnProgressionService).resolveAutoPass(gd);
         }
     }
@@ -1293,7 +1293,7 @@ class SpellCastingServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(artifact), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
+            verify(spellEvents).cast(eq(gd), eq(artifact), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
             verify(turnProgressionService).resolveAutoPass(gd);
         }
     }
@@ -1544,7 +1544,7 @@ class SpellCastingServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
             assertThat(rulesEvents(gd)).anyMatch(TapEvent.BecameTapped.class::isInstance);
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(convokeCard), eq(player1Id),
+            verify(spellEvents).cast(eq(gd), eq(convokeCard), eq(player1Id),
                     eq(Zone.HAND), isNull(), anyBoolean());
             verify(turnProgressionService).resolveAutoPass(gd);
         }
@@ -1673,7 +1673,7 @@ class SpellCastingServiceTest {
             assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(before + 1);
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(mutationCoordinator).invalidateAllPlayerViews(gd);
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(dummy), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
+            verify(spellEvents).cast(eq(gd), eq(dummy), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
             verify(targetTriggers).checkBecomesTargetOfSpellTriggers(gd);
             verify(stateBasedActionService).performStateBasedActions(gd);
             verify(turnProgressionService).resolveAutoPass(gd);
@@ -1719,7 +1719,7 @@ class SpellCastingServiceTest {
 
             // Only verify the method completes normally without errors
             assertThat(gd.pendingManaAbilityTriggers).isEmpty();
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(dummy), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
+            verify(spellEvents).cast(eq(gd), eq(dummy), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
         }
     }
 
@@ -1796,8 +1796,8 @@ class SpellCastingServiceTest {
             // Land-play special action from exile fires land-play triggers, not spell-cast ones
             assertThat(rulesEvents(gd)).anySatisfy(event -> assertThat(event)
                     .isEqualTo(new SpellEvent.LandPlayed(player1Id, land, Zone.EXILE, null)));
-            verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any());
-            verify(triggerCollectionService, never()).checkSpellCastTriggers(any(), any(), any(), anyBoolean());
+            verify(spellEvents, never()).cast(any(), any(), any());
+            verify(spellEvents, never()).cast(any(), any(), any(), anyBoolean());
         }
 
         @Test
@@ -1841,7 +1841,7 @@ class SpellCastingServiceTest {
             assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(0);
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(mutationCoordinator).invalidateAllPlayerViews(gd);
-            verify(triggerCollectionService).checkSpellCastTriggers(
+            verify(spellEvents).cast(
                     eq(gd), eq(creature), eq(player1Id), eq(Zone.EXILE), isNull());
             verify(targetTriggers).checkBecomesTargetOfSpellTriggers(gd);
             verify(turnProgressionService).resolveAutoPass(gd);

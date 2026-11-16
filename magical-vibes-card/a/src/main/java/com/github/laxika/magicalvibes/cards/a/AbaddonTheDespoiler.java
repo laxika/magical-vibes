@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantCastTriggerToSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerGrant;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostAmountPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "40K", collectorNumber = "2")
 @CardRegistration(set = "40K", collectorNumber = "171")
@@ -13,7 +16,10 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerGrant;
 public class AbaddonTheDespoiler extends Card {
 
     public AbaddonTheDespoiler() {
-        addStaticEffect(new GrantCastTriggerToSpellsEffect(
-                SpellCastTriggerGrant.CASCADE_TO_HAND_SPELLS_WITH_MANA_VALUE_AT_MOST_OPPONENTS_LIFE_LOST, new CascadeEffect()));
+        addTrigger(Triggers.youCastSpell().duringYourTurn().castFrom(Zone.HAND)
+                        .withStackEntryFilter(new StackEntryManaValueAtMostAmountPredicate(
+                                new LifeLostThisTurn(CountScope.OPPONENTS)))
+                        .grantedToTheSpell(),
+                new CascadeEffect());
     }
 }

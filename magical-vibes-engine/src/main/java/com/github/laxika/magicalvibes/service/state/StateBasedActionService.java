@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
@@ -92,7 +92,6 @@ public class StateBasedActionService {
     private final GraveyardService graveyardService;
     private final com.github.laxika.magicalvibes.service.battlefield.CreatureControlService creatureControlService;
     private final StateTriggerService stateTriggerService;
-    private final TriggerCollectionService triggerCollectionService;
     private final LegendRuleService legendRuleService;
     private final com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport battleDefeatSupport;
     private final DepartureService departureService;
@@ -612,7 +611,7 @@ public class StateBasedActionService {
                 logDeath(gameData, permanent.getCard(), reason);
                 if (reason == DeathReason.FINAL_CHAPTER && result.lastKnownControllerId() != null) {
                     // CR 704.5s: the Saga's controller sacrifices it.
-                    triggerCollectionService.recordSacrifice(gameData, result.lastKnownControllerId(), permanent.getCard());
+                    ActionEvents.sacrificed(gameData, result.lastKnownControllerId(), permanent.getCard());
                 }
             }
         }

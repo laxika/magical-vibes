@@ -28,7 +28,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import java.util.ArrayList;
@@ -51,7 +51,7 @@ public class ExileFreeCastSupport {
     private final GameLogService gameLogService;
     private final AdditionalSpellCostService additionalSpellCostService;
     private final PlayerInputService playerInputService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final SpellEvents spellEvents;
     private final InputCompletionService inputCompletionService;
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
@@ -68,7 +68,7 @@ public class ExileFreeCastSupport {
     // @Lazy mirrors ParadigmCastSupport: breaks cycles through InputCompletionService/PlayerInputService.
     public ExileFreeCastSupport(GameLogService gameLogService,
                                 @Lazy PlayerInputService playerInputService,
-                                @Lazy TriggerCollectionService triggerCollectionService,
+                                @Lazy SpellEvents spellEvents,
                                 @Lazy InputCompletionService inputCompletionService,
                                 ExileCastTargetSupport exileCastTargetSupport,
                                 AdditionalSpellCostService additionalSpellCostService,
@@ -76,7 +76,7 @@ public class ExileFreeCastSupport {
         this.gameLogService = gameLogService;
         this.additionalSpellCostService = additionalSpellCostService;
         this.playerInputService = playerInputService;
-        this.triggerCollectionService = triggerCollectionService;
+        this.spellEvents = spellEvents;
         this.inputCompletionService = inputCompletionService;
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
@@ -369,7 +369,7 @@ public class ExileFreeCastSupport {
                 GameLog.playerPlays(playerName, card, " without paying its mana cost."));
         log.info("Game {} - {} plays {} from exile without paying mana", gameData.id, playerName, card.getName());
 
-        triggerCollectionService.checkSpellCastTriggers(
+        spellEvents.cast(
                 gameData, card, playerId, Zone.EXILE, exiledEntry.sourcePermanentId());
         if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

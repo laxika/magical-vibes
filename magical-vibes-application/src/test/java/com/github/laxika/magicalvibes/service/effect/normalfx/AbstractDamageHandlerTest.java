@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerTestFixtures;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -45,7 +44,6 @@ abstract class AbstractDamageHandlerTest {
     @Mock protected PredicateEvaluationService predicateEvaluationService;
     @Mock protected GameLogService gameLogService;
     @Mock protected PermanentRemovalService permanentRemovalService;
-    @Mock protected TriggerCollectionService triggerCollectionService;
     @Mock protected com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers damageTriggers;
     @Mock protected LifeSupport lifeSupport;
     @Mock protected com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;

@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -35,7 +35,6 @@ public class MakeAnExampleEffectHandler implements NormalEffectHandlerBean {
     private final PermanentRemovalService permanentRemovalService;
     private final DepartureService departureService;
     private final PlayerInputService playerInputService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -111,7 +110,7 @@ public class MakeAnExampleEffectHandler implements NormalEffectHandlerBean {
                 () -> gameData.pollPendingInteraction(PendingPileSeparation.class),
                 (intent, permanent, snapshot, removed) -> {
                     if (removed) {
-                        triggerCollectionService.recordSacrifice(gameData, sacrificingPlayerId, permanent.getCard());
+                        ActionEvents.sacrificed(gameData, sacrificingPlayerId, permanent.getCard());
                         gameData.recordSacrificedPermanent(sacrificingPlayerId, permanent.getCard());
                         gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is sacrificed."));
                         permanentRemovalService.removeOrphanedAuras(gameData);

@@ -45,7 +45,6 @@ import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -76,7 +75,6 @@ class BattlefieldPlacementServiceTest {
     @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private PermanentCopierService permanentCopierService;
-    @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private GraveyardTargetingService graveyardTargetingService;
     @Mock private ETBTokenTargetService etbTokenTargetService;
     @Mock private com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
@@ -113,7 +111,7 @@ class BattlefieldPlacementServiceTest {
                 queryService, predicateService, gameLogService, playerInputService);
         return new BattlefieldPlacementService(
                 queryService, gameLogService, playerInputService, permanentCopierService,
-                triggerCollectionService, amountService, conditionService, predicateService,
+                amountService, conditionService, predicateService,
                 counterSupport, graveyardService, permanentRemovalService, becomeDayAsEntersEffectHandler);
     }
 

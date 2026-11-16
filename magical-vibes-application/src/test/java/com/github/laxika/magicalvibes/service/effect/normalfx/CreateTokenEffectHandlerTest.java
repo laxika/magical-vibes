@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.cards.m.MoonlitMeditation;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,8 +47,6 @@ class CreateTokenEffectHandlerTest {
     private CreateTokenCopyOfEnchantedPermanentEffectHandler enchantedPermanentTokenCopyHandler;
     @Mock
     private CreateTokenCopyOfChosenCreatureEffectHandler chosenCreatureTokenCopyHandler;
-    @Mock
-    private TriggerCollectionService triggerCollectionService;
 
     @Mock
     private EsixTokenReplacementSupport esixTokenReplacementSupport;

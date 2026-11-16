@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.model.trigger.StateTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerIndex;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
@@ -57,7 +56,6 @@ public class StateTriggerService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameQueryService gameQueryService;
     private final TriggeredAbilityStackService triggeredAbilityStackService;
-    private final TriggerCollectionService triggerCollectionService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final TriggerIndex triggerIndex;
 
@@ -69,7 +67,6 @@ public class StateTriggerService {
                                PredicateEvaluationService predicateEvaluationService,
                                GameQueryService gameQueryService,
                                @Lazy TriggeredAbilityStackService triggeredAbilityStackService,
-                               @Lazy TriggerCollectionService triggerCollectionService,
                                @Lazy TriggeredAbilityQueueService triggeredAbilityQueueService,
                                @Lazy TriggerIndex triggerIndex) {
         this.triggerIndex = triggerIndex;
@@ -77,7 +74,6 @@ public class StateTriggerService {
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameQueryService = gameQueryService;
         this.triggeredAbilityStackService = triggeredAbilityStackService;
-        this.triggerCollectionService = triggerCollectionService;
         this.triggeredAbilityQueueService = triggeredAbilityQueueService;
     }
 
@@ -177,7 +173,7 @@ public class StateTriggerService {
             }
         }
         // A target chosen as the ability goes on the stack (CR 603.3d) is chosen now, as the game state triggered it.
-        if (parked && triggerCollectionService != null) {
+        if (parked) {
             triggeredAbilityQueueService.beginStackDoorChoices(gameData);
         }
     }

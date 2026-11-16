@@ -201,7 +201,6 @@ class AbilityLimitMarkTest extends BaseCardTest {
         harness.addToBattlefield(player1, card);
         Permanent first = addCreatureReady(player1, new GrizzlyBears());
         Permanent second = addCreatureReady(player1, new GrizzlyBears());
-        TriggerCollectionService collection = GameTestEngineContext.get().getBean(TriggerCollectionService.class);
 
         harness.inMutationScope(() -> {
             gd.beginPermanentTapTriggerBatch();

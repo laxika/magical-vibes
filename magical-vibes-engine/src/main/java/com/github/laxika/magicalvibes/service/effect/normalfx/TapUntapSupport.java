@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.UntapLockReleaseService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,26 +20,22 @@ import java.util.UUID;
 @Component
 public class TapUntapSupport {
 
-    private final TriggerCollectionService triggerCollectionService;
     private final CreatureControlService creatureControlService;
     private final UntapLockReleaseService untapLockReleaseService;
     private final GameQueryService gameQueryService;
 
     @Autowired
-    public TapUntapSupport(TriggerCollectionService triggerCollectionService,
-                           CreatureControlService creatureControlService,
+    public TapUntapSupport(CreatureControlService creatureControlService,
                            UntapLockReleaseService untapLockReleaseService,
                            GameQueryService gameQueryService) {
-        this.triggerCollectionService = triggerCollectionService;
         this.creatureControlService = creatureControlService;
         this.untapLockReleaseService = untapLockReleaseService;
         this.gameQueryService = gameQueryService;
     }
 
-    public TapUntapSupport(TriggerCollectionService triggerCollectionService,
-                           CreatureControlService creatureControlService,
+    public TapUntapSupport(CreatureControlService creatureControlService,
                            UntapLockReleaseService untapLockReleaseService) {
-        this(triggerCollectionService, creatureControlService, untapLockReleaseService, null);
+        this(creatureControlService, untapLockReleaseService, null);
     }
 
     /**

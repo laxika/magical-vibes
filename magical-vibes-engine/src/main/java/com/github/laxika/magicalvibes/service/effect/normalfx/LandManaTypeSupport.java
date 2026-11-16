@@ -167,8 +167,7 @@ public class LandManaTypeSupport {
                     }
                 }
             } else if (effect instanceof AwardAnyColorManaEffect mana) {
-                if (mana.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
-                        || mana.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY) {
+                if (mana.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY) {
                     types.addAll(ManaProductionSupport.commanderColorIdentity(gameData,
                             gameQueryService.findPermanentController(gameData, source.getId())));
                 } else if (mana.restriction() == ManaSpendRestriction.CHOSEN_COLORS) {

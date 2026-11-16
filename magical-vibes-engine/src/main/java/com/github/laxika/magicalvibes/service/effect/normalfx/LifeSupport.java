@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.model.replacement.LifeGainEvent;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.LichDuelMasteryLifeLossReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainReplacementEffect;
@@ -57,7 +57,6 @@ public class LifeSupport {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final PermanentRemovalService permanentRemovalService;
     @Lazy
     private final DrawService drawService;
@@ -78,12 +77,10 @@ public class LifeSupport {
 
     public LifeSupport(GameQueryService gameQueryService,
                        GameLogService gameLogService,
-                       TriggerCollectionService triggerCollectionService,
                        @Lazy PermanentRemovalService permanentRemovalService,
                        @Lazy DrawService drawService) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
-        this.triggerCollectionService = triggerCollectionService;
         this.permanentRemovalService = permanentRemovalService;
         this.drawService = drawService;
     }
@@ -715,7 +712,7 @@ public class LifeSupport {
                 continue;
             }
             if (controllerId != null) {
-                triggerCollectionService.recordSacrifice(gameData, controllerId, source.getCard());
+                ActionEvents.sacrificed(gameData, controllerId, source.getCard());
             }
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " is sacrificed."));
             permanentRemovalService.removeOrphanedAuras(gameData);

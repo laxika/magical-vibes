@@ -74,7 +74,6 @@ import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
@@ -119,8 +118,6 @@ class TriggeredAbilityStackServiceTest {
     private ConditionEvaluationService conditionEvaluationService;
     @Mock
     private GraveyardTargetingSupport graveyardTargetingSupport;
-    @Mock
-    private TriggerCollectionService triggerCollectionService;
     @Mock
     private TargetTriggers targetTriggers;
     @Mock

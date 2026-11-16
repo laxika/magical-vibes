@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreaturesYouCo
 import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -122,8 +121,6 @@ class PermanentRemovalServiceTest {
     @Mock
     private BattlefieldEntryService battlefieldEntryService;
 
-    @Mock
-    private TriggerCollectionService triggerCollectionService;
     @Mock
     private com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
 
@@ -881,7 +878,7 @@ class PermanentRemovalServiceTest {
         @BeforeEach
         void setUpDepartures() {
             org.springframework.test.util.ReflectionTestUtils.setField(prs, "departureService",
-                    new DepartureService(gameQueryService, prs, graveyardService, triggerCollectionService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class),
+                    new DepartureService(gameQueryService, prs, graveyardService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class),
                             gameLogService));
         }
 

@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -27,12 +26,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SkybreenTest extends BaseCardTest {
 
     private PlanechaseService planar;
-    private TriggerCollectionService triggers;
 
     @BeforeEach
     void preparePlane() {
         planar = GameTestEngineContext.get().getBean(PlanechaseService.class);
-        triggers = GameTestEngineContext.get().getBean(TriggerCollectionService.class);
         gd.planechase = new PlanechaseState();
         gd.planechase.controllerId = player1.getId();
         gd.planechase.faceUp.add(new PlanarObject(new Skybreen(), gd.nextTimestamp()));

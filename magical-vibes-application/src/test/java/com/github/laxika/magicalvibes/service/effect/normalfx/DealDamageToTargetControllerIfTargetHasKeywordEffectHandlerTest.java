@@ -62,6 +62,5 @@ class DealDamageToTargetControllerIfTargetHasKeywordEffectHandlerTest extends Ab
                 dealDamageToTargetControllerIfTargetHasKeywordHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
-                verifyNoInteractions(triggerCollectionService);
-            }
+                            }
 }

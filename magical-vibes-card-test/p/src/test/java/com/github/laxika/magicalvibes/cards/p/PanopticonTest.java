@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.planar.*;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.planar.*;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.testutil.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +22,6 @@ class PanopticonTest extends BaseCardTest {
         die = mock(PlanarDieRoller.class);
         planar = new PlanechaseService(die, gqs,
                 GameTestEngineContext.get().getBean(GameLogService.class),
-                GameTestEngineContext.get().getBean(TriggerCollectionService.class),
                 GameTestEngineContext.get().getBean(ConditionEvaluationService.class),
                 GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.cards.CardCatalog.class),
                 GameTestEngineContext.get().getBean(

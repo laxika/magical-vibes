@@ -48,7 +48,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -96,7 +96,7 @@ public class GraveyardChoiceHandlerService {
     private final LegendRuleService legendRuleService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final SpellEvents spellEvents;
     private final TargetTriggers targetTriggers;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final PlayerInputService playerInputService;
@@ -2072,7 +2072,7 @@ public class GraveyardChoiceHandlerService {
             log.info("Game {} - {} casts {} with {} graveyard targets", gameData.id, pendingCard.getName(),
                     pendingCard.getName(), cardIds.size());
 
-            triggerCollectionService.checkSpellCastTriggers(gameData, pendingCard, controllerId,
+            spellEvents.cast(gameData, pendingCard, controllerId,
                     !pendingFlashback);
             targetTriggers.checkTargetChoiceTriggers(gameData, spellEntry);
             inputCompletionService.publishStateAfterInput(gameData);

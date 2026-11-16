@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,8 +42,6 @@ class ShuffleGraveyardIntoLibraryEffectHandlerTest {
     private PermanentRemovalService permanentRemovalService;
     @Mock
     private ExileService exileService;
-    @Mock
-    private TriggerCollectionService triggerCollectionService;
     @Mock
     private PredicateEvaluationService predicateEvaluationService;
     @Mock
@@ -78,7 +75,7 @@ player1Id = UUID.randomUUID();
         gd.activePlayerId = player1Id;
         GraveyardService graveyardService = new GraveyardService(
                 gameQueryService, gameLogService, exileService, predicateEvaluationService,
-                permanentCounterSupport, triggerCollectionService);
+                permanentCounterSupport);
         shuffleGraveyardIntoLibraryEffectHandler =
                 new ShuffleGraveyardIntoLibraryEffectHandler(gameLogService, graveyardService);
 

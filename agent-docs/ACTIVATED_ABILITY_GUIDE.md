@@ -1072,8 +1072,8 @@ to its spell ability, which resolves with the instant or sorcery. Additional cos
 Abilities that aren't triggered aren't added with `addTrigger` either; each is `addStaticEffect(e)`, functioning from the
 zones its effect names (CR 113.6b): "enters with" and "as this enters" abilities (CR 614.1c), dredge
 (`DredgeEffect`, the graveyard), mulligan-time actions (`SerumPowderEffect`, `NoRegretsEgretEffect`: the hand),
-opening-hand actions (`MayEffect(PregameChoiceEffect)`, CR 103.6: the hand) and "spells you cast have cascade"
-(`GrantCastTriggerToSpellsEffect`).
+and opening-hand actions (`MayEffect(PregameChoiceEffect)`, CR 103.6: the hand). "Spells you cast have cascade" is a
+triggered ability the spell has: `addTrigger(Triggers.youCastSpell()….grantedToTheSpell(), new CascadeEffect())`.
 
 | Slot | Fires when |
 |------|------------|

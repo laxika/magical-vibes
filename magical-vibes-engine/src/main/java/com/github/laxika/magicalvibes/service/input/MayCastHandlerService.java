@@ -55,7 +55,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSuppo
 import com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -126,7 +126,7 @@ public class MayCastHandlerService {
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final PermanentRemovalService permanentRemovalService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final SpellEvents spellEvents;
     private final BattlefieldEntryService battlefieldEntryService;
     private final ExileService exileService;
     private final ExileFreeCastSupport exileFreeCastSupport;
@@ -411,7 +411,7 @@ public class MayCastHandlerService {
         gameLogService.append(gameData, GameLog.textCardText(playerName + " casts " , cardToCast, " without paying its mana cost."));
         log.info("Game {} - {} casts {} from library without paying mana", gameData.id, playerName, cardToCast.getName());
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, player.getId(), false);
+        spellEvents.cast(gameData, cardToCast, player.getId(), false);
         return false;
     }
 
@@ -616,7 +616,7 @@ public class MayCastHandlerService {
                 gameLogService.append(gameData, GameLog.textCardText(playerName + " casts " , cardToPlay, " without paying its mana cost."));
                 log.info("Game {} - {} casts {} from library without paying mana", gameData.id, playerName, cardToPlay.getName());
 
-                triggerCollectionService.checkSpellCastTriggers(gameData, cardToPlay, player.getId(), false);
+                spellEvents.cast(gameData, cardToPlay, player.getId(), false);
             }
         }
 
@@ -739,7 +739,7 @@ public class MayCastHandlerService {
                     " without paying its mana cost."));
             log.info("Game {} - {} casts revealed {} without paying mana", gameData.id, playerName, card.getName());
 
-            triggerCollectionService.checkSpellCastTriggers(gameData, card, player.getId(), false);
+            spellEvents.cast(gameData, card, player.getId(), false);
             if (cardsToBottom != null) {
                 beginBottomReorder(gameData, ownerId, cardsToBottom);
             }
@@ -1090,7 +1090,7 @@ public class MayCastHandlerService {
                         gameLogService.append(gameData, GameLog.builder().text(playerName + " casts ").card(cardToCast).text(castLabel + ".").build());
                         log.info("Game {} - {} casts {} from graveyard", gameData.id, playerName, cardToCast.getName());
 
-                        triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, player.getId(), false);
+                        spellEvents.cast(gameData, cardToCast, player.getId(), false);
                     }
                 }
             }
@@ -1333,7 +1333,7 @@ public class MayCastHandlerService {
                 : " from the graveyard.";
         gameLogService.append(gameData, GameLog.builder().text(playerName + " casts ")
                 .card(castCharacteristics).text(castLabel).build());
-        triggerCollectionService.checkSpellCastTriggers(gameData, castCharacteristics, player.getId(), false);
+        spellEvents.cast(gameData, castCharacteristics, player.getId(), false);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1483,7 +1483,7 @@ public class MayCastHandlerService {
 
         gameLogService.append(gameData, GameLog.builder().text(playerName + " casts ").card(cardToCast)
                 .text(" from the graveyard.").build());
-        triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, player.getId(), false);
+        spellEvents.cast(gameData, cardToCast, player.getId(), false);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1694,7 +1694,7 @@ public class MayCastHandlerService {
                 " from their graveyard without paying its mana cost."));
         log.info("Game {} - {} casts {} from graveyard without paying mana", gameData.id, playerName, cardToPlay.getName());
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, cardToPlay, player.getId(), false);
+        spellEvents.cast(gameData, cardToPlay, player.getId(), false);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -2400,7 +2400,7 @@ public class MayCastHandlerService {
         gameData.priorityPassedBy.clear();
         gameLogService.append(gameData, GameLog.textCardText(
                 playerName + " casts ", cardToCast, " without paying its mana cost."));
-        triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, player.getId(), false);
+        spellEvents.cast(gameData, cardToCast, player.getId(), false);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -2642,7 +2642,7 @@ public class MayCastHandlerService {
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " casts ", graveyardCard,
                 " from the graveyard by paying " + graveyardCard.getManaValue() + " life."));
-        triggerCollectionService.checkSpellCastTriggers(gameData, graveyardCard, player.getId(), false);
+        spellEvents.cast(gameData, graveyardCard, player.getId(), false);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -3172,9 +3172,9 @@ public class MayCastHandlerService {
                 sourceZone == Zone.COMMAND ? "command zone" : "hand", costPhrase);
 
         if (sourceZone == Zone.COMMAND) {
-            triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, Zone.COMMAND);
+            spellEvents.cast(gameData, card, playerId, Zone.COMMAND);
         } else {
-            triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId,
+            spellEvents.cast(gameData, card, playerId,
                     "madness".equals(costLabel) ? Zone.EXILE : Zone.HAND);
         }
         exileCastTargetSupport.resolveAfterSuccessfulCast(gameData, card, playerId,

@@ -368,8 +368,6 @@ public class GameData {
      * counter removes the spell from the stack, so later effects of the same spell read it from here.
      */
     public final Map<UUID, CounteredSpellManaCost> counteredSpellManaCosts = new ConcurrentHashMap<>();
-    /** Amount of Path of Ancestry mana spent to cast each spell. */
-    public final Map<UUID, Integer> spellCastPathOfAncestryManaSpent = new ConcurrentHashMap<>();
     /** Amount of mana produced by creatures and spent to cast each spell. */
     public final Map<UUID, Integer> spellCastCreatureManaSpent = new ConcurrentHashMap<>();
     /**
@@ -2396,8 +2394,6 @@ public class GameData {
      *  {@link #recordSpellCast}. Cleared at end of turn. */
     public final Map<UUID, List<CreatureSpellEmpowerment>> nextCreatureSpellEmpowermentsThisTurn = new ConcurrentHashMap<>();
 
-    /** Pending one-shot grants that give the next creature spell cascade, keyed by player. */
-    public final Map<UUID, Integer> nextCreatureSpellCascadeThisTurn = new ConcurrentHashMap<>();
     /** Persistent one-time creature-spell boons, keyed by player and consumed by {@link #recordSpellCast}. */
     public final Map<UUID, List<CreatureSpellEmpowerment>> nextCreatureSpellEmpowerments = new ConcurrentHashMap<>();
 
@@ -2630,23 +2626,19 @@ public class GameData {
 
     /** Number of conspire copies still to queue for each spell cast with conspire cost(s) paid
      *  (CR 702.78). Each instance of conspire is paid separately and queues its own "copy it, you
-     *  may choose a new target" trigger. Consumed by {@code TriggerCollectionService} when the
-     *  spell-cast triggers are collected. */
+     *  may choose a new target" trigger. Taken into the cast's rules event as the spell becomes cast
+     *  ({@code SpellEvents}). */
     public final Map<UUID, Integer> conspiredSpellCopyCounts = new ConcurrentHashMap<>();
 
     /** Number of casualty copies still to queue for each just-cast spell. */
     public final Map<UUID, Integer> casualtySpellCopyCounts = new ConcurrentHashMap<>();
 
-    /** Path of Ancestry mana choices awaiting completion, keyed by source permanent id. */
-    public final Map<UUID, Integer> pendingPathOfAncestryManaChoices = new ConcurrentHashMap<>();
 
     /** Mana choices awaiting completion whose chosen mana carries a {@link ManaCopyRider} (Primal
      *  Wellspring's color choice; Sunken Palace's mana after a land-mana replacement prompt), keyed by
      *  source permanent id, then by rider, to the number of units still to be tagged. */
     public final Map<UUID, Map<ManaCopyRider, Integer>> pendingCopyRiderManaChoices = new ConcurrentHashMap<>();
 
-    /** Pending one-shot grants that give the next instant or sorcery spell Storm this turn. */
-    public final Map<UUID, Integer> pendingNextInstantSorceryStormThisTurnCount = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> pendingNextInstantSorceryCastFromHandToHandThisTurnCount =
             new ConcurrentHashMap<>();
 
@@ -5115,7 +5107,6 @@ public class GameData {
             case GAME_NEXT_SPELL_PAY_LIFE_EQUAL_TO_MANA_VALUE -> new HashMap<>(nextSpellPayLifeEqualToManaValueThisTurn);
             case GAME_NEXT_SPELL_FREE_CAST_PERMISSIONS -> synchronizedListMapEntries(nextSpellFreeCastPermissionsThisTurn);
             case GAME_NEXT_CREATURE_SPELL_EMPOWERMENTS -> synchronizedListMapEntries(nextCreatureSpellEmpowermentsThisTurn);
-            case GAME_NEXT_CREATURE_SPELL_CASCADE -> new HashMap<>(nextCreatureSpellCascadeThisTurn);
             case GAME_SPELL_COLOR_OVERRIDES -> Set.copyOf(plainMapEntries(spellColorOverridesUntilEndOfTurn));
             case GAME_CARDS_GRANTED_FLASHBACK -> cardsGrantedFlashbackUntilEndOfTurn;
             case GAME_CARDS_GRANTED_FLASHBACK_DESPITE_LOST_ABILITIES -> cardsGrantedFlashbackDespiteLostAbilitiesUntilEndOfTurn;
@@ -5141,7 +5132,6 @@ public class GameData {
             case GAME_GRAVEYARD_CARD_CAST_PERMISSION_GRANTS -> listMapEntries(graveyardCardCastPermissionGrantsUntilEndOfTurn);
             case GAME_GRAVEYARD_CAST_FILTER_PERMISSIONS -> new ArrayList<>(graveyardCastFilterPermissionsThisTurn);
             case GAME_GRAVEYARD_PLAY_FILTER_PERMISSIONS -> new ArrayList<>(graveyardPlayFilterPermissionsThisTurn);
-            case GAME_NEXT_INSTANT_SORCERY_STORM -> new HashMap<>(pendingNextInstantSorceryStormThisTurnCount);
             case GAME_NEXT_INSTANT_SORCERY_CAST_FROM_HAND_TO_HAND ->
                     new HashMap<>(pendingNextInstantSorceryCastFromHandToHandThisTurnCount);
             case GAME_NEXT_SPELL_UNCOUNTERABLE -> new HashMap<>(pendingNextSpellUncounterableThisTurnCount);
@@ -5423,7 +5413,6 @@ public class GameData {
                     nextSpellFreeCastPermissionsThisTurn, (List<Map.Entry<UUID, CardPredicate>>) value);
             case GAME_NEXT_CREATURE_SPELL_EMPOWERMENTS -> addSynchronizedListMapEntries(
                     nextCreatureSpellEmpowermentsThisTurn, (List<Map.Entry<UUID, CreatureSpellEmpowerment>>) value);
-            case GAME_NEXT_CREATURE_SPELL_CASCADE -> addCounts(nextCreatureSpellCascadeThisTurn, (Map<UUID, Integer>) value);
             case GAME_SPELL_COLOR_OVERRIDES -> ((Set<Map.Entry<UUID, Set<CardColor>>>) value)
                     .forEach(entry -> spellColorOverridesUntilEndOfTurn.putIfAbsent(entry.getKey(), entry.getValue()));
             case GAME_CARDS_GRANTED_FLASHBACK -> cardsGrantedFlashbackUntilEndOfTurn.addAll((Set<UUID>) value);
@@ -5461,8 +5450,6 @@ public class GameData {
                     graveyardCastFilterPermissionsThisTurn.addAll((List<GraveyardCastFilterPermission>) value);
             case GAME_GRAVEYARD_PLAY_FILTER_PERMISSIONS ->
                     graveyardPlayFilterPermissionsThisTurn.addAll((List<GraveyardPlayFilterPermission>) value);
-            case GAME_NEXT_INSTANT_SORCERY_STORM ->
-                    addCounts(pendingNextInstantSorceryStormThisTurnCount, (Map<UUID, Integer>) value);
             case GAME_NEXT_INSTANT_SORCERY_CAST_FROM_HAND_TO_HAND ->
                     addCounts(pendingNextInstantSorceryCastFromHandToHandThisTurnCount, (Map<UUID, Integer>) value);
             case GAME_NEXT_SPELL_UNCOUNTERABLE ->
@@ -7065,18 +7052,6 @@ public class GameData {
                 .add(empowerment);
     }
 
-    /** Adds one pending cascade grant for the next creature spell this turn. */
-    public void addNextCreatureSpellCascade(UUID playerId) {
-        nextCreatureSpellCascadeThisTurn.merge(playerId, 1, Integer::sum);
-    }
-
-    /** Consumes every pending cascade grant when the next creature spell is cast. */
-    public int consumeNextCreatureSpellCascade(UUID playerId, Card card) {
-        if (card == null || !card.hasType(CardType.CREATURE)) return 0;
-        Integer grants = nextCreatureSpellCascadeThisTurn.remove(playerId);
-        return grants == null ? 0 : grants;
-    }
-
     /** Adds a persistent one-time boon for the player's next creature spell. */
     public void addPersistentNextCreatureSpellEmpowerment(UUID playerId, CreatureSpellEmpowerment empowerment) {
         nextCreatureSpellEmpowerments
@@ -7447,30 +7422,6 @@ public class GameData {
         }
     }
 
-    public void addSpellCastPathOfAncestryManaSpent(UUID spellCardId, int manaSpent) {
-        if (manaSpent > 0) {
-            spellCastPathOfAncestryManaSpent.merge(spellCardId, manaSpent, Integer::sum);
-        }
-    }
-
-    public int getSpellCastPathOfAncestryManaSpent(UUID spellCardId) {
-        return spellCastPathOfAncestryManaSpent.getOrDefault(spellCardId, 0);
-    }
-
-    public void clearSpellCastPathOfAncestryManaSpent(UUID spellCardId) {
-        spellCastPathOfAncestryManaSpent.remove(spellCardId);
-    }
-
-    public void markPendingPathOfAncestryManaChoice(UUID sourcePermanentId, int amount) {
-        if (sourcePermanentId != null && amount > 0) {
-            pendingPathOfAncestryManaChoices.merge(sourcePermanentId, amount, Integer::sum);
-        }
-    }
-
-    public int consumePendingPathOfAncestryManaChoice(UUID sourcePermanentId, int amount) {
-        return consumePendingManaChoice(pendingPathOfAncestryManaChoices, sourcePermanentId, amount);
-    }
-
     /** Records that {@code amount} mana {@code sourcePermanentId} is about to add once its color is chosen carries {@code rider}. */
     public void markPendingCopyRiderManaChoice(UUID sourcePermanentId, ManaCopyRider rider, int amount) {
         if (sourcePermanentId != null && amount > 0) {
@@ -7776,6 +7727,11 @@ public class GameData {
 
     public int getSpellsCastFromOutsideHandThisTurnCount(UUID playerId) {
         return spellsCastFromOutsideHandThisTurn.getOrDefault(playerId, 0);
+    }
+
+    /** Whether mana a Treasure produced was spent to cast the spell {@code cardId} this turn. */
+    public boolean wasSpellCastUsingTreasureManaThisTurn(UUID cardId) {
+        return cardId != null && spellsCastUsingTreasureManaThisTurn.contains(cardId);
     }
 
     /** Returns the number of spells cast with Treasure-produced mana by the player this turn. */
@@ -11111,10 +11067,8 @@ public class GameData {
         copy.casualtySpellCopyCounts.putAll(this.casualtySpellCopyCounts);
 
         // --- Pending one-shot spell copy triggers (Primal Wellspring) ---
-        copy.pendingPathOfAncestryManaChoices.putAll(this.pendingPathOfAncestryManaChoices);
         this.pendingCopyRiderManaChoices.forEach((sourceId, riders) ->
                 copy.pendingCopyRiderManaChoices.put(sourceId, new ConcurrentHashMap<>(riders)));
-        copy.pendingNextInstantSorceryStormThisTurnCount.putAll(this.pendingNextInstantSorceryStormThisTurnCount);
         copy.pendingNextInstantSorceryCastFromHandToHandThisTurnCount
                 .putAll(this.pendingNextInstantSorceryCastFromHandToHandThisTurnCount);
         copy.pendingNextSpellUncounterableThisTurnCount.putAll(this.pendingNextSpellUncounterableThisTurnCount);
@@ -11304,7 +11258,6 @@ public class GameData {
 
         // --- Spell-cast payment tracking (X / converge / colors spent) ---
         copy.spellCastManaSpent.putAll(this.spellCastManaSpent);
-        copy.spellCastPathOfAncestryManaSpent.putAll(this.spellCastPathOfAncestryManaSpent);
         copy.spellCastCreatureManaSpent.putAll(this.spellCastCreatureManaSpent);
         copy.spellCastConvergeValue.putAll(this.spellCastConvergeValue);
         this.spellCastColorsSpent.forEach((k, v) ->
@@ -11369,7 +11322,6 @@ public class GameData {
                 copy.nextSpellFreeCastPermissionsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         this.nextCreatureSpellEmpowermentsThisTurn.forEach((k, v) ->
                 copy.nextCreatureSpellEmpowermentsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
-        copy.nextCreatureSpellCascadeThisTurn.putAll(this.nextCreatureSpellCascadeThisTurn);
         this.nextCreatureSpellEmpowerments.forEach((k, v) ->
                 copy.nextCreatureSpellEmpowerments.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.spellAdditionalEnterCounters.putAll(this.spellAdditionalEnterCounters);

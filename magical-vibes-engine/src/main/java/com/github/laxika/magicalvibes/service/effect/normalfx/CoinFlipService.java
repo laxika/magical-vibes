@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,9 +51,6 @@ public class CoinFlipService {
 
     private final GameQueryService gameQueryService;
 
-    @Autowired
-    @Lazy
-    private TriggerCollectionService triggerCollectionService;
 
     @Autowired
     @Lazy
@@ -269,10 +265,7 @@ public class CoinFlipService {
             if (choiceWindow) {
                 record(gameData, rolls);
             }
-            if (triggerCollectionService != null) {
-                ActionEvents.diceRolled(
-                        gameData, playerId, count, rolls.getLast().pokeyD20Result());
-            }
+            ActionEvents.diceRolled(gameData, playerId, count, rolls.getLast().pokeyD20Result());
             return rolls;
         }
 

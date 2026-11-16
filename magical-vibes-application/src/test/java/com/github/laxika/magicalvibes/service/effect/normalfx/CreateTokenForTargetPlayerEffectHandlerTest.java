@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,8 +35,6 @@ class CreateTokenForTargetPlayerEffectHandlerTest {
     private GameQueryService gameQueryService;
     @Mock
     private AmountEvaluationService amountEvaluationService;
-    @Mock
-    private TriggerCollectionService triggerCollectionService;
 
     private CreateTokenForTargetPlayerEffectHandler handler;
     private GameData gameData;

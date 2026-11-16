@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfE
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CommanderCreaturesDealPowerDamageToPreventedCreatureEffect;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.model.effect.DamageHealingEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDamageReductionEffect;
@@ -121,7 +122,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.beans.factory.ObjectProvider;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -160,7 +160,6 @@ public class DamagePreventionService {
     private final ObjectProvider<PlayerInputService> playerInputServiceProvider;
     private final ObjectProvider<DestructionSupport> destructionSupportProvider;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final ObjectProvider<TriggeredAbilityStackService> triggeredAbilityStackServiceProvider;
 
     public DamagePreventionService(GameQueryService gameQueryService,
@@ -175,7 +174,6 @@ public class DamagePreventionService {
                                    ObjectProvider<PlayerInputService> playerInputServiceProvider,
                                    ObjectProvider<DestructionSupport> destructionSupportProvider,
                                    GameLogService gameLogService,
-                                   TriggerCollectionService triggerCollectionService,
                                    ObjectProvider<TriggeredAbilityStackService> triggeredAbilityStackServiceProvider) {
         this.gameQueryService = gameQueryService;
         this.layerSystemServiceProvider = layerSystemServiceProvider;
@@ -190,8 +188,25 @@ public class DamagePreventionService {
         this.playerInputServiceProvider = playerInputServiceProvider;
         this.destructionSupportProvider = destructionSupportProvider;
         this.gameLogService = gameLogService;
-        this.triggerCollectionService = triggerCollectionService;
         this.triggeredAbilityStackServiceProvider = triggeredAbilityStackServiceProvider;
+    }
+
+    /**
+     * Puts Judgment of Alexander's "whenever damage from a creature is prevented this way, each commander creature you
+     * control deals damage equal to its power to that creature" on the stack: a delayed triggered ability the spell made
+     * as it resolved, with the spell as its source and its controller, the protected player, as its controller
+     * (CR 603.7d). "That creature" is the creature whose damage was prevented, which it doesn't target.
+     */
+    private void putCommanderDamagePreventedAbility(GameData gameData, UUID damagedPlayerId,
+                                                    UUID preventedCreatureId, Card sourceCard) {
+        if (damagedPlayerId == null || sourceCard == null) return;
+        StackEntry entry = TriggeredAbilityStackService.madeAbility(sourceCard, damagedPlayerId,
+                sourceCard.getName() + "'s triggered ability",
+                List.of(new CommanderCreaturesDealPowerDamageToPreventedCreatureEffect()), preventedCreatureId,
+                (UUID) null);
+        entry.setNonTargeting(true);
+        triggeredAbilityStackServiceProvider.getObject().putDelayed(gameData, entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
     }
 
     /** Applies a one-shot replacement that destroys a target creature instead of dealing damage. */
@@ -3121,7 +3136,7 @@ public class DamagePreventionService {
             // Only damage from a creature is prevented with retaliation; other opponent sources are
             // prevented without triggering the commanders.
             if (creatureSource) {
-                triggerCollectionService.checkCommanderDamagePreventedTriggers(
+                putCommanderDamagePreventedAbility(
                         gameData, protectedPlayerId, sourcePermanent == null ? null : sourcePermanent.getId(),
                         shield.sourceCard());
             }

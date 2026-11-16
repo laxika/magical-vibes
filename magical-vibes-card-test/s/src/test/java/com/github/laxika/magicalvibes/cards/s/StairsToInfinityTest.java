@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.service.planar.PlanarDieRoller;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -38,7 +37,6 @@ class StairsToInfinityTest extends BaseCardTest {
         die = mock(PlanarDieRoller.class);
         planar = new PlanechaseService(die, gqs,
                 GameTestEngineContext.get().getBean(GameLogService.class),
-                GameTestEngineContext.get().getBean(TriggerCollectionService.class),
                 GameTestEngineContext.get().getBean(ConditionEvaluationService.class),
                 GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.cards.CardCatalog.class),
                 GameTestEngineContext.get().getBean(

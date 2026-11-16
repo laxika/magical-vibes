@@ -144,7 +144,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import java.util.ArrayList;
@@ -188,7 +188,7 @@ public class ActivatedAbilityExecutionService {
     private final DrawService drawService;
     private final PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.battlefield.DepartureService departureService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final SpellEvents spellEvents;
     private final TargetTriggers targetTriggers;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final StateBasedActionService stateBasedActionService;
@@ -264,7 +264,7 @@ public class ActivatedAbilityExecutionService {
                                 return;
                             }
                             sacrificedCardIds.add(snapshot.permanent().getCard().getId());
-                            triggerCollectionService.recordSacrifice(gameData, player.getId(), snapshot.permanent().getCard());
+                            ActionEvents.sacrificed(gameData, player.getId(), snapshot.permanent().getCard());
                             if (!sacrificeSource || !sacrificedPermanent.getId().equals(sourceId)) {
                                 gameLogService.append(gameData, GameLog.textCardText(
                                         player.getUsername() + " sacrifices ", sacrificedPermanent.getCard(), "."));
@@ -998,14 +998,13 @@ public class ActivatedAbilityExecutionService {
         boolean isManaAbility = AbilityActivationService.isManaAbility(ability, abilityEffects);
 
         if (isManaAbility) {
-            triggerCollectionService.consumeManaLinkedCopyOnManaAbility(gameData, playerId);
             int stackBeforeCopyTriggers = gameData.stack.size();
             StackEntry abilitySnapshot = createImmediateAbilitySnapshot(
                     gameData, permanent, playerId, ability, snapshotEffects, effectiveXValue, effectiveTargetId,
                     targetZone, targetIds, damageAssignments);
             // CR 602.2b, CR 601.2i: "whenever [a player] activates an ability" abilities trigger once the costs
             // are paid; a mana ability's wait for the next time a player would receive priority (CR 603.3).
-            triggerCollectionService.collectActivationTriggers(gameData, new TriggerCollectionService.Activation(
+            spellEvents.activated(gameData, new SpellEvents.Activation(
                     playerId, abilitySnapshot, ability, activatedBattlefieldPermanent,
                     activatedPermanentControllerId, true));
             if (gameData.stack.size() > stackBeforeCopyTriggers) {
@@ -1150,12 +1149,11 @@ public class ActivatedAbilityExecutionService {
             gameData.stack.getLast().setDamageSourceCard(unattachedEquipmentCard);
         }
         StackEntry abilityEntry = abilityStackIndex < gameData.stack.size() ? gameData.stack.get(abilityStackIndex) : null;
-        triggerCollectionService.checkManaLinkedAbilityCopyTrigger(gameData, playerId, abilityEntry, ability);
         ActionEvents.crimeCommitted(gameData, abilityEntry);
         // CR 602.2b, CR 601.2i: "whenever [a player] activates an ability" abilities trigger now that the ability
         // is on the stack and its costs are paid, so they go on the stack above it and one that copies it has its
         // targets and X.
-        triggerCollectionService.collectActivationTriggers(gameData, new TriggerCollectionService.Activation(
+        spellEvents.activated(gameData, new SpellEvents.Activation(
                 playerId, abilityEntry, ability, activatedBattlefieldPermanent, activatedPermanentControllerId,
                 false));
         // Add "becomes tapped" triggers ON TOP of the ability so they resolve first (per CR rules)
@@ -2003,7 +2001,7 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof SacrificeSelfEffect
                     && !gameQueryService.cantBeSacrificed(gameData, permanent)
                     && sacrificeAlone(gameData, permanent)) {
-                triggerCollectionService.recordSacrifice(gameData, playerId, permanent.getCard());
+                ActionEvents.sacrificed(gameData, playerId, permanent.getCard());
                 gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is sacrificed."));
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }

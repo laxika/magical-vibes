@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -67,8 +66,6 @@ class ExileGraveyardCardsEffectHandlerTest {
     @Mock
     private GraveyardReturnSupport graveyardReturnSupport;
     @Mock
-    private TriggerCollectionService triggerCollectionService;
-    @Mock
     private PermanentCounterSupport permanentCounterSupport;
 
     private GameData gd;
@@ -92,7 +89,7 @@ class ExileGraveyardCardsEffectHandlerTest {
 
         GraveyardService graveyardService = new GraveyardService(
                 gameQueryService, gameLogService, exileService, predicateEvaluationService,
-                permanentCounterSupport, triggerCollectionService);
+                permanentCounterSupport);
         handler = new ExileGraveyardCardsEffectHandler(gameQueryService, gameLogService, exileService,
                 permanentRemovalService, predicateEvaluationService, graveyardReturnSupport, graveyardService);
     }

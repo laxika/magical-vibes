@@ -55,7 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
@@ -105,7 +105,7 @@ class AbilityActivationServiceTest {
     @Mock private ActivatedAbilityExecutionService activatedAbilityExecutionService;
     @Mock private PlayerInputService playerInputService;
     @Mock private PermanentRemovalService permanentRemovalService;
-    @Mock private TriggerCollectionService triggerCollectionService;
+    @Mock private SpellEvents spellEvents;
     @Mock private com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService triggeredAbilityQueueService;
     @Mock private com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers targetTriggers;
     @Mock private com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService etbTokenTargetService;
@@ -1518,7 +1518,7 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             verify(permanentRemovalService).sacrificePermanentToGraveyard(gameData, husk);
-            verify(triggerCollectionService).recordSacrifice(gameData, player1Id, husk.getCard());
+            assertThat(gameData.playersWhoSacrificedPermanentsThisTurn).contains(player1Id);
             verify(gameLogService).append(eq(gameData), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Nantuko Husk.")));
         }
 

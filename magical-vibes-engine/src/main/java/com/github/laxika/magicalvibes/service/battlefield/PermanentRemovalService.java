@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -79,7 +80,6 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.DyingCreatureAttachmentSnapshot;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -119,7 +119,6 @@ public class PermanentRemovalService {
 
     private final GraveyardService graveyardService;
     private final BattlefieldEntryService battlefieldEntryService;
-    private TriggerCollectionService triggerCollectionService;
     private GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final DamagePreventionService damagePreventionService;
     private final AuraAttachmentService auraAttachmentService;
@@ -148,7 +147,6 @@ public class PermanentRemovalService {
 
     public PermanentRemovalService(GraveyardService graveyardService,
                                    BattlefieldEntryService battlefieldEntryService,
-                                   @Lazy TriggerCollectionService triggerCollectionService,
                                    @Lazy GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
                                    DamagePreventionService damagePreventionService,
                                    AuraAttachmentService auraAttachmentService,
@@ -167,7 +165,6 @@ public class PermanentRemovalService {
                                    VisualCueService visualCueService) {
         this.graveyardService = graveyardService;
         this.battlefieldEntryService = battlefieldEntryService;
-        this.triggerCollectionService = triggerCollectionService;
         this.grantedTriggeredAbilitySupport = grantedTriggeredAbilitySupport;
         this.damagePreventionService = damagePreventionService;
         this.auraAttachmentService = auraAttachmentService;
@@ -184,10 +181,6 @@ public class PermanentRemovalService {
         this.effectHandlerRegistry = effectHandlerRegistry;
         this.phasingService = phasingService;
         this.visualCueService = visualCueService;
-    }
-
-    public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
-        this.triggerCollectionService = triggerCollectionService;
     }
 
     /** Opens a scope whose permanents leave the battlefield as one event (CR 603.2c). */
@@ -3119,7 +3112,7 @@ public class PermanentRemovalService {
             if (destroyedBySpellOrAbility && !wasCreature) {
                 recordNoncreaturePermanentDestroyedByOpponent(gameData, target, controllerId);
             }
-            triggerCollectionService.recordEnchantedPermanentDeparture(gameData, target.getId(),
+            recordEnchantedPermanentDeparture(gameData, target.getId(),
                     controllerId);
         } else if (exiledFromBattlefield > 0 && destroyedBySpellOrAbility && !wasCreature) {
             // The permanent was still destroyed when a replacement effect exiled it instead of
@@ -3847,5 +3840,32 @@ public class PermanentRemovalService {
 
     private boolean isToken(GameData gameData, Card card) {
         return card != null && (card.isToken() || gameData.dynamicTokenCardIds.contains(card.getId()));
+    }
+
+    /**
+     * Records on the triggered abilities already on the stack whose source is an Aura enchanting the permanent that
+     * dies the permanent's last-known controller (CR 608.2h) and the Aura as it is now, whatever their effects are:
+     * "enchanted permanent's controller" can no longer be read from the permanent once it has left.
+     */
+    private static void recordEnchantedPermanentDeparture(GameData gameData, UUID dyingPermanentId,
+                                                          UUID dyingPermanentControllerId) {
+        Map<UUID, Permanent> auras = new LinkedHashMap<>();
+        gameData.forEachPermanent((playerId, perm) -> auras.put(perm.getId(), perm));
+        gameData.simultaneousDyingPermanents.forEach(auras::putIfAbsent);
+        for (Permanent perm : auras.values()) {
+            if (!dyingPermanentId.equals(perm.getAttachedTo())
+                    || perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                continue;
+            }
+            for (StackEntry pending : gameData.stack) {
+                if (pending.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && perm.getId().equals(pending.getSourcePermanentId())) {
+                    pending.rememberRemovedPermanentController(dyingPermanentId, dyingPermanentControllerId);
+                    if (pending.getSourcePermanentSnapshot() == null) {
+                        pending.setSourcePermanentSnapshot(new Permanent(perm));
+                    }
+                }
+            }
+        }
     }
 }

@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
@@ -39,7 +38,6 @@ final class PlayerInteractionHandlerTestSupport {
                                                  GameQueryService gameQueryService,
                                                  com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService,
                                                  PlayerInputService playerInputService,
-                                                 TriggerCollectionService triggerCollectionService,
                                                  BattlefieldEntryService battlefieldEntryService,
                                                  PermanentRemovalService permanentRemovalService,
                                                  GraveyardService graveyardService,
@@ -61,7 +59,8 @@ final class PlayerInteractionHandlerTestSupport {
             deps.put(GameQueryService.class, gameQueryService);
             deps.put(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class, predicateEvaluationService);
             deps.put(PlayerInputService.class, playerInputService);
-            deps.put(TriggerCollectionService.class, triggerCollectionService);
+            deps.put(com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents.class,
+                    org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents.class));
             deps.put(BattlefieldEntryService.class, battlefieldEntryService);
             deps.put(PermanentRemovalService.class, permanentRemovalService);
             deps.put(GraveyardService.class, graveyardService);

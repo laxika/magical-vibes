@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.SacrificeBoonWatcher;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.model.trigger.PlayerActionTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlayerActionTrigger.PlayerAction;
 import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -57,14 +59,19 @@ public class ActionTriggers {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameQueryService gameQueryService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
+    private final TriggeredAbilityStackService stackService;
+    private final GameLogService gameLogService;
 
     public ActionTriggers(EventAbilitySupport abilities, @Lazy PredicateEvaluationService predicateEvaluationService,
                           @Lazy GameQueryService gameQueryService,
-                          @Lazy TriggeredAbilityQueueService triggeredAbilityQueueService) {
+                          @Lazy TriggeredAbilityQueueService triggeredAbilityQueueService,
+                          @Lazy TriggeredAbilityStackService stackService, @Lazy GameLogService gameLogService) {
         this.abilities = abilities;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameQueryService = gameQueryService;
         this.triggeredAbilityQueueService = triggeredAbilityQueueService;
+        this.stackService = stackService;
+        this.gameLogService = gameLogService;
     }
 
     /** Triggers the abilities {@code event} triggers. */
@@ -172,6 +179,7 @@ public class ActionTriggers {
             case ActionEvent.LostGame lost -> playerLosesGame(gameData, lost.playerId());
             case ActionEvent.CrimeCommitted crime -> playerAction(gameData, PlayerAction.COMMITS_CRIME,
                     crime.playerId(), Facts.NONE);
+            case ActionEvent.Sacrificed sacrificed -> sacrificeBoons(gameData, sacrificed.playerId());
             case ActionEvent.Fought fought -> fought(gameData, fought);
             case ActionEvent.Explored explored -> explored(gameData, explored);
             case ActionEvent.Connived connived -> connived(gameData, connived);
@@ -646,6 +654,29 @@ public class ActionTriggers {
 
         Facts judging(BiPredicate<Permanent, UUID> judge) {
             return new Facts(record, actionCard, contextValue, namesThatPlayer, judge);
+        }
+    }
+
+    /**
+     * The sacrifice boons of {@code sacrificingPlayerId} ("you get a two-time boon with 'whenever you sacrifice one or
+     * more permanents, ...'", Tasteful Offering): each triggers once for the event and uses one of its uses.
+     */
+    private void sacrificeBoons(GameData gameData, UUID sacrificingPlayerId) {
+        for (SacrificeBoonWatcher watcher : List.copyOf(gameData.sacrificeBoonWatchers)) {
+            if (!watcher.controllerId().equals(sacrificingPlayerId)
+                    || watcher.remainingUses() <= 0
+                    || !gameData.sacrificeBoonWatchers.remove(watcher)) {
+                continue;
+            }
+            int remainingUses = watcher.remainingUses() - 1;
+            if (remainingUses > 0) {
+                gameData.sacrificeBoonWatchers.add(new SacrificeBoonWatcher(
+                        watcher.controllerId(), watcher.sourceCard(), watcher.effect(), remainingUses));
+            }
+            stackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
+                    watcher.controllerId(), watcher.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(watcher.effect()))));
+            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
         }
     }
 }

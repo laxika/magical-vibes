@@ -129,7 +129,6 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
@@ -196,8 +195,6 @@ class StepTriggerServiceTest {
     @Mock
     private GraveyardService graveyardService;
 
-    @Mock
-    private TriggerCollectionService triggerCollectionService;
     @Mock
     private TriggeredAbilityQueueService triggeredAbilityQueueService;
 
@@ -272,7 +269,6 @@ class StepTriggerServiceTest {
                 battlefieldEntryService,
                 graveyardTransformedReturnService,
                 graveyardService,
-                triggerCollectionService,
                 triggeredAbilityQueueService,
                 triggerTargetCollector,
                 paradigmService,

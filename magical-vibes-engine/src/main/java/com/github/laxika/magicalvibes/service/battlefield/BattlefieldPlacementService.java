@@ -109,7 +109,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -159,7 +159,6 @@ public class BattlefieldPlacementService {
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final PermanentCopierService permanentCopierService;
-    private final TriggerCollectionService triggerCollectionService;
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -205,7 +204,6 @@ public class BattlefieldPlacementService {
                                        GameLogService gameLogService,
                                        PlayerInputService playerInputService,
                                        PermanentCopierService permanentCopierService,
-                                       @Lazy TriggerCollectionService triggerCollectionService,
                                        AmountEvaluationService amountEvaluationService,
                                        ConditionEvaluationService conditionEvaluationService,
                                        PredicateEvaluationService predicateEvaluationService,
@@ -219,7 +217,6 @@ public class BattlefieldPlacementService {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.permanentCopierService = permanentCopierService;
-        this.triggerCollectionService = triggerCollectionService;
         this.amountEvaluationService = amountEvaluationService;
         this.conditionEvaluationService = conditionEvaluationService;
         this.predicateEvaluationService = predicateEvaluationService;
@@ -235,7 +232,6 @@ public class BattlefieldPlacementService {
                                        GameLogService gameLogService,
                                        PlayerInputService playerInputService,
                                        PermanentCopierService permanentCopierService,
-                                       @Lazy TriggerCollectionService triggerCollectionService,
                                        AmountEvaluationService amountEvaluationService,
                                        ConditionEvaluationService conditionEvaluationService,
                                        PredicateEvaluationService predicateEvaluationService,
@@ -244,7 +240,7 @@ public class BattlefieldPlacementService {
                                        @Lazy PermanentRemovalService permanentRemovalService,
                                        com.github.laxika.magicalvibes.service.effect.normalfx.BecomeDayAsEntersEffectHandler becomeDayAsEntersEffectHandler) {
         this(gameQueryService, gameLogService, playerInputService, permanentCopierService,
-                triggerCollectionService, amountEvaluationService, conditionEvaluationService,
+                amountEvaluationService, conditionEvaluationService,
                 predicateEvaluationService, new EntryReplacementHandlerRegistry(List.of()),
                 permanentCounterSupport, graveyardService, permanentRemovalService,
                 becomeDayAsEntersEffectHandler,
@@ -1799,7 +1795,7 @@ public class BattlefieldPlacementService {
                 DepartureBatch.of(doomed.stream().map(Permanent::getId).map(DepartureIntent::sacrifice).toList()),
                 DepartureService.Hooks.afterEach((intent, other, snapshot, removed) -> {
                     if (removed) {
-                        triggerCollectionService.recordSacrifice(gameData, controllerId, other.getCard());
+                        ActionEvents.sacrificed(gameData, controllerId, other.getCard());
                         gameLogService.append(gameData, GameLog.cardThen(other.getCard(), " is sacrificed."));
                     }
                 }));

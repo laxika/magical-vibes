@@ -207,7 +207,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import java.util.ArrayList;
@@ -283,7 +283,7 @@ public class AbilityActivationService {
 
     private final com.github.laxika.magicalvibes.service.battlefield.DepartureService departureService;
 
-    private final TriggerCollectionService triggerCollectionService;
+    private final SpellEvents spellEvents;
     private final TargetTriggers targetTriggers;
     private final ETBTokenTargetService etbTokenTargetService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
@@ -2143,7 +2143,7 @@ public class AbilityActivationService {
         flushActivatedAbilityCostTriggers(gameData);
         if (!ability.isManaAbility()) {
             // An ability of a card in a graveyard is not an ability of a permanent (CR 109.2).
-            triggerCollectionService.collectActivationTriggers(gameData, new TriggerCollectionService.Activation(
+            spellEvents.activated(gameData, new SpellEvents.Activation(
                     playerId, stackEntry, ability, null, playerId, false));
             chooseActivationTriggerTarget(gameData);
         }
@@ -2590,7 +2590,7 @@ public class AbilityActivationService {
         if (ability.isDiscardSourceAsSpecialAction()) {
             return;
         }
-        triggerCollectionService.collectActivationTriggers(gameData, new TriggerCollectionService.Activation(
+        spellEvents.activated(gameData, new SpellEvents.Activation(
                 playerId, stackEntry, ability, null, playerId, ability.isManaAbility()));
         chooseActivationTriggerTarget(gameData);
     }
@@ -8424,7 +8424,7 @@ public class AbilityActivationService {
                             if (!removed) {
                                 return;
                             }
-                            triggerCollectionService.recordSacrifice(gameData, player.getId(), snapshot.permanent().getCard());
+                            ActionEvents.sacrificed(gameData, player.getId(), snapshot.permanent().getCard());
                             gameLogService.append(gameData, GameLog.textCardText(
                                     player.getUsername() + " sacrifices ", sacrificed.getCard(), "."));
                         }));

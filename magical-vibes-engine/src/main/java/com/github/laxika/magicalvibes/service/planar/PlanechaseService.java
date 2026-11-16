@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
@@ -50,14 +49,12 @@ public class PlanechaseService {
 
     private final GameLogService logs;
 
-    private final TriggerCollectionService triggers;
-
     private final ConditionEvaluationService conditionEvaluationService;
 
     private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     public PlanechaseService(PlanarDieRoller die, @Lazy GameQueryService query,
-                             @Lazy GameLogService logs, @Lazy TriggerCollectionService triggers,
+                             @Lazy GameLogService logs,
                              @Lazy ConditionEvaluationService conditionEvaluationService, CardCatalog catalog,
                              @Lazy TriggeredAbilityStackService triggeredAbilityStackService) {
         this.triggeredAbilityStackService = triggeredAbilityStackService;
@@ -65,7 +62,6 @@ public class PlanechaseService {
         this.die = die;
         this.query = query;
         this.logs = logs;
-        this.triggers = triggers;
         this.conditionEvaluationService = conditionEvaluationService;
     }
 

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,8 +45,6 @@ class TapCreatureCostHandlerTest {
     @Mock
     private GameLogService gameLogService;
 
-    @Mock
-    private TriggerCollectionService triggerCollectionService;
 
     private final TapCreatureCost cost = new TapCreatureCost(
             new PermanentColorInPredicate(Set.of(CardColor.BLUE)));

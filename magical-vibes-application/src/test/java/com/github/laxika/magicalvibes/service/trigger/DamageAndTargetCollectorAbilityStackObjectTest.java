@@ -25,7 +25,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * {@code TriggerCollectionService}'s damage and becomes-the-target collectors put each triggered ability on the stack
+ * The damage and becomes-the-target matchers ({@code DamageTriggers}, {@code TargetTriggers}) put each triggered ability on the stack
  * as one object of all its effects (CR 603.3): an ability of two effects is one object an opponent can't respond
  * between, and two abilities of one permanent on one trigger are two objects (CR 603.3b), never joined into one.
  */

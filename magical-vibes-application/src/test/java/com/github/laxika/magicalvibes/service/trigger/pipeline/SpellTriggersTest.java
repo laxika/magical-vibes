@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerMatchContext;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -82,6 +81,10 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnchantedCreatur
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCascadeToNextCreatureSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -147,8 +150,6 @@ class SpellTriggersTest {
 
     @Mock
     private com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport graveyardTargetingSupport;
-    @Mock
-    private TriggerCollectionService triggerCollectionService;
     @Mock
     private TriggerTargetCollector triggerTargetCollector;
     @Mock
@@ -326,6 +327,65 @@ class SpellTriggersTest {
             assertThat(entry.getTriggeringActivatedAbility()).isSameAs(loyalty);
             assertThat(entry.isMadeByResolution()).isTrue();
         });
+        assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each conspire and casualty cost paid is its own \"copy it\" ability of the spell (CR 702.78a, 702.153a)")
+    void eachCopyCostPaidIsItsOwnAbilityOfTheSpell() {
+        Card spell = createInstant("Barkshell Blessing");
+        gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Barkshell Blessing", List.of()));
+
+        sut.trigger(gd, new SpellEvent.Cast(spell, player1Id, Zone.HAND, null, false, false, 2, 1, 0, 0));
+
+        List<StackEntry> abilities = gd.stack.subList(1, gd.stack.size());
+        assertThat(abilities).hasSize(3).allSatisfy(entry -> {
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getCard()).isSameAs(spell);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getEffectsToResolve()).singleElement().isInstanceOf(CopyControllerCastSpellEffect.class);
+        });
+        assertThat(abilities).extracting(StackEntry::getDescription).containsExactly(
+                "Copy Barkshell Blessing (Conspire)", "Copy Barkshell Blessing (Conspire)",
+                "Copy Barkshell Blessing (Casualty)");
+    }
+
+    @Test
+    @DisplayName("Each mana that copies the ability it is spent on makes one copy of the activated ability (CR 603.7a)")
+    void eachManaThatCopiesAnAbilityMakesOneCopy() {
+        Card source = createCard("Prodigal Sorcerer");
+        ActivatedAbility ability = new ActivatedAbility(true, null, List.of(new DrawCardEffect(1)), "{T}: Draw a card.");
+        StackEntry abilityEntry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source, player1Id,
+                "Prodigal Sorcerer's ability", List.of(new DrawCardEffect(1)));
+
+        sut.trigger(gd, new SpellEvent.Activated(player1Id, abilityEntry, ability, null, player1Id, false, 0, false,
+                2));
+
+        assertThat(gd.stack).hasSize(2).allSatisfy(entry -> {
+            assertThat(entry.getCard()).isSameAs(source);
+            assertThat(entry.getEffectsToResolve()).singleElement()
+                    .isInstanceOf(CopyControllerActivatedAbilityEffect.class);
+        });
+    }
+
+    @Test
+    @DisplayName("\"The next creature spell you cast this turn has cascade\" is the spell's cascade and is used up by it")
+    void nextSpellKeywordGrantIsTheSpellsAbilityAndIsUsedUp() {
+        everySpellMatches();
+        Card maker = createCard("Sloppity Bilepiper");
+        TemporaryGlobalTriggeredAbility next = TemporaryGlobalTriggeredAbility.nextThisTurn(player1Id, maker,
+                new GrantCascadeToNextCreatureSpellThisTurnEffect().grantedAbility(), null);
+        gd.temporaryGlobalTriggeredAbilities.add(next);
+        when(triggerIndex.delayedAbilities(gd))
+                .thenAnswer(invocation -> List.copyOf(gd.temporaryGlobalTriggeredAbilities));
+        Card spell = createCard("Grizzly Bears");
+        gd.stack.add(new StackEntry(StackEntryType.CREATURE_SPELL, spell, player1Id, "Grizzly Bears", List.of()));
+
+        sut.trigger(gd, new SpellEvent.Cast(spell, player1Id, Zone.HAND, null));
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getCard()).isSameAs(spell);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).singleElement().isInstanceOf(CascadeEffect.class);
         assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
     }
 

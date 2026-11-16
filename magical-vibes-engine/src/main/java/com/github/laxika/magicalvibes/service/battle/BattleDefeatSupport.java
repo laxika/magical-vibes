@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import java.util.List;
@@ -46,18 +46,18 @@ public class BattleDefeatSupport {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final SpellEvents spellEvents;
     private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     public BattleDefeatSupport(GameQueryService gameQueryService,
                                GameLogService gameLogService,
                                PermanentRemovalService permanentRemovalService,
-                               @Lazy TriggerCollectionService triggerCollectionService,
+                               @Lazy SpellEvents spellEvents,
                                @Lazy TriggeredAbilityStackService triggeredAbilityStackService) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.permanentRemovalService = permanentRemovalService;
-        this.triggerCollectionService = triggerCollectionService;
+        this.spellEvents = spellEvents;
         this.triggeredAbilityStackService = triggeredAbilityStackService;
     }
     /**
@@ -179,7 +179,7 @@ public class BattleDefeatSupport {
                 " transformed without paying its mana cost."));
         log.info("Game {} - {} casts defeated battle {} transformed", gameData.id, playerName, frontCard.getName());
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, castCharacteristics, controllerId, Zone.EXILE, null);
+        spellEvents.cast(gameData, castCharacteristics, controllerId, Zone.EXILE, null);
     }
 
     private static StackEntryType mapBackFaceSpellType(Card card) {

@@ -120,7 +120,7 @@ class LibraryChoiceHandlerServiceTest {
                 graveyardService, battlefieldEntryService, legendRuleService,
                 stateBasedActionService, gameLogService, inputCompletionService,
                 playerInputService, effectResolutionService, exileService, registry,
-                mock(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class), org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.AttachmentTriggers.class),
+                mock(com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents.class), org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.AttachmentTriggers.class),
                 librarySearchSupport,
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport.class),
                 mock(com.github.laxika.magicalvibes.service.DrawService.class),

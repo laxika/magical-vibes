@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.DepartureResult;
@@ -43,7 +43,6 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
     private final PermanentRemovalService permanentRemovalService;
     private final DepartureService departureService;
     private final StepDepartureSupport stepDepartureSupport;
-    private final TriggerCollectionService triggerCollectionService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -127,7 +126,7 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
             if (done.results().stream().noneMatch(DepartureResult::sacrificed)) {
                 return;
             }
-            triggerCollectionService.recordSacrifice(gameData, controllerId, enchanted.getCard());
+            ActionEvents.sacrificed(gameData, controllerId, enchanted.getCard());
             entry.setSacrificedCard(enchanted.getCard());
             String playerName = gameData.playerIdToName.get(controllerId);
             gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", enchanted.getCard(), "."));

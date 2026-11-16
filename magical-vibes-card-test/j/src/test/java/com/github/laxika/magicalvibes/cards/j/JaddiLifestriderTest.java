@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -113,7 +112,6 @@ class JaddiLifestriderTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         PlanechaseService planar = GameTestEngineContext.get().getBean(PlanechaseService.class);
-        TriggerCollectionService triggers = GameTestEngineContext.get().getBean(TriggerCollectionService.class);
         harness.inMutationScope(() -> planar.chaos(gd));
         harness.beginTriggerChoices();
         harness.handlePermanentChosen(player2, restricted.getId());

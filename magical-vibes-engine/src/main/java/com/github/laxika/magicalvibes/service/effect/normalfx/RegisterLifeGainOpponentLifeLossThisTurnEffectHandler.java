@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 /**
  * Registers Vizkopa Guildmage's turn-scoped delayed trigger: for the rest of the turn, whenever the
  * controller gains life, each opponent loses that much life. Each resolution adds its own watcher so
- * repeated activations stack; {@code TriggerCollectionService} fires the triggers.
+ * repeated activations stack; {@code LifeTriggers} fires the triggers.
  */
 @Slf4j
 @Component

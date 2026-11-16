@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandOnCoinFlipLossEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,28 +18,19 @@ public class ReturnSelfToHandOnCoinFlipLossEffectHandler implements NormalEffect
     private final GameLogService gameLogService;
     private final BounceSupport bounceSupport;
     private final CoinFlipService coinFlipService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Autowired
     public ReturnSelfToHandOnCoinFlipLossEffectHandler(GameLogService gameLogService,
                                                        BounceSupport bounceSupport,
-                                                       CoinFlipService coinFlipService,
-                                                       TriggerCollectionService triggerCollectionService) {
+                                                       CoinFlipService coinFlipService) {
         this.gameLogService = gameLogService;
         this.bounceSupport = bounceSupport;
         this.coinFlipService = coinFlipService;
-        this.triggerCollectionService = triggerCollectionService;
     }
 
     public ReturnSelfToHandOnCoinFlipLossEffectHandler(GameLogService gameLogService,
                                                        BounceSupport bounceSupport) {
-        this(gameLogService, bounceSupport, null, null);
-    }
-
-    public ReturnSelfToHandOnCoinFlipLossEffectHandler(GameLogService gameLogService,
-                                                       BounceSupport bounceSupport,
-                                                       CoinFlipService coinFlipService) {
-        this(gameLogService, bounceSupport, coinFlipService, null);
+        this(gameLogService, bounceSupport, null);
     }
 
     @Override
@@ -62,9 +52,9 @@ public class ReturnSelfToHandOnCoinFlipLossEffectHandler implements NormalEffect
                         + coinFlipService.replacementDetails(result) + ".";
         gameLogService.append(gameData, GameLog.text(flipLog));
 
-        if (wonFlip && result.isActualCoinFlip() && triggerCollectionService != null) {
+        if (wonFlip && result.isActualCoinFlip()) {
             ActionEvents.coinFlipWon(gameData, controllerId);
-        } else if (!wonFlip && result.isActualCoinFlip() && triggerCollectionService != null) {
+        } else if (!wonFlip && result.isActualCoinFlip()) {
             ActionEvents.coinFlipLost(gameData, controllerId);
         }
 

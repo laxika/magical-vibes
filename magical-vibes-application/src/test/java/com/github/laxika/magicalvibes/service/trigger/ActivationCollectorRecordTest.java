@@ -33,7 +33,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * The one activation collector ({@code TriggerCollectionService.collectActivationTriggers}): every "whenever [a
+ * The one activation event ({@code SpellEvents.activated}, matched by {@code SpellTriggers}): every "whenever [a
  * player] activates an ability" ability triggers once the activated ability is on the stack and its costs are paid
  * (CR 602.2b, CR 601.2i), and its entry records the activation the same way whatever its effects are. An ability
  * that copies the activated ability and one that gains life have the same record, and the stack-entry and payment

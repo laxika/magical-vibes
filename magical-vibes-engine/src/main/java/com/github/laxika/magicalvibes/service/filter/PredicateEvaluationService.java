@@ -423,6 +423,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryIsModalSpellPredica
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColoredManaSpentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySnowManaOfItsColorSpentPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostAmountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostSourcePowerPredicate;
@@ -5469,6 +5470,7 @@ public class PredicateEvaluationService {
             case StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate ignored -> false;
             case StackEntryPowerOrToughnessAtMostPredicate ignored -> false;
             case StackEntryManaValueParityMatchesSourceChosenParityPredicate ignored -> false;
+            case StackEntryManaValueAtMostAmountPredicate ignored -> false;
             case StackEntryManaValueAtMostControlledCountPredicate ignored -> false;
             case StackEntryManaValueAtMostControllerGraveyardCountPredicate ignored -> false;
             case StackEntrySharesColorOrManaValueWithImprintedCardPredicate ignored -> false;

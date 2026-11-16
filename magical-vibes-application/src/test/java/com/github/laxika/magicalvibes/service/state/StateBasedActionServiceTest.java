@@ -33,7 +33,6 @@ import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -84,8 +83,6 @@ class StateBasedActionServiceTest {
     @Mock
     private StateTriggerService stateTriggerService;
     @Mock
-    private TriggerCollectionService triggerCollectionService;
-    @Mock
     private LegendRuleService legendRuleService;
     @Mock
     private BattleDefeatSupport battleDefeatSupport;
@@ -108,9 +105,9 @@ class StateBasedActionServiceTest {
     void setUp() {
         sut = new StateBasedActionService(gameOutcomeService, gameQueryService, gameLogService,
                 permanentRemovalService, graveyardService, creatureControlService, stateTriggerService,
-                triggerCollectionService, legendRuleService, battleDefeatSupport,
+                legendRuleService, battleDefeatSupport,
                 new DepartureService(gameQueryService, permanentRemovalService, graveyardService,
-                        triggerCollectionService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class), gameLogService));
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport.class), gameLogService));
         ReflectionTestUtils.setField(sut, "storiedEffectHandler", storiedEffectHandler);
         ReflectionTestUtils.setField(sut, "triggeredAbilityStackService", triggeredAbilityStackService);
         // The stack door puts a delayed ability that names its object as it was made.

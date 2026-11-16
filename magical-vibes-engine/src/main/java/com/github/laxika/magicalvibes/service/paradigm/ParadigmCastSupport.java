@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -33,7 +33,7 @@ public class ParadigmCastSupport {
 
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final SpellEvents spellEvents;
     private final InputCompletionService inputCompletionService;
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final CastingPermissionService castingPermissionService;
@@ -42,13 +42,13 @@ public class ParadigmCastSupport {
     // StepTriggerService → ParadigmService → ParadigmCastSupport.
     public ParadigmCastSupport(GameLogService gameLogService,
                                PlayerInputService playerInputService,
-                               @Lazy TriggerCollectionService triggerCollectionService,
+                               @Lazy SpellEvents spellEvents,
                                @Lazy InputCompletionService inputCompletionService,
                                ExileCastTargetSupport exileCastTargetSupport,
                                @Lazy CastingPermissionService castingPermissionService) {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
-        this.triggerCollectionService = triggerCollectionService;
+        this.spellEvents = spellEvents;
         this.inputCompletionService = inputCompletionService;
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.castingPermissionService = castingPermissionService;
@@ -122,7 +122,7 @@ public class ParadigmCastSupport {
         gameLogService.append(gameData, GameLog.textCardText(playerName + " casts " , card, " without paying its mana cost."));
         log.info("Game {} - {} casts {} paradigm copy without paying mana", gameData.id, playerName, card.getName());
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, false);
+        spellEvents.cast(gameData, card, playerId, false);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

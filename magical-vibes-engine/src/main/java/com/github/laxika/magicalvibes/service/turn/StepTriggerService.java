@@ -38,7 +38,6 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
@@ -129,7 +128,6 @@ public class StepTriggerService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final GraveyardTransformedReturnService graveyardTransformedReturnService;
     private final GraveyardService graveyardService;
-    private final TriggerCollectionService triggerCollectionService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final TriggerTargetCollector triggerTargetCollector;
     private final ParadigmService paradigmService;
@@ -152,7 +150,6 @@ public class StepTriggerService {
                               BattlefieldEntryService battlefieldEntryService,
                               GraveyardTransformedReturnService graveyardTransformedReturnService,
                               GraveyardService graveyardService,
-                              TriggerCollectionService triggerCollectionService,
                               TriggeredAbilityQueueService triggeredAbilityQueueService,
                               TriggerTargetCollector triggerTargetCollector,
                               @Lazy ParadigmService paradigmService,
@@ -174,7 +171,6 @@ public class StepTriggerService {
         this.battlefieldEntryService = battlefieldEntryService;
         this.graveyardTransformedReturnService = graveyardTransformedReturnService;
         this.graveyardService = graveyardService;
-        this.triggerCollectionService = triggerCollectionService;
         this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.triggerTargetCollector = triggerTargetCollector;
         this.paradigmService = paradigmService;

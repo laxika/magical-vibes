@@ -25,7 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -72,7 +72,7 @@ class MayCastHandlerServiceTest {
     @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private PermanentRemovalService permanentRemovalService;
-    @Mock private TriggerCollectionService triggerCollectionService;
+    @Mock private SpellEvents spellEvents;
     @Mock private LifeSupport lifeSupport;
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private ExileService exileService;
@@ -404,7 +404,7 @@ class MayCastHandlerServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
             assertThat(gd.stack.getFirst().getCard()).isEqualTo(card);
-            verify(triggerCollectionService).checkSpellCastTriggers(gd, card, PLAYER1_ID, false);
+            verify(spellEvents).cast(gd, card, PLAYER1_ID, false);
             verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
         }
 
@@ -547,7 +547,7 @@ class MayCastHandlerServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-            verify(triggerCollectionService).checkSpellCastTriggers(gd, card, PLAYER1_ID, false);
+            verify(spellEvents).cast(gd, card, PLAYER1_ID, false);
         }
 
         @Test
@@ -770,7 +770,7 @@ class MayCastHandlerServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
             assertThat(gd.stack.getFirst().getCard()).isEqualTo(card);
-            verify(triggerCollectionService).checkSpellCastTriggers(gd, card, PLAYER1_ID, false);
+            verify(spellEvents).cast(gd, card, PLAYER1_ID, false);
             verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
         }
 

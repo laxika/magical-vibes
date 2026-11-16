@@ -25,6 +25,22 @@ public final class ActionEvents {
     private ActionEvents() {
     }
 
+    /**
+     * {@code sacrificingPlayerId} sacrificed {@code sacrificedCard} (CR 701.21a): recorded for the turn's sacrifice
+     * counts. The permanents a player sacrifices at once ({@link GameData#simultaneousSacrificeDepth}) are one event of
+     * sacrificing one or more permanents. The abilities that trigger on the permanent's departure ("whenever you
+     * sacrifice a creature") are the zone change's.
+     */
+    public static void sacrificed(GameData gameData, UUID sacrificingPlayerId, Card sacrificedCard) {
+        gameData.playersWhoSacrificedPermanentsThisTurn.add(sacrificingPlayerId);
+        gameData.recordSacrificedPermanent(sacrificingPlayerId, sacrificedCard);
+        if (sacrificingPlayerId == null || gameData.simultaneousSacrificeDepth > 0
+                && !gameData.sacrificeBoonBatchPlayerIds.add(sacrificingPlayerId)) {
+            return;
+        }
+        gameData.rulesEvents.occur(new ActionEvent.Sacrificed(sacrificingPlayerId));
+    }
+
     /** {@code giverId} gave a gift. */
     public static void giftGiven(GameData gameData, UUID giverId) {
         gameData.rulesEvents.occur(new ActionEvent.GiftGiven(giverId));

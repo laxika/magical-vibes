@@ -36,7 +36,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.junit.jupiter.api.DisplayName;
@@ -69,7 +69,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
     @Mock private CardViewFactory cardViewFactory;
-    @Mock private TriggerCollectionService triggerCollectionService;
+    @Mock private SpellEvents spellEvents;
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private ExileService exileService;
     @Mock private InputCompletionService inputCompletionService;
@@ -314,7 +314,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 // Spell on stack
                 assertThat(gd.stack).anyMatch(se -> se.getCard() == chosenCard);
                 assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(1);
-                verify(triggerCollectionService).checkSpellCastTriggers(gd, chosenCard, player1Id, false);
+                verify(spellEvents).cast(gd, chosenCard, player1Id, false);
                 verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
             }
 

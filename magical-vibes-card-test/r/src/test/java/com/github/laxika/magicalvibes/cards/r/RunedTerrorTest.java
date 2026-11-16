@@ -851,16 +851,13 @@ class RunedTerrorTest extends BaseCardTest {
         gd.addNextSpellConvokeGrant(player1.getId());
         gs.advanceStep(gd);
         gd.addNextSpellConvokeGrant(player1.getId());
-        gd.addNextCreatureSpellCascade(player2.getId());
         assertThat(gd.nextSpellConvokeGrantsThisTurn).containsEntry(player1.getId(), 2);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
         assertThat(gd.nextSpellConvokeGrantsThisTurn).containsEntry(player1.getId(), 1);
-        assertThat(gd.nextCreatureSpellCascadeThisTurn).containsEntry(player2.getId(), 1);
 
         harness.passUntil(player2, TurnStep.CLEANUP);
         assertThat(gd.nextSpellConvokeGrantsThisTurn).isEmpty();
-        assertThat(gd.nextCreatureSpellCascadeThisTurn).isEmpty();
     }
 
     @Test

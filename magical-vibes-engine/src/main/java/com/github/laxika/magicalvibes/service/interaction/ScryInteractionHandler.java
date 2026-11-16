@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.SurveilThenEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.MayCastHandlerService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +37,6 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
     private final MayCastHandlerService mayCastHandlerService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Autowired @Lazy
     private GraveyardService graveyardService;
@@ -46,19 +44,16 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
     @Autowired
     public ScryInteractionHandler(GameLogService gameLogService,
                                   InputCompletionService inputCompletionService,
-                                  MayCastHandlerService mayCastHandlerService,
-                                  TriggerCollectionService triggerCollectionService) {
+                                  MayCastHandlerService mayCastHandlerService) {
         this.gameLogService = gameLogService;
         this.inputCompletionService = inputCompletionService;
         this.mayCastHandlerService = mayCastHandlerService;
-        this.triggerCollectionService = triggerCollectionService;
     }
 
     /** Backwards-compatible constructor for isolated scry tests without Scrycast support. */
     public ScryInteractionHandler(GameLogService gameLogService,
-                                  InputCompletionService inputCompletionService,
-                                  TriggerCollectionService triggerCollectionService) {
-        this(gameLogService, inputCompletionService, null, triggerCollectionService);
+                                  InputCompletionService inputCompletionService) {
+        this(gameLogService, inputCompletionService, null);
     }
 
     @Override

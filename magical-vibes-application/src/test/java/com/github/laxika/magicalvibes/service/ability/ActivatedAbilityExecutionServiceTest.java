@@ -59,7 +59,7 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
@@ -113,14 +113,14 @@ class ActivatedAbilityExecutionServiceTest {
         assertThat(source.isTapped()).isTrue();
         assertThat(gameData.stack).isEmpty();
         verify(stateBasedActionService).performStateBasedActions(gameData);
-        org.mockito.Mockito.verifyNoInteractions(triggerCollectionService);
+        org.mockito.Mockito.verifyNoInteractions(spellEvents);
     }
 
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
     @Mock private com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService landManaReplacementService;
     @Mock private DrawService drawService;
     @Mock private PermanentRemovalService permanentRemovalService;
-    @Mock private TriggerCollectionService triggerCollectionService;
+    @Mock private SpellEvents spellEvents;
     @Mock private com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService triggeredAbilityQueueService;
     @Mock private TargetTriggers targetTriggers;
     @Mock private StateBasedActionService stateBasedActionService;

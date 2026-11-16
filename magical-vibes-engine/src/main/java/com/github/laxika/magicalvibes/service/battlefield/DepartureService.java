@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -124,20 +124,17 @@ public class DepartureService {
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
     private final GraveyardService graveyardService;
-    private final TriggerCollectionService triggerCollectionService;
     private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final GameLogService gameLogService;
 
     public DepartureService(@Lazy GameQueryService gameQueryService,
                             @Lazy PermanentRemovalService permanentRemovalService,
                             @Lazy GraveyardService graveyardService,
-                            @Lazy TriggerCollectionService triggerCollectionService,
                             @Lazy GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
                             GameLogService gameLogService) {
         this.gameQueryService = gameQueryService;
         this.permanentRemovalService = permanentRemovalService;
         this.graveyardService = graveyardService;
-        this.triggerCollectionService = triggerCollectionService;
         this.grantedTriggeredAbilitySupport = grantedTriggeredAbilitySupport;
         this.gameLogService = gameLogService;
     }
@@ -443,7 +440,7 @@ public class DepartureService {
                 return;
             }
             if (intent.cause() == DepartureCause.SACRIFICE) {
-                triggerCollectionService.recordSacrifice(gameData, snapshot.controllerId(), permanent.getCard());
+                ActionEvents.sacrificed(gameData, snapshot.controllerId(), permanent.getCard());
                 gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is sacrificed."));
             } else if (intent.cause() == DepartureCause.DESTROY) {
                 gameLogService.append(gameData, GameLog.isDestroyed(permanent.getCard()));

@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -40,7 +40,7 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final PlayerInteractionSupport playerInteractionSupport;
-    private final TriggerCollectionService triggerCollectionService;
+    private final SpellEvents spellEvents;
     @Autowired
     @Lazy
     private SplitCardCastSupport splitCardCastSupport;
@@ -149,7 +149,7 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
                 gameLogService.append(gameData, GameLog.builder().text(playerName + " casts ").card(revealed).text(" without paying its mana cost (" + sourceName + ").").build());
                 log.info("Game {} - {} casts {} (Wild Evocation) without paying mana", gameData.id, playerName, revealed.getName());
 
-                triggerCollectionService.checkSpellCastTriggers(gameData, revealed, targetPlayerId, Zone.HAND);
+                spellEvents.cast(gameData, revealed, targetPlayerId, Zone.HAND);
             }
         }
     
