@@ -37,15 +37,10 @@ public class NarsetTranscendent extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new RegisterDelayedControllerSpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+                List.of(RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
-                                new CardTypePredicate(CardType.SORCERY))),
-                        new StackEntryCastFromZonePredicate(Zone.HAND),
-                        List.of(new GrantKeywordsToCastSpellEffect(Set.of(Keyword.REBOUND))),
-                        true,
-                        false,
-                        null)),
+                                new CardTypePredicate(CardType.SORCERY))), List.of(new GrantKeywordsToCastSpellEffect(Set.of(Keyword.REBOUND))))
+                .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.HAND))),
                 "−2: When you next cast an instant or sorcery spell from your hand this turn, it gains rebound."
         ));
 

@@ -17,7 +17,7 @@ import java.util.Set;
 public class SwiftspearsTeachings extends Card {
 
     public SwiftspearsTeachings() {
-        addSpellEffect(RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+        addSpellEffect(RegisterDelayedControllerSpellCastTriggerEffect.boon(
                 new CardTypePredicate(CardType.CREATURE), List.of(new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption("It gains prowess",
                                 new GrantKeywordsToCastSpellEffect(Set.of(Keyword.PROWESS))),

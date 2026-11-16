@@ -24,7 +24,7 @@ public class ArcaneArchery extends Card {
                 .addSpellEffect(new BoostTargetCreatureEffect(3, 3))
                 .addSpellEffect(new GrantKeywordEffect(Set.of(Keyword.REACH, Keyword.TRAMPLE), GrantScope.TARGET));
 
-        addSpellEffect(RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+        addSpellEffect(RegisterDelayedControllerSpellCastTriggerEffect.boon(
                         new CardTypePredicate(CardType.CREATURE),
                         List.of(
                                 new GrantAdditionalCounterToTriggeringCreatureSpellEffect(

@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTriggeringCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterOneShotCreatureSpellPerpetualPowerBoostEffect;
@@ -29,21 +30,9 @@ public class RegisterOneShotCreatureSpellPerpetualPowerBoostEffectHandler
             return;
         }
 
-        gameData.queueDelayedAction(new DelayedControllerSpellCastTrigger(
-                entry.getControllerId(),
-                null,
-                entry.getCard(),
-                new CardTypePredicate(CardType.CREATURE),
-                null,
-                List.of(new PerpetuallyBoostTriggeringCardEffect(power, 0)),
-                true,
-                false,
-                null,
-                null,
-                null,
-                false,
-                true,
-                gameData.turnNumber
-        ));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.boon(entry.getControllerId(),
+                entry.getCard(), RegisterDelayedControllerSpellCastTriggerEffect.boon(
+                        new CardTypePredicate(CardType.CREATURE),
+                        List.of(new PerpetuallyBoostTriggeringCardEffect(power, 0))).delayedAbility(), null));
     }
 }

@@ -26,16 +26,14 @@ public class CherishedHatchling extends Card {
     public CherishedHatchling() {
         addTrigger(Triggers.dies(ObjectRelation.THIS),
                 SequenceEffect.of(new GrantFlashToCardTypeThisTurnEffect(new CardSubtypePredicate(CardSubtype.DINOSAUR)),
-                new RegisterDelayedControllerSpellCastTriggerEffect(
-                new CardSubtypePredicate(CardSubtype.DINOSAUR),
-                List.of(new GrantTriggeredAbilityToCastSpellEffect(
+                RegisterDelayedControllerSpellCastTriggerEffect.thisTurn(
+                        new CardSubtypePredicate(CardSubtype.DINOSAUR), List.of(new GrantTriggeredAbilityToCastSpellEffect(
                         new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
                         new MayEffect(new EnteringCreatureFightsTargetCreatureEffect(
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
                                 ))),
-                                "Have it fight another target creature?")))),
-                false)));
+                                "Have it fight another target creature?")))))));
     }
 }

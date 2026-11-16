@@ -24,9 +24,8 @@ public class SummonFenrir extends Card {
         addTrigger(Triggers.chapter(1),
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));
 
-        addTrigger(Triggers.chapter(2), new RegisterDelayedControllerSpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(new GrantAdditionalCountersToCastSpellEffect(new Fixed(1))), true, false));
+        addTrigger(Triggers.chapter(2), RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                new CardTypePredicate(CardType.CREATURE), List.of(new GrantAdditionalCountersToCastSpellEffect(new Fixed(1)))));
 
         addTrigger(Triggers.chapter(3), new ConditionalEffect(
                 new ControlsCreatureWithGreatestPower(), new DrawCardEffect(1)));

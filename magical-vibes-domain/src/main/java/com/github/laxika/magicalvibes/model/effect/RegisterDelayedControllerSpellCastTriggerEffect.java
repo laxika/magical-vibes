@@ -1,115 +1,132 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import java.util.List;
+import java.util.UUID;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
- * When resolved, registers a delayed triggered ability for the rest of the turn or through the
- * beginning of the controller's next turn: "Until end of turn, whenever you cast a [filter] spell,
- * [resolvedEffects]." Registered by Mountain Titan and Nightmares and Daydreams.
+ * Creates a delayed triggered ability (CR 603.7a) of the resolving spell or ability's controller that triggers when
+ * they cast a spell matching {@code spellFilter} (any spell when {@code null}) and {@code stackEntryFilter} (none when
+ * {@code null}), putting {@code resolvedEffects} on the stack as one object, for {@code duration}: "until end of turn,
+ * whenever you cast a black spell, ..." (Mountain Titan), "when you next cast a creature spell this turn, ..."
+ * (Vivien, Monsters' Advocate), "until your next turn, whenever you cast an instant or sorcery spell, ..." (Nightmares
+ * and Daydreams) or a one-time boon (Swiftspear's Teachings). Its source is the maker's source (CR 603.7e), and it
+ * triggers whether or not that source is still on the battlefield, only unable to affect it once it has left
+ * (CR 603.7c).
  *
- * <p>The trigger belongs to the resolving controller and normally remains tied to the source
- * permanent, so it stops firing if that permanent leaves the battlefield. Set
- * {@code sourceMustRemainOnBattlefield} to false for delayed abilities that continue after their
- * source leaves. Unless {@code oneShot} is true, activating the granting ability several times in a
- * turn registers several independent triggers, each of which fires on every matching spell.
- *
- * @param spellFilter                  which cast spells fire the trigger; {@code null} = any spell
- * @param stackEntryFilter             optional filter evaluated against the cast stack entry
- * @param resolvedEffects              effects put on the stack when it fires
- * @param sourceMustRemainOnBattlefield whether the source permanent must still be on the battlefield
- * @param targetFilter                 optional permanent/player target filter used when the delayed
- *                                     trigger goes on the stack
- * @param untilNextTurn                whether the registration lasts through the controller's
- *                                     next turn's beginning instead of through turn cleanup
- * @param persistsUntilConsumed         whether a one-shot registration remains until it fires
+ * @param spellFilter      which cast spells trigger it; {@code null} = any spell
+ * @param stackEntryFilter what the cast spell's stack object must match; {@code null} = anything
+ * @param resolvedEffects  the ability's effects
+ * @param duration         how long it lasts and how often it triggers (CR 603.7b)
+ * @param targetFilter     what its targets, chosen as it goes on the stack (CR 603.3d), must match; {@code null} = the
+ *                         effects' own
  */
 public record RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
                                                                StackEntryPredicate stackEntryFilter,
                                                                List<CardEffect> resolvedEffects,
-                                                               boolean oneShot,
-                                                               boolean sourceMustRemainOnBattlefield,
-                                                               TargetFilter targetFilter,
-                                                               boolean untilNextTurn,
-                                                               boolean persistsUntilConsumed)
+                                                               Duration duration,
+                                                               TargetFilter targetFilter)
         implements CardEffect {
 
-    public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
-                                                            StackEntryPredicate stackEntryFilter,
-                                                            List<CardEffect> resolvedEffects,
-                                                            boolean oneShot,
-                                                            boolean sourceMustRemainOnBattlefield,
-                                                            TargetFilter targetFilter,
-                                                            boolean untilNextTurn) {
-        this(spellFilter, stackEntryFilter, resolvedEffects, oneShot,
-                sourceMustRemainOnBattlefield, targetFilter, untilNextTurn, false);
+    /** How long a delayed spell-cast ability lasts and how often it triggers (CR 603.7b). */
+    public enum Duration {
+        /** "Until end of turn, whenever you cast ...": every matching spell this turn. */
+        THIS_TURN,
+        /** "When you next cast ... this turn": the next matching spell this turn only. */
+        NEXT_THIS_TURN,
+        /** "Until your next turn, whenever you cast ...": every matching spell until its controller's next turn. */
+        UNTIL_YOUR_NEXT_TURN,
+        /** A one-time boon: the next matching spell, however many turns later. */
+        BOON;
+
+        /**
+         * The delayed ability {@code ability} of {@code controllerId} this duration makes, from a resolution of an
+         * object with the source {@code sourceCard} and {@code sourcePermanentId} (or none) on turn
+         * {@code turnNumber}, whose targets must match {@code targetFilter} (or the effects' own when {@code null}).
+         */
+        public TemporaryGlobalTriggeredAbility delayed(UUID controllerId, Card sourceCard, TriggeredAbility ability,
+                                                       UUID sourcePermanentId, int turnNumber,
+                                                       TargetFilter targetFilter) {
+            TemporaryGlobalTriggeredAbility delayed = switch (this) {
+                case THIS_TURN -> TemporaryGlobalTriggeredAbility.thisTurn(controllerId, sourceCard, ability,
+                        sourcePermanentId);
+                case NEXT_THIS_TURN -> TemporaryGlobalTriggeredAbility.nextThisTurn(controllerId, sourceCard, ability,
+                        sourcePermanentId);
+                case UNTIL_YOUR_NEXT_TURN -> TemporaryGlobalTriggeredAbility.untilYourNextTurn(controllerId,
+                        sourceCard, ability, sourcePermanentId, turnNumber);
+                case BOON -> TemporaryGlobalTriggeredAbility.boon(controllerId, sourceCard, ability,
+                        sourcePermanentId);
+            };
+            return targetFilter == null ? delayed : new TemporaryGlobalTriggeredAbility(delayed.controllerId(),
+                    delayed.sourceCard(), delayed.ability(), targetFilter, delayed.untilEndOfNextTurn(),
+                    delayed.untilNextTurn(), delayed.registrationTurnNumber(), delayed.expirationPlayerId(),
+                    delayed.watchedPermanentId(), delayed.sourcePermanentId(), delayed.watchedPlayerId(),
+                    delayed.linkedExiledCardId(), delayed.untilTriggered(), delayed.next(), delayed.boon());
+        }
     }
 
-    public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
-                                                            List<CardEffect> resolvedEffects) {
-        this(spellFilter, null, resolvedEffects, false, true, null, false);
+    /** "Until end of turn, whenever you cast a [spellFilter] spell, [effects]." */
+    public static RegisterDelayedControllerSpellCastTriggerEffect thisTurn(CardPredicate spellFilter,
+                                                                          List<CardEffect> resolvedEffects) {
+        return new RegisterDelayedControllerSpellCastTriggerEffect(spellFilter, null, resolvedEffects,
+                Duration.THIS_TURN, null);
     }
 
-    public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
-                                                            List<CardEffect> resolvedEffects,
-                                                            boolean sourceMustRemainOnBattlefield) {
-        this(spellFilter, null, resolvedEffects, false, sourceMustRemainOnBattlefield, null, false);
+    /** "When you next cast a [spellFilter] spell this turn, [effects]." */
+    public static RegisterDelayedControllerSpellCastTriggerEffect nextThisTurn(CardPredicate spellFilter,
+                                                                              List<CardEffect> resolvedEffects) {
+        return new RegisterDelayedControllerSpellCastTriggerEffect(spellFilter, null, resolvedEffects,
+                Duration.NEXT_THIS_TURN, null);
     }
 
-    public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
-                                                            List<CardEffect> resolvedEffects,
-                                                            boolean sourceMustRemainOnBattlefield,
-                                                            TargetFilter targetFilter) {
-        this(spellFilter, null, resolvedEffects, false, sourceMustRemainOnBattlefield, targetFilter, false);
+    /** "Until your next turn, whenever you cast a [spellFilter] spell, [effects]." */
+    public static RegisterDelayedControllerSpellCastTriggerEffect untilYourNextTurn(CardPredicate spellFilter,
+                                                                                   List<CardEffect> resolvedEffects) {
+        return new RegisterDelayedControllerSpellCastTriggerEffect(spellFilter, null, resolvedEffects,
+                Duration.UNTIL_YOUR_NEXT_TURN, null);
     }
 
-    public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
-                                                            List<CardEffect> resolvedEffects,
-                                                            boolean oneShot,
-                                                            boolean sourceMustRemainOnBattlefield) {
-        this(spellFilter, null, resolvedEffects, oneShot, sourceMustRemainOnBattlefield, null, false);
+    /** "You get a one-time boon with 'When you cast a [spellFilter] spell, [effects].'" */
+    public static RegisterDelayedControllerSpellCastTriggerEffect boon(CardPredicate spellFilter,
+                                                                      List<CardEffect> resolvedEffects) {
+        return new RegisterDelayedControllerSpellCastTriggerEffect(spellFilter, null, resolvedEffects,
+                Duration.BOON, null);
     }
 
-    public RegisterDelayedControllerSpellCastTriggerEffect(CardPredicate spellFilter,
-                                                            StackEntryPredicate stackEntryFilter,
-                                                            List<CardEffect> resolvedEffects,
-                                                            boolean oneShot,
-                                                            boolean sourceMustRemainOnBattlefield,
-                                                            TargetFilter targetFilter) {
-        this(spellFilter, stackEntryFilter, resolvedEffects, oneShot,
-                sourceMustRemainOnBattlefield, targetFilter, false);
+    /** This registration, triggering only for a spell whose stack object matches {@code filter} too. */
+    public RegisterDelayedControllerSpellCastTriggerEffect withStackEntryFilter(StackEntryPredicate filter) {
+        return new RegisterDelayedControllerSpellCastTriggerEffect(spellFilter, filter, resolvedEffects, duration,
+                targetFilter);
     }
 
-    public static RegisterDelayedControllerSpellCastTriggerEffect withStackEntryFilter(
-            StackEntryPredicate stackEntryFilter, List<CardEffect> resolvedEffects,
-            boolean sourceMustRemainOnBattlefield) {
-        return new RegisterDelayedControllerSpellCastTriggerEffect(
-                null, stackEntryFilter, resolvedEffects, false, sourceMustRemainOnBattlefield, null, false);
+    /** This registration, its ability's targets restricted to {@code filter}. */
+    public RegisterDelayedControllerSpellCastTriggerEffect withTargetFilter(TargetFilter filter) {
+        return new RegisterDelayedControllerSpellCastTriggerEffect(spellFilter, stackEntryFilter, resolvedEffects,
+                duration, filter);
     }
 
-    public static RegisterDelayedControllerSpellCastTriggerEffect withStackEntryFilter(
-            StackEntryPredicate stackEntryFilter, List<CardEffect> resolvedEffects,
-            boolean oneShot, boolean sourceMustRemainOnBattlefield) {
-        return new RegisterDelayedControllerSpellCastTriggerEffect(
-                null, stackEntryFilter, resolvedEffects, oneShot, sourceMustRemainOnBattlefield, null, false);
+    /** The delayed triggered ability this creates: "whenever you cast" a matching spell, its effects. */
+    public TriggeredAbility delayedAbility() {
+        return castAbility(spellFilter, stackEntryFilter, resolvedEffects);
     }
 
-    /** Registers a controller spell-cast trigger through the beginning of that controller's next turn. */
-    public static RegisterDelayedControllerSpellCastTriggerEffect untilNextTurn(
-            CardPredicate spellFilter, List<CardEffect> resolvedEffects,
-            boolean sourceMustRemainOnBattlefield, TargetFilter targetFilter) {
-        return new RegisterDelayedControllerSpellCastTriggerEffect(
-                spellFilter, null, resolvedEffects, false, sourceMustRemainOnBattlefield,
-                targetFilter, true, false);
-    }
-
-    /** Registers a source-independent one-shot boon that remains until the next matching spell is cast. */
-    public static RegisterDelayedControllerSpellCastTriggerEffect oneShotUntilConsumed(
-            CardPredicate spellFilter, List<CardEffect> resolvedEffects) {
-        return new RegisterDelayedControllerSpellCastTriggerEffect(
-                spellFilter, null, resolvedEffects, true, false, null, false, true);
+    /** "Whenever you cast" a spell matching {@code spellFilter} and {@code stackEntryFilter}, {@code effects}. */
+    static TriggeredAbility castAbility(CardPredicate spellFilter, StackEntryPredicate stackEntryFilter,
+                                        List<CardEffect> effects) {
+        var trigger = Triggers.youCastSpell();
+        if (spellFilter != null) {
+            trigger = trigger.withFilter(spellFilter);
+        }
+        if (stackEntryFilter != null) {
+            trigger = trigger.withStackEntryFilter(stackEntryFilter);
+        }
+        return new TriggeredAbility(trigger, effects.toArray(CardEffect[]::new));
     }
 }

@@ -21,7 +21,7 @@ public class ElectrostaticBlast extends Card {
 
     public ElectrostaticBlast() {
         addSpellEffect(new DealDamageToAnyTargetEffect(2));
-        addSpellEffect(RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+        addSpellEffect(RegisterDelayedControllerSpellCastTriggerEffect.boon(
                 INSTANT_OR_SORCERY,
                 List.of(ExileTopCardsChooseOneMayPlayThisTurnEffect.mayPlayOneOfThem(3))));
     }

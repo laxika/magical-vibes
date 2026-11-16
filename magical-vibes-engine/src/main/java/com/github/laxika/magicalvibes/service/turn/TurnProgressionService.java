@@ -32,7 +32,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHand
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageToken;
-import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedDamageDoubling;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDamagedByWatchedCreature;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDealingCombatDamageToPlaneswalker;
@@ -1073,10 +1072,6 @@ public class TurnProgressionService {
                         && nextActive.equals(watcher.expirationPlayerId() != null
                         ? watcher.expirationPlayerId() : watcher.controllerId())
                         && gameData.turnNumber != watcher.registrationTurnNumber());
-        gameData.clearDelayedActions(DelayedControllerSpellCastTrigger.class,
-                trigger -> trigger.untilNextTurn()
-                        && nextActive.equals(trigger.controllerId())
-                        && gameData.turnNumber != trigger.registrationTurnNumber());
         gameData.cardPutIntoExileThisTurn = false;
         gameData.pileGroupingOrGuessCountThisTurn = 0;
         gameData.turnsTakenByPlayer.merge(nextActive, 1, Integer::sum);
@@ -1255,8 +1250,6 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(DelayedAttackTokenCreation.class);
         gameData.clearDelayedActions(DelayedAttackDamage.class);
         gameData.clearDelayedActions(DelayedAttackUntap.class);
-        gameData.clearDelayedActions(DelayedControllerSpellCastTrigger.class,
-                trigger -> !trigger.untilNextTurn() && !trigger.persistsUntilConsumed());
         gameData.clearDelayedActions(DelayedUnblockedAttackerGainLife.class);
         gameData.clearDelayedActions(DelayedUnblockedAttackerPowerDamage.class);
         gameData.clearDelayedActions(DelayedUnblockedAttackerCubeCounter.class);

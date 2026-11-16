@@ -24,13 +24,10 @@ public class BrassInfiniscope extends Card {
                 null,
                 List.of(
                         new AwardManaEffect(ManaColor.COLORLESS, 2),
-                        new RegisterDelayedControllerSpellCastTriggerEffect(
-                                new CardHasXInManaCostPredicate(),
-                                List.of(
+                        RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                                new CardHasXInManaCostPredicate(), List.of(
                                         new DrawCardEffect(),
-                                        new GainLifeEffect(new Divided(new TriggeringSpellXValue(), 2))),
-                                true,
-                                false)),
+                                        new GainLifeEffect(new Divided(new TriggeringSpellXValue(), 2))))),
                 "{T}: Add {C}{C}. When you next cast a spell with {X} in its mana cost this turn, you draw a card and gain half X life, rounded down."));
     }
 }

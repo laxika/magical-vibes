@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreCardsInHandThanEachOtherPlayer;
@@ -1004,9 +1003,8 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && (gameData.boons.stream()
                             .anyMatch(boon -> ctx.controllerId().equals(boon.controllerId()))
-                            || gameData.hasDelayedAction(DelayedControllerSpellCastTrigger.class,
-                            trigger -> trigger.persistsUntilConsumed()
-                                    && ctx.controllerId().equals(trigger.controllerId())));
+                            || gameData.temporaryGlobalTriggeredAbilities.stream()
+                            .anyMatch(delayed -> delayed.boon() && ctx.controllerId().equals(delayed.controllerId())));
             case ControllerHasEmblem ignored ->
                     ctx.controllerId() != null
                             && gameData.emblems.stream()

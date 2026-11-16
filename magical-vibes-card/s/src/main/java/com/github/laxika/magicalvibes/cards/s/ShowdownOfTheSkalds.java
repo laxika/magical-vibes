@@ -27,10 +27,10 @@ public class ShowdownOfTheSkalds extends Card {
         var counterEffect = PutCounterOnTargetPermanentEffect.withTargetRestriction(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, targetCreatureYouControl);
         addTrigger(Triggers.chapter(2),
-                new RegisterDelayedControllerSpellCastTriggerEffect(
-                        null, List.of(counterEffect), false, targetFilter));
+                RegisterDelayedControllerSpellCastTriggerEffect.thisTurn(null, List.of(counterEffect))
+                .withTargetFilter(targetFilter));
         addTrigger(Triggers.chapter(3),
-                new RegisterDelayedControllerSpellCastTriggerEffect(
-                        null, List.of(counterEffect), false, targetFilter));
+                RegisterDelayedControllerSpellCastTriggerEffect.thisTurn(null, List.of(counterEffect))
+                .withTargetFilter(targetFilter));
     }
 }

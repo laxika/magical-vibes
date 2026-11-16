@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterOneShotInstantSorcerySpellDamageBoonEffect;
@@ -51,22 +51,9 @@ public class RegisterOneShotInstantSorcerySpellDamageBoonEffectHandler
                 opponentCreatureOrPlaneswalker,
                 "Target must be a creature or planeswalker an opponent controls");
 
-        gameData.queueDelayedAction(new DelayedControllerSpellCastTrigger(
-                entry.getControllerId(),
-                null,
-                entry.getCard(),
-                INSTANT_OR_SORCERY,
-                null,
-                List.of(new DealDamageToTargetCreatureOrPlaneswalkerEffect(
-                        damage, opponentCreatureOrPlaneswalker)),
-                true,
-                false,
-                targetFilter,
-                null,
-                null,
-                false,
-                true,
-                gameData.turnNumber
-        ));
+        var boon = RegisterDelayedControllerSpellCastTriggerEffect.boon(INSTANT_OR_SORCERY,
+                List.of(new DealDamageToTargetCreatureOrPlaneswalkerEffect(damage, opponentCreatureOrPlaneswalker)));
+        gameData.temporaryGlobalTriggeredAbilities.add(boon.duration().delayed(entry.getControllerId(),
+                entry.getCard(), boon.delayedAbility(), null, gameData.turnNumber, targetFilter));
     }
 }

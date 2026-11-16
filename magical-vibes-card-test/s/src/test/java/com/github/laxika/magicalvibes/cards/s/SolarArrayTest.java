@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -54,6 +56,24 @@ class SolarArrayTest extends BaseCardTest {
 
         assertThat(findPermanent(first).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(findPermanent(second).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void theGrantEndsWithTheTurn() {
+        harness.addToBattlefieldAndReturn(player1, new SolarArray());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.WHITE.name());
+        harness.inMutationScope(() -> GameTestEngineContext.get()
+                .getBean(TurnCleanupService.class).applyCleanupResets(gd));
+
+        MyrRetriever retriever = new MyrRetriever();
+        harness.setHand(player1, List.of(retriever));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(retriever).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private Permanent findPermanent(Card card) {

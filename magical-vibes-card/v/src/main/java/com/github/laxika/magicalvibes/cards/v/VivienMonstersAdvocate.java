@@ -41,14 +41,11 @@ public class VivienMonstersAdvocate extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new RegisterDelayedControllerSpellCastTriggerEffect(
-                        new CardTypePredicate(CardType.CREATURE),
-                        List.of(new SearchLibraryEffect(
+                List.of(RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                        new CardTypePredicate(CardType.CREATURE), List.of(new SearchLibraryEffect(
                                 new CardTypePredicate(CardType.CREATURE),
                                 LibrarySearchDestination.BATTLEFIELD,
-                                new ManaValueBound(new TargetSpellManaValue(), false, -1))),
-                        true,
-                        false)),
+                                new ManaValueBound(new TargetSpellManaValue(), false, -1))))),
                 "-2: When you next cast a creature spell this turn, search your library for a creature card with lesser mana value, put it onto the battlefield, then shuffle."));
     }
 

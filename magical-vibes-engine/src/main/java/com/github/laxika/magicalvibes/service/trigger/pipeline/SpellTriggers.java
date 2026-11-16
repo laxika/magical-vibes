@@ -1262,6 +1262,17 @@ public class SpellTriggers {
             return allOf.predicates().stream().allMatch(nested ->
                     matchesCastSpellPredicate(match, spellEntry, nested, exiledSourcePermanentId));
         }
+        if (match.permanent() == null && match.delayed() != null && match.delayed().sourcePermanentId() != null) {
+            // A delayed ability's "this creature" is its source (CR 603.7e): the permanent, or its last known information
+            // once it has left the battlefield ("less than or equal to Loki's power", CR 113.7a).
+            UUID sourceId = match.delayed().sourcePermanentId();
+            Permanent live = gameQueryService.findPermanentById(match.gameData(), sourceId);
+            Permanent departed = live != null ? null : match.gameData().departedPermanentSnapshots.values().stream()
+                    .filter(snapshot -> snapshot.getId().equals(sourceId)).findFirst().orElse(null);
+            return targetLegalityService.matchesStackEntryPredicate(match.gameData(), spellEntry, predicate,
+                    match.controllerId(), live != null ? live : departed, null,
+                    departed == null ? null : departed.getLastKnownPower());
+        }
         return targetLegalityService.matchesStackEntryPredicate(match.gameData(), spellEntry,
                 predicate, match.controllerId(), match.permanent());
     }

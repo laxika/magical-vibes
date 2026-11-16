@@ -614,22 +614,6 @@ public class TurnCleanupService {
         gameData.pendingAnyManaTypeForNextSpellThisTurnCount.clear();
         gameData.spellsPaidUsingPendingAnyManaTypeThisTurn.clear();
         gameData.pendingNextInstantSorceryUncounterableThisTurnCount.clear();
-        // A retained id's "until end of turn" choice was made during another player's phase (Runed Terror ruling,
-        // CR 514.2): it keeps its chosen type, and the id is put back when the retained state is re-applied below.
-        Set<UUID> retainedTemporaryChosenSubtypes = Set.copyOf(retainedGameState.<UUID>elements(
-                EndOfTurnStateField.GAME_TEMPORARY_CHOSEN_SUBTYPE_PERMANENTS));
-        for (UUID permanentId : gameData.temporaryChosenSubtypePermanentIds) {
-            if (retainedTemporaryChosenSubtypes.contains(permanentId)) {
-                continue;
-            }
-            gameData.forEachPermanent((ownerId, permanent) -> {
-                if (permanent.getId().equals(permanentId)) {
-                    permanent.setChosenSubtype(null);
-                }
-            });
-        }
-        gameData.temporaryChosenSubtypePermanentIds.clear();
-        gameData.chosenSubtypeActivationCopiesThisTurn.clear();
         gameData.creatureEntersDrawSourcesThisTurn.clear();
         gameData.untapAttackedCreaturesEachCombatThisTurnSources.clear();
         gameData.conspiredSpellCopyCounts.clear();

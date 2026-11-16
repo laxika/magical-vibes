@@ -35,12 +35,10 @@ public class RediscoverTheWay extends Card {
         addTrigger(Triggers.chapter(2),
                 LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(3)));
         addTrigger(Triggers.chapter(3),
-                new RegisterDelayedControllerSpellCastTriggerEffect(
-                        NONCREATURE_SPELL,
-                        List.of(new GrantKeywordEffect(
-                                Keyword.DOUBLE_STRIKE, GrantScope.TARGET, CREATURE_YOU_CONTROL)),
-                        false,
-                        new PermanentPredicateTargetFilter(
+                RegisterDelayedControllerSpellCastTriggerEffect.thisTurn(
+                        NONCREATURE_SPELL, List.of(new GrantKeywordEffect(
+                                Keyword.DOUBLE_STRIKE, GrantScope.TARGET, CREATURE_YOU_CONTROL)))
+                .withTargetFilter(new PermanentPredicateTargetFilter(
                                 CREATURE_YOU_CONTROL, "Target must be a creature you control")));
     }
 }

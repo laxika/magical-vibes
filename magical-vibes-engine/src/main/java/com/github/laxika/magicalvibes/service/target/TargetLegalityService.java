@@ -108,7 +108,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntrySupertypeInPredicat
 import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasAnyTargetPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsLoyaltyAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsMulticoloredPredicate;
@@ -5610,24 +5609,6 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryIsCardEnchantedBySourcePredicate) {
             return source != null && source.getAttachedTo() != null && stackEntry.getCard() != null
                     && source.getAttachedTo().equals(stackEntry.getCard().getId());
-        }
-        if (predicate instanceof StackEntryHasSourceChosenSubtypePredicate) {
-            if (source == null || source.getChosenSubtype() == null
-                    || stackEntry.getSourcePermanentId() == null) {
-                return false;
-            }
-            // Each choice made through the source's trigger is a delayed trigger of its own that is
-            // collected separately, so the source's own chosen subtype no longer produces a copy.
-            if (gameData.chosenSubtypeActivationCopiesThisTurn.stream()
-                    .anyMatch(copy -> source.getId().equals(copy.sourcePermanentId()))) {
-                return false;
-            }
-            Permanent abilitySource = gameQueryService.findPermanentById(
-                    gameData, stackEntry.getSourcePermanentId());
-            return abilitySource != null
-                    && predicateEvaluationService.matchesPermanentPredicate(
-                    gameData, abilitySource,
-                    new PermanentHasSubtypePredicate(source.getChosenSubtype()));
         }
         if (predicate instanceof StackEntryTypeInPredicate typeInPredicate) {
             // Combat damage put on the stack is not an ability, so it never matches an ability type.

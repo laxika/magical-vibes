@@ -36,7 +36,7 @@ public class MarchTowardPerfection extends Card {
             new DraftFromSpellbookEffect.SpellbookCard("ONE", "246"));
 
     public MarchTowardPerfection() {
-        addSpellEffect(RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+        addSpellEffect(RegisterDelayedControllerSpellCastTriggerEffect.boon(
                         new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardSubtypePredicate(CardSubtype.PHYREXIAN))),

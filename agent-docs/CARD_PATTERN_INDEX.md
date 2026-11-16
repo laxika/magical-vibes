@@ -102,7 +102,7 @@
 | d20 after revealing up to two basic lands from the library | `DruidOfTheEmeraldGrove.java` + `SearchLibraryForUpToTwoBasicLandsThenRollD20Effect` |
 | basic-land library search that perpetually turns the chosen card into a Clue artifact with a sacrifice-to-draw ability | `w/WoodlandInvestigation.java` + `SearchLibraryAndConditionalEffect` + `PerpetuallyGrantChosenCardCharacteristicsEffect` |
 | death-time last-known power captured into a source-independent one-time creature-spell perpetual boost boon | `d/DragonbornImmolator.java` + `TriggerOptions.DEFAULT.withInterveningIf(SourcePowerAtLeast(1))` + `RegisterOneShotCreatureSpellPerpetualPowerBoostEffect` + `PerpetuallyBoostTriggeringCardEffect` |
-| one-time boon that perpetually boosts the next creature spell by its power | `r/RothgaBondedEngulfer.java` + `RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed` + `PerpetuallyBoostTriggeringCardByPowerEffect` |
+| one-time boon that perpetually boosts the next creature spell by its power | `r/RothgaBondedEngulfer.java` + `RegisterDelayedControllerSpellCastTriggerEffect.boon` + `PerpetuallyBoostTriggeringCardByPowerEffect` |
 | look at four cards, choose one name, take all matching looked-at cards and lose life per card, random-bottom the rest | `s/StrokeOfLuck.java` + `LookAtTopCardsChooseSameNameToHandEffect` |
 | target opponent creature perpetually gets -2/-2 and gains an upkeep trigger that perpetually gives it -1/-1 | `s/SewerPlague.java` + `PerpetuallyBoostTargetCreatureEffect` + `PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect` |
 | ETB choose-up-to-one modal with a two-creature perpetual base-power exchange or a perpetual self base-P/T set | `h/HighFaePrankster.java` + `ChooseOneAtTriggerTimeEffect` + `PerpetuallyExchangeTargetCreatureBasePowerEffect` / `PerpetuallySetSourceBasePowerToughnessEffect` |
@@ -286,7 +286,7 @@
 | perpetual +1/+1 grant to an enter-trigger source and the entering creature | `l/LeafLeapGuide.java` + `PerpetuallyBoostSourceAndEnteringCreatureEffect` |
 | perpetual keyword grant to an enter-trigger source | `m/MarshlandHordemaster.java` + `PerpetuallyGrantKeywordToSourceEffect` |
 | once-per-turn non-flying creature cast duplicate with perpetual flying | `a/AceFlockbringer.java` + `ConjureDuplicateOfTriggeringCreatureToHandEffect` |
-| one-time boon that makes the next non-flying creature spell perpetually gain flying | `l/LuluForgetfulHollyphant.java` + `RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed` + `PerpetuallyGrantKeywordsToTriggeringCardEffect` |
+| one-time boon that makes the next non-flying creature spell perpetually gain flying | `l/LuluForgetfulHollyphant.java` + `RegisterDelayedControllerSpellCastTriggerEffect.boon` + `PerpetuallyGrantKeywordsToTriggeringCardEffect` |
 | one-time end-step boon with a death-count condition plus a boon-presence end-step rider | `u/UnderbridgeWarlock.java` + `CreateBoonEffect.atControllerEndStep` + `ConsumeBoonEffect` + `ControllerHasBoon` |
 | excess-damage note that becomes a one-time instant/sorcery damage boon | `m/MoltenImpact.java` + `ConditionalEffect(EventValueAtLeast(1), RegisterOneShotInstantSorcerySpellDamageBoonEffect)` |
 | Gift a named card onto an opponent's battlefield | `a/ArchivalWhorl.java` + `ConjureCardToOpponentBattlefieldEffect` |

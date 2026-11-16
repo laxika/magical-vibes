@@ -29,8 +29,8 @@ public class Tardis extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.TIME_LORD))),
                 SequenceEffect.of(
-                        new RegisterDelayedControllerSpellCastTriggerEffect(
-                                null, List.of(new CascadeEffect()), true, false),
+                        RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                                null, List.of(new CascadeEffect())),
                         new MayEffect(new PlaneswalkEffect(), "Planeswalk?")));
 
         addActivatedAbility(new ActivatedAbility(

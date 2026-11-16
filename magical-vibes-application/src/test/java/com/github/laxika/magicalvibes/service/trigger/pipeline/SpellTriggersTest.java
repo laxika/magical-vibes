@@ -82,6 +82,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnchantedCreatur
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -324,6 +326,33 @@ class SpellTriggersTest {
             assertThat(entry.getTriggeringActivatedAbility()).isSameAs(loyalty);
             assertThat(entry.isMadeByResolution()).isTrue();
         });
+        assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A delayed ability's \"this creature\" filter reads its maker's source as it last existed once it has left")
+    void delayedAbilityFilterReadsItsDepartedSourceAsItLastExisted() {
+        everySpellMatches();
+        Permanent loki = createPermanent("Loki Laufeyson");
+        loki.setLastKnownPower(3);
+        gd.departedPermanentSnapshots.put(loki.getCard().getId(), loki);
+        TemporaryGlobalTriggeredAbility next = TemporaryGlobalTriggeredAbility.nextThisTurn(player1Id, loki.getCard(),
+                RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(null, List.of(new CopyTriggeringSpellEffect()))
+                        .withStackEntryFilter(new StackEntryManaValueAtMostSourcePowerPredicate()).delayedAbility(),
+                loki.getId());
+        gd.temporaryGlobalTriggeredAbilities.add(next);
+        when(triggerIndex.delayedAbilities(gd))
+                .thenAnswer(invocation -> List.copyOf(gd.temporaryGlobalTriggeredAbilities));
+        Card spell = createInstant("Lightning Bolt");
+        gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Lightning Bolt", List.of()));
+        when(targetLegalityService.matchesStackEntryPredicate(eq(gd), any(StackEntry.class),
+                any(StackEntryManaValueAtMostSourcePowerPredicate.class), eq(player1Id), eq(loki), isNull(), eq(3)))
+                .thenReturn(true);
+
+        sut.trigger(gd, new SpellEvent.Cast(spell, player1Id, Zone.HAND, null));
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getCard()).isSameAs(loki.getCard());
         assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
     }
 

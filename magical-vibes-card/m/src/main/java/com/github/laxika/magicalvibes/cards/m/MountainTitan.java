@@ -18,7 +18,7 @@ public class MountainTitan extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{R}{R}",
-                List.of(new RegisterDelayedControllerSpellCastTriggerEffect(
+                List.of(RegisterDelayedControllerSpellCastTriggerEffect.thisTurn(
                         new CardColorPredicate(CardColor.BLACK),
                         List.of(new PutCountersOnSourceEffect(1, 1, 1)))),
                 "{1}{R}{R}: Until end of turn, whenever you cast a black spell, put a +1/+1 counter on this creature."));

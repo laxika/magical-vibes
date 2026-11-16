@@ -16,7 +16,7 @@ public class FlamingFistDuskguard extends Card {
 
     public FlamingFistDuskguard() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+                RegisterDelayedControllerSpellCastTriggerEffect.boon(
                         new CardTypePredicate(CardType.CREATURE),
                         List.of(new PerpetuallyBoostTriggeringCardEffect(1, 0))));
     }

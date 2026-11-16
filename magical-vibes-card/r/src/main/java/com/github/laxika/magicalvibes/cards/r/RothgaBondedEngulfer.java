@@ -16,7 +16,7 @@ public class RothgaBondedEngulfer extends Card {
 
     public RothgaBondedEngulfer() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+                RegisterDelayedControllerSpellCastTriggerEffect.boon(
                         new CardTypePredicate(CardType.CREATURE),
                         List.of(new PerpetuallyBoostTriggeringCardByPowerEffect())));
     }

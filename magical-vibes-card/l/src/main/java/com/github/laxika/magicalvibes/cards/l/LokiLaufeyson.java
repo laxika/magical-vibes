@@ -21,15 +21,10 @@ public class LokiLaufeyson extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new RegisterDelayedControllerSpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
+                List.of(RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
-                                new CardTypePredicate(CardType.SORCERY))),
-                        new StackEntryManaValueAtMostSourcePowerPredicate(),
-                        List.of(new CopyTriggeringSpellEffect()),
-                        true,
-                        false,
-                        null)),
+                                new CardTypePredicate(CardType.SORCERY))), List.of(new CopyTriggeringSpellEffect()))
+                .withStackEntryFilter(new StackEntryManaValueAtMostSourcePowerPredicate())),
                 "{1}, {T}: When you next cast an instant or sorcery spell with mana value less than or equal to Loki's power this turn, copy that spell. You may choose new targets for the copy."
         ));
 

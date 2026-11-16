@@ -43,10 +43,8 @@ public class NightmaresAndDaydreams extends Card {
     }
 
     private void addMillChapter(int chapter) {
-        addTrigger(Triggers.chapter(chapter), RegisterDelayedControllerSpellCastTriggerEffect.untilNextTurn(
-                INSTANT_OR_SORCERY,
-                List.of(new MillEffect(new EventValue(), MillRecipient.TARGET_PLAYER)),
-                false,
-                ANY_PLAYER));
+        addTrigger(Triggers.chapter(chapter), RegisterDelayedControllerSpellCastTriggerEffect.untilYourNextTurn(
+                INSTANT_OR_SORCERY, List.of(new MillEffect(new EventValue(), MillRecipient.TARGET_PLAYER)))
+                .withTargetFilter(ANY_PLAYER));
     }
 }

@@ -16,7 +16,7 @@ import java.util.List;
 public class PatchplateResolute extends Card {
 
     public PatchplateResolute() {
-        var boon = RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+        var boon = RegisterDelayedControllerSpellCastTriggerEffect.boon(
                 new CardTypePredicate(CardType.CREATURE),
                 List.of(new GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect(
                         new Fixed(1))));

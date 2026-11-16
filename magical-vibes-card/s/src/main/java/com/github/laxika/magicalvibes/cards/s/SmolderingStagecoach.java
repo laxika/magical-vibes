@@ -30,16 +30,10 @@ public class SmolderingStagecoach extends Card {
                 CountScope.CONTROLLER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(instantsAndSorceries, new Fixed(5)));
 
-        addTrigger(Triggers.attacks(), new RegisterDelayedControllerSpellCastTriggerEffect(
-                new CardTypePredicate(CardType.INSTANT),
-                List.of(new CascadeEffect()),
-                true,
-                false),
-                new RegisterDelayedControllerSpellCastTriggerEffect(
-                new CardTypePredicate(CardType.SORCERY),
-                List.of(new CascadeEffect()),
-                true,
-                false));
+        addTrigger(Triggers.attacks(), RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                new CardTypePredicate(CardType.INSTANT), List.of(new CascadeEffect())),
+                RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                        new CardTypePredicate(CardType.SORCERY), List.of(new CascadeEffect())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

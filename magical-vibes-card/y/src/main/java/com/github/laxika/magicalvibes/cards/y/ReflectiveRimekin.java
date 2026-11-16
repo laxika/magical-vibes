@@ -19,7 +19,7 @@ public class ReflectiveRimekin extends Card {
 
     public ReflectiveRimekin() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+                RegisterDelayedControllerSpellCastTriggerEffect.boon(
                         new CardAllOfPredicate(List.of(
                                 new CardAnyOfPredicate(List.of(
                                         new CardTypePredicate(CardType.INSTANT),

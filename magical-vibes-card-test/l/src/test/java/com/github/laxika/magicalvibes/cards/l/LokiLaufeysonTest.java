@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.c.Conflagrate;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,8 @@ class LokiLaufeysonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
 
-        assertThat(gd.stack).anyMatch(entry -> entry.getDescription().contains("delayed trigger"));
+        assertThat(gd.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && entry.getCard().getName().equals("Loki Laufeyson"));
     }
 
     @Test

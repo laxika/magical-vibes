@@ -6,17 +6,16 @@ import java.util.List;
 
 /** During resolution, secretly choose a subtype and store it on the source permanent. */
 public record ChooseSubtypeForSourceEffect(List<CardSubtype> allowedSubtypes,
-                                           boolean untilEndOfTurn,
                                            String choicePrompt)
         implements SubtypeChoiceOnEnterEffect {
 
 
     public ChooseSubtypeForSourceEffect() {
-        this(List.of(), false, "Choose a creature type.");
+        this(List.of(), "Choose a creature type.");
     }
 
     public ChooseSubtypeForSourceEffect(List<CardSubtype> allowedSubtypes) {
-        this(allowedSubtypes, false, "Choose a creature type.");
+        this(allowedSubtypes, "Choose a creature type.");
     }
 
     public ChooseSubtypeForSourceEffect {

@@ -676,6 +676,21 @@ class PlayerInputServiceTest {
     }
 
     @Nested
+    @DisplayName("beginSpellPlaneswalkerTypeChoice")
+    class BeginSpellPlaneswalkerTypeChoice {
+
+        @Test
+        @DisplayName("Offers the planeswalker types only and stores SpellPlaneswalkerTypeChoice context")
+        void offersPlaneswalkerTypes() {
+            svc.beginSpellPlaneswalkerTypeChoice(gd, PLAYER1_ID);
+
+            PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+            assertThat(choice.options()).contains("JACE", "CHANDRA").doesNotContain("ELF", "FOREST");
+            assertThat(choice.context()).isEqualTo(new ChoiceContext.SpellPlaneswalkerTypeChoice(PLAYER1_ID));
+        }
+    }
+
+    @Nested
     @DisplayName("beginSpellCardTypeChoice")
     class BeginSpellCardTypeChoice {
 

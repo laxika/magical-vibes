@@ -16,7 +16,7 @@ public class IlluminatingLash extends Card {
 
     public IlluminatingLash() {
         addSpellEffect(new DealDamageToAnyTargetEffect(3));
-        addSpellEffect(RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+        addSpellEffect(RegisterDelayedControllerSpellCastTriggerEffect.boon(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 List.of(new DrawCardEffect())));
     }

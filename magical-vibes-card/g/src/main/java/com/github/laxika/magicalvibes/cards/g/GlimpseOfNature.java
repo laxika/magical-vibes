@@ -16,7 +16,7 @@ public class GlimpseOfNature extends Card {
 
     public GlimpseOfNature() {
         // Whenever you cast a creature spell this turn, draw a card.
-        addSpellEffect(new RegisterDelayedControllerSpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE), List.of(new DrawCardEffect(1)), false, false));
+        addSpellEffect(RegisterDelayedControllerSpellCastTriggerEffect.thisTurn(
+                new CardTypePredicate(CardType.CREATURE), List.of(new DrawCardEffect(1))));
     }
 }

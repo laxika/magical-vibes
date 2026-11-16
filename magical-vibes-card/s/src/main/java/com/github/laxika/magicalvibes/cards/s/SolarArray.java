@@ -23,7 +23,7 @@ public class SolarArray extends Card {
                 null,
                 List.of(
                         new AwardAnyColorManaEffect(),
-                        RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+                        RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
                                 new CardTypePredicate(CardType.ARTIFACT),
                                 List.of(new GrantKeywordsToCastSpellEffect(Set.of(Keyword.SUNBURST))))),
                 "{T}: Add one mana of any color. When you next cast an artifact spell this turn, that spell gains sunburst."

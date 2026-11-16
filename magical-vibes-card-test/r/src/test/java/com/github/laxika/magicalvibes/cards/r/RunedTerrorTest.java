@@ -45,7 +45,6 @@ import com.github.laxika.magicalvibes.cards.w.Wish;
 import com.github.laxika.magicalvibes.cards.z.ZameckGuildmage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
@@ -1484,36 +1483,6 @@ class RunedTerrorTest extends BaseCardTest {
                 .containsExactly(untilNextTurnWatch);
         assertThat(gd.getDelayedActions(DelayedControllerDamageMultiplication.class)).isEmpty();
         assertThat(gd.drawReplacementTargetToController).isEmpty();
-    }
-
-    @Test
-    void untilEndOfTurnSourceSubtypeChoicesEndAtTheCleanupOfThePlayerActiveWhenTheyWereMade() {
-        harness.addToBattlefield(player1, new RunedTerror());
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        Permanent ownChoice = addCreatureReady(player1, new GrizzlyBears());
-        Permanent otherChoice = addCreatureReady(player2, new GrizzlyBears());
-        Permanent lastingChoice = addCreatureReady(player1, new GrizzlyBears());
-        ownChoice.setChosenSubtype(CardSubtype.JACE);
-        gd.temporaryChosenSubtypePermanentIds.add(ownChoice.getId());
-        lastingChoice.setChosenSubtype(CardSubtype.ELF);
-        gs.advanceStep(gd);
-        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        otherChoice.setChosenSubtype(CardSubtype.CHANDRA);
-        gd.temporaryChosenSubtypePermanentIds.add(otherChoice.getId());
-        gs.advanceStep(gd);
-        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
-
-        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(ownChoice.getChosenSubtype()).isNull();
-        assertThat(otherChoice.getChosenSubtype()).isEqualTo(CardSubtype.CHANDRA);
-        assertThat(lastingChoice.getChosenSubtype()).isEqualTo(CardSubtype.ELF);
-        assertThat(gd.temporaryChosenSubtypePermanentIds).containsExactly(otherChoice.getId());
-
-        harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(otherChoice.getChosenSubtype()).isNull();
-        assertThat(lastingChoice.getChosenSubtype()).isEqualTo(CardSubtype.ELF);
-        assertThat(gd.temporaryChosenSubtypePermanentIds).isEmpty();
     }
 
     @Test

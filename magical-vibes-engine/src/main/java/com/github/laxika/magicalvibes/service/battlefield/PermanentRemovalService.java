@@ -2449,8 +2449,6 @@ public class PermanentRemovalService {
                         gameQueryService.getEffectivePower(gameData, target),
                         gameQueryService.getEffectiveToughness(gameData, target));
                 boolean wasCreature = gameQueryService.isCreature(gameData, target);
-                gameData.updateDelayedControllerSpellCastTriggerSourceSnapshot(
-                        target, gameQueryService.getEffectivePower(gameData, target));
                 boolean wasLand = gameQueryService.isLand(gameData, target);
                 unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, target, target.getAttachedTo(), playerId);
                 List<StackEntry> watchingEntries = new ArrayList<>(gameData.stackEntriesAndTriggerRecords());

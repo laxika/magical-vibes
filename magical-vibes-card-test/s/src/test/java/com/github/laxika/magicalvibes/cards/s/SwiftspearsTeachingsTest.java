@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -28,8 +28,8 @@ class SwiftspearsTeachingsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.getDelayedActions(DelayedControllerSpellCastTrigger.class))
-                .hasSize(1);
+        assertThat(gd.temporaryGlobalTriggeredAbilities).singleElement()
+                .matches(TemporaryGlobalTriggeredAbility::boon);
 
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
@@ -42,8 +42,7 @@ class SwiftspearsTeachingsTest extends BaseCardTest {
 
         Permanent permanent = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.hasKeyword(gd, permanent, Keyword.PROWESS)).isTrue();
-        assertThat(gd.getDelayedActions(DelayedControllerSpellCastTrigger.class))
-                .isEmpty();
+        assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
     }
 
     @Test

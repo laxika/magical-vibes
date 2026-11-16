@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -138,6 +139,8 @@ import com.github.laxika.magicalvibes.model.filter.CardToughnessGreaterThanPower
 import com.github.laxika.magicalvibes.model.filter.CardToughnessLessThanSourceToughnessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.room.RoomNameSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LandManaTypeSupport;
@@ -405,7 +408,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchant
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasAnyTargetPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCopyPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsLoyaltyAbilityPredicate;
@@ -823,13 +825,7 @@ public class PredicateEvaluationService {
             case CardHasCascadePredicate ignored ->
                     card.getTriggerEffects(Triggers.youCastThisSpell()).stream().anyMatch(CascadeEffect.class::isInstance)
                             || gameData != null && cardOwnerId != null
-                            && gameData.getDelayedActions(
-                                    com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger.class)
-                            .stream()
-                            .anyMatch(delayed -> cardOwnerId.equals(delayed.controllerId())
-                                    && delayed.resolvedEffects().stream().anyMatch(CascadeEffect.class::isInstance)
-                                    && (delayed.spellFilter() == null
-                                    || matchesCardPredicate(card, delayed.spellFilter(), null, gameData, cardOwnerId)));
+                            && hasDelayedCascadeFor(gameData, card, cardOwnerId);
             case CardIsSelfPredicate ignored ->
                     sourceCardId != null && card.getId().equals(sourceCardId);
             case CardColorPredicate p ->
@@ -5447,7 +5443,6 @@ public class PredicateEvaluationService {
             case StackEntryIsSingleTargetPredicate ignored -> false;
             case StackEntryHasAnyTargetPredicate ignored -> false;
             case StackEntryHasTargetPredicate ignored -> false;
-            case StackEntryHasSourceChosenSubtypePredicate ignored -> false;
             case StackEntryHasXInManaCostPredicate ignored ->
                     entry.getCard().getParsedManaCost() != null && entry.getCard().getParsedManaCost().hasX();
             case StackEntryIsFirstSpellOfKindThisTurnPredicate ignored -> false;
@@ -5674,5 +5669,29 @@ public class PredicateEvaluationService {
                 .anyMatch(effect -> effect instanceof AddExtraManaOfChosenColorOnLandTapEffect
                         || effect instanceof AddOneOfEachManaTypeProducedByLandEffect
                         || effect instanceof AddManaOnEnchantedLandTapEffect);
+    }
+
+    /**
+     * Whether {@code playerId} has a delayed triggered ability that cascades for {@code card} as a spell they cast ("the
+     * next noncreature spell you cast this turn has cascade", Dark Apostle): its "whenever you cast" trigger's spell
+     * filter matches the card and one of its effects is cascade.
+     */
+    private boolean hasDelayedCascadeFor(GameData gameData, Card card, UUID playerId) {
+        for (TemporaryGlobalTriggeredAbility delayed : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
+            if (!playerId.equals(delayed.controllerId())
+                    || delayed.ability().effects().stream()
+                    .noneMatch(registration -> registration.effect() instanceof CascadeEffect)) {
+                continue;
+            }
+            for (TriggerCondition condition : delayed.ability().conditions()) {
+                if (condition.trigger() instanceof SpellTrigger cast
+                        && cast.event() == SpellTrigger.SpellEvent.CAST && cast.player() == com.github.laxika.magicalvibes.model.trigger.PlayerRelation.YOU
+                        && (cast.filter() == null || cast.filter().spell() == null
+                        || matchesCardPredicate(card, cast.filter().spell(), null, gameData, playerId))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

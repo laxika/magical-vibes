@@ -18,7 +18,7 @@ public class ChampionsOfTyr extends Card {
 
     public ChampionsOfTyr() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+                RegisterDelayedControllerSpellCastTriggerEffect.boon(
                         new CardTypePredicate(CardType.CREATURE),
                         List.of(new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption(

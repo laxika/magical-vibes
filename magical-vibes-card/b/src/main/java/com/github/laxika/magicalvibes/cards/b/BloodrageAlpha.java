@@ -50,7 +50,7 @@ public class BloodrageAlpha extends Card {
         TargetFilter wolf = new PermanentPredicateTargetFilter(
                 ANOTHER_WOLF_OR_WEREWOLF_YOU_CONTROL,
                 "Target must be another Wolf or Werewolf you control");
-        var oneTimeBoon = RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+        var oneTimeBoon = RegisterDelayedControllerSpellCastTriggerEffect.boon(
                 WOLF_OR_WEREWOLF,
                 List.of(new GrantTriggeredAbilityToCastSpellEffect(
                         new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),

@@ -18,11 +18,8 @@ public class DarkApostle extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}",
-                List.of(new RegisterDelayedControllerSpellCastTriggerEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        List.of(new CascadeEffect()),
-                        true,
-                        false)),
+                List.of(RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)), List.of(new CascadeEffect()))),
                 "{3}, {T}: The next noncreature spell you cast this turn has cascade."
         ));
     }

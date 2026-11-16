@@ -24,11 +24,9 @@ public class OriginOfThor extends Card {
 
         var creatureYouControl = TargetFilters.creatureYouControl();
         addTrigger(Triggers.chapter(2),
-                new RegisterDelayedControllerSpellCastTriggerEffect(
-                        null,
-                        List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
-                        false,
-                        creatureYouControl));
+                RegisterDelayedControllerSpellCastTriggerEffect.thisTurn(
+                        null, List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)))
+                .withTargetFilter(creatureYouControl));
 
         addTrigger(Triggers.chapter(3), new TargetCreatureDealsPowerDamageToEachOpponentEffect());
         setSagaChapterTargetFilter(3, Set.of(creatureYouControl));

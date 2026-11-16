@@ -35,6 +35,9 @@ import java.util.UUID;
  * @param next               whether it triggers only the next time its trigger event occurs within its stated
  *                           duration: "when you next cast an instant or sorcery spell this turn, copy that spell"
  *                           triggers once and ends with the turn if it hasn't (CR 603.7b)
+ * @param boon               whether it is a one-time boon ("you get a one-time boon with 'when you cast a creature spell,
+ *                           ...'"): it has no stated duration and triggers once, as {@code untilTriggered}, and it is
+ *                           what "if you have a boon" counts (Underbridge Warlock)
  */
 public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
                                               TargetFilter targetFilter,
@@ -46,7 +49,20 @@ public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard
                                               UUID watchedPlayerId,
                                               UUID linkedExiledCardId,
                                               boolean untilTriggered,
-                                              boolean next) {
+                                              boolean next,
+                                              boolean boon) {
+
+    /** {@code ability} that isn't a boon. */
+    public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
+                                           TargetFilter targetFilter,
+                                           boolean untilEndOfNextTurn, boolean untilNextTurn,
+                                           int registrationTurnNumber, UUID expirationPlayerId,
+                                           UUID watchedPermanentId, UUID sourcePermanentId, UUID watchedPlayerId,
+                                           UUID linkedExiledCardId, boolean untilTriggered, boolean next) {
+        this(controllerId, sourceCard, ability, targetFilter, untilEndOfNextTurn, untilNextTurn,
+                registrationTurnNumber, expirationPlayerId, watchedPermanentId, sourcePermanentId, watchedPlayerId,
+                linkedExiledCardId, untilTriggered, next, false);
+    }
 
     /** {@code ability} that triggers on every event of its duration, or with no stated duration (CR 603.7b). */
     public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
@@ -106,6 +122,28 @@ public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard
                                                                TriggeredAbility ability, UUID sourcePermanentId) {
         return new TemporaryGlobalTriggeredAbility(controllerId, sourceCard, ability, null, false, false, -1, null,
                 null, sourcePermanentId, null, null, false, true);
+    }
+
+    /**
+     * {@code ability} of the delayed triggered ability "until your next turn, whenever ..." a resolving spell or ability
+     * with the source {@code sourceCard} and {@code sourcePermanentId} (or none) created on turn
+     * {@code registrationTurnNumber}, controlled by {@code controllerId}: it ends as that player's next turn begins.
+     */
+    public static TemporaryGlobalTriggeredAbility untilYourNextTurn(UUID controllerId, Card sourceCard,
+                                                                    TriggeredAbility ability, UUID sourcePermanentId,
+                                                                    int registrationTurnNumber) {
+        return new TemporaryGlobalTriggeredAbility(controllerId, sourceCard, ability, null, false, true,
+                registrationTurnNumber, null, null, sourcePermanentId, null, null, false, false);
+    }
+
+    /**
+     * {@code ability} of the one-time boon {@code controllerId} gets from a resolving spell or ability with the source
+     * {@code sourceCard} and {@code sourcePermanentId} (or none): it lasts until it triggers, once.
+     */
+    public static TemporaryGlobalTriggeredAbility boon(UUID controllerId, Card sourceCard, TriggeredAbility ability,
+                                                       UUID sourcePermanentId) {
+        return new TemporaryGlobalTriggeredAbility(controllerId, sourceCard, ability, null, false, false, -1, null,
+                null, sourcePermanentId, null, null, true, false, true);
     }
 
     /** Whether it triggers only once: it has no stated duration, or it is a "when you next ..." (CR 603.7b). */

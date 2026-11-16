@@ -2,32 +2,36 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import java.util.List;
 
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect.Duration;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
- * Registers a delayed trigger watching the player chosen as the enclosing ability's target.
- * This is the targeted counterpart to {@link RegisterDelayedControllerSpellCastTriggerEffect}.
+ * The player the enclosing ability targets gets a delayed triggered ability (CR 603.7a) that triggers when they cast a
+ * spell matching {@code spellFilter} (any spell when {@code null}), for {@code duration}: "target player ... The next
+ * spell they cast this turn has cascade" (Bigger on the Inside), "target opponent gets a one-time boon with 'When you
+ * cast a creature spell, ...'" (Loch Larent). The targeted counterpart of
+ * {@link RegisterDelayedControllerSpellCastTriggerEffect}.
  */
-public record RegisterDelayedTargetPlayerSpellCastTriggerEffect(
-        CardPredicate spellFilter,
-        List<CardEffect> resolvedEffects,
-        boolean oneShot,
-        boolean sourceMustRemainOnBattlefield,
-        boolean persistsUntilConsumed
-) implements CardEffect {
+public record RegisterDelayedTargetPlayerSpellCastTriggerEffect(CardPredicate spellFilter,
+                                                                List<CardEffect> resolvedEffects,
+                                                                Duration duration) implements CardEffect {
 
-    public RegisterDelayedTargetPlayerSpellCastTriggerEffect(
-            CardPredicate spellFilter,
-            List<CardEffect> resolvedEffects,
-            boolean oneShot,
-            boolean sourceMustRemainOnBattlefield) {
-        this(spellFilter, resolvedEffects, oneShot, sourceMustRemainOnBattlefield, false);
+    /** The target player gets a one-time boon with "When you cast a [spellFilter] spell, [effects]." */
+    public static RegisterDelayedTargetPlayerSpellCastTriggerEffect boon(CardPredicate spellFilter,
+                                                                        List<CardEffect> resolvedEffects) {
+        return new RegisterDelayedTargetPlayerSpellCastTriggerEffect(spellFilter, resolvedEffects, Duration.BOON);
     }
 
-    /** Registers a source-independent one-shot boon that remains until the next matching spell. */
-    public static RegisterDelayedTargetPlayerSpellCastTriggerEffect oneShotUntilConsumed(
-            CardPredicate spellFilter, List<CardEffect> resolvedEffects) {
-        return new RegisterDelayedTargetPlayerSpellCastTriggerEffect(
-                spellFilter, resolvedEffects, true, false, true);
+    /** "The next [spellFilter] spell [the target player] casts this turn [effects]." */
+    public static RegisterDelayedTargetPlayerSpellCastTriggerEffect nextThisTurn(CardPredicate spellFilter,
+                                                                                List<CardEffect> resolvedEffects) {
+        return new RegisterDelayedTargetPlayerSpellCastTriggerEffect(spellFilter, resolvedEffects,
+                Duration.NEXT_THIS_TURN);
+    }
+
+    /** The delayed triggered ability the target player gets: "whenever you cast" a matching spell, its effects. */
+    public TriggeredAbility delayedAbility() {
+        return RegisterDelayedControllerSpellCastTriggerEffect.castAbility(spellFilter, null, resolvedEffects);
     }
 }

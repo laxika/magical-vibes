@@ -20,11 +20,8 @@ public class SummonBrynhildr extends Card {
     public SummonBrynhildr() {
         addTrigger(Triggers.chapter(1), ExileTopCardMayPlayThisTurnEffect.renewedOnLoreCounterTurns());
 
-        var nextCreatureGainsHaste = new RegisterDelayedControllerSpellCastTriggerEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                List.of(new GrantKeywordsToCastSpellEffect(Set.of(Keyword.HASTE))),
-                true,
-                false);
+        var nextCreatureGainsHaste = RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                new CardTypePredicate(CardType.CREATURE), List.of(new GrantKeywordsToCastSpellEffect(Set.of(Keyword.HASTE))));
         addTrigger(Triggers.chapter(2), nextCreatureGainsHaste);
         addTrigger(Triggers.chapter(3), nextCreatureGainsHaste);
     }

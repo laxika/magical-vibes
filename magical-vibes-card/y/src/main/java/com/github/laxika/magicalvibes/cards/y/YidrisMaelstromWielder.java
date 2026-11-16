@@ -16,9 +16,7 @@ public class YidrisMaelstromWielder extends Card {
 
     public YidrisMaelstromWielder() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                RegisterDelayedControllerSpellCastTriggerEffect.withStackEntryFilter(
-                        new StackEntryCastFromZonePredicate(Zone.HAND),
-                        List.of(new CascadeEffect()),
-                        false));
+                RegisterDelayedControllerSpellCastTriggerEffect.thisTurn(null, List.of(new CascadeEffect()))
+                .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.HAND)));
     }
 }

@@ -80,7 +80,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.MulliganService;
@@ -1194,8 +1193,9 @@ public class ChoiceHandlerService {
             handleSpellCreatureTypeChoice(gameData, player, colorName);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.SpellNonbasicLandTypeChoice) {
-            handleSpellNonbasicLandTypeChoice(gameData, player, colorName, colorChoice.options());
+        if (colorChoice.context() instanceof ChoiceContext.SpellNonbasicLandTypeChoice
+                || colorChoice.context() instanceof ChoiceContext.SpellPlaneswalkerTypeChoice) {
+            handleSpellSubtypeFromOptionsChoice(gameData, player, colorName, colorChoice.options());
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.SpellCardTypeChoice) {
@@ -3486,7 +3486,7 @@ public class ChoiceHandlerService {
         if (ctx.followUpSubtypeChoice() != null && ctx.sourcePermanentId() != null) {
             ChooseSubtypeForSourceEffect followUp = ctx.followUpSubtypeChoice();
             playerInputService.beginSubtypeChoiceForSource(gameData, ctx.controllerId(), ctx.sourcePermanentId(),
-                    followUp.allowedSubtypes(), followUp.untilEndOfTurn(), followUp.choicePrompt());
+                    followUp.allowedSubtypes(), followUp.choicePrompt());
             return;
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -6003,13 +6003,6 @@ public class ChoiceHandlerService {
         Permanent source = gameQueryService.findPermanentById(gameData, ctx.permanentId());
         if (source != null) {
             source.setChosenSubtype(subtype);
-            if (ctx.untilEndOfTurn()) {
-                gameData.temporaryChosenSubtypePermanentIds.add(source.getId());
-                if (copiesActivatedAbilities(source.getCard())) {
-                    gameData.chosenSubtypeActivationCopiesThisTurn.add(new GameData.ChosenSubtypeActivationCopy(
-                            player.getId(), source.getCard(), source.getId(), subtype));
-                }
-            }
             log.info("Game {} - {} secretly chooses creature type {} for {}", gameData.id,
                     player.getUsername(), subtype, source.getCard().getName());
             if (gameData.pendingEffectResolutionEntry == null) {
@@ -6027,13 +6020,6 @@ public class ChoiceHandlerService {
      * ability" ability (Leori, Sparktouched Hunter): an activation trigger whose effect is
      * {@link CopyTriggeringSpellOrAbilityEffect}. A chosen type until end of turn registers it as a delayed copy.
      */
-    private static boolean copiesActivatedAbilities(Card card) {
-        return card.getTriggeredAbilities().stream().anyMatch(ability ->
-                ability.conditions().stream().anyMatch(condition -> condition.trigger() instanceof AbilityTrigger)
-                        && ability.effects().stream().anyMatch(registration ->
-                        registration.effect() instanceof CopyTriggeringSpellOrAbilityEffect));
-    }
-
     private void handlePersistentManaColorChosen(GameData gameData, Player player, String colorName,
                                                  List<String> options,
                                                  ChoiceContext.PersistentManaColorChoice ctx) {
@@ -6109,10 +6095,11 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleSpellNonbasicLandTypeChoice(GameData gameData, Player player, String subtypeName,
-                                                    List<String> options) {
+    /** Records the subtype chosen among {@code options} for the resolving spell or ability, and resumes it. */
+    private void handleSpellSubtypeFromOptionsChoice(GameData gameData, Player player, String subtypeName,
+                                                     List<String> options) {
         if (!options.contains(subtypeName)) {
-            throw new IllegalArgumentException("Invalid nonbasic land type choice: " + subtypeName);
+            throw new IllegalArgumentException("Invalid subtype choice: " + subtypeName);
         }
         CardSubtype subtype = CardSubtype.valueOf(subtypeName);
 
@@ -6121,7 +6108,7 @@ public class ChoiceHandlerService {
 
         String logEntry = player.getUsername() + " chooses " + subtype.getDisplayName() + ".";
         gameLogService.append(gameData, GameLog.text(logEntry));
-        log.info("Game {} - {} chooses nonbasic land type {} for a spell",
+        log.info("Game {} - {} chooses subtype {} for a resolving spell or ability",
                 gameData.id, player.getUsername(), subtype);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

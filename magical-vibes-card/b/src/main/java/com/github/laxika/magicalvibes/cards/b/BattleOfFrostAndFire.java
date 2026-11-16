@@ -33,11 +33,9 @@ public class BattleOfFrostAndFire extends Card {
                         new PermanentIsPlaneswalkerPredicate()))));
         addTrigger(Triggers.chapter(2), new ScryEffect(3));
         addTrigger(Triggers.chapter(3),
-                RegisterDelayedControllerSpellCastTriggerEffect.withStackEntryFilter(
-                        new StackEntryNotPredicate(new StackEntryMaxManaValuePredicate(4)),
-                        List.of(
+                RegisterDelayedControllerSpellCastTriggerEffect.thisTurn(null, List.of(
                                 new DrawCardEffect(2),
-                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
-                        false));
+                                new DiscardEffect(1, DiscardRecipient.CONTROLLER)))
+                .withStackEntryFilter(new StackEntryNotPredicate(new StackEntryMaxManaValuePredicate(4))));
     }
 }

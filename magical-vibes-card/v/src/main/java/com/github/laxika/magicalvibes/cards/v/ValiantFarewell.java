@@ -24,7 +24,7 @@ public class ValiantFarewell extends Card {
                 .addSpellEffect(new BoostTargetCreatureEffect(2, 0))
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                        RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+                        RegisterDelayedControllerSpellCastTriggerEffect.boon(
                                 new CardTypePredicate(CardType.CREATURE),
                                 List.of(new PerpetuallyBoostTriggeringCardEffect(2, 0)))), true))
                 .addSpellEffect(new DrawCardEffect(1));

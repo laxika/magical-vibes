@@ -48,7 +48,7 @@ public class ChocoboCamp extends Card {
                 null,
                 List.of(
                         new AwardManaEffect(ManaColor.GREEN),
-                        RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+                        RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
                                 new CardAllOfPredicate(List.of(
                                         new CardTypePredicate(CardType.CREATURE),
                                         new CardSubtypePredicate(CardSubtype.BIRD)

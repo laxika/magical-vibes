@@ -16,13 +16,9 @@ public class RideTheAvalanche extends Card {
 
     public RideTheAvalanche() {
         addSpellEffect(GrantFlashToNextSpellOfTypeThisTurnEffect.nextSpell());
-        addSpellEffect(new RegisterDelayedControllerSpellCastTriggerEffect(
-                null,
-                null,
-                List.of(PutCounterOnTargetPermanentEffect.upToOneTarget(
-                        CounterType.PLUS_ONE_PLUS_ONE, new EventValue())),
-                true,
-                false,
-                TargetFilters.creature()));
+        addSpellEffect(RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                null, List.of(PutCounterOnTargetPermanentEffect.upToOneTarget(
+                        CounterType.PLUS_ONE_PLUS_ONE, new EventValue())))
+                .withTargetFilter(TargetFilters.creature()));
     }
 }

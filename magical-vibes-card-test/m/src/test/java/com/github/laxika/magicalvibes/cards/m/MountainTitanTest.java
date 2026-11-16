@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -26,6 +27,21 @@ class MountainTitanTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the delayed trigger
 
         assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The delayed ability still triggers after Mountain Titan left the battlefield")
+    void triggersAfterTheTitanLeft() {
+        Permanent titan = activateTitan();
+        gd.playerBattlefields.get(player1.getId()).remove(titan);
+        gd.playerGraveyards.get(player1.getId()).add(titan.getCard());
+
+        harness.castFromHand(player1, new DarkRitual(), "{B}");
+
+        assertThat(gd.stack).anySatisfy(entry -> {
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getCard().getName()).isEqualTo("Mountain Titan");
+        });
     }
 
     @Test

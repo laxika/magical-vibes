@@ -89,7 +89,7 @@ public class JaheiraHarperEmissary extends Card {
             case WHITE -> new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE);
             case BLUE -> new ScryEffect(2);
             case BLACK -> new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT);
-            case RED -> RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+            case RED -> RegisterDelayedControllerSpellCastTriggerEffect.boon(
                     new CardTypePredicate(CardType.CREATURE),
                     List.of(new PerpetuallyBoostTriggeringCardEffect(1, 0),
                             new PerpetuallyGrantKeywordsToTriggeringCardEffect(Set.of(Keyword.HASTE))));

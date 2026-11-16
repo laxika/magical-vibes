@@ -36,8 +36,8 @@ public class BiggerOnTheInside extends Card {
                                 List.of(
                                         new AwardAnyColorManaEffect(new Fixed(2), true, false)
                                                 .withColorChosenByRecipient(),
-                                        new RegisterDelayedTargetPlayerSpellCastTriggerEffect(
-                                                null, List.of(new CascadeEffect()), true, false)),
+                                        RegisterDelayedTargetPlayerSpellCastTriggerEffect.nextThisTurn(
+                                                null, List.of(new CascadeEffect()))),
                                 "{T}: Target player adds two mana of any one color. The next spell they cast this turn has cascade.",
                                 new PlayerPredicateTargetFilter(
                                         new PlayerRelationPredicate(PlayerRelation.ANY),

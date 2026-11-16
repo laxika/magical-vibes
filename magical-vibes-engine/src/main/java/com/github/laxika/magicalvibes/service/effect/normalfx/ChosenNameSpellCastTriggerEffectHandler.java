@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenNameSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
@@ -45,10 +46,10 @@ public class ChosenNameSpellCastTriggerEffectHandler implements NormalEffectHand
         }
 
         var trigger = (ChosenNameSpellCastTriggerEffect) effect;
-        gameData.queueDelayedAction(new DelayedControllerSpellCastTrigger(
-                entry.getControllerId(), entry.getSourcePermanentId(), entry.getCard(),
-                new CardNamedPredicate(source.getChosenName()), null, trigger.resolvedEffects(), true, false,
-                null, new Permanent(source), null, false, false, -1));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.nextThisTurn(
+                entry.getControllerId(), entry.getCard(), RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                        new CardNamedPredicate(chosenName), trigger.resolvedEffects()).delayedAbility(),
+                entry.getSourcePermanentId()));
         log.info("Game {} - {} registers a first chosen-name spell-cast trigger for this turn",
                 gameData.id, entry.getCard().getName());
     }

@@ -50,7 +50,7 @@ public class LuluForgetfulHollyphant extends Card {
 
     public LuluForgetfulHollyphant() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+                RegisterDelayedControllerSpellCastTriggerEffect.boon(
                         new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardNotPredicate(new CardKeywordPredicate(Keyword.FLYING)))),

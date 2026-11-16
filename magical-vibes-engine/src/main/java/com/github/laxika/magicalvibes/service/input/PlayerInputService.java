@@ -1421,7 +1421,7 @@ public class PlayerInputService {
                                    SubtypeChoiceOnEnterEffect choiceEffect) {
         if (choiceEffect instanceof ChooseSubtypeForSourceEffect chooseSubtype) {
             beginSubtypeChoiceForSource(gameData, playerId, permanentId, choiceEffect.allowedSubtypes(),
-                    chooseSubtype.untilEndOfTurn(), choiceEffect.choicePrompt());
+                    choiceEffect.choicePrompt());
             return;
         }
         if (choiceEffect instanceof ChooseSubtypeOnEnterEffect chooseSubtype && chooseSubtype.opponentChooses()) {
@@ -1444,7 +1444,7 @@ public class PlayerInputService {
                                    SubtypeChoiceOnEnterEffect choiceEffect, boolean landPlay) {
         if (choiceEffect instanceof ChooseSubtypeForSourceEffect chooseSubtype) {
             beginSubtypeChoiceForSource(gameData, playerId, permanentId, choiceEffect.allowedSubtypes(),
-                    chooseSubtype.untilEndOfTurn(), choiceEffect.choicePrompt());
+                    choiceEffect.choicePrompt());
             return;
         }
         if (choiceEffect instanceof ChooseSubtypeOnEnterEffect chooseSubtype && chooseSubtype.opponentChooses()) {
@@ -1517,15 +1517,12 @@ public class PlayerInputService {
 
     public void beginSubtypeChoiceForSource(GameData gameData, UUID playerId, UUID permanentId,
                                             List<CardSubtype> allowedSubtypes) {
-        beginSubtypeChoiceForSource(gameData, playerId, permanentId, allowedSubtypes, false,
-                "Choose a creature type.");
+        beginSubtypeChoiceForSource(gameData, playerId, permanentId, allowedSubtypes, "Choose a creature type.");
     }
 
     public void beginSubtypeChoiceForSource(GameData gameData, UUID playerId, UUID permanentId,
-                                            List<CardSubtype> allowedSubtypes, boolean untilEndOfTurn,
-                                            String prompt) {
-        ChoiceContext.SourceSubtypeChoice choiceContext =
-                new ChoiceContext.SourceSubtypeChoice(permanentId, untilEndOfTurn);
+                                            List<CardSubtype> allowedSubtypes, String prompt) {
+        ChoiceContext.SourceSubtypeChoice choiceContext = new ChoiceContext.SourceSubtypeChoice(permanentId);
 
         List<CardSubtype> choices = allowedSubtypes == null || allowedSubtypes.isEmpty()
                 ? Arrays.stream(CardSubtype.values())
@@ -1595,6 +1592,16 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a creature type", gameData.id, playerName);
+    }
+
+    /** Asks {@code playerId} to choose a planeswalker type for the resolving spell or ability. */
+    public void beginSpellPlaneswalkerTypeChoice(GameData gameData, UUID playerId) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, new ChoiceContext.SpellPlaneswalkerTypeChoice(playerId),
+                CardSubtype.planeswalkerTypes().stream().map(CardSubtype::name).toList(),
+                "Choose a planeswalker type."));
+        log.info("Game {} - Awaiting {} to choose a planeswalker type", gameData.id,
+                gameData.playerIdToName.get(playerId));
     }
 
     public void beginSpellNonbasicLandTypeChoice(GameData gameData, UUID playerId) {

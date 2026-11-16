@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDa
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamageByAttackingCreature;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DestroyChosenCreaturesIfDidNotAttackAtEndStep;
-import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedStillExiledCardsEndStepTrigger;
@@ -2666,21 +2665,6 @@ public class GameData {
     /** Pending one-shot grants that make the next instant or sorcery cast this turn uncounterable. */
     public final Map<UUID, Integer> pendingNextInstantSorceryUncounterableThisTurnCount = new ConcurrentHashMap<>();
 
-    /** Permanents whose source subtype choice is temporary and expires during cleanup. */
-    public final Set<UUID> temporaryChosenSubtypePermanentIds = ConcurrentHashMap.newKeySet();
-
-    /**
-     * Until-end-of-turn delayed triggers created by choosing a subtype for a source: whenever the
-     * controller activates an ability of a planeswalker of that subtype, the ability is copied
-     * (Leori, Sparktouched Hunter). Each choice is its own delayed trigger and outlives its source.
-     */
-    public final List<ChosenSubtypeActivationCopy> chosenSubtypeActivationCopiesThisTurn =
-            new java.util.concurrent.CopyOnWriteArrayList<>();
-
-    /** One delayed "copy abilities of planeswalkers of this type" trigger and the object that created it. */
-    public record ChosenSubtypeActivationCopy(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
-                                              CardSubtype subtype) {}
-
     /** "Whenever a creature enters this turn, you may draw a card" delayed triggers (Beck). */
     public final Map<UUID, List<Card>> creatureEntersDrawSourcesThisTurn = new ConcurrentHashMap<>();
 
@@ -5151,7 +5135,6 @@ public class GameData {
             case GAME_NEXT_INSTANT_SORCERY_UNCOUNTERABLE ->
                     new HashMap<>(pendingNextInstantSorceryUncounterableThisTurnCount);
             case GAME_ANY_MANA_TYPE_FOR_NEXT_SPELL -> new HashMap<>(pendingAnyManaTypeForNextSpellThisTurnCount);
-            case GAME_CHOSEN_SUBTYPE_ACTIVATION_COPIES -> new ArrayList<>(chosenSubtypeActivationCopiesThisTurn);
             case GAME_CREATURE_ENTERS_DRAW_SOURCES -> synchronizedListMapEntries(creatureEntersDrawSourcesThisTurn);
             case GAME_UNTAP_ATTACKED_CREATURES_EACH_COMBAT_SOURCES ->
                     synchronizedListMapEntries(untapAttackedCreaturesEachCombatThisTurnSources);
@@ -5203,7 +5186,6 @@ public class GameData {
                     .toList();
             case GAME_DRAW_REPLACEMENT_TARGET_TO_CONTROLLER ->
                     Set.copyOf(plainMapEntries(drawReplacementTargetToController));
-            case GAME_TEMPORARY_CHOSEN_SUBTYPE_PERMANENTS -> temporaryChosenSubtypePermanentIds;
             case GAME_SACRIFICE_FORBIDDEN -> Set.copyOf(plainMapEntries(sacrificeForbiddenThisTurn));
             case GAME_CONTROL_LOSS_UNATTACH_TRIGGERS -> synchronizedListMapEntries(controlLossUnattachTriggers);
             case GAME_SKIPPED_STEPS_OR_PHASES -> mapEntries(skippedStepOrPhasesThisTurn);
@@ -5479,8 +5461,6 @@ public class GameData {
                     addCounts(pendingNextInstantSorceryUncounterableThisTurnCount, (Map<UUID, Integer>) value);
             case GAME_ANY_MANA_TYPE_FOR_NEXT_SPELL ->
                     addCounts(pendingAnyManaTypeForNextSpellThisTurnCount, (Map<UUID, Integer>) value);
-            case GAME_CHOSEN_SUBTYPE_ACTIVATION_COPIES ->
-                    chosenSubtypeActivationCopiesThisTurn.addAll((List<ChosenSubtypeActivationCopy>) value);
             case GAME_CREATURE_ENTERS_DRAW_SOURCES -> addSynchronizedListMapEntries(
                     creatureEntersDrawSourcesThisTurn, (List<Map.Entry<UUID, Card>>) value);
             case GAME_UNTAP_ATTACKED_CREATURES_EACH_COMBAT_SOURCES -> addSynchronizedListMapEntries(
@@ -5549,8 +5529,6 @@ public class GameData {
             case GAME_THIS_TURN_DELAYED_ACTIONS -> delayedActions.addAll((List<DelayedAction>) value);
             case GAME_DRAW_REPLACEMENT_TARGET_TO_CONTROLLER -> ((Set<Map.Entry<UUID, UUID>>) value).forEach(entry ->
                     drawReplacementTargetToController.putIfAbsent(entry.getKey(), entry.getValue()));
-            case GAME_TEMPORARY_CHOSEN_SUBTYPE_PERMANENTS ->
-                    temporaryChosenSubtypePermanentIds.addAll((Set<UUID>) value);
             case GAME_SACRIFICE_FORBIDDEN -> ((Set<Map.Entry<UUID, UUID>>) value).forEach(entry ->
                     sacrificeForbiddenThisTurn.putIfAbsent(entry.getKey(), entry.getValue()));
             // Not cleared before the retained state is re-applied: the cleanup step drops only the ending triggers,
@@ -6468,26 +6446,6 @@ public class GameData {
                         && cleanup.actionId().equals(actionId)) {
                     delayedActions.set(i, cleanup.withLandRemoved(landId));
                     return;
-                }
-            }
-        }
-    }
-
-    /** Updates the last-known source snapshot of delayed spell-cast triggers before a permanent leaves. */
-    public void updateDelayedControllerSpellCastTriggerSourceSnapshot(Permanent permanent) {
-        updateDelayedControllerSpellCastTriggerSourceSnapshot(permanent, null);
-    }
-
-    /** Updates a delayed spell-cast trigger's last-known source state before a permanent leaves. */
-    public void updateDelayedControllerSpellCastTriggerSourceSnapshot(
-            Permanent permanent, Integer powerAtLastKnown) {
-        synchronized (delayedActions) {
-            for (int i = 0; i < delayedActions.size(); i++) {
-                DelayedAction action = delayedActions.get(i);
-                if (action instanceof DelayedControllerSpellCastTrigger delayed
-                        && permanent.getId().equals(delayed.sourcePermanentId())) {
-                    delayedActions.set(i, delayed.withSourcePermanentSnapshot(
-                            new Permanent(permanent), powerAtLastKnown));
                 }
             }
         }
@@ -10742,15 +10700,7 @@ public class GameData {
 
         // --- Unified delayed-action queue (immutable records, shallow copy — shared Card refs, as the
         //     per-mechanic fields it replaced were copied) ---
-        this.delayedActions.forEach(action -> {
-            if (action instanceof DelayedControllerSpellCastTrigger delayed
-                    && delayed.sourcePermanentSnapshot() != null) {
-                copy.delayedActions.add(delayed.withSourcePermanentSnapshot(
-                        new Permanent(delayed.sourcePermanentSnapshot()), delayed.sourcePowerAtLastKnown()));
-            } else {
-                copy.delayedActions.add(action);
-            }
-        });
+        copy.delayedActions.addAll(this.delayedActions);
 
         // --- Exile-until-source-leaves map (O-ring style) ---
         this.exileReturnOnPermanentLeave.forEach((k, v) ->
@@ -11209,8 +11159,6 @@ public class GameData {
         copy.spellsPaidUsingPendingAnyManaTypeThisTurn.addAll(this.spellsPaidUsingPendingAnyManaTypeThisTurn);
         copy.pendingNextInstantSorceryUncounterableThisTurnCount.putAll(
                 this.pendingNextInstantSorceryUncounterableThisTurnCount);
-        copy.temporaryChosenSubtypePermanentIds.addAll(this.temporaryChosenSubtypePermanentIds);
-        copy.chosenSubtypeActivationCopiesThisTurn.addAll(this.chosenSubtypeActivationCopiesThisTurn);
         this.creatureEntersDrawSourcesThisTurn.forEach((playerId, cards) ->
                 copy.creatureEntersDrawSourcesThisTurn.put(playerId, new ArrayList<>(cards)));
         this.untapAttackedCreaturesEachCombatThisTurnSources.forEach((playerId, cards) ->

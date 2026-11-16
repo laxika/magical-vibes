@@ -20,7 +20,7 @@ public class TenaciousPup extends Card {
     public TenaciousPup() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new GainLifeEffect(1),
-                RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+                RegisterDelayedControllerSpellCastTriggerEffect.boon(
                         new CardTypePredicate(CardType.CREATURE),
                         List.of(
                                 new GrantAdditionalCounterToTriggeringCreatureSpellEffect(

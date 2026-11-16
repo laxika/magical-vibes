@@ -1613,11 +1613,7 @@ public sealed interface ChoiceContext {
     /** The controller chooses one of the newly encountered creature types for their buddy list. */
     record BuddyListChoice(UUID playerId) implements ChoiceContext {}
 
-    record SourceSubtypeChoice(UUID permanentId, boolean untilEndOfTurn) implements ChoiceContext {
-        public SourceSubtypeChoice(UUID permanentId) {
-            this(permanentId, false);
-        }
-    }
+    record SourceSubtypeChoice(UUID permanentId) implements ChoiceContext {}
 
     /**
      * The controller chooses a creature type at resolution for a spell/ability that has no
@@ -1628,6 +1624,12 @@ public sealed interface ChoiceContext {
 
     /** Choosing a nonbasic land type at resolution for a spell with no permanent to store it on. */
     record SpellNonbasicLandTypeChoice(UUID controllerId) implements ChoiceContext {}
+
+    /**
+     * The controller chooses a planeswalker type as a spell or ability resolves (Leori, Sparktouched Hunter). The
+     * answer is stored on {@code GameData.chosenSpellSubtype} and effect resolution resumes.
+     */
+    record SpellPlaneswalkerTypeChoice(UUID controllerId) implements ChoiceContext {}
 
     /** Choosing a card type at resolution for a spell with no permanent to store it on. */
     record SpellCardTypeChoice(UUID controllerId) implements ChoiceContext {}

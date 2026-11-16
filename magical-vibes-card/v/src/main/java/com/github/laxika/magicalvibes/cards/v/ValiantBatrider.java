@@ -19,7 +19,7 @@ public class ValiantBatrider extends Card {
         // When the damaged player next casts a noncreature spell, they may pay {1}. If they do
         // not, each opponent draws a card.
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                RegisterDelayedTargetPlayerSpellCastTriggerEffect.oneShotUntilConsumed(
+                RegisterDelayedTargetPlayerSpellCastTriggerEffect.boon(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                         List.of(new MayPayManaEffect(
                                 "{1}", null,

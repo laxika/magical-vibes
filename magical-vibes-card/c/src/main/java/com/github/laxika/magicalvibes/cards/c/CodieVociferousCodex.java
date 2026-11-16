@@ -34,11 +34,8 @@ public class CodieVociferousCodex extends Card {
                         new AwardManaEffect(ManaColor.BLACK),
                         new AwardManaEffect(ManaColor.RED),
                         new AwardManaEffect(ManaColor.GREEN),
-                        new RegisterDelayedControllerSpellCastTriggerEffect(
-                                null,
-                                List.of(new CascadeEffect(true, null, true)),
-                                true,
-                                false)),
+                        RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                                null, List.of(new CascadeEffect(true, null, true)))),
                 "{4}, {T}: Add {W}{U}{B}{R}{G}. When you next cast a spell this turn, exile cards from the top of your library until you exile an instant or sorcery card with lesser mana value. Until end of turn, you may cast that card without paying its mana cost. Put each other card exiled this way on the bottom of your library in a random order."));
     }
 }

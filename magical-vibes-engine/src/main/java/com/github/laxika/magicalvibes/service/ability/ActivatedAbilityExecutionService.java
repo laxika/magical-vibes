@@ -28,7 +28,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
 import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
@@ -1930,21 +1929,11 @@ public class ActivatedAbilityExecutionService {
                 gameData.queueDelayedAction(new DrawCardsAtNextUpkeep(playerId, draw.count(), permanent.getCard(),
                         draw.upTo(), gameData.turnNumber, gameData.activePlayerId));
             } else if (effect instanceof RegisterDelayedControllerSpellCastTriggerEffect delayed) {
-                gameData.queueDelayedAction(new DelayedControllerSpellCastTrigger(
-                        playerId,
-                        permanent.getId(),
-                        permanent.getCard(),
-                        delayed.spellFilter(),
-                        delayed.stackEntryFilter(),
-                        delayed.resolvedEffects(),
-                        delayed.oneShot(),
-                        delayed.sourceMustRemainOnBattlefield(),
-                        delayed.targetFilter(),
-                        new Permanent(permanent),
-                        null,
-                        delayed.untilNextTurn(),
-                        delayed.persistsUntilConsumed(),
-                        gameData.turnNumber));
+                // "When you next cast an artifact spell this turn" on a mana ability (Solar Array): a delayed triggered
+                // ability the mana ability creates as it resolves (CR 603.7a), with the permanent as its source.
+                gameData.temporaryGlobalTriggeredAbilities.add(delayed.duration().delayed(playerId,
+                        permanent.getCard(), delayed.delayedAbility(), permanent.getId(), gameData.turnNumber,
+                        delayed.targetFilter()));
             } else if (effect instanceof DrawCardEffect draw) {
                 int amount = amountEvaluationService.evaluate(gameData, draw.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue));

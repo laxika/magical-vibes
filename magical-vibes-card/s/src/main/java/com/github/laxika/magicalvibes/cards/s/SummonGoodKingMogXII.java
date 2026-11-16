@@ -37,22 +37,12 @@ public class SummonGoodKingMogXII extends Card {
                 new PermanentIsTokenPredicate(),
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.SAGA))
         ));
-        addTrigger(Triggers.chapter(2), new RegisterDelayedControllerSpellCastTriggerEffect(
+        addTrigger(Triggers.chapter(2), RegisterDelayedControllerSpellCastTriggerEffect.thisTurn(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                null,
-                List.of(new CreateTokenCopyOfChosenPermanentYouControlEffect(nonSagaToken)),
-                false,
-                false,
-                null,
-                false));
-        addTrigger(Triggers.chapter(3), new RegisterDelayedControllerSpellCastTriggerEffect(
+                List.of(new CreateTokenCopyOfChosenPermanentYouControlEffect(nonSagaToken))));
+        addTrigger(Triggers.chapter(3), RegisterDelayedControllerSpellCastTriggerEffect.thisTurn(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                null,
-                List.of(new CreateTokenCopyOfChosenPermanentYouControlEffect(nonSagaToken)),
-                false,
-                false,
-                null,
-                false));
+                List.of(new CreateTokenCopyOfChosenPermanentYouControlEffect(nonSagaToken))));
 
         PermanentPredicate otherMoogle = new PermanentAllOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.MOOGLE),

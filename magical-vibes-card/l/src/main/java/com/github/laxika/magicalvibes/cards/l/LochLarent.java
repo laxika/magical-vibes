@@ -31,7 +31,7 @@ public class LochLarent extends Card {
                 "{1}{U}",
                 List.of(
                         new ScryEffect(3),
-                        RegisterDelayedTargetPlayerSpellCastTriggerEffect.oneShotUntilConsumed(
+                        RegisterDelayedTargetPlayerSpellCastTriggerEffect.boon(
                                 new CardTypePredicate(CardType.CREATURE),
                                 List.of(
                                         new GrantEntersTappedToTriggeringCreatureSpellEffect(),

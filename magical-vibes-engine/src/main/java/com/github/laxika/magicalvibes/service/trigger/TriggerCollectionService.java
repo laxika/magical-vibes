@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedExileReturnCounterTrigger;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
@@ -53,11 +52,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -132,80 +128,6 @@ public class TriggerCollectionService {
 
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
         checkSpellCastTriggers(gameData, spellCard, castingPlayerId, true);
-    }
-
-    /**
-     * Fires delayed "until end of turn, whenever you cast a [filter] spell, …" triggers registered
-     * this turn (Mountain Titan). One trigger per registration. Registrations that require their
-     * source permanent to remain on the battlefield are skipped once it has left.
-     */
-    private void processDelayedControllerSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
-        if (!gameData.hasDelayedAction(DelayedControllerSpellCastTrigger.class)) {
-            return;
-        }
-        for (DelayedControllerSpellCastTrigger delayed
-                : gameData.getDelayedActions(DelayedControllerSpellCastTrigger.class)) {
-            if (!delayed.controllerId().equals(castingPlayerId)) continue;
-            Permanent source = delayed.sourcePermanentId() == null
-                    ? null : gameQueryService.findPermanentById(gameData, delayed.sourcePermanentId());
-            if (delayed.sourceMustRemainOnBattlefield() && source == null) {
-                continue;
-            }
-            StackEntry spellEntry = gameData.stack.stream()
-                    .filter(candidate -> spellCard.getId().equals(candidate.getCard().getId()))
-                    .findFirst()
-                    .orElse(null);
-            // A spell with {X} on the stack is evaluated with its chosen X (CR 202.3e).
-            Integer spellXValue = spellEntry != null && spellCard.getParsedManaCost() != null
-                    && spellCard.getParsedManaCost().hasX() ? spellEntry.getXValue() : null;
-            if (delayed.spellFilter() != null
-                    && !predicateEvaluationService.matchesCardPredicate(
-                            spellCard, delayed.spellFilter(), null, gameData, castingPlayerId,
-                            null, null, spellXValue)) {
-                continue;
-            }
-            if (delayed.stackEntryFilter() != null
-                    && (spellEntry == null
-                    || !targetLegalityService.matchesStackEntryPredicate(
-                    gameData, spellEntry, delayed.stackEntryFilter(), castingPlayerId,
-                    source != null ? source : delayed.sourcePermanentSnapshot(), null,
-                    source == null ? delayed.sourcePowerAtLastKnown() : null))) {
-                continue;
-            }
-
-            if (delayed.oneShot()) {
-                gameData.delayedActions.remove(delayed);
-            }
-
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(), delayed.controllerId(),
-                    delayed.sourceCard().getName() + "'s delayed trigger", delayed.resolvedEffects(),
-                    (UUID) null, delayed.sourcePermanentId());
-            entry.setTriggeringCardId(spellCard.getId());
-            entry.setTriggeringSpell(spellEntry);
-            if (spellEntry != null) {
-                entry.setXValue(spellEntry.getXValue());
-            }
-            entry.setEventValue(spellManaValue(gameData, spellCard));
-            entry.setSourcePermanentSnapshot(delayed.sourcePermanentSnapshot());
-            entry.setNonTargeting(true);
-
-            if (delayed.targetFilter() != null) {
-                // Its target, restricted by the registration's filter, is chosen as it goes on the stack (CR 603.3d).
-                entry.setTargetFilter(delayed.targetFilter());
-                triggeredAbilityStackService.putMade(gameData, entry);
-                gameLogService.append(gameData, GameLog.cardTextCard(
-                        delayed.sourceCard(), "'s delayed trigger fires for ", spellCard, "."));
-                log.info("Game {} - {} delayed spell-cast trigger awaits a target for {}",
-                        gameData.id, delayed.sourceCard().getName(), spellCard.getName());
-                continue;
-            }
-
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.cardTextCard(
-                    delayed.sourceCard(), "'s delayed trigger fires for ", spellCard, "."));
-            log.info("Game {} - {} delayed spell-cast trigger fires for {}",
-                    gameData.id, delayed.sourceCard().getName(), spellCard.getName());
-        }
     }
 
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId, boolean castFromHand) {
@@ -376,8 +298,6 @@ public class TriggerCollectionService {
         // The spell became cast (CR 601.2i): the abilities that trigger on it are the rules event's.
         SpellEvent.Cast castEvent = new SpellEvent.Cast(spellCard, castingPlayerId, castZone, exiledSourcePermanentId);
         gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(castEvent));
-
-        processDelayedControllerSpellCastTriggers(gameData, spellCard, castingPlayerId);
 
         int pathOfAncestryScries = gameData.getSpellCastPathOfAncestryManaSpent(spellCard.getId());
         gameData.clearSpellCastPathOfAncestryManaSpent(spellCard.getId());
@@ -922,11 +842,10 @@ public class TriggerCollectionService {
                              boolean manaAbility) {}
 
     /**
-     * An activated ability was activated: it is on the stack and its costs are paid (CR 602.2b, 601.2i). Leori's
-     * delayed copies trigger first ({@link #collectDelayedActivationCopies}), then the activation is the rules event the
-     * "whenever [a player] activates an ability" abilities, delayed ones among them, trigger on
-     * ({@link SpellEvent.Activated}), with the life paid to activate it; then the abilities that choose their targets as
-     * they go on the stack (CR 603.3d) choose them, above the activated ability.
+     * An activated ability was activated: it is on the stack and its costs are paid (CR 602.2b, 601.2i). The
+     * activation is the rules event the "whenever [a player] activates an ability" abilities, delayed ones among them,
+     * trigger on ({@link SpellEvent.Activated}), with the life paid to activate it; then the abilities that choose their
+     * targets as they go on the stack (CR 603.3d) choose them, above the activated ability.
      */
     public void collectActivationTriggers(GameData gameData, Activation activation) {
         if (activation.abilityEntry() == null) {
@@ -937,7 +856,6 @@ public class TriggerCollectionService {
             gameData.trackingActivationLifePaid = false;
             gameData.activationLifePaid = 0;
         }
-        collectDelayedActivationCopies(gameData, activation);
         boolean treasureMana = gameData.abilityActivationUsedTreasureMana
                 .getOrDefault(activation.abilityEntry().getCard().getId(), false);
         SpellEvent.Activated event = new SpellEvent.Activated(activation.activatingPlayerId(),
@@ -950,43 +868,6 @@ public class TriggerCollectionService {
             triggeredAbilityQueueService.beginStackDoorChoices(gameData);
         }
     }
-
-    /**
-     * The "until end of turn, whenever you activate an ability of a planeswalker of the chosen type, copy that ability"
-     * delayed abilities (Leori, Sparktouched Hunter) that trigger on {@code activation} (CR 603.7), each a stack object
-     * of its own that copies the ability as it was activated.
-     */
-    private void collectDelayedActivationCopies(GameData gameData, Activation activation) {
-        UUID activatingPlayerId = activation.activatingPlayerId();
-        StackEntry abilityEntry = activation.abilityEntry();
-        ActivatedAbility ability = activation.ability();
-        if (activation.manaAbility()) {
-            return;
-        }
-        Permanent activatedPermanent = activation.activatedPermanent();
-        for (GameData.ChosenSubtypeActivationCopy delayedCopy : gameData.chosenSubtypeActivationCopiesThisTurn) {
-            if (!delayedCopy.controllerId().equals(activatingPlayerId) || activatedPermanent == null
-                    || !predicateEvaluationService.matchesPermanentPredicate(activatedPermanent,
-                    new PermanentAllOfPredicate(List.of(
-                            new PermanentIsPlaneswalkerPredicate(),
-                            new PermanentHasSubtypePredicate(delayedCopy.subtype()))),
-                    FilterContext.of(gameData).withSourceControllerId(activatingPlayerId))) {
-                continue;
-            }
-            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(delayedCopy.sourceCard(),
-                    activatingPlayerId,
-                    delayedCopy.sourceCard().getName() + "'s delayed ability",
-                    new ArrayList<>(List.of(new CopyControllerActivatedAbilityEffect(
-                            new StackEntry(abilityEntry), ability, activatingPlayerId))),
-                    null,
-                    delayedCopy.sourcePermanentId()
-            ));
-            gameLogService.append(gameData, GameLog.abilityTriggers(delayedCopy.sourceCard()));
-            log.info("Game {} - {} delayed trigger copies {}'s ability", gameData.id,
-                    delayedCopy.sourceCard().getName(), abilityEntry.getCard().getName());
-        }
-    }
-
 
     /**
      * Records on the triggered abilities already on the stack whose source is an Aura enchanting the permanent that

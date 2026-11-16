@@ -2,13 +2,16 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/**
+ * Creates the resolving object's delayed "whenever you cast" ability (CR 603.7a) for its controller, with the resolving
+ * object's source as its source (CR 603.7e), for the registration's duration (CR 603.7b).
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -22,27 +25,9 @@ public class RegisterDelayedControllerSpellCastTriggerEffectHandler implements N
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RegisterDelayedControllerSpellCastTriggerEffect) effect;
-        if (entry.getSourcePermanentId() == null && e.sourceMustRemainOnBattlefield()) {
-            return;
-        }
-        gameData.queueDelayedAction(new DelayedControllerSpellCastTrigger(
-                entry.getControllerId(),
-                entry.getSourcePermanentId(),
-                entry.getCard(),
-                e.spellFilter(),
-                e.stackEntryFilter(),
-                e.resolvedEffects(),
-                e.oneShot(),
-                e.sourceMustRemainOnBattlefield(),
-                e.targetFilter(),
-                entry.getSourcePermanentSnapshot(),
-                null,
-                e.untilNextTurn(),
-                e.persistsUntilConsumed(),
-                gameData.turnNumber));
-        log.info("Game {} - {} registers a delayed spell-cast trigger {}",
-                gameData.id, entry.getCard().getName(),
-                e.persistsUntilConsumed() ? "until it is consumed"
-                        : e.untilNextTurn() ? "until their next turn" : "for this turn");
+        gameData.temporaryGlobalTriggeredAbilities.add(e.duration().delayed(entry.getControllerId(), entry.getCard(),
+                e.delayedAbility(), entry.getSourcePermanentId(), gameData.turnNumber, e.targetFilter()));
+        log.info("Game {} - {} creates a delayed spell-cast ability ({})",
+                gameData.id, entry.getCard().getName(), e.duration());
     }
 }

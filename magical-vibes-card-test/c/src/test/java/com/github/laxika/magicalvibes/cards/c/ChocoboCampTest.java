@@ -57,6 +57,24 @@ class ChocoboCampTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Bird counter is for a Bird spell cast this turn only")
+    void birdCounterEndsWithTheTurn() {
+        harness.addToBattlefield(player1, new ChocoboCamp());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.inMutationScope(() -> GameTestEngineContext.get()
+                .getBean(TurnCleanupService.class).applyCleanupResets(gd));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player1, List.of(new BirdsOfParadise()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Birds of Paradise")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
     @DisplayName("Does not add the Bird counter to a non-Bird creature")
     void ignoresNonBirdCreatureSpells() {
         harness.addToBattlefield(player1, new ChocoboCamp());

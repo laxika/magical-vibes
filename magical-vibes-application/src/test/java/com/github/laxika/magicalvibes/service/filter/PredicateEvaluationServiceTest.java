@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.filter;
 
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
+import com.github.laxika.magicalvibes.model.filter.CardHasCascadePredicate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AdventureCast;
@@ -410,6 +414,25 @@ class PredicateEvaluationServiceTest {
 
             assertThat(evaluator.matchesCardPredicate(adventure, new CardHasAdventurePredicate(), null)).isTrue();
             assertThat(evaluator.matchesCardPredicate(ordinary, new CardHasAdventurePredicate(), null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("A spell has cascade when its caster has a delayed ability giving a matching spell cascade")
+        void matchesCascadeFromADelayedAbility() {
+            Card noncreature = new Card();
+            noncreature.setType(CardType.SORCERY);
+            Card creature = createCreature("Bear", 2, 2, CardColor.GREEN);
+            gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.nextThisTurn(player1Id,
+                    new Card(), RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
+                            new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
+                            List.of(new CascadeEffect())).delayedAbility(), null));
+
+            assertThat(evaluator.matchesCardPredicate(noncreature, new CardHasCascadePredicate(), null, gd, player1Id))
+                    .isTrue();
+            assertThat(evaluator.matchesCardPredicate(creature, new CardHasCascadePredicate(), null, gd, player1Id))
+                    .isFalse();
+            assertThat(evaluator.matchesCardPredicate(noncreature, new CardHasCascadePredicate(), null, gd, player2Id))
+                    .isFalse();
         }
 
         @Test
