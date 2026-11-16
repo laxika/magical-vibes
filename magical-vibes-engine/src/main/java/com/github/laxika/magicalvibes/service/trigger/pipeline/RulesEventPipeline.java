@@ -235,13 +235,17 @@ public class RulesEventPipeline {
      * "one or more" multiplicity or a limit but "only once"; this throws on one.
      */
     private void triggerStep(GameData gameData, StepEvent event) {
+        // Finding and matching the candidates only reads, so they share one query scope; putting the matched
+        // abilities on the stack runs after it closes (an ended delayed ability is removed there).
         List<StepMatch> matches = new ArrayList<>();
-        for (StepCandidate candidate : triggerIndex.stepCandidates(gameData, event)) {
-            StepMatch match = TriggerMatcher.matchedStep(gameData, gameQueryService, candidate, event);
-            if (match != null) {
-                matches.add(match);
+        inScope(gameData, () -> {
+            for (StepCandidate candidate : triggerIndex.stepCandidates(gameData, event)) {
+                StepMatch match = TriggerMatcher.matchedStep(gameData, gameQueryService, candidate, event);
+                if (match != null) {
+                    matches.add(match);
+                }
             }
-        }
+        });
         List<List<StepGroup>> order = STEP_ORDER.getOrDefault(event.moment(), List.of());
         matches.sort(Comparator.comparingInt(match -> stepRank(order, match.group())));
         if (event.moment() == StepTrigger.Moment.PRECOMBAT_MAIN_PHASE) {
@@ -502,7 +506,8 @@ public class RulesEventPipeline {
      * <p>The kinds whose detection only reads the board and hands abilities to the stack door (attack, block, spell,
      * control change, crew, day/night, Room, Saga, entry-caused trigger) detect inside one query scope per event
      * ({@link #inScope}): each scans every permanent's abilities as the layers leave them, so unscoped every permanent
-     * scanned paid a board fingerprint. The others stay unscoped or scope themselves: damage and combat damage record
+     * scanned paid a board fingerprint. A step event finds and matches its candidates in one scope and puts them on
+     * the stack after it. The others stay unscoped or scope themselves: damage and combat damage record
      * the turn's damage history (which static conditions read) as they detect, a life event checks for a win, an
      * action can make a player lose, an attachment applies "as this becomes attached" choices, and a tap event resolves
      * triggered mana abilities as they trigger (CR 605.4a); library, counter, tap and target detection open their own.

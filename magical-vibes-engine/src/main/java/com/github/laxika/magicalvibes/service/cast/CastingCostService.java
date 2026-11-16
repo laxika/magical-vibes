@@ -2822,7 +2822,13 @@ public class CastingCostService {
         return totalTax;
     }
 
+    /** Whether attacking with any creature costs {@code attackingPlayerId} something; judged in one query scope. */
     public boolean hasAttackPaymentForAnyCreature(GameData gameData, UUID attackingPlayerId) {
+        return gameQueryService.withQueryScope(gameData,
+                () -> attackPaymentForAnyCreature(gameData, attackingPlayerId));
+    }
+
+    private boolean attackPaymentForAnyCreature(GameData gameData, UUID attackingPlayerId) {
         if (getAttackPaymentPerCreature(gameData, attackingPlayerId) > 0) {
             return true;
         }
@@ -2845,14 +2851,15 @@ public class CastingCostService {
                         .anyMatch(attacker -> tax.attackCost(attacker) > 0));
     }
 
+    /** Whether attacking with any creature costs {@code attackingPlayerId} life; judged in one query scope. */
     public boolean hasAttackLifePaymentForAnyCreature(GameData gameData, UUID attackingPlayerId) {
         UUID defenderId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
         List<Permanent> attackingBattlefield = gameData.playerBattlefields.get(attackingPlayerId);
         if (attackingBattlefield == null) return false;
-        return attackingBattlefield.stream()
+        return gameQueryService.withQueryScope(gameData, () -> attackingBattlefield.stream()
                 .filter(attacker -> gameQueryService.isCreature(gameData, attacker))
                 .anyMatch(attacker -> getAttackLifePaymentPerCreature(
-                        gameData, attackingPlayerId, defenderId, attacker) > 0);
+                        gameData, attackingPlayerId, defenderId, attacker) > 0));
     }
 
     public List<ManaColor> getPhyrexianAttackPaymentsPerCreature(GameData gameData, UUID attackingPlayerId) {

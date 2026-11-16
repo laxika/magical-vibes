@@ -249,6 +249,9 @@ class StepTriggerServiceTest {
 
     @BeforeEach
     void setUp() {
+        // A query scope runs its queries; these tests have no layered pass to share.
+        lenient().when(gameQueryService.withQueryScope(any(GameData.class), any()))
+                .thenAnswer(invocation -> ((java.util.function.Supplier<?>) invocation.getArgument(1)).get());
         // Build the SUT manually so we can pass a REAL TriggerTargetCollector. The collector's
         // opponent-filter / valid-target logic is exercised by several tests in this class, so a
         // mock would silently return nulls and break them.

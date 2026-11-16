@@ -92,9 +92,14 @@ public class BlockLegalityService {
      * board-wide restrictions, the attached auras, and the defender land types once, then caches
      * per-creature facts as creatures are queried. Use one context for a whole sweep and build a
      * new one after any game-state mutation. A {@code null} defender battlefield is read as an
-     * empty one.
+     * empty one. Building it only reads, so the board-wide collection runs in one query scope.
      */
     public BlockLegalityContext createBlockLegalityContext(GameData gameData, List<Permanent> defenderBattlefield) {
+        return gameQueryService.withQueryScope(gameData,
+                () -> buildBlockLegalityContext(gameData, defenderBattlefield));
+    }
+
+    private BlockLegalityContext buildBlockLegalityContext(GameData gameData, List<Permanent> defenderBattlefield) {
         List<GlobalBlockRestriction> globalBlockRestrictions = new ArrayList<>();
         List<GlobalAttackOrBlockRestriction> globalAttackOrBlockRestrictions = new ArrayList<>();
         List<BlockLegalityContext.TappedBlockPermission> tappedBlockPermissions = new ArrayList<>();

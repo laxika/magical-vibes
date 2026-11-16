@@ -476,14 +476,16 @@ public class TurnProgressionService {
         }
     }
 
+    /** Whether a Runed Terror effect is active; the board walk only reads, so it shares one query scope. */
     private boolean hasRunedTerror(GameData gameData) {
-        return gameData.orderedPlayerIds.stream()
+        java.util.function.Supplier<Boolean> scan = () -> gameData.orderedPlayerIds.stream()
                 .map(gameData.playerBattlefields::get)
                 .filter(java.util.Objects::nonNull)
                 .flatMap(List::stream)
                 .filter(permanent -> !gameQueryService.hasLostAllAbilities(gameData, permanent))
                 .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                 .anyMatch(RunedTerrorEffect.class::isInstance);
+        return gameQueryService == null ? scan.get() : gameQueryService.withQueryScope(gameData, scan);
     }
 
     private boolean advanceRunedTerrorPhase(GameData gameData) {

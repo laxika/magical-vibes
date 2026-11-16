@@ -5471,23 +5471,28 @@ public class GameQueryService {
     /**
      * Every active static effect of {@code type} on the battlefield, with its permanent and that permanent's
      * controller, in turn order and then each battlefield's order. The one walk the board scans share: the controller
-     * comes from the battlefield being walked, never searched for, and inside a query scope each permanent's
-     * static abilities are judged once per pass.
+     * comes from the battlefield being walked, never searched for, and each permanent's static abilities are judged
+     * once per pass. The walk only reads, so it runs in one query scope of its own when its caller has none: one board
+     * fingerprint for the walk instead of one per permanent judged.
      */
     public <T extends CardEffect> List<ActiveStaticEffect<T>> activeStaticEffects(GameData gameData, Class<T> type) {
-        List<ActiveStaticEffect<T>> found = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            collectBattlefieldStaticEffects(gameData, playerId, type, found);
-        }
-        return found;
+        return withQueryScope(gameData, () -> {
+            List<ActiveStaticEffect<T>> found = new ArrayList<>();
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                collectBattlefieldStaticEffects(gameData, playerId, type, found);
+            }
+            return found;
+        });
     }
 
     /** As {@link #activeStaticEffects(GameData, Class)}, for the permanents {@code controllerId} controls. */
     public <T extends CardEffect> List<ActiveStaticEffect<T>> activeStaticEffects(GameData gameData, UUID controllerId,
                                                                                 Class<T> type) {
-        List<ActiveStaticEffect<T>> found = new ArrayList<>();
-        collectBattlefieldStaticEffects(gameData, controllerId, type, found);
-        return found;
+        return withQueryScope(gameData, () -> {
+            List<ActiveStaticEffect<T>> found = new ArrayList<>();
+            collectBattlefieldStaticEffects(gameData, controllerId, type, found);
+            return found;
+        });
     }
 
     private <T extends CardEffect> void collectBattlefieldStaticEffects(GameData gameData, UUID controllerId,

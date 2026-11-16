@@ -2132,6 +2132,13 @@ public class PermanentRemovalService {
 
     /** Whether {@link #tryApplyExileReplacementEffect} would exile {@code target}. Changes nothing. */
     private boolean exileReplacementApplies(GameData gameData, Permanent target, boolean checkExileInsteadOfDie) {
+        return gameQueryService.withQueryScope(gameData,
+                () -> exileReplacementAppliesInScope(gameData, target, checkExileInsteadOfDie));
+    }
+
+    /** {@link #exileReplacementApplies}'s reads, which share one query scope. */
+    private boolean exileReplacementAppliesInScope(GameData gameData, Permanent target,
+                                                   boolean checkExileInsteadOfDie) {
         boolean permanentGraveyardReplacement = checkExileInsteadOfDie
                 && !gameQueryService.hasLostPrintedAbilities(gameData, target)
                 && (GraveyardService.hasExilePermanentsInsteadOfGraveyardReplacementEffect(target.getCard())

@@ -1243,6 +1243,11 @@ public class AttackLegalityService {
     }
 
     private Set<UUID> validAttackTargetIds(GameData gameData, UUID activePlayerId, boolean ignoreRestrictions) {
+        return gameQueryService.withQueryScope(gameData,
+                () -> collectValidAttackTargetIds(gameData, activePlayerId, ignoreRestrictions));
+    }
+
+    private Set<UUID> collectValidAttackTargetIds(GameData gameData, UUID activePlayerId, boolean ignoreRestrictions) {
         Set<UUID> validIds = new HashSet<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(activePlayerId)) {

@@ -2065,15 +2065,17 @@ public class DrawService {
             return null;
         }
 
-        for (Permanent permanent : battlefield) {
-            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-            boolean hasEffect = permanent.getCard().getStaticEffects().stream()
-                    .anyMatch(effect -> effect instanceof LookAtTopCardsChooseOneToHandDrawReplacementEffect);
-            if (hasEffect) {
-                return permanent;
+        return gameQueryService.withQueryScope(gameData, () -> {
+            for (Permanent permanent : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
+                boolean hasEffect = permanent.getCard().getStaticEffects().stream()
+                        .anyMatch(effect -> effect instanceof LookAtTopCardsChooseOneToHandDrawReplacementEffect);
+                if (hasEffect) {
+                    return permanent;
+                }
             }
-        }
-        return null;
+            return null;
+        });
     }
 
     /**

@@ -100,7 +100,7 @@ public class AttackSacrificeCostService {
     /**
      * Totals the sacrifice cost each global restriction charges this declaration, keyed by the filter
      * of the permanents to sacrifice. Restrictions are gathered from every battlefield, since the
-     * effect applies from any permanent to every matching creature.
+     * effect applies from any permanent to every matching creature. Only reads, in one query scope.
      */
     private Map<PermanentPredicate, Integer> collectGlobalCosts(GameData gameData, UUID playerId,
                                                                 List<Permanent> attackers) {
@@ -109,6 +109,15 @@ public class AttackSacrificeCostService {
         if (battlefield == null || attackers.isEmpty()) {
             return totals;
         }
+        gameQueryService.withQueryScope(gameData, () -> {
+            addGlobalCosts(gameData, attackers, totals);
+            return null;
+        });
+        return totals;
+    }
+
+    private void addGlobalCosts(GameData gameData, List<Permanent> attackers,
+                                Map<PermanentPredicate, Integer> totals) {
         gameData.forEachPermanent((ownerId, permanent) -> {
             if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                 return;
@@ -130,7 +139,6 @@ public class AttackSacrificeCostService {
                 }
             }
         });
-        return totals;
     }
 
     private int countMatching(GameData gameData, UUID playerId, PermanentPredicate filter) {

@@ -822,6 +822,13 @@ entry-caused-trigger event) detect in one scope each on the same terms. The tapp
 stay unscoped: a triggered mana ability resolves as it triggers (CR 605.4a), and a later scan must see what it changed.
 So do damage and combat damage detection (they record the turn's damage history, which static conditions read, as
 they go), life events (a win check), actions (a player losing) and attachments ("as this becomes attached" choices).
+A step or phase beginning finds and matches its candidates in one scope and puts the matched abilities on the stack
+after it closes (an ended delayed ability is removed there). The read-only board lookups that judge each permanent in
+turn open one scope each: `GameQueryService.activeStaticEffects` (both overloads, so every board scan built on it),
+`BlockLegalityService.createBlockLegalityContext`, `AttackLegalityService`'s attack-target ids,
+`CastingCostService.hasAttackPaymentForAnyCreature`/`hasAttackLifePaymentForAnyCreature`,
+`AttackSacrificeCostService`'s global sacrifice costs, `TurnProgressionService.hasRunedTerror`,
+`DrawService`'s look-at-top-choose-one replacement source and `PermanentRemovalService.exileReplacementApplies`.
 A pass also memoizes each permanent's active static effects (`Pass.activeStaticEffects`, on the bonus memo's terms),
 the board-wide yes/no scans (`Pass.boardScan`: `anyBattlefieldHasStaticEffect`, `graveyardCardsHaveLostAllAbilities`,
 the printed-effect presence checks in front of `isCreature`'s animation scans, and `anyManaAbilityLock` and the
