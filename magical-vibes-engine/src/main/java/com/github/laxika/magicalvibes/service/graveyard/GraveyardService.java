@@ -2133,9 +2133,6 @@ public class GraveyardService {
         UUID dyingCreatureCardId = dyingCreatureCard.getId();
         UUID dyingControllerId = findLastKnownController(gameData, dyingCreatureCardId, ownerId);
 
-        triggerCollectionService.triggerDelayedDamagedCreatureDeathTriggers(
-                gameData, dyingCreatureCard, dyingControllerId);
-
         for (Map.Entry<UUID, Set<UUID>> entry : gameData.creatureCardsDamagedThisTurnBySourcePermanent.entrySet()) {
             UUID sourcePermanentId = entry.getKey();
             if (!entry.getValue().contains(dyingCreatureCardId)) {

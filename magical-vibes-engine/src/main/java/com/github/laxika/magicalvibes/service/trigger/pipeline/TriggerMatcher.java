@@ -207,7 +207,11 @@ final class TriggerMatcher {
             }
         } else if (trigger.relation() == ObjectRelation.ANOTHER_YOU_CONTROL || trigger.relation() == ObjectRelation.ANOTHER
                 || trigger.relation() == ObjectRelation.ANOTHER_YOU_OWN) {
-            if (source != null && moved != null && source.getId().equals(moved.getId())) {
+            // A delayed ability's "this" is the permanent that was its maker's source (CR 603.7e): "until end of
+            // turn, whenever another creature dies" (Electric Seaweed).
+            UUID thisId = source != null ? source.getId()
+                    : candidate.delayed() != null ? candidate.delayed().sourcePermanentId() : null;
+            if (thisId != null && moved != null && thisId.equals(moved.getId())) {
                 return false;
             }
         }

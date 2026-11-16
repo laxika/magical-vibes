@@ -160,7 +160,8 @@ class ExileGraveyardCardsEffectHandlerTest {
                     GraveyardExileScope.DYING_CREATURE_CONTROLLER);
             StackEntry entry = TestStackDoor.triggered(createCard("Burn Away"),
                     player1Id, "Burn Away triggers", List.of(effect), 0,
-                    player2Id, null);
+                    null, null);
+            entry.setTriggeringPermanentControllerId(player2Id);
 
             handler.resolve(gd, entry, effect);
 

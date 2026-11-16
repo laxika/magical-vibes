@@ -34,7 +34,7 @@ public enum GraveyardExileScope {
     /** Exiles the ENTIRE graveyard of a TARGET player. */
     TARGET_PLAYER_ENTIRE,
 
-    /** Exiles the entire graveyard of the creature's controller supplied by a delayed death trigger. */
+    /** Exiles the entire graveyard of the dying creature's last controller, the triggering permanent's controller. */
     DYING_CREATURE_CONTROLLER,
 
     /**

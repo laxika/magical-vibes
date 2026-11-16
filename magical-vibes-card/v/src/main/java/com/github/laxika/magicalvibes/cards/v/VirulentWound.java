@@ -16,6 +16,6 @@ public class VirulentWound extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE))
                 .addSpellEffect(new ResolveEffectOnTargetDeathThisTurnEffect(
-                        new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER)));
+                        new GivePoisonCountersEffect(1, PoisonRecipient.TRIGGERING_PERMANENT_CONTROLLER)));
     }
 }

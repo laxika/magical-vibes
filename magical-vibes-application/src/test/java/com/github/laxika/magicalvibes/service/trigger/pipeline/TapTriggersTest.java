@@ -46,7 +46,6 @@ import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -106,8 +105,6 @@ class TapTriggersTest {
     private DealDamageToPlayersEffectHandler dealDamageHandler;
 
     @Mock
-    private TriggerCollectionService triggerCollectionService;
-    @Mock
     private TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     @Mock
@@ -143,7 +140,7 @@ class TapTriggersTest {
                 gameQueryService, graveyardTargetingSupport, gameLogService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.ZoneChangeRequests.class), org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers.class), triggeredAbilityQueueService,
                 amountEvaluationService, predicateEvaluationService, triggerTargetCollector);
         sut = new TapTriggers(null, gameQueryService, predicateEvaluationService, conditionEvaluationService,
-                gameLogService, null, effectHandlerRegistry, door, triggerCollectionService, triggeredAbilityQueueService);
+                gameLogService, null, effectHandlerRegistry, door, triggeredAbilityQueueService);
         addOneOfEachHandler = new AddOneOfEachManaTypeProducedByLandEffectHandler(
                 gameQueryService, gameLogService, interactionHandlerRegistry);
         effectHandlerRegistry.register(AddOneOfEachManaTypeProducedByLandEffect.class, addOneOfEachHandler);

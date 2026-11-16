@@ -36,11 +36,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTri
 import com.github.laxika.magicalvibes.model.action.DelayedDamageDoubling;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDamagedByWatchedCreature;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDealingCombatDamageToPlaneswalker;
-import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedNontokenAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
-import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
-import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedSourceDamageMultiplication;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerCubeCounter;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerGainLife;
@@ -1264,10 +1261,6 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(DelayedUnblockedAttackerPowerDamage.class);
         gameData.clearDelayedActions(DelayedUnblockedAttackerCubeCounter.class);
         gameData.clearDelayedActions(DelayedDestroyCreatureDamagedByWatchedCreature.class);
-        gameData.clearDelayedActions(DelayedSacrificeSourceWhenTargetLeaves.class);
-        gameData.clearDelayedActions(DelayedSacrificeTargetWhenSourceLeaves.class);
-        gameData.drainDelayedActions(DelayedDestroyTargetWhenSourceLeaves.class,
-                DelayedDestroyTargetWhenSourceLeaves::thisTurnOnly);
         gameData.clearDelayedActions(DelayedAdditionalCombatBeginningEffect.class);
         gameData.clearDelayedActions(DelayedBeginningOfCombatTrigger.class);
         gameData.combatDamageSourceSubtypesThisTurn.clear();
@@ -1298,7 +1291,6 @@ public class TurnProgressionService {
         List<Card> handAtTurnStart = gameData.playerHands.get(nextActive);
         gameData.handSizeAtTurnStart.put(nextActive, handAtTurnStart == null ? 0 : handAtTurnStart.size());
         gameData.permanentsDealtDamageThisTurn.clear();
-        gameData.permanentTriggeringEffectOnDeathThisTurn.clear();
         gameData.permanentsDealtNoncombatDamageThisTurn.clear();
         gameData.permanentsDealtExcessDamageThisTurn.clear();
         gameData.damageDealtToPermanentsThisTurn.clear();
@@ -1336,10 +1328,7 @@ public class TurnProgressionService {
         gameData.sourcesThatDealtDamageToCreaturesThisTurn.clear();
         gameData.sourcesWhoseDamagedCreaturesDiedThisTurn.clear();
         gameData.creatureCardsDamagedBySourceThatDiedThisTurn.clear();
-        gameData.creatureGivingControllerPoisonOnDeathThisTurn.clear();
-        gameData.creaturesReturnedToBattlefieldOnDeathThisTurn.clear();
         gameData.playersAffectedByMeliraPoisonReplacementThisTurn.clear();
-        gameData.creatureTriggeringEffectOnDeathThisTurn.clear();
         gameData.additionalCombatMainPhasePairs = 0;
         gameData.additionalCombatMainPhasePairsReturnStep = null;
         gameData.additionalCombatMainPhasePairsAfterSecondMain = 0;

@@ -321,7 +321,11 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
 
     private void resolveTargetPlayerEntire(GameData gameData, StackEntry entry,
                                             ExileGraveyardCardsEffect effect) {
-        List<UUID> targetPlayerIds = entry.getTargetIds().isEmpty()
+        // "Its controller's graveyard": the dying creature's controller as it last existed (CR 603.10a).
+        List<UUID> targetPlayerIds = effect.scope() == GraveyardExileScope.DYING_CREATURE_CONTROLLER
+                ? entry.getTriggeringPermanentControllerId() == null ? List.of()
+                : List.of(entry.getTriggeringPermanentControllerId())
+                : entry.getTargetIds().isEmpty()
                 ? entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId())
                 : entry.targetsForEffect(effect);
         for (UUID targetPlayerId : targetPlayerIds) {

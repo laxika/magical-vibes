@@ -54,8 +54,12 @@ class PredatorySludgeTest extends BaseCardTest {
                         && !card.getId().equals(sludge.getId()));
     }
 
+    /**
+     * "When the chosen permanent is put into a graveyard from the battlefield" is Predatory Sludge's own ability, so it
+     * functions only while Sludge is on the battlefield (CR 113.6).
+     */
     @Test
-    void conjuresAfterSludgeHasLeftTheBattlefield() {
+    void doesNotConjureAfterSludgeHasLeftTheBattlefield() {
         Permanent chosen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent sludge = enterChoosing(chosen);
 
@@ -67,9 +71,8 @@ class PredatorySludgeTest extends BaseCardTest {
         destroy(chosen);
 
         assertThat(gd.playerHands.get(player1.getId()))
-                .filteredOn(card -> card.getName().equals("Predatory Sludge"))
-                .hasSize(1)
-                .allMatch(card -> !card.getId().equals(sludge.getCard().getId()));
+                .noneMatch(card -> card.getName().equals("Predatory Sludge")
+                        && !card.getId().equals(sludge.getCard().getId()));
     }
 
     @Test
@@ -90,8 +93,9 @@ class PredatorySludgeTest extends BaseCardTest {
                 .hasSize(1);
     }
 
+    /** The ability is controlled by whoever controls Sludge as it triggers (CR 603.3a), who conjures the card. */
     @Test
-    void delayedTriggerKeepsItsOriginalControllerAfterSludgeChangesControl() {
+    void sludgesCurrentControllerConjuresAfterSludgeChangesControl() {
         Permanent chosen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent sludge = enterChoosing(chosen);
 
@@ -110,10 +114,10 @@ class PredatorySludgeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, chosen.getId());
         resolveAllTriggers();
 
-        assertThat(gd.playerHands.get(player1.getId()))
+        assertThat(gd.playerHands.get(player2.getId()))
                 .filteredOn(card -> card.getName().equals("Predatory Sludge"))
                 .hasSize(1);
-        assertThat(gd.playerHands.get(player2.getId()))
+        assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(card -> card.getName().equals("Predatory Sludge"));
     }
 

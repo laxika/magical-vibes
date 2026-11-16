@@ -206,7 +206,7 @@ class EarthbenderAscensionTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
 
         if (exile) {
-            harness.getPermanentRemovalService().removePermanentToExile(gd, land);
+            harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, land));
         } else {
             harness.getPermanentRemovalService().removePermanentToGraveyard(gd, land);
         }

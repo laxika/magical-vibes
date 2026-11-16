@@ -70,14 +70,25 @@ public class ControlChangeTriggers {
     }
 
     /**
-     * The changed permanent's own abilities watched as {@code watched}, controlled by {@code controllerId}: the record
-     * names the permanent as it was.
+     * The changed permanent's own abilities watched as {@code watched}, controlled by {@code controllerId}, then the
+     * delayed abilities about it that player controls: the record names the permanent as it was.
      */
     private void ownControlChange(GameData gameData, Permanent permanent, UUID controllerId, Trigger watched) {
         for (TriggeredAbility ability : abilities.abilities(gameData, permanent, watched)) {
             abilities.put(gameData, ability, permanent.getCard(), permanent, controllerId,
                     ConditionContext.forPermanent(permanent, controllerId),
                     EventAbilitySupport.eventRecord(permanent, null, null, null, null, null));
+        }
+        // The delayed abilities about it ("when you lose control of this creature, exile that creature", Coffin
+        // Queen), whose "this" is that permanent (CR 603.7c) and whose "you" is their controller (CR 603.7e).
+        for (Watcher delayed : abilities.delayedWatching(gameData, permanent.getId())) {
+            if (!delayed.controllerId().equals(controllerId)) {
+                continue;
+            }
+            for (TriggeredAbility ability : abilities.abilities(gameData, delayed, watched)) {
+                abilities.put(gameData, ability, delayed, ConditionContext.forCard(delayed.card(), controllerId),
+                        EventAbilitySupport.eventRecord(permanent, null, null, null, null, null));
+            }
         }
     }
 }

@@ -6,11 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CreatureDeathTriggerWatcher;
 import com.github.laxika.magicalvibes.model.CreatureEntersTriggerWatcher;
-import com.github.laxika.magicalvibes.model.DamagedCreatureDeathTriggerWatcher;
-import com.github.laxika.magicalvibes.model.DelayedEffectOnDeath;
-import com.github.laxika.magicalvibes.model.DelayedReturnOnDeath;
 import com.github.laxika.magicalvibes.model.DelayedSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -23,14 +19,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SacrificeBoonWatcher;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetedCreatureDeathTriggerWatcher;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
-import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedExileReturnCounterTrigger;
-import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
-import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
@@ -43,7 +35,6 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -52,9 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutVoyageCounterOnExiledCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnVoyagingCardFromExileEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerGrant;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -77,7 +66,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentP
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -1329,13 +1317,6 @@ public class TriggerCollectionService {
         }
     }
 
-    /**
-     * The delayed "when that creature dies" watchers kept outside the trigger pipeline, which trigger as
-     * {@code dyingPermanent} dies.
-     */
-    public void checkCreatureDeathRegisteredTriggers(GameData gameData, Permanent dyingPermanent) {
-        collectCreatureDeathTriggerWatchers(gameData, dyingPermanent);
-    }
 
     /**
      * Records on the triggered abilities already on the stack whose source is an Aura enchanting the permanent that
@@ -1431,235 +1412,14 @@ public class TriggerCollectionService {
         }
     }
 
-    private void collectCreatureDeathTriggerWatchers(GameData gameData, Permanent dyingPermanent) {
-        for (CreatureDeathTriggerWatcher watcher : List.copyOf(gameData.creatureDeathTriggerWatchers)) {
-            if (watcher.onlyOthers() && dyingPermanent.getId().equals(watcher.sourcePermanentId())) {
-                continue;
-            }
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
-                    watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(watcher.effect())),
-                    (UUID) null,
-                    watcher.sourcePermanentId());
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-            log.info("Game {} - {} triggers because a creature died",
-                    gameData.id, watcher.sourceCard().getName());
-        }
-        for (TargetedCreatureDeathTriggerWatcher watcher
-                : List.copyOf(gameData.targetedCreatureDeathTriggerWatchers)) {
-            if (!watcher.watchedPermanentId().equals(dyingPermanent.getId())) {
-                continue;
-            }
-            gameData.targetedCreatureDeathTriggerWatchers.remove(watcher);
-            if (dyingPermanent.getCounterCount(watcher.counterType()) <= 0) {
-                continue;
-            }
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
-                    watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(watcher.effect())),
-                    (UUID) null,
-                    (UUID) null);
-            entry.setTriggeringPermanentId(dyingPermanent.getId());
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-            log.info("Game {} - {} triggers because its watched creature died",
-                    gameData.id, watcher.sourceCard().getName());
-        }
-    }
 
-    /** Fires delayed triggers registered for creatures damaged by a particular source object. */
-    public void triggerDelayedDamagedCreatureDeathTriggers(GameData gameData, Card dyingCard,
-                                                            UUID dyingCreatureControllerId) {
-        if (dyingCard == null) {
-            return;
-        }
-        UUID dyingCardId = dyingCard.getId();
-        for (DamagedCreatureDeathTriggerWatcher watcher
-                : List.copyOf(gameData.damagedCreatureDeathTriggerWatchers)) {
-            if (!watcher.allControllers() && !watcher.controllerId().equals(dyingCreatureControllerId)
-                    || !gameData.creatureCardsDamagedThisTurnBySource
-                    .getOrDefault(watcher.damageSourceId(), Set.of()).contains(dyingCardId)) {
-                continue;
-            }
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
-                    watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(watcher.effect())),
-                    (UUID) null,
-                    (UUID) null);
-            entry.setTriggeringCardId(dyingCardId);
-            // "Its controller" is the dying creature's last-known controller (CR 608.2h), whatever the effects are.
-            entry.setTriggeringPermanentControllerId(dyingCreatureControllerId);
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-            log.info("Game {} - {} triggers because a creature it damaged died",
-                    gameData.id, watcher.sourceCard().getName());
-        }
-    }
 
-    /**
-     * Fires the delayed "when that permanent leaves the battlefield" triggers that watch {@code target}
-     * (CR 603.7): the destination-keyed {@code DelayedZoneChangeTrigger}s and the leaves-the-battlefield
-     * abilities a resolving spell registered for it. The permanent's own leaves-the-battlefield abilities go
-     * through the trigger pipeline.
-     */
-    public void checkDelayedLeavesBattlefieldTriggers(GameData gameData, Permanent target, Zone destination) {
-        for (var delayed : gameData.drainDelayedActions(
-                com.github.laxika.magicalvibes.model.action.DelayedZoneChangeTrigger.class,
-                action -> action.watchedPermanentId().equals(target.getId()))) {
-            CardEffect effect = delayed.effectsByDestination().get(destination);
-            if (effect == null) continue;
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
-                    delayed.controllerId(), delayed.sourceCard().getName() + "'s delayed trigger",
-                    new ArrayList<>(List.of(effect)), null, delayed.sourcePermanentId());
-            entry.setTriggeringCardId(target.getOriginalCard().getId());
-            if (destination == Zone.EXILE) {
-                entry.setTriggeringCardExileEntryVersion(
-                        gameData.findExiledCard(entry.getTriggeringCardId()) == null ? -1L
-                                : gameData.exileEntryVersions.getOrDefault(entry.getTriggeringCardId(), 0L));
-            }
-            entry.setTriggeringCardGraveyardEntryVersion(
-                    destination == Zone.GRAVEYARD ? -1L : 0L);
-            entry.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-        }
-    }
 
-    /**
-     * Fires delayed "when that creature leaves the battlefield this turn, sacrifice this creature"
-     * triggers (Kjeldoran Elite Guard). Drains matching {@link DelayedSacrificeSourceWhenTargetLeaves}
-     * entries and enqueues a {@link SacrificeSelfEffect} for each. Called from every leave path in
-     * {@link com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService}.
-     */
-    public void processDelayedSacrificeSourceWhenTargetLeaves(GameData gameData, Permanent leavingPermanent) {
-        if (!gameData.hasDelayedAction(DelayedSacrificeSourceWhenTargetLeaves.class)) {
-            return;
-        }
-        UUID leavingId = leavingPermanent.getId();
-        for (DelayedSacrificeSourceWhenTargetLeaves delayed : gameData.drainDelayedActions(
-                DelayedSacrificeSourceWhenTargetLeaves.class,
-                d -> leavingId.equals(d.watchedPermanentId()))) {
-            StackEntry se = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
-                    delayed.controllerId(),
-                    delayed.sourceCard().getName() + "'s delayed trigger",
-                    new ArrayList<>(List.of(new SacrificeSelfEffect())),
-                    null,
-                    delayed.sourcePermanentId());
-            se.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, se);
-            gameLogService.append(gameData,
-                    GameLog.text(delayed.sourceCard().getName() + "'s delayed trigger triggers."));
-            log.info("Game {} - {} delayed leave-trigger fires (watched {} left); sacrifice source {}",
-                    gameData.id, delayed.sourceCard().getName(), leavingPermanent.getCard().getName(),
-                    delayed.sourcePermanentId());
-        }
-    }
 
-    /**
-     * Fires delayed "when this creature leaves the battlefield this turn, sacrifice that creature"
-     * triggers (Phantasmal Mount). Drains matching {@link DelayedSacrificeTargetWhenSourceLeaves}
-     * entries and enqueues a {@link SacrificeSelfEffect} against the pumped target for each. Called
-     * from every leave path in
-     * {@link com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService}.
-     */
-    public void processDelayedSacrificeTargetWhenSourceLeaves(GameData gameData, Permanent leavingPermanent) {
-        if (!gameData.hasDelayedAction(DelayedSacrificeTargetWhenSourceLeaves.class)) {
-            return;
-        }
-        UUID leavingId = leavingPermanent.getId();
-        for (DelayedSacrificeTargetWhenSourceLeaves delayed : gameData.drainDelayedActions(
-                DelayedSacrificeTargetWhenSourceLeaves.class,
-                d -> leavingId.equals(d.watchedPermanentId()))) {
-            StackEntry se = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
-                    delayed.controllerId(),
-                    delayed.sourceCard().getName() + "'s delayed trigger",
-                    new ArrayList<>(List.of(new SacrificeSelfEffect())),
-                    null,
-                    delayed.targetPermanentId());
-            se.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, se);
-            gameLogService.append(gameData,
-                    GameLog.text(delayed.sourceCard().getName() + "'s delayed trigger triggers."));
-            log.info("Game {} - {} delayed leave-trigger fires (source {} left); sacrifice target {}",
-                    gameData.id, delayed.sourceCard().getName(), leavingPermanent.getCard().getName(),
-                    delayed.targetPermanentId());
-        }
-    }
 
-    /**
-     * Fires delayed "when this artifact leaves the battlefield this turn, destroy that creature"
-     * triggers (War Barge). Drains matching registrations and enqueues a non-targeting destruction
-     * for each captured target. Called from every leave path in
-     * {@link com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService}.
-     */
-    public void processDelayedDestroyTargetWhenSourceLeaves(GameData gameData, Permanent leavingPermanent) {
-        if (!gameData.hasDelayedAction(DelayedDestroyTargetWhenSourceLeaves.class)) {
-            return;
-        }
-        UUID leavingId = leavingPermanent.getId();
-        for (DelayedDestroyTargetWhenSourceLeaves delayed : gameData.drainDelayedActions(
-                DelayedDestroyTargetWhenSourceLeaves.class,
-                d -> leavingId.equals(d.watchedPermanentId()))) {
-            enqueueDelayedDestroyTarget(gameData, delayed, leavingPermanent);
-        }
-    }
 
-    /**
-     * Fires delayed "when this creature ... becomes untapped, destroy that creature" triggers (Merieke Ri
-     * Berit) for the permanent that just became untapped. Each fires only once (CR 603.7b).
-     */
-    public void processDelayedDestroyTargetWhenSourceUntaps(GameData gameData, Permanent untappedPermanent) {
-        if (!gameData.hasDelayedAction(DelayedDestroyTargetWhenSourceLeaves.class)) {
-            return;
-        }
-        UUID untappedId = untappedPermanent.getId();
-        for (DelayedDestroyTargetWhenSourceLeaves delayed : gameData.drainDelayedActions(
-                DelayedDestroyTargetWhenSourceLeaves.class,
-                d -> d.alsoWhenUntapped() && untappedId.equals(d.watchedPermanentId()))) {
-            enqueueDelayedDestroyTarget(gameData, delayed, untappedPermanent);
-        }
-    }
 
-    /**
-     * Fires delayed "when you lose control of this creature, exile that creature" triggers (Coffin Queen)
-     * for a permanent whose control just changed away from {@code previousControllerId}. Each fires only
-     * once (CR 603.7b).
-     */
-    public void processDelayedTargetWhenSourceLosesControl(GameData gameData, Permanent permanent,
-                                                           UUID previousControllerId) {
-        if (!gameData.hasDelayedAction(DelayedDestroyTargetWhenSourceLeaves.class)) {
-            return;
-        }
-        for (DelayedDestroyTargetWhenSourceLeaves delayed : gameData.drainDelayedActions(
-                DelayedDestroyTargetWhenSourceLeaves.class,
-                d -> d.alsoWhenControlLost() && permanent.getId().equals(d.watchedPermanentId())
-                        && previousControllerId.equals(d.controllerId()))) {
-            enqueueDelayedDestroyTarget(gameData, delayed, permanent);
-        }
-    }
 
-    private void enqueueDelayedDestroyTarget(GameData gameData, DelayedDestroyTargetWhenSourceLeaves delayed,
-                                             Permanent watchedPermanent) {
-        StackEntry se = TriggeredAbilityStackService.madeAbility(
-                delayed.sourceCard(),
-                delayed.controllerId(),
-                delayed.sourceCard().getName() + "'s delayed trigger",
-                List.of(delayed.exile()
-                        ? new com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect(
-                                com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect.Mode.EXILE,
-                                delayed.targetPermanentId())
-                        : new DestroyLinkedPermanentEffect(true, delayed.targetPermanentId())));
-        se.setNonTargeting(true);
-        triggeredAbilityStackService.putDelayed(gameData, se);
-        gameLogService.append(gameData,
-                GameLog.text(delayed.sourceCard().getName() + "'s delayed trigger triggers."));
-        log.info("Game {} - {} delayed trigger fires (source {}); destroy target {}",
-                gameData.id, delayed.sourceCard().getName(), watchedPermanent.getCard().getName(),
-                delayed.targetPermanentId());
-    }
 
     /**
      * Fires delayed counter triggers for cards that return from exile when their source leaves the
@@ -1703,133 +1463,8 @@ public class TriggerCollectionService {
         }
     }
 
-    public void triggerDelayedPoisonOnDeath(GameData gameData, UUID dyingCreatureCardId, UUID controllerId) {
-        Integer poisonAmount = gameData.creatureGivingControllerPoisonOnDeathThisTurn.remove(dyingCreatureCardId);
-        if (poisonAmount == null || poisonAmount <= 0) {
-            return;
-        }
 
-        poisonAmount = gameQueryService.applyPoisonCounterReplacement(gameData, controllerId, poisonAmount);
-        if (poisonAmount <= 0) return;
 
-        poisonAmount = gameQueryService.replacePoisonCounters(gameData, controllerId, poisonAmount);
-        if (poisonAmount <= 0) return;
-        int currentPoison = gameData.playerPoisonCounters.getOrDefault(controllerId, 0);
-        gameData.playerPoisonCounters.put(controllerId, currentPoison + poisonAmount);
-        gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.YOU_PUT_COUNTERS, controllerId,
-                poisonAmount));
-
-        String playerName = gameData.playerIdToName.get(controllerId);
-        String logEntry = playerName + " gets " + poisonAmount + " poison counter"
-                + (poisonAmount > 1 ? "s" : "") + " (delayed trigger: creature died this turn).";
-        gameLogService.append(gameData, GameLog.text(logEntry));
-        log.info("Game {} - {} gets {} poison counter(s) (delayed trigger: creature died this turn)",
-                gameData.id, playerName, poisonAmount);
-    }
-
-    /**
-     * Delayed "return that card when it dies this turn" (Graceful Reprieve, Supernatural Stamina,
-     * Adarkar Valkyrie): if the dying creature's card was registered, push a triggered ability that
-     * returns it from its owner's graveyard to the battlefield. Fires at most once per registration.
-     */
-    public void triggerDelayedReturnOnDeath(GameData gameData, UUID dyingPermanentCardId, Card graveyardCard, UUID ownerId) {
-        List<DelayedReturnOnDeath> delayedReturns = gameData.creaturesReturnedToBattlefieldOnDeathThisTurn
-                .remove(dyingPermanentCardId);
-        if (delayedReturns == null || delayedReturns.isEmpty()) {
-            return;
-        }
-
-        for (DelayedReturnOnDeath delayedReturn : delayedReturns) {
-            if (delayedReturn.requireControllerGraveyard()
-                    && !delayedReturn.controllerId().equals(ownerId)) {
-                continue;
-            }
-            UUID triggerControllerId = delayedReturn.controllerId();
-            Card triggerSource = delayedReturn.sourceCard() != null ? delayedReturn.sourceCard() : graveyardCard;
-
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(triggerSource,
-                    triggerControllerId,
-                    "Return " + graveyardCard.getName() + " to the battlefield",
-                    new ArrayList<>(List.of(new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(
-                            delayedReturn.enterTapped(), delayedReturn.returnUnderController())))
-            );
-            entry.setTriggeringCardId(graveyardCard.getId());
-            entry.setTriggeringCardGraveyardEntryVersion(
-                    gameData.graveyardEntryVersion(graveyardCard.getId()));
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-
-            gameLogService.append(gameData, GameLog.cardThen(graveyardCard, " will return to the battlefield (it died this turn)."));
-            log.info("Game {} - Delayed return trigger: {} will return to the battlefield", gameData.id, graveyardCard.getName());
-        }
-    }
-
-    /**
-     * Resolves delayed effects registered for a permanent dying this turn. Creature-only registrations
-     * and registrations that can also apply to other permanent types are kept separately, then combined
-     * when the permanent dies. {@code dyingPermanent}, the permanent as it last existed on the battlefield
-     * (CR 603.10a), is each entry's triggering permanent.
-     */
-    public void triggerDelayedEffectOnDeath(GameData gameData, UUID dyingPermanentCardId,
-                                            UUID dyingPermanentControllerId, int dyingPermanentPower,
-                                            int dyingPermanentManaValue, Permanent dyingPermanent) {
-        UUID dyingPermanentId = dyingPermanent.getId();
-        List<DelayedEffectOnDeath> registrations = new ArrayList<>();
-        List<DelayedEffectOnDeath> creatureRegistrations =
-                gameData.creatureTriggeringEffectOnDeathThisTurn.remove(dyingPermanentCardId);
-        if (creatureRegistrations != null) {
-            registrations.addAll(creatureRegistrations);
-        }
-        List<DelayedEffectOnDeath> permanentRegistrations =
-                gameData.permanentTriggeringEffectOnDeathThisTurn.remove(dyingPermanentCardId);
-        if (permanentRegistrations != null) {
-            registrations.addAll(permanentRegistrations);
-        }
-        List<DelayedEffectOnDeath> graveyardRegistrations =
-                gameData.permanentTriggeringEffectOnGraveyardEntry.remove(dyingPermanentCardId);
-        if (graveyardRegistrations != null) {
-            registrations.addAll(graveyardRegistrations);
-        }
-        if (registrations.isEmpty()) {
-            return;
-        }
-
-        for (DelayedEffectOnDeath registration : registrations) {
-            if (registration.targetPermanentId() != null
-                    && !registration.targetPermanentId().equals(dyingPermanentId)) continue;
-
-            CardEffect effect = registration.effect();
-            // A delayed trigger's "if" (CR 603.7c: it is written as one effect) is checked as it triggers and again
-            // as it resolves.
-            if (effect instanceof ConditionalEffect conditional
-                    && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    ConditionContext.forCard(registration.sourceCard(), registration.controllerId()))) {
-                continue;
-            }
-            StackEntry delayedEntry = TriggeredAbilityStackService.madeAbility(registration.sourceCard(),
-                    registration.controllerId(),
-                    registration.sourceCard().getName() + " triggers (a creature dealt damage this way died)",
-                    List.of(effect), dyingPermanentControllerId, registration.sourcePermanentId());
-            delayedEntry.setEventValue(Math.max(0, dyingPermanentPower));
-            delayedEntry.setDyingPermanentManaValue(Math.max(0, dyingPermanentManaValue));
-            delayedEntry.setTriggeringCardId(dyingPermanentCardId);
-            delayedEntry.setTriggeringCardGraveyardEntryVersion(
-                    gameData.graveyardEntryVersion(dyingPermanentCardId));
-            delayedEntry.setTriggeringPermanent(dyingPermanent);
-            if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
-                // A target of its own is chosen as it goes on the stack (CR 603.3d), not the dying creature's
-                // controller.
-                delayedEntry.setTargetId(null);
-                triggeredAbilityStackService.putMade(gameData, delayedEntry);
-                continue;
-            }
-
-            triggeredAbilityStackService.putDelayed(gameData, delayedEntry);
-
-            log.info("Game {} - Delayed death trigger: {} triggers (a creature it damaged died this turn)",
-                    gameData.id, registration.sourceCard().getName());
-        }
-    }
 
     /**
      * What a creature entering under {@code controllerId}'s control triggers besides the card abilities the trigger

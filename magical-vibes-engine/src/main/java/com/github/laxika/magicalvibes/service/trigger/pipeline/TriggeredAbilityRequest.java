@@ -115,6 +115,19 @@ public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard,
         SOURCE_ATTACKED
     }
 
+    /**
+     * The source permanent its stack entry names: {@link #sourcePermanent}, or for a delayed triggered ability, which
+     * names none so that no "triggers an additional time" effect counts it (CR 603.2d), the source permanent of the
+     * ability that created it, which is its source too (CR 603.7e); {@code null} for neither.
+     */
+    public UUID entrySourcePermanentId() {
+        if (sourcePermanent != null) {
+            return sourcePermanent.getId();
+        }
+        return record instanceof EventAbilitySupport.DelayedRecord delayed ? delayed.delayed().sourcePermanentId()
+                : null;
+    }
+
     /** The id of {@link #sourcePermanent}, or {@code null}. */
     public UUID sourcePermanentId() {
         return sourcePermanent == null ? null : sourcePermanent.getId();

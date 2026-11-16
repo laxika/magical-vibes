@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
-import com.github.laxika.magicalvibes.model.DelayedEffectOnDeath;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureCause;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
@@ -37,7 +36,6 @@ import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOpponentPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -3186,15 +3184,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         entering.setChosenPermanentId(chosenPermanentId);
-        context.card().getStaticEffects().stream()
-                .filter(ChooseOpponentPermanentOnEnterEffect.class::isInstance)
-                .map(ChooseOpponentPermanentOnEnterEffect.class::cast)
-                .map(ChooseOpponentPermanentOnEnterEffect::whenChosenPermanentPutIntoGraveyard)
-                .filter(Objects::nonNull)
-                .forEach(delayed -> gameData.permanentTriggeringEffectOnGraveyardEntry
-                        .computeIfAbsent(chosen.getCard().getId(), id -> new ArrayList<>())
-                        .add(new DelayedEffectOnDeath(delayed, context.controllerId(), entering.getCard(),
-                                entering.getId(), chosen.getId())));
         gameLogService.append(gameData, GameLog.cardTextCard(entering.getCard(), " chooses ", chosen.getCard(), "."));
         log.info("Game {} - {} chooses {}", gameData.id,
                 entering.getCard().getName(), chosen.getCard().getName());

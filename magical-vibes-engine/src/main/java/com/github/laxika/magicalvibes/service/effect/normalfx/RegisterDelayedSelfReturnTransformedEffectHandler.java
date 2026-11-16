@@ -1,18 +1,19 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.DelayedEffectOnDeath;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collections;
 
 @Component
 @RequiredArgsConstructor
@@ -32,14 +33,11 @@ public class RegisterDelayedSelfReturnTransformedEffectHandler implements Normal
             return;
         }
 
-        gameData.creatureTriggeringEffectOnDeathThisTurn
-                .computeIfAbsent(source.getOriginalCard().getId(), ignored ->
-                        Collections.synchronizedList(new ArrayList<>()))
-                .add(new DelayedEffectOnDeath(
-                        new ReturnSourceTransformedFromGraveyardEffect(),
-                        entry.getControllerId(),
-                        source.getOriginalCard(),
-                        source.getId(),
-                        source.getId()));
+        // "When this creature dies this turn, return it to the battlefield transformed": about the source, with this
+        // turn as its stated duration (CR 603.7b), its card the source's (CR 603.7e).
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.about(
+                entry.getControllerId(), source.getOriginalCard(),
+                new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new ReturnSourceTransformedFromGraveyardEffect()),
+                source.getId(), source.getId(), true));
     }
 }

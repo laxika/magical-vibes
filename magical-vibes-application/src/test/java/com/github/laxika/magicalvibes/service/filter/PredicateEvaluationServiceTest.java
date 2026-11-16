@@ -90,6 +90,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCardTypePredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtExcessDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
@@ -2179,6 +2180,23 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentDealtDamageThisTurnPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentDealtDamageThisTurnBySourcePredicate matches only damage from the named source")
+        void dealtDamageThisTurnBySourcePredicateMatchesTheNamedSource() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            UUID spellCardId = UUID.randomUUID();
+            UUID otherSourceId = UUID.randomUUID();
+            gd.recordDamageToPermanentFromSource(perm.getId(), 2, otherSourceId, "Shock");
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentDealtDamageThisTurnBySourcePredicate(spellCardId))).isFalse();
+
+            gd.recordDamageToPermanentFromSource(perm.getId(), 1, spellCardId, "Reckless Blaze");
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, perm,
+                    new PermanentDealtDamageThisTurnBySourcePredicate(spellCardId))).isTrue();
         }
 
         @Test

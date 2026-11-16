@@ -37,7 +37,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSup
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.rules.ControlChangeEvent;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -71,7 +70,6 @@ public class CreatureControlService {
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final UnattachTriggerSupport unattachTriggerSupport;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Autowired
     @Lazy
@@ -99,21 +97,14 @@ public class CreatureControlService {
 
     @Autowired
     public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService,
-                                  UnattachTriggerSupport unattachTriggerSupport,
-                                  @Lazy TriggerCollectionService triggerCollectionService) {
+                                  UnattachTriggerSupport unattachTriggerSupport) {
         this.gameLogService = gameLogService;
         this.gameQueryService = gameQueryService;
         this.unattachTriggerSupport = unattachTriggerSupport;
-        this.triggerCollectionService = triggerCollectionService;
-    }
-
-    public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService,
-                                  UnattachTriggerSupport unattachTriggerSupport) {
-        this(gameLogService, gameQueryService, unattachTriggerSupport, null);
     }
 
     public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService) {
-        this(gameLogService, gameQueryService, new UnattachTriggerSupport(), null);
+        this(gameLogService, gameQueryService, new UnattachTriggerSupport());
     }
 
     /**
@@ -307,9 +298,6 @@ public class CreatureControlService {
                         ? new RingState(ringState.level(), null)
                         : ringState);
         queueSelfControlLossTriggers(gameData, permanent, current);
-        if (triggerCollectionService != null) {
-            triggerCollectionService.processDelayedTargetWhenSourceLosesControl(gameData, permanent, current);
-        }
         boolean revertedToDefault = gameData.newestControlEffectFor(permanent.getId()) == null;
         queueControlLossUnattachTriggers(gameData, permanent, current);
 

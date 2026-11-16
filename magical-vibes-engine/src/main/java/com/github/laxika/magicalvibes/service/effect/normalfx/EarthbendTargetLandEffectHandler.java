@@ -6,14 +6,17 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.DelayedZoneChangeTrigger;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnEarthbendedLandEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -22,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -76,11 +78,18 @@ public class EarthbendTargetLandEffectHandler implements NormalEffectHandlerBean
                     gameData, entry, target, counterCount);
             applied = true;
 
+            // "When that land dies or is put into exile, return it to the battlefield tapped under your control"
+            // (CR 701.66a): about the land, with no stated duration (CR 603.7b); it can go to only one of the two
+            // zones, so each is its own registration, with the return from that zone.
             UUID returnControllerId = entry.getControllerId();
-            gameData.queueDelayedAction(new DelayedZoneChangeTrigger(target.getId(), returnControllerId,
-                    entry.getCard(), Map.of(
-                            Zone.GRAVEYARD, new ReturnEarthbendedLandEffect(returnControllerId, false),
-                            Zone.EXILE, new ReturnEarthbendedLandEffect(returnControllerId, true))));
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.about(returnControllerId,
+                    entry.getCard(), new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
+                            new ReturnEarthbendedLandEffect(returnControllerId, false)),
+                    target.getId(), entry.getSourcePermanentId(), false));
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.about(returnControllerId,
+                    entry.getCard(), new TriggeredAbility(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), null,
+                            ObjectRelation.THIS), new ReturnEarthbendedLandEffect(returnControllerId, true)),
+                    target.getId(), entry.getSourcePermanentId(), false));
         }
         if (applied) {
             ActionEvents.bent(gameData, entry.getControllerId(), BendingType.EARTHBEND);

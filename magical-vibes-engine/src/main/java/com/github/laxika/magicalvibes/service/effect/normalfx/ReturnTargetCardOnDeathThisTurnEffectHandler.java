@@ -3,16 +3,20 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.DelayedReturnOnDeath;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardOnDeathThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collections;
 
 @Slf4j
 @Component
@@ -34,12 +38,18 @@ public class ReturnTargetCardOnDeathThisTurnEffectHandler implements NormalEffec
             return;
         }
 
-        boolean enterTapped = ((ReturnTargetCardOnDeathThisTurnEffect) effect).enterTapped();
-        gameData.creaturesReturnedToBattlefieldOnDeathThisTurn
-                .computeIfAbsent(target.getCard().getId(), k -> Collections.synchronizedList(new ArrayList<>()))
-                .add(new DelayedReturnOnDeath(entry.getControllerId(), enterTapped,
-                        ((ReturnTargetCardOnDeathThisTurnEffect) effect).returnUnderController(),
-                        ((ReturnTargetCardOnDeathThisTurnEffect) effect).requireControllerGraveyard(), entry.getCard()));
+        // "When target creature dies this turn, return that card to the battlefield": about the creature, with this
+        // turn as its stated duration (CR 603.7b); "put into your graveyard" (Saffi Eriksdotter) only for a card the
+        // ability's controller owns.
+        var register = (ReturnTargetCardOnDeathThisTurnEffect) effect;
+        PermanentPredicate filter = register.requireControllerGraveyard()
+                ? new PermanentOwnedBySourceControllerPredicate() : null;
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.about(
+                entry.getControllerId(), entry.getCard(),
+                new TriggeredAbility(Triggers.dies(filter, ObjectRelation.THIS),
+                        new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(register.enterTapped(),
+                                register.returnUnderController())),
+                target.getId(), entry.getSourcePermanentId(), true));
 
         log.info("Game {} - Delayed trigger registered: if {} dies this turn, return it to the battlefield",
                 gameData.id, target.getCard().getName());

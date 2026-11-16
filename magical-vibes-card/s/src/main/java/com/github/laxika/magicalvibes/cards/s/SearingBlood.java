@@ -18,6 +18,6 @@ public class SearingBlood extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new DealDamageToTargetCreatureEffect(2))
                 .addSpellEffect(new ResolveEffectOnTargetDeathThisTurnEffect(
-                        new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER)));
+                        new DealDamageToPlayersEffect(3, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER)));
     }
 }

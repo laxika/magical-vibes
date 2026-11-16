@@ -3,7 +3,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSacrificeTargetWhenSourceLeavesEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -32,11 +36,13 @@ public class RegisterDelayedSacrificeTargetWhenSourceLeavesEffectHandler impleme
             return;
         }
 
-        gameData.queueDelayedAction(new DelayedSacrificeTargetWhenSourceLeaves(
-                entry.getSourcePermanentId(),
-                target.getId(),
-                entry.getControllerId(),
-                entry.getCard()));
+        // "When this creature leaves the battlefield this turn, sacrifice that creature": about the source, with this
+        // turn as its stated duration (CR 603.7b).
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.about(
+                entry.getControllerId(), entry.getCard(),
+                new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
+                        new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.SACRIFICE, target.getId())),
+                entry.getSourcePermanentId(), entry.getSourcePermanentId(), true));
         log.info("Game {} - {} registers delayed trigger: if source leaves this turn, sacrifice {}",
                 gameData.id, entry.getCard().getName(), target.getCard().getName());
     }

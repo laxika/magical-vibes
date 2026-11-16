@@ -50,9 +50,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.CreatureDeathTriggerWatcher;
 import com.github.laxika.magicalvibes.model.CreatureEntersTriggerWatcher;
-import com.github.laxika.magicalvibes.model.DamagedCreatureDeathTriggerWatcher;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.OpponentGraveyardLifeLossWatcher;
@@ -66,8 +64,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerDamageMultiplication;
-import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
-import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -1459,32 +1455,23 @@ class RunedTerrorTest extends BaseCardTest {
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
         var graveyardWatcher = new OpponentGraveyardLifeLossWatcher(player2.getId(), source);
         var lifeGainWatcher = new LifeGainOpponentLifeLossWatcher(player2.getId(), source);
-        var deathWatcher = new CreatureDeathTriggerWatcher(player2.getId(), source, effect);
-        var damagedDeathWatcher = new DamagedCreatureDeathTriggerWatcher(
-                UUID.randomUUID(), player2.getId(), source, effect, false);
         var entersWatcher = new CreatureEntersTriggerWatcher(player2.getId(), source, effect);
         var globalTrigger = new TemporaryGlobalTriggeredAbility(
                 player2.getId(), source, new TriggeredAbility(Triggers.creatureBlocks(), effect));
         gd.opponentGraveyardLifeLossWatchers.add(graveyardWatcher);
         gd.lifeGainOpponentLifeLossWatchers.add(lifeGainWatcher);
-        gd.creatureDeathTriggerWatchers.add(deathWatcher);
-        gd.damagedCreatureDeathTriggerWatchers.add(damagedDeathWatcher);
         gd.allyCreatureEntersTriggerWatchers.add(entersWatcher);
         gd.temporaryGlobalTriggeredAbilities.add(globalTrigger);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
         assertThat(gd.opponentGraveyardLifeLossWatchers).containsExactly(graveyardWatcher);
         assertThat(gd.lifeGainOpponentLifeLossWatchers).containsExactly(lifeGainWatcher);
-        assertThat(gd.creatureDeathTriggerWatchers).containsExactly(deathWatcher);
-        assertThat(gd.damagedCreatureDeathTriggerWatchers).containsExactly(damagedDeathWatcher);
         assertThat(gd.allyCreatureEntersTriggerWatchers).containsExactly(entersWatcher);
         assertThat(gd.temporaryGlobalTriggeredAbilities).containsExactly(globalTrigger);
 
         harness.passUntil(player2, TurnStep.CLEANUP);
         assertThat(gd.opponentGraveyardLifeLossWatchers).isEmpty();
         assertThat(gd.lifeGainOpponentLifeLossWatchers).isEmpty();
-        assertThat(gd.creatureDeathTriggerWatchers).isEmpty();
-        assertThat(gd.damagedCreatureDeathTriggerWatchers).isEmpty();
         assertThat(gd.allyCreatureEntersTriggerWatchers).isEmpty();
         assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
     }
@@ -1546,29 +1533,17 @@ class RunedTerrorTest extends BaseCardTest {
         var thisTurnWatch = new DelayedWatchedCreaturesCombatDamage(
                 Set.of(watchedId), player2.getId(), List.of(effect), source, false, true);
         var multiplier = new DelayedControllerDamageMultiplication(player2.getId(), 2, true);
-        var sacrifice = new DelayedSacrificeSourceWhenTargetLeaves(
-                watchedId, UUID.randomUUID(), player2.getId(), source);
-        var destroy = new DelayedDestroyTargetWhenSourceLeaves(
-                watchedId, UUID.randomUUID(), player2.getId(), source, false, true);
-        var firedDestroy = new DelayedDestroyTargetWhenSourceLeaves(
-                UUID.randomUUID(), UUID.randomUUID(), player2.getId(), source, false, true);
         gd.queueDelayedAction(thisTurnWatch);
         gd.queueDelayedAction(multiplier);
-        gd.queueDelayedAction(sacrifice);
-        gd.queueDelayedAction(destroy);
-        gd.queueDelayedAction(firedDestroy);
         gd.drawReplacementTargetToController.put(player1.getId(), player2.getId());
         gs.advanceStep(gd);
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
-        gd.drainDelayedActions(DelayedDestroyTargetWhenSourceLeaves.class, firedDestroy::equals);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
         assertThat(gd.getDelayedActions(DelayedWatchedCreatureDealsDamage.class)).isEmpty();
         assertThat(gd.getDelayedActions(DelayedWatchedCreaturesCombatDamage.class))
                 .containsExactlyInAnyOrder(untilNextTurnWatch, thisTurnWatch);
         assertThat(gd.getDelayedActions(DelayedControllerDamageMultiplication.class)).containsExactly(multiplier);
-        assertThat(gd.getDelayedActions(DelayedSacrificeSourceWhenTargetLeaves.class)).containsExactly(sacrifice);
-        assertThat(gd.getDelayedActions(DelayedDestroyTargetWhenSourceLeaves.class)).containsExactly(destroy);
         assertThat(gd.drawReplacementTargetToController)
                 .containsExactly(Map.entry(player1.getId(), player2.getId()));
 
@@ -1576,8 +1551,6 @@ class RunedTerrorTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DelayedWatchedCreaturesCombatDamage.class))
                 .containsExactly(untilNextTurnWatch);
         assertThat(gd.getDelayedActions(DelayedControllerDamageMultiplication.class)).isEmpty();
-        assertThat(gd.getDelayedActions(DelayedSacrificeSourceWhenTargetLeaves.class)).isEmpty();
-        assertThat(gd.getDelayedActions(DelayedDestroyTargetWhenSourceLeaves.class)).isEmpty();
         assertThat(gd.drawReplacementTargetToController).isEmpty();
     }
 

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -394,23 +395,30 @@ class EventAbilitySupport {
 
     /**
      * {@code record} of an event of {@code delayed}'s ability, with what the delayed ability itself records: it was
-     * made by a resolution, its maker's source's linked exiled card (CR 603.7c), and the registration's target filter,
-     * which restricts the targets the door chooses (CR 603.3d).
+     * made by a resolution, its maker's source's linked exiled card (CR 603.7c), and the
+     * registration's target filter, which restricts the targets the door chooses (CR 603.3d). The door reads
+     * {@link DelayedRecord#delayed} to end an ability that triggers only once (CR 603.7b).
      */
     static TriggerRecord delayedRecord(TemporaryGlobalTriggeredAbility delayed, TriggerRecord record) {
-        UUID linkedExiledCardId = delayed.linkedExiledCardId();
-        TargetFilter targetFilter = delayed.targetFilter();
-        return entry -> {
+        return new DelayedRecord(delayed, record);
+    }
+
+    /** The record {@link #delayedRecord} stamps on an entry of the delayed triggered ability {@code delayed}. */
+    record DelayedRecord(TemporaryGlobalTriggeredAbility delayed, TriggerRecord record) implements TriggerRecord {
+
+        @Override
+        public void stamp(StackEntry entry) {
             entry.setMadeByResolution(true);
             record.stamp(entry);
-            if (linkedExiledCardId != null) {
-                entry.setLinkedExiledCardId(linkedExiledCardId);
+            if (delayed.linkedExiledCardId() != null) {
+                entry.setLinkedExiledCardId(delayed.linkedExiledCardId());
             }
-            if (targetFilter != null) {
-                entry.setTargetFilter(targetFilter);
+            if (delayed.targetFilter() != null) {
+                entry.setTargetFilter(delayed.targetFilter());
             }
-        };
+        }
     }
+
 
     /**
      * The record of a player, counter or tap event, stamped on the ability's entry whatever its effects are:

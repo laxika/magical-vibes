@@ -589,6 +589,14 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Ledger: no ability gained or lost but Desperate Measures'; every line is a record gained (the family's record), the event's creature no longer the ability's source (CR 603.7d, 603.7e), "that player" by the family's relation, or random (route-fixture draws, discards, dice).
 - Open: the other delayed lists (`DelayedAction` drains, the watcher and boon lists, the next-spell copies) and the step listing.
 
+**R3 (part 2: deaths and leaves).**
+- Every death and leave delayed list is a `TemporaryGlobalTriggeredAbility` (`about` / `thisTurn`): creature-death and damaged-creature watchers, Xira's egg watch, return and effect on death, Golden Guardian, the destination, sacrifice and destroy leave actions, Earthbend (CR 701.66a), the token links. `untilTriggered` is "no stated duration": the door ends it as it triggers (CR 603.7b), cleanup prunes one whose permanent left. Gone: 13 `TriggerCollectionService` drains and their call sites, 8 `GameData` lists, `DelayedZoneChangeTrigger`, the sacrifice and destroy `DelayedAction`s, `RegisterDelayedCreatureDeathTriggerEffect` (cards write `Triggers.creatureDies`), the dead `GiveControllerPoisonCountersOnTargetDeathThisTurnEffect`.
+- A delayed entry names its maker's source permanent (`DelayedRecord`, `entrySourcePermanentId`, CR 603.7e); one about a departing permanent records the card it became and its last controller. Untap and control-loss families list delayed abilities about the permanent. `PermanentDealtDamageThisTurnBySourcePredicate` judges "dealt damage this way / by that creature".
+- Rules fix (tests fail before): Predatory Sludge's graveyard ability is its own (CR 113.6, 603.3a): it no longer conjures after Sludge left, and Sludge's controller conjures. Its two tests are rewritten.
+- Cards as printed: Searing Blood, Virulent Wound ("that creature's controller" = `TRIGGERING_PERMANENT_CONTROLLER`), Burn Away (`DYING_CREATURE_CONTROLLER` reads it), Fight for the Throne (`ifCondition`, CR 603.4); Coffin Queen's ability also ends on it leaving (2014-02-01 ruling).
+- Ledger: no ability gained or lost but Sludge's; every line is a record gained (source permanent, triggering card, permanent and controller), an effect renamed (Phantasmal Mount, the death registrations), or random (route-fixture draws, reveals, clashes).
+- Open: Lagrella's `DelayedExileReturnCounterTrigger` ("when an exiled card enters under your control this way" needs the return to name its event), the step `DelayedAction` drains, the entering-creature watchers and boons, the next-spell copies, the step listing.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

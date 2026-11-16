@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
@@ -524,6 +525,26 @@ class TurnCleanupServiceTest {
             sut.resetEndOfTurnModifiers(gd);
 
             assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Keeps a delayed ability with no stated duration while the permanent it is about remains")
+        void keepsUntilTriggeredDelayedAbilityAboutAPermanentStillOnTheBattlefield() {
+            Permanent watched = new Permanent(createCardWithName("Merieke Ri Berit"));
+            Permanent gone = new Permanent(createCardWithName("Coffin Queen"));
+            TemporaryGlobalTriggeredAbility kept = TemporaryGlobalTriggeredAbility.about(player1Id,
+                    watched.getCard(), new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
+                            new LoseLifeEffect(1)), watched.getId(), watched.getId(), false);
+            TemporaryGlobalTriggeredAbility orphaned = TemporaryGlobalTriggeredAbility.about(player1Id,
+                    gone.getCard(), new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
+                            new LoseLifeEffect(1)), gone.getId(), gone.getId(), false);
+            gd.temporaryGlobalTriggeredAbilities.add(kept);
+            gd.temporaryGlobalTriggeredAbilities.add(orphaned);
+            when(gameQueryService.findPermanentById(gd, watched.getId())).thenReturn(watched);
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(gd.temporaryGlobalTriggeredAbilities).containsExactly(kept);
         }
 
         @Test

@@ -3,7 +3,16 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import java.util.ArrayList;
+import java.util.List;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedDestroyTargetWhenSourceLeavesEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -33,13 +42,19 @@ public class RegisterDelayedDestroyTargetWhenSourceLeavesEffectHandler implement
         }
 
         var register = (RegisterDelayedDestroyTargetWhenSourceLeavesEffect) effect;
-        gameData.queueDelayedAction(new DelayedDestroyTargetWhenSourceLeaves(
-                entry.getSourcePermanentId(),
-                target.getId(),
-                entry.getControllerId(),
-                entry.getCard(),
-                register.alsoWhenSourceUntaps(),
-                register.thisTurnOnly()));
+        // "When this artifact leaves the battlefield this turn, destroy that creature" (War Barge), "when Merieke Ri
+        // Berit leaves the battlefield or becomes untapped, destroy that creature": about the source, for this turn or
+        // with no stated duration (CR 603.7b). The creature can't be regenerated.
+        List<TriggerCondition> conditions = new ArrayList<>();
+        conditions.add(new TriggerCondition(Triggers.leavesBattlefield(ObjectRelation.THIS)));
+        if (register.alsoWhenSourceUntaps()) {
+            conditions.add(new TriggerCondition(Triggers.becomesUntapped()));
+        }
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.about(
+                entry.getControllerId(), entry.getCard(),
+                new TriggeredAbility(conditions, TriggerOptions.DEFAULT, List.of(new EffectRegistration(
+                        new DestroyLinkedPermanentEffect(true, target.getId())))),
+                entry.getSourcePermanentId(), entry.getSourcePermanentId(), register.thisTurnOnly()));
         log.info("Game {} - {} registers delayed trigger: if source leaves this turn, destroy {}",
                 gameData.id, entry.getCard().getName(), target.getCard().getName());
     }

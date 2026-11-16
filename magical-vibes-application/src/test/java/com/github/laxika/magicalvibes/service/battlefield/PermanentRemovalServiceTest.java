@@ -63,7 +63,6 @@ class PermanentRemovalServiceTest {
 
         assertThat(prs.enforceAttachmentLegality(gd)).isTrue();
 
-        verify(triggerCollectionService).checkDelayedLeavesBattlefieldTriggers(gd, aura, Zone.GRAVEYARD);
         assertThat(aura.getAttachedTo()).isEqualTo(hostId);
     }
 
@@ -594,16 +593,6 @@ class PermanentRemovalServiceTest {
             assertThat(deathsAfter).isEqualTo(deathsBefore);
         }
 
-        @Test
-        @DisplayName("Fires death triggers for creatures sent to graveyard")
-        void firesDeathTriggersForCreature() {
-            Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            stubGraveyardForCreature(bears, player1Id);
-
-            prs.removePermanentToGraveyard(gd, bears);
-
-            verify(triggerCollectionService).checkCreatureDeathRegisteredTriggers(gd, bears);
-        }
 
         @Test
         @DisplayName("Records an enchantment put into a graveyard from the battlefield")
@@ -862,18 +851,6 @@ class PermanentRemovalServiceTest {
             assertThat(gd.playerHands.get(player1Id)).containsExactly(tokenCard);
         }
 
-        @Test
-        @DisplayName("Bounced token still fires delayed leave-battlefield triggers")
-        void bouncedTokenStillFiresTriggers() {
-            Card tokenCard = createCreature("Saproling");
-            tokenCard.setToken(true);
-            Permanent token = addPermanent(player1Id, tokenCard);
-            when(gameQueryService.findPermanentController(gd, token.getId())).thenReturn(player1Id);
-
-            prs.removePermanentToHand(gd, token);
-
-            verify(triggerCollectionService).checkDelayedLeavesBattlefieldTriggers(gd, token, Zone.HAND);
-        }
     }
 
     // =========================================================================

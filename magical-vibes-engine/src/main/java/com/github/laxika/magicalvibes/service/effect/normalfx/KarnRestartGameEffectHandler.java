@@ -391,7 +391,6 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
             gameData.creatureSubtypeDeathPowerThisTurn.remove(playerId);
             gameData.creatureCardsDamagedThisTurnBySourcePermanent.put(playerId, ConcurrentHashMap.newKeySet());
             gameData.creatureCardsDamagedThisTurnBySource.put(playerId, ConcurrentHashMap.newKeySet());
-            gameData.creatureGivingControllerPoisonOnDeathThisTurn.clear();
             gameData.playerSourceDamagePreventionIds.put(playerId, ConcurrentHashMap.newKeySet());
             gameData.playerSourceDamagePreventionLifeGainIds.put(playerId, ConcurrentHashMap.newKeySet());
             gameData.playerColorDamagePreventionCount.put(playerId, new ConcurrentHashMap<>());

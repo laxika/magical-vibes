@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StagedHandExile;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -90,6 +91,27 @@ class GameDataDeepCopyTest {
         assertThat(copy.activePlayerId).isEqualTo(player1.getId());
         assertThat(copy.playerLifeTotals.get(player1.getId())).isEqualTo(15);
         assertThat(copy.playerLifeTotals.get(player2.getId())).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps delayed abilities with no stated duration in an independent list")
+    void deepCopyKeepsUntilTriggeredDelayedAbilitiesIndependently() {
+        Card source = new GrizzlyBears();
+        UUID watchedId = UUID.randomUUID();
+        TemporaryGlobalTriggeredAbility delayed = TemporaryGlobalTriggeredAbility.about(player1.getId(), source,
+                new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS), new DrawCardEffect(1)),
+                watchedId, null, false);
+        gd.temporaryGlobalTriggeredAbilities.add(delayed);
+
+        GameData copy = gd.simulationCopy();
+        copy.temporaryGlobalTriggeredAbilities.clear();
+
+        assertThat(gd.temporaryGlobalTriggeredAbilities).containsExactly(delayed);
+        assertThat(gd.simulationCopy().temporaryGlobalTriggeredAbilities).singleElement()
+                .satisfies(copied -> {
+                    assertThat(copied.untilTriggered()).isTrue();
+                    assertThat(copied.watchedPermanentId()).isEqualTo(watchedId);
+                });
     }
 
     @Test

@@ -43,7 +43,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerJudge;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import lombok.extern.slf4j.Slf4j;
@@ -98,7 +97,6 @@ public class TapTriggers {
     private final GameOutcomeService gameOutcomeService;
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final TriggeredAbilityStackService stackService;
-    private final TriggerCollectionService triggerCollectionService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     public TapTriggers(EventAbilitySupport abilities, @Lazy GameQueryService gameQueryService,
@@ -107,7 +105,6 @@ public class TapTriggers {
                        @Lazy GameLogService gameLogService, @Lazy GameOutcomeService gameOutcomeService,
                        @Lazy EffectHandlerRegistry effectHandlerRegistry,
                        @Lazy TriggeredAbilityStackService stackService,
-                       @Lazy TriggerCollectionService triggerCollectionService,
                        @Lazy TriggeredAbilityQueueService triggeredAbilityQueueService) {
         this.abilities = abilities;
         this.gameQueryService = gameQueryService;
@@ -117,7 +114,6 @@ public class TapTriggers {
         this.gameOutcomeService = gameOutcomeService;
         this.effectHandlerRegistry = effectHandlerRegistry;
         this.stackService = stackService;
-        this.triggerCollectionService = triggerCollectionService;
         this.triggeredAbilityQueueService = triggeredAbilityQueueService;
     }
 
@@ -737,7 +733,7 @@ public class TapTriggers {
 
     /**
      * {@code untappedPermanent} became untapped: the delayed "when this creature becomes untapped, destroy that
-     * creature" actions (Merieke Ri Berit), its own "whenever this permanent becomes untapped" (Hollowsage; those
+     * creature" abilities about it (Merieke Ri Berit), its own "whenever this permanent becomes untapped" (Hollowsage; those
      * granted to it, Well Rested, whose source is the enchanted creature), its controller's "whenever a permanent you
      * control becomes untapped" (Wake Thrasher), then every "whenever a permanent becomes untapped".
      */
@@ -752,7 +748,15 @@ public class TapTriggers {
         }
         if (controllerId == null) return;
 
-        triggerCollectionService.processDelayedDestroyTargetWhenSourceUntaps(gameData, untappedPermanent);
+        // The delayed abilities about it ("when this creature becomes untapped, destroy that creature"), whose "this"
+        // is that permanent (CR 603.7c); its maker's controller controls each (CR 603.7e).
+        for (Watcher delayed : abilities.delayedWatching(gameData, untappedPermanent.getId())) {
+            for (TriggeredAbility ability : abilities.abilities(gameData, delayed, SELF_UNTAPPED)) {
+                abilities.put(gameData, ability, delayed, ConditionContext.forCard(delayed.card(),
+                                delayed.controllerId()),
+                        EventAbilitySupport.eventRecord(untappedPermanent, null, controllerId, null, null, null));
+            }
+        }
 
         // "This ability triggers only once each turn" (Well Rested) is the ability's limit; each granting Aura's
         // instance keeps its own (TriggeredAbility#instance()).

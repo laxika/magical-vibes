@@ -28,6 +28,10 @@ import java.util.UUID;
  *                           exiled card", which the collector puts on the entry as its linked exiled card, so casting
  *                           the same spell again and exiling another card can't redirect it; {@code null} when it had
  *                           exiled none
+ * @param untilTriggered     whether it has no stated duration: it triggers only the next time its trigger event occurs
+ *                           and lasts until then (CR 603.7b), so no turn's end removes it; "when that creature leaves
+ *                           the battlefield or becomes untapped" (Merieke Ri Berit). One about a permanent that left the
+ *                           battlefield without triggering it never can: the permanent is gone (CR 400.7)
  */
 public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
                                               TargetFilter targetFilter,
@@ -37,7 +41,49 @@ public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard
                                               UUID watchedPermanentId,
                                               UUID sourcePermanentId,
                                               UUID watchedPlayerId,
-                                              UUID linkedExiledCardId) {
+                                              UUID linkedExiledCardId,
+                                              boolean untilTriggered) {
+
+    /** {@code ability} with a stated duration (CR 603.7b). */
+    public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
+                                           TargetFilter targetFilter,
+                                           boolean untilEndOfNextTurn, boolean untilNextTurn,
+                                           int registrationTurnNumber, UUID expirationPlayerId,
+                                           UUID watchedPermanentId, UUID sourcePermanentId, UUID watchedPlayerId,
+                                           UUID linkedExiledCardId) {
+        this(controllerId, sourceCard, ability, targetFilter, untilEndOfNextTurn, untilNextTurn,
+                registrationTurnNumber, expirationPlayerId, watchedPermanentId, sourcePermanentId, watchedPlayerId,
+                linkedExiledCardId, false);
+    }
+
+    /**
+     * {@code ability} of the delayed triggered ability a resolving spell or ability with the source {@code sourceCard}
+     * and {@code sourcePermanentId} (or none) created, controlled by {@code controllerId}, about the permanent
+     * {@code watchedPermanentId} ("when that creature leaves the battlefield this turn"): until end of turn when
+     * {@code thisTurn}, else until it triggers (CR 603.7b).
+     */
+    public static TemporaryGlobalTriggeredAbility about(UUID controllerId, Card sourceCard, TriggeredAbility ability,
+                                                        UUID watchedPermanentId, UUID sourcePermanentId,
+                                                        boolean thisTurn) {
+        return new TemporaryGlobalTriggeredAbility(controllerId, sourceCard, ability, null, false, false, -1, null,
+                watchedPermanentId, sourcePermanentId, null, null, !thisTurn);
+    }
+
+    /**
+     * {@code ability} of the delayed triggered ability a resolving spell or ability with the source {@code sourceCard}
+     * and {@code sourcePermanentId} (or none) created until end of turn, controlled by {@code controllerId}, that
+     * watches no particular object ("whenever a creature dealt damage this way dies this turn").
+     */
+    public static TemporaryGlobalTriggeredAbility thisTurn(UUID controllerId, Card sourceCard,
+                                                           TriggeredAbility ability, UUID sourcePermanentId) {
+        return new TemporaryGlobalTriggeredAbility(controllerId, sourceCard, ability, null, false, false, -1, null,
+                null, sourcePermanentId, null, null, false);
+    }
+
+    /** Whether a turn's end removes it: it has a stated duration that ends then (CR 603.7b, 514.2). */
+    public boolean endsThisTurn() {
+        return !untilTriggered && !untilEndOfNextTurn && !untilNextTurn;
+    }
 
     /** {@code ability} with no linked exiled card. */
     public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,

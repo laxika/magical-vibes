@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCreatureDeathTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,6 +24,7 @@ public class MassacreGirl extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate()));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 weakenOtherCreatures,
-                new RegisterDelayedCreatureDeathTriggerEffect(weakenOtherCreatures));
+                new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+                        new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANY), weakenOtherCreatures)));
     }
 }

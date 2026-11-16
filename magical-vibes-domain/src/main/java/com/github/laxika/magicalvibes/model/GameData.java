@@ -9,10 +9,7 @@ import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.action.DelayedAction;
 import com.github.laxika.magicalvibes.model.action.DelayedCamouflage;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerDamageMultiplication;
-import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
-import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
-import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamage;
@@ -898,17 +895,8 @@ public class GameData {
      * in a graveyard (Krovikan Vampire return). Pruned when a card leaves any graveyard.
      */
     public final Map<UUID, Set<UUID>> creatureCardsDamagedBySourceThatDiedThisTurn = new ConcurrentHashMap<>();
-    /** Delayed trigger: creature card ID → poison counters to give its controller when it dies this turn. */
-    public final Map<UUID, Integer> creatureGivingControllerPoisonOnDeathThisTurn = new ConcurrentHashMap<>();
-    /** Delayed triggers: creature card ID → return details if it dies this turn (Graceful Reprieve, Supernatural Stamina, Adarkar Valkyrie). */
-    public final Map<UUID, List<DelayedReturnOnDeath>> creaturesReturnedToBattlefieldOnDeathThisTurn = new ConcurrentHashMap<>();
     /** Permanents each exploit source sacrificed as its exploit ability resolved, keyed by the source permanent id. */
     public final Map<UUID, Set<UUID>> exploitedPermanentIdsBySource = new ConcurrentHashMap<>();
-    /** Delayed trigger: creature card ID → effect registrations to resolve if it dies this turn (Skeletonize, Initiate of Blood). */
-    public final Map<UUID, List<DelayedEffectOnDeath>> creatureTriggeringEffectOnDeathThisTurn = new ConcurrentHashMap<>();
-    public final Map<UUID, List<DelayedEffectOnDeath>> permanentTriggeringEffectOnDeathThisTurn = new ConcurrentHashMap<>();
-    /** Delayed trigger that does not expire: card ID of a chosen permanent → effects to resolve when it is put into a graveyard from the battlefield (Predatory Sludge). */
-    public final Map<UUID, List<DelayedEffectOnDeath>> permanentTriggeringEffectOnGraveyardEntry = new ConcurrentHashMap<>();
     /** Seraph: source Seraph permanent id → permanent ids of the creatures it returned under a player's control. */
     public final Map<UUID, Set<UUID>> seraphReturnedCreatures = new ConcurrentHashMap<>();
     /** Seraph: source Seraph permanent id → the player who last controlled it, watched for control-loss sacrifices. */
@@ -1955,15 +1943,6 @@ public class GameData {
     public int simultaneousSacrificeDepth;
     /** Players whose sacrifice boon has already fired during the current simultaneous-sacrifice batch. */
     public final Set<UUID> sacrificeBoonBatchPlayerIds = new HashSet<>();
-    /** Active "whenever a creature dies this turn" delayed triggers, cleared at turn cleanup. */
-    public final List<CreatureDeathTriggerWatcher> creatureDeathTriggerWatchers =
-            Collections.synchronizedList(new ArrayList<>());
-    /** Active delayed triggers watching one exact creature permanent, removed when that permanent dies. */
-    public final List<TargetedCreatureDeathTriggerWatcher> targetedCreatureDeathTriggerWatchers =
-            Collections.synchronizedList(new ArrayList<>());
-    /** Active delayed triggers for creatures damaged by a particular source, cleared at turn cleanup. */
-    public final List<DamagedCreatureDeathTriggerWatcher> damagedCreatureDeathTriggerWatchers =
-            Collections.synchronizedList(new ArrayList<>());
     public final List<CreatureEntersTriggerWatcher> allyCreatureEntersTriggerWatchers =
             Collections.synchronizedList(new ArrayList<>());
     /** Damage redirect shields (e.g. Vengeful Archon): prevention shields that redirect prevented damage to a target player. */
@@ -5330,12 +5309,10 @@ public class GameData {
             case GAME_OUTSIDE_GAME_ADDITIONAL_MODAL_MODE_PERMISSIONS -> outsideGameAdditionalModalModePermissions;
             case GAME_OPPONENT_GRAVEYARD_LIFE_LOSS_WATCHERS -> synchronizedCopy(opponentGraveyardLifeLossWatchers);
             case GAME_LIFE_GAIN_OPPONENT_LIFE_LOSS_WATCHERS -> synchronizedCopy(lifeGainOpponentLifeLossWatchers);
-            case GAME_CREATURE_DEATH_TRIGGER_WATCHERS -> synchronizedCopy(creatureDeathTriggerWatchers);
-            case GAME_DAMAGED_CREATURE_DEATH_TRIGGER_WATCHERS -> synchronizedCopy(damagedCreatureDeathTriggerWatchers);
             case GAME_ALLY_CREATURE_ENTERS_TRIGGER_WATCHERS -> synchronizedCopy(allyCreatureEntersTriggerWatchers);
             case GAME_TEMPORARY_GLOBAL_TRIGGERED_ABILITIES_THIS_TURN -> synchronizedCopy(temporaryGlobalTriggeredAbilities)
                     .stream()
-                    .filter(watcher -> !watcher.untilEndOfNextTurn() && !watcher.untilNextTurn())
+                    .filter(TemporaryGlobalTriggeredAbility::endsThisTurn)
                     .toList();
             case GAME_NEXT_DRAW_LOOK_AT_TOP -> synchronizedListMapEntries(pendingNextDrawLookAtTop);
             case GAME_NEXT_DRAW_GAIN_LIFE -> new HashMap<>(pendingNextDrawGainLife);
@@ -5694,10 +5671,6 @@ public class GameData {
                     opponentGraveyardLifeLossWatchers.addAll((List<OpponentGraveyardLifeLossWatcher>) value);
             case GAME_LIFE_GAIN_OPPONENT_LIFE_LOSS_WATCHERS ->
                     lifeGainOpponentLifeLossWatchers.addAll((List<LifeGainOpponentLifeLossWatcher>) value);
-            case GAME_CREATURE_DEATH_TRIGGER_WATCHERS ->
-                    creatureDeathTriggerWatchers.addAll((List<CreatureDeathTriggerWatcher>) value);
-            case GAME_DAMAGED_CREATURE_DEATH_TRIGGER_WATCHERS ->
-                    damagedCreatureDeathTriggerWatchers.addAll((List<DamagedCreatureDeathTriggerWatcher>) value);
             case GAME_ALLY_CREATURE_ENTERS_TRIGGER_WATCHERS ->
                     allyCreatureEntersTriggerWatchers.addAll((List<CreatureEntersTriggerWatcher>) value);
             case GAME_TEMPORARY_GLOBAL_TRIGGERED_ABILITIES_THIS_TURN ->
@@ -6772,23 +6745,19 @@ public class GameData {
      * Whether {@code action} is a "this turn" delayed trigger or effect that the cleanup step ends (CR 514.2):
      * a watched-creature combat damage trigger registered until end of turn (Tamiyo, Field Researcher's form or a
      * chosen-name one), the watched-creature damage / attack / dealt-damage triggers, Camouflage's blocking
-     * replacement, a controller damage multiplier, the "when it leaves the battlefield this turn, sacrifice" pairs
-     * and a this-turn-only "when it leaves the battlefield, destroy that creature" trigger. Under Runed Terror's
+     * replacement, and a controller damage multiplier. Under Runed Terror's
      * sequential phases these are split between the players active when they were registered.
      */
     public static boolean isThisTurnDelayedAction(DelayedAction action) {
         return switch (action) {
             case DelayedWatchedCreaturesCombatDamage watch -> watch.untilEndOfTurn();
             case DelayedNamedCreatureCombatDamage watch -> watch.untilEndOfTurn();
-            case DelayedDestroyTargetWhenSourceLeaves destroy -> destroy.thisTurnOnly();
             case DelayedCamouflage ignored -> true;
             case DelayedWatchedCreatureDealsDamage ignored -> true;
             case DelayedWatchedCreatureAttack ignored -> true;
             case DelayedWatchedCreatureDealtDamageByAttackingCreature ignored -> true;
             case DelayedWatchedCreatureDealtDamage ignored -> true;
             case DelayedControllerDamageMultiplication ignored -> true;
-            case DelayedSacrificeSourceWhenTargetLeaves ignored -> true;
-            case DelayedSacrificeTargetWhenSourceLeaves ignored -> true;
             default -> false;
         };
     }
@@ -10238,9 +10207,6 @@ public class GameData {
         copy.lifeGainOpponentLifeLossWatchers.addAll(this.lifeGainOpponentLifeLossWatchers);
         copy.temporaryGlobalTriggeredAbilities.addAll(this.temporaryGlobalTriggeredAbilities);
         copy.sacrificeBoonWatchers.addAll(this.sacrificeBoonWatchers);
-        copy.creatureDeathTriggerWatchers.addAll(this.creatureDeathTriggerWatchers);
-        copy.targetedCreatureDeathTriggerWatchers.addAll(this.targetedCreatureDeathTriggerWatchers);
-        copy.damagedCreatureDeathTriggerWatchers.addAll(this.damagedCreatureDeathTriggerWatchers);
         copy.allyCreatureEntersTriggerWatchers.addAll(this.allyCreatureEntersTriggerWatchers);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
         copy.comeuppanceDamagePreventionShields.addAll(this.comeuppanceDamagePreventionShields);
@@ -10904,17 +10870,8 @@ public class GameData {
         copy.sourcesWhoseDamagedCreaturesDiedThisTurn.addAll(this.sourcesWhoseDamagedCreaturesDiedThisTurn);
         this.creatureCardsDamagedBySourceThatDiedThisTurn.forEach((k, v) ->
                 copy.creatureCardsDamagedBySourceThatDiedThisTurn.put(k, new HashSet<>(v)));
-        copy.creatureGivingControllerPoisonOnDeathThisTurn.putAll(this.creatureGivingControllerPoisonOnDeathThisTurn);
-        this.creaturesReturnedToBattlefieldOnDeathThisTurn.forEach((k, v) ->
-                copy.creaturesReturnedToBattlefieldOnDeathThisTurn.put(k, new ArrayList<>(v)));
         this.exploitedPermanentIdsBySource.forEach((k, v) ->
                 copy.exploitedPermanentIdsBySource.put(k, new HashSet<>(v)));
-        this.creatureTriggeringEffectOnDeathThisTurn.forEach((k, v) ->
-                copy.creatureTriggeringEffectOnDeathThisTurn.put(k, new ArrayList<>(v)));
-        this.permanentTriggeringEffectOnDeathThisTurn.forEach((k, v) ->
-                copy.permanentTriggeringEffectOnDeathThisTurn.put(k, new ArrayList<>(v)));
-        this.permanentTriggeringEffectOnGraveyardEntry.forEach((k, v) ->
-                copy.permanentTriggeringEffectOnGraveyardEntry.put(k, new ArrayList<>(v)));
         this.seraphReturnedCreatures.forEach((k, v) ->
                 copy.seraphReturnedCreatures.put(k, new HashSet<>(v)));
         copy.seraphControlWatch.putAll(this.seraphControlWatch);

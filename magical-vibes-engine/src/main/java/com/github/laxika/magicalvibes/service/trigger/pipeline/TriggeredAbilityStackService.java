@@ -198,7 +198,7 @@ public class TriggeredAbilityStackService extends StackDoor {
         TriggeredAbilityRequest request = new TriggeredAbilityRequest(candidate.ability(), card,
                 candidate.sourcePermanent(), abilityControllerId(gameData, candidate), card.getName() + "'s ability",
                 context, candidate.delayed() == null ? record
-                : EventAbilitySupport.delayedRecord(candidate.delayed(), record));
+                : EventAbilitySupport.delayedRecord(candidate.delayed(), aboutRecord(gameData, record, event)));
         if (creatureDied) {
             // A creature dying is told apart, so "a creature you control" doublers (Delney, Streetwise Lookout) judge
             // the creature by its last-known controller and see one that died in the same event (CR 603.10a); one
@@ -222,6 +222,35 @@ public class TriggeredAbilityStackService extends StackDoor {
      * graveyard's, or the exile zone's for "is put into exile from the battlefield") and the card its linked ability
      * exiled (CR 607.2a).
      */
+    /**
+     * {@code record} of a delayed ability about the permanent that moved in {@code event} ("when that creature dies
+     * this turn"), whose source is the spell or ability that created it, not that permanent (CR 603.7d, 603.7e): it
+     * also names the card the permanent became, in the exile it went to as that exile object (CR 400.7), and the
+     * player who controlled it as it left ("that creature's controller", CR 603.10a).
+     */
+    private TriggeredAbilityRequest.TriggerRecord aboutRecord(GameData gameData,
+                                                              TriggeredAbilityRequest.TriggerRecord record,
+                                                              ZoneChangeEvent event) {
+        Permanent lastKnown = event.permanent();
+        Card moved = lastKnown == null ? event.card()
+                : lastKnown.getOriginalCard() != null ? lastKnown.getOriginalCard() : lastKnown.getCard();
+        Long exileStay = event.to() == Zone.EXILE && moved != null
+                ? gameData.exileEntryVersions.getOrDefault(moved.getId(), 0L) : null;
+        UUID controllerId = event.controllerId();
+        return entry -> {
+            record.stamp(entry);
+            if (moved != null && entry.getTriggeringCardId() == null) {
+                entry.setTriggeringCardId(moved.getId());
+            }
+            if (exileStay != null) {
+                entry.setTriggeringCardExileEntryVersion(exileStay);
+            }
+            if (controllerId != null) {
+                entry.setTriggeringPermanentControllerId(controllerId);
+            }
+        };
+    }
+
     private TriggeredAbilityRequest.TriggerRecord ownZoneChangeRecord(GameData gameData, TriggerCandidate candidate, ZoneChangeEvent event) {
         Card card = candidate.sourceCard();
         Permanent sourceSnapshot = candidate.sourcePermanent() == null ? null
@@ -453,6 +482,10 @@ public class TriggeredAbilityStackService extends StackDoor {
             // "Permanents entering the battlefield don't cause abilities of permanents your opponents control to
             // trigger" (Elesh Norn, Mother of Machines).
             return false;
+        }
+        if (request.record() instanceof EventAbilitySupport.DelayedRecord delayed && delayed.delayed().untilTriggered()) {
+            // It triggered: one with no stated duration triggers only this once (CR 603.7b).
+            gameData.temporaryGlobalTriggeredAbilities.removeIf(listed -> listed == delayed.delayed());
         }
         List<CardEffect> written = new ArrayList<>(ability.effects().size());
         ChooseOneEffect.ChooseOneOption randomMode = null;
@@ -797,7 +830,7 @@ public class TriggeredAbilityStackService extends StackDoor {
     /** {@code request}'s entry of {@code effects}, its record stamped. */
     private static StackEntry abilityEntry(TriggeredAbilityRequest request, List<CardEffect> effects) {
         StackEntry entry = newTriggeredEntry(request.sourceCard(), request.controllerId(), request.description(),
-                new ArrayList<>(effects), 0, null, request.sourcePermanentId(), null, null, null);
+                new ArrayList<>(effects), 0, null, request.entrySourcePermanentId(), null, null, null);
         entry.setOnceEachTurnActionKey(onceEachTurnActionKey(request.ability()));
         entry.setGrantingPermanentId(request.ability().grantingPermanentId());
         entry.setTriggeredBySourceAttacking(request.attack() == TriggeredAbilityRequest.AttackCause.SOURCE_ATTACKED);

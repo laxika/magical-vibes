@@ -148,9 +148,9 @@ class EarthenAllyTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, land)).isTrue();
         assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(5);
         if (exile) {
-            harness.getPermanentRemovalService().removePermanentToExile(gd, land);
+            harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, land));
         } else {
-            harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, land);
+            harness.inMutationScope(() -> harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, land));
         }
         harness.passBothPriorities();
 

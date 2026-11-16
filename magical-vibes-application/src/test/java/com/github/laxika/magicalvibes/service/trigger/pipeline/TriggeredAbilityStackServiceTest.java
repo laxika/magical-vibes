@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -388,6 +389,35 @@ class TriggeredAbilityStackServiceTest {
         assertThat(entry.getControllerId()).isEqualTo(PLAYER1_ID);
         assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
         assertThat(entry.getEffectsToResolve().get(0)).isInstanceOf(DrawCardEffect.class);
+    }
+
+    @Test
+    @DisplayName("A delayed ability about a dying creature has its maker's source and ends once it triggers")
+    void delayedAbilityAboutADyingCreatureEndsOnceItTriggers() {
+        Card maker = createCreature("Merieke Ri Berit", 1, 1);
+        UUID makerPermanentId = UUID.randomUUID();
+        Card stolen = createCreature("Stolen Bear", 2, 2);
+        Permanent stolenPermanent = new Permanent(stolen);
+        TemporaryGlobalTriggeredAbility once = TemporaryGlobalTriggeredAbility.about(PLAYER1_ID, maker,
+                new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DrawCardEffect(1)),
+                stolenPermanent.getId(), makerPermanentId, false);
+        TemporaryGlobalTriggeredAbility thisTurn = TemporaryGlobalTriggeredAbility.about(PLAYER1_ID, maker,
+                new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DrawCardEffect(1)),
+                stolenPermanent.getId(), makerPermanentId, true);
+        gd.temporaryGlobalTriggeredAbilities.add(once);
+        gd.temporaryGlobalTriggeredAbilities.add(thisTurn);
+        var ctx = dies(stolen, PLAYER2_ID, stolenPermanent);
+
+        stackService.trigger(gd, TriggerCandidate.of(once), ctx.event(), ctx.trigger());
+        stackService.trigger(gd, TriggerCandidate.of(thisTurn), ctx.event(), ctx.trigger());
+
+        assertThat(gd.stack).hasSize(2);
+        StackEntry entry = gd.stack.get(0);
+        assertThat(entry.getControllerId()).isEqualTo(PLAYER1_ID);
+        assertThat(entry.getSourcePermanentId()).isEqualTo(makerPermanentId);
+        assertThat(entry.getTriggeringCardId()).isEqualTo(stolen.getId());
+        assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(PLAYER2_ID);
+        assertThat(gd.temporaryGlobalTriggeredAbilities).containsExactly(thisTurn);
     }
 
     @Test
