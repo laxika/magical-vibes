@@ -823,8 +823,9 @@ stay unscoped: a triggered mana ability resolves as it triggers (CR 605.4a), and
 So do damage and combat damage detection (they record the turn's damage history, which static conditions read, as
 they go), life events (a win check), actions (a player losing) and attachments ("as this becomes attached" choices).
 A pass also memoizes each permanent's active static effects (`Pass.activeStaticEffects`, on the bonus memo's terms),
-the board-wide yes/no scans (`Pass.boardScan`: `anyBattlefieldHasStaticEffect`, `graveyardCardsHaveLostAllAbilities`
-and the printed-effect presence checks in front of `isCreature`'s animation scans), and answers `findPermanentController` from a battlefield index it builds after a few lookups, each answer checked
+the board-wide yes/no scans (`Pass.boardScan`: `anyBattlefieldHasStaticEffect`, `graveyardCardsHaveLostAllAbilities`,
+the printed-effect presence checks in front of `isCreature`'s animation scans, and `anyManaAbilityLock` and the
+board-wide tap-ability lock check in front of `canActivateManaAbility`'s per-source lock walks), and answers `findPermanentController` from a battlefield index it builds after a few lookups, each answer checked
 against the battlefield it names. A scan over the board's static abilities uses
 `GameQueryService.activeStaticEffects(gameData[, controllerId], type)` rather than looping over the battlefields:
 it gives each effect with its permanent and that permanent's controller, never searched for.

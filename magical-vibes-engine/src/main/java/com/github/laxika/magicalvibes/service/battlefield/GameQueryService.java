@@ -995,7 +995,9 @@ public class GameQueryService {
             /** {@link #anyBattlefieldPrintsStaticEffect}. */
             PRINTED_STATIC,
             /** {@link #graveyardCardsHaveLostAllAbilities}. */
-            GRAVEYARD_CARDS_LOSE_ALL_ABILITIES
+            GRAVEYARD_CARDS_LOSE_ALL_ABILITIES,
+            /** {@link #anyManaAbilityLock}. */
+            MANA_ABILITY_LOCK
         }
     }
 
@@ -14022,6 +14024,9 @@ public class GameQueryService {
             return false;
         }
 
+        if (!anyManaAbilityLock(gameData)) {
+            return true;
+        }
         for (ActiveStaticEffect<CardEffect> active : activeStaticEffects(gameData, CardEffect.class)) {
             UUID pid = active.controllerId();
             Permanent p = active.source();
@@ -14047,12 +14052,31 @@ public class GameQueryService {
     }
 
     /**
+     * Whether any active static effect on the battlefield is a lock that can stop a mana ability (Stony Silence,
+     * Phyrexian Revoker): the board-wide first question of {@link #canActivateManaAbility}, answered once per query
+     * scope, so judging every mana source of a board without such a lock skips the per-source walk of the board's
+     * static effects. Asks exactly what that walk tests before it judges the permanent.
+     */
+    private boolean anyManaAbilityLock(GameData gameData) {
+        return boardScan(gameData, new BoardScan(BoardScan.Kind.MANA_ABILITY_LOCK, null), () ->
+                activeStaticEffects(gameData, CardEffect.class).stream()
+                        .map(ActiveStaticEffect::effect)
+                        .anyMatch(effect -> (effect instanceof ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect
+                                matchingLock && matchingLock.blocksManaAbilities())
+                                || (effect instanceof ActivatedAbilitiesOfChosenNameCantBeActivatedEffect namedLock
+                                && namedLock.blocksManaAbilities())));
+    }
+
+    /**
      * Returns {@code true} if the permanent's activated abilities with {T} in their costs are
      * locked (Serra Bestiary aura, or a board-wide matching-predicate lock such as Katabatic Winds).
      */
     public boolean isLockedFromActivatingTapAbilities(GameData gameData, Permanent permanent) {
         if (hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateTapAbilitiesEffect.class)) {
             return true;
+        }
+        if (!anyBattlefieldPrintsStaticEffect(gameData, MatchingPermanentsCantActivateTapAbilitiesEffect.class)) {
+            return false;
         }
         for (UUID pid : gameData.playerIds) {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {

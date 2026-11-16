@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedDamageDoubling;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
@@ -3905,6 +3906,85 @@ class GameQueryServiceTest {
             aura.setAttachedTo(myr.getId());
 
             assertThat(gqs.canActivateManaAbility(gd, myr)).isFalse();
+        }
+
+        @Test
+        @DisplayName("inside one query scope, Stony Silence locks each artifact and no land, whichever is judged first")
+        void scopedStonySilenceLocksOnlyArtifacts() {
+            addPermanent(player2Id, createEnchantmentWithStaticEffect("Stony Silence",
+                    new ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect(new PermanentIsArtifactPredicate())));
+            Permanent forest = addPermanent(player1Id, createLand("Forest"));
+            Permanent myr = addPermanent(player1Id, createArtifactCreature("Leaden Myr", 1, 1, List.of(CardSubtype.MYR)));
+            Permanent otherMyr = addPermanent(player2Id, createArtifactCreature("Silver Myr", 1, 1, List.of(CardSubtype.MYR)));
+
+            List<Boolean> answers = gqs.withQueryScope(gd, () -> List.of(
+                    gqs.canActivateManaAbility(gd, forest),
+                    gqs.canActivateManaAbility(gd, myr),
+                    gqs.canActivateManaAbility(gd, otherMyr),
+                    gqs.canActivateManaAbility(gd, forest)));
+
+            assertThat(answers).containsExactly(true, false, false, true);
+        }
+
+        @Test
+        @DisplayName("inside one query scope, a chosen-name lock blocks only the named permanent")
+        void scopedChosenNameLockBlocksOnlyTheNamedPermanent() {
+            Permanent revoker = addPermanent(player2Id, createCreatureWithStaticEffect("Phyrexian Revoker", 2, 1, null,
+                    new ActivatedAbilitiesOfChosenNameCantBeActivatedEffect(true)));
+            revoker.setChosenName("Leaden Myr");
+            Permanent silverMyr = addPermanent(player1Id, createArtifactCreature("Silver Myr", 1, 1, List.of(CardSubtype.MYR)));
+            Permanent leadenMyr = addPermanent(player1Id, createArtifactCreature("Leaden Myr", 1, 1, List.of(CardSubtype.MYR)));
+
+            List<Boolean> answers = gqs.withQueryScope(gd, () -> List.of(
+                    gqs.canActivateManaAbility(gd, silverMyr),
+                    gqs.canActivateManaAbility(gd, leadenMyr)));
+
+            assertThat(answers).containsExactly(true, false);
+        }
+
+        @Test
+        @DisplayName("a conditional lock locks while its condition holds and not otherwise")
+        void conditionalLockFollowsItsCondition() {
+            ControllerTurn condition = new ControllerTurn();
+            addPermanent(player2Id, createEnchantmentWithStaticEffect("Conditional Silence", new ConditionalEffect(
+                    condition,
+                    new ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect(new PermanentIsArtifactPredicate()))));
+            Permanent myr = addPermanent(player1Id, createArtifactCreature("Leaden Myr", 1, 1, List.of(CardSubtype.MYR)));
+
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any())).thenReturn(false);
+            assertThat(gqs.withQueryScope(gd, () -> gqs.canActivateManaAbility(gd, myr))).isTrue();
+
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any())).thenReturn(true);
+            assertThat(gqs.withQueryScope(gd, () -> gqs.canActivateManaAbility(gd, myr))).isFalse();
+        }
+
+        @Test
+        @DisplayName("a lock that enters between two query scopes locks in the second")
+        void lockEnteringBetweenScopesLocksInTheNextScope() {
+            Permanent myr = addPermanent(player1Id, createArtifactCreature("Leaden Myr", 1, 1, List.of(CardSubtype.MYR)));
+            assertThat(gqs.withQueryScope(gd, () -> gqs.canActivateManaAbility(gd, myr))).isTrue();
+
+            addPermanent(player2Id, createEnchantmentWithStaticEffect("Stony Silence",
+                    new ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect(new PermanentIsArtifactPredicate())));
+
+            assertThat(gqs.withQueryScope(gd, () -> gqs.canActivateManaAbility(gd, myr))).isFalse();
+        }
+
+        @Test
+        @DisplayName("inside one query scope, a board-wide tap-ability lock blocks only matching permanents")
+        void scopedTapAbilityLockBlocksOnlyMatchingPermanents() {
+            addPermanent(player2Id, createEnchantmentWithStaticEffect("Tap Lock",
+                    new MatchingPermanentsCantActivateTapAbilitiesEffect(new PermanentIsArtifactPredicate())));
+            Permanent forest = addPermanent(player1Id, createLand("Forest"));
+            Permanent myr = addPermanent(player1Id, createArtifactCreature("Leaden Myr", 1, 1, List.of(CardSubtype.MYR)));
+
+            List<Boolean> answers = gqs.withQueryScope(gd, () -> List.of(
+                    gqs.isLockedFromActivatingTapAbilities(gd, forest),
+                    gqs.isLockedFromActivatingTapAbilities(gd, myr),
+                    gqs.canActivateManaAbility(gd, forest),
+                    gqs.canActivateManaAbility(gd, myr)));
+
+            assertThat(answers).containsExactly(false, true, true, false);
         }
     }
 
