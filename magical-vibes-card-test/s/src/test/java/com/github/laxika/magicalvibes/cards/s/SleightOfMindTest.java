@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionRed;
 import com.github.laxika.magicalvibes.cards.h.Hydroblast;
+import com.github.laxika.magicalvibes.cards.k.KormusBell;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -214,5 +217,22 @@ class SleightOfMindTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Sleight of Mind");
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Changing black to green on Kormus Bell makes its animated Swamps green")
+    @CardUsed({KormusBell.class, Swamp.class})
+    void changesColorOfKormusBellAnimatedLands() {
+        Permanent bell = harness.addToBattlefieldAndReturn(player1, new KormusBell());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+        harness.setHand(player1, List.of(new SleightOfMind()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, bell.getId());
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gqs.isCreature(gd, swamp)).isTrue();
+        assertThat(gqs.getEffectiveColors(gd, swamp)).containsExactly(CardColor.GREEN);
     }
 }

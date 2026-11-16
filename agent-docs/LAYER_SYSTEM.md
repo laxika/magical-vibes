@@ -341,7 +341,8 @@ identity-preserving visitor): given a `CardEffect` and the source's replacement 
 order — they compose, replacement N applies to the output of N�?�1), it rewrites color parameters
 (`ProtectionFromColorsEffect` colors, `GrantColorEffect` color), basic-land-type parameters
 (`EnchantedPermanentBecomesTypeEffect`/`NonbasicLandsBecomeTypeEffect`/`GrantSubtypeEffect`
-subtypes), landwalk keywords inside `StaticBoostEffect`/`GrantKeywordEffect` keyword sets
+subtypes, `AllLandsAreCreaturesEffect` required land type and colour — its two printed-effect scans
+`matchesAnimateLand` in `GameQueryService`/`StaticEffectSupport` apply the source's own replacements too), landwalk keywords inside `StaticBoostEffect`/`GrantKeywordEffect` keyword sets
 (via the reverse of `Keyword.LANDWALK_MAP`), land-type and color predicates inside filters
 (`PermanentHasSubtypePredicate`, `PermanentHasAnySubtypePredicate`, `PermanentColorInPredicate`,
 recursing through AllOf/AnyOf/Not), stack-entry color predicates inside target-spell conditions,

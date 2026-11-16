@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
+import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -378,7 +379,8 @@ public class StaticEffectSupport {
 
     /**
      * Whether a face-up battlefield permanent's {@link AllLandsAreCreaturesEffect} animates {@code permanent}, a land
-     * with {@code subtypes}. A face-down source has no abilities (CR 708.2).
+     * with {@code subtypes}, reading the required land type through the source's own text changes (Magical Hack).
+     * A face-down source has no abilities (CR 708.2).
      */
     public boolean matchesAnimateLand(GameData gameData, Permanent permanent,
                                       Collection<CardSubtype> subtypes) {
@@ -387,7 +389,9 @@ public class StaticEffectSupport {
             if (bf == null) continue;
             for (Permanent source : bf) {
                 if (source.isFaceDown()) continue;
-                for (CardEffect e : source.getCard().getStaticEffects()) {
+                for (CardEffect printed : source.getCard().getStaticEffects()) {
+                    if (!(printed instanceof AllLandsAreCreaturesEffect)) continue;
+                    CardEffect e = TextChangeTransformer.transform(printed, source.getTextReplacements());
                     if (e instanceof AllLandsAreCreaturesEffect animateLands
                             && (animateLands.scope() == GrantScope.ALL_LANDS
                                     || (animateLands.scope() == GrantScope.OWN_LANDS

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TextReplacement;
+import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
@@ -169,5 +170,17 @@ class TextChangeTransformerTest {
                 List.of())).isSameAs(red);
         assertThat(TextChangeTransformer.transformSpellFilter(SpellFilter.ANY, List.of(BLACK_TO_BLUE), List.of()))
                 .isSameAs(SpellFilter.ANY);
+    }
+
+    @Test
+    @DisplayName("A replacement rewrites the land type and color of an all-lands animation, keeping identity otherwise")
+    void replacementRewritesAllLandsAnimation() {
+        AllLandsAreCreaturesEffect bell = new AllLandsAreCreaturesEffect(1, 1, CardSubtype.MOUNTAIN, CardColor.BLACK);
+
+        assertThat(TextChangeTransformer.transform(bell, List.of(MOUNTAIN_TO_ISLAND, BLACK_TO_BLUE)))
+                .isEqualTo(new AllLandsAreCreaturesEffect(1, 1, CardSubtype.ISLAND, CardColor.BLUE));
+        AllLandsAreCreaturesEffect revolt = new AllLandsAreCreaturesEffect(2, 2);
+        assertThat(TextChangeTransformer.transform(revolt, List.of(MOUNTAIN_TO_ISLAND, BLACK_TO_BLUE)))
+                .isSameAs(revolt);
     }
 }

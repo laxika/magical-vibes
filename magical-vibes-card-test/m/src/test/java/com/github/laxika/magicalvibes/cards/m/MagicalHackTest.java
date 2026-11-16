@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.l.LivingLands;
 import com.github.laxika.magicalvibes.cards.l.LordOfAtlantis;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.t.Tsunami;
@@ -190,6 +192,30 @@ class MagicalHackTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, merfolk, Keyword.ISLANDWALK)).isTrue();
         assertThat(gqs.hasKeyword(gd, merfolk, Keyword.SWAMPWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Changing Forest to Island on Living Lands animates Islands instead of Forests")
+    @CardUsed({LivingLands.class, Forest.class})
+    void changesLandTypeLivingLandsAnimates() {
+        Permanent livingLands = harness.addToBattlefieldAndReturn(player1, new LivingLands());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.setHand(player1, List.of(new MagicalHack()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.isCreature(gd, island)).isFalse();
+
+        harness.castAndResolveInstant(player1, 0, livingLands.getId());
+        harness.handleListChoice(player1, "FOREST");
+        harness.handleListChoice(player1, "ISLAND");
+
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
+        assertThat(gqs.isCreature(gd, island)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, island)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, island)).isEqualTo(1);
+        assertThat(gqs.isLand(gd, island)).isTrue();
     }
 
     @Test

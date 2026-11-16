@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.effect.AllColorWordsBecomeChosenColorEffect;
+import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
@@ -371,6 +372,15 @@ public final class TextChangeTransformer {
                         .toList();
                 yield updated.equals(becomes.subtypes()) ? becomes
                         : new EnchantedPermanentBecomesTypeEffect(updated);
+            }
+            // "All Forests are 1/1 creatures" (Living Lands), "All Swamps are 1/1 black creatures" (Kormus Bell).
+            case AllLandsAreCreaturesEffect animate -> {
+                CardSubtype subtype = replaceSubtype(animate.requiredSubtype(), substitution);
+                CardColor color = substitution.fromColor() != null && animate.color() == substitution.fromColor()
+                        ? substitution.toColor() : animate.color();
+                yield subtype == animate.requiredSubtype() && color == animate.color() ? animate
+                        : new AllLandsAreCreaturesEffect(animate.power(), animate.toughness(), subtype, color,
+                        animate.scope());
             }
             case NonbasicLandsBecomeTypeEffect becomes ->
                     substitution.fromLandType() != null && becomes.subtype() == substitution.fromLandType()

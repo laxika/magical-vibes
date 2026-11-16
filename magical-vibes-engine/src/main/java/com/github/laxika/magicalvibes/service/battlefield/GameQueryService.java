@@ -10905,13 +10905,16 @@ public class GameQueryService {
      * Returns {@code true} if the given land is animated into a creature by an
      * {@link AllLandsAreCreaturesEffect} on any battlefield. An effect with no required subtype
      * animates every land (Nature's Revolt); an effect with a required land subtype (Living Lands:
-     * Forest) animates only lands carrying that subtype. A face-down source has no abilities
-     * (CR 708.2) and animates nothing.
+     * Forest) animates only lands carrying that subtype, as rewritten by the source's own text changes
+     * (Magical Hack: "All Islands"). Global colour-word changes are not applied: they cannot change
+     * which lands are animated. A face-down source has no abilities (CR 708.2) and animates nothing.
      */
     private boolean matchesAnimateLand(GameData gameData, Permanent permanent) {
         return anyBattlefieldPrintsStaticEffect(gameData, AllLandsAreCreaturesEffect.class)
                 && gameData.anyPermanentMatches(source -> !source.isFaceDown()
                 && source.getCard().getStaticEffects().stream()
+                        .filter(AllLandsAreCreaturesEffect.class::isInstance)
+                        .map(e -> TextChangeTransformer.transform(e, source.getTextReplacements()))
                         .anyMatch(e -> e instanceof AllLandsAreCreaturesEffect animateLands
                                 && (animateLands.scope() == GrantScope.ALL_LANDS
                                         || (animateLands.scope() == GrantScope.OWN_LANDS
