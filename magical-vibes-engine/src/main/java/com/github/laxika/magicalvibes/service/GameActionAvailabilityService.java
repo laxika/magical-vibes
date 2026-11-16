@@ -1696,8 +1696,8 @@ public class GameActionAvailabilityService {
 
     /** Whether the land's own mayhem casting option (discarded this turn) allows playing it from the graveyard. */
     private boolean hasOwnMayhemLandPermission(GameData gameData, UUID playerId, Card card) {
-        return !gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)
-                && card.getCastingOption(GraveyardCast.class)
+        return card.getCastingOption(GraveyardCast.class)
+                .filter(option -> !gameQueryService.graveyardCardsHaveLostAllAbilities(gameData))
                 .map(option -> castingPermissionService.isGraveyardCastAvailable(gameData, playerId, card, option))
                 .orElse(false);
     }

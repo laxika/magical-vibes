@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.d.Dub;
 import com.github.laxika.magicalvibes.cards.e.ElvishChampion;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -14,12 +16,16 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService.LayeredBoardState;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -202,5 +208,78 @@ class LayeredBoardCacheTest extends BaseCardTest {
         // The real game still sees the anthem and still serves its own cache.
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
         assertThat(gd.layeredBoardCache).isSameAs(realGameCache);
+    }
+
+    /**
+     * Runs {@code query} in a fresh pass over the state with {@code player}'s hand at {@code handIndex} left out, then
+     * puts the hand and the cache back, the way a spell's cost is previewed as it leaves its hand.
+     */
+    private <T> T withoutHandCard(Player player, int handIndex, Supplier<T> query) {
+        List<Card> hand = gd.playerHands.get(player.getId());
+        List<Card> preview = new ArrayList<>(hand);
+        preview.remove(handIndex);
+        Object cache = gd.layeredBoardCache;
+        gd.playerHands.put(player.getId(), preview);
+        try {
+            return gqs.withFreshQueryScope(gd, query);
+        } finally {
+            gd.playerHands.put(player.getId(), hand);
+            gd.layeredBoardCache = cache;
+        }
+    }
+
+    @Test
+    void freshPassesInOneScopeOverTheSamePreviewedStateShareOneBoard() {
+        add(player1, new GloriousAnthem());
+        Permanent bear = add(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        gqs.withQueryScope(gd, () -> {
+            LayeredBoardState first = withoutHandCard(player1, 0, () -> LayerSystemService.activePass().board());
+            LayeredBoardState second = withoutHandCard(player1, 1, () -> LayerSystemService.activePass().board());
+            assertThat(second).isSameAs(first);
+            assertThat(withoutHandCard(player1, 1, () -> gqs.getEffectivePower(gd, bear))).isEqualTo(3);
+            return null;
+        });
+    }
+
+    @Test
+    void aFreshPassInAScopeOverAChangedBoardComputesItsOwn() {
+        Permanent anthem = add(player1, new GloriousAnthem());
+        Permanent bear = add(player1, new GrizzlyBears());
+        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
+
+        gqs.withQueryScope(gd, () -> {
+            battlefield.remove(anthem);
+            Object cache = gd.layeredBoardCache;
+            try {
+                assertThat(gqs.withFreshQueryScope(gd, () -> gqs.getEffectivePower(gd, bear))).isEqualTo(2);
+            } finally {
+                battlefield.add(0, anthem);
+                gd.layeredBoardCache = cache;
+            }
+            assertThat(gqs.withFreshQueryScope(gd, () -> gqs.getEffectivePower(gd, bear))).isEqualTo(3);
+            return null;
+        });
+    }
+
+    @Test
+    void aFreshPassInAScopeJudgesBoardWideQuestionsAgainstItsOwnState() {
+        Permanent mindStone = add(player1, new MindStone());
+        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
+
+        gqs.withQueryScope(gd, () -> {
+            assertThat(gqs.isCreature(gd, mindStone)).isFalse();
+            Permanent march = add(player1, new MarchOfTheMachines());
+            Object cache = gd.layeredBoardCache;
+            try {
+                assertThat(gqs.withFreshQueryScope(gd, () -> gqs.isCreature(gd, mindStone))).isTrue();
+            } finally {
+                battlefield.remove(march);
+                gd.layeredBoardCache = cache;
+            }
+            return null;
+        });
+        assertThat(gqs.isCreature(gd, mindStone)).isFalse();
     }
 }

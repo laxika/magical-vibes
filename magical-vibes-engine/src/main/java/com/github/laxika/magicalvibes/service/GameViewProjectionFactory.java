@@ -413,6 +413,7 @@ public class GameViewProjectionFactory {
 
     List<List<CardView>> getGraveyardViews(GameData data, UUID viewerId) {
         List<List<CardView>> graveyards = new ArrayList<>();
+        boolean graveyardAbilitiesLost = gameQueryService.graveyardCardsHaveLostAllAbilities(data);
         for (UUID pid : data.orderedPlayerIds) {
             List<Card> gy = data.playerGraveyards.get(pid);
             List<CardSubtype> granted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(data, pid);
@@ -437,7 +438,7 @@ public class GameViewProjectionFactory {
                                         .orElse(null);
                         return cardViewFactory.createForGraveyard(c, cardGranted,
                                 gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard(data, pid, c),
-                                gameQueryService.graveyardCardsHaveLostAllAbilities(data),
+                                graveyardAbilitiesLost,
                                 graveyardCastExileCount, graveyardCastExileLabel);
                     }).toList()
                     : new ArrayList<>());

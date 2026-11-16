@@ -816,10 +816,14 @@ Detection writes inside the scope, but only state neither the board nor the asse
 (triggered abilities on the stack, log lines, queued choices/may abilities, once-per-turn
 markers); the pending-target prompts it queues are started after the scope closes.
 `LibraryTriggers` (a draw), `TapTriggers` (a permanent becoming tapped) and `RulesEventPipeline` (a zone-change
-batch's observer and moving-object candidates) detect in one scope each on the same terms. The tapped-for-mana events
+batch's observer and moving-object candidates; one attack, block, spell, control-change, crew, day/night, Room, Saga or
+entry-caused-trigger event) detect in one scope each on the same terms. The tapped-for-mana events
 stay unscoped: a triggered mana ability resolves as it triggers (CR 605.4a), and a later scan must see what it changed.
-A pass also memoizes each permanent's active static effects (`Pass.activeStaticEffects`, on the bonus memo's terms)
-and answers `findPermanentController` from a battlefield index it builds after a few lookups, each answer checked
+So do damage and combat damage detection (they record the turn's damage history, which static conditions read, as
+they go), life events (a win check), actions (a player losing) and attachments ("as this becomes attached" choices).
+A pass also memoizes each permanent's active static effects (`Pass.activeStaticEffects`, on the bonus memo's terms),
+the board-wide yes/no scans (`Pass.boardScan`: `anyBattlefieldHasStaticEffect`, `graveyardCardsHaveLostAllAbilities`
+and the printed-effect presence checks in front of `isCreature`'s animation scans), and answers `findPermanentController` from a battlefield index it builds after a few lookups, each answer checked
 against the battlefield it names. A scan over the board's static abilities uses
 `GameQueryService.activeStaticEffects(gameData[, controllerId], type)` rather than looping over the battlefields:
 it gives each effect with its permanent and that permanent's controller, never searched for.
@@ -865,7 +869,9 @@ protection, hexproof and "can't be the target of" checks are layered queries. Wi
 `SHARE_TOUGHNESS` recheck compares each legal target with the first. Note that
 only `computeStaticBonus` and the `activeStateFor`-first queries (`hasLostPrintedAbilities`,
 `hasLostAllAbilities`, subtype/keyword reads) answer from the scope's board — a direct nested
-`beginPass` still fingerprints.
+`beginPass` still fingerprints. A fresh pass nested in a scope (`withFreshQueryScope`, over a previewed state) that
+misses the cache reuses a board an earlier nested pass of the same scope computed for that fingerprint
+(`Pass.nestedBoard`): the cost previews of every hand card leaving its hand in one playability sweep share one board.
 
 ### Invalidation contract
 

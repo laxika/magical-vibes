@@ -959,10 +959,44 @@ public class GameQueryService {
     }
 
     private boolean anyBattlefieldHasStaticEffect(GameData gameData, Class<? extends CardEffect> effectType) {
-        return gameData.anyPermanentMatches(p ->
-                !p.isFaceDown()
-                        && p.getCard().getStaticEffects().stream().anyMatch(effectType::isInstance)
-                        && !hasLostPrintedAbilities(gameData, p));
+        return boardScan(gameData, new BoardScan(BoardScan.Kind.ACTIVE_PRINTED_STATIC, effectType), () ->
+                gameData.anyPermanentMatches(p ->
+                        !p.isFaceDown()
+                                && p.getCard().getStaticEffects().stream().anyMatch(effectType::isInstance)
+                                && !hasLostPrintedAbilities(gameData, p)));
+    }
+
+    /**
+     * Whether any battlefield permanent's card prints a static effect of {@code effectType}, whatever its state: the
+     * cheap first question of a scan that only acts on such effects (an animation effect that makes a noncreature a
+     * creature), so a board without one skips the per-permanent judging.
+     */
+    private boolean anyBattlefieldPrintsStaticEffect(GameData gameData, Class<? extends CardEffect> effectType) {
+        return boardScan(gameData, new BoardScan(BoardScan.Kind.PRINTED_STATIC, effectType), () ->
+                gameData.anyPermanentMatches(p ->
+                        p.getCard().getStaticEffects().stream().anyMatch(effectType::isInstance)));
+    }
+
+    /**
+     * Answers the board-wide question {@code key} from the active query scope's memo
+     * ({@link LayerSystemService.Pass#boardScan}), or by {@code compute} when no scope is active.
+     */
+    private boolean boardScan(GameData gameData, BoardScan key, java.util.function.BooleanSupplier compute) {
+        LayerSystemService.Pass pass = layerSystemService.activePass(gameData);
+        return pass == null ? compute.getAsBoolean() : pass.boardScan(key, compute);
+    }
+
+    /** The name of a board-wide question {@link #boardScan} memoizes: its kind and the effect type it asks about. */
+    private record BoardScan(Kind kind, Class<?> effectType) {
+
+        private enum Kind {
+            /** {@link #anyBattlefieldHasStaticEffect}. */
+            ACTIVE_PRINTED_STATIC,
+            /** {@link #anyBattlefieldPrintsStaticEffect}. */
+            PRINTED_STATIC,
+            /** {@link #graveyardCardsHaveLostAllAbilities}. */
+            GRAVEYARD_CARDS_LOSE_ALL_ABILITIES
+        }
     }
 
     private boolean anyBattlefieldSpellsCantBeCountered(GameData gameData, Card card) {
@@ -2701,11 +2735,12 @@ public class GameQueryService {
 
     /** Returns whether cards in graveyards currently have all of their abilities removed. */
     public boolean graveyardCardsHaveLostAllAbilities(GameData gameData) {
-        return gameData.anyPermanentMatches(permanent -> !permanent.isFaceDown()
-                && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                && permanent.getCard().getStaticEffects().stream()
-                .anyMatch(GraveyardCardsLoseAllAbilitiesEffect.class::isInstance)
-                && !hasLayeredAllAbilitiesLost(gameData, permanent));
+        return boardScan(gameData, new BoardScan(BoardScan.Kind.GRAVEYARD_CARDS_LOSE_ALL_ABILITIES, null), () ->
+                gameData.anyPermanentMatches(permanent -> !permanent.isFaceDown()
+                        && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                        && permanent.getCard().getStaticEffects().stream()
+                        .anyMatch(GraveyardCardsLoseAllAbilitiesEffect.class::isInstance)
+                        && !hasLayeredAllAbilitiesLost(gameData, permanent)));
     }
 
     /**
@@ -3516,6 +3551,9 @@ public class GameQueryService {
      * makes the enchanted permanent a creature.
      */
     private boolean hasAuraBecomeCreatureEffect(GameData gameData, Permanent permanent) {
+        if (!anyBattlefieldPrintsStaticEffect(gameData, EnchantedPermanentBecomesCreatureEffect.class)) {
+            return false;
+        }
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
@@ -10836,6 +10874,9 @@ public class GameQueryService {
      * control enough enchantments.
      */
     public boolean isAnimatedByStarfield(GameData gameData, Permanent permanent) {
+        if (!anyBattlefieldPrintsStaticEffect(gameData, AnimateControlledEnchantmentsEffect.class)) {
+            return false;
+        }
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
@@ -10866,7 +10907,8 @@ public class GameQueryService {
      * Forest) animates only lands carrying that subtype.
      */
     private boolean matchesAnimateLand(GameData gameData, Permanent permanent) {
-        return gameData.anyPermanentMatches(source ->
+        return anyBattlefieldPrintsStaticEffect(gameData, AllLandsAreCreaturesEffect.class)
+                && gameData.anyPermanentMatches(source ->
                 source.getCard().getStaticEffects().stream()
                         .anyMatch(e -> e instanceof AllLandsAreCreaturesEffect animateLands
                                 && (animateLands.scope() == GrantScope.ALL_LANDS

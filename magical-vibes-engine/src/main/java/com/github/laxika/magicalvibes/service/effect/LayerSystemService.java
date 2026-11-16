@@ -421,6 +421,8 @@ public class LayerSystemService {
         private final Map<Permanent, GameQueryService.StaticBonus> bonusMemo = new IdentityHashMap<>();
         private final Map<UUID, GameQueryService.StaticBonus> preliminaryBonusMemo = new HashMap<>();
         private final Map<Permanent, ControlledStaticEffects> activeStaticEffectsMemo = new IdentityHashMap<>();
+        private final Map<Object, Boolean> boardScanMemo = new HashMap<>();
+        private Map<Long, LayeredBoardState> nestedBoards;
         private ControllerIndex controllerIndex;
         private int controllerLookups;
 
@@ -486,6 +488,45 @@ public class LayerSystemService {
             List<CardEffect> effects = List.copyOf(compute.get());
             activeStaticEffectsMemo.put(permanent, new ControlledStaticEffects(controllerId, effects));
             return effects;
+        }
+
+        /**
+         * The answer to a yes/no question about the whole board ({@code key} names it: "does any permanent have this
+         * static ability", "have graveyard cards lost their abilities"), computed by {@code compute} the first time this
+         * pass is asked and answered from the memo after: a per-permanent or per-card loop that asks it each time walks
+         * the board once per pass instead of once per item. Memoized only once the board is finished, like
+         * {@link #bonusMemo}, and on the same terms: the queries of a pass change nothing the scan reads. A pass nested in
+         * this one starts its own memo, as it may see a previewed state.
+         */
+        public boolean boardScan(Object key, java.util.function.BooleanSupplier compute) {
+            if (!boardReady) {
+                return compute.getAsBoolean();
+            }
+            Boolean memo = boardScanMemo.get(key);
+            if (memo != null) {
+                return memo;
+            }
+            boolean answer = compute.getAsBoolean();
+            boardScanMemo.put(key, answer);
+            return answer;
+        }
+
+        /**
+         * A finished board a pass nested in this one computed for the game state {@code fingerprint} names, for the next
+         * nested pass that sees the same state: a fresh pass over a previewed state (a spell leaving its hand while its
+         * cost is judged) starts nested in a scope that may preview many such states, and those that agree on every input
+         * the board reads share one board instead of each computing it. Lives as long as this pass, whose scope changes
+         * nothing, so only previews of that one state are ever compared.
+         */
+        LayeredBoardState nestedBoard(long fingerprint) {
+            return nestedBoards == null ? null : nestedBoards.get(fingerprint);
+        }
+
+        void rememberNestedBoard(long fingerprint, LayeredBoardState nested) {
+            if (nestedBoards == null) {
+                nestedBoards = new HashMap<>();
+            }
+            nestedBoards.put(fingerprint, nested);
         }
 
         /**
@@ -604,7 +645,9 @@ public class LayerSystemService {
     /**
      * Registers a pass for the given game state on this thread and provides its layered board:
      * reused from the {@code GameData}-level cache when the board fingerprint is unchanged
-     * since the last computation, recomputed (and cached) otherwise.
+     * since the last computation, or from a board an earlier pass nested in the same enclosing
+     * pass computed for that fingerprint ({@link Pass#nestedBoard}), recomputed (and cached)
+     * otherwise.
      */
     public Pass beginPass(GameData gameData) {
         return beginPass(gameData, null);
@@ -636,12 +679,20 @@ public class LayerSystemService {
                 computeBoardState(gameData, pass);
             } else {
                 long fingerprint = computeBoardFingerprint(gameData);
+                Pass enclosing = pass.parent != null && pass.parent.gameData == gameData ? pass.parent : null;
+                LayeredBoardState nested;
                 if (gameData.layeredBoardCache instanceof BoardCache cached
                         && cached.fingerprint() == fingerprint) {
                     pass.board = cached.board();
+                } else if (enclosing != null && (nested = enclosing.nestedBoard(fingerprint)) != null) {
+                    pass.board = nested;
+                    gameData.layeredBoardCache = new BoardCache(fingerprint, nested);
                 } else {
                     computeBoardState(gameData, pass);
                     gameData.layeredBoardCache = new BoardCache(fingerprint, pass.board);
+                    if (enclosing != null) {
+                        enclosing.rememberNestedBoard(fingerprint, pass.board);
+                    }
                 }
             }
             pass.boardReady = true;

@@ -415,7 +415,25 @@ public class RulesEventPipeline {
         };
     }
 
-    /** Matches the events of {@code batch}, one occurrence that just ended, and triggers what they trigger. */
+    /** Runs {@code detection} under one {@linkplain GameQueryService#withQueryScope query scope}, see {@link #process}. */
+    private void inScope(GameData gameData, Runnable detection) {
+        gameQueryService.withQueryScope(gameData, () -> {
+            detection.run();
+            return null;
+        });
+    }
+
+    /**
+     * Matches the events of {@code batch}, one occurrence that just ended, and triggers what they trigger.
+     *
+     * <p>The kinds whose detection only reads the board and hands abilities to the stack door (attack, block, spell,
+     * control change, crew, day/night, Room, Saga, entry-caused trigger) detect inside one query scope per event
+     * ({@link #inScope}): each scans every permanent's abilities as the layers leave them, so unscoped every permanent
+     * scanned paid a board fingerprint. The others stay unscoped or scope themselves: damage and combat damage record
+     * the turn's damage history (which static conditions read) as they detect, a life event checks for a win, an
+     * action can make a player lose, an attachment applies "as this becomes attached" choices, and a tap event resolves
+     * triggered mana abilities as they trigger (CR 605.4a); library, counter, tap and target detection open their own.
+     */
     public void process(GameData gameData, RulesEventBatch batch) {
         List<ZoneChangeEvent> events = new ArrayList<>();
         List<PermanentChangeEvent> permanentChanges = new ArrayList<>();
@@ -429,11 +447,11 @@ public class RulesEventPipeline {
             } else if (event instanceof StepEvent step) {
                 triggerStep(gameData, step);
             } else if (event instanceof AttackEvent attack) {
-                attackTriggers.trigger(gameData, attack);
+                inScope(gameData, () -> attackTriggers.trigger(gameData, attack));
             } else if (event instanceof BlockEvent block) {
-                blockTriggers.trigger(gameData, block);
+                inScope(gameData, () -> blockTriggers.trigger(gameData, block));
             } else if (event instanceof SpellEvent spell) {
-                spellTriggers.trigger(gameData, spell);
+                inScope(gameData, () -> spellTriggers.trigger(gameData, spell));
             } else if (event instanceof TargetEvent target) {
                 targetTriggers.trigger(gameData, target);
             } else if (event instanceof DamageDealtEvent damage) {
@@ -449,19 +467,19 @@ public class RulesEventPipeline {
             } else if (event instanceof ActionEvent action) {
                 actionTriggers.trigger(gameData, action);
             } else if (event instanceof ControlChangeEvent controlChange) {
-                controlChangeTriggers.trigger(gameData, controlChange);
+                inScope(gameData, () -> controlChangeTriggers.trigger(gameData, controlChange));
             } else if (event instanceof AttachmentEvent attachment) {
                 attachmentTriggers.trigger(gameData, attachment);
             } else if (event instanceof CrewEvent crew) {
-                crewTriggers.trigger(gameData, crew);
+                inScope(gameData, () -> crewTriggers.trigger(gameData, crew));
             } else if (event instanceof DayNightEvent dayNight) {
-                dayNightTriggers.trigger(gameData, dayNight);
+                inScope(gameData, () -> dayNightTriggers.trigger(gameData, dayNight));
             } else if (event instanceof RoomEvent room) {
-                roomTriggers.trigger(gameData, room);
+                inScope(gameData, () -> roomTriggers.trigger(gameData, room));
             } else if (event instanceof SagaEvent saga) {
-                sagaTriggers.trigger(gameData, saga);
+                inScope(gameData, () -> sagaTriggers.trigger(gameData, saga));
             } else if (event instanceof EntryCausedTriggerEvent entryCausedTrigger) {
-                entryCausedTriggerTriggers.trigger(gameData, entryCausedTrigger);
+                inScope(gameData, () -> entryCausedTriggerTriggers.trigger(gameData, entryCausedTrigger));
             }
         }
         if (!permanentChanges.isEmpty()) {
