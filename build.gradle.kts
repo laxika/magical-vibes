@@ -110,6 +110,11 @@ subprojects {
                 "verifyStaticSourceCache",
                 System.getProperty("verifyStaticSourceCache") ?: "true"
             )
+            // Every reuse of a multi-target group's permanent candidates is checked against a fresh scan
+            systemProperty(
+                "verifyTargetCandidateCache",
+                System.getProperty("verifyTargetCandidateCache") ?: "true"
+            )
             // Forward select system properties to the forked test JVM
             listOf("runCardFuzz", "runAiStress", "fuzzGames",
                     "runScenarioFuzz", "scenarioCard", "scenarioIterations", "scenarioSeed",

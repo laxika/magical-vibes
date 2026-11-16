@@ -895,6 +895,11 @@ public class LayerSystemService {
      * cached (Cryptoplasm/Evil Twin exception baking happens inside the same resolution as the
      * copy swap, so no query can intervene today).
      */
+    public static long boardFingerprint(GameData gameData) {
+        return computeBoardFingerprint(gameData);
+    }
+
+    /** {@link #boardFingerprint}. */
     private static long computeBoardFingerprint(GameData gameData) {
         long h = 0x9E3779B97F4A7C15L;
         for (StackEntry spell : stackStaticSources(gameData)) {

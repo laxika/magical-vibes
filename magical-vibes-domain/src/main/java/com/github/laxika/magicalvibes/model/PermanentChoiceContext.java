@@ -2343,8 +2343,23 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                       int eventValue,
                                       com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource,
                                       int stateTriggerEffectIndex,
-                                      StackEntry triggerRecord)
+                                      StackEntry triggerRecord,
+                                      GroupCandidates groupCandidates)
             implements PermanentChoiceContext {
+
+        /**
+         * The permanents the slots of target group {@code groupIndex} may choose, judged once as the group's first
+         * slot was asked and handed to its later slots: the game state doesn't change while an ability's targets are
+         * chosen (CR 601.2c via CR 603.3d), so neither does what each slot may choose, less the targets already chosen.
+         * {@code boardFingerprint} is the layered board they were judged against; a walk that finds another board
+         * judges them again.
+         */
+        public record GroupCandidates(int groupIndex, long boardFingerprint, List<UUID> permanentIds) {
+
+            public GroupCandidates {
+                permanentIds = List.copyOf(permanentIds);
+            }
+        }
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
@@ -2420,6 +2435,25 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                           com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource,
                                           int stateTriggerEffectIndex,
                                           StackEntry triggerRecord) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
+                    repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
+                    triggeringPermanentId, eventValue, planarSource, stateTriggerEffectIndex, triggerRecord, null);
+        }
+
+        public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
+                                          int currentGroupIndex, int chosenInCurrentGroup,
+                                          List<Integer> groupSizes, int xValue,
+                                          List<String> repeatedAdditionalCosts,
+                                          boolean resumePendingMayResolution,
+                                          UUID triggeringCardId,
+                                          UUID triggeringPermanentId,
+                                          int eventValue,
+                                          com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource,
+                                          int stateTriggerEffectIndex,
+                                          StackEntry triggerRecord,
+                                          GroupCandidates groupCandidates) {
             this.sourceCard = sourceCard;
             this.controllerId = controllerId;
             this.effects = List.copyOf(effects);
@@ -2437,6 +2471,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this.planarSource = planarSource;
             this.stateTriggerEffectIndex = stateTriggerEffectIndex;
             this.triggerRecord = triggerRecord;
+            this.groupCandidates = groupCandidates;
+        }
+
+        /** This choice with {@code candidates} as the permanents its current target group may choose. */
+        public ETBTokenMultiTargetTrigger withGroupCandidates(GroupCandidates candidates) {
+            return new ETBTokenMultiTargetTrigger(
+                    sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
+                    repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
+                    triggeringPermanentId, eventValue, planarSource, stateTriggerEffectIndex, triggerRecord,
+                    candidates);
         }
 
         /**
@@ -2449,13 +2494,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
                     repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
                     triggeringPermanentId, eventValue, planarSource, stateTriggerEffectIndex,
-                    record);
+                    record, groupCandidates);
         }
 
         /**
          * The next step of this walk: the same ability and trigger event, with {@code chosenTargets} chosen so far,
          * at slot {@code chosenInGroup} of group {@code groupIndex}, the finished groups having taken
-         * {@code finishedGroupSizes} targets each.
+         * {@code finishedGroupSizes} targets each. A step within the same group keeps the group's
+         * {@link #groupCandidates}; a step to another group drops them.
          */
         public ETBTokenMultiTargetTrigger withProgress(List<UUID> chosenTargets, int groupIndex, int chosenInGroup,
                                                        List<Integer> finishedGroupSizes) {
@@ -2463,7 +2509,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     sourceCard, controllerId, effects, sourcePermanentId, chosenTargets,
                     groupIndex, chosenInGroup, finishedGroupSizes, xValue,
                     repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
-                    triggeringPermanentId, eventValue, planarSource, stateTriggerEffectIndex, triggerRecord);
+                    triggeringPermanentId, eventValue, planarSource, stateTriggerEffectIndex, triggerRecord,
+                    groupIndex == currentGroupIndex ? groupCandidates : null);
         }
 
         public ETBTokenMultiTargetTrigger withStateTriggerEffectIndex(int index) {
@@ -2471,7 +2518,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
                     currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
                     repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
-                    triggeringPermanentId, eventValue, planarSource, index, triggerRecord);
+                    triggeringPermanentId, eventValue, planarSource, index, triggerRecord, groupCandidates);
         }
 
         /** This choice with {@code eventValue} as the amount of the event the ability triggered on. */
@@ -2480,7 +2527,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
                     currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
                     repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
-                    triggeringPermanentId, eventValue, planarSource, stateTriggerEffectIndex, triggerRecord);
+                    triggeringPermanentId, eventValue, planarSource, stateTriggerEffectIndex, triggerRecord,
+                    groupCandidates);
         }
 
         public ETBTokenMultiTargetTrigger copyPlanarSnapshot() {
@@ -2488,7 +2536,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
                     currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
                     repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
-                    triggeringPermanentId, eventValue, planarSource.copy(), stateTriggerEffectIndex, triggerRecord);
+                    triggeringPermanentId, eventValue, planarSource.copy(), stateTriggerEffectIndex, triggerRecord,
+                    groupCandidates);
         }
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,

@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -253,16 +254,17 @@ public class ETBTokenTargetService {
                     : new com.github.laxika.magicalvibes.model.filter.FilterContext(gameData, card.getId(),
                             pending.controllerId(), pending.xValue(), restrictionSource)
                             .withSourcePermanentId(pending.sourcePermanentId());
+            // The ability as the prompt is asked with: with the group's permanent candidates once they are judged.
+            PermanentChoiceContext.ETBTokenMultiTargetTrigger prompting = pending;
             if (canTargetPermanent) {
                 // One shared layered pass for the whole candidate scan: every per-candidate
                 // legality query reads the same board instead of re-fingerprinting it.
-                validPermanentTargets.addAll(gameQueryService.withQueryScope(gameData, () -> {
+                java.util.function.Supplier<List<UUID>> scan = () -> gameQueryService.withQueryScope(gameData, () -> {
                     List<UUID> candidates = new ArrayList<>();
                     for (UUID pid : gameData.orderedPlayerIds) {
                         List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                         if (battlefield == null) continue;
                         for (Permanent p : battlefield) {
-                            if (targetAlreadyChosen(pending, p.getId())) continue;
                             if (matchesPermanentTargetFilter(gameData, p, group.getFilter(),
                                     pending.controllerId(), card, pending.sourcePermanentId(), pending.xValue(),
                                     pending.triggerRecord() == null ? null
@@ -277,7 +279,15 @@ public class ETBTokenTargetService {
                         }
                     }
                     return candidates;
-                }));
+                });
+                PermanentChoiceContext.ETBTokenMultiTargetTrigger.GroupCandidates groupCandidates =
+                        groupPermanentCandidates(gameData, pending, idx, scan);
+                prompting = pending.withGroupCandidates(groupCandidates);
+                for (UUID candidateId : groupCandidates.permanentIds()) {
+                    if (!targetAlreadyChosen(pending, candidateId)) {
+                        validPermanentTargets.add(candidateId);
+                    }
+                }
             }
 
             List<UUID> validExiledCardTargets = new ArrayList<>();
@@ -420,7 +430,7 @@ public class ETBTokenTargetService {
                         validPermanentTargets, validPlayerTargets, validCardTargets,
                         Math.min(validPermanentTargets.size() + validPlayerTargets.size() + validCardTargets.size(),
                                 effectiveMaxTargets - chosenInGroup),
-                        new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.EtbPlayerTargetGroup(pending),
+                        new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.EtbPlayerTargetGroup(prompting),
                         card.getName() + "'s ability — Choose targets, or choose none.");
                 return;
             }
@@ -443,12 +453,12 @@ public class ETBTokenTargetService {
                         gameData, pending.controllerId(), List.of(), validGraveyardCardTargets,
                         Math.min(validGraveyardCardTargets.size(), effectiveMaxTargets - chosenInGroup),
                         new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext
-                                .EtbGraveyardCardTargetGroup(pending),
+                                .EtbGraveyardCardTargetGroup(prompting),
                         card.getName() + "'s ability — Choose target creature card from an opponent's graveyard.");
                 return;
             }
 
-            gameData.interaction.setPermanentChoiceContext(pending);
+            gameData.interaction.setPermanentChoiceContext(prompting);
             String slotLabel = "target " + (idx + 1)
                     + (group.getMaxTargets() > 1 ? "." + (chosenInGroup + 1) : "");
             String prompt = controllerStops
@@ -591,6 +601,37 @@ public class ETBTokenTargetService {
             offset = end;
         }
         return graveyardTargets;
+    }
+
+    /** Test JVMs set {@code -DverifyTargetCandidateCache=true}: every reuse of a group's candidates is checked
+     *  against a fresh scan (see {@link #groupPermanentCandidates}). */
+    private static final boolean TARGET_CANDIDATE_CACHE_VERIFIED = Boolean.getBoolean("verifyTargetCandidateCache");
+
+    /**
+     * The permanents target group {@code groupIndex} of {@code pending} may choose, before the targets already chosen
+     * are taken out: the ones its earlier slots judged, when they were judged for this group against the same board,
+     * and {@code scan}'s otherwise. Targets are chosen in a frozen game state (CR 601.2c via CR 603.3d), so a group
+     * of many slots judges every permanent once instead of once per slot. When the check is on, a reuse scans again
+     * and throws if the two differ.
+     */
+    private PermanentChoiceContext.ETBTokenMultiTargetTrigger.GroupCandidates groupPermanentCandidates(
+            GameData gameData, PermanentChoiceContext.ETBTokenMultiTargetTrigger pending, int groupIndex,
+            java.util.function.Supplier<List<UUID>> scan) {
+        long fingerprint = LayerSystemService.boardFingerprint(gameData);
+        PermanentChoiceContext.ETBTokenMultiTargetTrigger.GroupCandidates cached = pending.groupCandidates();
+        if (cached != null && cached.groupIndex() == groupIndex && cached.boardFingerprint() == fingerprint) {
+            if (TARGET_CANDIDATE_CACHE_VERIFIED) {
+                List<UUID> fresh = scan.get();
+                if (!fresh.equals(cached.permanentIds())) {
+                    throw new IllegalStateException("The permanents target group " + groupIndex + " of "
+                            + pending.sourceCard().getName() + " may choose changed between its slots (judged "
+                            + cached.permanentIds().size() + ", now " + fresh.size() + ")");
+                }
+            }
+            return cached;
+        }
+        return new PermanentChoiceContext.ETBTokenMultiTargetTrigger.GroupCandidates(groupIndex, fingerprint,
+                scan.get());
     }
 
     private boolean targetAlreadyChosen(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,

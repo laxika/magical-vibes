@@ -529,6 +529,12 @@ kind. "Up to N" abilities prompt too; choosing zero still puts the ability on th
 resolves doing nothing. Choosing yourself declines an optional single target, or stops a group once
 its minimum is met, only when you are not yourself a legal target for it
 (`ETBTokenTargetService.controllerChoiceDeclines` / `controllerChoiceStopsGroup`).
+A group's permanent candidates are judged once, as its first slot is asked, and carried on the walk
+(`ETBTokenMultiTargetTrigger.groupCandidates`, kept by `withProgress` within the group): the game state doesn't
+change while targets are chosen (CR 601.2c via CR 603.3d), so each later slot only takes out the targets already
+chosen and applies the constraints that read them (shared card type, one per controller, mana value). A walk
+that finds a different board fingerprint judges them again. Test JVMs run with `-DverifyTargetCandidateCache=true`,
+which judges them again on every reuse and throws if they differ.
 
 The AI answers these prompts through `AiDecisionEngine.answerEtbTargetPrompt`, reusing
 `AiTargetSelector`'s spell-target judgement. In tests, a target passed to a harness cast helper for
