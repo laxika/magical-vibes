@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -24,6 +24,6 @@ public class DerangedHermit extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL)));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 4, "Squirrel", 1, 1, CardColor.GREEN, List.of(CardSubtype.SQUIRREL), Set.of(), Set.of()));
-        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{3}{G}{G}"));
+        addStaticEffect(new EchoEffect("{3}{G}{G}"));
     }
 }

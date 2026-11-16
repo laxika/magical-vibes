@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseAnyNumberEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,6 +26,6 @@ public class VolcanoHellion extends Card {
                 chooseAnyNumber,
                 dealDamageToTargetCreature,
                 new DealDamageToPlayersEffect(new ChosenNumberOnSource(), DamageRecipient.CONTROLLER, true));
-        addStaticEffect(new RegisterEchoAtNextUpkeepEffect(new ControllerLifeTotal()));
+        addStaticEffect(new EchoEffect(new ControllerLifeTotal()));
     }
 }

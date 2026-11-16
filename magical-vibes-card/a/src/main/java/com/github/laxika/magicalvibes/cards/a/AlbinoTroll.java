@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import java.util.List;
 public class AlbinoTroll extends Card {
 
     public AlbinoTroll() {
-        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{1}{G}"));
+        addStaticEffect(new EchoEffect("{1}{G}"));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{G}",

@@ -29,6 +29,13 @@ public class RegisterDelayedEndStepTriggerEffectHandler implements NormalEffectH
         var registration = (RegisterDelayedEndStepTriggerEffect) effect;
         Card triggerCard = entry.getCard().createRuntimeCopy();
         triggerCard.clearRuntimeSpellTargets();
+        if (registration.aboutActivePlayer()) {
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    entry.getControllerId(), triggerCard,
+                    new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY), registration.triggerEffect()),
+                    entry.getSourcePermanentId(), null, gameData.activePlayerId, DelayedReferents.NONE));
+            return;
+        }
         for (DelayedTargetGroup group : registration.targetGroups()) {
             triggerCard.target(group.filter(), group.minTargets(), group.maxTargets());
         }

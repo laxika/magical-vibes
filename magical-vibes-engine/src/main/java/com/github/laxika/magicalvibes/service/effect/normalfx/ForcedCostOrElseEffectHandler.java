@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
@@ -191,9 +192,11 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
         }
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         int pendingIndex = gameData.pendingEffectResolutionIndex;
+        // Echo's "if" wraps its effect to be judged again as it resolves (CR 603.4).
         boolean echoPayment = forcedCost instanceof PayEchoCost
                 || pendingEntry != null && pendingEntry.getEffectsToResolve().stream().anyMatch(effect ->
-                effect instanceof ForcedCostOrElseEffect pending && pending.forcedCost() instanceof PayEchoCost);
+                (effect instanceof ConditionalEffect conditional ? conditional.wrapped() : effect)
+                        instanceof ForcedCostOrElseEffect pending && pending.forcedCost() instanceof PayEchoCost);
         if (pendingEntry != null
                 && !cumulativeUpkeep
                 && !echoPayment

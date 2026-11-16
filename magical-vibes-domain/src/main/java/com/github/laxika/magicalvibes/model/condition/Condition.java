@@ -79,6 +79,7 @@ public sealed interface Condition permits
         CollectEvidenceCostPaid,
         CanBeholdSubtype,
         CameUnderControlThisTurn,
+        CameUnderControlSinceLastUpkeep,
         CardDiscardedThisTurn,
         ControllerDiscardedCardThisTurn,
         CastDuringMainPhase,

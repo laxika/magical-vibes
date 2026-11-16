@@ -81,6 +81,7 @@ import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
 import com.github.laxika.magicalvibes.model.condition.BlockPairLesserPower;
 import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
+import com.github.laxika.magicalvibes.model.condition.CameUnderControlSinceLastUpkeep;
 import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CanBeholdSubtype;
 import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
@@ -633,6 +634,15 @@ public class ConditionEvaluationService {
                         : gameQueryService.findPermanentController(gameData, source.getId());
                 // A source that has left the battlefield is judged by its last-known information.
                 yield source != null && source.isSummoningSick()
+                        && (ctx.controllerId() == null || currentController == null
+                        || ctx.controllerId().equals(currentController));
+            }
+            case CameUnderControlSinceLastUpkeep ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                UUID currentController = source == null ? null
+                        : gameQueryService.findPermanentController(gameData, source.getId());
+                // A source that has left the battlefield is judged by its last-known information.
+                yield source != null && source.getControllerUpkeepsSinceControlled() <= 1
                         && (ctx.controllerId() == null || currentController == null
                         || ctx.controllerId().equals(currentController));
             }

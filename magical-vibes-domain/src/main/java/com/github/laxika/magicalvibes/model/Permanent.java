@@ -56,6 +56,10 @@ public class Permanent {
     @Setter private boolean untapAfterTapCost;
     private int untapSequence;
     private int controlChangeSequence;
+    /** How many of its controller's upkeeps have begun since it came under that player's control (entering or a
+     *  control change), for echo's "if this permanent came under your control since the beginning of your last
+     *  upkeep" (CR 702.30a): at most one during that player's upkeep means it did. */
+    private int controllerUpkeepsSinceControlled;
     /** True once the "sacrifice a [permanent] instead of entering" replacement (Balduvian Trading
      *  Post) has been paid for this permanent, so the re-entry after the choice isn't replaced again. */
     @Setter private boolean entryCostPaid;
@@ -1040,6 +1044,7 @@ public class Permanent {
         this.untappedAtTurnStart = source.untappedAtTurnStart;
         this.untapSequence = source.untapSequence;
         this.controlChangeSequence = source.controlChangeSequence;
+        this.controllerUpkeepsSinceControlled = source.controllerUpkeepsSinceControlled;
         this.entryCostPaid = source.entryCostPaid;
         this.entryCostResolved = source.entryCostResolved;
         this.amplifyRevealedCards = source.amplifyRevealedCards;
@@ -1563,6 +1568,12 @@ public class Permanent {
 
     public void recordControlChange() {
         this.controlChangeSequence++;
+        this.controllerUpkeepsSinceControlled = 0;
+    }
+
+    /** Records that its controller's upkeep began, for {@link #controllerUpkeepsSinceControlled}. */
+    public void markControllerUpkeepStarted() {
+        this.controllerUpkeepsSinceControlled++;
     }
 
     public void setAttacking(boolean attacking) {

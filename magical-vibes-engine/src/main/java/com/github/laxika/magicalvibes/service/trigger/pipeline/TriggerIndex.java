@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -692,7 +693,8 @@ public class TriggerIndex {
 
     /**
      * The triggered abilities {@code permanent}, a permanent or a face-up scheme's view, has as the layers leave it, in
-     * this order: its card's, unless it is face down (CR 708.2) or lost them; those granted it until end of turn,
+     * this order: its card's and its printed echo's (CR 702.30a), unless it is face down (CR 708.2) or lost them;
+     * those granted it until end of turn,
      * end of combat or its controller's next upkeep and until it leaves, unless it lost all its abilities; and those
      * other permanents' static abilities give it, a granted cumulative upkeep among them (CR 702.24a), as the layers
      * order them against a "loses all abilities" effect (CR 613.1f, 613.7: Aura Flux after Humility still grants).
@@ -705,6 +707,11 @@ public class TriggerIndex {
         if (!lostAll && !permanent.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
             abilities.addAll(withoutLost(gameData, permanent.getCard().getId(),
                     permanent.getCard().getTriggeredAbilities()));
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
+                if (effect instanceof EchoEffect echo) {
+                    abilities.add(KeywordTriggers.echo(echo));
+                }
+            }
         }
         keywordAbilities(gameData, permanent, staticBonus, abilities);
         if (!lostAll && !gameQueryService.hasLostAllAbilities(gameData, permanent)) {

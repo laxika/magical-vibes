@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -18,7 +18,7 @@ import java.util.List;
 public class Timbermare extends Card {
 
     public Timbermare() {
-        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{5}{G}"));
+        addStaticEffect(new EchoEffect("{5}{G}"));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(
                 TapUntapScope.ALL_CREATURES,
                 new PermanentAllOfPredicate(List.of(

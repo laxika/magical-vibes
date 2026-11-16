@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -29,6 +29,6 @@ public class KarmicGuide extends Card {
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)
                 .build());
-        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{3}{W}{W}"));
+        addStaticEffect(new EchoEffect("{3}{W}{W}"));
     }
 }

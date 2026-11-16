@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "285")
 public class WindingWurm extends Card {
 
     public WindingWurm() {
-        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{4}{G}"));
+        addStaticEffect(new EchoEffect("{4}{G}"));
     }
 }

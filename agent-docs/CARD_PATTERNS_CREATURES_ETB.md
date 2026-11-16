@@ -29,7 +29,7 @@ For an ETB that pays X and then offers a free cast of an instant or sorcery with
 from any graveyard, use `PayXManaCastTargetInstantOrSorceryFromGraveyardEffect()` as in
 `h/HaloForager.java`.
 
-Echo ETB pattern: `k/KeldonChampion.java` combines `DealDamageToTargetPlayerOrPlaneswalkerEffect(3)` with `RegisterEchoAtNextUpkeepEffect("{2}{R}{R}")`; `v/VolcanoHellion.java` uses the `(DynamicAmount)` overload for a cost evaluated at upkeep; `d/DeepcavernImp.java` uses the `(HandCardCost)` overload for echo—discard a card; `s/ShahOfNaarIsle.java` passes a `List<CardEffect>` as the second argument for effects that resolve when echo is paid. The registrar creates a one-shot echo trigger for the source permanent's current controller.
+Echo pattern: `k/KeldonChampion.java` combines an ETB `DealDamageToTargetPlayerOrPlaneswalkerEffect(3)` with STATIC `EchoEffect("{2}{R}{R}")`; `v/VolcanoHellion.java` uses the `(DynamicAmount)` overload for a cost evaluated at upkeep; `d/DeepcavernImp.java` uses the `(HandCardCost)` overload for echo—discard a card; `s/ShahOfNaarIsle.java` passes a `List<CardEffect>` as the second argument for effects that resolve when echo is paid. The trigger index lists echo's upkeep ability for the permanent (CR 702.30a).
 
 ## Vanilla creatures (empty body, all from Scryfall)
 

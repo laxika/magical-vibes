@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,7 +17,7 @@ import java.util.List;
 public class Extruder extends Card {
 
     public Extruder() {
-        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{4}"));
+        addStaticEffect(new EchoEffect("{4}"));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

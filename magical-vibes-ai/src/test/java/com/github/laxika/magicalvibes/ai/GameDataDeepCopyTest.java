@@ -150,6 +150,20 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps how many of its controller's upkeeps began since a permanent came under control")
+    void deepCopyPreservesControllerUpkeepsSinceControlled() {
+        Permanent origPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        origPerm.markControllerUpkeepStarted();
+
+        GameData copy = gd.simulationCopy();
+        Permanent copyPerm = copy.playerBattlefields.get(player1.getId()).getFirst();
+        copyPerm.markControllerUpkeepStarted();
+
+        assertThat(copyPerm.getControllerUpkeepsSinceControlled()).isEqualTo(2);
+        assertThat(origPerm.getControllerUpkeepsSinceControlled()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Deep copy keeps a permanent's granted abilities, and the copy's grants stay its own")
     void deepCopyPreservesGrantedAbilitiesIndependently() {
         harness.addToBattlefield(player1, new GrizzlyBears());

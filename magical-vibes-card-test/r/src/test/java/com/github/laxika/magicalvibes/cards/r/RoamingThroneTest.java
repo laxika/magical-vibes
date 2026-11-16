@@ -314,7 +314,7 @@ class RoamingThroneTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        assertThat(gd.stack).filteredOn(entry -> entry.getDescription().equals("Acridian's echo ability"))
+        assertThat(gd.stack).filteredOn(entry -> entry.getDescription().equals("Acridian's upkeep ability"))
                 .hasSize(2);
     }
 }

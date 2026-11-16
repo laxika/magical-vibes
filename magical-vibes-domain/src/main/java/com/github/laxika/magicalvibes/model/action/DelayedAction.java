@@ -20,12 +20,10 @@ package com.github.laxika.magicalvibes.model.action;
 public sealed interface DelayedAction permits
         DelayedAdditionalCombatBeginningEffect,
         TargetCreatureMustAttackNextCombat,
-        DestroyNonAttackersAtEndStep,
         DelayedPlusZeroPlusOneCounters,
         DelayedAttackerDeclarationControl,
         DelayedBlockerDeclarationControl,
         DelayedCamouflage,
-        EchoAtNextUpkeep,
         GrantExilePlayPermissionAtNextTurn,
         RevokeExilePlayPermissionAtNextUpkeep,
         ExpireControlAtEndOfNextTurn,

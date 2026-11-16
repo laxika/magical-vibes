@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -24,6 +24,6 @@ public class SubterraneanShambler extends Card {
                 false,
                 false,
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
-        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{3}{R}"));
+        addStaticEffect(new EchoEffect("{3}{R}"));
     }
 }

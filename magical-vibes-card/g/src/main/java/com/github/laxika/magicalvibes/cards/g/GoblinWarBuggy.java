@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "196")
 public class GoblinWarBuggy extends Card {
 
     public GoblinWarBuggy() {
-        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{1}{R}"));
+        addStaticEffect(new EchoEffect("{1}{R}"));
     }
 }

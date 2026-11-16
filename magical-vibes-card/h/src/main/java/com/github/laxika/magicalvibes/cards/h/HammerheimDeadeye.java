@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,6 +26,6 @@ public class HammerheimDeadeye extends Card {
                 )),
                 "Target must be a creature with flying"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyTargetPermanentEffect());
-        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{5}{R}"));
+        addStaticEffect(new EchoEffect("{5}{R}"));
     }
 }

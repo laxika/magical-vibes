@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
 import java.util.Set;
-import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,6 +24,6 @@ public class GoblinMarshal extends Card {
         addTrigger(Triggers.dies(ObjectRelation.THIS), goblinTokens);
 
         // Echo {4}{R}{R}.
-        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{4}{R}{R}"));
+        addStaticEffect(new EchoEffect("{4}{R}{R}"));
     }
 }

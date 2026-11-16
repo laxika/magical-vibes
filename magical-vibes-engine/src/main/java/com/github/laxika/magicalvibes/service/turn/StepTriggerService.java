@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
-import com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.GrantExilePlayPermissionAtNextTurn;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.action.DestroyNonAttackersAtEndStep;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.AbilityZones;
@@ -19,7 +17,6 @@ import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityS
 import com.github.laxika.magicalvibes.model.Boon;
 import com.github.laxika.magicalvibes.model.BoonTrigger;
 import com.github.laxika.magicalvibes.model.Emblem;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -47,14 +44,9 @@ import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 import com.github.laxika.magicalvibes.model.effect.TemporaryCopyEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveRadCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersSkipUpkeepStepEffect;
@@ -212,6 +204,12 @@ public class StepTriggerService {
         // upkeep begins, before the delayed trigger below puts its counter on the creature.
         gameData.expireFloatingEffectsAtUpkeep(gameData.activePlayerId);
         gameData.forEachPermanent((playerId, permanent) -> permanent.markUpkeepStarted(gameData.activePlayerId));
+        // Echo's "came under your control since the beginning of your last upkeep" (CR 702.30a) counts this upkeep
+        // for the active player's permanents, phased out ones too: phasing changes neither control nor history.
+        gameData.playerBattlefields.getOrDefault(gameData.activePlayerId, List.of())
+                .forEach(Permanent::markControllerUpkeepStarted);
+        gameData.phasedOutPermanents.getOrDefault(gameData.activePlayerId, List.of())
+                .forEach(Permanent::markControllerUpkeepStarted);
         gameData.forEachPermanent((playerId, permanent) ->
                 permanent.clearUntilNextUpkeepTriggeredEffects(gameData.activePlayerId));
         gameData.phasedOutPermanents.values().forEach(permanents -> permanents.forEach(permanent ->
@@ -238,36 +236,6 @@ public class StepTriggerService {
                 if (gameData.findExiledCard(action.cardId()) != null) {
                     gameData.exilePlayPermissions.put(action.cardId(), action.ownerId());
                 }
-            }
-        }
-
-        if (gameData.hasDelayedAction(EchoAtNextUpkeep.class)) {
-            List<EchoAtNextUpkeep> pendingEchoes = gameData.drainDelayedActions(EchoAtNextUpkeep.class);
-            for (EchoAtNextUpkeep action : pendingEchoes) {
-                Permanent echoSource = gameQueryService.findPermanentById(gameData, action.permanentId());
-                if (echoSource == null || gameQueryService.hasLostAllAbilities(gameData, echoSource)) continue;
-                UUID controllerId = gameQueryService.findPermanentController(gameData, action.permanentId());
-                if (controllerId == null) {
-                    continue;
-                }
-                if (!controllerId.equals(gameData.activePlayerId)) {
-                    gameData.queueDelayedAction(action);
-                    continue;
-                }
-
-                ForcedCostOrElseEffect payEchoOrSacrifice = new ForcedCostOrElseEffect(
-                        new PayEchoCost(action.manaCost(), action.handCardCost(), action.cost(),
-                                action.dynamicManaCost()),
-                        new ArrayList<>(List.of(new SacrificeSelfEffect())),
-                        true, action.paidEffects());
-                // Echo is the permanent's own triggered ability (CR 702.30a): the effects that make its abilities
-                // trigger an additional time count it (CR 603.3).
-                triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
-                        new TriggeredAbility(YOUR_UPKEEP, payEchoOrSacrifice), action.sourceCard(), echoSource,
-                        controllerId, action.sourceCard().getName() + "'s echo ability",
-                        ConditionContext.forPermanent(echoSource, controllerId), TriggerRecord.NONE));
-                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s echo ability triggers."));
-                log.info("Game {} - {} echo trigger pushed onto stack", gameData.id, action.sourceCard().getName());
             }
         }
 
@@ -1188,32 +1156,6 @@ public class StepTriggerService {
         }
         expireNextEndStepTemporaryCopies(gameData);
         handleBedtimeStoryLoreCounters(gameData);
-        // Process Siren's Call: destroy all non-Wall creatures the player controls that didn't attack
-        // this turn, ignoring creatures they didn't control continuously since the beginning of the
-        // turn (summoning sick).
-        if (gameData.hasDelayedAction(DestroyNonAttackersAtEndStep.class)) {
-            List<DestroyNonAttackersAtEndStep> pending =
-                    gameData.drainDelayedActions(DestroyNonAttackersAtEndStep.class);
-            for (DestroyNonAttackersAtEndStep action : pending) {
-                var filter = new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(List.of(
-                        new com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate(),
-                        new com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate(
-                                new com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate(CardSubtype.WALL)),
-                        new com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate(
-                                new com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate()),
-                        action.excludeSummoningSickFromDestruction()
-                                ? new com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate()
-                                : new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate()));
-                StackEntry delayed = TriggeredAbilityStackService.madeAbility(action.sourceCard(), action.controllerId(),
-                        action.sourceCard().getName() + "'s delayed ability",
-                        new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect(
-                                filter, com.github.laxika.magicalvibes.model.effect.EachPermanentScope.TARGET_PLAYER, null))));
-                delayed.setTargetId(action.playerId());
-                delayed.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, delayed);
-            }
-        }
-
         UUID activePlayerId = gameData.activePlayerId;
 
         // End-step boons go on the stack before the step's printed abilities: a permanent's ability that triggers

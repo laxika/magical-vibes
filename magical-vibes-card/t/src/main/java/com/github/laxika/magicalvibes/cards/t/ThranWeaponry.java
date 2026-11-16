@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesWhileSourceTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ import java.util.List;
 public class ThranWeaponry extends Card {
 
     public ThranWeaponry() {
-        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{4}"));
+        addStaticEffect(new EchoEffect("{4}"));
         addStaticEffect(new MayNotUntapDuringUntapStepEffect());
 
         addActivatedAbility(new ActivatedAbility(

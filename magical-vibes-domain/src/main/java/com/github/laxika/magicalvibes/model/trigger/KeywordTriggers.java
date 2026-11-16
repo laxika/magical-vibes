@@ -6,13 +6,18 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
+import com.github.laxika.magicalvibes.model.condition.CameUnderControlSinceLastUpkeep;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourceToughness;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasGreaterPowerOrToughnessThanSource;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.effect.EvolveEffect;
+import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -56,6 +61,19 @@ public final class KeywordTriggers {
                     new AnyOf(List.of(new SpellManaSpentGreaterThanSourcePower(),
                             new SpellManaSpentGreaterThanSourceToughness()))))),
             new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
+
+    /**
+     * Echo: "At the beginning of your upkeep, if this permanent came under your control since the beginning of your
+     * last upkeep, sacrifice it unless you pay [cost]" (CR 702.30a), for the cost and paid effects {@code echo} names.
+     * The cost is optional to pay and its "if" is judged as it triggers and again as it resolves (CR 603.4).
+     */
+    public static TriggeredAbility echo(EchoEffect echo) {
+        return new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new CameUnderControlSinceLastUpkeep()),
+                new ForcedCostOrElseEffect(
+                        new PayEchoCost(echo.manaCost(), echo.handCardCost(), echo.cost(), echo.dynamicManaCost()),
+                        List.of(new SacrificeSelfEffect()), true, echo.paidEffects()));
+    }
 
     /** Every keyword that stands for a triggered ability the index lists, with that ability. */
     public static final List<KeywordTrigger> ALL = List.of(

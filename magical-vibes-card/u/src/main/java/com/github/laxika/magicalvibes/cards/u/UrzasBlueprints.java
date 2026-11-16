@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ import java.util.List;
 public class UrzasBlueprints extends Card {
 
     public UrzasBlueprints() {
-        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{6}"));
+        addStaticEffect(new EchoEffect("{6}"));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

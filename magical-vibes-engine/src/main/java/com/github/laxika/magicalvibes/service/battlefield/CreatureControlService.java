@@ -49,8 +49,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep;
-import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
 
 /**
  * CR 613.2/613.7 layer-2 control semantics. Every control-changing effect is a floating
@@ -344,20 +342,6 @@ public class CreatureControlService {
         if (storiedEffectHandler != null) {
             storiedEffectHandler.checkPermanentStoried(gameData, derived);
         }
-        if (!gameQueryService.hasLostAllAbilities(gameData, permanent)
-                && gameData.getDelayedActions(EchoAtNextUpkeep.class).stream()
-                .noneMatch(action -> action.permanentId().equals(permanent.getId()))) {
-            for (var effect : java.util.stream.Stream.concat(
-                    permanent.getCard().getStaticEffects().stream(),
-                    permanent.getCard().getOwnEntryEffects().stream()).toList()) {
-                if (effect instanceof RegisterEchoAtNextUpkeepEffect echo) {
-                    gameData.queueDelayedAction(new EchoAtNextUpkeep(permanent.getId(),
-                            echo.manaCost(), echo.dynamicManaCost(), echo.handCardCost(),
-                            echo.cost(), echo.paidEffects(), permanent.getCard()));
-                }
-            }
-        }
-
         // Soulbond lasts only while you control both (CR 702.95) — control change breaks the pair.
         UUID partnerId = permanent.getPairedWithId();
         if (partnerId != null) {

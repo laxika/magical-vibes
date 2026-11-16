@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 
 @CardRegistration(set = "ULG", collectorNumber = "134")
 public class ThranWarMachine extends Card {
 
     public ThranWarMachine() {
-        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{4}"));
+        addStaticEffect(new EchoEffect("{4}"));
         addStaticEffect(new MustAttackEffect());
     }
 }

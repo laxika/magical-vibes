@@ -155,9 +155,6 @@ public class BattlefieldPlacementService {
     @Autowired @Lazy
     private AsEntersDiscardSupport asEntersDiscardSupport;
 
-    @Autowired @Lazy
-    private com.github.laxika.magicalvibes.service.effect.normalfx.RegisterEchoAtNextUpkeepEffectHandler echoHandler;
-
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
@@ -546,7 +543,6 @@ public class BattlefieldPlacementService {
                 }
             }
         });
-        if (echoHandler != null) echoHandler.registerOnEntry(gameData, permanent);
         if (permanent.getCard().isToken()) {
             gameData.playersWhoCreatedTokensThisTurn.add(puttingPlayerId);
             if (permanent.getCard().getSubtypes().contains(CardSubtype.TREASURE)) {

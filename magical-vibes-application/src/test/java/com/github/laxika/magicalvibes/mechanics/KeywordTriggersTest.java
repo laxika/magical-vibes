@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.mechanics;
 
+import com.github.laxika.magicalvibes.cards.a.Acridian;
 import com.github.laxika.magicalvibes.cards.a.AmbitiousAugmenter;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -45,6 +48,48 @@ class KeywordTriggersTest extends BaseCardTest {
         harness.passBothPriorities();
         // Four mana is greater than the 1/1's power, then than the 2/2's.
         assertThat(augmenter.getPlusOnePlusOneCounters()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Echo triggers for a permanent that entered without its abilities if it has echo as the upkeep begins "
+            + "(CR 702.30a)")
+    void echoTriggersForPermanentThatEnteredWithoutItsAbilities() {
+        Permanent humility = harness.addToBattlefieldAndReturn(player2, new Humility());
+        harness.castFromHand(player1, new Acridian(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Acridian");
+        gd.playerBattlefields.get(player2.getId()).remove(humility);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    @DisplayName("Echo doesn't trigger for a permanent its controller has controlled since before their last upkeep")
+    void echoDoesNotTriggerAfterAnUpkeepUnderTheSameController() {
+        Permanent acridian = harness.addToBattlefieldAndReturn(player1, new Acridian());
+        acridian.markControllerUpkeepStarted();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Echo is put on the stack by the trigger pipeline as the permanent's own upkeep ability, with its cost")
+    void echoIsThePermanentsOwnUpkeepAbility() {
+        Permanent acridian = harness.addToBattlefieldAndReturn(player1, new Acridian());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(acridian.getId());
+            assertThat(entry.getControllerId()).isEqualTo(player1.getId());
+        });
     }
 
     /** An enchantment whose static ability gives the other creatures its controller controls {@code keyword}. */

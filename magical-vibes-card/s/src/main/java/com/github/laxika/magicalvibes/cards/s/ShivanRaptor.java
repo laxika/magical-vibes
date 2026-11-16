@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "215")
 public class ShivanRaptor extends Card {
 
     public ShivanRaptor() {
-        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{2}{R}"));
+        addStaticEffect(new EchoEffect("{2}{R}"));
     }
 }

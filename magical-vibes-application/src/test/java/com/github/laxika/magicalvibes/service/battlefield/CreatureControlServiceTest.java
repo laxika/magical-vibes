@@ -23,8 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,20 +54,16 @@ import static org.mockito.Mockito.verify;
 class CreatureControlServiceTest {
 
     @Test
-    void changingControlSchedulesEchoAgain() {
-        Card card = createCreatureCard("Echo creature");
-        card.addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect("{2}{R}"));
-        Permanent creature = new Permanent(card);
+    @DisplayName("Gaining control of a permanent restarts echo's \"since your last upkeep\" count (CR 702.30a)")
+    void changingControlRestartsTheUpkeepCount() {
+        Permanent creature = new Permanent(createCreatureCard("Echo creature"));
         gd.playerBattlefields.get(player1Id).add(creature);
+        creature.markControllerUpkeepStarted();
+        creature.markControllerUpkeepStarted();
 
         applySteal(player2Id, creature, EffectDuration.PERMANENT, null);
 
-        assertThat(gd.getDelayedActions(com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep.class))
-                .singleElement().satisfies(echo -> {
-                    assertThat(echo.permanentId()).isEqualTo(creature.getId());
-                    assertThat(echo.manaCost()).isEqualTo("{2}{R}");
-                });
+        assertThat(creature.getControllerUpkeepsSinceControlled()).isZero();
     }
 
     @Mock private GameLogService gameLogService;

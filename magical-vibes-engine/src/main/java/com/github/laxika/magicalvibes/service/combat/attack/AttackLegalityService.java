@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.action.DestroyNonAttackersAtEndStep;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.AttackOrBlockRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackDirectionRestrictionEffect;
@@ -848,12 +847,6 @@ public class AttackLegalityService {
         }
 
         UUID creatureControllerId = gameData.findControllerOf(creature);
-        if (gameData.getDelayedActions(DestroyNonAttackersAtEndStep.class).stream()
-                .anyMatch(action -> action.playerId().equals(creatureControllerId)
-                        && (!action.excludeWallsFromAttack() || !gameQueryService.hasEffectiveSubtype(gameData, creature,
-                        com.github.laxika.magicalvibes.model.CardSubtype.WALL)))) {
-            count[0]++;
-        }
 
         List<CardEffect> grantedEffects = gameQueryService.computeStaticBonus(gameData, creature).grantedEffects();
         if (grantedEffects.stream().anyMatch(MustAttackPlayerEffect.class::isInstance)) {
