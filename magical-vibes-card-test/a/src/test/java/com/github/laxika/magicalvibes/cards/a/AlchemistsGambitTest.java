@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -15,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 
 @CardUsed({AlchemistsGambit.class, PersistentSpecimen.class})
 class AlchemistsGambitTest extends BaseCardTest {
@@ -24,7 +24,7 @@ class AlchemistsGambitTest extends BaseCardTest {
         AlchemistsGambit card = castNormally();
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
-        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
     }
 
@@ -33,7 +33,7 @@ class AlchemistsGambitTest extends BaseCardTest {
         AlchemistsGambit card = castCleaved();
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
-        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
     }
 

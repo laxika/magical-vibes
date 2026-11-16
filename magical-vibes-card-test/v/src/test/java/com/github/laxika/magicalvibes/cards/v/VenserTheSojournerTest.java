@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.e.EtchedChampion;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -22,6 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 @CardUsed({VenserTheSojourner.class, GoldMyr.class, OriginSpellbomb.class, EtchedChampion.class})
 class VenserTheSojournerTest extends BaseCardTest {
@@ -58,13 +58,13 @@ class VenserTheSojournerTest extends BaseCardTest {
         assertThat(venser.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         // Myr should be exiled
         harness.assertNotOnBattlefield(player1, "Gold Myr");
-        assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(1);
+        assertThat(DelayedPermanentMoves.waitingExileReturns(gd)).hasSize(1);
 
         // Resolve the delayed return at the next end step.
         advanceToEndStep();
 
         harness.assertOnBattlefield(player1, "Gold Myr");
-        assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
+        assertThat(DelayedPermanentMoves.waitingExileReturns(gd)).isEmpty();
     }
 
     @Test
@@ -93,7 +93,7 @@ class VenserTheSojournerTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(venser.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         harness.assertNotOnBattlefield(player1, "Origin Spellbomb");
-        assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(1);
+        assertThat(DelayedPermanentMoves.waitingExileReturns(gd)).hasSize(1);
     }
 
     @Test

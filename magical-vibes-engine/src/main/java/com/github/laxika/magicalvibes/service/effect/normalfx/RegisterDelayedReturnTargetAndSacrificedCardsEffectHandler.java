@@ -1,10 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.DelayedReferents;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedGraveyardCardsToBattlefieldUnderControl;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnTargetAndSacrificedCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnGraveyardCardsToBattlefieldUnderControlEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -46,8 +51,10 @@ public class RegisterDelayedReturnTargetAndSacrificedCardsEffectHandler implemen
             }
         }
         if (!remembered.isEmpty()) {
-            gameData.queueDelayedAction(new DelayedGraveyardCardsToBattlefieldUnderControl(
-                    remembered, entry.getControllerId(), entry.getCard(), versions));
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    entry.getControllerId(), entry.getCard(), new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                            new ReturnGraveyardCardsToBattlefieldUnderControlEffect(remembered, versions)),
+                    null, null, null, DelayedReferents.NONE));
         }
     }
 }

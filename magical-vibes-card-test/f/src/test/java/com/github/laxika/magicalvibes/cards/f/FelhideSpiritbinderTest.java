@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,10 +48,9 @@ class FelhideSpiritbinderTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(token.getCard().getAdditionalTypes()).contains(CardType.ENCHANTMENT);
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP,
-                        false, null, null, player1.getId(), false, spiritbinder.getCard(),
-                        player1.getId(), spiritbinder.getId()).scheduledBy(gd.resolutionOrdinal));
+        assertThat(DelayedPermanentMoves.waiting(gd))
+                .contains(new DelayedPermanentAction(token.getId(),
+                        DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP).scheduledBy(gd.resolutionOrdinal));
     }
 
     @Test

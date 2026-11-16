@@ -54,6 +54,9 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsTo
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
@@ -66,7 +69,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGraveyardExileEffect;
 import com.github.laxika.magicalvibes.model.ManaCost;
-import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -270,11 +272,11 @@ public abstract class AiDecisionEngine {
                 if (gameData.interaction.isAwaitingInput()) return true;
                 if (!cost.canPayForSpecialAction(gameData.playerManaPools.get(playerId))) return false;
             }
-            int obligationsBefore = gameData.delayedActions.size();
+            int obligationsBefore = gameData.temporaryGlobalTriggeredAbilities.size();
             log.info("AI: Paying {} for {}'s delayed ability in game {}", payment.manaCost(),
                     payment.sourceCard().getName(), gameId);
             send(() -> gameActions.handlePayDelayedTriggerCost(payment.sourceCard().getId(), payment.affectedId()));
-            if (gameData.delayedActions.size() >= obligationsBefore) return false;
+            if (gameData.temporaryGlobalTriggeredAbilities.size() >= obligationsBefore) return false;
         }
         return false;
     }
@@ -294,13 +296,24 @@ public abstract class AiDecisionEngine {
         if (gameData.currentStep == TurnStep.END_STEP) return true;
         UUID playerId = aiPlayer.getId();
         if (gameData.currentStep != TurnStep.UPKEEP || !playerId.equals(gameData.activePlayerId)
-                || !(payment.obligation() instanceof LoseLifeAtNextDrawStepUnlessPays)) {
+                || !triggersAtDrawStep(payment.obligation())) {
             return false;
         }
-        int pendingLoss = gameData.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class).stream()
-                .filter(action -> playerId.equals(action.playerId()))
-                .mapToInt(LoseLifeAtNextDrawStepUnlessPays::lifeLoss).sum();
+        int pendingLoss = gameData.temporaryGlobalTriggeredAbilities.stream()
+                .filter(delayed -> delayed.payToPrevent() != null && triggersAtDrawStep(delayed)
+                        && playerId.equals(delayed.watchedPlayerId()))
+                .flatMap(delayed -> delayed.ability().effects().stream())
+                .map(registration -> registration.effect())
+                .filter(LoseLifeEffect.class::isInstance)
+                .map(LoseLifeEffect.class::cast)
+                .filter(loss -> loss.amount() instanceof Fixed)
+                .mapToInt(loss -> ((Fixed) loss.amount()).value()).sum();
         return pendingLoss >= gameData.getLife(playerId);
+    }
+
+    private static boolean triggersAtDrawStep(TemporaryGlobalTriggeredAbility delayed) {
+        return delayed.ability().conditions().stream().anyMatch(condition ->
+                condition.trigger() instanceof StepTrigger step && step.moment() == StepTrigger.Moment.DRAW_STEP);
     }
 
     protected boolean tryCastCommander(GameData gameData) {

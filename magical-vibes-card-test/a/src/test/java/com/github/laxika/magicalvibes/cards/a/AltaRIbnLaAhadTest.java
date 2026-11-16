@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,6 +19,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -64,7 +64,7 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(graveyardAssassin.getId(), exiledAssassin.getId());
         assertThat(gd.exiledCardsWithMemoryCounters)
                 .containsExactlyInAnyOrder(graveyardAssassin.getId(), exiledAssassin.getId());
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+        assertThat(DelayedPermanentMoves.waiting(gd))
                 .allMatch(action -> action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT)
                 .hasSize(2);
     }
@@ -235,7 +235,7 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
 
         chooseReplacement("Queen Allenal of Ruadach");
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+        assertThat(DelayedPermanentMoves.waiting(gd))
                 .filteredOn(action -> action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT)
                 .hasSize(4);
     }

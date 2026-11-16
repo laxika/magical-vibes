@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
+import java.util.Objects;
+
 /**
  * Damage to every creature (optionally planeswalkers and players too).
  *
@@ -23,8 +25,23 @@ public record MassDamageEffect(
         boolean cantRegenerate,
         boolean damagesBattles,
         boolean tapDamagedCreatures,
-        boolean filterAppliesToPlaneswalkers
+        boolean filterAppliesToPlaneswalkers,
+        DamageSource damageSource
 ) implements BoardWipeEffect {
+
+    public MassDamageEffect {
+        Objects.requireNonNull(damageSource, "damageSource");
+    }
+
+    public MassDamageEffect(DynamicAmount amount, boolean damagesPlayers,
+                            boolean damagesPlaneswalkers, PermanentPredicate filter,
+                            boolean perCreatureAmount, boolean exileInsteadOfDie,
+                            boolean cantRegenerate, boolean damagesBattles,
+                            boolean tapDamagedCreatures, boolean filterAppliesToPlaneswalkers) {
+        this(amount, damagesPlayers, damagesPlaneswalkers, filter, perCreatureAmount, exileInsteadOfDie,
+                cantRegenerate, damagesBattles, tapDamagedCreatures, filterAppliesToPlaneswalkers,
+                DamageSource.ABILITY_SOURCE);
+    }
 
     public MassDamageEffect(DynamicAmount amount, boolean damagesPlayers,
                             boolean damagesPlaneswalkers, PermanentPredicate filter,
@@ -41,7 +58,18 @@ public record MassDamageEffect(
      */
     public MassDamageEffect withFilterAppliedToPlaneswalkers() {
         return new MassDamageEffect(amount, damagesPlayers, damagesPlaneswalkers, filter, perCreatureAmount,
-                exileInsteadOfDie, cantRegenerate, damagesBattles, tapDamagedCreatures, true);
+                exileInsteadOfDie, cantRegenerate, damagesBattles, tapDamagedCreatures, true, damageSource);
+    }
+
+    /**
+     * The permanent the trigger event was about deals the damage ({@link DamageSource#TRIGGERING_PERMANENT}): "it
+     * deals that much damage to each other creature and each player" (Arcbond). It is the effect's source, so a
+     * filter on the source excludes it.
+     */
+    public MassDamageEffect dealtByTriggeringPermanent() {
+        return new MassDamageEffect(amount, damagesPlayers, damagesPlaneswalkers, filter, perCreatureAmount,
+                exileInsteadOfDie, cantRegenerate, damagesBattles, tapDamagedCreatures, filterAppliesToPlaneswalkers,
+                DamageSource.TRIGGERING_PERMANENT);
     }
 
     public MassDamageEffect(DynamicAmount amount, boolean damagesPlayers,

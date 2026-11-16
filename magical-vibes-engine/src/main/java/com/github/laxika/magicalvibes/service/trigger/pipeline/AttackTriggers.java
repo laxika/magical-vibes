@@ -153,7 +153,12 @@ public class AttackTriggers {
         for (UUID controllerId : gameData.orderedPlayerIds) {
             for (Permanent permanent : List.copyOf(gameData.playerBattlefields.getOrDefault(controllerId, List.of()))) {
                 playerAttacksYourOpponent(attack, controllerId, permanent);
-                playerAttacks(attack, controllerId, permanent);
+                playerAttacks(attack, Watcher.of(permanent, controllerId));
+            }
+        }
+        for (TemporaryGlobalTriggeredAbility delayed : triggerIndex.delayedAbilities(gameData)) {
+            if (delayed.watchedPermanentId() == null) {
+                playerAttacks(attack, Watcher.of(delayed));
             }
         }
     }
@@ -433,14 +438,15 @@ public class AttackTriggers {
         }
         record Source(Watcher watcher, TriggeredAbility ability, List<Permanent> band) {
         }
-        // The attacking player's permanents, then the delayed abilities they control that watch no particular object.
+        // The attacking player's permanents, then the delayed abilities they control: one about a permanent ("whenever
+        // you attack this turn, Jaya deals damage to that creature") names it as the entry's non-targeting object.
         List<Watcher> watchers = new ArrayList<>();
         for (Permanent permanent : List.copyOf(gameData.playerBattlefields.getOrDefault(playerId, List.of()))) {
             watchers.add(Watcher.of(permanent, playerId));
         }
         if (!attack.attackers().isEmpty()) {
             for (TemporaryGlobalTriggeredAbility delayed : triggerIndex.delayedAbilities(gameData)) {
-                if (delayed.watchedPermanentId() == null && delayed.controllerId().equals(playerId)) {
+                if (delayed.controllerId().equals(playerId)) {
                     watchers.add(Watcher.of(delayed));
                 }
             }
@@ -498,6 +504,11 @@ public class AttackTriggers {
                         entry.setAttackingPermanentSnapshots(attackingSnapshots);
                         if (permanent != null) {
                             entry.setSourcePermanentSnapshot(new Permanent(permanent));
+                        }
+                        if (watcher.delayed() != null && watcher.delayed().watchedPermanentId() != null) {
+                            entry.setTargetId(watcher.delayed().watchedPermanentId());
+                            entry.setTriggeringPermanentId(watcher.delayed().watchedPermanentId());
+                            entry.setNonTargeting(true);
                         }
                     });
             if (put(gameData, sourceAttacked ? request.causedBySourceAttacking() : request.causedByAttack(),
@@ -601,7 +612,9 @@ public class AttackTriggers {
     }
 
     /**
-     * "Whenever a creature you control attacks" of the attacking player's permanents, for {@code attacker}: the filter
+     * "Whenever a creature you control attacks" of the attacking player's permanents and of the delayed abilities they
+     * control that watch no particular object ("whenever a creature you control attacks this turn", Indulge), for
+     * {@code attacker}: the filter
      * on the attacker ("a creature you control with a +1/+1 counter on it attacks", Rage Forger), the event condition
      * ("attacks alone", exalted, CR 702.83a). The entry records the attacked player, planeswalker or battle, the
      * defending player and the attacker as its triggering permanent and non-targeting "that creature".
@@ -623,6 +636,30 @@ public class AttackTriggers {
                 if (eventConditionMet(gameData, ability, context)) {
                     putCreatureYouControlAttacks(gameData, playerId, permanent, attacker, ability, context);
                 }
+            }
+        }
+        for (TemporaryGlobalTriggeredAbility delayed : triggerIndex.delayedAbilities(gameData)) {
+            if (delayed.watchedPermanentId() != null || !delayed.controllerId().equals(playerId)) {
+                continue;
+            }
+            Watcher watcher = Watcher.of(delayed);
+            ConditionContext context = watcher.conditionContext().withTriggeringPermanentId(attacker.getId());
+            for (TriggeredAbility ability : abilities(gameData, watcher, watched)) {
+                requireNoLimitOrMultiplicity(ability, watched);
+                PermanentPredicate filter = filter(ability, watched, null);
+                if ((filter != null && !predicateEvaluationService.matchesPermanentPredicate(attacker, filter,
+                        sourceContext(gameData, watcher))) || !eventConditionMet(gameData, ability, context)) {
+                    continue;
+                }
+                put(gameData, EventAbilitySupport.request(watcher, ability, "'s attack trigger", context, entry -> {
+                    entry.setAttackedTargetId(attacker.getAttackTarget());
+                    entry.setDefendingPlayerId(gameQueryService.defendingPlayerOfAttackTarget(gameData,
+                            attacker.getAttackTarget()));
+                    entry.setTargetId(attacker.getId());
+                    entry.setNonTargeting(true);
+                    entry.setTriggeringPermanentId(attacker.getId());
+                    entry.setTriggeringPermanentOwnerId(gameData.defaultControllerOf(attacker.getId()));
+                }).causedByAttack(), watcher.card(), "'s ability triggers.");
             }
         }
     }
@@ -1104,37 +1141,41 @@ public class AttackTriggers {
     }
 
     /**
-     * "Whenever a player attacks" of {@code permanent}, once for the declaration: its filter on the attackers
-     * ("one or more creatures that are enchanted by an Aura you control attack", Killian), its event condition ("with
-     * three or more creatures", CR 603.2). "That player" is the attacking player, the entry's non-targeting target, and
-     * "those creatures" the attackers that triggered it.
+     * "Whenever a player attacks" of {@code watcher}, once for the declaration: its filter on the attackers ("one or
+     * more creatures that are enchanted by an Aura you control attack", Killian; "one or more nontoken creatures attack
+     * this turn", Basri Ket), its event condition ("with three or more creatures", CR 603.2). "That player" is the
+     * attacking player, the entry's non-targeting target, and "those creatures" the attackers that triggered it, "that
+     * many" their number.
      */
-    private void playerAttacks(Attack attack, UUID controllerId, Permanent permanent) {
+    private void playerAttacks(Attack attack, Watcher watcher) {
         GameData gameData = attack.gameData();
         UUID playerId = attack.playerId();
+        Permanent permanent = watcher.permanent();
         CombatTrigger watched = Triggers.playerAttacks();
-        ConditionContext context = ConditionContext.forPermanent(permanent, controllerId).withTargetId(playerId)
-                .withXValue(attack.count());
-        for (TriggeredAbility ability : abilities(gameData, permanent, watched)) {
+        ConditionContext context = watcher.conditionContext().withTargetId(playerId).withXValue(attack.count());
+        for (TriggeredAbility ability : abilities(gameData, watcher, watched)) {
             requireNoLimitOrMultiplicity(ability, watched);
-            PermanentPredicate filter = filter(ability, watched, Zone.BATTLEFIELD);
+            PermanentPredicate filter = filter(ability, watched, permanent != null ? Zone.BATTLEFIELD : null);
             List<Permanent> triggering = filter == null ? attack.attackers() : attack.attackers().stream()
                     .filter(attacker -> predicateEvaluationService.matchesPermanentPredicate(attacker, filter,
-                            sourceContext(gameData, permanent, controllerId)))
+                            sourceContext(gameData, watcher)))
                     .toList();
             if (triggering.isEmpty() || !eventConditionMet(gameData, ability, context)) {
                 continue;
             }
             List<Permanent> attackingSnapshots = attack.declaredSnapshots(triggering);
-            put(gameData, new TriggeredAbilityRequest(ability, permanent.getCard(), permanent, controllerId,
-                    permanent.getCard().getName() + "'s trigger", context, entry -> {
-                        entry.setXValue(attack.count());
-                        entry.setTargetId(playerId);
-                        entry.setTriggeringPermanentControllerId(playerId);
-                        entry.setNonTargeting(true);
-                        entry.setSourcePermanentSnapshot(new Permanent(permanent));
-                        entry.setAttackingPermanentSnapshots(attackingSnapshots);
-                    }).causedByAttack(), permanent.getCard(), "'s ability triggers.");
+            put(gameData, EventAbilitySupport.request(watcher, ability, "'s trigger", context, entry -> {
+                entry.setXValue(attack.count());
+                entry.setTargetId(playerId);
+                entry.setTriggeringPermanentControllerId(playerId);
+                entry.setNonTargeting(true);
+                if (permanent != null) {
+                    entry.setSourcePermanentSnapshot(new Permanent(permanent));
+                } else if (filter != null) {
+                    entry.setEventValue(triggering.size());
+                }
+                entry.setAttackingPermanentSnapshots(attackingSnapshots);
+            }).causedByAttack(), watcher.card(), "'s ability triggers.");
         }
     }
 

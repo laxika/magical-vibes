@@ -13,8 +13,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.action.DimensionalBreachUpkeepReturn;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -251,12 +252,17 @@ class ExileAllPermanentsEffectHandlerTest {
 
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(creature), eq(filter), any()))
                         .thenReturn(true);
+                when(permanentRemovalService.removePermanentToExile(gd, creature, sourceCard.getId()))
+                        .thenAnswer(invocation -> {
+                            gd.addToExile(player1Id, creatureCard, sourceCard.getId());
+                            return true;
+                        });
 
                 exileAllPermanentsHandler.resolve(gd, entry, effect);
 
                 verify(permanentRemovalService).removePermanentToExile(gd, creature, sourceCard.getId());
-                assertThat(gd.getDelayedActions(DimensionalBreachUpkeepReturn.class))
-                        .extracting(DimensionalBreachUpkeepReturn::sourceCard)
+                assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP))
+                        .extracting(TemporaryGlobalTriggeredAbility::sourceCard)
                         .containsExactly(sourceCard);
             }
 

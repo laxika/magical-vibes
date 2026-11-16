@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
@@ -67,7 +67,7 @@ class FeveredSuspicionTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of());
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
     }
 
     @Test
@@ -94,7 +94,7 @@ class FeveredSuspicionTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.findExiledCard(land.getId())).isNotNull();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
     }
 
     @Test
@@ -145,7 +145,7 @@ class FeveredSuspicionTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.findExiledCard(card.getId())).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -161,7 +161,7 @@ class FeveredSuspicionTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     private void castFeveredSuspicion() {

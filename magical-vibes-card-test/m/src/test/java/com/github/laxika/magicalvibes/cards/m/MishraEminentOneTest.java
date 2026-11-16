@@ -9,12 +9,12 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,7 +50,7 @@ class MishraEminentOneTest extends BaseCardTest {
         assertThat(token.getCard().getPower()).isEqualTo(4);
         assertThat(token.getCard().getToughness()).isEqualTo(4);
         assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+        assertThat(DelayedPermanentMoves.waiting(gd))
                 .singleElement()
                 .satisfies(action -> {
                     assertThat(action.permanentId()).isEqualTo(token.getId());

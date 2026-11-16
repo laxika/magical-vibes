@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -43,11 +42,8 @@ public class AdditionalCombatPhaseEffectHandler implements NormalEffectHandlerBe
         }
         gameData.additionalCombatCreatedAfterUpkeepSteps = gameData.additionalUpkeepStepsAfterCombat > 0;
         if (e.additionalCombatBeginningEffect() != null) {
-            for (int i = 0; i < e.count(); i++) {
-                gameData.queueDelayedAction(new DelayedAdditionalCombatBeginningEffect(
-                        entry.getControllerId(), entry.getCard(), e.additionalCombatBeginningEffect(),
-                        entry.getSourcePermanentId()));
-            }
+            AdditionalCombatBeginningSupport.register(gameData, entry, e.additionalCombatBeginningEffect(),
+                    e.count(), 0);
         }
 
         String logEntry;

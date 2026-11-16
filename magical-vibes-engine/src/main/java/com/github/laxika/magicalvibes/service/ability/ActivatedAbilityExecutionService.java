@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.service.effect.normalfx.RegisterDrawCardsAtNextUpkeepEffectHandler;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
@@ -28,8 +29,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
 import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
 import com.github.laxika.magicalvibes.model.condition.ActivationCount;
 import com.github.laxika.magicalvibes.model.effect.ActivationCostCardReferenceEffect;
@@ -121,6 +120,7 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeSelfAtEndStepEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -1926,8 +1926,10 @@ public class ActivatedAbilityExecutionService {
                         damage);
             } else if (effect instanceof RegisterDrawCardsAtNextUpkeepEffect draw) {
                 // "Draw a card at the beginning of the next turn's upkeep." rider on a mana ability (Barbed Sextant).
-                gameData.queueDelayedAction(new DrawCardsAtNextUpkeep(playerId, draw.count(), permanent.getCard(),
-                        draw.upTo(), gameData.turnNumber, gameData.activePlayerId));
+                gameData.temporaryGlobalTriggeredAbilities.add(
+                        RegisterDrawCardsAtNextUpkeepEffectHandler.drawAtNextTurnsUpkeep(gameData.turnNumber,
+                                playerId, playerId, draw.count(), draw.upTo(), permanent.getCard(),
+                                permanent.getId()));
             } else if (effect instanceof RegisterDelayedControllerSpellCastTriggerEffect delayed) {
                 // "When you next cast an artifact spell this turn" on a mana ability (Solar Array): a delayed triggered
                 // ability the mana ability creates as it resolves (CR 603.7a), with the permanent as its source.
@@ -1995,9 +1997,9 @@ public class ActivatedAbilityExecutionService {
                 gameLogService.append(gameData, GameLog.cardThen(
                         permanent.getCard(), " will return to its owner's hand during its controller's next untap step."));
             } else if (effect instanceof SacrificeSelfAtEndStepEffect sacrifice) {
-                gameData.queueDelayedAction(new SacrificeSelfAtNextEndStepTrigger(
-                        permanent.getId(), playerId, permanent.getCard(),
-                        sacrifice.currentControllerSacrifices(), sacrifice.currentControllersEndStepOnly()));
+                gameData.temporaryGlobalTriggeredAbilities.add(
+                        SacrificeSelfAtEndStepEffectHandler.sacrificeAtNextEndStep(
+                                sacrifice, permanent.getId(), playerId, permanent.getCard(), permanent.getId()));
             } else if (effect instanceof SacrificeSelfEffect
                     && !gameQueryService.cantBeSacrificed(gameData, permanent)
                     && sacrificeAlone(gameData, permanent)) {

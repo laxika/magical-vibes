@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.a.AbbeyGargoyles;
 import com.github.laxika.magicalvibes.cards.a.AysenAbbey;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -63,17 +64,16 @@ class JinxTest extends BaseCardTest {
     void schedulesDrawAtNextUpkeep() {
         castJinxOnOpponentLand();
 
-        List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
+        List<TemporaryGlobalTriggeredAbility> scheduled = gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP);
         assertThat(scheduled).hasSize(1);
         assertThat(scheduled.getFirst().controllerId()).isEqualTo(player1.getId());
-        assertThat(scheduled.getFirst().count()).isEqualTo(1);
 
         int handAfterResolution = gd.playerHands.get(player1.getId()).size();
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handAfterResolution + 1);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -114,7 +114,7 @@ class JinxTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Jinx");
         advanceToUpkeep(player2);
@@ -129,13 +129,13 @@ class JinxTest extends BaseCardTest {
         castJinxOnOpponentLand();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
 
         advanceToUpkeep(player2);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.passBothPriorities();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     /** Casts Jinx on the opponent's land and chooses Island. */

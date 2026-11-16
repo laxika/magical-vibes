@@ -7,9 +7,10 @@ import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -39,8 +40,8 @@ class RockBasiliskTest extends BaseCardTest {
                         && se.getTargetId().equals(avatar.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> a.affectedPermanentId().equals(avatar.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> a.watchedPermanentId().equals(avatar.getId()));
     }
 
     @Test
@@ -74,7 +75,7 @@ class RockBasiliskTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
-        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).isEmpty();
     }
 
     @Test
@@ -113,9 +114,9 @@ class RockBasiliskTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> a.affectedPermanentId().equals(firstAvatar.getId()))
-                .anyMatch(a -> a.affectedPermanentId().equals(secondAvatar.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> a.watchedPermanentId().equals(firstAvatar.getId()))
+                .anyMatch(a -> a.watchedPermanentId().equals(secondAvatar.getId()));
     }
 
     @Test
@@ -158,8 +159,8 @@ class RockBasiliskTest extends BaseCardTest {
                         && se.getTargetId().equals(attacker.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> a.affectedPermanentId().equals(attacker.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> a.watchedPermanentId().equals(attacker.getId()));
     }
 
     @Test
@@ -204,8 +205,8 @@ class RockBasiliskTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .extracting(TemporaryGlobalTriggeredAbility::watchedPermanentId)
                 .containsExactly(avatar.getId());
     }
 

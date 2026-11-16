@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.action.CyclopeanTombUpkeepCleanup;
 import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
 import com.github.laxika.magicalvibes.model.rules.RulesEventLog;
@@ -9,16 +8,7 @@ import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.action.DelayedAction;
 import com.github.laxika.magicalvibes.model.action.DelayedCamouflage;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerDamageMultiplication;
-import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
-import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
-import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
-import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamage;
-import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamageByAttackingCreature;
-import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
-import com.github.laxika.magicalvibes.model.action.DestroyChosenCreaturesIfDidNotAttackAtEndStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
-import com.github.laxika.magicalvibes.model.action.DelayedStillExiledCardsEndStepTrigger;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -39,11 +29,13 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEf
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllMireCountersFromChosenLandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import java.time.LocalDateTime;
 import java.util.ArrayDeque;
@@ -68,6 +60,11 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 public class GameData {
 
@@ -747,20 +744,6 @@ public class GameData {
     public final Map<UUID, Long> exileEntryVersions = new ConcurrentHashMap<>();
     /** Number of times each card has entered a hand through {@link #addCardToHand}. A card that returns to hand is a new object (CR 400.7), so a delayed effect that refers to an earlier hand entry checks this version. */
     public final Map<UUID, Long> handEntryVersions = new ConcurrentHashMap<>();
-    /**
-     * Exile-entry version of the card at the moment a {@link PendingExileReturn} was queued, keyed by the
-     * queued instance. A delayed return applies only to the exile object it was scheduled for (CR 400.7),
-     * so a later re-exile of the same card id must not satisfy it.
-     */
-    public final Map<PendingExileReturn, Long> pendingExileReturnExileVersions =
-            Collections.synchronizedMap(new IdentityHashMap<>());
-    /**
-     * Earliest turn number on which a queued {@link PendingExileReturn} may fire, keyed by the queued
-     * instance. Used by returns worded "on your next turn", which must not fire during an extra
-     * step of the turn on which they were created.
-     */
-    public final Map<PendingExileReturn, Integer> pendingExileReturnEarliestTurns =
-            Collections.synchronizedMap(new IdentityHashMap<>());
     /** Affected permanent mapped to the player whose next turn ends the attack restriction. */
     public final Map<UUID, Set<UUID>> permanentsCantAttackUntilNextTurn = new ConcurrentHashMap<>();
     private long graveyardEntryVersion;
@@ -1232,6 +1215,12 @@ public class GameData {
     /** Whether held hand puts have already left the hand, to be returned to it just before they enter. */
     public boolean heldHandBattlefieldPutsLeaveHand;
     public final List<BattlefieldEntryCard> heldHandBattlefieldPuts = new ArrayList<>();
+    /**
+     * The spell or ability whose effects are resolving now, innermost first while one resolution runs inside another;
+     * {@code null} between resolutions. A delayed triggered ability made while it resolves, by code that isn't
+     * handed its stack entry, takes it as its source and controller (CR 603.7d).
+     */
+    public StackEntry resolvingEntry;
     public StackEntry pendingEffectResolutionEntry;
     public int pendingEffectResolutionIndex;
     /**
@@ -1610,6 +1599,15 @@ public class GameData {
      */
     public final Deque<Boolean> extraTurnDamageCantBePrevented = new ArrayDeque<>();
     public final Deque<Long> extraTurnSequences = new ArrayDeque<>();
+
+    /**
+     * Ends the delayed triggered abilities that wait for the end step of the extra turn {@code sequence} ("at the
+     * beginning of that turn's end step"): the turn was skipped or ended without its end step, so the event they
+     * wait for never happens and they can't trigger in another turn (CR 603.7).
+     */
+    public void endDelayedAbilitiesOfExtraTurn(long sequence) {
+        temporaryGlobalTriggeredAbilities.removeIf(delayed -> delayed.referents().extraTurnSequence() == sequence);
+    }
 
     public long queueExtraTurnFirst(UUID playerId, boolean skipsUntap) {
         return queueExtraTurnFirst(playerId, skipsUntap, false);
@@ -2664,12 +2662,6 @@ public class GameData {
 
     /** Pending one-shot grants that make the next instant or sorcery cast this turn uncounterable. */
     public final Map<UUID, Integer> pendingNextInstantSorceryUncounterableThisTurnCount = new ConcurrentHashMap<>();
-
-    /** "Whenever a creature enters this turn, you may draw a card" delayed triggers (Beck). */
-    public final Map<UUID, List<Card>> creatureEntersDrawSourcesThisTurn = new ConcurrentHashMap<>();
-
-    /** "At the beginning of each combat this turn, untap all creatures that attacked this turn" delayed triggers. */
-    public final Map<UUID, List<Card>> untapAttackedCreaturesEachCombatThisTurnSources = new ConcurrentHashMap<>();
 
     /**
      * Paradigm (CR 702.192): delayed triggers that fire at the beginning of each of the
@@ -4209,9 +4201,13 @@ public class GameData {
     // Oracle en-Vec — "the chosen creatures attack if able, and other creatures can't attack"
     /** Delayed: affectedPlayerId -> the creature IDs that player chose, consumed when their turn begins. */
     public final Map<UUID, Set<UUID>> chosenAttackersNextTurn = new ConcurrentHashMap<>();
-    public final Map<UUID, List<DestroyChosenCreaturesIfDidNotAttackAtEndStep>> chosenAttackersToDestroyNextTurn =
-            new ConcurrentHashMap<>();
 
+    /**
+     * Records that {@code playerId} chose {@code chosen} to attack during their next turn (Oracle en-Vec) and makes
+     * the delayed triggered ability "at the beginning of that turn's end step, destroy each of the chosen creatures
+     * that didn't attack this turn" (CR 603.7a) for the ability of {@code sourceCard} controlled by
+     * {@code controllerId}: it waits for the end step of {@code playerId}'s next turn.
+     */
     public void restrictAttackersNextTurn(UUID playerId, Set<UUID> chosen, UUID controllerId, Card sourceCard) {
         chosenAttackersNextTurn.merge(playerId, Set.copyOf(chosen), (previous, current) -> {
             Set<UUID> allowed = new java.util.HashSet<>(previous);
@@ -4219,10 +4215,16 @@ public class GameData {
             return Set.copyOf(allowed);
         });
         if (!chosen.isEmpty()) {
-            chosenAttackersToDestroyNextTurn.computeIfAbsent(playerId, ignored -> new ArrayList<>())
-                    .add(new DestroyChosenCreaturesIfDidNotAttackAtEndStep(List.copyOf(chosen), controllerId, sourceCard));
+            List<UUID> chosenIds = List.copyOf(chosen);
+            temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(controllerId, sourceCard,
+                    new TriggeredAbility(Triggers.endStep(ActivePlayer.CHOSEN_PLAYER),
+                            new DestroyEachTargetPermanentEffect(new PermanentNotPredicate(
+                                    new PermanentAttackedThisTurnPredicate()))),
+                    null, chosenIds.getFirst(), playerId,
+                    DelayedReferents.permanents(chosenIds).afterTurn(turnNumber)));
         }
     }
+
     /** Active this turn: affectedPlayerId -> the only creatures allowed to attack (all others can't). */
     public final Map<UUID, Set<UUID>> chosenAttackersThisTurn = new ConcurrentHashMap<>();
 
@@ -4551,7 +4553,7 @@ public class GameData {
                     "subgameCards", "suspendedZoneTriggers", "turnStartSnapshot", "gameLog", "playersWhoLostGameThisMatch", "matchCreatureTypeErrata", "timestampCounter",
                     "nextExtraTurnSequence", "graveyardEntryVersion",
                     "domainActionSequence", "domainEventSequence", "domainStateVersion",
-                    "currentlyResolvingControllerId", "pendingEffectResolutionEntry",
+                    "currentlyResolvingControllerId", "pendingEffectResolutionEntry", "resolvingEntry",
                     "pendingEffectResolutionIndex", "resolutionOrdinal", "parkedOuterResolutions",
                     "resolvingMayEffectFromStack",
                     "resolvedMayAccepted", "resolvedMayTargetingEntry",
@@ -4654,6 +4656,17 @@ public class GameData {
      */
     public synchronized void markGraveyardExit(UUID cardId) {
         graveyardEntryVersions.put(cardId, ++graveyardEntryVersion);
+    }
+
+    /**
+     * The exile entry versions of the cards {@code cardIds} as they are now, in their order (0 for one never exiled):
+     * what a delayed ability about "those cards" remembers, so a card that left exile and was exiled again is a new
+     * object it no longer refers to (CR 400.7).
+     */
+    public java.util.Map<UUID, Long> exileEntryVersionsOf(java.util.Collection<UUID> cardIds) {
+        java.util.Map<UUID, Long> versions = new java.util.LinkedHashMap<>();
+        cardIds.forEach(cardId -> versions.put(cardId, exileEntryVersions.getOrDefault(cardId, 0L)));
+        return versions;
     }
 
     /** Returns the identity of the card's latest graveyard entry, or zero if it is untracked. */
@@ -5135,9 +5148,6 @@ public class GameData {
             case GAME_NEXT_INSTANT_SORCERY_UNCOUNTERABLE ->
                     new HashMap<>(pendingNextInstantSorceryUncounterableThisTurnCount);
             case GAME_ANY_MANA_TYPE_FOR_NEXT_SPELL -> new HashMap<>(pendingAnyManaTypeForNextSpellThisTurnCount);
-            case GAME_CREATURE_ENTERS_DRAW_SOURCES -> synchronizedListMapEntries(creatureEntersDrawSourcesThisTurn);
-            case GAME_UNTAP_ATTACKED_CREATURES_EACH_COMBAT_SOURCES ->
-                    synchronizedListMapEntries(untapAttackedCreaturesEachCombatThisTurnSources);
             case GAME_EXILE_CAST_PERMISSIONS -> new ArrayList<>(exileCastPermissionsUntilEndOfTurn);
             case GAME_EXILE_CAST_WILDCARD_PERMISSIONS -> new ArrayList<>(exileCastWildcardPermissionsUntilEndOfTurn);
             case GAME_FORETOLD_CARD_CAST_PERMISSIONS -> new ArrayList<>(foretoldCardCastPermissionsThisTurn);
@@ -5461,10 +5471,6 @@ public class GameData {
                     addCounts(pendingNextInstantSorceryUncounterableThisTurnCount, (Map<UUID, Integer>) value);
             case GAME_ANY_MANA_TYPE_FOR_NEXT_SPELL ->
                     addCounts(pendingAnyManaTypeForNextSpellThisTurnCount, (Map<UUID, Integer>) value);
-            case GAME_CREATURE_ENTERS_DRAW_SOURCES -> addSynchronizedListMapEntries(
-                    creatureEntersDrawSourcesThisTurn, (List<Map.Entry<UUID, Card>>) value);
-            case GAME_UNTAP_ATTACKED_CREATURES_EACH_COMBAT_SOURCES -> addSynchronizedListMapEntries(
-                    untapAttackedCreaturesEachCombatThisTurnSources, (List<Map.Entry<UUID, Card>>) value);
             case GAME_EXILE_CAST_PERMISSIONS ->
                     exileCastPermissionsUntilEndOfTurn.addAll((List<ExileCastPermission>) value);
             case GAME_EXILE_CAST_WILDCARD_PERMISSIONS ->
@@ -6427,10 +6433,6 @@ public class GameData {
      * Appends a scheduled {@link DelayedAction} to the tail of the unified delayed-action queue.
      */
     public void queueDelayedAction(DelayedAction action) {
-        if (action instanceof PendingExileReturn pending && findExiledCard(pending.card().getId()) != null) {
-            pendingExileReturnExileVersions.put(pending,
-                    exileEntryVersions.getOrDefault(pending.card().getId(), -1L));
-        }
         if (action.schedulingResolution() == 0) {
             action = action.scheduledBy(resolutionOrdinal);
         }
@@ -6439,13 +6441,27 @@ public class GameData {
 
     /** Marks a land as already cleaned by the corresponding Cyclopean Tomb delayed trigger. */
     public void markCyclopeanTombLandRemoved(UUID actionId, UUID landId) {
-        synchronized (delayedActions) {
-            for (int i = 0; i < delayedActions.size(); i++) {
-                DelayedAction action = delayedActions.get(i);
-                if (action instanceof CyclopeanTombUpkeepCleanup cleanup
-                        && cleanup.actionId().equals(actionId)) {
-                    delayedActions.set(i, cleanup.withLandRemoved(landId));
-                    return;
+        changeCyclopeanTombCleanups(delayed -> true, effect -> actionId.equals(effect.delayedActionId()),
+                effect -> effect.withLandRemoved(landId));
+    }
+
+    /** Tracks lands a mire counter was put onto with the Tomb {@code tombPermanentId} after it left the battlefield. */
+    public void trackCyclopeanTombLands(UUID tombPermanentId, java.util.Collection<UUID> landIds) {
+        changeCyclopeanTombCleanups(delayed -> tombPermanentId.equals(delayed.sourcePermanentId()),
+                effect -> true, effect -> effect.withLandsTracked(Set.copyOf(landIds)));
+    }
+
+    private void changeCyclopeanTombCleanups(
+            Predicate<TemporaryGlobalTriggeredAbility> which,
+            Predicate<RemoveAllMireCountersFromChosenLandEffect> ofEffect,
+            java.util.function.UnaryOperator<RemoveAllMireCountersFromChosenLandEffect> change) {
+        synchronized (temporaryGlobalTriggeredAbilities) {
+            for (int i = 0; i < temporaryGlobalTriggeredAbilities.size(); i++) {
+                TemporaryGlobalTriggeredAbility delayed = temporaryGlobalTriggeredAbilities.get(i);
+                if (delayed.ability().effects().getFirst().effect() instanceof RemoveAllMireCountersFromChosenLandEffect
+                        cleanup && which.test(delayed) && ofEffect.test(cleanup)) {
+                    temporaryGlobalTriggeredAbilities.set(i, delayed.withAbility(
+                            change.apply(cleanup).atEachOfYourUpkeeps()));
                 }
             }
         }
@@ -6470,6 +6486,17 @@ public class GameData {
             if (type.isInstance(action) && filter.test(type.cast(action))) return true;
         }
         return false;
+    }
+
+    /**
+     * The delayed triggered abilities waiting for the beginning of the step or phase {@code moment} ("at the beginning
+     * of the next end step"), in the order they were made.
+     */
+    public List<TemporaryGlobalTriggeredAbility> delayedStepAbilities(StepTrigger.Moment moment) {
+        return synchronizedCopy(temporaryGlobalTriggeredAbilities).stream()
+                .filter(delayed -> delayed.ability().conditions().stream().anyMatch(condition ->
+                        condition.trigger() instanceof StepTrigger step && step.moment() == moment))
+                .toList();
     }
 
     /**
@@ -6554,20 +6581,12 @@ public class GameData {
 
     /**
      * Whether {@code action} is a "this turn" delayed trigger or effect that the cleanup step ends (CR 514.2):
-     * a watched-creature combat damage trigger registered until end of turn (Tamiyo, Field Researcher's form or a
-     * chosen-name one), the watched-creature damage / attack / dealt-damage triggers, Camouflage's blocking
-     * replacement, and a controller damage multiplier. Under Runed Terror's
+     * Camouflage's blocking replacement and a controller damage multiplier. Under Runed Terror's
      * sequential phases these are split between the players active when they were registered.
      */
     public static boolean isThisTurnDelayedAction(DelayedAction action) {
         return switch (action) {
-            case DelayedWatchedCreaturesCombatDamage watch -> watch.untilEndOfTurn();
-            case DelayedNamedCreatureCombatDamage watch -> watch.untilEndOfTurn();
             case DelayedCamouflage ignored -> true;
-            case DelayedWatchedCreatureDealsDamage ignored -> true;
-            case DelayedWatchedCreatureAttack ignored -> true;
-            case DelayedWatchedCreatureDealtDamageByAttackingCreature ignored -> true;
-            case DelayedWatchedCreatureDealtDamage ignored -> true;
             case DelayedControllerDamageMultiplication ignored -> true;
             default -> false;
         };
@@ -6579,48 +6598,6 @@ public class GameData {
      */
     public <T extends DelayedAction> void clearDelayedActions(Class<T> type, Predicate<T> filter) {
         delayedActions.removeIf(action -> type.isInstance(action) && filter.test(type.cast(action)));
-    }
-
-    /**
-     * Accumulates {@code delta} pending +1/+1 counters for {@code permanentId} at the next end step,
-     * preserving the legacy keyed-map semantics (at most one {@link DelayedPlusOneCounters} per
-     * permanent, holding the running total).
-     */
-    public void addDelayedPlusOneCounters(UUID permanentId, int delta) {
-        addDelayedPlusOneCounters(permanentId, null, delta);
-    }
-
-    /** As {@link #addDelayedPlusOneCounters(UUID, int)}, with the controller of the delayed trigger fixed. */
-    public void addDelayedPlusOneCounters(UUID permanentId, UUID controllerId, int delta) {
-        int total = delta;
-        var it = delayedActions.iterator();
-        while (it.hasNext()) {
-            DelayedAction action = it.next();
-            if (action instanceof DelayedPlusOneCounters existing && existing.permanentId().equals(permanentId)
-                    && java.util.Objects.equals(existing.controllerId(), controllerId)) {
-                total += existing.totalCounters();
-                it.remove();
-            }
-        }
-        delayedActions.add(new DelayedPlusOneCounters(permanentId, total, controllerId));
-    }
-
-    /**
-     * Accumulates {@code delta} pending +0/+1 counters for {@code permanentId} at the next end step
-     * (Sacred Boon), preserving keyed-map semantics (at most one {@link DelayedPlusZeroPlusOneCounters}
-     * per permanent, holding the running total).
-     */
-    public void addDelayedPlusZeroPlusOneCounters(UUID permanentId, int delta) {
-        int total = delta;
-        var it = delayedActions.iterator();
-        while (it.hasNext()) {
-            DelayedAction action = it.next();
-            if (action instanceof DelayedPlusZeroPlusOneCounters existing && existing.permanentId().equals(permanentId)) {
-                total += existing.totalCounters();
-                it.remove();
-            }
-        }
-        delayedActions.add(new DelayedPlusZeroPlusOneCounters(permanentId, total));
     }
 
     /**
@@ -6639,10 +6616,16 @@ public class GameData {
         delayedActions.add(entry);
     }
 
-    public void registerSacredBoonShield(UUID permanentId, UUID controllerId, Card sourceCard,
-                                         int amount) {
-        delayedActions.add(new DelayedPlusZeroPlusOneCounters(
-                permanentId, 0, controllerId, sourceCard, UUID.randomUUID(), amount));
+    /**
+     * Starts the prevention shield of a Sacred Boon on {@code permanentId}: it prevents the next {@code amount} damage
+     * and counts what it prevents, which the delayed triggered ability that puts the counters reads as it resolves.
+     *
+     * @return the id the shield is read by
+     */
+    public UUID registerSacredBoonShield(UUID permanentId, int amount) {
+        UUID shieldId = UUID.randomUUID();
+        delayedActions.add(new DelayedPlusZeroPlusOneCounters(permanentId, 0, shieldId, amount));
+        return shieldId;
     }
 
     public int consumeSacredBoonShields(UUID permanentId, int damage) {
@@ -6660,8 +6643,7 @@ public class GameData {
             remainingDamage -= prevented;
             it.remove();
             replacements.add(new DelayedPlusZeroPlusOneCounters(
-                    shield.permanentId(), shield.totalCounters() + prevented,
-                    shield.controllerId(), shield.sourceCard(), shield.shieldId(),
+                    shield.permanentId(), shield.totalCounters() + prevented, shield.shieldId(),
                     shield.remainingShield() - prevented, shield.triggered()));
         }
         delayedActions.addAll(replacements);
@@ -6670,7 +6652,7 @@ public class GameData {
 
     /**
      * Ends every Sacred Boon prevention remainder at cleanup. The prevention lapses with "this turn",
-     * but the +0/+1 counters already owed for damage prevented stay queued for the next end step.
+     * but the +0/+1 counters already owed for damage prevented stay recorded for the delayed ability that puts them.
      */
     public void endSacredBoonShieldsAtCleanup() {
         List<DelayedPlusZeroPlusOneCounters> replacements = new ArrayList<>();
@@ -6682,24 +6664,10 @@ public class GameData {
             } else if (action instanceof DelayedPlusZeroPlusOneCounters shield && shield.remainingShield() > 0) {
                 it.remove();
                 replacements.add(new DelayedPlusZeroPlusOneCounters(
-                        shield.permanentId(), shield.totalCounters(), shield.controllerId(),
-                        shield.sourceCard(), shield.shieldId(), 0, false));
+                        shield.permanentId(), shield.totalCounters(), shield.shieldId(), 0, false));
             }
         }
         delayedActions.addAll(replacements);
-    }
-
-    /**
-     * Returns the pending +1/+1 counter total scheduled for {@code permanentId} (0 if none).
-     */
-    public int getDelayedPlusOneCounters(UUID permanentId) {
-        int total = 0;
-        for (DelayedAction action : delayedActions) {
-            if (action instanceof DelayedPlusOneCounters existing && existing.permanentId().equals(permanentId)) {
-                total += existing.totalCounters();
-            }
-        }
-        return total;
     }
 
     /**
@@ -9006,10 +8974,6 @@ public class GameData {
             // A card that leaves exile is a new object (CR 400.7): delay-counter tracking from its
             // earlier exile no longer applies, even if it is exiled again later.
             delayedSpellExiles.removeIf(pending -> pending.cardId().equals(cardId));
-            delayedActions.replaceAll(action -> action instanceof DelayedStillExiledCardsEndStepTrigger still
-                    && still.cardIds().contains(cardId) ? still.withoutCard(cardId) : action);
-            delayedActions.removeIf(action -> action instanceof com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextEndStep back
-                    && back.cardId().equals(cardId));
             exiledVoyageCounters.remove(cardId);
             exiledVoyageControllerIds.remove(cardId);
             hauntingCardToPermanentId.remove(cardId);
@@ -9432,8 +9396,6 @@ public class GameData {
         source.combatDamageDealtToCreatures.forEach((key, value) -> copy.combatDamageDealtToCreatures.put(permanentCopy.apply(key), new ArrayList<>(value)));
         copy.combatDamageToBlockingCreatureSources.addAll(source.combatDamageToBlockingCreatureSources);
         source.combatDamageDealerControllers.forEach((key, value) -> copy.combatDamageDealerControllers.put(permanentCopy.apply(key), value));
-        source.delayedCombatDamageDrawQualifications.forEach(value -> copy.delayedCombatDamageDrawQualifications.add(new CombatDamageState.DelayedCombatDamageDrawQualification(value.delayedAction(), Set.copyOf(value.sourceIds()))));
-        copy.delayedCombatDamageLookAtHandAndDrawQualifications.addAll(source.delayedCombatDamageLookAtHandAndDrawQualifications);
         source.combatDamageAmountsToCreatures.forEach((key, value) -> copy.combatDamageAmountsToCreatures.put(permanentCopy.apply(key), new HashMap<>(value)));
         source.combatDamageTargetControllers.forEach((key, value) -> copy.combatDamageTargetControllers.put(key, value));
         source.pendingDralnuReplacementTargets.forEach((key, value) -> copy.pendingDralnuReplacementTargets.put(key, permanentCopy.apply(value)));
@@ -9545,6 +9507,9 @@ public class GameData {
         copy.combatDamageRedirectPlayer = this.combatDamageRedirectPlayer;
         copy.pendingEffectResolutionEntry = this.pendingEffectResolutionEntry != null
                 ? new StackEntry(this.pendingEffectResolutionEntry) : null;
+        copy.resolvingEntry = this.resolvingEntry == null ? null
+                : this.resolvingEntry == this.pendingEffectResolutionEntry ? copy.pendingEffectResolutionEntry
+                : new StackEntry(this.resolvingEntry);
         copy.pendingEffectResolutionIndex = this.pendingEffectResolutionIndex;
         copy.resolutionOrdinal = this.resolutionOrdinal;
         copy.handCardChoiceDeclineEntry = this.handCardChoiceDeclineEntry != null
@@ -9834,8 +9799,6 @@ public class GameData {
         copy.graveyardEntryVersions.putAll(this.graveyardEntryVersions);
         copy.exileEntryVersions.putAll(this.exileEntryVersions);
         copy.handEntryVersions.putAll(this.handEntryVersions);
-        copy.pendingExileReturnExileVersions.putAll(this.pendingExileReturnExileVersions);
-        copy.pendingExileReturnEarliestTurns.putAll(this.pendingExileReturnEarliestTurns);
         this.permanentsCantAttackUntilNextTurn.forEach((permanentId, controllers) ->
                 copy.permanentsCantAttackUntilNextTurn.put(permanentId, new java.util.HashSet<>(controllers)));
         copy.combatDamageFirstStrikeStepComplete = this.combatDamageFirstStrikeStepComplete;
@@ -11159,10 +11122,6 @@ public class GameData {
         copy.spellsPaidUsingPendingAnyManaTypeThisTurn.addAll(this.spellsPaidUsingPendingAnyManaTypeThisTurn);
         copy.pendingNextInstantSorceryUncounterableThisTurnCount.putAll(
                 this.pendingNextInstantSorceryUncounterableThisTurnCount);
-        this.creatureEntersDrawSourcesThisTurn.forEach((playerId, cards) ->
-                copy.creatureEntersDrawSourcesThisTurn.put(playerId, new ArrayList<>(cards)));
-        this.untapAttackedCreaturesEachCombatThisTurnSources.forEach((playerId, cards) ->
-                copy.untapAttackedCreaturesEachCombatThisTurnSources.put(playerId, new ArrayList<>(cards)));
 
         copy.libraryTopCardFreePlayPermissionsUntilEndOfTurn.putAll(this.libraryTopCardFreePlayPermissionsUntilEndOfTurn);
         copy.libraryTopCardPermissionsUntilEndOfTurn.addAll(this.libraryTopCardPermissionsUntilEndOfTurn);
@@ -11270,8 +11229,6 @@ public class GameData {
         copy.tauntedThisTurn.putAll(this.tauntedThisTurn);
         copy.creatureMustAttackPermanentNextTurn.putAll(this.creatureMustAttackPermanentNextTurn);
         this.chosenAttackersNextTurn.forEach((playerId, ids) -> copy.chosenAttackersNextTurn.put(playerId, Set.copyOf(ids)));
-        this.chosenAttackersToDestroyNextTurn.forEach((playerId, ids) ->
-                copy.chosenAttackersToDestroyNextTurn.put(playerId, new ArrayList<>(ids)));
         this.chosenAttackersThisTurn.forEach((playerId, ids) -> copy.chosenAttackersThisTurn.put(playerId, Set.copyOf(ids)));
         this.attackableCreaturesThisTurn.forEach((playerId, ids) -> copy.attackableCreaturesThisTurn.put(playerId, Set.copyOf(ids)));
         this.creaturesAbleToAttackAtDeclareAttackersThisTurn.forEach((playerId, ids) ->

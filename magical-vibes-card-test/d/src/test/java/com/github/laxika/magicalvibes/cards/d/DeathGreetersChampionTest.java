@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -73,8 +73,8 @@ class DeathGreetersChampionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(champion.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.getDelayedActions(DelayedEndStepTrigger.class))
-                .anyMatch(action -> action.affectedPermanentId().equals(champion.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP))
+                .anyMatch(action -> action.watchedPermanentId().equals(champion.getId()));
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -110,8 +110,8 @@ class DeathGreetersChampionTest extends BaseCardTest {
         Permanent champion = findPermanent(player1, "Death-Greeter's Champion");
         harness.handlePermanentChosen(player1, champion.getId());
 
-        assertThat(gd.getDelayedActions(DelayedEndStepTrigger.class))
-                .anyMatch(action -> action.affectedPermanentId().equals(champion.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP))
+                .anyMatch(action -> action.watchedPermanentId().equals(champion.getId()));
     }
 
     @Test

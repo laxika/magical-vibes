@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.w.WallOfAir;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -42,8 +42,8 @@ class CockatriceTest extends BaseCardTest {
                         && se.getTargetId().equals(spider.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> a.affectedPermanentId().equals(spider.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> a.watchedPermanentId().equals(spider.getId()));
     }
 
     @Test
@@ -82,7 +82,7 @@ class CockatriceTest extends BaseCardTest {
                         && se.getCard() instanceof Cockatrice);
 
         harness.passBothPriorities();
-        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).isEmpty();
     }
 
     @Test
@@ -101,8 +101,8 @@ class CockatriceTest extends BaseCardTest {
                         && se.getTargetId().equals(attacker.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> a.affectedPermanentId().equals(attacker.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> a.watchedPermanentId().equals(attacker.getId()));
     }
 
     @Test
@@ -125,9 +125,9 @@ class CockatriceTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> a.affectedPermanentId().equals(spider.getId()))
-                .noneMatch(a -> a.affectedPermanentId().equals(wall.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> a.watchedPermanentId().equals(spider.getId()))
+                .noneMatch(a -> a.watchedPermanentId().equals(wall.getId()));
     }
 
     @Test
@@ -172,8 +172,8 @@ class CockatriceTest extends BaseCardTest {
         assertThat(gqs.hasEffectiveSubtype(gd, spider, CardSubtype.WALL)).isTrue();
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> a.affectedPermanentId().equals(spider.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> a.watchedPermanentId().equals(spider.getId()));
     }
 
     @Test
@@ -194,8 +194,8 @@ class CockatriceTest extends BaseCardTest {
         // Nobody has anything to do once the trigger has resolved, so priority passes on to end of combat, where the
         // scheduled destruction is put onto the stack; either way it was not dropped when the blocker stopped being
         // a creature.
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class).stream()
-                .anyMatch(a -> a.affectedPermanentId().equals(spider.getId()))
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT).stream()
+                .anyMatch(a -> a.watchedPermanentId().equals(spider.getId()))
                 || gd.stack.stream().anyMatch(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && se.getCard() instanceof Cockatrice && spider.getId().equals(se.getTargetId()))).isTrue();
 

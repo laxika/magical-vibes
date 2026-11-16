@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -40,7 +40,7 @@ class UnnaturalSummonsTest extends BaseCardTest {
                 permanent.isManifested() && permanent.getCard().getId().equals(manifestedCard.getId()));
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(graveyardCard);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
     }
 
     @Test
@@ -114,7 +114,7 @@ class UnnaturalSummonsTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
         assertThat(gd.findExiledCard(spell.getId())).isNull();
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test

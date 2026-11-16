@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +15,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 
 @CardUsed({FinalFortune.class, Counterspell.class, PlatinumAngel.class, UginsNexus.class})
 class FinalFortuneTest extends BaseCardTest {
@@ -40,14 +41,13 @@ class FinalFortuneTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving queues an extra turn and registers a delayed 'lose the game'")
     void resolvingQueuesExtraTurnAndDelayedLoss() {
-        int turnBefore = gd.turnNumber;
         castFinalFortune();
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
-        List<LoseGameAtEndStep> pending = gd.getDelayedActions(LoseGameAtEndStep.class);
+        List<TemporaryGlobalTriggeredAbility> pending = gd.delayedStepAbilities(StepTrigger.Moment.END_STEP);
         assertThat(pending).hasSize(1);
-        assertThat(pending.getFirst().playerId()).isEqualTo(player1.getId());
-        assertThat(pending.getFirst().registeredTurnNumber()).isEqualTo(turnBefore);
+        assertThat(pending.getFirst().controllerId()).isEqualTo(player1.getId());
+        assertThat(pending.getFirst().referents().extraTurnSequence()).isNotNegative();
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 
@@ -91,7 +91,7 @@ class FinalFortuneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.extraTurns).isEmpty();
-        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(finalFortune.getId()));
     }
@@ -106,7 +106,7 @@ class FinalFortuneTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
-        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
     }
 
     @Test
@@ -127,7 +127,7 @@ class FinalFortuneTest extends BaseCardTest {
 
             assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
             assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("loses the game"));
-            assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
         });
     }
 
@@ -159,7 +159,7 @@ class FinalFortuneTest extends BaseCardTest {
 
             assertThat(gd.activePlayerId).isEqualTo(player2.getId());
             assertThat(gd.extraTurns).isEmpty();
-            assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
             assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
         });
     }
@@ -220,13 +220,13 @@ class FinalFortuneTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.extraTurns).containsExactly(player1.getId(), player1.getId());
-            assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(2);
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(2);
 
             advanceTurn();
             advanceToEndStep();
 
             assertThat(gd.stack).hasSize(1);
-            assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(1);
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
             harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
             assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
 
@@ -234,7 +234,7 @@ class FinalFortuneTest extends BaseCardTest {
             advanceToEndStep();
 
             assertThat(gd.stack).hasSize(1);
-            assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
             harness.passBothPriorities();
             assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
         });

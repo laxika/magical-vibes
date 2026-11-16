@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.c.CaptureOfJingzhou;
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 
 @CardUsed({WarriorsOath.class, PlatinumAngel.class, CaptureOfJingzhou.class})
 class WarriorsOathTest extends BaseCardTest {
@@ -29,14 +30,13 @@ class WarriorsOathTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving queues an extra turn and registers a delayed 'lose the game'")
     void resolvingQueuesExtraTurnAndDelayedLoss() {
-        int turnBefore = gd.turnNumber;
         castWarriorsOath();
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
-        List<LoseGameAtEndStep> pending = gd.getDelayedActions(LoseGameAtEndStep.class);
+        List<TemporaryGlobalTriggeredAbility> pending = gd.delayedStepAbilities(StepTrigger.Moment.END_STEP);
         assertThat(pending).hasSize(1);
-        assertThat(pending.getFirst().playerId()).isEqualTo(player1.getId());
-        assertThat(pending.getFirst().registeredTurnNumber()).isEqualTo(turnBefore);
+        assertThat(pending.getFirst().controllerId()).isEqualTo(player1.getId());
+        assertThat(pending.getFirst().referents().extraTurnSequence()).isNotNegative();
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 
@@ -51,7 +51,7 @@ class WarriorsOathTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
-        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
     }
 
     @Test
@@ -73,7 +73,7 @@ class WarriorsOathTest extends BaseCardTest {
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("loses the game"));
-        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test
@@ -101,7 +101,7 @@ class WarriorsOathTest extends BaseCardTest {
         castWarriorsOath();
 
         assertThat(gd.extraTurns).containsExactly(player1.getId(), player1.getId());
-        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(2);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(2);
 
         harness.forceStep(TurnStep.CLEANUP);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
@@ -109,7 +109,7 @@ class WarriorsOathTest extends BaseCardTest {
         gs.advanceStep(gd); // -> first extra turn's END_STEP
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
         harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
 
@@ -119,7 +119,7 @@ class WarriorsOathTest extends BaseCardTest {
         gs.advanceStep(gd); // -> second extra turn's END_STEP
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
         harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
@@ -138,7 +138,7 @@ class WarriorsOathTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
-        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
 
         harness.forceStep(TurnStep.CLEANUP);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);

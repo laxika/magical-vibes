@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.t.Tremor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedLoseLifeAndReturnFromGraveyard;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 
 @CardUsed({BroodOfCockroaches.class, Tremor.class, Necromancy.class, FuneralCharm.class})
 class BroodOfCockroachesTest extends BaseCardTest {
@@ -38,7 +38,7 @@ class BroodOfCockroachesTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Brood of Cockroaches");
-        assertThat(gd.getDelayedActions(DelayedLoseLifeAndReturnFromGraveyard.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(broodId));
@@ -64,7 +64,7 @@ class BroodOfCockroachesTest extends BaseCardTest {
                 .anyMatch(c -> c.getId().equals(broodId));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(broodId));
-        assertThat(gd.getDelayedActions(DelayedLoseLifeAndReturnFromGraveyard.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test
@@ -89,7 +89,7 @@ class BroodOfCockroachesTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .filteredOn(c -> c.getId().equals(broodId))
                 .hasSize(1);
-        assertThat(gd.getDelayedActions(DelayedLoseLifeAndReturnFromGraveyard.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test
@@ -109,7 +109,7 @@ class BroodOfCockroachesTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Brood of Cockroaches");
         harness.assertNotInGraveyard(player2, "Brood of Cockroaches");
-        assertThat(gd.getDelayedActions(DelayedLoseLifeAndReturnFromGraveyard.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
     }
 

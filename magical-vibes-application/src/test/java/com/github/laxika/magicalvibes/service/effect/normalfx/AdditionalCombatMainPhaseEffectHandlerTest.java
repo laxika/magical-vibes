@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
@@ -215,6 +215,28 @@ class AdditionalCombatMainPhaseEffectHandlerTest {
             }
 
             @Test
+            @DisplayName("The combat added last comes first (CR 500.8)")
+            void laterAddedCombatComesBeforeEarlierOne() {
+                Card card = createCard("World at War", CardType.SORCERY);
+                UntapPermanentsEffect first = new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES);
+                UntapPermanentsEffect second = new UntapPermanentsEffect(TapUntapScope.CONTROLLED);
+                AdditionalCombatMainPhaseEffect firstEffect = new AdditionalCombatMainPhaseEffect(1, first);
+                AdditionalCombatMainPhaseEffect secondEffect = new AdditionalCombatMainPhaseEffect(1, second);
+
+                additionalCombatMainPhaseEffectHandler.resolve(gd,
+                        createUntargetedEntry(card, player1Id, List.of(firstEffect)), firstEffect);
+                additionalCombatMainPhaseEffectHandler.resolve(gd,
+                        createUntargetedEntry(card, player1Id, List.of(secondEffect)), secondEffect);
+
+                assertThat(gd.delayedStepAbilities(StepTrigger.Moment.BEGINNING_OF_COMBAT))
+                        .extracting(delayed -> delayed.ability().effects().getFirst().effect(),
+                                delayed -> delayed.referents().combatPhase())
+                        .containsExactlyInAnyOrder(
+                                org.assertj.core.groups.Tuple.tuple(first, 2),
+                                org.assertj.core.groups.Tuple.tuple(second, 1));
+            }
+
+            @Test
             void queuesBeginningEffectForEachAdditionalCombat() {
                 Card card = createCard("World at War", CardType.SORCERY);
                 UntapPermanentsEffect beginningEffect = new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES);
@@ -223,7 +245,10 @@ class AdditionalCombatMainPhaseEffectHandlerTest {
 
                 additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.getDelayedActions(DelayedAdditionalCombatBeginningEffect.class)).hasSize(2)
-                        .allMatch(delayed -> delayed.effect().equals(beginningEffect));
+                assertThat(gd.delayedStepAbilities(StepTrigger.Moment.BEGINNING_OF_COMBAT)).hasSize(2)
+                        .extracting(delayed -> delayed.referents().combatPhase())
+                        .containsExactly(1, 2);
+                assertThat(gd.delayedStepAbilities(StepTrigger.Moment.BEGINNING_OF_COMBAT))
+                        .allMatch(delayed -> delayed.ability().effects().getFirst().effect().equals(beginningEffect));
             }
 }

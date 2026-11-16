@@ -33,11 +33,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StagedHandExile;
 import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
-import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -59,8 +59,10 @@ import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfComma
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -69,6 +71,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -86,6 +89,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSup
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnExiledCardToHandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -2396,10 +2400,11 @@ public class CardChoiceHandlerService {
                     }
                 }
                 if (revealedHandChoice.returnAtNextEndStep()) {
-                    gameData.queueDelayedAction(new ReturnExiledCardToHandAtNextEndStep(
-                            exiled.getId(), targetPlayerId,
-                            gameData.pendingEffectResolutionEntry == null ? null
-                                    : gameData.pendingEffectResolutionEntry.getCard(), player.getId()));
+                    gameData.temporaryGlobalTriggeredAbilities.add(
+                            ReturnExiledCardToHandEffectHandler.returnAtNextEndStep(gameData, player.getId(),
+                                    gameData.pendingEffectResolutionEntry == null ? exiled
+                                            : gameData.pendingEffectResolutionEntry.getCard(),
+                                    null, List.of(exiled.getId()), targetPlayerId, 0, true));
                 }
             }
 
@@ -2552,13 +2557,15 @@ public class CardChoiceHandlerService {
         battlefieldEntryService.handleCreatureEnteredBattlefield(
                 gameData, player.getId(), chosenCard, null, false);
         if (choice.sacrificeAtEndStep()) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(
-                    permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                    false, null, null, player.getId()));
+            DelayedPermanentActions.scheduleForResolution(gameData, player.getId(), permanent,
+                    new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
+                    ActivePlayer.ANY);
         }
         if (choice.returnToHandAtEndStep()) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(
-                    permanent.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
+            DelayedPermanentActions.scheduleForResolution(gameData, player.getId(), permanent,
+                    new DelayedPermanentAction(permanent.getId(),
+                            DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP),
+                    ActivePlayer.ANY);
         }
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " puts ", chosenCard, " onto the battlefield under their control."));
@@ -3140,25 +3147,24 @@ public class CardChoiceHandlerService {
             if (returnExiledSourceCardId == null) {
                 Card sourceCard = gameData.pendingEffectResolutionEntry == null
                         ? card : gameData.pendingEffectResolutionEntry.getCard();
-                gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger(
-                        permanent.getId(), playerId, sourceCard));
+                gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                        Triggers.endStep(ActivePlayer.ANY), playerId, sourceCard, null, permanent.getId(),
+                        new SacrificeTriggeringPermanentEffect()));
             } else {
-                gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(),
-                        DelayedPermanentActionKind.SACRIFICE_AT_END_STEP, false, returnExiledSourceCardId,
-                        null, playerId));
+                DelayedPermanentActions.scheduleForResolution(gameData, playerId, permanent,
+                        new DelayedPermanentAction(permanent.getId(),
+                                DelayedPermanentActionKind.SACRIFICE_AT_END_STEP, false, returnExiledSourceCardId),
+                        ActivePlayer.ANY);
             }
         }
         if (returnToHandAtEndStep) {
             // The delayed return belongs to the ability or spell that put the card onto the
             // battlefield (Ilharg's attack trigger), not to the returned permanent.
             StackEntry creatingEntry = gameData.pendingEffectResolutionEntry;
-            gameData.queueDelayedAction(creatingEntry == null
-                    ? new DelayedPermanentAction(permanent.getId(),
-                            DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP)
-                    : new DelayedPermanentAction(permanent.getId(),
-                            DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP, false, null, null, null,
-                            false, creatingEntry.getCard(), creatingEntry.getControllerId(),
-                            creatingEntry.getSourcePermanentId()));
+            DelayedPermanentActions.scheduleForResolution(gameData, playerId, permanent,
+                    new DelayedPermanentAction(permanent.getId(),
+                            DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP),
+                    ActivePlayer.ANY);
         }
 
         // Flash: "sacrifice it unless you pay its mana cost reduced by {N}." Prompt a pay-or-sacrifice

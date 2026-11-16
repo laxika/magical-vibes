@@ -6,10 +6,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCombatDamageDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "48")
 @CardRegistration(set = "ECL", collectorNumber = "304")
@@ -23,7 +26,9 @@ public class FlitterwingNuisance extends Card {
                 "{2}{U}",
                 List.of(
                         new RemoveCounterFromSourceCost(),
-                        new RegisterDelayedCombatDamageDrawEffect()
+                        new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
+                                Triggers.creatureYouControlDealsCombatDamageToPlayerOrPlaneswalker(),
+                                new DrawCardEffect(1)))
                 ),
                 "{2}{U}, Remove a counter from this creature: Whenever a creature you control deals combat damage to a player or planeswalker this turn, draw a card."
         ));

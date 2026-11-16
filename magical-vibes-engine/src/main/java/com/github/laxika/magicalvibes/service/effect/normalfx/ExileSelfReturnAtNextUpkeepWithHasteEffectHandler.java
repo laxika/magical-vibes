@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfReturnAtNextUpkeepWithHasteEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PendingExileReturns;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,7 +61,7 @@ public class ExileSelfReturnAtNextUpkeepWithHasteEffectHandler implements Normal
 
         // The return is timed by the ability's controller's upkeep, not the owner's (a stolen card returns
         // at the upkeep of the player who exiled it).
-        gameData.queueDelayedAction(new PendingExileReturn(
+        PendingExileReturns.schedule(gameData,new PendingExileReturn(
                 card, returnControllerId, false, false, TurnStep.UPKEEP, 0,
                 cards.size() == 1 ? List.of() : cards.subList(1, cards.size()), true, true, false, false,
                 entry.getControllerId(), null, false));

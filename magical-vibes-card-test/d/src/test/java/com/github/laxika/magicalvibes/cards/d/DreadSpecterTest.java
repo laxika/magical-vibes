@@ -7,8 +7,9 @@ import com.github.laxika.magicalvibes.cards.p.PrismaticLace;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -38,8 +39,8 @@ class DreadSpecterTest extends BaseCardTest {
                         && se.getTargetId().equals(scout.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> a.affectedPermanentId().equals(scout.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> a.watchedPermanentId().equals(scout.getId()));
     }
 
     @Test
@@ -76,7 +77,7 @@ class DreadSpecterTest extends BaseCardTest {
                         && se.getCard().getName().equals("Dread Specter"));
 
         harness.passBothPriorities();
-        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).isEmpty();
     }
 
     @Test
@@ -97,8 +98,8 @@ class DreadSpecterTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> a.affectedPermanentId().equals(blocker.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> a.watchedPermanentId().equals(blocker.getId()));
 
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
         harness.assertInGraveyard(player2, "Femeref Scouts");
@@ -120,8 +121,8 @@ class DreadSpecterTest extends BaseCardTest {
                         && se.getTargetId().equals(attacker.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> a.affectedPermanentId().equals(attacker.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> a.watchedPermanentId().equals(attacker.getId()));
     }
 
     @Test
@@ -139,7 +140,7 @@ class DreadSpecterTest extends BaseCardTest {
                         && se.getCard().getName().equals("Dread Specter"));
 
         harness.passBothPriorities();
-        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).isEmpty();
     }
 
     @Test
@@ -157,8 +158,8 @@ class DreadSpecterTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .extracting(TemporaryGlobalTriggeredAbility::watchedPermanentId)
                 .containsExactlyInAnyOrder(first.getId(), second.getId());
     }
 
@@ -175,8 +176,8 @@ class DreadSpecterTest extends BaseCardTest {
                 new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .extracting(TemporaryGlobalTriggeredAbility::watchedPermanentId)
                 .containsExactly(scout.getId());
     }
 

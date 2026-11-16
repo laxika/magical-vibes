@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureAndSelfReturnAtNextTurnDeclareAttackersEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PendingExileReturns;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -91,8 +92,7 @@ public class ExileEnchantedCreatureAndSelfReturnAtNextTurnDeclareAttackersEffect
                 0,
                 Map.of(),
                 false);
-        gameData.queueDelayedAction(pendingReturn);
-        gameData.pendingExileReturnEarliestTurns.put(pendingReturn, gameData.turnNumber + 1);
+        PendingExileReturns.scheduleAfterTurn(gameData, pendingReturn, gameData.turnNumber);
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         gameLogService.append(gameData, GameLog.cardThen(enchantedCard, aura == null

@@ -1,12 +1,17 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +39,24 @@ public class SacrificeSelfAtEndStepEffectHandler implements NormalEffectHandlerB
         return SacrificeSelfAtEndStepEffect.class;
     }
 
+    /**
+     * The delayed triggered ability "at the beginning of the next end step, sacrifice it" of a spell or ability of
+     * {@code sourceCard} (with the source permanent {@code makerSourcePermanentId}, or none) controlled by
+     * {@code controllerId}, about the permanent {@code permanentId}: its own source for the plain form, which then
+     * sacrifices itself, or the permanent the source is attached to.
+     */
+    public static TemporaryGlobalTriggeredAbility sacrificeAtNextEndStep(SacrificeSelfAtEndStepEffect sacrifice,
+                                                                         UUID permanentId, UUID controllerId,
+                                                                         Card sourceCard,
+                                                                         UUID makerSourcePermanentId) {
+        if (sacrifice.attachedPermanent()) {
+            return TemporaryGlobalTriggeredAbility.atNextStep(Triggers.endStep(ActivePlayer.ANY), controllerId,
+                    sourceCard, makerSourcePermanentId, permanentId, new SacrificeTriggeringPermanentEffect());
+        }
+        return TemporaryGlobalTriggeredAbility.atNextStep(Triggers.endStep(ActivePlayer.ANY), controllerId, sourceCard,
+                permanentId, null, new SacrificeSelfEffect(sacrifice.currentControllerSacrifices()));
+    }
+
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var sacrifice = (SacrificeSelfAtEndStepEffect) effect;
@@ -49,9 +72,8 @@ public class SacrificeSelfAtEndStepEffectHandler implements NormalEffectHandlerB
             return;
         }
 
-        gameData.queueDelayedAction(new SacrificeSelfAtNextEndStepTrigger(
-                sourceId, entry.getControllerId(), entry.getCard(),
-                sacrifice.currentControllerSacrifices(), sacrifice.currentControllersEndStepOnly()));
+        gameData.temporaryGlobalTriggeredAbilities.add(sacrificeAtNextEndStep(
+                sacrifice, sourceId, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId()));
 
         String logEntry = source.getCard().getName() + " will be sacrificed at the beginning of the next end step.";
         gameLogService.append(gameData, GameLog.text(logEntry));

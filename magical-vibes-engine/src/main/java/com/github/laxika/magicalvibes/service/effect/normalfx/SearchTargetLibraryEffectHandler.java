@@ -124,8 +124,8 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
             params.filterCardName(named.cardName());
         }
         if (grantsPlayPermission(e.destination())) {
-            // Grinning Totem reads the source card back out of the params when it queues
-            // ExileToOwnerGraveyardAtNextUpkeep for the card left unplayed.
+            // Grinning Totem reads the source card back out of the params when it makes
+            // its delayed ability for the card left unplayed.
             params.sourceCards(List.of(entry.getCard()));
         }
 

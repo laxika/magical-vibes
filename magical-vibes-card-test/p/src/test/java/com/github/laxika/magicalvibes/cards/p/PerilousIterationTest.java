@@ -35,10 +35,7 @@ class PerilousIterationTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(extra, low, high);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        endStepOfYourNextTurn();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(extra);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -60,14 +57,42 @@ class PerilousIterationTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(low);
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        endStepOfYourNextTurn();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)
                 .contains(low.getId());
+    }
+
+    @Test
+    @DisplayName("The sought cards stay in hand through this turn's end step: it discards at your next turn's end step")
+    void doesNotDiscardAtThisTurnsEndStep() {
+        Card low = new GrizzlyBears();
+        Card high = new HillGiant();
+        harness.setHand(player1, List.of(new PerilousIteration()));
+        harness.setLibrary(player1, List.of(low, high));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(low, high);
+    }
+
+    /** Moves to the end step of a later turn of player 1's, resolving what triggers there. */
+    private void endStepOfYourNextTurn() {
+        gd.turnNumber++;
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
     }
 }

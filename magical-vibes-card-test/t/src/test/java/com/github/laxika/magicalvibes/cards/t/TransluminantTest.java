@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 
 @CardUsed({Transluminant.class})
 class TransluminantTest extends BaseCardTest {
@@ -28,8 +28,8 @@ class TransluminantTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Transluminant");
         harness.assertInGraveyard(player1, "Transluminant");
-        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).hasSize(1);
-        assertThat(gd.getDelayedActions(DelayedCreateToken.class).getFirst().controllerId())
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP).getFirst().controllerId())
                 .isEqualTo(player1.getId());
         harness.assertNotOnBattlefield(player1, "Spirit");
     }
@@ -54,7 +54,7 @@ class TransluminantTest extends BaseCardTest {
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.SPIRIT);
         assertThat(token.getCard().isToken()).isTrue();
-        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test
@@ -68,7 +68,7 @@ class TransluminantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Spirit");
-        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
@@ -77,7 +77,7 @@ class TransluminantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Spirit");
-        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test
@@ -115,10 +115,10 @@ class TransluminantTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Transluminant");
         assertThat(gd.stack).hasSize(1);
         harness.assertNotOnBattlefield(player1, "Spirit");
-        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
     }
 
     @Test

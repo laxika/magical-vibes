@@ -4,12 +4,17 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedCoinFlipSacrificeTargetPermanentAtEndStep;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,14 +57,15 @@ public class SacrificeTargetPermanentAtEndStepEffectHandler implements NormalEff
             }
 
             if (e.flipBeforeSacrificing()) {
-                gameData.queueDelayedAction(new DelayedCoinFlipSacrificeTargetPermanentAtEndStep(
-                        target.getId(), entry.getControllerId(), entry.getCard()));
+                gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                        Triggers.endStep(ActivePlayer.ANY), entry.getControllerId(), entry.getCard(),
+                        entry.getSourcePermanentId(), target.getId(),
+                        new FlipCoinWinEffect(null, new SacrificeTriggeringPermanentEffect())));
             } else {
-                gameData.queueDelayedAction(new DelayedPermanentAction(
-                        target.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                        false, null, null,
-                        e.onlyIfAbilityControllerControls() ? entry.getControllerId() : null,
-                        false, entry.getCard()));
+                DelayedPermanentActions.schedule(gameData, entry,
+                        new DelayedPermanentAction(target.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                                false, null, !e.onlyIfAbilityControllerControls()),
+                        ActivePlayer.ANY);
             }
 
             String timingText = e.flipBeforeSacrificing()

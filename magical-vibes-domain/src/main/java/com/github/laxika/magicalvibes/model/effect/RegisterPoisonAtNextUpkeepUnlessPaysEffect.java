@@ -8,8 +8,8 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>The damaged player is the firing stack entry's non-targeting {@code targetId}, which the
  * damage-to-a-player collector records; the handler reads it and
- * queues a {@code PoisonAtNextUpkeepUnlessPays} delayed action, drained at that player's upkeep in
- * {@code StepTriggerService} as a "you may pay; if you don't, get a poison counter" prompt.
+ * adds a delayed triggered ability that triggers at that player's upkeep as a "you may pay; if you don't, get a poison
+ * counter" prompt.
  * Modelling the payment at the upkeep (rather than any time before it) is outcome-equivalent:
  * paying avoids the counter, declining incurs it.
  *

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.k.KnightOfCliffhaven;
 import com.github.laxika.magicalvibes.cards.v.Vendetta;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ class EmergeUnscathedTest extends BaseCardTest {
 
         assertThat(bear.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
     }
 
     @Test
@@ -58,7 +58,7 @@ class EmergeUnscathedTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(card.getId())).isNull();
         harness.assertInGraveyard(player1, "Emerge Unscathed");
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -107,7 +107,7 @@ class EmergeUnscathedTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Knight of Cliffhaven");
         harness.assertInGraveyard(player1, "Emerge Unscathed");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -141,7 +141,7 @@ class EmergeUnscathedTest extends BaseCardTest {
         assertThat(creature.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.WHITE);
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(creature.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
-        assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
     }
 
     @Test
@@ -163,7 +163,7 @@ class EmergeUnscathedTest extends BaseCardTest {
         assertThat(other.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.GREEN);
         assertThat(original.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.GREEN);
         harness.assertInGraveyard(player1, "Emerge Unscathed");
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -186,7 +186,7 @@ class EmergeUnscathedTest extends BaseCardTest {
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
         harness.assertNotInGraveyard(player1, "Emerge Unscathed");
 
         advanceToUpkeep(player1);

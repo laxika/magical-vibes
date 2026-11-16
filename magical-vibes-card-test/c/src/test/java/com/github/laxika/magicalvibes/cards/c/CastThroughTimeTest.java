@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.a.AllIsDust;
 import com.github.laxika.magicalvibes.cards.f.FleetingDistraction;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.cards.s.SkitteringInvasion;
 import com.github.laxika.magicalvibes.cards.s.SkywatcherAdept;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ class CastThroughTimeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.findExiledCard(spell.getId())).isNotNull();
-        assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -70,7 +70,7 @@ class CastThroughTimeTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Eldrazi Spawn")).isEqualTo(10);
         harness.assertInGraveyard(player1, "Skittering Invasion");
         assertThat(gd.findExiledCard(spell.getId())).isNull();
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -87,7 +87,7 @@ class CastThroughTimeTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(spell.getId())).isNotNull();
         assertThat(countPermanents(player1, "Eldrazi Spawn")).isEqualTo(5);
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
         advanceToUpkeep(player1);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -106,7 +106,7 @@ class CastThroughTimeTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Fleeting Distraction");
         assertThat(gd.findExiledCard(spell.getId())).isNull();
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -121,7 +121,7 @@ class CastThroughTimeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Cast Through Time");
         harness.assertInGraveyard(player1, "All Is Dust");
         assertThat(gd.findExiledCard(spell.getId())).isNull();
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -139,7 +139,7 @@ class CastThroughTimeTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Fleeting Distraction");
         assertThat(gd.findExiledCard(spell.getId())).isNull();
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }

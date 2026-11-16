@@ -41,6 +41,27 @@ class DelifsCubeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The delayed ability triggers when the chosen creature, now an opponent's, attacks unblocked")
+    void triggersForTheChosenCreatureAttackingUnderAnotherPlayersControl() {
+        Permanent cube = harness.addToBattlefieldAndReturn(player2, new DelifsCube());
+        Permanent chosen = addCreatureReady(player2, new IcatianPhalanx());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, chosen.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(chosen);
+        gd.playerBattlefields.get(player1.getId()).add(chosen);
+        chosen.setSummoningSick(false);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(chosen)));
+
+        declareBlockers(List.of());
+
+        assertThat(cube.getCounterCount(CounterType.CUBE)).isEqualTo(1);
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(chosen.getId());
+    }
+
+    @Test
     @DisplayName("A blocked chosen attacker does not add a cube counter or lose combat damage")
     void blockedChosenAttackerDoesNotTrigger() {
         Permanent cube = harness.addToBattlefieldAndReturn(player1, new DelifsCube());

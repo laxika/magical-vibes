@@ -4,13 +4,18 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedReturnSourceAuraToCreature;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnSourceAuraToCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
+import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOnDeathEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /** Registers Ghoulish Impetus's next-end-step Aura return. */
 @Component
@@ -35,8 +40,12 @@ public class RegisterDelayedReturnSourceAuraToCreatureOnDeathEffectHandler
             return;
         }
 
-        gameData.queueDelayedAction(new DelayedReturnSourceAuraToCreature(
-                auraCard.getId(), entry.getControllerId(), gameData.graveyardEntryVersion(auraCard.getId())));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                entry.getControllerId(), entry.getCard(),
+                new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),
+                        new ReturnSourceAuraToCreatureOnDeathEffect()),
+                entry.getSourcePermanentId(), null, null,
+                DelayedReferents.graveyardCard(auraCard.getId(), gameData.graveyardEntryVersion(auraCard.getId()))));
         gameLogService.append(gameData,
                 GameLog.cardThen(auraCard, " will return to the battlefield at the beginning of the next end step."));
     }

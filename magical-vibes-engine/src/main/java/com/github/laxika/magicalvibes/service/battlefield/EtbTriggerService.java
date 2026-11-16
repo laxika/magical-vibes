@@ -498,7 +498,6 @@ public class EtbTriggerService {
         triggerCollectionService.checkAllyPermanentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAllyCreatureEntersTriggers(gameData, controllerId, card);
         Permanent enteringPermanent = findEnteringPermanent(gameData, card);
-        triggerCollectionService.checkCreatureEntersThisTurnTriggers(gameData, controllerId, card);
         if (!faceDown && (enteringPermanent == null ? card.hasType(CardType.LAND)
                 : gameQueryService.isLand(gameData, enteringPermanent))) {
             triggerCollectionService.checkAllyLandEntersTriggers(gameData, controllerId, card);

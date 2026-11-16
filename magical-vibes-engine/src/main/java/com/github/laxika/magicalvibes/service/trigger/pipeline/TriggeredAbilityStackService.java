@@ -468,6 +468,11 @@ public class TriggeredAbilityStackService extends StackDoor {
     private boolean put(GameData gameData, TriggeredAbilityRequest request, Router router) {
         TriggeredAbility ability = request.ability();
         TriggerOptions options = ability.options();
+        if (request.record() instanceof EventAbilitySupport.DelayedRecord delayed && delayed.delayed().triggersOnce()) {
+            // Its trigger event occurred: one with no stated duration, or a "when you next ...", triggers only this
+            // once, whether or not its "if" holds as it does (CR 603.7b, 603.4).
+            gameData.temporaryGlobalTriggeredAbilities.removeIf(listed -> listed == delayed.delayed());
+        }
         Condition interveningIf = options.interveningIf();
         if (interveningIf != null && !conditionEvaluationService.isMet(gameData, interveningIf, request.ifContext())) {
             return false;
@@ -482,10 +487,6 @@ public class TriggeredAbilityStackService extends StackDoor {
             // "Permanents entering the battlefield don't cause abilities of permanents your opponents control to
             // trigger" (Elesh Norn, Mother of Machines).
             return false;
-        }
-        if (request.record() instanceof EventAbilitySupport.DelayedRecord delayed && delayed.delayed().triggersOnce()) {
-            // It triggered: one with no stated duration, or a "when you next ...", triggers only this once (CR 603.7b).
-            gameData.temporaryGlobalTriggeredAbilities.removeIf(listed -> listed == delayed.delayed());
         }
         List<CardEffect> written = new ArrayList<>(ability.effects().size());
         ChooseOneEffect.ChooseOneOption randomMode = null;

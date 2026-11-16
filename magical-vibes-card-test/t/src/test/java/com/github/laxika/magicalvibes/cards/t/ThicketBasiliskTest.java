@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.w.WallOfAir;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -36,8 +37,8 @@ class ThicketBasiliskTest extends BaseCardTest {
                         && se.getTargetId().equals(spider.getId()));
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> a.affectedPermanentId().equals(spider.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> a.watchedPermanentId().equals(spider.getId()));
     }
 
     @Test
@@ -74,7 +75,7 @@ class ThicketBasiliskTest extends BaseCardTest {
         assertThat(gd.stack)
                 .noneMatch(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && se.getCard().getName().equals("Thicket Basilisk"));
-        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).isEmpty();
     }
     @Test
     @DisplayName("When Thicket Basilisk blocks a non-Wall creature, that attacker is scheduled for end-of-combat destruction")
@@ -92,8 +93,8 @@ class ThicketBasiliskTest extends BaseCardTest {
                         && se.getTargetId().equals(attacker.getId()));
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> a.affectedPermanentId().equals(attacker.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> a.watchedPermanentId().equals(attacker.getId()));
     }
 
     @Test
@@ -110,7 +111,7 @@ class ThicketBasiliskTest extends BaseCardTest {
         assertThat(gd.stack)
                 .noneMatch(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && se.getCard().getName().equals("Thicket Basilisk"));
-        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).isEmpty();
     }
 
     @Test
@@ -133,8 +134,8 @@ class ThicketBasiliskTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
 
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .extracting(TemporaryGlobalTriggeredAbility::watchedPermanentId)
                 .containsExactlyInAnyOrder(firstBlocker.getId(), secondBlocker.getId());
     }
 
@@ -152,8 +153,8 @@ class ThicketBasiliskTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
 
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> a.affectedPermanentId().equals(blocker.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> a.watchedPermanentId().equals(blocker.getId()));
     }
 
     @Test
@@ -239,8 +240,8 @@ class ThicketBasiliskTest extends BaseCardTest {
                 new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
 
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .extracting(TemporaryGlobalTriggeredAbility::watchedPermanentId)
                 .containsExactly(spider.getId());
     }
 }

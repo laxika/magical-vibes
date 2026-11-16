@@ -34,10 +34,12 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.replacement.TokenCopyBatch;
 import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -860,35 +862,35 @@ public class TokenCopySupport {
             if (effect.exileAtEndStep()) {
                 // CR 603.7e: the ability that created the delayed exile keeps controlling it, even if the
                 // token changes control before the end step.
-                gameData.queueDelayedAction(new DelayedPermanentAction(
-                        tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP,
-                        false, null, null, entry.getControllerId(), false, entry.getCard(),
-                        entry.getControllerId(), entry.getSourcePermanentId()));
+                DelayedPermanentActions.schedule(gameData, entry,
+                        new DelayedPermanentAction(tokenPermanent.getId(),
+                                DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP),
+                        ActivePlayer.ANY);
             }
             if (effect.exileAtEndOfCombat()) {
                 // One resolution's tokens share a single "exile them at end of combat" delayed trigger;
                 // the source card is the batching key. CR 603.7e: the ability that created the delayed
                 // trigger keeps controlling it and remains its source, even if a token changes control.
-                gameData.queueDelayedAction(new DelayedPermanentAction(
-                        tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT,
-                        false, null, null, null, false, entry.getCard(),
-                        entry.getControllerId(), entry.getSourcePermanentId()));
+                DelayedPermanentActions.schedule(gameData, entry,
+                        new DelayedPermanentAction(tokenPermanent.getId(),
+                                DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT),
+                        ActivePlayer.ANY);
             }
             if (effect.sacrificeAtEndStep()) {
                 // Only the player who created the token sacrifices it, and only while they control it
                 // The source card keys the batch: several tokens from one resolution share a single
                 // "sacrifice those tokens at the beginning of the next end step" delayed trigger.
-                gameData.queueDelayedAction(tokens.size() > 1
-                        ? new DelayedPermanentAction(
-                                tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                                false, null, null, tokenControllerId, false, entry.getCard())
-                        : new DelayedPermanentAction(
-                                tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                                false, null, null, tokenControllerId));
+                DelayedPermanentActions.schedule(gameData, tokenControllerId, entry.getCard(),
+                        entry.getSourcePermanentId(),
+                        new DelayedPermanentAction(tokenPermanent.getId(),
+                                DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
+                        ActivePlayer.ANY);
             }
             if (effect.sacrificeAtNextUpkeep()) {
-                gameData.queueDelayedAction(new DelayedPermanentAction(
-                        tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_NEXT_UPKEEP));
+                DelayedPermanentActions.schedule(gameData, entry,
+                        new DelayedPermanentAction(tokenPermanent.getId(),
+                                DelayedPermanentActionKind.SACRIFICE_AT_NEXT_UPKEEP),
+                        ActivePlayer.ANY);
             }
             if (effect.grantHaste() && effect.hasteUntilEndOfTurn()) {
                 tokenPermanent.getGrantedKeywords().add(Keyword.HASTE);

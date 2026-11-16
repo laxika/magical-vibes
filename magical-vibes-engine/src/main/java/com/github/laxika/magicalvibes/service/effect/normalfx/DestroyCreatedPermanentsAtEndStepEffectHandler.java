@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 
 /**
  * Queues destruction for permanents created by the current stack-entry resolution. The delayed trigger
@@ -28,10 +30,9 @@ public class DestroyCreatedPermanentsAtEndStepEffectHandler implements NormalEff
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         for (UUID createdId : entry.getCreatedPermanentIds()) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(
-                    createdId, DelayedPermanentActionKind.DESTROY_AT_END_STEP,
-                    false, null, null, null, false, entry.getCard(),
-                    entry.getControllerId(), entry.getSourcePermanentId()));
+            DelayedPermanentActions.schedule(gameData, entry,
+                    new DelayedPermanentAction(createdId, DelayedPermanentActionKind.DESTROY_AT_END_STEP),
+                    ActivePlayer.ANY);
         }
         log.info("Game {} - {} permanent(s) scheduled for destruction at end step by {}",
                 gameData.id, entry.getCreatedPermanentIds().size(), entry.getCard().getName());

@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,8 +48,8 @@ public class ExileSelfAtEndStepEffectHandler implements NormalEffectHandlerBean 
             return;
         }
 
-        gameData.queueDelayedAction(new DelayedPermanentAction(sourceId, DelayedPermanentActionKind.EXILE_AT_END_STEP,
-                false, null, null, entry.getControllerId()));
+        DelayedPermanentActions.schedule(gameData, entry,
+                new DelayedPermanentAction(sourceId, DelayedPermanentActionKind.EXILE_AT_END_STEP), ActivePlayer.ANY);
 
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " will be exiled at the beginning of the next end step."));
         log.info("Game {} - {} scheduled for exile at end step", gameData.id, source.getCard().getName());

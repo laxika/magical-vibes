@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
+import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -118,7 +118,7 @@ class NecromancyTest extends BaseCardTest {
         castAndChooseReanimate(python);
 
         harness.inMutationScope(() ->
-                GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
+                GameTestEngineContext.get().getBean(TurnProgressionService.class).applyCleanupResets(gd));
 
         harness.assertOnBattlefield(player1, "Necromancy");
         harness.assertOnBattlefield(player1, "Python");
@@ -147,7 +147,7 @@ class NecromancyTest extends BaseCardTest {
         castAndChooseReanimate(python, TurnStep.BEGINNING_OF_COMBAT);
 
         harness.inMutationScope(() ->
-                GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
+                GameTestEngineContext.get().getBean(TurnProgressionService.class).applyCleanupResets(gd));
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Necromancy");
@@ -331,7 +331,7 @@ class NecromancyTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Python");
 
         harness.inMutationScope(() ->
-                GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
+                GameTestEngineContext.get().getBean(TurnProgressionService.class).applyCleanupResets(gd));
         resolveAllTriggers();
         harness.assertInGraveyard(player1, "Necromancy");
         harness.assertInGraveyard(player2, "Python");

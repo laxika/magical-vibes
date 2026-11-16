@@ -14,9 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
  * return from {@code Triggers.creatureDies(ANY)}.
  *
  * <p>On resolution the handler reads the dying creature's card from the stack entry's triggering card
- * ({@code StackEntry.triggeringCardId}) and its graveyard incarnation, then queues a
- * {@code DelayedGraveyardToBattlefieldUnderControl} carrying the riders below, drained in
- * {@code StepTriggerService.handleEndStepTriggers}.
+ * ({@code StackEntry.triggeringCardId}) and its graveyard incarnation, then makes the delayed triggered ability
+ * (CR 603.7a) that returns it as the next end step begins, carrying the riders below.
  *
  * @param sacrificeOnSourceControlLoss when true the returned permanent is linked to the source
  *                                     permanent so it is sacrificed if its controller later loses
@@ -29,10 +28,11 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
  *                                     "in addition to its other colors"
  * @param grantSubtype                 when non-null, permanently granted to the returned permanent
  *                                     "in addition to its other types"
- * @param requireSourceOnBattlefield   when true the delayed return does nothing unless the exact
- *                                     source permanent is still on the battlefield at the end step
- *                                     (Shirei's "if Shirei is still on the battlefield" — a Shirei
- *                                     that left and came back is a new object and does not count)
+ * @param requireSourceOnBattlefield   when true the delayed ability triggers only if the exact source
+ *                                     permanent is still on the battlefield as the end step begins, and does
+ *                                     nothing if it isn't as it resolves (Shirei's "if Shirei is still on the
+ *                                     battlefield", an intervening "if", CR 603.4: a Shirei that left and came
+ *                                     back is a new object and does not count)
  * @param returnUnderOwnersControl      when true, return the card under its owner's control instead
  *                                     of the ability controller's control (Lifeline)
  * @param targetOpponent               when true, the death trigger targets an opponent and that

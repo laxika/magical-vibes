@@ -21,6 +21,7 @@ public class EpicUpkeepCopyEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        epicService.createUpkeepCopy(gameData, entry.getControllerId(), entry.getCard(), entry.getTargetId());
+        epicService.createUpkeepCopy(gameData, entry.getControllerId(), entry.getCard(),
+                ((EpicUpkeepCopyEffect) effect).targetId());
     }
 }

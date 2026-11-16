@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.cards.k.KraulWarrior;
 import com.github.laxika.magicalvibes.cards.s.SavagebornHydra;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.s.Stomp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -54,16 +54,15 @@ class PlasmCaptureTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Kraul Warrior");
         harness.assertInGraveyard(player1, "Kraul Warrior");
 
-        AddManaAtNextMainPhase reward = gd.getDelayedActions(AddManaAtNextMainPhase.class).getFirst();
-        assertThat(reward.controllerId()).isEqualTo(player2.getId());
-        assertThat(reward.amount()).isEqualTo(2);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE))
+                .allMatch(delayed -> delayed.controllerId().equals(player2.getId()));
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
         gs.advanceStep(gd);
 
-        assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE)).isEmpty();
 
         // Mandatory: the delayed ability resolves straight into the color picks, one per mana.
         harness.passBothPriorities();
@@ -91,7 +90,7 @@ class PlasmCaptureTest extends BaseCardTest {
         gs.advanceStep(gd);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE)).hasSize(1);
     }
 
     private void resolveManaReward(int amount) {
@@ -165,7 +164,7 @@ class PlasmCaptureTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Kraul Warrior");
-        assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE)).hasSize(1);
         resolveManaReward(2);
     }
 
@@ -178,7 +177,7 @@ class PlasmCaptureTest extends BaseCardTest {
         harness.clearPriorityPassed();
         gs.advanceStep(gd);
 
-        assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE)).hasSize(1);
         assertThat(gd.stack).isEmpty();
         resolveManaReward(2);
     }

@@ -57,7 +57,7 @@ public class ResolveDelayedPermanentActionEffectHandler implements NormalEffectH
         }
         List<DepartureIntent> intents = new ArrayList<>();
         for (DelayedPermanentAction member : run(entry, effect, op)) {
-            DepartureIntent intent = intent(gameData, member);
+            DepartureIntent intent = intent(gameData, entry, member);
             if (intent != null && intents.stream().noneMatch(added -> added.permanentId().equals(intent.permanentId()))) {
                 intents.add(intent);
             }
@@ -80,7 +80,7 @@ public class ResolveDelayedPermanentActionEffectHandler implements NormalEffectH
                         && resolve.action().permanentId().equals(result.permanentId())
                         && resolve.action().kind().op() == DelayedPermanentActionKind.Op.SACRIFICE) {
                     permanentRemovalService.returnExiledCardToBattlefield(gameData,
-                            resolve.action().returnExiledCardId(), resolve.action().sacrificingPlayerId());
+                            resolve.action().returnExiledCardId(), entry.getControllerId());
                     break;
                 }
             }
@@ -110,8 +110,11 @@ public class ResolveDelayedPermanentActionEffectHandler implements NormalEffectH
         return run;
     }
 
-    /** The departure of {@code action}'s permanent, or {@code null} when the action does nothing to it. */
-    private DepartureIntent intent(GameData gameData, DelayedPermanentAction action) {
+    /**
+     * The departure of {@code action}'s permanent, or {@code null} when the action does nothing to it: a sacrifice is
+     * made by the ability's controller, so it does nothing to a permanent that player doesn't control.
+     */
+    private DepartureIntent intent(GameData gameData, StackEntry entry, DelayedPermanentAction action) {
         Permanent permanent = gameQueryService.findPermanentById(gameData, action.permanentId());
         if (permanent == null) {
             return null;
@@ -123,7 +126,7 @@ public class ResolveDelayedPermanentActionEffectHandler implements NormalEffectH
             return null;
         }
         UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-        if (action.sacrificingPlayerId() != null && !action.sacrificingPlayerId().equals(controllerId)) {
+        if (!action.currentControllerSacrifices() && !entry.getControllerId().equals(controllerId)) {
             return null;
         }
         if (gameQueryService.cantBeSacrificed(gameData, permanent)) {

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextEndStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileRandomCardFromHandMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -51,8 +50,9 @@ public class ExileRandomCardFromHandMayPlayThisTurnEffectHandler implements Norm
 
         gameData.exilePlayPermissions.put(exiled.getId(), playerId);
         gameData.exilePlayPermissionsExpireEndOfTurn.add(exiled.getId());
-        gameData.queueDelayedAction(new ExileToOwnerGraveyardAtNextEndStep(
-                exiled.getId(), playerId, entry.getCard(), entry.getControllerId()));
+        gameData.temporaryGlobalTriggeredAbilities.add(PutExiledCardsIntoOwnersGraveyardEffectHandler.atNextEndStep(
+                gameData, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
+                List.of(exiled.getId())));
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(playerName + " exiles ").card(exiled)

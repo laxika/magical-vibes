@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.DelayedReferents;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -14,8 +16,10 @@ import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCountersOnTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -53,17 +57,21 @@ public class DestroyCombatOpponentAtEndOfCombatEffectHandler implements NormalEf
         if (destroyEffect.putCounterOnSourceIfDestroyed()) {
             // Infinite Authority: "At the beginning of the next end step, if that creature was
             // destroyed this way, put a +1/+1 counter on the first creature."
-            gameData.queueDelayedAction(new DelayedEndOfCombatTrigger(entry.getControllerId(),
-                    entry.getCard(), entry.getSourcePermanentId(), targetId,
-                    new DestroyTargetPermanentThenEffect(EventStat.NONE,
-                            new RegisterDelayedCountersOnTriggeringPermanentEffect(
-                                    new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
-                            ThenEffectRecipient.CONTROLLER, null, destroyEffect.cannotBeRegenerated(), true),
-                    entry.getTriggeringPermanentId()));
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    entry.getControllerId(), entry.getCard(),
+                    new TriggeredAbility(Triggers.endOfCombat(),
+                            new DestroyTargetPermanentThenEffect(EventStat.NONE,
+                                    new RegisterDelayedCountersOnTriggeringPermanentEffect(
+                                            new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                                    ThenEffectRecipient.CONTROLLER, null, destroyEffect.cannotBeRegenerated(),
+                                    true)),
+                    entry.getSourcePermanentId(), targetId, null,
+                    DelayedReferents.permanents(List.of(targetId))
+                            .withTriggeringPermanent(entry.getTriggeringPermanentId())));
         } else {
-            gameData.queueDelayedAction(new DelayedEndOfCombatTrigger(entry.getControllerId(),
-                    entry.getCard(), entry.getSourcePermanentId(), targetId,
-                    new DestroyTargetPermanentEffect(destroyEffect.cannotBeRegenerated())));
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    Triggers.endOfCombat(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
+                    targetId, new DestroyTargetPermanentEffect(destroyEffect.cannotBeRegenerated())));
         }
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " will be destroyed at end of combat."));
     }

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,7 +40,7 @@ class SwiftWarkiteTest extends BaseCardTest {
 
         Permanent entered = findPermanent(player1, "Kolaghan Aspirant");
         assertThat(entered.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+        assertThat(DelayedPermanentMoves.waiting(gd))
                 .contains(new DelayedPermanentAction(
                         entered.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP).scheduledBy(gd.resolutionOrdinal));
 
@@ -86,7 +87,7 @@ class SwiftWarkiteTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(bear);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(bear.getId()));
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
+        assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
     }
 
     @Test

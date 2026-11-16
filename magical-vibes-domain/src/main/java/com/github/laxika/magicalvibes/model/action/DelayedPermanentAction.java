@@ -1,106 +1,46 @@
 package com.github.laxika.magicalvibes.model.action;
 
-import com.github.laxika.magicalvibes.model.Card;
-
 import java.util.UUID;
 
 /**
- * Schedules one zone-change operation on one permanent at a fixed timing point (see
- * {@link DelayedPermanentActionKind}). Drained by
- * {@code PermanentRemovalService.processDelayedPermanentActions}; a permanent that already left
- * the battlefield by then is skipped. A non-null {@code controllerId} restricts an end-step action
- * to that player's end step. When {@code followsPermanentController} is true, the permanent's
- * current controller determines that end step instead (Aethermage's Touch).
- * {@code cannotBeRegenerated} is honoured by the DESTROY kinds only
- * (e.g. "destroy it at end of combat, it can't be regenerated" triggers).
- * A non-null {@code sourceCard} is the card whose ability created the delayed trigger (a spell
- * that creates one is its source); when null the permanent's own card is used as the source.
- * A non-null {@code triggerControllerId} is the controller of the delayed trigger itself (the
- * controller of the ability that created it), and a non-null {@code triggerSourcePermanentId} is the
- * permanent that ability came from; both default to the scheduled permanent's own data when null.
- * A {@code recurring} action models a granted "at the beginning of the end step" ability that stays
- * on the permanent: it is scheduled again each time it is drained while the permanent is still on
- * the battlefield, so a countered trigger fires again at the next end step.
+ * One zone-change operation on one permanent a delayed triggered ability performs when its step begins (see
+ * {@link DelayedPermanentActionKind}); it is the payload of a {@code ResolveDelayedPermanentActionEffect}, one step of
+ * the ability, and the ability does nothing to a permanent that left the battlefield by then (CR 603.7c).
+ * {@code cannotBeRegenerated} is honoured by the DESTROY kinds only (e.g. "destroy it at end of combat, it can't be
+ * regenerated"). {@code returnExiledCardId} is the card a sacrificed permanent gives back from exile, returned to the
+ * battlefield once the permanent was sacrificed. A sacrifice is made by the ability's controller, so it does nothing to
+ * a permanent that player no longer controls, unless {@code currentControllerSacrifices}: then the permanent's
+ * controller sacrifices it, whoever that is.
  * {@code schedulingResolution} is the identity of the resolution that scheduled the action
- * ({@code GameData.resolutionOrdinal}, stamped by {@code GameData.queueDelayedAction}; 0 until then): the actions one
- * resolution of a source schedules are one delayed triggered ability ("exile them at the beginning of the next end
- * step"), and those another resolution of the same source schedules are another (CR 603.7a).
+ * ({@code GameData.resolutionOrdinal}; 0 for none): the actions one resolution schedules together are one delayed
+ * triggered ability ("exile them at the beginning of the next end step"), and those another resolution of the same
+ * source schedules are another (CR 603.7a).
  */
-public record DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
-                                     boolean cannotBeRegenerated, UUID returnExiledCardId,
-                                     UUID controllerId, UUID sacrificingPlayerId,
-                                     boolean followsPermanentController, Card sourceCard,
-                                     UUID triggerControllerId, UUID triggerSourcePermanentId,
-                                     boolean recurring, long schedulingResolution)
-        implements DelayedAction {
+public record DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind, boolean cannotBeRegenerated,
+                                     UUID returnExiledCardId, boolean currentControllerSacrifices,
+                                     long schedulingResolution) {
 
-    public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
-                                  boolean cannotBeRegenerated, UUID returnExiledCardId,
-                                  UUID controllerId, UUID sacrificingPlayerId,
-                                  boolean followsPermanentController, Card sourceCard,
-                                  UUID triggerControllerId, UUID triggerSourcePermanentId) {
-        this(permanentId, kind, cannotBeRegenerated, returnExiledCardId, controllerId, sacrificingPlayerId,
-                followsPermanentController, sourceCard, triggerControllerId, triggerSourcePermanentId, false, 0);
+    public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind, boolean cannotBeRegenerated,
+                                  UUID returnExiledCardId, boolean currentControllerSacrifices) {
+        this(permanentId, kind, cannotBeRegenerated, returnExiledCardId, currentControllerSacrifices, 0);
     }
 
-    /** Creates a recurring action; see the class description. */
-    public static DelayedPermanentAction recurring(UUID permanentId, DelayedPermanentActionKind kind) {
-        return new DelayedPermanentAction(permanentId, kind, false, null, null, null, false, null, null, null, true,
-                0);
+    public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind, boolean cannotBeRegenerated,
+                                  UUID returnExiledCardId) {
+        this(permanentId, kind, cannotBeRegenerated, returnExiledCardId, false);
     }
 
-    @Override
-    public DelayedPermanentAction scheduledBy(long schedulingResolution) {
-        return new DelayedPermanentAction(permanentId, kind, cannotBeRegenerated, returnExiledCardId, controllerId,
-                sacrificingPlayerId, followsPermanentController, sourceCard, triggerControllerId,
-                triggerSourcePermanentId, recurring, schedulingResolution);
-    }
-
-    public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
-                                  boolean cannotBeRegenerated, UUID returnExiledCardId,
-                                  UUID controllerId, UUID sacrificingPlayerId,
-                                  boolean followsPermanentController, Card sourceCard) {
-        this(permanentId, kind, cannotBeRegenerated, returnExiledCardId, controllerId, sacrificingPlayerId,
-                followsPermanentController, sourceCard, null, null);
-    }
-
-    public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
-                                  boolean cannotBeRegenerated, UUID returnExiledCardId,
-                                  UUID controllerId, UUID sacrificingPlayerId,
-                                  boolean followsPermanentController) {
-        this(permanentId, kind, cannotBeRegenerated, returnExiledCardId,
-                controllerId, sacrificingPlayerId, followsPermanentController, null);
-    }
-
-    public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
-                                  boolean cannotBeRegenerated, UUID returnExiledCardId,
-                                  UUID controllerId, UUID sacrificingPlayerId) {
-        this(permanentId, kind, cannotBeRegenerated, returnExiledCardId,
-                controllerId, sacrificingPlayerId, false);
-    }
-
-    public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
-                                  boolean cannotBeRegenerated, UUID returnExiledCardId,
-                                  UUID controllerId) {
-        this(permanentId, kind, cannotBeRegenerated, returnExiledCardId, controllerId, null);
-    }
-
-    public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
-                                  boolean cannotBeRegenerated, UUID returnExiledCardId) {
-        this(permanentId, kind, cannotBeRegenerated, returnExiledCardId, null, null);
-    }
-
-    public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
-                                  boolean cannotBeRegenerated) {
-        this(permanentId, kind, cannotBeRegenerated, null, null, null);
+    public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind, boolean cannotBeRegenerated) {
+        this(permanentId, kind, cannotBeRegenerated, null);
     }
 
     public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind) {
-        this(permanentId, kind, false, null, null, null);
+        this(permanentId, kind, false);
     }
 
-    /** Creates an end-step action that is drained only during the controller's end step. */
-    public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind, UUID controllerId) {
-        this(permanentId, kind, false, null, controllerId, null);
+    /** This action as scheduled by the resolution {@code resolution}. */
+    public DelayedPermanentAction scheduledBy(long resolution) {
+        return new DelayedPermanentAction(permanentId, kind, cannotBeRegenerated, returnExiledCardId,
+                currentControllerSacrifices, resolution);
     }
 }

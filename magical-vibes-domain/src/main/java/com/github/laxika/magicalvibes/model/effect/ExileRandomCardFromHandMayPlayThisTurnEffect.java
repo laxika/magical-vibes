@@ -8,7 +8,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * The affected player is the stack entry's {@code targetId} (set to the active player by
  * {@code Triggers.upkeep(ActivePlayer.ANY)}). Empty hand is a no-op. Play permission uses
  * {@code exilePlayPermissions} + {@code exilePlayPermissionsExpireEndOfTurn}; unplayed cleanup is
- * an {@code ExileToOwnerGraveyardAtNextEndStep} delayed action.
+ * a delayed triggered ability at the next end step.
  */
 public record ExileRandomCardFromHandMayPlayThisTurnEffect() implements CardEffect {
 }

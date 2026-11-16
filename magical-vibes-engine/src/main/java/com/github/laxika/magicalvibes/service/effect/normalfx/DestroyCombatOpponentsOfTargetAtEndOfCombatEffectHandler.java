@@ -1,15 +1,17 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.DelayedReferents;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentsOfTargetAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -22,9 +24,10 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Resolves {@link DestroyCombatOpponentsOfTargetAtEndOfCombatEffect} by queueing a
- * {@link DestroyCombatOpponentsAtEndOfCombat} delayed action for the target. The creatures to
- * destroy are captured when the spell or ability resolves.
+ * Resolves {@link DestroyCombatOpponentsOfTargetAtEndOfCombatEffect}. As a spell's effect it registers the delayed
+ * triggered ability about the target creature and the creatures that blocked or were blocked by it so far; as the
+ * effect of a triggered ability (that delayed one, or Kjeldoran Frostbeast's own) it destroys the creature's combat
+ * opponents, those remembered and those recorded since.
  */
 @Component
 @RequiredArgsConstructor
@@ -43,7 +46,7 @@ public class DestroyCombatOpponentsOfTargetAtEndOfCombatEffectHandler implements
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         DestroyCombatOpponentsOfTargetAtEndOfCombatEffect destroyEffect =
                 (DestroyCombatOpponentsOfTargetAtEndOfCombatEffect) effect;
-        if (entry.getTargetId() == null && gameData.currentStep == TurnStep.END_OF_COMBAT) {
+        if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
             destroyCombatOpponents(gameData, entry, destroyEffect);
             return;
         }
@@ -53,9 +56,12 @@ public class DestroyCombatOpponentsOfTargetAtEndOfCombatEffectHandler implements
             return;
         }
         Set<UUID> combatOpponentIds = combatOpponentIds(gameData, target.getId(), destroyEffect);
-        gameData.queueDelayedAction(new DestroyCombatOpponentsAtEndOfCombat(target.getId(),
-                destroyEffect.onlyCreaturesBlockedByTarget(), Set.copyOf(combatOpponentIds),
-                entry.getCard(), entry.getControllerId()));
+        List<UUID> remembered = new ArrayList<>(List.of(target.getId()));
+        remembered.addAll(combatOpponentIds);
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStepThisTurn(
+                Triggers.endOfCombat(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
+                target.getId(), DelayedReferents.permanents(remembered),
+                new DestroyCombatOpponentsOfTargetAtEndOfCombatEffect(destroyEffect.onlyCreaturesBlockedByTarget())));
         String affectedCreatures = destroyEffect.onlyCreaturesBlockedByTarget()
                 ? "'s blocked creatures will be destroyed at end of combat."
                 : "'s combat opponents will be destroyed at end of combat.";
@@ -72,12 +78,14 @@ public class DestroyCombatOpponentsOfTargetAtEndOfCombatEffectHandler implements
      */
     private void destroyCombatOpponents(GameData gameData, StackEntry entry,
                                         DestroyCombatOpponentsOfTargetAtEndOfCombatEffect destroyEffect) {
-        Set<UUID> opponentIds = new LinkedHashSet<>(entry.getTriggeringPermanentIds());
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        UUID creatureId = entry.getTargetId() != null ? entry.getTargetId() : entry.getSourcePermanentId();
+        Set<UUID> opponentIds = new LinkedHashSet<>(entry.getDeclaredTargetIds());
+        opponentIds.remove(creatureId);
+        Permanent source = gameQueryService.findPermanentById(gameData, creatureId);
         boolean sourceOutOfCombat = destroyEffect.onlyWhileInCombat() && source != null
                 && !source.isAttacking() && !source.isBlocking();
         if (!sourceOutOfCombat) {
-            opponentIds.addAll(combatOpponentIds(gameData, entry.getSourcePermanentId(), destroyEffect));
+            opponentIds.addAll(combatOpponentIds(gameData, creatureId, destroyEffect));
         }
         List<DepartureIntent> intents = new ArrayList<>();
         for (UUID opponentId : opponentIds) {

@@ -13,6 +13,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Flags the source permanent for sacrifice at the beginning of the next cleanup step.
@@ -42,11 +47,10 @@ public class SacrificeSelfAtNextCleanupEffectHandler implements NormalEffectHand
             return;
         }
 
-        gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedCleanupTrigger(
-                entry.getControllerId(), entry.getCard(),
-                new com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect(1,
-                        new com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate(sourceId),
-                        com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.CONTROLLER)));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.cleanup(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), null,
+                new SacrificePermanentsEffect(1, new PermanentIsSpecificPermanentPredicate(sourceId),
+                        SacrificeRecipient.CONTROLLER)));
         gameLogService.append(gameData, GameLog.text(source.getCard().getName()
                 + " will be sacrificed at the beginning of the next cleanup step."));
         log.info("Game {} - {} scheduled for sacrifice at next cleanup", gameData.id, source.getCard().getName());

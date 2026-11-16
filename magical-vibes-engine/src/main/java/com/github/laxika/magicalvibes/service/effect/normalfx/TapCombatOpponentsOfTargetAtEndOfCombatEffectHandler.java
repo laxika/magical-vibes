@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.DelayedReferents;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCombatOpponentsOfTargetAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +20,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Resolves {@link TapCombatOpponentsOfTargetAtEndOfCombatEffect}. The spell's form records its
- * targets in one {@link TapCombatOpponentsAtEndOfCombat} delayed trigger; the delayed trigger's form
+ * Resolves {@link TapCombatOpponentsOfTargetAtEndOfCombatEffect}. The spell's form registers one delayed
+ * triggered ability about its targets for this turn's next end of combat; the delayed ability's form
  * taps each creature blocked by one of those creatures this turn and keeps it from untapping during
  * its controller's next untap step.
  */
@@ -39,12 +41,18 @@ public class TapCombatOpponentsOfTargetAtEndOfCombatEffectHandler implements Nor
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         if (((TapCombatOpponentsOfTargetAtEndOfCombatEffect) effect).schedule()) {
-            gameData.queueDelayedAction(new TapCombatOpponentsAtEndOfCombat(
-                    List.copyOf(entry.targetsForEffect(effect)), entry.getCard(), entry.getControllerId()));
+            List<UUID> creatureIds = List.copyOf(entry.targetsForEffect(effect));
+            if (creatureIds.isEmpty()) {
+                return;
+            }
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStepThisTurn(
+                    Triggers.endOfCombat(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
+                    creatureIds.getFirst(), DelayedReferents.permanents(creatureIds),
+                    new TapCombatOpponentsOfTargetAtEndOfCombatEffect(false)));
             return;
         }
         Set<UUID> blockedIds = new LinkedHashSet<>();
-        for (UUID creatureId : entry.getTriggeringPermanentIds()) {
+        for (UUID creatureId : entry.getDeclaredTargetIds()) {
             blockedIds.addAll(gameData.combatOpponentIdsBlockedByThisTurn.getOrDefault(creatureId, Set.of()));
         }
         for (UUID blockedId : blockedIds) {

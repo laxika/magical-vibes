@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +36,9 @@ public class ReturnTargetPermanentToHandAtEndStepEffectHandler implements Normal
             return;
         }
 
-        gameData.queueDelayedAction(new DelayedPermanentAction(target.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
+        DelayedPermanentActions.schedule(gameData, entry,
+                new DelayedPermanentAction(target.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP),
+                ActivePlayer.ANY);
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " will be returned to its owner's hand at the beginning of the next end step."));
         log.info("Game {} - {} scheduled for return to hand at end step", gameData.id, target.getCard().getName());

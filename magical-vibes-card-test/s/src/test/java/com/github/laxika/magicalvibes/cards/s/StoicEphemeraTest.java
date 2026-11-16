@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -34,8 +34,8 @@ class StoicEphemeraTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class))
-                .anyMatch(action -> action.permanentId().equals(stoicEphemera.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(action -> stoicEphemera.getId().equals(action.sourcePermanentId()));
     }
 
     @Test
@@ -66,7 +66,7 @@ class StoicEphemeraTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.hasDelayedAction(SacrificeAtEndOfCombat.class)).isFalse();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).isEmpty();
         harness.assertOnBattlefield(player2, "Stoic Ephemera");
     }
 

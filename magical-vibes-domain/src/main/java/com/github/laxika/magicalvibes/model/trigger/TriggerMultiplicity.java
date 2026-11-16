@@ -15,6 +15,13 @@ public enum TriggerMultiplicity {
      */
     ONE_OR_MORE,
     /**
+     * Once for the combat damage step however many players the damage is dealt to: "whenever one or more creatures
+     * you control deal combat damage to one or more players" (Forth Eorlingas!), where {@link #ONE_OR_MORE} on "to a
+     * player" is once for each player dealt damage (CR 603.2c). Only delayed "deals combat damage to a player"
+     * triggers have it.
+     */
+    ONE_OR_MORE_PLAYERS,
+    /**
      * Once for each creature blocking the attacking creature: "whenever this creature becomes blocked by a creature"
      * (CR 509.3d), where the default "becomes blocked" triggers once however many creatures block it (CR 509.3c).
      */

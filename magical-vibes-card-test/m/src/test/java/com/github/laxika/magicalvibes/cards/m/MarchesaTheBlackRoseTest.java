@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldUnderControl;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 
 @CardUsed({MarchesaTheBlackRose.class, GrizzlyBears.class, LightningBolt.class,
         DacksDuplicate.class, Reanimate.class})
@@ -41,7 +41,7 @@ class MarchesaTheBlackRoseTest extends BaseCardTest {
 
         destroyBears();
 
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
         harness.assertInGraveyard(player1, "Grizzly Bears");
 
         advanceToEndStep();
@@ -60,7 +60,7 @@ class MarchesaTheBlackRoseTest extends BaseCardTest {
 
         destroyBears();
 
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
         advanceToEndStep();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -77,7 +77,7 @@ class MarchesaTheBlackRoseTest extends BaseCardTest {
         harness.runStateBasedActions();
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
         advanceToEndStep();
 
         harness.assertOnBattlefield(player1, "Marchesa, the Black Rose");

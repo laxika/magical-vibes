@@ -6,10 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoHandAndDiscardAtNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardSpecificCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
@@ -45,8 +47,8 @@ public class ConjureCardIntoHandAndDiscardAtNextEndStepEffectHandler implements 
 
         Card sourceCard = entry.getCard().createRuntimeCopy();
         sourceCard.clearRuntimeSpellTargets();
-        gameData.queueDelayedAction(new DelayedEndStepTrigger(
-                entry.getControllerId(), sourceCard, entry.getSourcePermanentId(),
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(Triggers.endStep(
+                ActivePlayer.ANY), entry.getControllerId(), sourceCard, entry.getSourcePermanentId(),
                 entry.getSourcePermanentId(), new DiscardSpecificCardEffect(conjured.getId())));
     }
 }

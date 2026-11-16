@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelectedPermanentToHandAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -36,8 +38,10 @@ public class ReturnSelectedPermanentToHandAtEndOfCombatEffectHandler implements 
             return;
         }
 
-        gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(),
-                DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_OF_COMBAT));
+        DelayedPermanentActions.schedule(gameData, entry,
+                new DelayedPermanentAction(permanent.getId(),
+                        DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_OF_COMBAT),
+                ActivePlayer.ANY);
         gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(),
                 " will be returned to its owner's hand at end of combat."));
     }

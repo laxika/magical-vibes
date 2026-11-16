@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.t.TolarianSerpent;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -27,8 +27,8 @@ class SawtoothOgreTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities(); // resolve the becomes-blocked trigger
 
-        assertThat(gd.getDelayedActions(DealDamageToPermanentAtEndOfCombat.class))
-                .anyMatch(a -> a.permanentId().equals(blocker.getId()) && a.damage() == 1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> blocker.getId().equals(a.watchedPermanentId()));
         assertThat(blocker.getMarkedDamage()).isZero();
 
         leaveEndOfCombat();
@@ -47,8 +47,8 @@ class SawtoothOgreTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities(); // resolve the block trigger
 
-        assertThat(gd.getDelayedActions(DealDamageToPermanentAtEndOfCombat.class))
-                .anyMatch(a -> a.permanentId().equals(attacker.getId()) && a.damage() == 1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> attacker.getId().equals(a.watchedPermanentId()));
 
         leaveEndOfCombat();
 
@@ -67,9 +67,9 @@ class SawtoothOgreTest extends BaseCardTest {
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(gd.getDelayedActions(DealDamageToPermanentAtEndOfCombat.class))
-                .anyMatch(a -> a.permanentId().equals(firstBlocker.getId()))
-                .anyMatch(a -> a.permanentId().equals(secondBlocker.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> firstBlocker.getId().equals(a.watchedPermanentId()))
+                .anyMatch(a -> secondBlocker.getId().equals(a.watchedPermanentId()));
 
         leaveEndOfCombat();
 
@@ -85,7 +85,7 @@ class SawtoothOgreTest extends BaseCardTest {
 
         leaveEndOfCombat();
 
-        assertThat(gd.hasDelayedAction(DealDamageToPermanentAtEndOfCombat.class)).isFalse();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).isEmpty();
         assertThat(blocker.getMarkedDamage()).isZero();
     }
 
@@ -142,7 +142,7 @@ class SawtoothOgreTest extends BaseCardTest {
 
         harness.assertLife(player2, 17);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.hasDelayedAction(DealDamageToPermanentAtEndOfCombat.class)).isFalse();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).isEmpty();
     }
 
     private void leaveEndOfCombat() {

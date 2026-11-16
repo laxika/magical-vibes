@@ -4,12 +4,19 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedDestroyCreatureDamagedByTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSacrificeSourceWhenTargetLeavesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityAboutTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 
 @CardRegistration(set = "MIR", collectorNumber = "291")
 public class AcidicDagger extends Card {
@@ -22,7 +29,10 @@ public class AcidicDagger extends Card {
                 true,
                 "{4}",
                 List.of(
-                        new RegisterDelayedDestroyCreatureDamagedByTargetEffect(),
+                        new RegisterGlobalTriggeredAbilityAboutTargetUntilEndOfTurnEffect(new TriggeredAbility(
+                                Triggers.dealsDamageToCreature().withCombatDamageOnly().withDamagedFilter(
+                                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.WALL))),
+                                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING, true))),
                         new RegisterDelayedSacrificeSourceWhenTargetLeavesEffect()
                 ),
                 "{4}, {T}: Whenever target creature deals combat damage to a non-Wall creature this "

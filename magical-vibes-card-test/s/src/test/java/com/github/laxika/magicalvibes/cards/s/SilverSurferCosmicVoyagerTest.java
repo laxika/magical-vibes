@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,7 +39,7 @@ class SilverSurferCosmicVoyagerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Forest");
-        assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(1);
+        assertThat(DelayedPermanentMoves.waitingExileReturns(gd)).hasSize(1);
 
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
@@ -56,7 +56,7 @@ class SilverSurferCosmicVoyagerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
+        assertThat(DelayedPermanentMoves.waitingExileReturns(gd)).isEmpty();
         harness.assertOnBattlefield(player1, "Silver Surfer, Cosmic Voyager");
     }
 
@@ -71,7 +71,7 @@ class SilverSurferCosmicVoyagerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Forest");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
+        assertThat(DelayedPermanentMoves.waitingExileReturns(gd)).isEmpty();
     }
 
     @Test

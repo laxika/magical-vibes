@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseAttackTargetsForCreatedTokensEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -73,8 +75,9 @@ public class ChooseAttackTargetsForCreatedTokensEffectHandler implements NormalE
                 continue;
             }
             if (step.sacrificeAtEndStep()) {
-                gameData.queueDelayedAction(new DelayedPermanentAction(token.getId(),
-                        DelayedPermanentActionKind.SACRIFICE_AT_END_STEP, false, null, null, controllerId));
+                DelayedPermanentActions.schedule(gameData, controllerId, entry.getCard(), entry.getSourcePermanentId(),
+                        new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
+                        ActivePlayer.ANY);
             }
             if (inCombat && gameQueryService.isCreature(gameData, token)) {
                 token.enterAttacking(true);

@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnTopOfLibraryAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -36,8 +38,10 @@ public class PutSelfOnTopOfLibraryAtEndOfCombatEffectHandler implements NormalEf
             return;
         }
 
-        gameData.queueDelayedAction(new DelayedPermanentAction(self.getId(),
-                DelayedPermanentActionKind.PUT_ON_TOP_OF_LIBRARY_AT_END_OF_COMBAT));
+        DelayedPermanentActions.schedule(gameData, entry,
+                new DelayedPermanentAction(self.getId(),
+                        DelayedPermanentActionKind.PUT_ON_TOP_OF_LIBRARY_AT_END_OF_COMBAT),
+                ActivePlayer.ANY);
         gameLogService.append(gameData, GameLog.cardThen(self.getCard(),
                 " will be put on top of its owner's library at end of combat."));
     }

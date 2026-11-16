@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -46,7 +46,7 @@ class OjutaisSummonsTest extends BaseCardTest {
 
         assertThat(djinnMonkTokens(player1)).hasSize(1);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -58,7 +58,7 @@ class OjutaisSummonsTest extends BaseCardTest {
         assertThat(djinnMonkTokens(player1)).hasSize(2);
         assertThat(gd.findExiledCard(card.getId())).isNull();
         harness.assertInGraveyard(player1, "Ojutai's Summons");
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -75,7 +75,7 @@ class OjutaisSummonsTest extends BaseCardTest {
         assertThat(djinnMonkTokens(player1)).hasSize(1);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         harness.assertNotInGraveyard(player1, "Ojutai's Summons");
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
 
         advanceToUpkeep(player2);
         advanceToUpkeep(player1);

@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.b.Banefire;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranHomeGuard;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -49,18 +50,12 @@ class ArcaneDenialTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
 
-        List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
+        List<TemporaryGlobalTriggeredAbility> scheduled = gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP);
         assertThat(scheduled).hasSize(2);
-        assertThat(scheduled).anySatisfy(a -> {
-            assertThat(a.controllerId()).isEqualTo(player1.getId());
-            assertThat(a.count()).isEqualTo(2);
-            assertThat(a.upTo()).isTrue();
-        });
-        assertThat(scheduled).anySatisfy(a -> {
-            assertThat(a.controllerId()).isEqualTo(player2.getId());
-            assertThat(a.count()).isEqualTo(1);
-            assertThat(a.upTo()).isFalse();
-        });
+        assertThat(scheduled).allMatch(a -> a.controllerId().equals(player2.getId()));
+        // The countered spell's controller is the one who may draw up to two; the caster simply draws one.
+        assertThat(scheduled).extracting(TemporaryGlobalTriggeredAbility::watchedPlayerId)
+                .containsExactlyInAnyOrder(player1.getId(), null);
     }
 
     @Test
@@ -78,7 +73,7 @@ class ArcaneDenialTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 2);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -116,7 +111,7 @@ class ArcaneDenialTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(2);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(2);
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
@@ -124,7 +119,7 @@ class ArcaneDenialTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -160,7 +155,7 @@ class ArcaneDenialTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(2);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(2);
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
@@ -169,6 +164,6 @@ class ArcaneDenialTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 }

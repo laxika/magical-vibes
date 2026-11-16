@@ -433,6 +433,11 @@ public final class Triggers {
         return new StepTrigger(StepTrigger.Moment.END_STEP, player);
     }
 
+    /** "At the beginning of the next cleanup step", a delayed triggered ability's only (CR 514.3a). */
+    public static StepTrigger cleanup() {
+        return new StepTrigger(StepTrigger.Moment.CLEANUP, ActivePlayer.ANY);
+    }
+
     /** "Whenever you cast a spell". */
     public static SpellTrigger youCastSpell() {
         return new SpellTrigger(SpellTrigger.SpellEvent.CAST, PlayerRelation.YOU);
@@ -657,6 +662,11 @@ public final class Triggers {
     /** "Whenever a creature you control attacks and isn't blocked". */
     public static CombatTrigger creatureYouControlAttacksUnblocked() {
         return new CombatTrigger(CombatTrigger.CombatEvent.ATTACKS_UNBLOCKED, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a creature attacks and isn't blocked". */
+    public static CombatTrigger creatureAttacksUnblocked() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ATTACKS_UNBLOCKED, ObjectRelation.ANY);
     }
 
     /** "Whenever one or more creatures an opponent controls attack you and aren't blocked". */
@@ -1080,6 +1090,15 @@ public final class Triggers {
     public static DamageTrigger creatureYouControlDealsCombatDamageToPlaneswalker() {
         return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_COMBAT_DAMAGE_TO_PLANESWALKER,
                 ObjectRelation.YOU_CONTROL);
+    }
+
+    /**
+     * "Whenever a creature deals combat damage to this planeswalker": for a delayed ability, the planeswalker whose
+     * ability created it. The creature is the entry's non-targeting "that creature" and triggering permanent.
+     */
+    public static DamageTrigger creatureDealsCombatDamageToThisPlaneswalker() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_COMBAT_DAMAGE_TO_THIS_PLANESWALKER,
+                ObjectRelation.ANY);
     }
 
     /** "Whenever a creature deals damage to enchanted planeswalker". */

@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndTemporarilyReanimateMilledCreaturesEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
@@ -85,9 +87,10 @@ public class MillControllerAndTemporarilyReanimateMilledCreaturesEffectHandler
             graveyardReturnSupport.handleCreatureEtbAndLegendRule(
                     gameData, controllerId, permanent, permanent.getCard());
             if (gameQueryService.findPermanentById(gameData, permanent.getId()) != null) {
-                gameData.queueDelayedAction(new DelayedPermanentAction(
-                        permanent.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP,
-                        false, null, null, null, false, entry.getCard()));
+                DelayedPermanentActions.schedule(gameData, entry,
+                        new DelayedPermanentAction(permanent.getId(),
+                                DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP),
+                        ActivePlayer.ANY);
             }
         }
     }

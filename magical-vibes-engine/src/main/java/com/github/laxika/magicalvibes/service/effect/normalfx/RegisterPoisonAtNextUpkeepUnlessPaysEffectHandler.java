@@ -1,9 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterPoisonAtNextUpkeepUnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -14,8 +19,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves Sabertooth Cobra's {@code ON_DAMAGE_TO_PLAYER} trigger: reads the damaged player from the
- * stack entry's non-targeting {@code targetId} (recorded by the damage collector) and queues a
- * {@link PoisonAtNextUpkeepUnlessPays} delayed action, drained at that player's next upkeep.
+ * stack entry's non-targeting {@code targetId} (recorded by the damage collector) and adds a
+ * delayed triggered ability for that player's next upkeep.
  */
 @Slf4j
 @Component
@@ -35,8 +40,11 @@ public class RegisterPoisonAtNextUpkeepUnlessPaysEffectHandler implements Normal
         UUID playerId = entry.getTargetId();
         if (playerId == null) return;
 
-        gameData.queueDelayedAction(new PoisonAtNextUpkeepUnlessPays(
-                playerId, entry.getControllerId(), e.amount(), e.manaCost(), entry.getCard()));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStepUnlessPaid(
+                entry.getControllerId(), entry.getCard(),
+                new TriggeredAbility(Triggers.upkeep(ActivePlayer.CHOSEN_PLAYER),
+                        new GivePoisonCountersEffect(e.amount(), PoisonRecipient.TARGET_PLAYER)),
+                entry.getSourcePermanentId(), null, playerId, e.manaCost()));
 
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " will get another poison counter at the"

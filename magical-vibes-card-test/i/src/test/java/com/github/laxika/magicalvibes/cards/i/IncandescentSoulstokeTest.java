@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
 import com.github.laxika.magicalvibes.cards.f.FlamekinBrawler;
 import com.github.laxika.magicalvibes.cards.h.HillcomberGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -10,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -126,7 +126,7 @@ class IncandescentSoulstokeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertNotOnBattlefield(player1, "Flamekin Brawler");
-        assertThat(gd.getDelayedActions(SacrificeSelfAtNextEndStepTrigger.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test
@@ -207,7 +207,7 @@ class IncandescentSoulstokeTest extends BaseCardTest {
         assertThat(soulstoke.isTapped()).isTrue();
         harness.assertInHand(player1, "Hillcomber Giant");
         harness.assertInHand(player1, "Mountain");
-        assertThat(gd.getDelayedActions(SacrificeSelfAtNextEndStepTrigger.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     private void putElementalFromHand(int cardIndex) {

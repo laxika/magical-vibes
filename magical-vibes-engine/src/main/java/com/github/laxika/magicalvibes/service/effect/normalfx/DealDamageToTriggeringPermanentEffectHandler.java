@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -40,7 +41,10 @@ public class DealDamageToTriggeringPermanentEffectHandler implements NormalEffec
 
         Permanent triggering = entry.getTriggeringPermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
-        if (triggering == null) {
+        // Damage is dealt to a creature, planeswalker or battle only: "it" may have stopped being one (CR 603.7c).
+        if (triggering == null || !gameQueryService.isCreature(gameData, triggering)
+                && !gameQueryService.isPlaneswalker(gameData, triggering)
+                && !triggering.getCard().hasType(CardType.BATTLE)) {
             return;
         }
 

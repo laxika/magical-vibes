@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,7 +43,7 @@ class WakeToSlaughterTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.getDelayedActions(com.github.laxika.magicalvibes.model.action.DelayedPermanentAction.class))
+        assertThat(DelayedPermanentMoves.waiting(gd))
                 .anyMatch(action -> action.permanentId().equals(returned.getId()));
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

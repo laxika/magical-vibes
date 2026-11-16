@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.DelayedReturnAuraAttachedToPermanent;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -25,6 +25,12 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
+import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardAttachedToPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @Component
 @RequiredArgsConstructor
@@ -70,7 +76,7 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
                             UUID sourceCardId, String sourceCardName, CounterType enterWithCounter,
                             int enterWithCounterCount, boolean grantHaste, boolean returnToHandAtEndStep,
                             boolean includeGraveyard, boolean includeCommandZone,
-                            UUID delayedAuraCardId, UUID delayedAuraOwnerId,
+                            UUID delayedAuraCardId, UUID delayedAuraControllerId,
                             boolean handleCreatureEtbAndLegendRule) {
         List<UUID> validCardIds = new ArrayList<>();
         addMatchingCardIds(validCardIds, gameData.playerHands.get(playerId), predicate,
@@ -91,7 +97,7 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
                 new PendingInteraction.PutCardFromHandOrGraveyardChoice(
                         playerId, validCardIds, label, sourceCardName, enterWithCounter, enterWithCounterCount,
                         grantHaste, returnToHandAtEndStep, includeGraveyard, includeCommandZone,
-                        delayedAuraCardId, delayedAuraOwnerId, handleCreatureEtbAndLegendRule));
+                        delayedAuraCardId, delayedAuraControllerId, handleCreatureEtbAndLegendRule));
     }
 
     public void applyChoice(GameData gameData, UUID playerId, UUID chosenCardId, String sourceCardName) {
@@ -126,7 +132,7 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
                             CounterType enterWithCounter, int enterWithCounterCount,
                             boolean grantHaste, boolean returnToHandAtEndStep,
                             boolean includeGraveyard, boolean includeCommandZone,
-                            UUID delayedAuraCardId, UUID delayedAuraOwnerId,
+                            UUID delayedAuraCardId, UUID delayedAuraControllerId,
                             boolean handleCreatureEtbAndLegendRule) {
         Card chosen = removeCard(gameData.playerHands.get(playerId), chosenCardId);
         String zone = "hand";
@@ -161,16 +167,41 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
             graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, playerId, permanent, chosen);
         }
         if (returnToHandAtEndStep) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(
-                    permanent.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
+            DelayedPermanentActions.scheduleForResolution(gameData, playerId, permanent,
+                    new DelayedPermanentAction(permanent.getId(),
+                            DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP),
+                    ActivePlayer.ANY);
         }
-        if (delayedAuraCardId != null && delayedAuraOwnerId != null) {
-            gameData.queueDelayedAction(new DelayedReturnAuraAttachedToPermanent(
-                    delayedAuraCardId, delayedAuraOwnerId, permanent.getId()));
+        if (delayedAuraCardId != null && delayedAuraControllerId != null) {
+            registerAuraReturn(gameData, delayedAuraCardId, delayedAuraControllerId, permanent.getId());
         }
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " puts "
                 + chosen.getName() + " from their " + zone + " onto the battlefield ("
                 + sourceCardName + ")."));
+    }
+
+    /**
+     * The delayed triggered ability "return {@code auraCardId} to the battlefield attached to that creature at the
+     * beginning of the next end step" (Next of Kin) that its controller {@code controllerId} made as the creature
+     * {@code enchantedPermanentId} entered. The Aura card is the one in a graveyard now (CR 400.7), and comes back
+     * under {@code controllerId}'s control (CR 110.2a).
+     */
+    private void registerAuraReturn(GameData gameData, UUID auraCardId, UUID controllerId,
+                                    UUID enchantedPermanentId) {
+        for (UUID graveyardOwnerId : gameData.orderedPlayerIds) {
+            for (Card aura : gameData.playerGraveyards.getOrDefault(graveyardOwnerId, List.of())) {
+                if (aura.getId().equals(auraCardId)) {
+                    gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                            controllerId, aura,
+                            new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),
+                                    new ReturnAuraFromGraveyardAttachedToPermanentEffect(
+                                            auraCardId, controllerId, enchantedPermanentId)),
+                            null, null, null,
+                            DelayedReferents.graveyardCard(auraCardId, gameData.graveyardEntryVersion(auraCardId))));
+                    return;
+                }
+            }
+        }
     }
 
     private void addMatchingCardIds(List<UUID> destination, List<Card> cards, CardPredicate predicate,

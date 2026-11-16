@@ -12,9 +12,11 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -148,8 +150,9 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
             entry.rememberReturnedPermanent(perm.getId());
             simultaneouslyEntered.add(perm);
             if (returnEffect.sacrificeAtEndStep()) {
-                gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
-                        DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                DelayedPermanentActions.schedule(gameData, entry,
+                        new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
+                        ActivePlayer.ANY);
             }
 
             gameLogService.append(gameData, GameLog.builder().card(card).text(" returns to the battlefield under " + gameData.playerIdToName.get(newControllerId) + "'s control.").build());

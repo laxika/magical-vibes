@@ -5,7 +5,14 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedExileReturnCounterTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.filter.PermanentReturnedWhenSourceLeftPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSourceLeavesWithCounterEffect;
@@ -73,14 +80,17 @@ public class ExileTargetCreaturesUntilSourceLeavesWithCounterEffectHandler
             }
         }
 
-        if (sourcePermanentId != null) {
-            gameData.queueDelayedAction(new DelayedExileReturnCounterTrigger(
-                    sourcePermanentId,
-                    entry.getControllerId(),
-                    entry.getCard(),
-                    exileEffect.counterType(),
-                    exileEffect.counterAmount()));
-        }
+        // "When an exiled card enters under your control this way, put two +1/+1 counters on it": a delayed triggered
+        // ability this resolution makes (CR 603.7a), controlled by the ability's controller (CR 603.7e), that triggers
+        // once, the next time a card returns this way (CR 603.7b), even if the source has since lost its abilities.
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.about(
+                entry.getControllerId(), entry.getCard(),
+                new TriggeredAbility(
+                        Triggers.enters(new PermanentReturnedWhenSourceLeftPredicate(sourcePermanentId),
+                                ObjectRelation.YOU_CONTROL),
+                        new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING,
+                                exileEffect.counterType(), new Fixed(exileEffect.counterAmount()))),
+                null, sourcePermanentId, false));
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 

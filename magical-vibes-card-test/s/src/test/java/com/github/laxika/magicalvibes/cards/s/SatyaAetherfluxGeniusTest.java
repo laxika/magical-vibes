@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.SacrificePermanentAtControllerEndStepUnlessPays;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -240,7 +240,7 @@ class SatyaAetherfluxGeniusTest extends BaseCardTest {
             assertThat(token.isAttacking()).isTrue();
             assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
         });
-        assertThat(gd.getDelayedActions(SacrificePermanentAtControllerEndStepUnlessPays.class)).hasSize(4);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(4);
     }
 
     @Test
@@ -256,7 +256,7 @@ class SatyaAetherfluxGeniusTest extends BaseCardTest {
 
         assertThat(bearTokens()).hasSize(2);
         assertThat(findPermanents(player1, "Soldier")).hasSize(1);
-        assertThat(gd.getDelayedActions(SacrificePermanentAtControllerEndStepUnlessPays.class)).hasSize(3);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(3);
     }
 
     private void attackUnderQueenAndParallelLives() {

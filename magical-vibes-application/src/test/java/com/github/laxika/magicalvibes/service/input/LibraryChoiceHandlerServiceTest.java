@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -19,7 +20,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachOneOfEquipmentToSamuraiEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -472,7 +472,7 @@ class LibraryChoiceHandlerServiceTest {
                 entered.capture(), any(Set.class), any(List.class), isNull());
         assertThat(entered.getValue().getPersistentTriggerEffects(Triggers.endStep(ActivePlayer.YOU)))
                 .singleElement().isInstanceOf(ReturnToHandEffect.class);
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
+        assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
     }
 
     @Test

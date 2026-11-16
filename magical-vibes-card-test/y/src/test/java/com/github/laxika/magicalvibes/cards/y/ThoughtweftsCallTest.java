@@ -51,6 +51,23 @@ class ThoughtweftsCallTest extends BaseCardTest {
     }
 
     @Test
+    void doesNotExileSoughtKithkinThatLeftHandAndCameBack() {
+        Card kithkin = new KithkinBillyrider();
+        harness.setLibrary(player1, List.of(kithkin));
+        castWithMode(0);
+        harness.assertInHand(player1, "Kithkin Billyrider");
+
+        gd.playerHands.get(player1.getId()).remove(kithkin);
+        gd.addCardToHand(player1.getId(), kithkin);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Kithkin Billyrider");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(kithkin);
+    }
+
+    @Test
     void perpetuallyBoostsCreatureCardsInHand() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(new ThoughtweftsCall(), bears));

@@ -4,13 +4,15 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndStepIfAttackedEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -41,8 +43,9 @@ public class DestroyTargetPermanentAtEndStepIfAttackedEffectHandler implements N
         CardEffect destruction = new ConditionalEffect(
                 new TargetPermanentMatches(new PermanentAttackedThisTurnPredicate()),
                 new DestroyTargetPermanentEffect());
-        gameData.queueDelayedAction(new DelayedEndStepTrigger(entry.getControllerId(), entry.getCard(),
-                entry.getSourcePermanentId(), target.getId(), destruction));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(Triggers.endStep(
+                ActivePlayer.ANY), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
+                target.getId(), destruction));
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " will be destroyed at the beginning of the next end step if it attacked this turn."));

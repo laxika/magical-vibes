@@ -1,6 +1,4 @@
 package com.github.laxika.magicalvibes.cards.j;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
-
 import com.github.laxika.magicalvibes.cards.p.PerilousVoyage;
 import com.github.laxika.magicalvibes.cards.s.SirenStormtamer;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -11,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,7 +17,9 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -28,7 +29,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 class JaceCunningCastawayTest extends BaseCardTest {
 
     @Test
-    @DisplayName("+1 ability increases loyalty and registers delayed loot trigger")
+    @DisplayName("+1 ability increases loyalty and registers a delayed ability of Jace's controller")
     void plusOneRegistersDelayedLootTrigger() {
         Permanent jace = addReadyJace(player1);
 
@@ -37,25 +38,10 @@ class JaceCunningCastawayTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(4); // 3 + 1
-        assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class)).hasSize(1);
-        assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class).getFirst().controllerId()).isEqualTo(player1.getId());
-        assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class).getFirst().drawAmount()).isEqualTo(1);
-        assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class).getFirst().discardAmount()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("+1 delayed trigger data is correctly stored with source card reference")
-    void plusOneDelayedTriggerStoresSourceCard() {
-        Permanent jace = addReadyJace(player1);
-
-        harness.activateAbility(player1, 0, 0, null, null);
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
-        assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class)).hasSize(1);
-        DelayedCombatDamageLoot loot = gd.getDelayedActions(DelayedCombatDamageLoot.class).getFirst();
-        assertThat(loot.sourceCard()).isNotNull();
-        assertThat(loot.sourceCard()).isSameAs(jace.getCard());
+        assertThat(gd.temporaryGlobalTriggeredAbilities).singleElement().satisfies(delayed -> {
+            assertThat(delayed.controllerId()).isEqualTo(player1.getId());
+            assertThat(delayed.sourceCard()).isSameAs(jace.getCard());
+        });
     }
 
     @Test
@@ -265,6 +251,38 @@ class JaceCunningCastawayTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawn);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("+1 loots once for each player dealt combat damage, as it says \"to a player\"")
+    void lootsOncePerPlayerDealtCombatDamage() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        addReadyJace(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
+        Permanent first = addCreatureReady(player1, new SirenStormtamer());
+        Permanent second = addCreatureReady(player1, new SirenStormtamer());
+        first.setAttacking(true);
+        second.setAttacking(true);
+        second.setAttackTarget(thirdPlayerId);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.stack).hasSize(2);
     }
 
     private Permanent addReadyJace(Player player) {

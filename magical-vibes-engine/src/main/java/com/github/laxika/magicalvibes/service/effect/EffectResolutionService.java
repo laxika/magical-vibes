@@ -143,6 +143,8 @@ public class EffectResolutionService {
      */
     public void resolveEffectsFrom(GameData gameData, StackEntry entry, int startIndex) {
         UUID previousTriggeredAbilityControllerId = gameData.currentlyResolvingTriggeredAbilityControllerId;
+        StackEntry previousResolvingEntry = gameData.resolvingEntry;
+        gameData.resolvingEntry = entry;
         if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
             gameData.currentlyResolvingTriggeredAbilityControllerId = entry.getControllerId();
         }
@@ -181,6 +183,7 @@ public class EffectResolutionService {
                 }
             }
             gameData.currentlyResolvingTriggeredAbilityControllerId = previousTriggeredAbilityControllerId;
+            gameData.resolvingEntry = previousResolvingEntry;
         }
     }
 

@@ -6,8 +6,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * entry's non-targeting {@code targetId} — nothing is chosen, so this effect declares no
  * {@link TargetSpec}.
  *
- * <p>Resolution creates a {@link com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger}
- * carrying a {@link PhaseOutEffect} for the attacker, so the creature is still around to deal its
+ * <p>Resolution registers a delayed "at end of combat" ability about the attacker carrying a
+ * {@link PhaseOutEffect}, so the creature is still around to deal its
  * combat damage and the phasing uses the stack. The phasing itself goes through
  * {@code PhasingService}, which takes attachments along indirectly (CR 702.26g) and removes the
  * permanent from combat (CR 506.4); because it phased out directly it phases in during its

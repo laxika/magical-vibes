@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -36,8 +36,8 @@ class KaijinOfTheVanishingTouchTest extends BaseCardTest {
                         && se.getTargetId().equals(attacker.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> attacker.getId().equals(a.affectedPermanentId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> attacker.getId().equals(a.watchedPermanentId()));
     }
 
     @Test
@@ -122,8 +122,8 @@ class KaijinOfTheVanishingTouchTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, attacker)).isFalse();
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> attacker.getId().equals(a.affectedPermanentId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> attacker.getId().equals(a.watchedPermanentId()));
 
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
         harness.assertInHand(player1, "Frostling");

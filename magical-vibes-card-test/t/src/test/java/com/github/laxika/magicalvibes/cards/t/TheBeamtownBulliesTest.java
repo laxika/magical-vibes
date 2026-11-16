@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -34,7 +34,7 @@ class TheBeamtownBulliesTest extends BaseCardTest {
         assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
         assertThat(als.getMustAttackRequirementCount(gd, returned)).isEqualTo(1);
         assertThat(gd.stolenCreatures).containsEntry(returned.getId(), player1.getId());
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+        assertThat(DelayedPermanentMoves.waiting(gd))
                 .anyMatch(action -> action.permanentId().equals(returned.getId())
                         && action.kind() == DelayedPermanentActionKind.EXILE_AT_END_STEP);
         harness.assertNotInGraveyard(player1, "Grizzly Bears");

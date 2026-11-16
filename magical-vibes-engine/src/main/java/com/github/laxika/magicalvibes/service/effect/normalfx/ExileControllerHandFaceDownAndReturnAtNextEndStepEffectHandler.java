@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileControllerHandFaceDownAndReturnAtNextEndStepEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -35,18 +34,20 @@ public class ExileControllerHandFaceDownAndReturnAtNextEndStepEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        List<Card> hand = gameData.playerHands.get(controllerId);
-        if (hand == null || hand.isEmpty()) {
-            return;
-        }
-
+        var exile = (ExileControllerHandFaceDownAndReturnAtNextEndStepEffect) effect;
+        List<Card> hand = gameData.playerHands.getOrDefault(controllerId, new ArrayList<>());
         List<Card> cardsToExile = new ArrayList<>(hand);
         hand.clear();
-        UUID groupId = UUID.randomUUID();
         for (Card card : cardsToExile) {
             exileService.exileCardFaceDown(gameData, controllerId, card, null);
-            gameData.queueDelayedAction(new ReturnExiledCardToHandAtNextEndStep(
-                    card.getId(), controllerId, entry.getCard(), controllerId, groupId));
+        }
+        if (!cardsToExile.isEmpty() || exile.thenDraw() > 0) {
+            gameData.temporaryGlobalTriggeredAbilities.add(ReturnExiledCardToHandEffectHandler.returnAtNextEndStep(
+                    gameData, controllerId, entry.getCard(), entry.getSourcePermanentId(),
+                    cardsToExile.stream().map(Card::getId).toList(), controllerId, exile.thenDraw(), false));
+        }
+        if (cardsToExile.isEmpty()) {
+            return;
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldUnderControl;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 
 @CardUsed({LilianaDefiantNecromancer.class, LilianaHereticalHealer.class, GrizzlyBears.class, HillGiant.class, Shock.class})
 class LilianaDefiantNecromancerTest extends BaseCardTest {
@@ -104,7 +104,7 @@ class LilianaDefiantNecromancerTest extends BaseCardTest {
 
         // The return is delayed to the beginning of the next end step.
         harness.assertInGraveyard(player2, "Grizzly Bears");
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);

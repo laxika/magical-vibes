@@ -1,16 +1,19 @@
 package com.github.laxika.magicalvibes.service.epic;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
-import com.github.laxika.magicalvibes.model.action.EpicDelayedTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.EpicUpkeepCopyEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import java.util.ArrayList;
@@ -18,8 +21,6 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 /** Resolves Epic's game-long restriction and recurring upkeep spell copies. */
@@ -31,37 +32,20 @@ public class EpicService {
     private final CopySupport copySupport;
     private final GameLogService gameLogService;
 
-    @Autowired
-    @Lazy
-    private TriggeredAbilityStackService triggeredAbilityStackService;
-
     public void register(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
         if (controllerId == null) return;
 
         gameData.playersCantCastSpellsForRestOfGame.add(controllerId);
         Card prototype = copySupport.createCopyCardWithoutEpic(entry.getCard());
-        gameData.queueDelayedAction(new EpicDelayedTrigger(controllerId, prototype, entry.getTargetId()));
+        // "At the beginning of each of your upkeeps for the rest of the game, copy this spell": a delayed triggered
+        // ability the spell made as it resolved, made by the spell and controlled by its controller (CR 702.50a,
+        // 603.7e), that triggers at every one of their upkeeps (CR 603.7b).
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atEveryStep(controllerId,
+                prototype, new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                new EpicUpkeepCopyEffect(entry.getTargetId())), null, null, DelayedReferents.NONE, null));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s Epic ability is registered."));
         log.info("Game {} - {} registers Epic for {}", gameData.id, entry.getCard().getName(), controllerId);
-    }
-
-    public void fireUpkeepTriggers(GameData gameData) {
-        UUID activePlayerId = gameData.activePlayerId;
-        for (EpicDelayedTrigger delayed : gameData.getDelayedActions(EpicDelayedTrigger.class)) {
-            if (!delayed.controllerId().equals(activePlayerId)) continue;
-
-            // Epic's delayed triggered ability, made by the spell as it resolved (CR 702.50a, 603.7d): it copies the
-            // spell with the targets it had, and the copy may choose new ones.
-            StackEntry upkeepTrigger = TriggeredAbilityStackService.madeAbility(delayed.spellPrototype(),
-                    activePlayerId, "Epic copy trigger for " + delayed.spellPrototype().getName(),
-                    List.of(new EpicUpkeepCopyEffect()), delayed.targetId(), (UUID) null);
-            upkeepTrigger.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, upkeepTrigger);
-            gameLogService.append(gameData, GameLog.cardThen(delayed.spellPrototype(), "'s Epic ability triggers."));
-            log.info("Game {} - {} Epic upkeep trigger pushed onto the stack", gameData.id,
-                    delayed.spellPrototype().getName());
-        }
     }
 
     public void createUpkeepCopy(GameData gameData, UUID controllerId, Card prototype, UUID targetId) {

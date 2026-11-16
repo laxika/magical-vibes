@@ -4,11 +4,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutAttackingCreatureAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +38,9 @@ public class PhaseOutAttackingCreatureAtEndOfCombatEffectHandler implements Norm
         if (attacker == null) {
             return;
         }
-        gameData.queueDelayedAction(new DelayedEndOfCombatTrigger(entry.getControllerId(), entry.getCard(),
-                entry.getSourcePermanentId(), attacker.getId(), new PhaseOutEffect(PhaseOutSubject.TARGET)));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.endOfCombat(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
+                attacker.getId(), new PhaseOutEffect(PhaseOutSubject.TARGET)));
         gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(), " will phase out at end of combat."));
     }
 }

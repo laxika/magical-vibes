@@ -11,12 +11,12 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -55,7 +55,7 @@ class YorionSkyNomadTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Null Rod");
         assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
         harness.assertOnBattlefield(player1, "Forest");
-        assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(1);
+        assertThat(DelayedPermanentMoves.waitingExileReturns(gd)).hasSize(1);
 
         advanceToEndStep();
         harness.assertNotOnBattlefield(player1, "Null Rod");
@@ -64,7 +64,7 @@ class YorionSkyNomadTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(2);
         harness.assertOnBattlefield(player1, "Null Rod");
         harness.assertOnBattlefield(player1, "Forest");
-        assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
+        assertThat(DelayedPermanentMoves.waitingExileReturns(gd)).isEmpty();
     }
 
     @Test
@@ -77,7 +77,7 @@ class YorionSkyNomadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
-        assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
+        assertThat(DelayedPermanentMoves.waitingExileReturns(gd)).isEmpty();
     }
 
     @Test
@@ -97,7 +97,7 @@ class YorionSkyNomadTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         harness.assertOnBattlefield(player1, "Almighty Brushwagg");
-        assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
+        assertThat(DelayedPermanentMoves.waitingExileReturns(gd)).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 

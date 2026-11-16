@@ -11,10 +11,12 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAurasFromGraveyardAttachedToCreaturesEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -152,9 +154,9 @@ public class ReturnAurasFromGraveyardAttachedToCreaturesEffectHandler implements
         StackEntry resolvingEntry = gameData.pendingEffectResolutionEntry;
         Card delayedTriggerSource = resolvingEntry != null && resolvingEntry.getCard() != null
                 ? resolvingEntry.getCard() : auraCard;
-        gameData.queueDelayedAction(new DelayedPermanentAction(
-                aura.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP, false, null,
-                controllerId, null, false, delayedTriggerSource));
+        DelayedPermanentActions.schedule(gameData, controllerId, delayedTriggerSource, null,
+                new DelayedPermanentAction(aura.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP),
+                ActivePlayer.YOU);
         creatureControlService.reconcileControl(gameData);
         gameLogService.append(gameData, GameLog.builder()
                 .card(auraCard)

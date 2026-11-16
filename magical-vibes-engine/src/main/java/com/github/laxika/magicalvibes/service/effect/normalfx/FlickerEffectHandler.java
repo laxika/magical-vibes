@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PendingExileReturns;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -148,7 +149,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             returnImmediateBatch(gameData, entry, e, List.of(new FlickeredPermanent(card, ownerId, ownerId, false)));
             return;
         }
-        gameData.queueDelayedAction(new PendingExileReturn(
+        PendingExileReturns.schedule(gameData,new PendingExileReturn(
                 card, ownerId, e.returnTapped(), false, e.returnStep(),
                 e.plusOnePlusOneCountersOnReturn(), List.of(),
                 false, false, false, false, null, null, false,
@@ -199,7 +200,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         Card primaryCard = creatureCards.getFirst();
-        gameData.queueDelayedAction(PendingExileReturn.withCardsAttachedToPrimary(
+        PendingExileReturns.schedule(gameData,PendingExileReturn.withCardsAttachedToPrimary(
                 primaryCard, ownerId, additionalCards, cardsToAttach)
                 .withTriggerSource(entry.getCard(), entry.getControllerId()));
 
@@ -258,7 +259,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                 }
             }
         }
-        gameData.queueDelayedAction(new PendingExileReturn(
+        PendingExileReturns.schedule(gameData,new PendingExileReturn(
                 cards.getFirst(), primaryOwnerId, e.returnTapped(), false, e.returnStep(),
                 e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()),
                 e.returnAtOwnerNextEndStep() || e.returnAtControllerNextStep(), false, false, false,
@@ -423,7 +424,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
 
         // One delayed triggered ability returns every card, each under its owner's control.
         List<Card> cards = cardsByOwner.values().stream().flatMap(List::stream).toList();
-        gameData.queueDelayedAction(new PendingExileReturn(
+        PendingExileReturns.schedule(gameData,new PendingExileReturn(
                 cards.getFirst(), cardsByOwner.keySet().iterator().next(), e.returnTapped(), false, e.returnStep(),
                 e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()),
                 false, e.grantHaste(), false, false, null, null, false,
@@ -457,7 +458,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
 
         // One delayed triggered ability returns every card, each under its owner's control (Ghostway).
         List<Card> cards = cardsByOwner.values().stream().flatMap(List::stream).toList();
-        gameData.queueDelayedAction(new PendingExileReturn(
+        PendingExileReturns.schedule(gameData,new PendingExileReturn(
                 cards.getFirst(), cardsByOwner.keySet().iterator().next(), e.returnTapped(), false, e.returnStep(),
                 e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()),
                 e.returnAtControllerNextStep(), e.grantHaste(), false, false,

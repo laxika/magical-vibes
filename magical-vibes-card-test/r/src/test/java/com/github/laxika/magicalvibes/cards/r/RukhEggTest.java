@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 
 @CardUsed({RukhEgg.class, VolcanicHammer.class, DarkBanishing.class})
 class RukhEggTest extends BaseCardTest {
@@ -36,8 +36,8 @@ class RukhEggTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve death trigger; register delayed token creation
 
         harness.assertInGraveyard(player1, "Rukh Egg");
-        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).hasSize(1);
-        assertThat(gd.getDelayedActions(DelayedCreateToken.class).getFirst().controllerId())
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP).getFirst().controllerId())
                 .isEqualTo(player1.getId());
         // No token yet; it only appears at the next end step.
         harness.assertNotOnBattlefield(player1, "Bird");
@@ -69,7 +69,7 @@ class RukhEggTest extends BaseCardTest {
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.BIRD);
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
         assertThat(token.getCard().isToken()).isTrue();
-        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test
@@ -88,7 +88,7 @@ class RukhEggTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Rukh Egg");
         harness.assertNotOnBattlefield(player1, "Bird");
-        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         harness.assertNotOnBattlefield(player1, "Bird");
@@ -97,7 +97,7 @@ class RukhEggTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Bird");
         harness.assertNotOnBattlefield(player2, "Bird");
-        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test

@@ -1,18 +1,20 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.DelayedReferents;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerUntapRemoveFromCombat;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedUnblockedAttackerUntapRemoveFromCombatEffect;
-import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import org.springframework.stereotype.Component;
 
-@Slf4j
+/** Registers "whenever a creature attacks and isn't blocked this combat, untap it and remove it from combat". */
 @Component
-@RequiredArgsConstructor
 public class RegisterDelayedUnblockedAttackerUntapRemoveFromCombatEffectHandler implements NormalEffectHandlerBean {
 
     @Override
@@ -22,10 +24,12 @@ public class RegisterDelayedUnblockedAttackerUntapRemoveFromCombatEffectHandler 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        gameData.queueDelayedAction(
-                new DelayedUnblockedAttackerUntapRemoveFromCombat(controllerId, entry.getCard()));
-        log.info("Game {} - {} registers delayed untap-and-remove-from-combat for unblocked attackers",
-                gameData.id, entry.getCard().getName());
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.thisTurn(
+                entry.getControllerId(), entry.getCard(),
+                new TriggeredAbility(Triggers.creatureAttacksUnblocked(),
+                        new UntapPermanentsEffect(TapUntapScope.TRIGGERING),
+                        RemoveTargetFromCombatEffect.ofTriggeringPermanent()),
+                entry.getSourcePermanentId())
+                .withReferents(DelayedReferents.NONE.duringCombatPhase(gameData.combatPhasesThisTurn)));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.cards.w.WordOfUndoing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -86,7 +86,7 @@ class TolarianEntrancerTest extends BaseCardTest {
 
         leaveEndOfCombat();
 
-        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(knight);
     }
 
@@ -103,7 +103,7 @@ class TolarianEntrancerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(entrancer.isBlockedWithoutBlockers()).isTrue();
-        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).isEmpty();
     }
 
     @Test

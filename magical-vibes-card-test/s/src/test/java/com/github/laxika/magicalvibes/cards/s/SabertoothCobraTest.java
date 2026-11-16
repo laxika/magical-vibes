@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.g.GiantMantis;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.p.PsionicGift;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -108,7 +108,7 @@ class SabertoothCobraTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(poison()).isEqualTo(1);
-        assertThat(gd.getDelayedActions(PoisonAtNextUpkeepUnlessPays.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
 
     @Test
@@ -148,7 +148,7 @@ class SabertoothCobraTest extends BaseCardTest {
         dealCombatDamageToPlayer2();
 
         assertThat(poison()).isZero();
-        assertThat(gd.getDelayedActions(PoisonAtNextUpkeepUnlessPays.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -177,7 +177,7 @@ class SabertoothCobraTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(poison()).isEqualTo(1);
-        assertThat(gd.getDelayedActions(PoisonAtNextUpkeepUnlessPays.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
 
         advanceToPlayer2UpkeepObligation();
 
@@ -232,7 +232,7 @@ class SabertoothCobraTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 2);
         gs.payDelayedTriggerCost(gd, player2, cobraCard.getId(), player2.getId());
 
-        assertThat(gd.getDelayedActions(PoisonAtNextUpkeepUnlessPays.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
 
         advanceToPlayer2UpkeepObligation();
@@ -258,6 +258,6 @@ class SabertoothCobraTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.payDelayedTriggerCost(gd, player2, cobraCard.getId(), player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
-        assertThat(gd.getDelayedActions(PoisonAtNextUpkeepUnlessPays.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
 }

@@ -20,5 +20,12 @@ public enum CounterRemovalSubject {
     SOURCE,
 
     /** The stack entry's target permanent. */
-    TARGET
+    TARGET,
+
+    /**
+     * The permanent the effect names itself ({@code RemoveAllCountersEffect.permanentId}), without targeting it: what
+     * a delayed ability about another permanent acts on ("when this leaves the battlefield or becomes untapped, remove
+     * all -1/-1 counters from that creature").
+     */
+    NAMED
 }

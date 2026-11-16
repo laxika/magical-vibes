@@ -4,9 +4,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNextEndStep;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEachPlayerHandFaceDownAndReturnAtNextEndStepEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +37,7 @@ public class ExileEachPlayerHandFaceDownAndReturnAtNextEndStepEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<EachPlayerHandExileReturnAtNextEndStep.PlayerCards> players = new ArrayList<>();
+        List<DiscardEachPlayerHandAndReturnExiledCardsEffect.PlayerCards> players = new ArrayList<>();
         for (UUID playerId : apnapOrder(gameData)) {
             List<Card> hand = gameData.playerHands.get(playerId);
             List<Card> cards = hand == null ? List.of() : new ArrayList<>(hand);
@@ -45,7 +48,7 @@ public class ExileEachPlayerHandFaceDownAndReturnAtNextEndStepEffectHandler
             for (Card card : cards) {
                 exileService.exileCardFaceDown(gameData, playerId, card, null);
             }
-            players.add(new EachPlayerHandExileReturnAtNextEndStep.PlayerCards(
+            players.add(new DiscardEachPlayerHandAndReturnExiledCardsEffect.PlayerCards(
                     playerId, cards.stream().map(Card::getId).toList()));
 
             String playerName = gameData.playerIdToName.get(playerId);
@@ -53,8 +56,9 @@ public class ExileEachPlayerHandFaceDownAndReturnAtNextEndStepEffectHandler
                     + " card" + (cards.size() != 1 ? "s" : "") + " from their hand face down."));
         }
 
-        gameData.queueDelayedAction(new EachPlayerHandExileReturnAtNextEndStep(
-                entry.getCard(), entry.getControllerId(), players));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.endStep(ActivePlayer.ANY), entry.getControllerId(), entry.getCard(),
+                entry.getSourcePermanentId(), null, new DiscardEachPlayerHandAndReturnExiledCardsEffect(players)));
         log.info("Game {} - {} exiles every player's hand face down until the next end step",
                 gameData.id, entry.getCard().getName());
     }

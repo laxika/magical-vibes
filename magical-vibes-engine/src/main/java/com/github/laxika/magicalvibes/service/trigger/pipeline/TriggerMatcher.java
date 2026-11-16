@@ -543,7 +543,9 @@ final class TriggerMatcher {
                 continue;
             }
             StepMatch match;
-            if (step.counterAbility() != null) {
+            if (step.delayed() != null) {
+                match = delayedStepMatch(step, trigger, activeId);
+            } else if (step.counterAbility() != null) {
                 match = new StepMatch(step, StepGroup.EXILE_COUNTER, activeId, null);
             } else if (step.plane() != null) {
                 match = trigger.player() == ActivePlayer.YOU
@@ -571,6 +573,24 @@ final class TriggerMatcher {
             }
         }
         return null;
+    }
+
+    /**
+     * A delayed triggered ability's step match: "the next" step is anyone's, "your next" step its controller's, "each
+     * opponent's" anyone else's, and "that player's next" step ({@link ActivePlayer#CHOSEN_PLAYER}) that of the player
+     * its maker named.
+     */
+    private static StepMatch delayedStepMatch(StepCandidate step, StepTrigger trigger, UUID activeId) {
+        UUID controllerId = step.candidate().controllerId();
+        boolean matches = switch (trigger.player()) {
+            case ANY -> true;
+            case YOU -> controllerId.equals(activeId);
+            case OPPONENT -> !controllerId.equals(activeId);
+            case CHOSEN_PLAYER -> activeId.equals(step.delayed().watchedPlayerId());
+            default -> throw new IllegalStateException(step.candidate().sourceCard().getName()
+                    + "'s delayed ability has a step trigger no step reads: " + trigger);
+        };
+        return matches ? new StepMatch(step, StepGroup.DELAYED, activeId, null) : null;
     }
 
     private static StepMatch battlefieldStepMatch(GameData gameData, GameQueryService query, StepCandidate step,

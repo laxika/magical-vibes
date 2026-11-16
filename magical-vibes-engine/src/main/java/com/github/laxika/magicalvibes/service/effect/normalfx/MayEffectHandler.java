@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CipherEncodeEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
@@ -27,7 +26,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEff
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
@@ -70,13 +68,6 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 .noneMatch(card -> gameQueryService.cardHasSubtype(
                         card, reveal.subtype(), gameData, entry.getControllerId()))) {
             // No card of the subtype in hand to reveal, so no choice is offered and the ability does nothing.
-            return;
-        }
-        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.ReturnDelayedGraveyardCardUnderControlEffect delayedReturn
-                && delayedReturn.pending().requireSourceOnBattlefield()
-                && (delayedReturn.pending().sourcePermanentId() == null
-                || gameQueryService.findPermanentById(gameData, delayedReturn.pending().sourcePermanentId()) == null)) {
-            // "If it is still on the battlefield" (Shirei) fails, so the return can't happen and there is nothing to decide.
             return;
         }
         if (e.wrapped() instanceof LookAtTopCardsOfTargetLibraryEffect look

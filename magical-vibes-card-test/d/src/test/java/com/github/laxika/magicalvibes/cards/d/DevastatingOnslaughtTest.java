@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -39,7 +40,7 @@ class DevastatingOnslaughtTest extends BaseCardTest {
                 .toList();
         assertThat(tokens).hasSize(2);
         assertThat(tokens).allMatch(token -> token.hasKeyword(Keyword.HASTE));
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+        assertThat(DelayedPermanentMoves.waiting(gd))
                 .extracting(DelayedPermanentAction::permanentId)
                 .containsExactlyInAnyOrder(tokens.get(0).getId(), tokens.get(1).getId());
 

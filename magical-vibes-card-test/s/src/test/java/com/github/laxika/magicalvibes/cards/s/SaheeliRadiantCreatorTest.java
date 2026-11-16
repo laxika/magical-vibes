@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.Test;
 
@@ -63,7 +63,7 @@ class SaheeliRadiantCreatorTest extends BaseCardTest {
         assertThat(token.getCard().getPower()).isEqualTo(5);
         assertThat(token.getCard().getToughness()).isEqualTo(5);
         assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+        assertThat(DelayedPermanentMoves.waiting(gd))
                 .anySatisfy(action -> {
                     assertThat(action.permanentId()).isEqualTo(token.getId());
                     assertThat(action.kind()).isEqualTo(DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);

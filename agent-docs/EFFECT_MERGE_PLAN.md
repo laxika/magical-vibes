@@ -1499,7 +1499,7 @@ log line is shared. The six diverge on at least six axes the audit missed:
 | `ExileTopCardsMayPlayUntilNextTurn` | evaluates a `DynamicAmount` with a live-permanent→snapshot fallback; delegates to `ExileSupport.grantPlayUntilOwnersNextTurn`; aggregate plain-text log; silent return on `count <= 0` |
 | `ExileTopCardMayCastNonlandThisTurn` | single card, no loop; permission granted conditionally on card type |
 | `ExileTopCardMayPlayUntilNextUpkeep` | no end-of-turn expiry; queues `RevokeExilePlayPermissionAtNextUpkeep` |
-| `ExileTopCardsFaceDownMayPlayUntilNextUpkeep` | `exileCardFaceDown`; queues `ExileToOwnerGraveyardAtNextUpkeep`; count-based aggregate log |
+| `ExileTopCardsFaceDownMayPlayUntilNextUpkeep` | `exileCardFaceDown`; queues delayed triggered ability; count-based aggregate log |
 | `ExileTopCardsMayCastMatchingThisTurn` | filter-gated permission; aggregate log naming the castable subset |
 
 Collapsing these means unifying five different log formats and would change the visible game log for

@@ -1,8 +1,17 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawUpToNCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawUpToRecipient;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -37,11 +46,30 @@ public class RegisterDrawCardsAtNextUpkeepEffectHandler implements NormalEffectH
         if (drawerId == null) {
             return;
         }
-        gameData.queueDelayedAction(new DrawCardsAtNextUpkeep(drawerId, e.count(), entry.getCard(), e.upTo(),
-                gameData.turnNumber, gameData.activePlayerId, entry.getControllerId()));
+        gameData.temporaryGlobalTriggeredAbilities.add(drawAtNextTurnsUpkeep(gameData.turnNumber,
+                entry.getControllerId(), drawerId, e.count(), e.upTo(), entry.getCard(),
+                entry.getSourcePermanentId()));
 
         String playerName = gameData.playerIdToName.get(drawerId);
         log.info("Game {} - {} registers delayed draw of {} at next upkeep", gameData.id, playerName, e.count());
+    }
+
+    /**
+     * The delayed triggered ability "at the beginning of the next turn's upkeep, {@code drawerId} draws {@code count}
+     * cards" ("up to" that many when {@code upTo}) that a spell or ability of {@code sourceCard} controlled by
+     * {@code controllerId} made on turn {@code turnNumber}: it triggers at the next upkeep of a later turn, whoever's
+     * it
+     * is, and its controller is its maker's, whoever draws (CR 603.7d).
+     */
+    public static TemporaryGlobalTriggeredAbility drawAtNextTurnsUpkeep(int turnNumber, UUID controllerId,
+                                                                        UUID drawerId, int count, boolean upTo,
+                                                                        Card sourceCard, UUID sourcePermanentId) {
+        boolean drawerIsController = drawerId.equals(controllerId);
+        CardEffect draw = upTo ? new DrawUpToNCardsEffect(count, DrawUpToRecipient.TARGET_PLAYER)
+                : drawerIsController ? new DrawCardEffect(count) : new DrawCardForTargetPlayerEffect(count);
+        return TemporaryGlobalTriggeredAbility.atNextStep(controllerId, sourceCard,
+                new TriggeredAbility(Triggers.upkeep(ActivePlayer.ANY), draw), sourcePermanentId, null,
+                upTo || !drawerIsController ? drawerId : null, DelayedReferents.NONE.afterTurn(turnNumber));
     }
 
     /**

@@ -167,7 +167,10 @@ class SusurianVoidbornTest extends BaseCardTest {
 
         destroyWithLightningBolt(player1, "Susurian Voidborn");
         resolveDrain(player2.getId());
+        // Warp's delayed exile still triggers for the permanent that died, and does nothing (CR 603.7c).
         harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Susurian Voidborn");
         assertThat(gd.findExiledCard(voidborn.getId())).isNull();

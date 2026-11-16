@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.RandomDiscardCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -22,10 +22,9 @@ class CaseyJonesVigilanteTest extends BaseCardTest {
         castCasey();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
-        assertThat(gd.getDelayedActions(RandomDiscardCardsAtNextUpkeep.class)).hasSize(1);
-        assertThat(gd.getDelayedActions(RandomDiscardCardsAtNextUpkeep.class).getFirst().controllerId())
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP).getFirst().controllerId())
                 .isEqualTo(player1.getId());
-        assertThat(gd.getDelayedActions(RandomDiscardCardsAtNextUpkeep.class).getFirst().count()).isEqualTo(3);
     }
 
     @Test
@@ -34,18 +33,20 @@ class CaseyJonesVigilanteTest extends BaseCardTest {
         castCasey();
 
         StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+        gd.turnNumber++;
         gd.activePlayerId = player2.getId();
         harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.getDelayedActions(RandomDiscardCardsAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
 
+        gd.turnNumber++;
         gd.activePlayerId = player1.getId();
         harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
-        assertThat(gd.getDelayedActions(RandomDiscardCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
 
         harness.passBothPriorities();
 

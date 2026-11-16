@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNextEndStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -36,7 +35,7 @@ public class DiscardEachPlayerHandAndReturnExiledCardsEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var delayed = (DiscardEachPlayerHandAndReturnExiledCardsEffect) effect;
-        List<EachPlayerHandExileReturnAtNextEndStep.PlayerCards> players = apnapPlayers(
+        List<DiscardEachPlayerHandAndReturnExiledCardsEffect.PlayerCards> players = apnapPlayers(
                 gameData, delayed.players());
         for (var playerCards : players) {
             if (gameQueryService.canEffectCauseDiscard(gameData, playerCards.playerId(), entry.getControllerId())) {
@@ -48,7 +47,7 @@ public class DiscardEachPlayerHandAndReturnExiledCardsEffectHandler
     }
 
     private void returnCards(GameData gameData,
-                             EachPlayerHandExileReturnAtNextEndStep.PlayerCards playerCards) {
+                             DiscardEachPlayerHandAndReturnExiledCardsEffect.PlayerCards playerCards) {
         UUID playerId = playerCards.playerId();
         int returned = 0;
         for (UUID cardId : playerCards.cardIds()) {
@@ -68,9 +67,9 @@ public class DiscardEachPlayerHandAndReturnExiledCardsEffectHandler
                 gameData.id, gameData.playerIdToName.get(playerId), returned);
     }
 
-    private List<EachPlayerHandExileReturnAtNextEndStep.PlayerCards> apnapPlayers(
-            GameData gameData, List<EachPlayerHandExileReturnAtNextEndStep.PlayerCards> players) {
-        List<EachPlayerHandExileReturnAtNextEndStep.PlayerCards> order = new ArrayList<>();
+    private List<DiscardEachPlayerHandAndReturnExiledCardsEffect.PlayerCards> apnapPlayers(
+            GameData gameData, List<DiscardEachPlayerHandAndReturnExiledCardsEffect.PlayerCards> players) {
+        List<DiscardEachPlayerHandAndReturnExiledCardsEffect.PlayerCards> order = new ArrayList<>();
         UUID activePlayerId = gameData.activePlayerId;
         if (activePlayerId != null) {
             players.stream()

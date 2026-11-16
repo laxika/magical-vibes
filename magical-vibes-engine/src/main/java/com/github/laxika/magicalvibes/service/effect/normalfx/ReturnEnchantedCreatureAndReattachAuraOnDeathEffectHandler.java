@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedReturnAuraAttachedToPermanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureAndReattachAuraOnDeathEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -16,6 +15,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
+import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardAttachedToPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @Slf4j
 @Component
@@ -64,15 +69,13 @@ public class ReturnEnchantedCreatureAndReattachAuraOnDeathEffectHandler implemen
 
         UUID auraCardId = entry.getCard().getId();
         if (gameQueryService.findCardInGraveyardById(gameData, auraCardId) != null) {
-            UUID auraOwnerId = entry.getCard().getOwnerId();
-            if (auraOwnerId == null) {
-                auraOwnerId = gameQueryService.findGraveyardOwnerById(gameData, auraCardId);
-            }
-            if (auraOwnerId == null) {
-                return;
-            }
-            gameData.queueDelayedAction(new DelayedReturnAuraAttachedToPermanent(
-                    auraCardId, auraOwnerId, returnedCreature.getId()));
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    entry.getControllerId(), entry.getCard(),
+                    new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),
+                            new ReturnAuraFromGraveyardAttachedToPermanentEffect(
+                                    auraCardId, entry.getControllerId(), returnedCreature.getId())),
+                    entry.getSourcePermanentId(), null, null,
+                    DelayedReferents.graveyardCard(auraCardId, gameData.graveyardEntryVersion(auraCardId))));
         }
     }
 }

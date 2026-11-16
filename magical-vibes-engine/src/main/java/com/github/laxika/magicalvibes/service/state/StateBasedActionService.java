@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
-import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CantBeDestroyedByLethalDamageUnlessSingleSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterLimitEffect;
@@ -336,8 +335,6 @@ public class StateBasedActionService {
         }
         gameData.dynamicTokenCardIds.removeAll(removedTokenIds);
         gameData.imprintedCards.entrySet().removeIf(entry -> removedTokenIds.contains(entry.getValue().getId()));
-        gameData.clearDelayedActions(PendingExileReturn.class,
-                pending -> removedTokenIds.contains(pending.card().getId()));
         gameData.exileReturnOnPermanentLeave.entrySet().removeIf(entry -> {
             entry.getValue().removeIf(pending -> removedTokenIds.contains(pending.card().getId()));
             return entry.getValue().isEmpty();

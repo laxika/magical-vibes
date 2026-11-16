@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 
 @CardUsed({GiantCaterpillar.class})
 class GiantCaterpillarTest extends BaseCardTest {
@@ -30,12 +30,12 @@ class GiantCaterpillarTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Giant Caterpillar");
         harness.assertInGraveyard(player1, "Giant Caterpillar");
-        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
 
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).hasSize(1);
-        assertThat(gd.getDelayedActions(DelayedCreateToken.class).getFirst().controllerId())
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP).getFirst().controllerId())
                 .isEqualTo(player1.getId());
         harness.assertNotOnBattlefield(player1, "Butterfly");
     }
@@ -61,7 +61,7 @@ class GiantCaterpillarTest extends BaseCardTest {
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.INSECT);
         assertThat(token.getCard().isToken()).isTrue();
-        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test
@@ -90,7 +90,7 @@ class GiantCaterpillarTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Giant Caterpillar");
         harness.assertInGraveyard(player1, "Giant Caterpillar");
-        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
     }
 
     @Test

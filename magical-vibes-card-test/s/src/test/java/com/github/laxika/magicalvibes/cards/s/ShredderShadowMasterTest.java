@@ -10,9 +10,12 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -50,7 +53,7 @@ class ShredderShadowMasterTest extends BaseCardTest {
         assertThat(copy.isAttacking()).isTrue();
         assertThat(copy.getAttackTarget()).isEqualTo(player3.getId());
         assertThat(copy.getCard().getSupertypes()).doesNotContain(CardSupertype.LEGENDARY);
-        assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class))
+        assertThat(DelayedPermanentMoves.waiting(gd, DelayedPermanentActionKind.SACRIFICE_AT_END_OF_COMBAT))
                 .anyMatch(action -> action.permanentId().equals(copy.getId()));
 
         harness.passUntil(TurnStep.END_OF_COMBAT);
@@ -81,7 +84,7 @@ class ShredderShadowMasterTest extends BaseCardTest {
         });
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
-        assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).isEmpty();
     }
 
     @Test
@@ -100,7 +103,7 @@ class ShredderShadowMasterTest extends BaseCardTest {
         });
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
-        assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).isEmpty();
     }
 
     @Test
@@ -213,8 +216,8 @@ class ShredderShadowMasterTest extends BaseCardTest {
             assertThat(soldier.isAttacking()).isTrue();
             assertThat(soldier.getAttackTarget()).isEqualTo(player3.getId());
         });
-        List<UUID> sacrificed = gd.getDelayedActions(SacrificeAtEndOfCombat.class).stream()
-                .map(SacrificeAtEndOfCombat::permanentId).toList();
+        List<UUID> sacrificed = DelayedPermanentMoves.waiting(gd, DelayedPermanentActionKind.SACRIFICE_AT_END_OF_COMBAT)
+                .stream().map(DelayedPermanentAction::permanentId).toList();
         assertThat(sacrificed).containsAll(shredderCopies().stream().map(Permanent::getId).toList());
         assertThat(sacrificed).containsAll(findPermanents(player1, "Soldier").stream().map(Permanent::getId).toList());
     }

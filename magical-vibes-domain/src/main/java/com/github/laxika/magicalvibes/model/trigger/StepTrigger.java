@@ -25,6 +25,8 @@ public record StepTrigger(Moment moment, ActivePlayer player) implements Trigger
         PRECOMBAT_MAIN_PHASE,
         /** The beginning of combat step: "at the beginning of combat". */
         BEGINNING_OF_COMBAT,
+        /** The declare attackers step: "at the beginning of the declare attackers step". */
+        DECLARE_ATTACKERS,
         /** The end of combat step: "at end of combat". */
         END_OF_COMBAT,
         /** Every postcombat main phase. */
@@ -32,6 +34,11 @@ public record StepTrigger(Moment moment, ActivePlayer player) implements Trigger
         /** The turn's second main phase (CR 505.1), and no later one. */
         SECOND_MAIN_PHASE,
         /** The end step. */
-        END_STEP
+        END_STEP,
+        /**
+         * The cleanup step: only a delayed triggered ability waits for it ("at the beginning of the next cleanup
+         * step"), put on the stack as the step checks for triggered abilities (CR 514.3a).
+         */
+        CLEANUP
     }
 }

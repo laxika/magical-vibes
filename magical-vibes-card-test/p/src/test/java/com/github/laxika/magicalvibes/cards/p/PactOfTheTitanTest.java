@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.PayManaOrLoseGameAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -52,10 +52,9 @@ class PactOfTheTitanTest extends BaseCardTest {
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class)).singleElement()
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).singleElement()
                 .satisfies(action -> {
-                    assertThat(action.playerId()).isEqualTo(player1.getId());
-                    assertThat(action.manaCost()).isEqualTo("{4}{R}");
+                    assertThat(action.controllerId()).isEqualTo(player1.getId());
                 });
     }
 

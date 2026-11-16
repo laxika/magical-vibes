@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -71,8 +71,8 @@ class BasaltGolemTest extends BaseCardTest {
                         && blocker.getId().equals(se.getTargetId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class))
-                .anyMatch(a -> a.permanentId().equals(blocker.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> blocker.getId().equals(a.watchedPermanentId()));
     }
 
     @Test
@@ -168,7 +168,8 @@ class BasaltGolemTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(se ->
                 se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && se.getCard().getName().equals("Basalt Golem")
-                        && blocker.getId().equals(se.getSourcePermanentId()));
+                        && golem.getId().equals(se.getSourcePermanentId())
+                        && blocker.getId().equals(se.getTargetId()));
     }
 
     @Test
@@ -209,6 +210,6 @@ class BasaltGolemTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         assertThat(findPermanents(player1, "Wall")).isEmpty();
         assertThat(findPermanents(player2, "Wall")).isEmpty();
-        assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).isEmpty();
     }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -27,12 +29,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
-import com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger;
 import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -1937,108 +1937,7 @@ public class PermanentRemovalService {
     }
 
     /**
-     * Drains all scheduled {@link DelayedPermanentAction}s of the given kind and puts their delayed triggers on the
-     * stack, one trigger per resolution of a source that scheduled them together (CR 603.7a; a token exiled at the
-     * next cleanup is exiled at once). Two resolutions of one source (Molten Echoes triggering twice) are two delayed
-     * triggered abilities, each a stack object of its own. Permanents that already left the battlefield are skipped.
-     * Each permanent is one {@code ResolveDelayedPermanentActionEffect} step of its trigger.
-     */
-    public void processDelayedPermanentActions(GameData gameData, DelayedPermanentActionKind kind) {
-        List<DelayedPermanentAction> actions =
-                gameData.drainDelayedActions(DelayedPermanentAction.class,
-                        a -> a.kind() == kind
-                                && (a.followsPermanentController()
-                                ? gameQueryService.findPermanentById(gameData, a.permanentId()) == null
-                                    || gameData.activePlayerId.equals(gameQueryService.findPermanentController(
-                                            gameData, a.permanentId()))
-                                : a.controllerId() == null || a.controllerId().equals(gameData.activePlayerId)));
-        Map<List<Object>, List<DelayedPermanentAction>> batches = new LinkedHashMap<>();
-        for (DelayedPermanentAction action : actions) {
-            if (action.recurring() && gameQueryService.findPermanentById(gameData, action.permanentId()) != null) {
-                gameData.queueDelayedAction(action);
-            }
-            if (kind == DelayedPermanentActionKind.EXILE_TOKEN_AT_NEXT_CLEANUP) {
-                resolveDelayedPermanentAction(gameData, action);
-                continue;
-            }
-            // One delayed trigger of one resolution of a source covers every permanent that resolution scheduled
-            // together ("sacrifice those tokens at the beginning of your next upkeep" and "exile them at the
-            // beginning of the next end step" are each a single trigger); another resolution of the same source
-            // created another delayed trigger (CR 603.7a).
-            List<Object> batchKey = (kind == DelayedPermanentActionKind.SACRIFICE_AT_NEXT_UPKEEP
-                    || kind == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP
-                    || kind == DelayedPermanentActionKind.SACRIFICE_AT_END_STEP
-                    || kind == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT
-                    || kind == DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT
-                    || kind == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP)
-                    && action.sourceCard() != null
-                    ? List.of(action.sourceCard().getId(), Objects.requireNonNullElse(action.controllerId(), ""),
-                            Objects.requireNonNullElse(action.sacrificingPlayerId(), ""),
-                            action.schedulingResolution())
-                    : List.of(action, batches.size());
-            batches.computeIfAbsent(batchKey, ignored -> new ArrayList<>()).add(action);
-        }
-        for (List<DelayedPermanentAction> batch : batches.values()) {
-            List<CardEffect> effects = new ArrayList<>();
-            Permanent firstPermanent = null;
-            UUID controllerId = null;
-            Card sourceCard = null;
-            for (DelayedPermanentAction action : batch) {
-                Permanent permanent = gameQueryService.findPermanentById(gameData, action.permanentId());
-                if (permanent == null) {
-                    continue;
-                }
-                if (firstPermanent == null) {
-                    firstPermanent = permanent;
-                    controllerId = action.triggerControllerId() != null ? action.triggerControllerId()
-                            : action.sacrificingPlayerId() != null ? action.sacrificingPlayerId()
-                            : action.controllerId() != null ? action.controllerId()
-                            : gameQueryService.findPermanentController(gameData, permanent.getId());
-                    sourceCard = action.sourceCard() != null ? action.sourceCard() : permanent.getCard();
-                }
-                effects.add(new com.github.laxika.magicalvibes.model.effect.ResolveDelayedPermanentActionEffect(action));
-            }
-            if (firstPermanent == null) {
-                continue;
-            }
-            UUID triggerSourcePermanentId = firstPermanent.getId();
-            Permanent triggerSnapshotSource = firstPermanent;
-            UUID abilitySourcePermanentId = batch.getFirst().triggerSourcePermanentId();
-            if (abilitySourcePermanentId != null) {
-                Permanent abilitySource = gameQueryService.findPermanentById(gameData, abilitySourcePermanentId);
-                if (abilitySource != null) {
-                    triggerSourcePermanentId = abilitySourcePermanentId;
-                    triggerSnapshotSource = abilitySource;
-                }
-            }
-            if (kind == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT
-                    && batch.getFirst().sourceCard() != null) {
-                // The delayed trigger belongs to the ability's source (e.g. the original Myriad creature),
-                // not to the tokens it exiles.
-                UUID sourceCardId = batch.getFirst().sourceCard().getId();
-                Set<UUID> batchPermanentIds = batch.stream()
-                        .map(DelayedPermanentAction::permanentId).collect(java.util.stream.Collectors.toSet());
-                for (UUID playerId : gameData.orderedPlayerIds) {
-                    for (Permanent candidate : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-                        if (candidate.getCard().getId().equals(sourceCardId)
-                                && !batchPermanentIds.contains(candidate.getId())) {
-                            triggerSourcePermanentId = candidate.getId();
-                        }
-                    }
-                }
-            }
-            StackEntry trigger = TriggeredAbilityStackService.madeAbility(
-                    sourceCard, controllerId,
-                    sourceCard.getName() + "'s delayed ability",
-                    effects,
-                    null, triggerSourcePermanentId);
-            trigger.setSourcePermanentSnapshot(new Permanent(triggerSnapshotSource));
-            triggeredAbilityStackService.putDelayed(gameData, trigger);
-        }
-    }
-
-    /**
-     * Resolves one previously collected delayed action that moves a permanent without destroying or sacrificing it
+     * Resolves one step of a delayed ability that moves a permanent without destroying or sacrificing it
      * (exile, return to hand or the command zone, put on top of its library). A delayed sacrifice or destroy is a
      * departure and is resolved by {@code ResolveDelayedPermanentActionEffectHandler}.
      */
@@ -2339,8 +2238,8 @@ public class PermanentRemovalService {
 
     /**
      * Records the Auras and Equipment attached to {@code target} just before it leaves the battlefield (CR 608.2h) on
-     * every stack entry that targets it or names it as its non-targeting "that creature", and on every delayed "at end
-     * of combat" ability that affects it, whatever their effects are: "destroy all Equipment attached to that creature"
+     * every stack entry that targets it or names it as its non-targeting "that creature", and on every delayed step
+     * ability that is about it, whatever their effects are: "destroy all Equipment attached to that creature"
      * (Corrosive Ooze) reads them once the creature is gone.
      */
     private void rememberAttachmentsOfDepartingPermanent(GameData gameData, Permanent target) {
@@ -2349,13 +2248,11 @@ public class PermanentRemovalService {
         if (attachments.auraCardIds().isEmpty() && attachments.equipmentPermanentIds().isEmpty()) {
             return;
         }
-        synchronized (gameData.delayedActions) {
-            for (int i = 0; i < gameData.delayedActions.size(); i++) {
-                if (gameData.delayedActions.get(i) instanceof DelayedEndOfCombatTrigger delayed
-                        && target.getId().equals(delayed.affectedPermanentId())) {
-                    gameData.delayedActions.set(i, delayed.withAffectedPermanentAttachments(attachments));
-                }
-            }
+        synchronized (gameData.temporaryGlobalTriggeredAbilities) {
+            gameData.temporaryGlobalTriggeredAbilities.replaceAll(delayed ->
+                    delayed.waitsForStep() && target.getId().equals(delayed.watchedPermanentId())
+                            ? delayed.withReferents(delayed.referents().withPermanentAttachments(attachments))
+                            : delayed);
         }
         for (StackEntry entry : gameData.stackEntriesAndTriggerRecords()) {
             if (target.getId().equals(entry.getTargetId())
@@ -3132,8 +3029,8 @@ public class PermanentRemovalService {
                 if (controlledPermanentExileReplacement
                         && !isToken(gameData, leaving)
                         && gameData.findExiledCard(leaving.getId()) != null) {
-                    gameData.queueDelayedAction(new DelayedEndStepTrigger(
-                            controllerId, leaving, null, null,
+                    gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                            Triggers.endStep(ActivePlayer.ANY), controllerId, leaving, null, null,
                             new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(leaving.getId())));
                 }
                 } else if (chosenReplacement != null
@@ -3550,8 +3447,6 @@ public class PermanentRemovalService {
                         && exileAll.returnsOnSourceLeavesTrigger());
         if (pendingReturns == null && !returnsOnSourceLeavesTrigger && !hasLeavesTriggerExile
                 && !hasLeavesTriggerHandExile && !hasLeavesTriggerExileAll) {
-            triggerCollectionService.processDelayedExileReturnCounterTriggers(
-                    gameData, removedPermanent.getId(), List.of(), List.of());
             phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
             return;
         }
@@ -3635,12 +3530,9 @@ public class PermanentRemovalService {
             phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
             return;
         }
-        List<UUID> returnedPermanentIds = new ArrayList<>();
         for (PendingExileReturn pending : pendingReturns) {
-            returnedPermanentIds.add(returnPendingExiledCard(gameData, removedPermanent.getId(), pending));
+            returnPendingExiledCard(gameData, removedPermanent.getId(), pending);
         }
-        triggerCollectionService.processDelayedExileReturnCounterTriggers(
-                gameData, removedPermanent.getId(), pendingReturns, returnedPermanentIds);
         phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
     }
 
@@ -3731,7 +3623,7 @@ public class PermanentRemovalService {
                         GameLog.cardThen(exiledCard, " returns to " + playerName + "'s hand."));
                 log.info("Game {} - {} returns to hand from exile (source left battlefield)", gameData.id, exiledCard.getName());
             } else {
-                return returnExiledCardsToBattlefield(gameData, ownerId, pending, exiledCard);
+                return returnExiledCardsToBattlefield(gameData, sourcePermanentId, ownerId, pending, exiledCard);
             }
         } else {
             log.info("Game {} - Exiled card {} no longer in exile zone, return skipped", gameData.id, exiledCard.getName());
@@ -3748,7 +3640,7 @@ public class PermanentRemovalService {
                 && pending.countersOnReturn().isEmpty() && !pending.grantHaste();
     }
 
-    private UUID returnExiledCardsToBattlefield(GameData gameData, UUID ownerId,
+    private UUID returnExiledCardsToBattlefield(GameData gameData, UUID sourcePermanentId, UUID ownerId,
                                                 PendingExileReturn pending, Card exiledCard) {
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
@@ -3781,6 +3673,7 @@ public class PermanentRemovalService {
 
             Permanent permanent = new Permanent(card);
             permanent.setEnteredFromExile(true);
+            permanent.setReturnedWhenSourceLeftId(sourcePermanentId);
             // "return that exiled card ... tapped ... return the other exiled cards ... attached to that
             // permanent" (Tawnos's Coffin): only the primary card enters tapped, not the attached cards.
             if (pending.returnTapped() && (primary || !attachToPrimary)) {

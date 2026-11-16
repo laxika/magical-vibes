@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -34,6 +32,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @ExtendWith(MockitoExtension.class)
 class EndTurnEffectHandlerTest {
@@ -41,18 +46,24 @@ class EndTurnEffectHandlerTest {
     @Test
     void endingExtraTurnExpiresOnlyItsOwnDelayedLoss() {
         Card source = new Card();
-        var thisTurn = new com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep(player1Id, source, 1, 7L);
-        var laterTurn = new com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep(player1Id, source, 1, 8L);
-        var nextEndStep = new com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep(player1Id, source, 1);
+        var thisTurn = loseGameAtEndStep(source, DelayedReferents.NONE.duringExtraTurn(7L));
+        var laterTurn = loseGameAtEndStep(source, DelayedReferents.NONE.duringExtraTurn(8L));
+        var nextEndStep = loseGameAtEndStep(source, DelayedReferents.NONE.afterTurn(1));
         gd.currentExtraTurnSequence = 7L;
-        gd.queueDelayedAction(thisTurn);
-        gd.queueDelayedAction(laterTurn);
-        gd.queueDelayedAction(nextEndStep);
+        gd.temporaryGlobalTriggeredAbilities.add(thisTurn);
+        gd.temporaryGlobalTriggeredAbilities.add(laterTurn);
+        gd.temporaryGlobalTriggeredAbilities.add(nextEndStep);
 
         turnSupport.skipToCleanupStep(gd);
 
-        assertThat(gd.getDelayedActions(com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep.class))
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP))
                 .containsExactly(laterTurn, nextEndStep);
+    }
+
+    private TemporaryGlobalTriggeredAbility loseGameAtEndStep(Card source, DelayedReferents referents) {
+        return TemporaryGlobalTriggeredAbility.atNextStep(player1Id, source,
+                new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY), new ControllerLosesGameEffect()), null, null,
+                null, referents);
     }
 
     @Mock private CombatService combatService;
@@ -186,18 +197,18 @@ class EndTurnEffectHandlerTest {
             }
 
             @Test
-            @DisplayName("Clears sacrifice-at-end-of-combat and token-exile-at-end-of-combat sets")
-            void clearsCombatEndSets() {
-                gd.queueDelayedAction(new SacrificeAtEndOfCombat(UUID.randomUUID()));
-                gd.queueDelayedAction(new DelayedPermanentAction(UUID.randomUUID(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
+            @DisplayName("Keeps the delayed at-end-of-combat abilities for the next end of combat (CR 603.7b)")
+            void keepsDelayedEndOfCombatAbilities() {
+                gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                        Triggers.endOfCombat(), player1Id, createCard("Geist of Saint Traft", CardType.CREATURE),
+                        null, UUID.randomUUID(), new ExileTargetPermanentEffect()));
 
                 Card card = createCard("Time Stop", CardType.INSTANT);
                 StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
                 endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
-                assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).isEmpty();
-                assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
+                assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).hasSize(1);
             }
 
             @Test

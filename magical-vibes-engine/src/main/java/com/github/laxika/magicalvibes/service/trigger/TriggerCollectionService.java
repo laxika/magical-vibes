@@ -19,8 +19,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.DelayedExileReturnCounterTrigger;
-import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -31,20 +29,16 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilit
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCastTriggerToSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellCostEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutVoyageCounterOnExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnVoyagingCardFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerGrant;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -963,60 +957,6 @@ public class TriggerCollectionService {
         }
     }
 
-
-
-
-
-
-
-
-
-
-    /**
-     * Fires delayed counter triggers for cards that return from exile when their source leaves the
-     * battlefield. The return controller is compared with the controller captured when the
-     * source's enter-the-battlefield ability resolved.
-     */
-    public void processDelayedExileReturnCounterTriggers(GameData gameData, UUID leavingPermanentId,
-                                                          List<PendingExileReturn> pendingReturns,
-                                                          List<UUID> returnedPermanentIds) {
-        List<DelayedExileReturnCounterTrigger> delayedTriggers = gameData.drainDelayedActions(
-                DelayedExileReturnCounterTrigger.class,
-                trigger -> leavingPermanentId.equals(trigger.watchedPermanentId()));
-        if (delayedTriggers.isEmpty()) {
-            return;
-        }
-
-        for (int i = 0; i < pendingReturns.size(); i++) {
-            PendingExileReturn pending = pendingReturns.get(i);
-            UUID returnedPermanentId = returnedPermanentIds.get(i);
-            if (returnedPermanentId == null) {
-                continue;
-            }
-            for (DelayedExileReturnCounterTrigger delayed : delayedTriggers) {
-                if (!pending.controllerId().equals(delayed.controllerId())) {
-                    continue;
-                }
-                StackEntry trigger = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
-                        delayed.controllerId(),
-                        delayed.sourceCard().getName() + "'s delayed ability",
-                        new ArrayList<>(List.of(new PutCounterOnTargetPermanentEffect(
-                                delayed.counterType(), delayed.counterAmount()))),
-                        returnedPermanentId,
-                        (UUID) null);
-                trigger.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, trigger);
-                gameLogService.append(gameData,
-                        GameLog.cardThen(delayed.sourceCard(), "'s delayed ability triggers."));
-                log.info("Game {} - {} delayed return counter trigger queued for {}",
-                        gameData.id, delayed.sourceCard().getName(), pending.card().getName());
-            }
-        }
-    }
-
-
-
-
     /**
      * What a creature entering under {@code controllerId}'s control triggers besides the card abilities the trigger
      * pipeline matches, the emblems' and the keywords' among them: the watchers and boons a resolved spell left, and the "whenever a creature you control enters" abilities a spell
@@ -1173,38 +1113,6 @@ public class TriggerCollectionService {
         }
     }
 
-    /**
-     * Fires turn-scoped delayed triggers registered by Beck. Each registration is a separate
-     * optional draw trigger, including for tokens and creatures controlled by the other player.
-     */
-    public void checkCreatureEntersThisTurnTriggers(GameData gameData, UUID enteringCreatureControllerId,
-                                                    Card enteringCreature) {
-        if (!enteringPermanentHasType(gameData, enteringCreature, CardType.CREATURE)) return;
-
-        List<UUID> controllers = new ArrayList<>(gameData.orderedPlayerIds);
-        int activePlayerIndex = controllers.indexOf(gameData.activePlayerId);
-        if (activePlayerIndex > 0) {
-            List<UUID> apnapControllers = new ArrayList<>(controllers.subList(activePlayerIndex, controllers.size()));
-            apnapControllers.addAll(controllers.subList(0, activePlayerIndex));
-            controllers = apnapControllers;
-        }
-
-        for (UUID controllerId : controllers) {
-            List<Card> sources = gameData.creatureEntersDrawSourcesThisTurn.get(controllerId);
-            if (sources == null) continue;
-            for (Card sourceCard : new ArrayList<>(sources)) {
-                // The delayed ability the spell made ("whenever a creature enters this turn, you may draw a card"),
-                // its "you may" asked as it resolves (CR 603.5).
-                StackEntry entry = TriggeredAbilityStackService.madeAbility(sourceCard, controllerId,
-                        sourceCard.getName() + "'s ability",
-                        List.of(new MayEffect(new DrawCardEffect(), "Draw a card?")));
-                entry.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, entry);
-                gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-            }
-        }
-    }
-
     /** The boons a noncreature permanent entering under {@code controllerId}'s control uses. */
     public void checkAllyPermanentEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
         Permanent enteringPermanent = findPermanentByCard(gameData, enteringCard);
@@ -1230,33 +1138,6 @@ public class TriggerCollectionService {
         entry.setNonTargeting(true);
         triggeredAbilityStackService.putDelayed(gameData, entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-    }
-
-    /** Fires Full Throttle's delayed untap trigger once for each registration at each combat. */
-    public void checkUntapAttackedCreaturesEachCombatThisTurnTriggers(GameData gameData) {
-        List<UUID> controllers = new ArrayList<>(gameData.orderedPlayerIds);
-        int activePlayerIndex = controllers.indexOf(gameData.activePlayerId);
-        if (activePlayerIndex > 0) {
-            List<UUID> apnapControllers = new ArrayList<>(controllers.subList(activePlayerIndex, controllers.size()));
-            apnapControllers.addAll(controllers.subList(0, activePlayerIndex));
-            controllers = apnapControllers;
-        }
-
-        for (UUID controllerId : controllers) {
-            List<Card> sources = gameData.untapAttackedCreaturesEachCombatThisTurnSources.get(controllerId);
-            if (sources == null) continue;
-            for (Card sourceCard : new ArrayList<>(sources)) {
-                StackEntry entry = TriggeredAbilityStackService.madeAbility(sourceCard,
-                        controllerId,
-                        sourceCard.getName() + "'s delayed ability",
-                        List.of(new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES)));
-                entry.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, entry);
-                gameLogService.append(gameData, GameLog.cardThen(sourceCard,
-                        "'s delayed ability triggers."));
-                log.info("Game {} - {} delayed combat trigger queued", gameData.id, sourceCard.getName());
-            }
-        }
     }
 
     /**

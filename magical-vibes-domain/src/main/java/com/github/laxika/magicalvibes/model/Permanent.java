@@ -668,6 +668,9 @@ public class Permanent {
      *  cast-time target selection, so a mandatory targeted ETB must choose its target as the
      *  triggered ability is put on the stack (CR 603.3b). */
     @Setter private boolean enteredFromExile;
+    /** The permanent whose leaving the battlefield returned this one from the exile it was in "until" that permanent
+     *  left (Lagrella, the Magpie: "when an exiled card enters under your control this way"), or {@code null}. */
+    @Setter private UUID returnedWhenSourceLeftId;
     /** Source permanent IDs that prevent this permanent from untapping during its controller's untap step.
      *  Each entry means: "this permanent doesn't untap for as long as that source permanent remains tapped." */
     private final Set<UUID> untapPreventedByPermanentIds = new HashSet<>();
@@ -1222,6 +1225,7 @@ public class Permanent {
         this.protectorPlayerId = source.protectorPlayerId;
         this.enteredFromGraveyardOwnerId = source.enteredFromGraveyardOwnerId;
         this.enteredFromExile = source.enteredFromExile;
+        this.returnedWhenSourceLeftId = source.returnedWhenSourceLeftId;
         this.grantedKeywords.addAll(source.grantedKeywords);
         this.persistentGrantedKeywords.addAll(source.persistentGrantedKeywords);
         this.removedKeywords.addAll(source.removedKeywords);

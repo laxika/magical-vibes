@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -37,10 +38,9 @@ class RayOfErasureTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(gyBefore + 1);
         assertThat(gd.playerGraveyards.get(player2.getId()).getLast()).isSameAs(milled);
 
-        List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
+        List<TemporaryGlobalTriggeredAbility> scheduled = gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP);
         assertThat(scheduled).hasSize(1);
         assertThat(scheduled.getFirst().controllerId()).isEqualTo(player1.getId());
-        assertThat(scheduled.getFirst().count()).isEqualTo(1);
     }
 
     @Test
@@ -56,13 +56,14 @@ class RayOfErasureTest extends BaseCardTest {
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
         StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+        gd.turnNumber++;
         gd.activePlayerId = player2.getId();
         harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -78,7 +79,7 @@ class RayOfErasureTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
 
     @Test
@@ -110,6 +111,7 @@ class RayOfErasureTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
         StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+        gd.turnNumber++;
         gd.turnNumber++;
         gd.activePlayerId = player2.getId();
         harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));

@@ -6,11 +6,12 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreatedPermanentsAtNextCleanupEffect;
 import org.springframework.stereotype.Component;
 
-import com.github.laxika.magicalvibes.model.action.DelayedCleanupTrigger;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Resolves {@link ExileCreatedPermanentsAtNextCleanupEffect} by scheduling each permanent created
@@ -32,8 +33,8 @@ public class ExileCreatedPermanentsAtNextCleanupEffectHandler implements NormalE
                         .<PermanentPredicate>map(
                                 PermanentIsSpecificPermanentPredicate::new)
                         .toList());
-        gameData.queueDelayedAction(new DelayedCleanupTrigger(
-                entry.getControllerId(), entry.getCard(),
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.cleanup(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), null,
                 new ExileAllPermanentsEffect(filter)));
     }
 }

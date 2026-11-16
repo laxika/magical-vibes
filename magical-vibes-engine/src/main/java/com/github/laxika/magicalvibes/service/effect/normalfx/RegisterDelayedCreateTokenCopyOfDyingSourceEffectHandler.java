@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedCreateTokenCopy;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCreateTokenCopyOfDyingSourceEffect;
@@ -11,6 +10,9 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Resolves {@link RegisterDelayedCreateTokenCopyOfDyingSourceEffect} (Ochre Jelly): registers the next end step's
@@ -38,8 +40,9 @@ public class RegisterDelayedCreateTokenCopyOfDyingSourceEffectHandler implements
         int counters = Math.max(0, amountEvaluationService.evaluate(gameData,
                 delayedEffect.plusOnePlusOneCounters(), AmountContext.forStackEntry(entry, null)));
         CreateTokenCopyOfSourceEffect copyEffect = new CreateTokenCopyOfSourceEffect(false, 1, counters);
-        gameData.queueDelayedAction(new DelayedCreateTokenCopy(
-                entry.getControllerId(), copyEffect, entry.getCard()));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.endStep(ActivePlayer.ANY), entry.getControllerId(), entry.getCard(),
+                entry.getSourcePermanentId(), null, copyEffect));
         log.info("Game {} - {} registers delayed token copy at next end step",
                 gameData.id, entry.getCard().getName());
     }

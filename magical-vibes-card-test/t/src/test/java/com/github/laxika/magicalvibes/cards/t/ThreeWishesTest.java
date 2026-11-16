@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.e.EonHub;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -7,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -56,13 +57,13 @@ class ThreeWishesTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissions.get(c.getId())).isEqualTo(player1.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(leftover);
 
-        List<ExileToOwnerGraveyardAtNextUpkeep> scheduled =
-                gd.getDelayedActions(ExileToOwnerGraveyardAtNextUpkeep.class);
-        assertThat(scheduled).hasSize(3);
-        assertThat(scheduled).allMatch(s -> s.controllerId().equals(player1.getId()));
-        assertThat(scheduled).allMatch(s -> s.ownerId().equals(player1.getId()));
-        assertThat(scheduled).extracting(ExileToOwnerGraveyardAtNextUpkeep::cardId)
-                .containsExactlyInAnyOrder(a.getId(), b.getId(), c.getId());
+        List<TemporaryGlobalTriggeredAbility> scheduled =
+                gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP);
+        // The three exiled cards are one delayed ability, whose cards are the ones the spell exiled (CR 603.7a).
+        assertThat(scheduled).hasSize(1);
+        assertThat(scheduled.getFirst().controllerId()).isEqualTo(player1.getId());
+        assertThat(scheduled.getFirst().referents().cardIds()).containsExactlyInAnyOrder(a.getId(), b.getId(), c.getId(
+                ));
     }
 
     @Test
@@ -86,7 +87,7 @@ class ThreeWishesTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)
                 .contains(a.getId(), b.getId(), c.getId());
-        assertThat(gd.getDelayedActions(ExileToOwnerGraveyardAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -105,7 +106,7 @@ class ThreeWishesTest extends BaseCardTest {
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(a.getId(), b.getId(), c.getId());
         assertThat(gd.exilePlayPermissions.get(a.getId())).isEqualTo(player1.getId());
-        assertThat(gd.getDelayedActions(ExileToOwnerGraveyardAtNextUpkeep.class)).hasSize(3);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
 
     @Test
@@ -163,7 +164,7 @@ class ThreeWishesTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactly(only.getId());
-        assertThat(gd.getDelayedActions(ExileToOwnerGraveyardAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
@@ -175,7 +176,7 @@ class ThreeWishesTest extends BaseCardTest {
         castThreeWishes();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.getDelayedActions(ExileToOwnerGraveyardAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test

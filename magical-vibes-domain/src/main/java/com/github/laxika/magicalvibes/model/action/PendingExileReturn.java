@@ -45,7 +45,7 @@ public record PendingExileReturn(
         boolean returnCantBeBlockedUntilEndOfCombat,
         Card triggerSourceCard,
         UUID triggerControllerId,
-        Map<UUID, UUID> returnControllerByCardId) implements DelayedAction {
+        Map<UUID, UUID> returnControllerByCardId) {
 
     public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
                               TurnStep returnStep, int plusOnePlusOneCounters, List<Card> additionalCards,

@@ -3,13 +3,16 @@ package com.github.laxika.magicalvibes.service.effect.manafx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.action.DelayedChooseOpponentGainsControlOfSource;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedChooseOpponentGainsControlOfSourceEffect;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.ChooseOpponentGainsControlOfSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Resolves Rainbow Vale's "an opponent gains control of this land at the beginning of the next end step" as part of its
@@ -32,8 +35,9 @@ public class RegisterDelayedChooseOpponentGainsControlOfSourceManaAbilityEffectH
         if (permanent == null) {
             return;
         }
-        gameData.queueDelayedAction(new DelayedChooseOpponentGainsControlOfSource(
-                playerId, permanent.getId(), permanent.getCard()));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.endStep(ActivePlayer.ANY), playerId, permanent.getCard(), permanent.getId(), null,
+                new ChooseOpponentGainsControlOfSourceEffect()));
         log.info("Game {} - {} registers its control change at the next end step", gameData.id,
                 permanent.getCard().getName());
     }

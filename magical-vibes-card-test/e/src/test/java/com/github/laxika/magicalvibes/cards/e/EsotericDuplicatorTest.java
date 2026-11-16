@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 
 @CardUsed({EsotericDuplicator.class, ChromaticStar.class})
 class EsotericDuplicatorTest extends BaseCardTest {
@@ -33,7 +34,7 @@ class EsotericDuplicatorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.getDelayedActions(com.github.laxika.magicalvibes.model.action.DelayedCreateTokenCopy.class))
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP))
                 .hasSize(1);
 
         harness.passUntil(player1, TurnStep.END_STEP);

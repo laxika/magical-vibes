@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfReturnAtNextTurnDeclareAttackersEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PendingExileReturns;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,14 +53,13 @@ public class ExileSelfReturnAtNextTurnDeclareAttackersEffectHandler implements N
                 card, entry.getControllerId(),
                 cards.size() == 1 ? List.of() : cards.subList(1, cards.size()),
                 ((ExileSelfReturnAtNextTurnDeclareAttackersEffect) effect).returnCantBeBlocked());
-        gameData.queueDelayedAction(pendingReturn);
         // The controller's next declare attackers step is still ahead this turn when the exile happens
         // on their own turn before that step begins; otherwise it is on their next turn.
         boolean declareAttackersStillAhead = entry.getControllerId().equals(gameData.activePlayerId)
                 && gameData.currentStep != null
                 && gameData.currentStep.ordinal() < TurnStep.DECLARE_ATTACKERS.ordinal();
-        gameData.pendingExileReturnEarliestTurns.put(pendingReturn,
-                declareAttackersStillAhead ? gameData.turnNumber : gameData.turnNumber + 1);
+        PendingExileReturns.scheduleAfterTurn(gameData, pendingReturn,
+                declareAttackersStillAhead ? gameData.turnNumber - 1 : gameData.turnNumber);
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         gameLogService.append(gameData, GameLog.cardThen(card,

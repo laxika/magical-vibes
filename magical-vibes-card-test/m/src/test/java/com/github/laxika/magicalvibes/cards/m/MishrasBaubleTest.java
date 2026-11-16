@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.b.BorealDruid;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredIsland;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -35,10 +36,9 @@ class MishrasBaubleTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bauble);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard, nextCard);
-        List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
+        List<TemporaryGlobalTriggeredAbility> scheduled = gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP);
         assertThat(scheduled).hasSize(1);
         assertThat(scheduled.getFirst().controllerId()).isEqualTo(player1.getId());
-        assertThat(scheduled.getFirst().count()).isEqualTo(1);
     }
 
     @Test
@@ -66,7 +66,7 @@ class MishrasBaubleTest extends BaseCardTest {
                 .contains(drawn);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(targetTop);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -91,12 +91,12 @@ class MishrasBaubleTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bauble);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(bauble.getCard());
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
 
         harness.passBothPriorities();
         harness.handleCardChosen(player1, -1);
 
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
 
     @Test
@@ -112,7 +112,7 @@ class MishrasBaubleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
 
         advanceToUpkeep(player2);
@@ -136,7 +136,7 @@ class MishrasBaubleTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, nextCard);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(topCard);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
 
     @Test
@@ -154,7 +154,7 @@ class MishrasBaubleTest extends BaseCardTest {
         harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
 
         advanceToUpkeep(player2);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
@@ -163,7 +163,7 @@ class MishrasBaubleTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -192,7 +192,7 @@ class MishrasBaubleTest extends BaseCardTest {
         harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bauble);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
 
     private Permanent addBauble() {

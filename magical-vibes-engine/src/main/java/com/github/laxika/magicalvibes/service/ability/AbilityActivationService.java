@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.PendingGraveyardAbilityActivation;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingManaActivation;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -1132,7 +1133,7 @@ public class AbilityActivationService {
                     + " for " + payment.sourceCard().getName());
         }
         cost.payForSpecialAction(pool);
-        gameData.delayedActions.remove(payment.obligation());
+        removeFirstListed(gameData.temporaryGlobalTriggeredAbilities, payment.obligation());
         gameData.revertableManaActivations.clear();
         gameData.priorityPassedBy.clear();
         gameLogService.append(gameData, GameLog.textCardText(
@@ -1141,6 +1142,18 @@ public class AbilityActivationService {
         log.info("Game {} - {} pays {} to cancel {}'s delayed ability", gameData.id, player.getUsername(),
                 payment.manaCost(), payment.sourceCard().getName());
         mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
+    private static void removeFirstListed(List<TemporaryGlobalTriggeredAbility> list,
+                                          TemporaryGlobalTriggeredAbility delayed) {
+        synchronized (list) {
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i) == delayed) {
+                    list.remove(i);
+                    return;
+                }
+            }
+        }
     }
 
     /**

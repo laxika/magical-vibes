@@ -1,5 +1,4 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
-import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldTransformedReturn;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -14,6 +13,12 @@ import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
+import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @Slf4j
 @Component
@@ -42,9 +47,12 @@ public class RegisterDelayedReturnSourceTransformedEffectHandler implements Norm
         }
 
         UUID returnControllerId = e.underOwnerControl() ? ownerId : entry.getControllerId();
-        gameData.queueDelayedAction(
-                new DelayedGraveyardToBattlefieldTransformedReturn(card.getId(), ownerId, returnControllerId,
-                        gameData.graveyardEntryVersion(card.getId())));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                entry.getControllerId(), card,
+                new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),
+                        new ReturnSourceTransformedFromGraveyardEffect(false, e.underOwnerControl())),
+                entry.getSourcePermanentId(), null, null,
+                DelayedReferents.graveyardCard(card.getId(), gameData.graveyardEntryVersion(card.getId()))));
         String playerName = gameData.playerIdToName.get(returnControllerId);
         gameLogService.append(gameData, GameLog.builder().card(card).text(" will return to the battlefield transformed under " + playerName + "'s control at the beginning of the next end step.").build());
         log.info("Game {} - Delayed transformed return registered for {} (owner {}, controller {})",

@@ -41,7 +41,6 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureOnTopOrOptio
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetPermanentThenReflexiveEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterControlLossUnattachTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreatureDealtDamageByAttackingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardOnDeathThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
@@ -205,9 +204,6 @@ class TargetPolarityGuardTest {
         assertThat(classifier.classify(gd,
                 new PreventAllDamageToTargetFromColorlessSourcesEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
-        assertThat(classifier.classify(gd,
-                new RegisterDelayedWatchedCreatureDealtDamageByAttackingCreatureEffect(List.of()), aiPlayerId))
-                .isEqualTo(TargetPolarity.NEUTRAL);
         assertThat(classifier.classify(gd,
                 new TapAndPreventCombatDamageByTargetAndBlockersEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.NEUTRAL);

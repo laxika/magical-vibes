@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextEndStep;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -44,9 +45,9 @@ class HornOfPlentyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         int handBeforeDraw = gd.playerHands.get(player2.getId()).size();
-        assertThat(gd.getDelayedActions(DrawCardsAtNextEndStep.class))
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP))
                 .singleElement()
-                .extracting(DrawCardsAtNextEndStep::drawingPlayerId)
+                .extracting(TemporaryGlobalTriggeredAbility::watchedPlayerId)
                 .isEqualTo(player2.getId());
 
         harness.forceActivePlayer(player2);
@@ -69,7 +70,7 @@ class HornOfPlentyTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.getDelayedActions(DrawCardsAtNextEndStep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test
@@ -96,7 +97,7 @@ class HornOfPlentyTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.getDelayedActions(DrawCardsAtNextEndStep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test
@@ -113,7 +114,7 @@ class HornOfPlentyTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(gd.getDelayedActions(DrawCardsAtNextEndStep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test
@@ -158,7 +159,7 @@ class HornOfPlentyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextEndStep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
         assertThat(gd.stack).isEmpty();
@@ -207,7 +208,7 @@ class HornOfPlentyTest extends BaseCardTest {
             assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         });
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.getDelayedActions(DrawCardsAtNextEndStep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

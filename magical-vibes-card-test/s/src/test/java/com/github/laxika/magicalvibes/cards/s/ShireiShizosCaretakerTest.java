@@ -159,6 +159,24 @@ class ShireiShizosCaretakerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The delayed return doesn't trigger at all if Shirei has left the battlefield (CR 603.4)")
+    void delayedReturnDoesNotTriggerWhenShireiLeftTheBattlefield() {
+        harness.addToBattlefield(player1, new ShireiShizosCaretaker());
+        harness.addToBattlefield(player1, new Frostling());
+
+        firstVolleyAt(player1, player1, "Frostling");
+        resolveDeathTrigger();
+        herosDemiseAt(player1, player1, "Shirei, Shizo's Caretaker");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Frostling");
+    }
+
+    @Test
     @DisplayName("Uses a creature's power immediately before it dies")
     void returnsCreatureThatDiedWithPowerOneOrLess() {
         harness.addToBattlefield(player1, new ShireiShizosCaretaker());

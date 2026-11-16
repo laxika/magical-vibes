@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ScheduleCreatedPermanentsEffect;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 
 @Component
 public class ScheduleCreatedPermanentsEffectHandler implements NormalEffectHandlerBean {
@@ -19,17 +21,9 @@ public class ScheduleCreatedPermanentsEffectHandler implements NormalEffectHandl
         var schedule = (ScheduleCreatedPermanentsEffect) effect;
         var scheduledController = schedule.controllerOnly() ? entry.getControllerId() : null;
         for (var permanentId : entry.getCreatedPermanentIds()) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(
-                    permanentId,
-                    schedule.action(),
-                    false,
-                    null,
-                    scheduledController,
-                    scheduledController,
-                    false,
-                    entry.getCard(),
-                    entry.getControllerId(),
-                    entry.getSourcePermanentId()));
+            DelayedPermanentActions.schedule(gameData, entry,
+                    new DelayedPermanentAction(permanentId, schedule.action(), false, null, !schedule.controllerOnly()),
+                    schedule.controllerOnly() ? ActivePlayer.YOU : ActivePlayer.ANY);
         }
     }
 }

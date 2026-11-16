@@ -35,7 +35,8 @@ public class RemoveAllCountersEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RemoveAllCountersEffect) effect;
-        UUID subjectId = e.subject() == CounterRemovalSubject.SOURCE && entry.getSourcePermanentId() != null
+        UUID subjectId = e.subject() == CounterRemovalSubject.NAMED ? e.permanentId()
+                : e.subject() == CounterRemovalSubject.SOURCE && entry.getSourcePermanentId() != null
                 ? entry.getSourcePermanentId()
                 : targetOf(entry, effect);
         Permanent subject = gameQueryService.findPermanentById(gameData, subjectId);

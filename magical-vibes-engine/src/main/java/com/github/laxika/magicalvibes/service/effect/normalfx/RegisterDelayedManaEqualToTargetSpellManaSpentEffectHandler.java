@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaEqualToTargetSpellManaSpentEffect;
 import lombok.extern.slf4j.Slf4j;
@@ -36,8 +35,9 @@ public class RegisterDelayedManaEqualToTargetSpellManaSpentEffectHandler impleme
         }
 
         var delayedMana = (RegisterDelayedManaEqualToTargetSpellManaSpentEffect) effect;
-        gameData.queueDelayedAction(new AddManaAtNextMainPhase(
-                entry.getControllerId(), delayedMana.color(), targetEntry.getManaSpentToCast(), entry.getCard(), false, false));
+        gameData.temporaryGlobalTriggeredAbilities.add(RegisterDelayedManaAtNextMainPhaseEffectHandler.delayedMana(
+                entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), delayedMana.color(),
+                targetEntry.getManaSpentToCast(), false, false, false, false));
 
         log.info("Game {} - {} schedules {} {} at their next main phase (mana spent)",
                 gameData.id,

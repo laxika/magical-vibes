@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedControllerEndStepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTriggeringSpellIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardSpecificCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
@@ -43,9 +45,9 @@ public class ConjureDuplicateOfTriggeringSpellIntoHandEffectHandler implements N
 
         if (conjureEffect.discardAtNextEndStep()) {
             // "At the beginning of your next end step": another player's end step doesn't fire it.
-            gameData.queueDelayedAction(new DelayedControllerEndStepTrigger(
-                    entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
-                    new DiscardSpecificCardEffect(duplicate.getId())));
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    Triggers.endStep(ActivePlayer.YOU), entry.getControllerId(), entry.getCard(),
+                    entry.getSourcePermanentId(), null, new DiscardSpecificCardEffect(duplicate.getId())));
         }
 
         gameLogService.append(gameData, GameLog.textCardText(

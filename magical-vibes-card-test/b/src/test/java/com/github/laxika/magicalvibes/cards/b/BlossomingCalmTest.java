@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ class BlossomingCalmTest extends BaseCardTest {
 
         harness.assertLife(player1, 12);
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isTrue();
-        assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -59,7 +59,7 @@ class BlossomingCalmTest extends BaseCardTest {
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isTrue();
         assertThat(gd.findExiledCard(card.getId())).isNull();
         harness.assertInGraveyard(player1, "Blossoming Calm");
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -96,7 +96,7 @@ class BlossomingCalmTest extends BaseCardTest {
 
         harness.assertLife(player1, 12);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -158,7 +158,7 @@ class BlossomingCalmTest extends BaseCardTest {
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
 
         harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
         declareAttackers(player2, List.of());

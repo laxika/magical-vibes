@@ -2,8 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedControllerEndStepTrigger;
-import com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Resolves {@link SacrificeCreatedPermanentsAtEndStepEffect} by queueing a
@@ -40,13 +41,11 @@ public class SacrificeCreatedPermanentsAtEndStepEffectHandler implements NormalE
                         .toList());
         CardEffect sacrifice = new SacrificePermanentsEffect(
                 Integer.MAX_VALUE, filter, SacrificeRecipient.CONTROLLER).withSimultaneousChoices();
-        if (((SacrificeCreatedPermanentsAtEndStepEffect) effect).controllerEndStepOnly()) {
-            gameData.queueDelayedAction(new DelayedControllerEndStepTrigger(
-                    entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), sacrifice));
-        } else {
-            gameData.queueDelayedAction(new DelayedEndStepTrigger(
-                    entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), null, sacrifice));
-        }
+        ActivePlayer whose = ((SacrificeCreatedPermanentsAtEndStepEffect) effect).controllerEndStepOnly()
+                ? ActivePlayer.YOU : ActivePlayer.ANY;
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.endStep(whose), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), null,
+                sacrifice));
         log.info("Game {} - {} permanent(s) scheduled for sacrifice at end step by {}",
                 gameData.id, entry.getCreatedPermanentIds().size(), entry.getCard().getName());
     }

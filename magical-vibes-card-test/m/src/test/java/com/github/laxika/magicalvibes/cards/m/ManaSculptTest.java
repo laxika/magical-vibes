@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.b.BurstLightning;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -35,9 +35,7 @@ class ManaSculptTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Burst Lightning");
-        AddManaAtNextMainPhase reward = gd.getDelayedActions(AddManaAtNextMainPhase.class).getFirst();
-        assertThat(reward.amount()).isEqualTo(5);
-        assertThat(reward.color()).isEqualTo(ManaColor.COLORLESS);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE)).hasSize(1);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DRAW);
@@ -65,7 +63,7 @@ class ManaSculptTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Burst Lightning");
-        assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE)).isEmpty();
     }
 
     @Test
@@ -86,7 +84,7 @@ class ManaSculptTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Burst Lightning");
         harness.assertLife(player2, 20);
-        assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE)).isEmpty();
     }
 
     @Test
@@ -111,7 +109,7 @@ class ManaSculptTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
         harness.assertLife(player2, 20);
-        assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE)).isEmpty();
     }
 
     @Test
@@ -134,13 +132,13 @@ class ManaSculptTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Fugitive Wizard");
 
         harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE)).hasSize(1);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DRAW);
         harness.passUntil(TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE)).isEmpty();
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
         harness.passBothPriorities();
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);

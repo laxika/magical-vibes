@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.cards.g.Ghostfire;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -7,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.PayManaOrLoseGameAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -38,12 +39,11 @@ class InterventionPactTest extends BaseCardTest {
     void schedulesNextUpkeepPayment() {
         castInterventionPact();
 
-        List<PayManaOrLoseGameAtNextUpkeep> scheduled =
-                gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class);
+        List<TemporaryGlobalTriggeredAbility> scheduled =
+                gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP);
         assertThat(scheduled).singleElement()
                 .satisfies(action -> {
-                    assertThat(action.playerId()).isEqualTo(player1.getId());
-                    assertThat(action.manaCost()).isEqualTo("{1}{W}{W}");
+                    assertThat(action.controllerId()).isEqualTo(player1.getId());
                 });
     }
 
@@ -58,7 +58,7 @@ class InterventionPactTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
-        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -118,7 +118,7 @@ class InterventionPactTest extends BaseCardTest {
         advanceToUpkeep(player2);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 

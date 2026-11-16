@@ -15,8 +15,10 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureCardFromControllerGraveyardUnderTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
@@ -76,9 +78,9 @@ public class PutTargetCreatureCardFromControllerGraveyardUnderTargetPlayerEffect
         graveyardReturnSupport.trackStolenCreature(
                 gameData, permanent.getId(), targetPlayerId, entry.getControllerId());
         // CR 603.7e: the delayed exile trigger is controlled by this ability's controller and keeps its source.
-        gameData.queueDelayedAction(new DelayedPermanentAction(
-                permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP, false, null, null, null, false,
-                entry.getCard(), entry.getControllerId(), entry.getSourcePermanentId()));
+        DelayedPermanentActions.schedule(gameData, entry,
+                new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP),
+                ActivePlayer.ANY);
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
                 new GoadTargetCreatureUntilNextTurnEffect(), permanent.getId(), null, null,

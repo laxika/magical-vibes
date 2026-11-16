@@ -1,9 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterLoseLifeAtNextDrawStepUnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -14,8 +19,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves Nafs Asp's {@code ON_DAMAGE_TO_PLAYER} trigger: reads the damaged player from the stack
- * entry's non-targeting {@code targetId} (recorded by the damage collector) and queues a
- * {@link LoseLifeAtNextDrawStepUnlessPays} delayed action, drained at that player's next draw step.
+ * entry's non-targeting {@code targetId} (recorded by the damage collector) and adds a
+ * delayed triggered ability for that player's next draw step.
  */
 @Slf4j
 @Component
@@ -35,8 +40,11 @@ public class RegisterLoseLifeAtNextDrawStepUnlessPaysEffectHandler implements No
         UUID playerId = entry.getTargetId();
         if (playerId == null) return;
 
-        gameData.queueDelayedAction(new LoseLifeAtNextDrawStepUnlessPays(
-                playerId, e.lifeLoss(), e.payAmount(), entry.getCard(), entry.getControllerId()));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStepUnlessPaid(
+                entry.getControllerId(), entry.getCard(),
+                new TriggeredAbility(Triggers.drawStep(ActivePlayer.CHOSEN_PLAYER),
+                        new LoseLifeEffect(e.lifeLoss(), LoseLifeRecipient.TRIGGERING_PLAYER)),
+                entry.getSourcePermanentId(), null, playerId, "{" + e.payAmount() + "}"));
 
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " must pay {" + e.payAmount() + "} before their next draw step or lose " + e.lifeLoss() + " life. (", entry.getCard(), ")"));

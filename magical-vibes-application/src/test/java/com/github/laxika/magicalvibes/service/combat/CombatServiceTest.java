@@ -1,14 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -47,13 +40,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.contains;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -135,8 +123,7 @@ class CombatServiceTest {
         gd.playerGraveyards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
 
-        // CombatService.processEndOfCombatSacrifices looks the marked permanent up by id; mimic the
-        // real lookup over the battlefields (lenient: the no-sacrifice tests never call it).
+        // Mimic the real permanent lookup over the battlefields (lenient: not every test calls it).
         lenient().when(gameQueryService.findPermanentById(any(), any())).thenAnswer(inv -> {
             UUID id = inv.getArgument(1);
             for (List<Permanent> battlefield : gd.playerBattlefields.values()) {
@@ -452,173 +439,6 @@ class CombatServiceTest {
             assertThat(gd.combatDamagePendingIndices).isEmpty();
             assertThat(gd.combatDamagePhase1Complete).isFalse();
             assertThat(gd.combatDamagePhase1State).isNull();
-        }
-    }
-
-    @Nested
-    @DisplayName("processEndOfCombatCombatOpponentTaps")
-    class ProcessEndOfCombatCombatOpponentTapsTest {
-
-        @Test
-        @DisplayName("Puts the delayed tap trigger on the stack instead of tapping directly")
-        void putsDelayedTriggerOnStack() {
-            Permanent blocker = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            Card source = createCreature("Triton Tactics");
-            gd.queueDelayedAction(new TapCombatOpponentsAtEndOfCombat(List.of(blocker.getId()), source, player1Id));
-
-            combatService.processEndOfCombatCombatOpponentTaps(gd);
-
-            assertThat(gd.stack).singleElement().satisfies(entry -> {
-                assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-                assertThat(entry.getControllerId()).isEqualTo(player1Id);
-                assertThat(entry.getTriggeringPermanentIds()).containsExactly(blocker.getId());
-            });
-            assertThat(gd.getDelayedActions(TapCombatOpponentsAtEndOfCombat.class)).isEmpty();
-            verifyNoInteractions(tapUntapSupport);
-        }
-    }
-
-    // ===== processEndOfCombatSacrifices Tests =====
-
-    @Nested
-    @DisplayName("processEndOfCombatSacrifices")
-    class ProcessEndOfCombatSacrificesTest {
-
-        @Test
-        void damageRiderQueuesAnAbilityEvenAfterItsSourceLeaves() {
-            Card source = createCreature("Delayed damage source");
-            UUID sourceId = UUID.randomUUID();
-            gd.queueDelayedAction(new SacrificeAtEndOfCombat(sourceId, player1Id, source, 5));
-
-            combatService.processEndOfCombatSacrifices(gd);
-
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
-            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(sourceId);
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
-        }
-
-        @Test
-        @DisplayName("Sacrifices permanent marked for end-of-combat sacrifice")
-        void sacrificesMarkedPermanent() {
-            Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            gd.queueDelayedAction(new SacrificeAtEndOfCombat(creature.getId()));
-
-            combatService.processEndOfCombatSacrifices(gd);
-
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, creature);
-        }
-
-        @Test
-        @DisplayName("Logs sacrifice message for each sacrificed permanent")
-        void logsSacrificeMessage() {
-            Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            gd.queueDelayedAction(new SacrificeAtEndOfCombat(creature.getId()));
-
-            combatService.processEndOfCombatSacrifices(gd);
-
-            verify(gameLogService).append(
-                    eq(gd),
-                    argThat((GameLogEntry logEntry) ->
-                            logEntry.plainText().contains("Grizzly Bears")));
-            verify(gameLogService).append(
-                    eq(gd),
-                    argThat((GameLogEntry logEntry) ->
-                            logEntry.plainText().contains("sacrificed")));
-        }
-
-        @Test
-        @DisplayName("Clears sacrifice set after processing")
-        void clearsSacrificeSetAfterProcessing() {
-            Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            gd.queueDelayedAction(new SacrificeAtEndOfCombat(creature.getId()));
-
-            combatService.processEndOfCombatSacrifices(gd);
-
-            assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Removes orphaned auras after sacrificing")
-        void removesOrphanedAurasAfterSacrificing() {
-            Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            gd.queueDelayedAction(new SacrificeAtEndOfCombat(creature.getId()));
-
-            combatService.processEndOfCombatSacrifices(gd);
-
-            verify(permanentRemovalService).removeOrphanedAuras(gd);
-        }
-
-        @Test
-        @DisplayName("No-op when no permanents are marked for sacrifice")
-        void noOpWhenNoMarkedPermanents() {
-            addPermanent(player1Id, createCreature("Grizzly Bears"));
-
-            combatService.processEndOfCombatSacrifices(gd);
-
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
-        }
-
-        @Test
-        @DisplayName("Creates the token rider for the sacrificed permanent's controller (Basalt Golem)")
-        void createsTokenRiderForSacrificingPlayer() {
-            Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            CreateTokenEffect wall = new CreateTokenEffect("Wall", 0, 2, null,
-                    List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), Set.of(CardType.ARTIFACT));
-            gd.queueDelayedAction(new SacrificeAtEndOfCombat(creature.getId(), null, null, 0, wall));
-            when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player1Id);
-
-            combatService.processEndOfCombatSacrifices(gd);
-
-            verify(permanentControlSupport).applyCreateToken(eq(gd), eq(player1Id), eq(wall), any());
-        }
-
-        @Test
-        @DisplayName("Creates no token rider when the permanent already left the battlefield")
-        void createsNoTokenRiderWhenPermanentGone() {
-            CreateTokenEffect wall = new CreateTokenEffect("Wall", 0, 2, null,
-                    List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), Set.of(CardType.ARTIFACT));
-            gd.queueDelayedAction(new SacrificeAtEndOfCombat(UUID.randomUUID(), null, null, 0, wall));
-
-            combatService.processEndOfCombatSacrifices(gd);
-
-            verify(permanentControlSupport, never()).applyCreateToken(any(), any(), any(), any());
-        }
-
-        @Test
-        @DisplayName("Still removes orphaned auras even when no sacrifices occur")
-        void removesOrphanedAurasEvenWithNoSacrifices() {
-            combatService.processEndOfCombatSacrifices(gd);
-
-            verify(permanentRemovalService).removeOrphanedAuras(gd);
-        }
-
-        @Test
-        @DisplayName("Sacrifices multiple permanents from different players")
-        void sacrificesMultiplePermanentsFromDifferentPlayers() {
-            Permanent creature1 = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            Permanent creature2 = addPermanent(player2Id, createCreature("Serra Angel"));
-            gd.queueDelayedAction(new SacrificeAtEndOfCombat(creature1.getId()));
-            gd.queueDelayedAction(new SacrificeAtEndOfCombat(creature2.getId()));
-
-            combatService.processEndOfCombatSacrifices(gd);
-
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, creature1);
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, creature2);
-            assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Does not sacrifice permanent that is not marked")
-        void doesNotSacrificeUnmarkedPermanent() {
-            Permanent marked = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            Permanent unmarked = addPermanent(player1Id, createCreature("Serra Angel"));
-            gd.queueDelayedAction(new SacrificeAtEndOfCombat(marked.getId()));
-
-            combatService.processEndOfCombatSacrifices(gd);
-
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, marked);
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, unmarked);
         }
     }
 }

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -53,7 +54,7 @@ class BroodbirthViperTest extends BaseCardTest {
         assertThat(copy.isTapped()).isTrue();
         assertThat(copy.isAttacking()).isTrue();
         assertThat(copy.getAttackTarget()).isEqualTo(player3.getId());
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+        assertThat(DelayedPermanentMoves.waiting(gd))
                 .anyMatch(action -> action.permanentId().equals(copy.getId())
                         && action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
 
@@ -218,7 +219,7 @@ class BroodbirthViperTest extends BaseCardTest {
             assertThat(soldier.isAttacking()).isTrue();
             assertThat(soldier.getAttackTarget()).isEqualTo(player3.getId());
         });
-        List<UUID> exiledAtEndOfCombat = gd.getDelayedActions(DelayedPermanentAction.class).stream()
+        List<UUID> exiledAtEndOfCombat = DelayedPermanentMoves.waiting(gd).stream()
                 .filter(action -> action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT)
                 .map(DelayedPermanentAction::permanentId).toList();
         assertThat(exiledAtEndOfCombat).containsAll(myriadCopies().stream().map(Permanent::getId).toList());

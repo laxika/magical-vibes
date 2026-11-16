@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileRandomInstantOrSorceryFromTargetHandMayCastFreeEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
@@ -63,8 +62,9 @@ public class ExileRandomInstantOrSorceryFromTargetHandMayCastFreeEffectHandler
         exileService.exileCard(gameData, targetPlayerId, revealed);
         gameData.exilePlayPermissions.put(revealed.getId(), entry.getControllerId());
         gameData.exilePlayWithoutPayingManaCost.add(revealed.getId());
-        gameData.queueDelayedAction(new ReturnExiledCardToHandAtNextEndStep(
-                revealed.getId(), targetPlayerId, entry.getCard(), entry.getControllerId()));
+        gameData.temporaryGlobalTriggeredAbilities.add(ReturnExiledCardToHandEffectHandler.returnAtNextEndStep(
+                gameData, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
+                List.of(revealed.getId()), targetPlayerId, 0, true));
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(playerName + " reveals ").card(revealed)

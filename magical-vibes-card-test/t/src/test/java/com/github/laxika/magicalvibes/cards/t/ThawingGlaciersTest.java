@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
+import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -89,7 +89,8 @@ class ThawingGlaciersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Thawing Glaciers");
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.inMutationScope(
+                () -> GameTestEngineContext.get().getBean(TurnProgressionService.class).applyCleanupResets(gd));
         harness.assertOnBattlefield(player1, "Thawing Glaciers");
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -104,7 +105,8 @@ class ThawingGlaciersTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Thawing Glaciers");
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.inMutationScope(
+                () -> GameTestEngineContext.get().getBean(TurnProgressionService.class).applyCleanupResets(gd));
 
         harness.assertOnBattlefield(player1, "Thawing Glaciers");
         assertThat(gd.stack).singleElement()
@@ -120,7 +122,8 @@ class ThawingGlaciersTest extends BaseCardTest {
     void staysWithoutActivation() {
         harness.addToBattlefield(player1, new ThawingGlaciers());
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.inMutationScope(
+                () -> GameTestEngineContext.get().getBean(TurnProgressionService.class).applyCleanupResets(gd));
 
         harness.assertOnBattlefield(player1, "Thawing Glaciers");
     }
@@ -133,7 +136,8 @@ class ThawingGlaciersTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard() instanceof ThawingGlaciers)
                 .noneMatch(p -> p.getCard() instanceof Forest)
                 .noneMatch(p -> p.getCard() instanceof Island);
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.inMutationScope(
+                () -> GameTestEngineContext.get().getBean(TurnProgressionService.class).applyCleanupResets(gd));
         harness.assertOnBattlefield(player1, "Thawing Glaciers");
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();

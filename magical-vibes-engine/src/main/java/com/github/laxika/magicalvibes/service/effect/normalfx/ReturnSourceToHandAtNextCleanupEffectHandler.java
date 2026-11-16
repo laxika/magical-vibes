@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedCleanupTrigger;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Handler for {@link ReturnSourceToHandAtNextCleanupEffect}: queues a delayed triggered ability that
@@ -36,8 +37,8 @@ public class ReturnSourceToHandAtNextCleanupEffectHandler implements NormalEffec
         if (source == null) {
             return;
         }
-        gameData.queueDelayedAction(new DelayedCleanupTrigger(
-                entry.getControllerId(), entry.getCard(),
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.cleanup(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), null,
                 ReturnToHandEffect.allPermanentsMatching(
                         new PermanentIsSpecificPermanentPredicate(source.getId()))));
         log.info("Game {} - {} scheduled to return to hand at next cleanup", gameData.id, entry.getCard().getName());

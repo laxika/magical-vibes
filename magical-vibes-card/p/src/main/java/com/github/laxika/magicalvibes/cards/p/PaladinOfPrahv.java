@@ -7,11 +7,12 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreatureDealsDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityAboutTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 
 @CardRegistration(set = "DIS", collectorNumber = "14")
 @CardRegistration(set = "DDG", collectorNumber = "22")
@@ -23,8 +24,8 @@ public class PaladinOfPrahv extends Card {
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{1}{W}",
-                List.of(new RegisterDelayedWatchedCreatureDealsDamageEffect(
-                        List.of(new GainLifeEffect(new EventValue())))),
+                List.of(new RegisterGlobalTriggeredAbilityAboutTargetUntilEndOfTurnEffect(new TriggeredAbility(
+                        Triggers.dealsDamage(), new GainLifeEffect(new EventValue())))),
                 "Forecast — {1}{W}, Reveal this card from your hand: Whenever target creature deals damage this turn, "
                         + "you gain that much life. Activate only during your upkeep and only once each turn.",
                 TargetFilters.creature(),

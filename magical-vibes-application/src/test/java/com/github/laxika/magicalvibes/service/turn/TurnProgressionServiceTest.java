@@ -1,10 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -306,7 +302,6 @@ class TurnProgressionServiceTest {
             assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
             verify(combatService).clearCombatState(gd);
             verify(stepTriggerService).handlePostcombatMainTriggers(gd);
-            verify(stepTriggerService).drainAddManaAtNextMainPhase(gd, false);
         }
 
         @Test
@@ -353,78 +348,6 @@ class TurnProgressionServiceTest {
             turnProgressionService.advanceStep(gd);
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_BLOCKERS);
-        }
-    }
-
-    // =========================================================================
-    // advanceStep — end-of-combat sacrifices/exiles
-    // =========================================================================
-
-    @Nested
-    @DisplayName("advanceStep — end-of-combat sacrifices and exiles")
-    class EndOfCombatSacrificesExiles {
-
-        @Test
-        @DisplayName("Processes sacrifices when leaving END_OF_COMBAT with pending sacrifices")
-        void processesEndOfCombatSacrifices() {
-            gd.currentStep = TurnStep.END_OF_COMBAT;
-            gd.queueDelayedAction(new SacrificeAtEndOfCombat(UUID.randomUUID()));
-
-            turnProgressionService.advanceStep(gd);
-
-            verify(combatService).processEndOfCombatSacrifices(gd);
-            verify(combatService).processEndOfCombatExiles(gd);
-            // Should NOT advance step
-            assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
-        }
-
-        @Test
-        @DisplayName("Processes exiles when leaving END_OF_COMBAT with pending token exiles")
-        void processesEndOfCombatExiles() {
-            gd.currentStep = TurnStep.END_OF_COMBAT;
-            gd.queueDelayedAction(new DelayedPermanentAction(UUID.randomUUID(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
-
-            turnProgressionService.advanceStep(gd);
-
-            verify(combatService).processEndOfCombatSacrifices(gd);
-            verify(combatService).processEndOfCombatExiles(gd);
-            assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
-        }
-
-        @Test
-        @DisplayName("Processes top-of-library moves when leaving END_OF_COMBAT")
-        void processesTopOfLibraryMoves() {
-            gd.currentStep = TurnStep.END_OF_COMBAT;
-            gd.queueDelayedAction(new DelayedPermanentAction(UUID.randomUUID(),
-                    DelayedPermanentActionKind.PUT_ON_TOP_OF_LIBRARY_AT_END_OF_COMBAT));
-
-            turnProgressionService.advanceStep(gd);
-
-            verify(combatService).processEndOfCombatLibraryTucks(gd);
-            assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
-        }
-
-        @Test
-        @DisplayName("Clears priority passed after processing end-of-combat sacrifices")
-        void clearsPriorityAfterSacrifices() {
-            gd.currentStep = TurnStep.END_OF_COMBAT;
-            gd.queueDelayedAction(new SacrificeAtEndOfCombat(UUID.randomUUID()));
-            gd.priorityPassedBy.add(player1Id);
-
-            turnProgressionService.advanceStep(gd);
-
-            assertThat(gd.priorityPassedBy).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Advances normally from END_OF_COMBAT when no pending sacrifices or exiles")
-        void advancesNormallyWhenNoPending() {
-            gd.currentStep = TurnStep.END_OF_COMBAT;
-
-            turnProgressionService.advanceStep(gd);
-
-            assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
-            verify(combatService, never()).processEndOfCombatSacrifices(any());
         }
     }
 
@@ -822,7 +745,6 @@ class TurnProgressionServiceTest {
             gd.lifeGainedThisTurn.put(player1Id, 4);
             gd.combatDamageToPlayersThisTurn.put(UUID.randomUUID(), new HashSet<>());
             gd.recordDamageDealtBySource(UUID.randomUUID(), 3);
-            gd.queueDelayedAction(new DelayedCombatDamageLoot(player1Id, 1, 1, new Card()));
             gd.playersDealtDamageThisTurn.add(player1Id);
             gd.permanentsDealtDamageThisTurn.add(UUID.randomUUID());
             gd.creatureCardsDamagedThisTurnBySourcePermanent.put(UUID.randomUUID(), new HashSet<>());
@@ -844,7 +766,6 @@ class TurnProgressionServiceTest {
             assertThat(gd.lifeGainedThisTurn).isEmpty();
             assertThat(gd.combatDamageToPlayersThisTurn).isEmpty();
             assertThat(gd.damageDealtThisTurnBySource).isEmpty();
-            assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class)).isEmpty();
             assertThat(gd.playersDealtDamageThisTurn).isEmpty();
             assertThat(gd.permanentsDealtDamageThisTurn).isEmpty();
             assertThat(gd.creatureCardsDamagedThisTurnBySourcePermanent).isEmpty();

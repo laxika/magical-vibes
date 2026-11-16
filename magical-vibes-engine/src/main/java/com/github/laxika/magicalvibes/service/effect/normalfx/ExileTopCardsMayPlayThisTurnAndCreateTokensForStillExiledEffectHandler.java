@@ -4,10 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedStillExiledCardsEndStepTrigger;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayThisTurnAndCreateTokensForStillExiledEffect;
-import com.github.laxika.magicalvibes.model.effect.PutStillExiledCardsIntoGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.ArrayList;
@@ -65,13 +63,10 @@ public class ExileTopCardsMayPlayThisTurnAndCreateTokensForStillExiledEffectHand
             return;
         }
 
-        gameData.queueDelayedAction(new DelayedStillExiledCardsEndStepTrigger(
-                controllerId,
-                entry.getCard(),
-                entry.getSourcePermanentId(),
-                new PutStillExiledCardsIntoGraveyardAndCreateTokensEffect(
-                        exiledCardIds, exileEffect.tokenEffect()),
-                exiledCardIds));
+        gameData.temporaryGlobalTriggeredAbilities.add(
+                PutStillExiledCardsIntoGraveyardAndCreateTokensEffectHandler.atNextEndStep(
+                gameData, controllerId, entry.getCard(), entry.getSourcePermanentId(), exiledCardIds,
+                exileEffect.tokenEffect()));
         log.info("Game {} - {} exiled {} cards for Glimpse's delayed token effect",
                 gameData.id, gameData.playerIdToName.get(controllerId), exiledNames.size());
     }

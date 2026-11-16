@@ -30,8 +30,7 @@ public class ChooseCardNameForDelayedCreatureCombatDamageEffectHandler implement
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var chooseEffect = (ChooseCardNameForDelayedCreatureCombatDamageEffect) effect;
         var choiceContext = new ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice(
-                entry.getControllerId(), chooseEffect.effects(), entry.getCard(),
-                chooseEffect.combatDamageToPlayerOnly(), chooseEffect.untilEndOfTurn());
+                entry.getControllerId(), chooseEffect.effects(), entry.getCard(), entry.getSourcePermanentId());
         List<String> cardNames = libraryRevealSupport.collectAllCardNamesInGame(gameData);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 entry.getControllerId(), null, null, choiceContext, cardNames, "Choose a card name."));

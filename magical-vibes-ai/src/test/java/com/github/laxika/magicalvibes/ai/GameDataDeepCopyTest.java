@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
+import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -310,19 +312,22 @@ class GameDataDeepCopyTest {
         StackEntry entry = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Block trigger", List.of());
         entry.rememberLastKnownPermanentAttachments(departedId, attachments);
         gd.stack.add(entry);
-        gd.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger(
-                player1.getId(), new SerraAngel(), null, departedId,
-                new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1), null, attachments));
+        gd.temporaryGlobalTriggeredAbilities.add(
+                com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility.atNextStep(
+                        com.github.laxika.magicalvibes.model.trigger.Triggers.endOfCombat(), player1.getId(),
+                        new SerraAngel(), null, departedId,
+                        new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1))
+                        .withReferents(com.github.laxika.magicalvibes.model.DelayedReferents
+                                .permanents(List.of(departedId)).withPermanentAttachments(attachments)));
 
         GameData copy = gd.simulationCopy();
 
         assertThat(copy.stack.getFirst()).isNotSameAs(entry);
         assertThat(copy.stack.getFirst().lastKnownPermanentAttachments(departedId).equipmentPermanentIds())
                 .containsExactly(equipmentId);
-        assertThat(copy.delayedActions).singleElement()
-                .isInstanceOfSatisfying(com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger.class,
-                        delayed -> assertThat(delayed.affectedPermanentAttachments().equipmentPermanentIds())
-                                .containsExactly(equipmentId));
+        assertThat(copy.temporaryGlobalTriggeredAbilities).singleElement()
+                .satisfies(delayed -> assertThat(delayed.referents().permanentAttachments().equipmentPermanentIds())
+                        .containsExactly(equipmentId));
     }
 
     @Test
@@ -546,25 +551,20 @@ class GameDataDeepCopyTest {
     void deepCopyPreservesDelayedActions() {
         UUID a = UUID.randomUUID();
         UUID b = UUID.randomUUID();
-        gd.queueDelayedAction(new DelayedPermanentAction(a, DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
-        gd.queueDelayedAction(new DelayedPermanentAction(b, DelayedPermanentActionKind.DESTROY_AT_END_STEP));
-        gd.addDelayedPlusOneCounters(a, 4);
+        UUID shieldId = UUID.randomUUID();
+        gd.queueDelayedAction(new DelayedPlusZeroPlusOneCounters(a, 4, shieldId, 0));
+        gd.queueDelayedAction(new DelayedPlusZeroPlusOneCounters(b, 2, shieldId, 1));
 
         GameData copy = gd.simulationCopy();
 
         // Same values, same insertion order (records are immutable, shallow copy).
         assertThat(copy.delayedActions).containsExactly(
-                new DelayedPermanentAction(a, DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP),
-                new DelayedPermanentAction(b, DelayedPermanentActionKind.DESTROY_AT_END_STEP),
-                new DelayedPlusOneCounters(a, 4));
+                new DelayedPlusZeroPlusOneCounters(a, 4, shieldId, 0),
+                new DelayedPlusZeroPlusOneCounters(b, 2, shieldId, 1));
 
         // Independent list — mutating the copy leaves the original untouched.
         copy.delayedActions.clear();
-        assertThat(gd.delayedActions).hasSize(3);
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .containsExactly(
-                        new DelayedPermanentAction(a, DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP),
-                        new DelayedPermanentAction(b, DelayedPermanentActionKind.DESTROY_AT_END_STEP));
+        assertThat(gd.delayedActions).hasSize(2);
     }
 
     @Test
@@ -788,25 +788,23 @@ class GameDataDeepCopyTest {
     void deepCopyPreservesTheResolutionThatScheduledADelayedAction() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         gd.resolutionOrdinal = 7;
-        gd.queueDelayedAction(new DelayedPermanentAction(
-                bears.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+        DelayedPermanentActions.scheduleOwn(gd, player1.getId(), bears, new DelayedPermanentAction(
+                bears.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP), ActivePlayer.ANY);
 
         GameData copy = gd.simulationCopy();
 
         assertThat(copy.resolutionOrdinal).isEqualTo(7);
-        assertThat(copy.delayedActions).hasSize(1).first()
-                .isInstanceOfSatisfying(DelayedPermanentAction.class,
-                        action -> assertThat(action.schedulingResolution()).isEqualTo(7));
+        assertThat(DelayedPermanentMoves.waiting(copy)).hasSize(1)
+                .allSatisfy(action -> assertThat(action.schedulingResolution()).isEqualTo(7));
 
         copy.resolutionOrdinal++;
-        copy.queueDelayedAction(new DelayedPermanentAction(
-                bears.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+        DelayedPermanentActions.scheduleOwn(copy, player1.getId(), bears, new DelayedPermanentAction(
+                bears.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP), ActivePlayer.ANY);
 
         assertThat(gd.resolutionOrdinal).isEqualTo(7);
-        assertThat(gd.delayedActions).hasSize(1);
-        assertThat(copy.delayedActions).last()
-                .isInstanceOfSatisfying(DelayedPermanentAction.class,
-                        action -> assertThat(action.schedulingResolution()).isEqualTo(8));
+        assertThat(DelayedPermanentMoves.waiting(gd)).hasSize(1);
+        assertThat(DelayedPermanentMoves.waiting(copy)).last()
+                .satisfies(action -> assertThat(action.schedulingResolution()).isEqualTo(8));
     }
 
     @Test

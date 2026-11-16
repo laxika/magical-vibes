@@ -442,6 +442,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSuspected;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
+import com.github.laxika.magicalvibes.model.condition.SourceRemainsTapped;
 import com.github.laxika.magicalvibes.model.condition.SourceLibraryPlayPermissionUsedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
@@ -485,6 +486,8 @@ import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToActivat
 import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
+import com.github.laxika.magicalvibes.model.condition.TriggeringCardInExile;
+import com.github.laxika.magicalvibes.model.condition.CardsStillInZone;
 import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
 import com.github.laxika.magicalvibes.model.condition.TriggeringCardManaValueIsUncrossedChosenDigit;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
@@ -1846,6 +1849,9 @@ public class ConditionEvaluationService {
                             == ctx.sourceGraveyardEntryVersion());
             case SourceCardInExile ignored ->
                     isSourceCardInExile(gameData, ctx);
+            case CardsStillInZone c -> cardsStillInZone(gameData, ctx, c);
+            case TriggeringCardInExile ignored -> ctx.triggeringCard() != null
+                    && gameData.findExiledCard(ctx.triggeringCard().getId()) != null;
             case SourceCardInExileWithFetchCounter ignored ->
                     isSourceCardInExileWithFetchCounter(gameData, ctx);
             case SourceCardToughnessAtLeast c ->
@@ -2196,6 +2202,11 @@ public class ConditionEvaluationService {
             case SourceIsTapped ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.isTapped();
+            }
+            case SourceRemainsTapped c -> {
+                Permanent source = ctx.sourcePermanentId() == null ? null
+                        : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+                yield source != null && source.isTapped() && source.getUntapSequence() == c.untapSequence();
             }
             case SourceLibraryPlayPermissionUsedThisTurn ignored -> ctx.sourcePermanentId() != null
                     && gameData.oncePerTurnLibraryPlayPermissionsUsedThisTurn.contains(ctx.sourcePermanentId());
@@ -4812,6 +4823,17 @@ public class ConditionEvaluationService {
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, filter, null, gameData, controllerId))
                 .count();
+    }
+
+    private boolean cardsStillInZone(GameData gameData, ConditionContext ctx, CardsStillInZone condition) {
+        return condition.entryVersions().entrySet().stream().anyMatch(card -> switch (condition.zone()) {
+            case HAND -> gameData.playerHands.getOrDefault(ctx.controllerId(), List.of()).stream()
+                    .anyMatch(inHand -> inHand.getId().equals(card.getKey()))
+                    && gameData.handEntryVersions.getOrDefault(card.getKey(), 0L).equals(card.getValue());
+            case EXILE -> gameData.findExiledCard(card.getKey()) != null
+                    && gameData.exileEntryVersions.getOrDefault(card.getKey(), 0L).equals(card.getValue());
+            default -> throw new IllegalArgumentException("No cards-still-in-zone condition reads " + condition.zone());
+        });
     }
 
     private int countMatchingCardsInExile(GameData gameData, UUID ownerId, CardPredicate filter) {

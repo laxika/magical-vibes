@@ -29,9 +29,10 @@ grep its `^#### Run` headings and read that range. The invariants those runs est
 | R0 | Delete the dead `TriggerCollectionService` injections | done |
 | R1 | Emblems' abilities are `TriggerIndex` candidates for every family | done |
 | R2 | Keyword abilities and departed sources are candidates; abilities as the layers leave them | done |
-| R3 | One delayed-ability model (temporary-global abilities and every delayed list), listed for every family | open |
+| R3 | One delayed-ability model (temporary-global abilities and every delayed list), listed for every family | done but: C50, C51, C52 |
 | R4 | Cast bookkeeping at the cast's completion; `TriggerCollectionService` deleted | open |
 | F | Delete the legacy types; docs | open |
+| D | Durations: one `Duration` on floating effects, ended by a clock on the rules events; `DelayedAction` deleted | open |
 
 A row's status is `open`, `done`, or `done but: <ids from Carried over>`. Nothing else goes in it.
 
@@ -296,7 +297,7 @@ moment kept or a rule cited for moving it).
 | R0 | Delete the injections of `TriggerCollectionService` that call nothing (about 280 main classes), and their tests' constructor arguments. No behaviour change. |
 | R1 | `TriggerIndex` lists emblems' abilities (they function in the command zone, CR 114.4) as candidates for every family, as it lists them for steps; each family's matcher judges them as it judges any other candidate, and the hand-written emblem readers go (the zone-change readers here, and those of `TapTriggers`, `LifeTriggers`, `DamageTriggers`, `LibraryTriggers`, `SpellTriggers`, `AttackTriggers`). Close C48. |
 | R2 | Prowess, increment and evolve are keyword abilities `TriggerIndex` lists for a permanent with the keyword (CR 702.108a, 702.100); a departed permanent's snapshot abilities are listed as it last existed (C46); becomes-the-target abilities are read as the layers leave them (C45). |
-| R3 | An ability a resolving spell or ability creates is a delayed triggered ability (CR 603.7a), once only or for its stated duration (CR 603.7b). `TemporaryGlobalTriggeredAbility` is one already (source, controller, duration, the permanent and player it watches); make it the one delayed-ability model, listed by `TriggerIndex` for every family (deleting the hand loops over `temporaryGlobalTriggeredAbilities` in seven families and here), then convert the other delayed lists to it family by family (deaths and leaves, cast and activation copies, the rest), deleting each drain as its family moves. Deep-copy test for new state. |
+| R3 | An ability a resolving spell or ability creates is a delayed triggered ability (CR 603.7a), once only or for its stated duration (CR 603.7b). `TemporaryGlobalTriggeredAbility` is one already (source, controller, duration, the permanent and player it watches); make it the one delayed-ability model, listed by `TriggerIndex` for every family (deleting the hand loops over `temporaryGlobalTriggeredAbilities` in seven families and here), then convert the other delayed lists to it family by family (deaths and leaves, cast and activation copies, the rest), deleting each drain as its family moves. The step family lists them too, and a step trigger can name the turn or phase it means ("that turn's end step", "that combat": an added phase is its own, CR 500.8). `ReturnExiledCardToHandAtNextEndStep` and `DelayedGraveyardToHandReturn` resolve without the stack: they are delayed abilities and go on it (CR 603.3). A `DelayedAction` that is a duration, not an ability (play permissions, an attack requirement), stays for D, with a line under Carried over. Deep-copy test for new state. |
 | R4 | The cast bookkeeping of `checkSpellCastTriggers` moves to the cast's completion (CR 601.2i), the ledger confirming the abilities' order; what is left (boons, sacrifice records) moves to the family that owns it; delete `TriggerCollectionService`. |
 
 ### F: delete the legacy types; docs
@@ -309,6 +310,8 @@ moment kept or a rule cited for moving it).
   zone-change abilities as `TriggerIndex` candidates, matched by `TriggerMatcher`, and delete the planar and scheme
   readers. Take the ledger before and after over the planar and scheme card tests and the two route tests, and
   adjudicate the moment they now trigger as Rules correctness says (keep it, or cite the rule for moving it).
+- C50: list echo as a keyword ability `TriggerIndex` lists for a permanent (CR 702.30a) and delete `EchoAtNextUpkeep`
+  and its drain, with the ledger over the echo card tests.
 - Delete the `scripts/step*` conversion scripts and `scripts/effect-slot-*`.
 - The legacy trigger choice types are deleted (S8). Delete `ChoiceContext.ChooseModeChoice.triggerTime` (always
   false since S8) and its readers.
@@ -317,10 +320,39 @@ moment kept or a rule cited for moving it).
   from `agent-docs/` (13 files) and Javadoc (22 files).
 - Replace `agent-docs/TRIGGER_SLOT_TARGETING.md` with a short note on targets of triggered
   abilities. Update the two card skills.
-- Delete this file.
 
 **Done when:** C47 is closed with its ledger diff adjudicated, a grep for `EffectSlot` finds nothing and the docs
 describe only the new model.
+
+### D: durations
+
+Depends on F. An effect a resolving spell or ability makes lasts as long as it states (CR 611.2a). The engine keeps
+most such durations as state named for one effect: `GameData` fields (`…UntilNextTurn`, `exilePlayPermissionsExpire…`,
+`…AwaitNextTurnOfPlayer`, and those `…ThisTurn` fields that are effects rather than turn history), their
+`EndOfTurnStateField` resets, an `EffectDuration` constant per wording with an `expire…FloatingEffects…` method per
+constant called from its own place, and the `DelayedAction`s R3 leaves (C51, C52).
+
+1. **Inventory** by script: the fields that hold an effect's duration, apart from turn history ("spells cast this
+   turn" is not an effect and stays).
+2. **`Duration`** replaces `EffectDuration`: a start (now, or after this turn, CR 702.185a), an end event (end of turn,
+   CR 514.2; a player's next turn, upkeep or untap step; end of combat; a matching cast; the affected object leaving
+   its zone, CR 400.7), and an optional "for as long as" condition (one that never starts does nothing, CR 611.2b).
+3. **One model.** Every effect a resolution makes is a `FloatingContinuousEffect` with a `Duration`, rules-modifying
+   ones too (play permissions, attack requirements CR 508.1d, prevention, can't attack, hand size, flash grants).
+   Whether its affected set is locked as it begins follows CR 611.2c; the layers apply only those that change
+   characteristics (CR 613.1). Each field's readers become a query over floating effects.
+4. **The clock.** Durations end at the rules events that end them, through `RulesEventPipeline`, without the stack
+   (as CR 514.2). The `expire…` methods and their call sites go. The moment an effect ends is kept, or a rule is cited
+   for moving it.
+5. **Family by family.** The ledger records triggered abilities only, so first extend its recorder with a line per
+   floating effect as it begins and ends (test id, source, effect, end event). Take it before and after each family and
+   adjudicate as Rules correctness says. Delete each family's fields, resets and deep-copy lines; deep-copy test for new
+   state.
+6. **Close.** Delete `DelayedAction` and `EffectDuration`. Update `LAYER_SYSTEM.md`, `game-state.md` and the effect
+   indexes. Delete this file.
+
+**Done when:** `DelayedAction` and `EffectDuration` are gone, no `GameData` field holds an effect's duration, and the
+ledger diff is adjudicated.
 
 ## Carried over
 
@@ -391,6 +423,9 @@ named, with the Oracle text of the cards involved read first.
 | C47 | F (closed) | Planar and scheme zone-change abilities (`TriggerCollectionService`'s planar enters, leaves, land-enters and death readers, the scheme leaves reader, the planar nonblack-card reader) still run at their old call sites, selecting abilities by their trigger's fields; `TriggerIndex` doesn't list planar or scheme candidates for zone changes, and moving them changes the moment they trigger, which needs its own ledger pass |
 | C48 | R1 (closed) | A battlefield departure's "put into a graveyard from anywhere" observers are read as leaves-the-battlefield abilities: `TriggerIndex.observerCandidates` lists them as they were before the event and `TriggerMatcher.filterMatches` judges their filter on the permanent as it last existed (CR 603.10a), but CR 603.6c says such an ability is never a leaves-the-battlefield ability (every observer written `Triggers.putIntoGraveyardFromAnywhere(filter, relation)`, The Dark Barony's "nonblack card" among them); changing it needs its own ledger pass over those cards |
 | C49 | R2 (closed) | The combat-damage passes' emblem readers (`DamageTriggers.checkEmblemAllyCreatureCombatDamageToPlayerTriggers`, `checkEmblemCombatDamageTriggers`) are still hand-written: those passes read their watchers as `List<Permanent>` with departed watchers, batched fire marks and owner-relative passes, which C46 reworks; emblems join them as watchers there |
+| C50 | R3 (closed) | Echo stays a `StepTriggerService` drain (`EchoAtNextUpkeep`): it is the permanent's own triggered ability with an intervening if (CR 702.30a), not a delayed one, so `TriggerIndex` must list it as a keyword ability for a permanent that came under its controller's control since their last upkeep (R2's pattern); closes in F |
+| C51 | R3 (closed) | `DelayedAction` keeps what isn't an ability: play permissions granted or revoked at a turn, `TargetCreatureMustAttackNextCombat`, `ExpireControlAtEndOfNextTurn`, `PhasedOutUntilEndOfNextTurn`, the attack restrictions of `DelayedAdditionalCombatBeginningEffect`, attacker and blocker declaration control, Camouflage, Sacred Boon's prevention shield (`DelayedPlusZeroPlusOneCounters`), and the damage doubling and multiplication replacements (CR 614.1a); closes in D |
+| C52 | R3 (closed) | Siren's Call's `DestroyNonAttackersAtEndStep` is both the "attack this turn if able" requirement and the end-step destruction: the destruction becomes a delayed ability once D makes the requirement an effect; closes in D |
 
 **Fixes**
 
@@ -611,6 +646,14 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Rules fixes (tests fail before): Solar Array and Chocobo Camp's "when you next cast ... this turn" ended with the turn, not when consumed (Oracle text, CR 603.7b); Mountain Titan's delayed ability triggers after it left, putting its counter nowhere (CR 603.7c); Leori chooses a type and copies even if it left before its ability resolved (Oracle text, CR 113.7a).
 - Ledger: no ability gained or lost but Mountain Titan's and Leori's (effects renamed); every other line is the cast record gained (that player, triggering player, card snapshot, cast indices, spell targets), the registration's source snapshot and the target route's `activePlayerId` lost, or random (route-fixture draws, discards, dice, clashes; combat-damage fixture order).
 - Open: the step `DelayedAction` drains and the step listing, Lagrella's `DelayedExileReturnCounterTrigger`, the entering-creature watchers (Beck's `creatureEntersDrawSourcesThisTurn`, `untapAttackedCreaturesEachCombatThisTurnSources`).
+
+**R3 (part 5: step-timed delayed actions and the rest).**
+- Every step-timed `DelayedAction` is a `TemporaryGlobalTriggeredAbility` (`atNextStep`, `atNextStepUnlessPaid`, `atEveryStep` with `repeats`/`lastsWhile` for "for the rest of the game" and "for as long as", CR 603.7b), listed by `TriggerIndex.stepCandidates` before the step's other abilities (the moment the drains ran) and matched by `TriggerMatcher.delayedStepMatch`. `DelayedReferents` names its other objects and the turn, extra turn or combat phase it waits for (CR 500.8); `Triggers.cleanup()` (CR 514.3a). The attack, block, combat-damage and damage "this turn" lists, Beck's and Full Throttle's are delayed abilities their families match. Gone: about 95 records and their drains, about 25 single-purpose registration effects, epic's and Lagrella's drains; `DelayedPermanentAction` and `PendingExileReturn` are payloads of their resolve effects.
+- A delayed step ability triggers even if its object left, and doesn't affect it (CR 603.7c); a one-shot whose intervening if is false as its step begins is removed (CR 603.7b, 603.4).
+- Rules fixes (tests fail before): Shirei's "if Shirei is still on the battlefield" (CR 603.4), Perilous Iteration's "your next turn's end step", Biolume Egg's return controlled by its controller (CR 603.7e), Jaya keeps damaging the chosen permanent that stopped being a creature (CR 603.7c), a permanent's "whenever a creature blocks" triggers once for a blocker an effect makes block more attackers (CR 509.3a; Noble Ox with Heat of Battle).
+- Rules fixes without such a test: Norritt's and Nettling Imp's intervening ifs; a delayed sacrifice is made by the ability's controller (CR 701.21a); "at end of combat" abilities survive "end the turn"; Moraug's and World at War's "that combat"; Cyclopean Tomb triggers each upkeep; Terminal Velocity and Strago and Relm grant a lasting end-step ability; Lagrella triggers once (CR 603.7b, rulings 2022-04-29); Arcbond's creature deals the damage; Esper Terra's chapter makes the delayed sacrifice (no registration trigger on the token).
+- Ledger: abilities gained are delayed abilities whose object left (CR 603.7c) and new tests; lost are Shirei's (fix), per-permanent sacrifices now one ability per resolution (CR 603.7a: Dalkovan Encampment, Fire Navy Trebuchet) and Terra's registration trigger; the rest is effects renamed or wrapped in the intervening if, the maker as source (CR 603.7e), the event's objects recorded, or random (Drover of the Swine, Jadelight Spelunker, Mirror March, route fixtures).
+- Open: C50, C51, C52. `lastsWhile` is judged only as a step begins. The new `PermanentRemovalServiceTest$ResolveDelayedPermanentAction` cases fail on the class's HEAD mock wiring (`layerSystemServiceProvider` is null), as its other 42 cases do.
 
 ## Prompt
 

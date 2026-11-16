@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.f.Fog;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -63,12 +64,11 @@ class GrinningTotemTest extends BaseCardTest {
         assertThat(gameLogContains("Library is shuffled.")).isTrue();
 
         // Cleanup is scheduled for the caster's next upkeep, targeting the true owner's graveyard.
-        List<ExileToOwnerGraveyardAtNextUpkeep> scheduled =
-                gd.getDelayedActions(ExileToOwnerGraveyardAtNextUpkeep.class);
+        List<TemporaryGlobalTriggeredAbility> scheduled =
+                gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP);
         assertThat(scheduled).hasSize(1);
         assertThat(scheduled.getFirst().controllerId()).isEqualTo(player1.getId());
-        assertThat(scheduled.getFirst().ownerId()).isEqualTo(player2.getId());
-        assertThat(scheduled.getFirst().cardId()).isEqualTo(swamp.getId());
+        assertThat(scheduled.getFirst().referents().cardIds()).containsExactly(swamp.getId());
 
         // Grinning Totem was sacrificed as a cost.
         harness.assertNotOnBattlefield(player1, "Grinning Totem");
@@ -94,7 +94,7 @@ class GrinningTotemTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissions).doesNotContainKey(swamp.getId());
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getId().equals(swamp.getId()));
-        assertThat(gd.getDelayedActions(ExileToOwnerGraveyardAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -112,7 +112,7 @@ class GrinningTotemTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getId().equals(swamp.getId()));
         assertThat(gd.exilePlayPermissions.get(swamp.getId())).isEqualTo(player1.getId());
-        assertThat(gd.getDelayedActions(ExileToOwnerGraveyardAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
 
     @Test
@@ -188,7 +188,7 @@ class GrinningTotemTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gameLogContains("searches " + player2.getUsername()
                 + "'s library but it is empty. Library is shuffled.")).isTrue();
-        assertThat(gd.getDelayedActions(ExileToOwnerGraveyardAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
         harness.assertNotOnBattlefield(player1, "Grinning Totem");
         harness.assertInGraveyard(player1, "Grinning Totem");
     }

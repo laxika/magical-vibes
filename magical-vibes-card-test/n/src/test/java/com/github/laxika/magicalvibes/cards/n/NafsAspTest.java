@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.testutil.DelayedObligations;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HermeticStudy;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.networking.model.DelayedTriggerPaymentView;
 import com.github.laxika.magicalvibes.service.JacksonConfig;
@@ -75,7 +77,7 @@ class NafsAspTest extends BaseCardTest {
         gs.payDelayedTriggerCost(gd, player2, asp.getCard().getId(), player2.getId());
 
         assertThat(gd.playerManaPools.get(player2.getId()).getPowerstoneOnlyColorless()).isZero();
-        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.DRAW_STEP)).isEmpty();
     }
 
     @Test
@@ -95,7 +97,7 @@ class NafsAspTest extends BaseCardTest {
         gs.payDelayedTriggerCost(gd, player2, asp.getCard().getId(), player2.getId());
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
-        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.DRAW_STEP)).isEmpty();
         assertThat(gd.stack).isEmpty();
         advanceToPlayer2DrawStepObligation();
 
@@ -115,7 +117,7 @@ class NafsAspTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.DRAW_STEP)).hasSize(1);
     }
 
     @Test
@@ -229,7 +231,7 @@ class NafsAspTest extends BaseCardTest {
 
         advanceToPlayer2DrawStepObligation();
         harness.assertLife(player2, 18);
-        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.DRAW_STEP)).isEmpty();
 
         advanceToPlayer2DrawStepObligation();
         harness.assertLife(player2, 18);
@@ -254,7 +256,7 @@ class NafsAspTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 20);
-        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.DRAW_STEP)).isEmpty();
     }
 
     /** Player1 passes in their own end step, handing priority to player2 (who owes the payment). */
@@ -344,28 +346,28 @@ class NafsAspTest extends BaseCardTest {
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gqs.getPriorityPlayerId(gd)).isEqualTo(player2.getId());
         assertThat(gd.priorityPassedBy).isEmpty();
-        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.DRAW_STEP)).isEmpty();
     }
 
     @Test
     @DisplayName("Two identical obligations are offered as one payment until both are paid, one at a time")
     void identicalObligationsArePaidOneAtATime() throws Exception {
         NafsAsp aspCard = new NafsAsp();
-        LoseLifeAtNextDrawStepUnlessPays obligation =
-                new LoseLifeAtNextDrawStepUnlessPays(player2.getId(), 1, 1, aspCard, player1.getId());
-        gd.queueDelayedAction(obligation);
-        gd.queueDelayedAction(obligation);
+        TemporaryGlobalTriggeredAbility obligation = DelayedObligations.loseLifeAtDrawStepUnlessPaid(
+                player1.getId(), player2.getId(), aspCard, 1, 1);
+        gd.temporaryGlobalTriggeredAbilities.add(obligation);
+        gd.temporaryGlobalTriggeredAbilities.add(obligation);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         passToPlayer2InPlayer1EndStep();
 
         assertThat(offeredPayments(harness.getConn2())).hasSize(1);
         gs.payDelayedTriggerCost(gd, player2, aspCard.getId(), player2.getId());
 
-        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).containsExactly(obligation);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.DRAW_STEP)).containsExactly(obligation);
         assertThat(offeredPayments(harness.getConn2())).hasSize(1);
         gs.payDelayedTriggerCost(gd, player2, aspCard.getId(), player2.getId());
 
-        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.DRAW_STEP)).isEmpty();
         assertThat(offeredPayments(harness.getConn2())).isEmpty();
         assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
     }
@@ -392,7 +394,7 @@ class NafsAspTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
 
-        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.DRAW_STEP)).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
     }
 
@@ -410,6 +412,6 @@ class NafsAspTest extends BaseCardTest {
 
         // Blocked: no combat damage reaches player2, so no draw-step obligation is scheduled.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
-        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.DRAW_STEP)).isEmpty();
     }
 }

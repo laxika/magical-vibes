@@ -1,11 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.action.EpicDelayedTrigger;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
-import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
@@ -163,12 +158,8 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.clearAllSourceTracking();
         gameData.stolenCreatures.clear();
         gameData.floatingEffects.clear();
-        gameData.clearDelayedActions(PendingExileReturn.class);
         gameData.exileReturnOnPermanentLeave.clear();
         gameData.sourceLinkedAnimations.clear();
-        gameData.clearDelayedActions(DelayedPermanentAction.class,
-                a -> a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP
-                        || a.kind() == DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
         gameData.pendingMayAbilities.clear();
         gameData.clearPendingInteractions(PermanentChoiceContext.AttackTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.EntersTriggerTarget.class);
@@ -212,9 +203,6 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersWhoCantGainLifeRestOfGame.clear();
         gameData.playersWithHandRevealed.clear();
         gameData.resetPriorityToActivePlayer();
-        gameData.clearDelayedActions(SacrificeAtEndOfCombat.class);
-        gameData.clearDelayedActions(DelayedPermanentAction.class,
-                a -> a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.permanentsPreventedFromDealingDamageUntilNextTurn.clear();
         gameData.permanentsCantAttackUntilNextTurn.clear();
@@ -231,7 +219,6 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersSilencedThisTurn.clear();
         gameData.clearSpellLimitsThisTurn();
         gameData.playersCantCastSpellsForRestOfGame.clear();
-        gameData.clearDelayedActions(EpicDelayedTrigger.class);
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.clear();
         gameData.opponentsCantCastSpellsWithManaValueUntilControllerNextTurn.clear();
         gameData.playersCantCastNamedSpellsUntilControllerNextTurn.clear();

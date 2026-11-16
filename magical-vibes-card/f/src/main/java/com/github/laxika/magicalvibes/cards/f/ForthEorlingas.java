@@ -7,10 +7,14 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCombatDamageBecomeMonarchEffect;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 
 @CardRegistration(set = "LTC", collectorNumber = "56")
 @CardRegistration(set = "LTC", collectorNumber = "139")
@@ -22,6 +26,8 @@ public class ForthEorlingas extends Card {
                 new XValue(), "Human Knight", 2, 2, CardColor.RED,
                 List.of(CardSubtype.HUMAN, CardSubtype.KNIGHT),
                 Set.of(Keyword.TRAMPLE, Keyword.HASTE), Set.of()));
-        addSpellEffect(new RegisterDelayedCombatDamageBecomeMonarchEffect());
+        addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
+                Triggers.creatureYouControlDealsCombatDamageToPlayer(), TriggerOptions.ONE_OR_MORE_PLAYERS,
+                new BecomeMonarchEffect())));
     }
 }

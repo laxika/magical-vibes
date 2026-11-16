@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -9,7 +12,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffect;
-import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStep;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -50,8 +52,10 @@ public class SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffectH
             return;
         }
 
-        gameData.queueDelayedAction(new DelayedSacrificeTargetPermanentAtEndStep(
-                target.getId(), entry.getControllerId(), entry.getCard()));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.endStep(ActivePlayer.ANY), entry.getControllerId(), entry.getCard(),
+                entry.getSourcePermanentId(), target.getId(),
+                new SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffect(true)));
         gameLogService.append(gameData,
                 GameLog.cardThen(target.getCard(), " will be sacrificed at the beginning of the next end step."));
         log.info("Game {} - {} scheduled for sacrifice and life gain at end step",

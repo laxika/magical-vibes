@@ -1,5 +1,4 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -29,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -122,7 +122,7 @@ class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandlerTest 
                         argThat(p -> p.getGrantedKeywords().contains(Keyword.HASTE)
                                 && p.isExileIfLeavesBattlefield()),
                         eq(Set.of()));
-                assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isNotEmpty();
+                assertThat(DelayedPermanentMoves.waiting(gd)).isNotEmpty();
                 assertThat(gd.stolenCreatures).isNotEmpty();
                 assertThat(gd.floatingEffects).anyMatch(fe -> fe.isControlEffect());
             }

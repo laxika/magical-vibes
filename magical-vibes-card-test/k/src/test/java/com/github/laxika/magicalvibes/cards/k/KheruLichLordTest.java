@@ -14,14 +14,16 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,12 +55,14 @@ class KheruLichLordTest extends BaseCardTest {
         assertThat(returned.hasKeyword(Keyword.TRAMPLE)).isTrue();
         assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(returned.isExileIfLeavesBattlefield()).isTrue();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+        assertThat(DelayedPermanentMoves.waiting(gd))
                 .anySatisfy(action -> {
                     assertThat(action.permanentId()).isEqualTo(returned.getId());
                     assertThat(action.kind()).isEqualTo(DelayedPermanentActionKind.EXILE_AT_END_STEP);
-                    assertThat(action.controllerId()).isEqualTo(player1.getId());
                 });
+        assertThat(DelayedPermanentMoves.abilities(gd)).singleElement()
+                .satisfies(delayed -> assertThat(delayed.ability().conditions().getFirst().trigger())
+                        .isEqualTo(Triggers.endStep(ActivePlayer.YOU)));
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
     }
 

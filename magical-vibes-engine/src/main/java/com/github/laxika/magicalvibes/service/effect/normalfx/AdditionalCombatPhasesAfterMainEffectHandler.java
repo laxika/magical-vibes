@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhasesAfterMainEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OnlyTargetCreaturesCanAttackThisCombatEffect;
@@ -45,20 +44,14 @@ public class AdditionalCombatPhasesAfterMainEffectHandler implements NormalEffec
         }
 
         if (additionalCombats.additionalCombatBeginningEffect() != null) {
-            for (int i = 0; i < additionalCombats.count(); i++) {
-                gameData.queueDelayedAction(new DelayedAdditionalCombatBeginningEffect(
-                        entry.getControllerId(), entry.getCard(),
-                        additionalCombats.additionalCombatBeginningEffect(), entry.getSourcePermanentId()));
-            }
+            AdditionalCombatBeginningSupport.register(gameData, entry,
+                    additionalCombats.additionalCombatBeginningEffect(), additionalCombats.count(), 0);
         }
 
         if (additionalCombats.onlyTargetCreaturesCanAttack()) {
-            for (int i = 0; i < additionalCombats.count(); i++) {
-                gameData.queueDelayedAction(new DelayedAdditionalCombatBeginningEffect(
-                        entry.getControllerId(), entry.getCard(),
-                        new OnlyTargetCreaturesCanAttackThisCombatEffect(Set.copyOf(entry.getTargetIds())),
-                        entry.getSourcePermanentId()));
-            }
+            AdditionalCombatBeginningSupport.register(gameData, entry,
+                    new OnlyTargetCreaturesCanAttackThisCombatEffect(Set.copyOf(entry.getTargetIds())),
+                    additionalCombats.count(), 0);
         }
 
         String logEntry = additionalCombats.count() == 1

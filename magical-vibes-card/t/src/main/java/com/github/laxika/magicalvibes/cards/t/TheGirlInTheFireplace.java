@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
 import com.github.laxika.magicalvibes.model.effect.TimeTravelEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -24,6 +23,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "21")
 @CardRegistration(set = "WHO", collectorNumber = "626")
@@ -48,6 +48,7 @@ public class TheGirlInTheFireplace extends Card {
                         Keyword.HORSEMANSHIP, GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.DOCTOR))))));
 
-        addTrigger(Triggers.chapter(3), new RegisterDelayedCombatDamageEffect(new TimeTravelEffect(1)));
+        addTrigger(Triggers.chapter(3), new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+                new TriggeredAbility(Triggers.creatureYouControlDealsCombatDamageToPlayer(), new TimeTravelEffect(1))));
     }
 }

@@ -14,8 +14,10 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCreatureWithManaValueEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -79,8 +81,9 @@ public class ConjureRandomCreatureWithManaValueEffectHandler implements NormalEf
                 gameData, entry.getControllerId(), card, null, false);
         entry.getCreatedPermanentIds().add(permanent.getId());
         if (typed.temporary()) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(
-                    permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
+            DelayedPermanentActions.schedule(gameData, entry,
+                    new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP),
+                    ActivePlayer.ANY);
         }
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());

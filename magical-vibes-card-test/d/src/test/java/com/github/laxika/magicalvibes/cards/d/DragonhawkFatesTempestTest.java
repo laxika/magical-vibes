@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.cards.t.TakeOutTheTrash;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DamageForCardsStillExiledAtNextEndStep;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -40,7 +40,7 @@ class DragonhawkFatesTempestTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissions)
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
-        assertThat(gd.getDelayedActions(DamageForCardsStillExiledAtNextEndStep.class))
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP))
                 .hasSize(1);
     }
 
@@ -75,7 +75,7 @@ class DragonhawkFatesTempestTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.inMutationScope(() -> stepTriggerService.handleEndStepTriggers(gd));
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.getDelayedActions(DamageForCardsStillExiledAtNextEndStep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
 
         harness.forceActivePlayer(player1);
         harness.inMutationScope(() -> stepTriggerService.handleEndStepTriggers(gd));

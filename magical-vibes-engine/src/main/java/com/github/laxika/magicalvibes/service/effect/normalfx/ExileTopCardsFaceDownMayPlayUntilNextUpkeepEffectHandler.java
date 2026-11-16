@@ -4,11 +4,17 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsFaceDownMayPlayUntilNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.PutUnplayedExiledCardsIntoOwnersGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +52,7 @@ public class ExileTopCardsFaceDownMayPlayUntilNextUpkeepEffectHandler implements
             return;
         }
 
+        List<UUID> exiledCardIds = new ArrayList<>();
         int exiled = 0;
         for (int i = 0; i < count && !deck.isEmpty(); i++) {
             Card topCard = deck.removeFirst();
@@ -57,10 +64,15 @@ public class ExileTopCardsFaceDownMayPlayUntilNextUpkeepEffectHandler implements
             gameData.exilePlayPermissionsExpireAtTurnBeginning.put(topCard.getId(),
                     gameData.exilePlayPermissionsExpireAtTurnEnd.remove(topCard.getId()));
             gameData.exileLookPermissions.put(topCard.getId(), controllerId);
-            gameData.queueDelayedAction(new ExileToOwnerGraveyardAtNextUpkeep(
-                    controllerId, topCard.getId(), controllerId, entry.getCard()));
+            exiledCardIds.add(topCard.getId());
             exiled++;
         }
+        // "Put any of those cards you didn't play into your graveyard" at the beginning of your next upkeep: the cards
+        // this resolution exiled share one delayed triggered ability (CR 603.7a).
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(controllerId,
+                entry.getCard(), new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                        new PutUnplayedExiledCardsIntoOwnersGraveyardEffect()),
+                entry.getSourcePermanentId(), null, null, DelayedReferents.cards(exiledCardIds)));
 
         gameLogService.append(gameData, GameLog.text(
                 controllerName + " exiles the top " + exiled

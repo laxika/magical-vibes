@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -42,9 +43,9 @@ class KikiJikiMirrorBreakerTest extends BaseCardTest {
                 .filter(p -> p.getCard().isToken())
                 .findFirst().orElseThrow();
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                        false, null, null, player1.getId()).scheduledBy(gd.resolutionOrdinal));
+        assertThat(DelayedPermanentMoves.waiting(gd))
+                .contains(new DelayedPermanentAction(token.getId(),
+                        DelayedPermanentActionKind.SACRIFICE_AT_END_STEP).scheduledBy(gd.resolutionOrdinal));
     }
 
     @Test
@@ -64,7 +65,7 @@ class KikiJikiMirrorBreakerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, copy, Keyword.HASTE)).isTrue();
         assertThat(copy.getCard().getKeywords()).contains(Keyword.HASTE);
         assertThat(gqs.hasKeyword(gd, soldier, Keyword.HASTE)).isFalse();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+        assertThat(DelayedPermanentMoves.waiting(gd))
                 .anyMatch(action -> action.permanentId().equals(soldier.getId())
                         && action.kind() == DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
     }
@@ -92,7 +93,7 @@ class KikiJikiMirrorBreakerTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Wandering Ones").stream()
                 .filter(p -> p.getCard().isToken())
                 .toList()).isEmpty();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
+        assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
     }
 
     @Test

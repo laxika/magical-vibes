@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 
 @Slf4j
 @Component
@@ -78,9 +80,9 @@ public class RevealTopCardCreatureToBattlefieldEffectHandler implements NormalEf
                 gameData, controllerId, topCard, null, false);
 
         if (typed.sacrificeAtEndStep()) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(
-                    permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                    false, null, controllerId, controllerId));
+            DelayedPermanentActions.schedule(gameData, entry,
+                    new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
+                    ActivePlayer.YOU);
         }
 
         log.info("Game {} - {} puts {} onto the battlefield ({})",

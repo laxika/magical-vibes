@@ -4,10 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedUnblockedAttackerCubeCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityAboutTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +23,10 @@ public class DelifsCube extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new RegisterDelayedUnblockedAttackerCubeCounterEffect()),
+                List.of(new RegisterGlobalTriggeredAbilityAboutTargetUntilEndOfTurnEffect(new TriggeredAbility(
+                        Triggers.attacksUnblocked(),
+                        AssignNoCombatDamageEffect.ofTriggeringPermanent(),
+                        new PutCountersOnSourceCardEffect(CounterType.CUBE)))),
                 "{2}, {T}: This turn, when target creature you control attacks and isn't blocked, it "
                         + "assigns no combat damage this turn and you put a cube counter on this artifact.",
                 TargetFilters.creatureYouControl()

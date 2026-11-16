@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -32,7 +33,6 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -496,7 +496,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false), any(StackEntry.class));
-            assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+            assertThat(DelayedPermanentMoves.waiting(gd))
                     .anyMatch(action -> action.permanentId().equals(permanentCaptor.getValue().getId()));
         }
 

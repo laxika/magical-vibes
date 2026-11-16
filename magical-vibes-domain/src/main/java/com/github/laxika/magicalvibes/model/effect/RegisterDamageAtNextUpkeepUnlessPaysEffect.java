@@ -8,8 +8,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * controller) pays {@code manaCost} before that step.
  *
  * <p>Piggybacks on the accompanying {@link DealDamageToTargetPlayerOrPlaneswalkerEffect}'s target and
- * declares no target of its own ({@link TargetSpec#NONE}); the handler queues a
- * {@code DamageAtNextUpkeepUnlessPays} delayed action, drained in {@code StepTriggerService}.
+ * declares no target of its own ({@link TargetSpec#NONE}); the handler adds a
+ * delayed triggered ability for the controller's next upkeep.
  *
  * @param damage   additional damage dealt at the controller's next upkeep if unpaid
  * @param manaCost mana the affected party may pay to avoid the damage (e.g. {@code "{U}"})

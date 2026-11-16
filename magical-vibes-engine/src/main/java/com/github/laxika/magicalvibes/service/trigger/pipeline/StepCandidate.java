@@ -1,22 +1,35 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 
 /**
  * A triggered ability a step or phase beginning may trigger ({@link TriggerIndex#stepCandidates}): its source as
- * {@link TriggerCandidate} names it, and, for an ability of a face-up plane or phenomenon or of an emblem, that object.
+ * {@link TriggerCandidate} names it, and, for an ability of a face-up plane or phenomenon, of an emblem or of a delayed
+ * triggered ability, that object.
  *
  * @param candidate      the ability and its source; a face-up scheme's source is its permanent view (CR 314.4)
  * @param plane          the face-up planar object whose ability it is, or {@code null}
  * @param emblem         the emblem whose ability it is (CR 114.4), or {@code null}
  * @param counterAbility the upkeep ability a card in exile has for the counters on it, or {@code null}
+ * @param delayed        the delayed triggered ability a resolving spell or ability made (CR 603.7a), or {@code null}
  */
 public record StepCandidate(TriggerCandidate candidate, PlanarObject plane, Emblem emblem,
-                            ExileCounterAbility counterAbility) {
+                            ExileCounterAbility counterAbility, TemporaryGlobalTriggeredAbility delayed) {
 
     public StepCandidate(TriggerCandidate candidate, PlanarObject plane, Emblem emblem) {
-        this(candidate, plane, emblem, null);
+        this(candidate, plane, emblem, null, null);
+    }
+
+    public StepCandidate(TriggerCandidate candidate, PlanarObject plane, Emblem emblem,
+                         ExileCounterAbility counterAbility) {
+        this(candidate, plane, emblem, counterAbility, null);
+    }
+
+    /** {@code delayed}'s step ability, with its maker's source card and no source permanent (CR 603.7d, 603.7e). */
+    static StepCandidate of(TemporaryGlobalTriggeredAbility delayed) {
+        return new StepCandidate(TriggerCandidate.of(delayed), null, null, null, delayed);
     }
 
     /**

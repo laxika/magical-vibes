@@ -4,10 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedStillExiledCardsEndStepTrigger;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileBottomCardMatchingMayCastThisTurnAndCreateTokenForStillExiledEffect;
-import com.github.laxika.magicalvibes.model.effect.PutStillExiledCardsIntoGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -69,13 +67,10 @@ public class ExileBottomCardMatchingMayCastThisTurnAndCreateTokenForStillExiledE
                 .text(" from the bottom of their library (may cast it this turn).")
                 .build());
 
-        gameData.queueDelayedAction(new DelayedStillExiledCardsEndStepTrigger(
-                controllerId,
-                entry.getCard(),
-                entry.getSourcePermanentId(),
-                new PutStillExiledCardsIntoGraveyardAndCreateTokensEffect(
-                        List.of(matchingCard.getId()), exileEffect.tokenEffect()),
-                List.of(matchingCard.getId())));
+        gameData.temporaryGlobalTriggeredAbilities.add(
+                PutStillExiledCardsIntoGraveyardAndCreateTokensEffectHandler.atNextEndStep(
+                gameData, controllerId, entry.getCard(), entry.getSourcePermanentId(),
+                List.of(matchingCard.getId()), exileEffect.tokenEffect()));
         log.info("Game {} - {} exiled {} from the bottom of their library",
                 gameData.id, gameData.playerIdToName.get(controllerId), matchingCard.getName());
     }

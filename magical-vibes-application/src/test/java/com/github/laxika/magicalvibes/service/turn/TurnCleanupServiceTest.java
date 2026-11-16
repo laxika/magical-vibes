@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
@@ -67,35 +66,6 @@ class TurnCleanupServiceTest {
         assertThat(gd.skipNextCombatPhaseCount).containsOnlyKeys(player1Id);
         assertThat(gd.skipNextCombatPhaseCount.get(player1Id)).isEqualTo(1);
         assertThat(gd.skipCombatPhaseExpirationsThisTurn).isEmpty();
-    }
-
-    @Test
-    void cleanupExpiresUnresolvedEndOfCombatDestruction() {
-        gd.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat(
-                UUID.randomUUID()));
-
-        sut.applyCleanupResets(gd);
-
-        assertThat(gd.getDelayedActions(
-                com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat.class)).isEmpty();
-    }
-
-    @Test
-    void cleanupQueuesDelayedAbilityWithoutResolvingIt() {
-        Card source = new Card();
-        source.setName("Cleanup source");
-        var effect = new LoseLifeEffect(2);
-        gd.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedCleanupTrigger(
-                player1Id, source, effect));
-
-        sut.applyCleanupResets(gd);
-
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
-        assertThat(gd.getDelayedActions(
-                com.github.laxika.magicalvibes.model.action.DelayedCleanupTrigger.class)).isEmpty();
-        sut.applyCleanupResets(gd);
-        assertThat(gd.stack).hasSize(1);
     }
 
     @Test
@@ -182,15 +152,6 @@ class TurnCleanupServiceTest {
 
             assertThat(perm.getPowerModifier()).isZero();
             verify(creatureControlService).reconcileControl(gd);
-        }
-
-        @Test
-        @DisplayName("Processes permanents scheduled for exile at cleanup")
-        void processesExilesScheduledForCleanup() {
-            sut.applyCleanupResets(gd);
-
-            verify(permanentRemovalService).processDelayedPermanentActions(
-                    gd, DelayedPermanentActionKind.EXILE_TOKEN_AT_NEXT_CLEANUP);
         }
 
         @Test

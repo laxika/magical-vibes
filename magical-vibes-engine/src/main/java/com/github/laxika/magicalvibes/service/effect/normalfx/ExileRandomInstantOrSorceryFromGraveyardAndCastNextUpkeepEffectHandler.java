@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -49,7 +48,8 @@ public class ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffectHand
 
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, exiled.getId());
         exileService.exileCard(gameData, controllerId, exiled);
-        gameData.queueDelayedAction(new ReboundAtNextUpkeep(controllerId, controllerId, exiled, true));
+        gameData.temporaryGlobalTriggeredAbilities.add(
+                ReboundCastFromExileEffectHandler.reboundAbility(controllerId, exiled, true));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.builder()

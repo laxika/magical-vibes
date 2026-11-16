@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.b.BayFalcon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.ManaPrism;
@@ -7,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -32,10 +33,9 @@ class JoltTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isTrue();
 
-        List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
+        List<TemporaryGlobalTriggeredAbility> scheduled = gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP);
         assertThat(scheduled).hasSize(1);
         assertThat(scheduled.getFirst().controllerId()).isEqualTo(player1.getId());
-        assertThat(scheduled.getFirst().count()).isEqualTo(1);
     }
 
     @Test
@@ -102,6 +102,7 @@ class JoltTest extends BaseCardTest {
         int handSizeBeforeDraw = gd.playerHands.get(player1.getId()).size();
         int deckSizeBeforeDraw = gd.playerDecks.get(player1.getId()).size();
         StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+        gd.turnNumber++;
         gd.activePlayerId = player2.getId();
         harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
         harness.passBothPriorities();
@@ -109,7 +110,7 @@ class JoltTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBeforeDraw + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBeforeDraw - 1);
         assertThat(gd.playerHands.get(player1.getId()).getFirst()).isInstanceOf(Forest.class);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -125,7 +126,7 @@ class JoltTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
 
     @Test
@@ -139,6 +140,7 @@ class JoltTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         gd.turnNumber++;
+        gd.turnNumber++;
         gd.activePlayerId = player2.getId();
         StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
         harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
@@ -150,7 +152,7 @@ class JoltTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -164,7 +166,7 @@ class JoltTest extends BaseCardTest {
         harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
 
         gd.turnNumber++;
         harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
@@ -190,7 +192,7 @@ class JoltTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     private void prepareJolt() {

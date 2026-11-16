@@ -10,10 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * "{T}: Choose target attacking or blocking creature whose controller controls an Island. This
  * creature deals 2 damage to that creature at end of combat.").
  * <p>
- * Resolution queues a
- * {@link com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat}, drained
- * in {@code CombatService.processEndOfCombatDamage()}. The source card is captured so the damage
- * still happens with last-known information if the source left the battlefield in the meantime.
+ * Resolution registers the delayed "at end of combat" ability that deals the damage. The source card is kept so
+ * the damage still happens with last-known information if the source left the battlefield in the meantime.
  * <p>
  * Written with no declared target it also serves the Sawtooth Ogre wording "whenever this creature
  * blocks or becomes blocked by a creature, this creature deals N damage to that creature at end of

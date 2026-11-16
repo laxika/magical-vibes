@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.action.RemoveCounterFromPermanentAtNextEndStep;
-import com.github.laxika.magicalvibes.model.action.RemoveCountersFromPermanentAtNextCleanup;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -19,6 +17,10 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Resolves {@link DistributeCountersAmongTargetsEffect} for both division modes.
@@ -100,15 +102,17 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
                         gameData, entry, target, e.counterType(), assignment.getValue());
             }
             if (e.removeAtNextCleanup() && placed > 0) {
-                gameData.delayedActions.add(new RemoveCountersFromPermanentAtNextCleanup(
-                        entry.getCard(), entry.getControllerId(), target.getId(), e.counterType(), placed));
+                gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                        Triggers.cleanup(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
+                        target.getId(), new RemoveCounterFromTargetPermanentEffect(e.counterType(), null, placed)));
             }
             if (e.removeAtNextEndStep() && placed > 0) {
                 // The removal amount is the amount assigned to this target, not the number placed, so a
                 // doubled placement still removes only the assigned counters.
-                gameData.delayedActions.add(new RemoveCounterFromPermanentAtNextEndStep(
-                        entry.getCard(), entry.getControllerId(), target.getId(), e.counterType(),
-                        assignment.getValue()));
+                gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                        Triggers.endStep(ActivePlayer.ANY), entry.getControllerId(), entry.getCard(),
+                        entry.getSourcePermanentId(), target.getId(),
+                        new RemoveCounterFromTargetPermanentEffect(e.counterType(), null, assignment.getValue())));
             }
         }
     }

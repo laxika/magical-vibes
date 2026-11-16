@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainTargetPlayersLandManaEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -121,8 +120,10 @@ public class DrainTargetPlayersLandManaEffectHandler implements NormalEffectHand
         defendingPool.clear();
         defendingPool.clearPersistentMana();
         if (manaLost > 0) {
-            gameData.queueDelayedAction(new AddManaAtNextMainPhase(
-                    entry.getControllerId(), ManaColor.COLORLESS, manaLost, entry.getCard(), false, true));
+            gameData.temporaryGlobalTriggeredAbilities.add(
+                    RegisterDelayedManaAtNextMainPhaseEffectHandler.delayedMana(entry.getControllerId(),
+                            entry.getCard(), entry.getSourcePermanentId(), ManaColor.COLORLESS, manaLost,
+                            false, true, false, false));
         }
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                 .text(" drains " + manaLost + " mana for colorless at next main phase.").build());

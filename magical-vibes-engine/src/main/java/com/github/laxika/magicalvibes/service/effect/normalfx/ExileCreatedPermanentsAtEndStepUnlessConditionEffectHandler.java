@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedExileCreatedPermanentsAtEndStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreatedPermanentsAtEndStepUnlessConditionEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -17,6 +16,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @Component
 @RequiredArgsConstructor
@@ -38,8 +42,12 @@ public class ExileCreatedPermanentsAtEndStepUnlessConditionEffectHandler impleme
         if (exile.permanentIds() == null) {
             List<UUID> createdIds = List.copyOf(entry.getCreatedPermanentIds());
             if (!createdIds.isEmpty()) {
-                gameData.queueDelayedAction(new DelayedExileCreatedPermanentsAtEndStep(
-                        entry.getControllerId(), createdIds, exile.condition(), entry.getCard()));
+                gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                        entry.getControllerId(), entry.getCard(),
+                        new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),
+                                new ExileCreatedPermanentsAtEndStepUnlessConditionEffect(createdIds,
+                                        exile.condition())),
+                        entry.getSourcePermanentId(), null, null, DelayedReferents.NONE));
             }
             return;
         }

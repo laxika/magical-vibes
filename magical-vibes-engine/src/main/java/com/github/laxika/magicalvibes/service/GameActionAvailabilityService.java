@@ -3,10 +3,6 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 
 import com.github.laxika.magicalvibes.model.*;
-import com.github.laxika.magicalvibes.model.action.DamageAtNextUpkeepUnlessPays;
-import com.github.laxika.magicalvibes.model.action.DelayedAction;
-import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
-import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.effect.*;
 import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
@@ -409,10 +405,10 @@ public class GameActionAvailabilityService {
      * triggered ability that a player may pay off as a special action (CR 116.2c), stopping the
      * ability from triggering.
      *
-     * @param obligation the queued delayed action the payment removes
+     * @param obligation the delayed triggered ability the payment removes
      * @param affectedId the player or planeswalker the delayed ability would affect
      */
-    public record DelayedTriggerPayment(DelayedAction obligation, Card sourceCard, UUID affectedId,
+    public record DelayedTriggerPayment(TemporaryGlobalTriggeredAbility obligation, Card sourceCard, UUID affectedId,
                                         String manaCost) {
     }
 
@@ -421,30 +417,22 @@ public class GameActionAvailabilityService {
      * the timing or the mana available: Quenchable Fire's (the damaged player, or the current
      * controller of the damaged planeswalker), Sabertooth Cobra's (the poisoned player) and Nafs Asp's
      * or Glass Asp's (the damaged player, before their next draw step). An obligation stays payable
-     * until its step begins and drains it, which is "before that step". Identical obligations (one
+     * until its step begins and it triggers, which is "before that step". Identical obligations (one
      * source damaging the same player twice) are each listed, and a payment removes only one.
      */
     public List<DelayedTriggerPayment> getDelayedTriggerPaymentsOwedBy(GameData gameData, UUID playerId) {
         List<DelayedTriggerPayment> payments = new ArrayList<>();
-        for (DamageAtNextUpkeepUnlessPays action : gameData.getDelayedActions(DamageAtNextUpkeepUnlessPays.class)) {
-            UUID payerId = gameData.playerIds.contains(action.targetId())
-                    ? action.targetId()
-                    : gameQueryService.findPermanentController(gameData, action.targetId());
+        for (TemporaryGlobalTriggeredAbility delayed : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
+            if (delayed.payToPrevent() == null) {
+                continue;
+            }
+            UUID affectedId = delayed.watchedPlayerId() != null ? delayed.watchedPlayerId()
+                    : delayed.watchedPermanentId();
+            UUID payerId = delayed.watchedPlayerId() != null ? delayed.watchedPlayerId()
+                    : gameQueryService.findPermanentController(gameData, delayed.watchedPermanentId());
             if (playerId.equals(payerId)) {
-                payments.add(new DelayedTriggerPayment(action, action.sourceCard(), action.targetId(),
-                        action.manaCost()));
-            }
-        }
-        for (PoisonAtNextUpkeepUnlessPays action : gameData.getDelayedActions(PoisonAtNextUpkeepUnlessPays.class)) {
-            if (playerId.equals(action.playerId())) {
-                payments.add(new DelayedTriggerPayment(action, action.sourceCard(), action.playerId(),
-                        action.manaCost()));
-            }
-        }
-        for (LoseLifeAtNextDrawStepUnlessPays action : gameData.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)) {
-            if (playerId.equals(action.playerId())) {
-                payments.add(new DelayedTriggerPayment(action, action.sourceCard(), action.playerId(),
-                        "{" + action.payAmount() + "}"));
+                payments.add(new DelayedTriggerPayment(delayed, delayed.sourceCard(), affectedId,
+                        delayed.payToPrevent()));
             }
         }
         return payments;

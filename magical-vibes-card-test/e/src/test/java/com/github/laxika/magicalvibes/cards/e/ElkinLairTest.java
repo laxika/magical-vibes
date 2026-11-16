@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.cards.j.JamuraanLion;
 import com.github.laxika.magicalvibes.cards.u.UndiscoveredParadise;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextEndStep;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -36,11 +37,9 @@ class ElkinLairTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissions.get(only.getId())).isEqualTo(player1.getId());
         assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(only.getId());
 
-        List<ExileToOwnerGraveyardAtNextEndStep> scheduled =
-                gd.getDelayedActions(ExileToOwnerGraveyardAtNextEndStep.class);
+        List<TemporaryGlobalTriggeredAbility> scheduled = gd.delayedStepAbilities(StepTrigger.Moment.END_STEP);
         assertThat(scheduled).hasSize(1);
-        assertThat(scheduled.getFirst().cardId()).isEqualTo(only.getId());
-        assertThat(scheduled.getFirst().ownerId()).isEqualTo(player1.getId());
+        assertThat(scheduled.getFirst().referents().cardIds()).containsExactly(only.getId());
     }
 
     @Test
@@ -104,7 +103,7 @@ class ElkinLairTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.getDelayedActions(ExileToOwnerGraveyardAtNextEndStep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test
@@ -125,7 +124,7 @@ class ElkinLairTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissions).doesNotContainKey(only.getId());
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(only.getId()));
-        assertThat(gd.getDelayedActions(ExileToOwnerGraveyardAtNextEndStep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test
@@ -147,7 +146,7 @@ class ElkinLairTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Undiscovered Paradise");
         assertThat(gd.playerGraveyards.getOrDefault(player1.getId(), List.of()))
                 .noneMatch(c -> c.getId().equals(land.getId()));
-        assertThat(gd.getDelayedActions(ExileToOwnerGraveyardAtNextEndStep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test

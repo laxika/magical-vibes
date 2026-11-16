@@ -7,10 +7,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>
  * Unlike {@link DestroyCombatOpponentAtEndOfCombatEffect} this is a real target chosen on
  * activation, and unlike {@link DestroySelfAtEndOfCombatEffect} the scheduled permanent is the
- * target rather than the source. At resolution a delayed
- * {@link com.github.laxika.magicalvibes.model.action.DelayedPermanentAction} is queued for the
- * target; it is drained in {@code CombatService.processEndOfCombatDestructions()} so regeneration
- * and indestructible apply.
+ * target rather than the source. At resolution a delayed "at end of combat" ability is registered for the
+ * target; it destroys it as a destruction, so regeneration and indestructible apply.
  *
  * <p>{@link #ofTriggeringPermanent()} schedules the stack entry's triggering permanent instead: "whenever this
  * creature deals combat damage to a creature, destroy that creature at end of combat" (the basilisks, Sosuke, Son of

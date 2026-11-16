@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHandAndDraw;
 
 import java.util.*;
 
@@ -82,9 +80,6 @@ public class CombatDamageState {
     public final Map<Permanent, List<UUID>> combatDamageDealtToCreatures = new HashMap<>();
     public final Set<UUID> combatDamageToBlockingCreatureSources = new HashSet<>();
     public final Map<Permanent, UUID> combatDamageDealerControllers = new HashMap<>();
-    public final List<DelayedCombatDamageDrawQualification> delayedCombatDamageDrawQualifications = new ArrayList<>();
-    public final List<DelayedCombatDamageLookAtHandAndDrawQualification>
-            delayedCombatDamageLookAtHandAndDrawQualifications = new ArrayList<>();
 
     /**
      * The abilities the step's damage triggered that wait on the stack while the state-based actions run, put back
@@ -122,13 +117,4 @@ public class CombatDamageState {
             new ArrayList<>();
     /** Creatures a prevention effect shuffles into their owners' libraries once the step's damage is dealt. */
     public final Map<UUID, Permanent> permanentsToShuffleAfterDamage = new LinkedHashMap<>();
-
-    public record DelayedCombatDamageDrawQualification(DelayedCombatDamageDraw delayedAction,
-                                                       Set<UUID> sourceIds) {
-    }
-
-    public record DelayedCombatDamageLookAtHandAndDrawQualification(
-            DelayedCombatDamageLookAtHandAndDraw delayedAction,
-            UUID damagedPlayerId) {
-    }
 }

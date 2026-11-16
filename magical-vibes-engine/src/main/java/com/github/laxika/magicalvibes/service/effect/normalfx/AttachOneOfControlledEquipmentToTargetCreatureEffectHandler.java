@@ -7,9 +7,12 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.UnattachEquipmentAtNextEndStep;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachOneOfControlledEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -80,7 +83,9 @@ public class AttachOneOfControlledEquipmentToTargetCreatureEffectHandler impleme
         }
 
         if (unattachAtNextEndStep) {
-            gameData.queueDelayedAction(new UnattachEquipmentAtNextEndStep(controllerId, equipmentId, sourceCard));
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    Triggers.endStep(ActivePlayer.ANY), controllerId, sourceCard, null, null,
+                    new UnattachEquipmentEffect(equipmentId)));
         }
         gameLogService.append(gameData,
                 GameLog.cardTextCard(equipment.getCard(), " is now attached to ", creature.getCard(), "."));

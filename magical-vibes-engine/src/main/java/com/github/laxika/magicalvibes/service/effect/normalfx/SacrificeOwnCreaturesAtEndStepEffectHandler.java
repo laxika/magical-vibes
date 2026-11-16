@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOwnCreaturesAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -58,9 +60,9 @@ public class SacrificeOwnCreaturesAtEndStepEffectHandler implements NormalEffect
         for (UUID creatureId : creatureIds) {
             // The spell is the source and the controller is the sacrificing player, so the scheduled
             // sacrifices share one delayed trigger and a creature that changed control is skipped.
-            gameData.queueDelayedAction(new DelayedPermanentAction(
-                    creatureId, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                    false, null, null, entry.getControllerId(), false, entry.getCard()));
+            DelayedPermanentActions.schedule(gameData, entry,
+                    new DelayedPermanentAction(creatureId, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
+                    ActivePlayer.ANY);
         }
         log.info("Game {} - {} creature(s) scheduled for sacrifice at end step by {}",
                 gameData.id, creatureIds.size(), entry.getCard().getName());

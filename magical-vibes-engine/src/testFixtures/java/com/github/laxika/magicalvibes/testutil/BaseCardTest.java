@@ -305,6 +305,9 @@ public abstract class BaseCardTest {
     }
 
     protected void advanceToUpkeep(Player activePlayer) {
+        if (!activePlayer.getId().equals(gd.activePlayerId)) {
+            harness.beginLaterTurn();
+        }
         harness.performUntapStep(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();

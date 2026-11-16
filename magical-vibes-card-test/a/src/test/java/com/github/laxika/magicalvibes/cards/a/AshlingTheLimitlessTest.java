@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.SacrificePermanentAtControllerEndStepUnlessPays;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -35,7 +35,7 @@ class AshlingTheLimitlessTest extends BaseCardTest {
         Permanent token = findPermanents(player1, "Air Elemental").getFirst();
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.getDelayedActions(SacrificePermanentAtControllerEndStepUnlessPays.class))
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP))
                 .hasSize(1);
     }
 
@@ -216,7 +216,7 @@ class AshlingTheLimitlessTest extends BaseCardTest {
                 .allSatisfy(token -> assertThat(token.hasKeyword(Keyword.HASTE)).isTrue());
         assertThat(findPermanents(player1, "Soldier")).hasSize(2)
                 .allSatisfy(token -> assertThat(token.hasKeyword(Keyword.HASTE)).isTrue());
-        assertThat(gd.getDelayedActions(SacrificePermanentAtControllerEndStepUnlessPays.class)).hasSize(4);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(4);
     }
 
     @Test
@@ -230,7 +230,7 @@ class AshlingTheLimitlessTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Air Elemental")).hasSize(2);
         assertThat(findPermanents(player1, "Soldier")).hasSize(1);
-        assertThat(gd.getDelayedActions(SacrificePermanentAtControllerEndStepUnlessPays.class)).hasSize(3);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(3);
     }
 
     private void evokeAirElementalUnderQueenAndParallelLives() {

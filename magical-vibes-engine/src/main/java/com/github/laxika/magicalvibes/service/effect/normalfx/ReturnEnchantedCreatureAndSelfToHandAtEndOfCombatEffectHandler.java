@@ -4,20 +4,16 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ResolveDelayedPermanentActionEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureAndSelfToHandAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Resolves {@link ReturnEnchantedCreatureAndSelfToHandAtEndOfCombatEffect}: schedules the source
@@ -50,13 +46,9 @@ public class ReturnEnchantedCreatureAndSelfToHandAtEndOfCombatEffectHandler impl
             return;
         }
 
-        List<CardEffect> returns = new ArrayList<>();
-        returns.add(new ResolveDelayedPermanentActionEffect(new DelayedPermanentAction(aura.getId(),
-                DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_OF_COMBAT)));
-        returns.add(new ResolveDelayedPermanentActionEffect(new DelayedPermanentAction(enchanted.getId(),
-                DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_OF_COMBAT)));
-        gameData.queueDelayedAction(new DelayedEndOfCombatTrigger(entry.getControllerId(),
-                entry.getCard(), aura.getId(), new SequenceEffect(returns)));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.endOfCombat(), entry.getControllerId(), entry.getCard(), aura.getId(), enchanted.getId(),
+                ReturnToHandEffect.targetAndSelf()));
         gameLogService.append(gameData, GameLog.cardThen(enchanted.getCard(),
                 " and " + aura.getCard().getName() + " will be returned to their owners' hands at end of combat."));
     }

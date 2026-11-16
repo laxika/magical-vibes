@@ -319,7 +319,16 @@ class TriggerRouteRecordTest extends BaseCardTest {
                     + "on a card, so a fixture never triggers, and the temporary ability has one route",
             "playerGainsLife", "read only for a temporary ability registered until end of turn "
                     + "(TriggerCollectionService.collectTemporaryGlobalTriggers; False Cure): no collector reads it "
-                    + "on a card, so a fixture never triggers, and the temporary ability has one route");
+                    + "on a card, so a fixture never triggers, and the temporary ability has one route",
+            "cleanup", "only a delayed ability made by a resolving spell or ability waits for the cleanup step "
+                    + "(CR 514.3a): no card's own ability has it, so a fixture never triggers, and the delayed "
+                    + "ability has one route",
+            "creatureAttacksUnblocked", "read only for a delayed ability made by a resolving spell (BlockTriggers: "
+                    + "Melee): no card's own ability has it, so a fixture never triggers, and the delayed "
+                    + "ability has one route",
+            "creatureDealsCombatDamageToThisPlaneswalker", "only a delayed ability made by a resolving planeswalker "
+                    + "ability waits for combat damage to that planeswalker (Vraska the Unseen): no card's own "
+                    + "ability has it, so a fixture never triggers, and the delayed ability has one route");
 
     /**
      * "This ability triggers only once each turn", for a watch whose targeted fixture would make its own event happen

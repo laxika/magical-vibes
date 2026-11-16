@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,7 +53,7 @@ class DawnOfTheDeadTest extends BaseCardTest {
         Permanent returned = findPermanent(player1, "Pardic Lancer");
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+        assertThat(DelayedPermanentMoves.waiting(gd))
                 .anyMatch(action -> action.permanentId().equals(returned.getId())
                         && action.kind() == DelayedPermanentActionKind.EXILE_AT_END_STEP);
     }
@@ -99,14 +99,14 @@ class DawnOfTheDeadTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).hasSize(1);
+        assertThat(DelayedPermanentMoves.waiting(gd)).hasSize(1);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         resolveAllTriggers();
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).as("delayed actions after end step")
+        assertThat(DelayedPermanentMoves.waiting(gd)).as("delayed actions after end step")
                 .isEmpty();
 
         harness.assertNotOnBattlefield(player1, "Pardic Lancer");
@@ -133,7 +133,7 @@ class DawnOfTheDeadTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Pardic Lancer");
         harness.assertNotOnBattlefield(player1, "Pardic Lancer");
         harness.assertLife(player1, 19);
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
+        assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
     }
 
     @Test
@@ -185,6 +185,6 @@ class DawnOfTheDeadTest extends BaseCardTest {
 
         harness.assertLife(player1, 19);
         harness.assertNotOnBattlefield(player1, "Pardic Lancer");
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
+        assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
     }
 }

@@ -28,7 +28,8 @@ public class CreateTokensAttackingEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CreateTokensAttackingEffect create = (CreateTokensAttackingEffect) effect;
-        if (create.amount() <= 0) {
+        int amount = create.thatMany() ? entry.getEventValue() : create.amount();
+        if (amount <= 0) {
             return;
         }
 
@@ -39,7 +40,7 @@ public class CreateTokensAttackingEffectHandler implements NormalEffectHandlerBe
         }
         int createdFromIndex = entry.getCreatedPermanentIds().size();
         entry.getCreatedPermanentIds().addAll(permanentControlSupport.applyCreateToken(
-                gameData, controllerId, create.tokenEffect(), create.amount(), entry.getCard().getSetCode()));
+                gameData, controllerId, create.tokenEffect(), amount, entry.getCard().getSetCode()));
         attackTargetsHandler.createdTokensAttack(gameData, entry, controllerId, createdFromIndex,
                 create.sacrificeAtEndStep());
     }

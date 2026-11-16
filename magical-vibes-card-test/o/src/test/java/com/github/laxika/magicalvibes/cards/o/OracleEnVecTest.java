@@ -131,7 +131,7 @@ class OracleEnVecTest extends BaseCardTest {
     @DisplayName("A chosen creature that didn't attack is destroyed at that turn's end step")
     void chosenCreatureThatDidNotAttackIsDestroyed() {
         Permanent chosen = addCreatureReady(player2, new TrainedArmodon());
-        gd.chosenAttackersNextTurn.put(player2.getId(), Set.of(chosen.getId()));
+        gd.restrictAttackersNextTurn(player2.getId(), Set.of(chosen.getId()), player1.getId(), new OracleEnVec());
 
         advanceTurn();
         runEndStep();
@@ -145,7 +145,7 @@ class OracleEnVecTest extends BaseCardTest {
     @DisplayName("A chosen creature that attacked survives the end step")
     void chosenCreatureThatAttackedSurvives() {
         Permanent chosen = addCreatureReady(player2, new TrainedArmodon());
-        gd.chosenAttackersNextTurn.put(player2.getId(), Set.of(chosen.getId()));
+        gd.restrictAttackersNextTurn(player2.getId(), Set.of(chosen.getId()), player1.getId(), new OracleEnVec());
 
         advanceTurn();
         declareAttackers(player2, List.of(0));

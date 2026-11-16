@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -28,7 +27,10 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -1449,8 +1451,10 @@ class CombatDamageServiceTest {
             stubbedDelayedDrawPredicate();
             addAttacker("Small creature", 2, 2);
             addAttacker("Large creature", 3, 3);
-            gameData.queueDelayedAction(new DelayedCombatDamageDraw(
-                    player1Id, createCard("Subira", 2, 3), new PermanentPowerAtMostPredicate(2), false));
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.thisTurn(
+                    player1Id, createCard("Subira", 2, 3), new TriggeredAbility(
+                            Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                                    .withFilter(new PermanentPowerAtMostPredicate(2)), new DrawCardEffect(1)), null));
 
             combatDamageService.resolveCombatDamage(gameData);
 
@@ -1503,9 +1507,9 @@ class CombatDamageServiceTest {
 
         private void stubbedDelayedDrawPredicate() {
             when(predicateEvaluationService.matchesPermanentPredicate(
-                    eq(gameData), any(Permanent.class), any(PermanentPowerAtMostPredicate.class)))
+                    any(Permanent.class), any(PermanentPowerAtMostPredicate.class), any(FilterContext.class)))
                     .thenAnswer(invocation -> {
-                        Permanent source = invocation.getArgument(1);
+                        Permanent source = invocation.getArgument(0);
                         return source.getCard().getPower() <= 2;
                     });
         }

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -8,7 +7,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OnlyTargetCreaturesCanAttackThisCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,20 +50,15 @@ public class AdditionalCombatMainPhaseEffectHandler implements NormalEffectHandl
         if (deferredToSecondMain) {
             gameData.additionalCombatMainPhasePairsAfterSecondMain += e.count();
         }
-        CardEffect additionalCombatBeginningEffect = e.additionalCombatBeginningEffect();
-        if (e.onlyTargetCreaturesCanAttack()) {
-            CardEffect attackRestriction = new OnlyTargetCreaturesCanAttackThisCombatEffect(
-                    Set.copyOf(entry.getTargetIds()));
-            additionalCombatBeginningEffect = additionalCombatBeginningEffect == null
-                    ? attackRestriction
-                    : SequenceEffect.of(additionalCombatBeginningEffect, attackRestriction);
+        int combatPhasesBefore = deferredToSecondMain ? 1 : 0;
+        if (e.additionalCombatBeginningEffect() != null) {
+            AdditionalCombatBeginningSupport.register(gameData, entry, e.additionalCombatBeginningEffect(),
+                    e.count(), combatPhasesBefore);
         }
-        if (additionalCombatBeginningEffect != null) {
-            for (int i = 0; i < e.count(); i++) {
-                gameData.queueDelayedAction(new DelayedAdditionalCombatBeginningEffect(
-                        entry.getControllerId(), entry.getCard(), additionalCombatBeginningEffect,
-                        entry.getSourcePermanentId()));
-            }
+        if (e.onlyTargetCreaturesCanAttack()) {
+            AdditionalCombatBeginningSupport.register(gameData, entry,
+                    new OnlyTargetCreaturesCanAttackThisCombatEffect(Set.copyOf(entry.getTargetIds())),
+                    e.count(), combatPhasesBefore);
         }
 
         String logEntry;

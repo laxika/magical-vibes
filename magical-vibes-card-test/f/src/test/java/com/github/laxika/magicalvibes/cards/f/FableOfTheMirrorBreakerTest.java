@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -90,9 +91,9 @@ class FableOfTheMirrorBreakerTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .containsExactly(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                        false, null, null, player1.getId()).scheduledBy(gd.resolutionOrdinal));
+        assertThat(DelayedPermanentMoves.waiting(gd))
+                .containsExactly(new DelayedPermanentAction(token.getId(),
+                        DelayedPermanentActionKind.SACRIFICE_AT_END_STEP).scheduledBy(gd.resolutionOrdinal));
     }
 
     @Test

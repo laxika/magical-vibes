@@ -3,7 +3,13 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
-import com.github.laxika.magicalvibes.model.effect.RegisterCombatDamageReflectionEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "POR", collectorNumber = "18")
 @CardRegistration(set = "ME4", collectorNumber = "13")
@@ -15,6 +21,9 @@ public class HarshJustice extends Card {
 
         // This turn, whenever an attacking creature deals combat damage to you, it deals that much
         // damage to its controller.
-        addSpellEffect(new RegisterCombatDamageReflectionEffect());
+        addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
+                Triggers.creatureDealsCombatDamageToYou().withFilter(new PermanentIsAttackingPredicate()),
+                new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER)
+                        .dealtByEventDamageSource())));
     }
 }

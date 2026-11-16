@@ -10,9 +10,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code TriggerOptions.EACH_BLOCKER} (one trigger per blocker) and/or
  * on {@code Triggers.blocks()} ability for the "blocks" half. The
  * referenced creature is carried as the stack entry's non-targeting target, so the trigger can't
- * fizzle. Resolution queues a {@link com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat}
- * drained by {@code CombatService.processEndOfCombatSacrifices()} — the creature still deals its
- * combat damage, and sacrifice bypasses regeneration and indestructible.
+ * fizzle. Resolution registers the delayed "at end of combat" ability that has the creature's controller
+ * sacrifice it — the creature still deals its combat damage, and sacrifice bypasses regeneration and
+ * indestructible.
  *
  * @param tokenForSacrificingPlayer token created for the sacrificing player, or {@code null} for no rider
  */

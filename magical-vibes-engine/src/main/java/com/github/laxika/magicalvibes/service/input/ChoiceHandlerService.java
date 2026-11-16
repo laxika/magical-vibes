@@ -42,12 +42,14 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.VoteChoiceContext;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
 import com.github.laxika.magicalvibes.model.amount.DevotionToColor;
 import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
@@ -7963,9 +7965,13 @@ public class ChoiceHandlerService {
             GameData gameData, Player player, String cardName,
             ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice ctx) {
         gameData.interaction.clearAwaitingInput();
-        gameData.queueDelayedAction(new DelayedNamedCreatureCombatDamage(
-                cardName, ctx.controllerId(), ctx.effects(), ctx.sourceCard(),
-                ctx.combatDamageToPlayerOnly(), ctx.untilEndOfTurn()));
+        // "Whenever a creature with the chosen name deals combat damage to a player this turn": a delayed ability
+        // (CR 603.7a) whose trigger names the creature by the name chosen as it was made.
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.thisTurn(
+                ctx.controllerId(), ctx.sourceCard(),
+                new TriggeredAbility(Triggers.creatureDealsCombatDamageToPlayer()
+                        .withFilter(new PermanentNamedPredicate(cardName)),
+                        ctx.effects().toArray(CardEffect[]::new)), ctx.sourcePermanentId()));
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses \"" + cardName + "\"."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

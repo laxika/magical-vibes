@@ -1,15 +1,23 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedEndStepIfStillInHandTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.CardsStillInZone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpecificCardFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryToHandAndRegisterExileAtNextEndStepEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -56,10 +64,13 @@ public class SeekLibraryToHandAndRegisterExileAtNextEndStepEffectHandler
 
         Card triggerCard = entry.getCard().createRuntimeCopy();
         triggerCard.clearRuntimeSpellTargets();
-        gameData.queueDelayedAction(new DelayedEndStepIfStillInHandTrigger(
-                controllerId, triggerCard, entry.getSourcePermanentId(), chosen.getId(),
-                gameData.handEntryVersions.getOrDefault(chosen.getId(), 0L),
-                new ExileSpecificCardFromHandEffect(chosen.getId())));
+        TriggerOptions stillInHand = TriggerOptions.DEFAULT.withInterveningIf(new CardsStillInZone(Zone.HAND,
+                Map.of(chosen.getId(), gameData.handEntryVersions.getOrDefault(chosen.getId(), 0L))));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                controllerId, triggerCard,
+                new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY), stillInHand,
+                        new ExileSpecificCardFromHandEffect(chosen.getId())),
+                entry.getSourcePermanentId(), null, null, DelayedReferents.NONE));
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                 .text("seeks and puts " + chosen.getName() + " into hand.").build());
     }

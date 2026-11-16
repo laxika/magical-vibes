@@ -9,16 +9,20 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -470,14 +474,17 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
         if (effect.sacrificeAtEndStep()) {
             // One delayed trigger of the spell or ability sacrifices everything it returned, and only the
             // player who controls that trigger can sacrifice a permanent (CR 701.21a).
-            gameData.queueDelayedAction(new DelayedPermanentAction(
-                    permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                    false, null, null, entry.getControllerId(), false, entry.getCard()));
+            DelayedPermanentActions.schedule(gameData, entry,
+                    new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
+                    ActivePlayer.ANY);
         }
-        if (effect.sacrificeAtEndStepIfManaValueAtLeast() > 0) {
-            gameData.queueDelayedAction(new DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtLeast(
-                    permanent.getId(), gameQueryService.findPermanentController(gameData, permanent.getId()),
-                    effect.sacrificeAtEndStepIfManaValueAtLeast()));
+        if (effect.sacrificeAtEndStepIfManaValueAtLeast() > 0
+                && permanent.getCard().getManaValue() >= effect.sacrificeAtEndStepIfManaValueAtLeast()) {
+            // "If its mana value is 4 or greater, sacrifice it at the beginning of your next end step": the mana value
+            // is judged as it returns, and the delayed ability is made only then.
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    Triggers.endStep(ActivePlayer.YOU), entry.getControllerId(), entry.getCard(),
+                    entry.getSourcePermanentId(), permanent.getId(), new SacrificeTriggeringPermanentEffect()));
         }
     }
 }

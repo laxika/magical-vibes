@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -158,7 +159,7 @@ class FlickerEffectHandlerTest {
 
         verify(permanentRemovalService).removePermanentToExile(gd, first);
         verify(permanentRemovalService).removePermanentToExile(gd, second);
-        assertThat(gd.getDelayedActions(PendingExileReturn.class))
+        assertThat(DelayedPermanentMoves.waitingExileReturns(gd))
                 .extracting(PendingExileReturn::controllerId)
                 .containsExactly(player1Id, player2Id);
     }
@@ -327,7 +328,7 @@ class FlickerEffectHandlerTest {
             handler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService).removePermanentToExile(gd, target);
-            assertThat(gd.getDelayedActions(PendingExileReturn.class))
+            assertThat(DelayedPermanentMoves.waitingExileReturns(gd))
                     .anyMatch(per -> per.card().getName().equals("Grizzly Bears")
                             && per.controllerId().equals(player1Id));
         }
@@ -352,7 +353,7 @@ class FlickerEffectHandlerTest {
 
             verify(permanentRemovalService).removePermanentToExile(gd, first);
             verify(permanentRemovalService).removePermanentToExile(gd, second);
-            assertThat(gd.getDelayedActions(PendingExileReturn.class))
+            assertThat(DelayedPermanentMoves.waitingExileReturns(gd))
                     .singleElement()
                     .satisfies(pending -> {
                         assertThat(pending.card().getName()).isEqualTo("Grizzly Bears");
@@ -378,7 +379,7 @@ class FlickerEffectHandlerTest {
 
             handler.resolve(gd, entry, effect);
 
-            assertThat(gd.getDelayedActions(PendingExileReturn.class))
+            assertThat(DelayedPermanentMoves.waitingExileReturns(gd))
                     .singleElement()
                     .satisfies(pending -> {
                         assertThat(pending.plusOnePlusOneCounters()).isEqualTo(1);
@@ -403,7 +404,7 @@ class FlickerEffectHandlerTest {
 
             handler.resolve(gd, entry, effect);
 
-            assertThat(gd.getDelayedActions(PendingExileReturn.class))
+            assertThat(DelayedPermanentMoves.waitingExileReturns(gd))
                     .singleElement()
                     .satisfies(pending -> assertThat(pending.countersOnReturn())
                             .containsExactlyInAnyOrderEntriesOf(
@@ -423,7 +424,7 @@ class FlickerEffectHandlerTest {
             handler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
-            assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
+            assertThat(DelayedPermanentMoves.waitingExileReturns(gd)).isEmpty();
         }
 
         @Test
@@ -442,7 +443,7 @@ class FlickerEffectHandlerTest {
 
             handler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
-            assertThat(gd.getDelayedActions(PendingExileReturn.class))
+            assertThat(DelayedPermanentMoves.waitingExileReturns(gd))
                     .anyMatch(per -> per.card().getName().equals("Grizzly Bears")
                             && per.controllerId().equals(player2Id));
         }
@@ -541,7 +542,7 @@ class FlickerEffectHandlerTest {
             handler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService).removePermanentToExile(gd, source);
-            assertThat(gd.getDelayedActions(PendingExileReturn.class))
+            assertThat(DelayedPermanentMoves.waitingExileReturns(gd))
                     .anyMatch(per -> per.card().getName().equals("Argent Sphinx")
                             && per.controllerId().equals(player1Id));
         }
@@ -559,7 +560,7 @@ class FlickerEffectHandlerTest {
             handler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
-            assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
+            assertThat(DelayedPermanentMoves.waitingExileReturns(gd)).isEmpty();
         }
 
         @Test

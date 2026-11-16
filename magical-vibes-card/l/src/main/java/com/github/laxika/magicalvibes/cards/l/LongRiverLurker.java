@@ -38,7 +38,7 @@ public class LongRiverLurker extends Card {
                         new RegisterDelayedWatchedCreaturesCombatDamageEffect(
                                 List.of(new MayEffect(
                                         new FlickerEffect(
-                                                FlickerScope.SELF,
+                                                FlickerScope.TRIGGERING,
                                                 null,
                                                 ReturnTiming.IMMEDIATE,
                                                 TurnStep.END_STEP,

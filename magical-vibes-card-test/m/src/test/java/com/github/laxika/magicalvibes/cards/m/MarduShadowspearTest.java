@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -53,8 +53,8 @@ class MarduShadowspearTest extends BaseCardTest {
 
         Permanent shadowspear = findPermanent(player1, "Mardu Shadowspear");
         assertThat(shadowspear.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.getDelayedActions(DelayedEndStepTrigger.class))
-                .anyMatch(action -> shadowspear.getId().equals(action.affectedPermanentId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP))
+                .anyMatch(action -> shadowspear.getId().equals(action.watchedPermanentId()));
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);

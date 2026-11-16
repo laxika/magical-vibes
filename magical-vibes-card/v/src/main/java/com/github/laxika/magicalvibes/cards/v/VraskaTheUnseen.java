@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedDestroyCreatureDealingCombatDamageToPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilNextTurnEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "208")
 @CardRegistration(set = "DDM", collectorNumber = "42")
@@ -26,7 +26,8 @@ public class VraskaTheUnseen extends Card {
     public VraskaTheUnseen() {
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new RegisterDelayedDestroyCreatureDealingCombatDamageToPlaneswalkerEffect()),
+                List.of(new RegisterGlobalTriggeredAbilityUntilNextTurnEffect(new TriggeredAbility(
+                        Triggers.creatureDealsCombatDamageToThisPlaneswalker(), new DestroyTargetPermanentEffect()))),
                 "+1: Until your next turn, whenever a creature deals combat damage to Vraska, destroy that creature."
         ));
 

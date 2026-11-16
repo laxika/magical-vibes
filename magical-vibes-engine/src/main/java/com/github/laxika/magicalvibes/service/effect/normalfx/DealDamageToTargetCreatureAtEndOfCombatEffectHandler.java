@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -15,9 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link DealDamageToTargetCreatureAtEndOfCombatEffect}: schedule the source to deal the
- * evaluated damage to the targeted creature at end of combat via a
- * {@link DealDamageToPermanentAtEndOfCombat} delayed action. E.g. Dwarven Sea Clan.
+ * Resolves {@link DealDamageToTargetCreatureAtEndOfCombatEffect}: registers the delayed triggered ability that has
+ * the source deal the evaluated damage to the targeted creature at end of combat. E.g. Dwarven Sea Clan.
  */
 @Component
 @RequiredArgsConstructor
@@ -52,8 +53,9 @@ public class DealDamageToTargetCreatureAtEndOfCombatEffectHandler implements Nor
             return;
         }
 
-        gameData.queueDelayedAction(new DealDamageToPermanentAtEndOfCombat(target.getId(),
-                entry.getSourcePermanentId(), entry.getCard(), entry.getControllerId(), damage));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.endOfCombat(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
+                target.getId(), new DealDamageToTargetCreatureEffect(damage)));
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " will be dealt " + damage + " damage at end of combat."));
     }

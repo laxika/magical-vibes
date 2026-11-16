@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
-import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -57,8 +60,9 @@ public class DestroyTargetCreatureAndCreateSpiritCopyToSacrificeEffectHandler im
                 gameData, entry.getControllerId(), spirit, 1, entry.getCard().getSetCode());
 
         for (UUID id : createdIds) {
-            gameData.queueDelayedAction(new SacrificeSelfAtNextEndStepTrigger(
-                    id, entry.getControllerId(), entry.getCard()));
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    Triggers.endStep(ActivePlayer.ANY), entry.getControllerId(), entry.getCard(),
+                    entry.getSourcePermanentId(), id, new SacrificeTriggeringPermanentEffect()));
         }
     }
 }

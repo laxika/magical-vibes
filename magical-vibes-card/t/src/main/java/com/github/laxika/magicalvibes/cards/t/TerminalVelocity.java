@@ -15,10 +15,11 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldThenEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -41,7 +42,8 @@ public class TerminalVelocity extends Card {
                                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF, GrantDuration.INDEFINITE),
                                 GrantEffectToTargetEffect.toSourcePermanent(
                                         new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS), leavesDamage)),
-                                SacrificeSelfAtEndStepEffect.atCurrentControllersEndStep())),
+                                GrantEffectToTargetEffect.toSourcePermanent(new TriggeredAbility(
+                                        Triggers.endStep(ActivePlayer.YOU), new SacrificeSelfEffect())))),
                 "Put an artifact or creature card from your hand onto the battlefield?"));
     }
 }

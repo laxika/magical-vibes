@@ -65,7 +65,6 @@ import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
@@ -13342,8 +13341,6 @@ public class SpellCastingService {
                 && !gameData.consumeExilePlayPermission(exileCardId)) {
             throw new IllegalStateException("Exile play limit has been reached");
         }
-        gameData.clearDelayedActions(ReturnExiledCardToHandAtNextEndStep.class,
-                action -> action.cardId().equals(exileCardId));
         gameData.removeFromExile(exileCardId);
         if (!copy) {
             gameData.recordCardPlayedFromExile(playerId);

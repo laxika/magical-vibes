@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +15,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 
 @CardUsed({ChanceForGlory.class, GrizzlyBears.class, PlatinumAngel.class})
 class ChanceForGloryTest extends BaseCardTest {
@@ -50,15 +51,14 @@ class ChanceForGloryTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving queues an extra turn and delayed loss")
     void resolvingQueuesExtraTurnAndDelayedLoss() {
-        int turnBefore = gd.turnNumber;
 
         castChanceForGlory();
 
         assertThat(gd.extraTurns).containsExactly(player1.getId());
-        List<LoseGameAtEndStep> pending = gd.getDelayedActions(LoseGameAtEndStep.class);
+        List<TemporaryGlobalTriggeredAbility> pending = gd.delayedStepAbilities(StepTrigger.Moment.END_STEP);
         assertThat(pending).hasSize(1);
-        assertThat(pending.getFirst().playerId()).isEqualTo(player1.getId());
-        assertThat(pending.getFirst().registeredTurnNumber()).isEqualTo(turnBefore);
+        assertThat(pending.getFirst().controllerId()).isEqualTo(player1.getId());
+        assertThat(pending.getFirst().referents().extraTurnSequence()).isNotNegative();
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 
@@ -172,8 +172,8 @@ class ChanceForGloryTest extends BaseCardTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
-            assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(1);
-            assertThat(gd.getDelayedActions(LoseGameAtEndStep.class).getFirst().playerId())
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP).getFirst().controllerId())
                     .isEqualTo(player1.getId());
             harness.passBothPriorities();
             assertThat(gd.status).isEqualTo(GameStatus.FINISHED);

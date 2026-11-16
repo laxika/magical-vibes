@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -38,6 +41,17 @@ import java.util.UUID;
  * @param boon               whether it is a one-time boon ("you get a one-time boon with 'when you cast a creature spell,
  *                           ...'"): it has no stated duration and triggers once, as {@code untilTriggered}, and it is
  *                           what "if you have a boon" counts (Underbridge Warlock)
+ * @param referents          the other objects it refers to and the turn it waits past ({@link DelayedReferents#NONE}
+ *                           for none)
+ * @param repeats            whether its stated duration lets it trigger every time its trigger event occurs, however
+ *                           many turns that takes: "for the rest of the game", "for as long as ...", which a turn's end
+ *                           doesn't remove (CR 603.7b)
+ * @param lastsWhile         the condition its "for as long as ..." duration holds while, judged as its trigger event
+ *                           occurs: once it is false the ability has ended and is removed without triggering; {@code
+ *                           null} for a duration with no such condition. Read for step abilities
+ * @param payToPrevent       the mana cost the player or planeswalker's controller it is about may pay, as a special
+ *                           action, to stop it from triggering ("unless that player pays {2} before that step",
+ *                           CR 116.2c); {@code null} when nothing stops it
  */
 public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
                                               TargetFilter targetFilter,
@@ -50,7 +64,69 @@ public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard
                                               UUID linkedExiledCardId,
                                               boolean untilTriggered,
                                               boolean next,
-                                              boolean boon) {
+                                              boolean boon,
+                                              DelayedReferents referents,
+                                              String payToPrevent,
+                                              boolean repeats,
+                                              Condition lastsWhile) {
+
+    public TemporaryGlobalTriggeredAbility {
+        if (referents == null) {
+            referents = DelayedReferents.NONE;
+        }
+    }
+
+    /** {@code ability} that doesn't repeat. */
+    public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
+                                           TargetFilter targetFilter,
+                                           boolean untilEndOfNextTurn, boolean untilNextTurn,
+                                           int registrationTurnNumber,
+                                           UUID expirationPlayerId,
+                                           UUID watchedPermanentId,
+                                           UUID sourcePermanentId,
+                                           UUID watchedPlayerId,
+                                           UUID linkedExiledCardId,
+                                           boolean untilTriggered,
+                                           boolean next,
+                                           boolean boon,
+                                           DelayedReferents referents,
+                                           String payToPrevent) {
+        this(controllerId, sourceCard, ability, targetFilter, untilEndOfNextTurn, untilNextTurn,
+                registrationTurnNumber, expirationPlayerId, watchedPermanentId, sourcePermanentId, watchedPlayerId,
+                linkedExiledCardId, untilTriggered, next, boon, referents, payToPrevent, false, null);
+    }
+
+    /** {@code ability} that nothing stops by paying for it. */
+    public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
+                                           TargetFilter targetFilter,
+                                           boolean untilEndOfNextTurn, boolean untilNextTurn,
+                                           int registrationTurnNumber,
+                                           UUID expirationPlayerId,
+                                           UUID watchedPermanentId,
+                                           UUID sourcePermanentId,
+                                           UUID watchedPlayerId,
+                                           UUID linkedExiledCardId,
+                                           boolean untilTriggered,
+                                           boolean next,
+                                           boolean boon,
+                                           DelayedReferents referents) {
+        this(controllerId, sourceCard, ability, targetFilter, untilEndOfNextTurn, untilNextTurn,
+                registrationTurnNumber, expirationPlayerId, watchedPermanentId, sourcePermanentId, watchedPlayerId,
+                linkedExiledCardId, untilTriggered, next, boon, referents, null);
+    }
+
+    /** {@code ability} that refers to nothing more than its permanent and player. */
+    public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
+                                           TargetFilter targetFilter,
+                                           boolean untilEndOfNextTurn, boolean untilNextTurn,
+                                           int registrationTurnNumber, UUID expirationPlayerId,
+                                           UUID watchedPermanentId, UUID sourcePermanentId, UUID watchedPlayerId,
+                                           UUID linkedExiledCardId, boolean untilTriggered, boolean next,
+                                           boolean boon) {
+        this(controllerId, sourceCard, ability, targetFilter, untilEndOfNextTurn, untilNextTurn,
+                registrationTurnNumber, expirationPlayerId, watchedPermanentId, sourcePermanentId, watchedPlayerId,
+                linkedExiledCardId, untilTriggered, next, boon, DelayedReferents.NONE);
+    }
 
     /** {@code ability} that isn't a boon. */
     public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
@@ -147,13 +223,104 @@ public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard
     }
 
     /** Whether it triggers only once: it has no stated duration, or it is a "when you next ..." (CR 603.7b). */
+    /**
+     * {@code ability}, whose trigger is the beginning of a step or phase ("at the beginning of the next end step",
+     * "at the beginning of your next upkeep"), of the delayed triggered ability a resolving spell or ability with the
+     * source {@code sourceCard} and {@code sourcePermanentId} (or none) created, controlled by {@code controllerId}. It
+     * has no stated duration, so it triggers only the next time its step begins (CR 603.7b), however its objects fared
+     * (CR 603.7c). It is about the permanent {@code permanentId} and the player {@code playerId} (or neither), and
+     * {@code referents}.
+     */
+    public static TemporaryGlobalTriggeredAbility atNextStep(UUID controllerId, Card sourceCard,
+                                                             TriggeredAbility ability, UUID sourcePermanentId,
+                                                             UUID permanentId, UUID playerId,
+                                                             DelayedReferents referents) {
+        return new TemporaryGlobalTriggeredAbility(controllerId, sourceCard, ability, null, false, false, -1, null,
+                permanentId, sourcePermanentId, playerId, null, true, false, false, referents);
+    }
+
+    /**
+     * {@link #atNextStep(UUID, Card, TriggeredAbility, UUID, UUID, UUID, DelayedReferents)} with the trigger
+     * {@code step} and the effects {@code effects}, about the permanent {@code permanentId} alone (or nothing).
+     */
+    public static TemporaryGlobalTriggeredAbility atNextStep(StepTrigger step, UUID controllerId, Card sourceCard,
+                                                             UUID sourcePermanentId, UUID permanentId,
+                                                             CardEffect... effects) {
+        return atNextStep(controllerId, sourceCard, new TriggeredAbility(step, effects), sourcePermanentId,
+                permanentId, null, permanentId == null ? DelayedReferents.NONE
+                        : DelayedReferents.permanents(List.of(permanentId)));
+    }
+
+    /**
+     * {@link #atNextStep(UUID, Card, TriggeredAbility, UUID, UUID, UUID, DelayedReferents)} that the player or
+     * planeswalker's controller it is about can stop by paying {@code manaCost} before the step, as a special action
+     * (CR 116.2c).
+     */
+    public static TemporaryGlobalTriggeredAbility atNextStepUnlessPaid(UUID controllerId, Card sourceCard,
+                                                                       TriggeredAbility ability,
+                                                                       UUID sourcePermanentId, UUID permanentId,
+                                                                       UUID playerId, String manaCost) {
+        return new TemporaryGlobalTriggeredAbility(controllerId, sourceCard, ability, null, false, false, -1, null,
+                permanentId, sourcePermanentId, playerId, null, true, false, false, DelayedReferents.NONE, manaCost);
+    }
+
+    /**
+     * {@link #atNextStep(StepTrigger, UUID, Card, UUID, UUID, CardEffect...)} with a stated duration: "at this turn's
+     * next end of combat" triggers only the next time its step begins this turn and ends with the turn if it hasn't
+     * (CR 603.7b). It is about the objects {@code referents} and the permanent {@code permanentId} (or none).
+     */
+    public static TemporaryGlobalTriggeredAbility atNextStepThisTurn(StepTrigger step, UUID controllerId,
+                                                                     Card sourceCard, UUID sourcePermanentId,
+                                                                     UUID permanentId, DelayedReferents referents,
+                                                                     CardEffect... effects) {
+        return new TemporaryGlobalTriggeredAbility(controllerId, sourceCard, new TriggeredAbility(step, effects), null,
+                false, false, -1, null, permanentId, sourcePermanentId, null, null, false, true, false, referents);
+    }
+
+    /**
+     * {@code ability}, whose trigger is the beginning of a step or phase, of the delayed triggered ability a resolving
+     * spell or ability with the source {@code sourceCard} and {@code sourcePermanentId} (or none) created, controlled
+     * by {@code controllerId}, with a stated duration that lets it trigger every time its step begins: "at the
+     * beginning of each of your upkeeps for the rest of the game", or, with {@code lastsWhile}, "for as long as ...
+     * at the beginning of each upkeep" (CR 603.7b). It ends, without triggering, as its step begins while
+     * {@code lastsWhile} is false. It is about the permanent {@code permanentId} (or none) and {@code referents}.
+     */
+    public static TemporaryGlobalTriggeredAbility atEveryStep(UUID controllerId, Card sourceCard,
+                                                              TriggeredAbility ability, UUID sourcePermanentId,
+                                                              UUID permanentId, DelayedReferents referents,
+                                                              Condition lastsWhile) {
+        return new TemporaryGlobalTriggeredAbility(controllerId, sourceCard, ability, null, false, false, -1, null,
+                permanentId, sourcePermanentId, null, null, false, false, false, referents, null, true, lastsWhile);
+    }
+
+    /** This delayed ability with the ability {@code newAbility}. */
+    public TemporaryGlobalTriggeredAbility withAbility(TriggeredAbility newAbility) {
+        return new TemporaryGlobalTriggeredAbility(controllerId, sourceCard, newAbility, targetFilter,
+                untilEndOfNextTurn, untilNextTurn, registrationTurnNumber, expirationPlayerId, watchedPermanentId,
+                sourcePermanentId, watchedPlayerId, linkedExiledCardId, untilTriggered, next, boon, referents,
+                payToPrevent, repeats, lastsWhile);
+    }
+
+    /** This ability with the other objects it refers to and the turn it waits past {@code newReferents}. */
+    public TemporaryGlobalTriggeredAbility withReferents(DelayedReferents newReferents) {
+        return new TemporaryGlobalTriggeredAbility(controllerId, sourceCard, ability, targetFilter, untilEndOfNextTurn,
+                untilNextTurn, registrationTurnNumber, expirationPlayerId, watchedPermanentId, sourcePermanentId,
+                watchedPlayerId, linkedExiledCardId, untilTriggered, next, boon, newReferents, payToPrevent, repeats,
+                lastsWhile);
+    }
+
+    /** Whether its trigger is the beginning of a step or phase, which it waits for whatever its objects do. */
+    public boolean waitsForStep() {
+        return ability.conditions().stream().anyMatch(condition -> condition.trigger() instanceof StepTrigger);
+    }
+
     public boolean triggersOnce() {
         return untilTriggered || next;
     }
 
     /** Whether a turn's end removes it: it has a stated duration that ends then (CR 603.7b, 514.2). */
     public boolean endsThisTurn() {
-        return !untilTriggered && !untilEndOfNextTurn && !untilNextTurn;
+        return !untilTriggered && !repeats && !untilEndOfNextTurn && !untilNextTurn;
     }
 
     /** {@code ability} with no linked exiled card. */

@@ -101,9 +101,15 @@ class GrixisSlavedriverTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grixis Slavedriver"));
         assertThat(findPermanents(player1, "Zombie")).hasSize(1);
 
+        // Unearth's delayed exile still triggers for the creature that left, and does nothing (CR 603.7c).
         harness.passUntil(TurnStep.END_STEP);
-        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
         assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Grixis Slavedriver"));
     }
 
     @Test

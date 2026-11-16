@@ -20,6 +20,11 @@ record StepMatch(StepCandidate candidate, StepGroup group, UUID thatPlayerId, UU
      * ability's controller or to what the source is attached to.
      */
     enum StepGroup {
+        /**
+         * A delayed triggered ability a resolving spell or ability made (CR 603.7a): "the next" step, "your next" step
+         * (its controller's), or the step of the player its maker named.
+         */
+        DELAYED,
         /** A face-up plane's or phenomenon's ability, controlled by the planar controller (CR 901.6). */
         PLANE,
         /** An emblem's ability (CR 114.4). */

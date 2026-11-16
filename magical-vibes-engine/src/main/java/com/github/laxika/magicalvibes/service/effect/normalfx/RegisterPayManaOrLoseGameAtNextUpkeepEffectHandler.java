@@ -1,9 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
+import java.util.List;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.PayManaOrLoseGameAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterPayManaOrLoseGameAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -29,8 +35,11 @@ public class RegisterPayManaOrLoseGameAtNextUpkeepEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var registrar = (RegisterPayManaOrLoseGameAtNextUpkeepEffect) effect;
-        gameData.queueDelayedAction(new PayManaOrLoseGameAtNextUpkeep(
-                entry.getControllerId(), registrar.manaCost(), entry.getCard()));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.upkeep(ActivePlayer.YOU), entry.getControllerId(), entry.getCard(),
+                entry.getSourcePermanentId(), null,
+                new ForcedCostOrElseEffect(new PayManaCost(registrar.manaCost()),
+                        List.of(new ControllerLosesGameEffect()), true)));
 
         gameLogService.append(gameData, GameLog.text(entry.getCard().getName()
                 + " requires its controller to pay " + registrar.manaCost()

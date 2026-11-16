@@ -27,6 +27,7 @@ public sealed interface PermanentPredicate permits
         PermanentCastBySourceControllerThisTurnPredicate,
         PermanentCastFromZonePredicate,
         PermanentEnteredOrCastFromZonePredicate,
+        PermanentReturnedWhenSourceLeftPredicate,
         PermanentWasCastPredicate,
         PermanentCastForWarpCostPredicate,
         PermanentBlockingSourcePredicate,

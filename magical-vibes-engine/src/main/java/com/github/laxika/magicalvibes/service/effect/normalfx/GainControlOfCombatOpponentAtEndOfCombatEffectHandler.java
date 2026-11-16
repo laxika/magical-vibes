@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -45,8 +46,9 @@ public class GainControlOfCombatOpponentAtEndOfCombatEffectHandler implements No
         }
         GainControlOfCombatOpponentAtEndOfCombatEffect controlEffect =
                 (GainControlOfCombatOpponentAtEndOfCombatEffect) effect;
-        gameData.queueDelayedAction(new DelayedEndOfCombatTrigger(entry.getControllerId(), entry.getCard(),
-                sourceId, targetId, new GainControlOfTargetEffect(controlEffect.duration())));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.endOfCombat(), entry.getControllerId(), entry.getCard(), sourceId, targetId,
+                new GainControlOfTargetEffect(controlEffect.duration())));
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " will gain control of ", target.getCard(), " at end of combat."));
     }
 }

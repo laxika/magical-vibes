@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextEndStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentsGraveyardsAndMayCastThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -38,7 +37,7 @@ public class ExileOpponentsGraveyardsAndMayCastThisTurnEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         int totalExiled = 0;
-        UUID groupId = UUID.randomUUID();
+        List<UUID> allExiledIds = new ArrayList<>();
 
         for (UUID opponentId : gameData.orderedPlayerIds) {
             if (opponentId.equals(controllerId)) {
@@ -61,11 +60,10 @@ public class ExileOpponentsGraveyardsAndMayCastThisTurnEffectHandler
                     gameData.exilePlayPermissionsExpireEndOfTurn.add(card.getId());
                     gameData.exilePlayAnyManaType.add(card.getId());
                 }
-                gameData.queueDelayedAction(new ExileToOwnerGraveyardAtNextEndStep(
-                        card.getId(), opponentId, entry.getCard(), controllerId, groupId));
             }
 
             totalExiled += exiledCards.size();
+            exiledCards.forEach(card -> allExiledIds.add(card.getId()));
             String playerName = gameData.playerIdToName.get(opponentId);
             gameLogService.append(gameData, GameLog.text(
                     playerName + "'s graveyard is exiled (" + exiledCards.size()
@@ -74,6 +72,9 @@ public class ExileOpponentsGraveyardsAndMayCastThisTurnEffectHandler
 
         if (totalExiled == 0) {
             gameLogService.append(gameData, GameLog.text("Opponents' graveyards are already empty."));
+        } else {
+            gameData.temporaryGlobalTriggeredAbilities.add(PutExiledCardsIntoOwnersGraveyardEffectHandler.atNextEndStep(
+                    gameData, controllerId, entry.getCard(), entry.getSourcePermanentId(), allExiledIds));
         }
         log.info("Game {} - {} exiled {} cards from opponents' graveyards; nonland cards may be cast this turn",
                 gameData.id, entry.getCard().getName(), totalExiled);

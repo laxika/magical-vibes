@@ -1,9 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DamageAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDamageAtNextUpkeepUnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -14,8 +20,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves Quenchable Fire's SPELL registrar: reads the spell's target (player or planeswalker) from
- * the stack entry's {@code targetId} and queues a {@link DamageAtNextUpkeepUnlessPays} delayed action,
- * drained at the spell controller's next upkeep.
+ * the stack entry's {@code targetId} and adds a delayed triggered ability
+ * for the spell controller's next upkeep.
  */
 @Slf4j
 @Component
@@ -36,8 +42,16 @@ public class RegisterDamageAtNextUpkeepUnlessPaysEffectHandler implements Normal
         if (targetId == null) return;
 
         UUID spellControllerId = entry.getControllerId();
-        gameData.queueDelayedAction(new DamageAtNextUpkeepUnlessPays(
-                spellControllerId, targetId, e.damage(), e.manaCost(), entry.getCard()));
+        // "That player or that planeswalker" is the one the spell targeted, which its delayed ability names rather than
+        // targets again (CR 115.10a).
+        boolean targetsPlayer = gameData.playerIds.contains(targetId);
+        CardEffect damage = targetsPlayer
+                ? new DealDamageToPlayersEffect(e.damage(), DamageRecipient.TRIGGERING_PLAYER)
+                : new DealDamageToTriggeringPermanentEffect(e.damage());
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStepUnlessPaid(
+                spellControllerId, entry.getCard(), new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), damage),
+                entry.getSourcePermanentId(), targetsPlayer ? null : targetId, targetsPlayer ? targetId : null,
+                e.manaCost()));
 
         gameLogService.append(gameData, GameLog.text(entry.getCard().getName()
                 + " will deal an additional " + e.damage() + " damage at the beginning of "

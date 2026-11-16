@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.d.DeepFreeze;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -116,7 +116,7 @@ class OathOfTeferiTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB → fizzles
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
+            assertThat(DelayedPermanentMoves.waitingExileReturns(gd)).isEmpty();
         }
     }
 

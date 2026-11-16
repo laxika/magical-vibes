@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
+import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -103,7 +103,8 @@ class RelicWardTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, artifact.getId());
         harness.passBothPriorities();
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.inMutationScope(
+                () -> GameTestEngineContext.get().getBean(TurnProgressionService.class).applyCleanupResets(gd));
 
         harness.assertOnBattlefield(player1, "Relic Ward");
     }
@@ -122,7 +123,8 @@ class RelicWardTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Relic Ward");
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.inMutationScope(
+                () -> GameTestEngineContext.get().getBean(TurnProgressionService.class).applyCleanupResets(gd));
 
         harness.assertOnBattlefield(player1, "Relic Ward");
         assertThat(gqs.hasKeyword(gd, artifact, Keyword.SHROUD)).isTrue();

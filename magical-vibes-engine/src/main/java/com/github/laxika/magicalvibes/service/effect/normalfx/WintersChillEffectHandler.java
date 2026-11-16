@@ -14,7 +14,9 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.WintersChillEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -59,22 +61,22 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
             } else if (entry.getTargetId() != null) {
                 state.remainingTargetIds.add(entry.getTargetId());
             }
-            advance(gameData, sourceName);
+            advance(gameData, entry, sourceName);
             return;
         }
 
         if (state.chosenMode != null) {
             String mode = state.chosenMode;
             state.chosenMode = null;
-            applyMode(gameData, sourceName, state.currentTargetId, mode);
-            advance(gameData, sourceName);
+            applyMode(gameData, entry, sourceName, state.currentTargetId, mode);
+            advance(gameData, entry, sourceName);
             return;
         }
 
-        advance(gameData, sourceName);
+        advance(gameData, entry, sourceName);
     }
 
-    private void advance(GameData gameData, String sourceName) {
+    private void advance(GameData gameData, StackEntry entry, String sourceName) {
         WintersChillState state = gameData.wintersChill;
         while (true) {
             if (state.remainingTargetIds.isEmpty()) {
@@ -95,7 +97,8 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
             List<String> options = availableOptions(gameData, controllerId);
             if (options.size() == 1) {
                 // Only "Pay nothing" — auto-apply destroy-at-end-of-combat.
-                applyMode(gameData, sourceName, targetId, ChoiceContext.WintersChillPaymentChoice.PAY_NOTHING);
+                applyMode(gameData, entry, sourceName, targetId,
+                        ChoiceContext.WintersChillPaymentChoice.PAY_NOTHING);
                 continue;
             }
 
@@ -110,7 +113,7 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
-    private void applyMode(GameData gameData, String sourceName, UUID targetId, String mode) {
+    private void applyMode(GameData gameData, StackEntry entry, String sourceName, UUID targetId, String mode) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return;
@@ -120,7 +123,7 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
         if (ChoiceContext.WintersChillPaymentChoice.PAY_TWO.equals(mode)) {
             if (!pay(gameData, controllerId, "{2}")) {
                 // Can't pay — treat as pay nothing.
-                scheduleDestroy(gameData, target);
+                scheduleDestroy(gameData, entry, target);
                 return;
             }
             gameLogService.append(gameData, GameLog.textCardText(
@@ -130,7 +133,7 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
 
         if (ChoiceContext.WintersChillPaymentChoice.PAY_ONE.equals(mode)) {
             if (!pay(gameData, controllerId, "{1}")) {
-                scheduleDestroy(gameData, target);
+                scheduleDestroy(gameData, entry, target);
                 return;
             }
             gameData.creaturesWithCombatDamagePreventedThisCombat.add(targetId);
@@ -142,12 +145,13 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
         }
 
         // Pay nothing
-        scheduleDestroy(gameData, target);
+        scheduleDestroy(gameData, entry, target);
     }
 
-    private void scheduleDestroy(GameData gameData, Permanent target) {
-        gameData.queueDelayedAction(new DelayedPermanentAction(target.getId(),
-                DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT, false));
+    private void scheduleDestroy(GameData gameData, StackEntry entry, Permanent target) {
+        DelayedPermanentActions.schedule(gameData, entry,
+                new DelayedPermanentAction(target.getId(), DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT),
+                ActivePlayer.ANY);
         gameLogService.append(gameData,
                 GameLog.cardThen(target.getCard(), " will be destroyed at end of combat."));
     }

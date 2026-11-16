@@ -1,5 +1,4 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
-import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -10,6 +9,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @Slf4j
 @Component
@@ -25,8 +29,9 @@ public class RegisterDelayedUntapPermanentsEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RegisterDelayedUntapPermanentsEffect) effect;
         UUID controllerId = entry.getControllerId();
-        gameData.queueDelayedAction(
-                new DelayedUntapPermanents(controllerId, e.count(), e.filter(), entry.getCard()));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.endStep(ActivePlayer.ANY), controllerId, entry.getCard(), entry.getSourcePermanentId(), null,
+                new UntapPermanentsEffect(TapUntapScope.ALL_PERMANENTS, e.filter(), e.count())));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - {} registers delayed untap up to {} permanents at next end step",

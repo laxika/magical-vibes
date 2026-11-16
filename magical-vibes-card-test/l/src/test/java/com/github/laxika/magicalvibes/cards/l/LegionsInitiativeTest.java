@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -90,7 +90,7 @@ class LegionsInitiativeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LegionsInitiative());
 
         activateInitiative();
-        assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(1);
+        assertThat(DelayedPermanentMoves.waitingExileReturns(gd)).hasSize(1);
 
         advanceToBeginningOfCombat();
 
@@ -101,7 +101,7 @@ class LegionsInitiativeTest extends BaseCardTest {
         assertThat(giant.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(vanguard.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(giant.isTapped()).isFalse();
-        assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
+        assertThat(DelayedPermanentMoves.waitingExileReturns(gd)).isEmpty();
     }
 
     @Test

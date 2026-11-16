@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedControllerEndStepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturePerpetuallyBecomesEnchantmentAndReturnAtNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderControlEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -71,10 +73,12 @@ public class ExileTargetCreaturePerpetuallyBecomesEnchantmentAndReturnAtNextEndS
                 enchantment.freeze();
                 replaceExiledCard(gameData, exiled, enchantment);
 
-                gameData.queueDelayedAction(new DelayedControllerEndStepTrigger(
+                gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                        Triggers.endStep(ActivePlayer.YOU),
                         entry.getControllerId(),
                         entry.getCard(),
                         entry.getSourcePermanentId(),
+                        null,
                         new ReturnExiledCardToBattlefieldUnderControlEffect(enchantment.getId())));
                 gameLogService.append(gameData, GameLog.cardThen(enchantment,
                         " is exiled and perpetually becomes an enchantment. It will return at the beginning "

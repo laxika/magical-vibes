@@ -639,6 +639,22 @@ public record ConditionContext(
                 triggeringPermanentPowerAtTrigger, eventValue);
     }
 
+    /**
+     * The same context with {@code newSourcePermanentId} as its source permanent, for a delayed triggered ability,
+     * which has none as it triggers but is about the source permanent of the ability that created it (CR 603.7e).
+     */
+    public ConditionContext withSourcePermanentId(UUID newSourcePermanentId) {
+        return new ConditionContext(controllerId, newSourcePermanentId, sourcePermanent, sourceCard,
+                kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, xValue,
+                targetId, triggeringCard, staticEvaluation, putCounterCostPaid, beholdCostPaid,
+                triggeringPermanentId, triggeringPermanentPowerAtTrigger, sacrificedCard,
+                repeatedAdditionalCosts, alternateCost, spectacle, controlledMountAsCast,
+                controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue,
+                waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast,
+                treasureManaSpentToActivate, teamworkCostPaid, controlledModifiedCreatureAsCast, copiedSpell,
+                attackedTargetId, resolutionResults, sourceGraveyardEntryVersion, casualtyCostPaid, triggeringSpell);
+    }
+
     public ConditionContext withTargetId(UUID newTargetId) {
         return copy(xValue, newTargetId, triggeringCard, triggeringPermanentId,
                 triggeringPermanentPowerAtTrigger, eventValue);

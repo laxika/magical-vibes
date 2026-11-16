@@ -1,16 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
-import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.RemoveCounterFromSourceAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -31,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.rules.StepEvent;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 
 /**
  * Shared turn helpers used by every "normal" Turn effect handler.
@@ -91,17 +84,6 @@ public class TurnSupport {
     public void clearCombatState(GameData gameData) {
         gameData.expireEndOfCombatFloatingEffects();
         combatService.clearCombatState(gameData);
-        gameData.clearDelayedActions(SacrificeAtEndOfCombat.class);
-        gameData.clearDelayedActions(DelayedEndOfCombatTrigger.class);
-        gameData.clearDelayedActions(TapCombatOpponentsAtEndOfCombat.class);
-        gameData.clearDelayedActions(DealDamageToPermanentAtEndOfCombat.class);
-        gameData.clearDelayedActions(DestroyCombatOpponentsAtEndOfCombat.class);
-        gameData.clearDelayedActions(RemoveCounterFromSourceAtEndOfCombat.class);
-        gameData.clearDelayedActions(DelayedPermanentAction.class,
-                a -> a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT
-                        || a.kind() == DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT
-                        || a.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_OF_COMBAT
-                        || a.kind() == DelayedPermanentActionKind.PUT_ON_TOP_OF_LIBRARY_AT_END_OF_COMBAT);
     }
 
     public void endCombatPhase(GameData gameData) {
@@ -131,8 +113,7 @@ public class TurnSupport {
 
     public void skipToCleanupStep(GameData gameData) {
         if (gameData.currentExtraTurnSequence != null) {
-            gameData.drainDelayedActions(LoseGameAtEndStep.class,
-                    action -> gameData.currentExtraTurnSequence.equals(action.extraTurnSequence()));
+            gameData.endDelayedAbilitiesOfExtraTurn(gameData.currentExtraTurnSequence);
         }
         gameData.currentStep = TurnStep.CLEANUP;
         creatureControlService.reconcileControl(gameData);
@@ -152,6 +133,9 @@ public class TurnSupport {
             gameData.discardCausedByOpponent = false;
             playerInputService.beginDiscardChoice(gameData, activePlayerId, hand.size() - maxHandSize);
         } else {
+            // The cleanup step begins: the delayed abilities that wait for it trigger (CR 514.3a).
+            gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(
+                    new StepEvent(StepTrigger.Moment.CLEANUP, gameData.activePlayerId)));
             turnCleanupService.applyCleanupResets(gameData);
         }
     }

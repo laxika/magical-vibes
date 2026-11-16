@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -80,8 +81,8 @@ class BatteringRamTest extends BaseCardTest {
                             && se.getTargetId().equals(wall.getId()));
 
             harness.passBothPriorities();
-            assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                    .anyMatch(a -> a.affectedPermanentId().equals(wall.getId()));
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                    .anyMatch(a -> a.watchedPermanentId().equals(wall.getId()));
         });
     }
 
@@ -151,7 +152,7 @@ class BatteringRamTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
-        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).isEmpty();
     }
 
     @Test
@@ -184,8 +185,8 @@ class BatteringRamTest extends BaseCardTest {
             TestCards.mutableCard(wall).setSubtypes(List.of());
             harness.passBothPriorities();
 
-            assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                    .anyMatch(a -> a.affectedPermanentId().equals(wall.getId()));
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                    .anyMatch(a -> a.watchedPermanentId().equals(wall.getId()));
         });
     }
 
@@ -210,8 +211,8 @@ class BatteringRamTest extends BaseCardTest {
 
             resolveAllTriggers();
 
-            assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                    .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                    .extracting(TemporaryGlobalTriggeredAbility::watchedPermanentId)
                     .containsExactlyInAnyOrder(firstWall.getId(), secondWall.getId());
         });
     }

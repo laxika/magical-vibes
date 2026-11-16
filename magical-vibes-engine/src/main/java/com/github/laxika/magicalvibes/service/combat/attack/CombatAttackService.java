@@ -17,23 +17,9 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackDamage;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationControl;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackerKeywordGrant;
-import com.github.laxika.magicalvibes.model.action.DelayedNontokenAttackTokenCreation;
-import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
-import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
-import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToHandEffect;
@@ -51,9 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountA
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
@@ -64,13 +48,10 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackRequiremen
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesMustAttackIfSourceAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TrainEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -1209,40 +1190,6 @@ public class CombatAttackService {
             }
         }
 
-        // Fire delayed "until your next turn, whenever a creature an opponent controls attacks, it
-        // gets X/Y until end of turn" triggers (Jace, Architect of Thought's +1). The attacking
-        // player is always the attackers' controller here, so a single controller comparison per
-        // registered action decides whether it applies to this whole declaration.
-        for (DelayedOpponentAttackerBoost boost : gameData.getDelayedActions(DelayedOpponentAttackerBoost.class)) {
-            if (boost.controllerId().equals(playerId)) continue;
-            for (int idx : attackerIndices) {
-                Permanent attacker = battlefield.get(idx);
-                StackEntry boostTrigger = TriggeredAbilityStackService.madeAbility(
-                        boost.sourceCard(),
-                        boost.controllerId(),
-                        boost.sourceCard().getName() + "'s delayed trigger",
-                        List.of(new BoostSelfEffect(boost.power(), boost.toughness())),
-                        attacker.getId(),
-                        attacker.getId());
-                boostTrigger.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, boostTrigger);
-                gameLogService.append(gameData, GameLog.cardTextCard(
-                        boost.sourceCard(), " — ", attacker.getCard(),
-                        " gets " + formatBoostPair(boost.power(), boost.toughness())
-                                + " until end of turn."));
-                log.info("Game {} - {} delayed opponent-attacker boost fires for {}",
-                        gameData.id, boost.sourceCard().getName(), attacker.getCard().getName());
-            }
-        }
-
-        processDelayedAttackerBoostTriggers(gameData, battlefield, attackerIndices);
-        processDelayedAttackerKeywordGrantTriggers(gameData, battlefield, attackerIndices);
-        processDelayedNontokenAttackTokenTriggers(gameData, battlefield, attackerIndices);
-        processDelayedAttackTokenCreationTriggers(gameData, playerId, attackerIndices);
-        processDelayedAttackDamageTriggers(gameData, playerId, attackerIndices);
-        processDelayedAttackUntapTriggers(gameData, playerId, attackerIndices);
-        processDelayedWatchedCreatureAttackTriggers(gameData, battlefield, attackerIndices);
-
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeAttackTriggers, playerId);
 
@@ -1469,222 +1416,6 @@ public class CombatAttackService {
             }
         }
         return indices;
-    }
-
-    /**
-     * Song of Blood-style delayed triggers: whenever a creature attacks this turn, it gets
-     * +power/+toughness until end of turn. One stack entry per attacker per registered boost.
-     */
-    private void processDelayedAttackerBoostTriggers(GameData gameData, List<Permanent> battlefield,
-                                                     List<Integer> attackerIndices) {
-        if (attackerIndices.isEmpty() || !gameData.hasDelayedAction(DelayedAttackerBoost.class)) {
-            return;
-        }
-        for (DelayedAttackerBoost boost : gameData.getDelayedActions(DelayedAttackerBoost.class)) {
-            for (int idx : attackerIndices) {
-                Permanent attacker = battlefield.get(idx);
-                StackEntry se = TriggeredAbilityStackService.madeAbility(
-                        boost.sourceCard(),
-                        boost.controllerId(),
-                        boost.sourceCard().getName() + "'s delayed trigger",
-                        List.of(new BoostSelfEffect(boost.power(), boost.toughness())),
-                        attacker.getId(),
-                        attacker.getId());
-                se.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, se);
-                gameLogService.append(gameData, GameLog.cardTextCard(
-                        boost.sourceCard(), " — ", attacker.getCard(),
-                        " gets +" + boost.power() + "/+" + boost.toughness() + " until end of turn."));
-                log.info("Game {} - {} delayed attacker boost fires for {}",
-                        gameData.id, boost.sourceCard().getName(), attacker.getCard().getName());
-            }
-        }
-    }
-
-    /** Fires delayed triggers for a watched creature attacking one of its registering player's opponents. */
-    private void processDelayedWatchedCreatureAttackTriggers(GameData gameData,
-                                                              List<Permanent> battlefield,
-                                                              List<Integer> attackerIndices) {
-        if (attackerIndices.isEmpty() || !gameData.hasDelayedAction(DelayedWatchedCreatureAttack.class)) {
-            return;
-        }
-        for (DelayedWatchedCreatureAttack watch
-                : gameData.getDelayedActions(DelayedWatchedCreatureAttack.class)) {
-            for (int idx : attackerIndices) {
-                Permanent attacker = battlefield.get(idx);
-                UUID attackedTargetId = attacker.getAttackTarget();
-                if (!watch.watchedPermanentId().equals(attacker.getId())
-                        || attackedTargetId == null
-                        || !gameData.playerIds.contains(attackedTargetId)
-                        || watch.controllerId().equals(attackedTargetId)) {
-                    continue;
-                }
-
-                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
-                        watch.sourceCard(),
-                        watch.controllerId(),
-                        watch.sourceCard().getName() + "'s delayed trigger",
-                        new ArrayList<>(watch.effects()),
-                        (UUID) null,
-                        attacker.getId());
-                trigger.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, trigger);
-                gameLogService.append(gameData,
-                        GameLog.builder().card(watch.sourceCard()).text("'s ability triggers.").build());
-            }
-        }
-    }
-
-    /**
-     * Delayed attack triggers that grant keywords until end of turn. One stack entry is created
-     * for each attacker and each registered grant.
-     */
-    private void processDelayedAttackerKeywordGrantTriggers(GameData gameData,
-                                                              List<Permanent> battlefield,
-                                                              List<Integer> attackerIndices) {
-        if (attackerIndices.isEmpty() || !gameData.hasDelayedAction(DelayedAttackerKeywordGrant.class)) {
-            return;
-        }
-        for (DelayedAttackerKeywordGrant grant
-                : gameData.getDelayedActions(DelayedAttackerKeywordGrant.class)) {
-            for (int idx : attackerIndices) {
-                Permanent attacker = battlefield.get(idx);
-                StackEntry se = TriggeredAbilityStackService.madeAbility(
-                        grant.sourceCard(),
-                        grant.controllerId(),
-                        grant.sourceCard().getName() + "'s delayed trigger",
-                        List.of(new GrantKeywordEffect(
-                                grant.keywords(), GrantScope.TARGET, null,
-                                GrantDuration.END_OF_TURN, null)),
-                        attacker.getId(),
-                        (UUID) null);
-                se.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, se);
-                gameLogService.append(gameData, GameLog.cardTextCard(
-                        grant.sourceCard(), " — ", attacker.getCard(),
-                        " gains " + grant.keywords() + " until end of turn."));
-                log.info("Game {} - {} delayed attacker keyword grant fires for {}",
-                        gameData.id, grant.sourceCard().getName(), attacker.getCard().getName());
-            }
-        }
-    }
-
-    private void processDelayedNontokenAttackTokenTriggers(GameData gameData, List<Permanent> battlefield,
-                                                            List<Integer> attackerIndices) {
-        if (attackerIndices.isEmpty() || !gameData.hasDelayedAction(DelayedNontokenAttackTokenCreation.class)) return;
-        int nontokenAttackers = (int) attackerIndices.stream()
-                .map(battlefield::get)
-                .filter(attacker -> !attacker.getCard().isToken())
-                .count();
-        if (nontokenAttackers == 0) return;
-
-        for (DelayedNontokenAttackTokenCreation action
-                : gameData.getDelayedActions(DelayedNontokenAttackTokenCreation.class)) {
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(
-                    action.sourceCard(),
-                    action.controllerId(),
-                    action.sourceCard().getName() + "'s delayed trigger",
-                    List.of(new CreateTokensAttackingEffect(nontokenAttackers, action.tokenEffect())));
-            entry.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed ability triggers."));
-            log.info("Game {} - {} delayed token creation trigger fires for {} nontoken attacker(s)",
-                    gameData.id, action.sourceCard().getName(), nontokenAttackers);
-        }
-    }
-
-    private void processDelayedAttackUntapTriggers(GameData gameData, UUID attackingPlayerId,
-                                                    List<Integer> attackerIndices) {
-        if (attackerIndices.isEmpty() || !gameData.hasDelayedAction(DelayedAttackUntap.class)) return;
-
-        List<DelayedAttackUntap> matchingActions = gameData.getDelayedActions(DelayedAttackUntap.class).stream()
-                .filter(action -> action.controllerId().equals(attackingPlayerId))
-                .toList();
-        if (matchingActions.isEmpty()) return;
-
-        for (DelayedAttackUntap action : matchingActions) {
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(
-                    action.sourceCard(),
-                    action.controllerId(),
-                    action.sourceCard().getName() + "'s delayed trigger",
-                    List.of(new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
-                            new PermanentIsCreaturePredicate())));
-            entry.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed ability triggers."));
-            log.info("Game {} - {} delayed attack untap trigger fires", gameData.id, action.sourceCard().getName());
-        }
-
-        gameData.clearDelayedActions(DelayedAttackUntap.class,
-                action -> action.controllerId().equals(attackingPlayerId));
-    }
-
-    private void processDelayedAttackTokenCreationTriggers(GameData gameData, UUID attackingPlayerId,
-                                                            List<Integer> attackerIndices) {
-        if (attackerIndices.isEmpty() || !gameData.hasDelayedAction(DelayedAttackTokenCreation.class)) return;
-
-        for (DelayedAttackTokenCreation action : gameData.getDelayedActions(DelayedAttackTokenCreation.class)) {
-            if (!action.controllerId().equals(attackingPlayerId)) continue;
-
-            if (action.attackerPredicate() == null) {
-                addDelayedAttackTokenCreationTrigger(gameData, action);
-                continue;
-            }
-
-            for (int idx : attackerIndices) {
-                Permanent attacker = gameData.playerBattlefields.get(attackingPlayerId).get(idx);
-                if (!predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, attacker, action.attackerPredicate())) {
-                    continue;
-                }
-
-                addDelayedAttackTokenCreationTrigger(gameData, action);
-            }
-        }
-    }
-
-    private void addDelayedAttackTokenCreationTrigger(GameData gameData, DelayedAttackTokenCreation action) {
-        StackEntry entry = TriggeredAbilityStackService.madeAbility(
-                action.sourceCard(),
-                action.controllerId(),
-                action.sourceCard().getName() + "'s delayed trigger",
-                List.of(new CreateTokensAttackingEffect(
-                        action.amount(), action.tokenEffect(), action.sacrificeAtEndStep())));
-        entry.setNonTargeting(true);
-        triggeredAbilityStackService.putDelayed(gameData, entry);
-        gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed ability triggers."));
-        log.info("Game {} - {} delayed attack token creation trigger fires",
-                gameData.id, action.sourceCard().getName());
-    }
-
-    private void processDelayedAttackDamageTriggers(GameData gameData, UUID attackingPlayerId,
-                                                    List<Integer> attackerIndices) {
-        if (attackerIndices.isEmpty() || !gameData.hasDelayedAction(DelayedAttackDamage.class)) return;
-
-        for (DelayedAttackDamage action : gameData.getDelayedActions(DelayedAttackDamage.class)) {
-            if (!action.controllerId().equals(attackingPlayerId)) continue;
-
-            // "that creature" refers to the creature chosen when the delayed ability was created: the
-            // trigger doesn't target again, so control changes and later hexproof don't stop it.
-            Permanent target = gameQueryService.findPermanentById(gameData, action.targetPermanentId());
-            if (target == null || !gameQueryService.isCreature(gameData, target)) {
-                continue;
-            }
-
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(
-                    action.sourceCard(),
-                    action.controllerId(),
-                    action.sourceCard().getName() + "'s delayed trigger",
-                    List.of(new DealDamageToTargetCreatureEffect(new PermanentCount(
-                            new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER))),
-                    action.targetPermanentId(),
-                    action.sourcePermanentId());
-            entry.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed ability triggers."));
-            log.info("Game {} - {} delayed attack damage trigger fires", gameData.id,
-                    action.sourceCard().getName());
-        }
     }
 
     private void validateMaximumAttackRequirements(GameData gameData, UUID playerId,

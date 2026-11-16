@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -40,9 +41,9 @@ class TreacherousUrgeTest extends BaseCardTest {
         assertThat(phantasm.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
                 .containsExactly("Extirpate");
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(phantasm.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                        false, null, null, player1.getId()).scheduledBy(gd.resolutionOrdinal));
+        assertThat(DelayedPermanentMoves.waiting(gd))
+                .contains(new DelayedPermanentAction(phantasm.getId(),
+                        DelayedPermanentActionKind.SACRIFICE_AT_END_STEP).scheduledBy(gd.resolutionOrdinal));
     }
 
     @Test
@@ -73,7 +74,7 @@ class TreacherousUrgeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
                 .containsExactly("Gossamer Phantasm");
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
+        assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
     }
 
     @Test

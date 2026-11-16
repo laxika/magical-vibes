@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCombatDamageDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -15,6 +14,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "162")
 @CardRegistration(set = "M21", collectorNumber = "368")
@@ -46,7 +49,10 @@ public class SubiraTulzidiCaravanner extends Card {
                 "{1}{R}",
                 List.of(
                         new DiscardHandCost(),
-                        new RegisterDelayedCombatDamageDrawEffect(powerAtMostTwoCreature, false)
+                        new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
+                                Triggers.creatureYouControlDealsCombatDamageToPlayer()
+                                        .withFilter(powerAtMostTwoCreature),
+                                new DrawCardEffect(1)))
                 ),
                 "{1}{R}, {T}, Discard your hand: Until end of turn, whenever a creature you control "
                         + "with power 2 or less deals combat damage to a player, draw a card."

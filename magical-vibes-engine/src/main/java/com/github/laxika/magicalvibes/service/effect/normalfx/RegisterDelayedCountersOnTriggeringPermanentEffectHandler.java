@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextEndStep;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCountersOnTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,9 +16,8 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * Resolves {@link RegisterDelayedCountersOnTriggeringPermanentEffect}: queues a
- * {@link PutCounterOnPermanentAtNextEndStep} delayed action for the stack entry's triggering
- * permanent, drained by {@code StepTriggerService} at the beginning of the next end step.
+ * Resolves {@link RegisterDelayedCountersOnTriggeringPermanentEffect}: makes the delayed triggered ability "at the
+ * beginning of the next end step, put counters on it" about the stack entry's triggering permanent.
  */
 @Slf4j
 @Component
@@ -37,8 +38,9 @@ public class RegisterDelayedCountersOnTriggeringPermanentEffectHandler implement
             return;
         }
         var registered = (RegisterDelayedCountersOnTriggeringPermanentEffect) effect;
-        gameData.queueDelayedAction(new PutCounterOnPermanentAtNextEndStep(
-                entry.getCard(), entry.getControllerId(), permanentId, registered.counters()));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.endStep(ActivePlayer.ANY), entry.getControllerId(), entry.getCard(),
+                entry.getSourcePermanentId(), permanentId, registered.counters()));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " will put counters on the creature at the beginning of the next end step."));
         log.info("Game {} - {} schedules counters for triggering permanent at the next end step",

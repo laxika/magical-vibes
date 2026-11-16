@@ -21,33 +21,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageBecomeMonarch;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageEffect;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHandAndDraw;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageToken;
-import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDamagedByWatchedCreature;
-import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDealingCombatDamageToPlaneswalker;
-import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
-import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -78,6 +56,12 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class CombatDamageTriggers {
+
+    /**
+     * The prefix of the keys of abilities that trigger once for the combat damage step whichever players are dealt
+     * the damage ({@code TriggerMultiplicity.ONE_OR_MORE_PLAYERS}); the other keys are of one player's damage.
+     */
+    private static final String ONCE_FOR_ALL_PLAYERS_KEY = "all-players:";
 
     private static final PermanentHasSameNameAsSourcePredicate SAME_NAME_AS_SOURCE =
             new PermanentHasSameNameAsSourcePredicate();
@@ -254,6 +238,8 @@ public class CombatDamageTriggers {
         // player") that already fired in this damage step against this player, so they fire once
         // for the whole batch instead of once per dealer.
         Set<String> firedBatchedAllyAbilities = new HashSet<>();
+        firedOncePerStepAbilities.stream().filter(key -> key.startsWith(ONCE_FOR_ALL_PLAYERS_KEY))
+                .forEach(firedBatchedAllyAbilities::add);
         // The planes' "one or more creatures you control deal combat damage to a player" abilities that already
         // triggered in this damage step against this player, each by its place among the plane's abilities.
         Set<String> firedBatchedPlanarAbilities = new HashSet<>();
@@ -390,6 +376,27 @@ public class CombatDamageTriggers {
                 }
             }
 
+            // The delayed "whenever that creature deals combat damage to a player this turn" abilities about it
+            // (CR 603.7c): the creature is "that creature" and "it", the player "that player".
+            for (Watcher delayed : eventAbilitySupport.delayedWatching(gameData, creature.getId())) {
+                for (TriggeredAbility ability : plainCombatAbilities(
+                        eventAbilitySupport.abilities(gameData, delayed, combatDamageToPlayer),
+                        combatDamageToPlayer)) {
+                    eventAbilitySupport.put(gameData, ability, delayed, delayed.conditionContext()
+                            .withTargetId(defenderId).withTriggeringPermanentId(creature.getId())
+                            .withEventValue(damageDealt), record -> {
+                                record.setTargetId(defenderId);
+                                record.setNonTargeting(true);
+                                record.setEventValue(damageDealt);
+                                record.setTriggeringPlayerId(defenderId);
+                                record.setAttackedTargetId(defenderId);
+                                record.setTriggeringPermanentId(creature.getId());
+                                record.setTriggeringPermanentControllerId(attackerId);
+                                record.setEventDamageSource(creature, attackerId);
+                            });
+                }
+            }
+
             checkAttachedCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt,
                     attachedDamageSources);
             checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, attackerId, defenderId, damageDealt);
@@ -411,6 +418,8 @@ public class CombatDamageTriggers {
             damageTriggers.checkAnyCreatureCombatDamageToOwnerTriggers(
                     gameData, creature, attackerId, defenderId, damageDealt);
         }
+        firedBatchedAllyAbilities.stream().filter(key -> key.startsWith(ONCE_FOR_ALL_PLAYERS_KEY))
+                .forEach(firedOncePerStepAbilities::add);
     }
 
     /**
@@ -649,6 +658,11 @@ public class CombatDamageTriggers {
                             combatDamageDealtToPlayer, firedBatchedAllyAbilities, ownerRelativePass,
                             Triggers.creatureYouControlDealsCombatDamageToPlayer());
                 }
+                if (!battleDamage) {
+                    collectAllyCombatDamageAbilities(gameData, watcher, creature, attackerId, defenderId, damageDealt,
+                            combatDamageDealtToPlayer, firedBatchedAllyAbilities, ownerRelativePass,
+                            Triggers.creatureYouControlDealsCombatDamageToPlayerOrPlaneswalker());
+                }
                 collectAllyCombatDamageAbilities(gameData, watcher, creature, attackerId, defenderId, damageDealt,
                         combatDamageDealtToPlayer, firedBatchedAllyAbilities, ownerRelativePass,
                         Triggers.creatureYouControlDealsCombatDamageToPlayerOrBattle());
@@ -667,6 +681,11 @@ public class CombatDamageTriggers {
                 collectAllyCombatDamageAbilities(gameData, watcher, creature, attackerId, defenderId, damageDealt,
                         combatDamageDealtToPlayer, firedBatchedAllyAbilities, ownerRelativePass,
                         Triggers.creatureYouControlDealsCombatDamageToPlayer());
+            }
+            if (!battleDamage) {
+                collectAllyCombatDamageAbilities(gameData, watcher, creature, attackerId, defenderId, damageDealt,
+                        combatDamageDealtToPlayer, firedBatchedAllyAbilities, ownerRelativePass,
+                        Triggers.creatureYouControlDealsCombatDamageToPlayerOrPlaneswalker());
             }
             collectAllyCombatDamageAbilities(gameData, watcher, creature, attackerId, defenderId, damageDealt,
                     combatDamageDealtToPlayer, firedBatchedAllyAbilities, ownerRelativePass,
@@ -705,6 +724,12 @@ public class CombatDamageTriggers {
                                                   Set<String> firedBatchedAllyAbilities, boolean ownerRelativePass,
                                                   Trigger watch) {
         Permanent perm = watcher.permanent();
+        // A delayed ability that names a player ("whenever a creature you control deals combat damage to that player
+        // this turn", Great Train Heist) is about damage to that player alone.
+        if (watcher.delayed() != null && watcher.delayed().watchedPlayerId() != null
+                && !watcher.delayed().watchedPlayerId().equals(defenderId)) {
+            return;
+        }
         List<TriggeredAbility> abilities = eventAbilitySupport.abilities(gameData, watcher, watch);
         FilterContext triggerContext = FilterContext.of(gameData)
                 .withSourceControllerId(attackerId)
@@ -723,7 +748,8 @@ public class CombatDamageTriggers {
             if (options.multiplicity() == TriggerMultiplicity.EACH_BLOCKER) {
                 throw new IllegalStateException("A combat damage ability has no \"each blocker\": " + ability);
             }
-            boolean oneOrMore = options.multiplicity() == TriggerMultiplicity.ONE_OR_MORE;
+            boolean oneOrMore = options.multiplicity() == TriggerMultiplicity.ONE_OR_MORE
+                    || options.multiplicity() == TriggerMultiplicity.ONE_OR_MORE_PLAYERS;
             PermanentPredicate filter = Read.filter(ability, watch);
             if (ownerRelativePass && !(filter instanceof PermanentIsCommanderPredicate commander
                     && commander.ownedBySourceController())) {
@@ -735,7 +761,9 @@ public class CombatDamageTriggers {
             }
             // "One or more ... deal combat damage" is a single event for the whole batch,
             // so a batched ability only goes on the stack for the first matching dealer.
-            if (oneOrMore && !firedBatchedAllyAbilities.add(watcher.id() + ":" + watch + ":" + abilityIndex)) {
+            String batchKey = (options.multiplicity() == TriggerMultiplicity.ONE_OR_MORE_PLAYERS
+                    ? ONCE_FOR_ALL_PLAYERS_KEY : "") + watcher.id() + ":" + watch + ":" + abilityIndex;
+            if (oneOrMore && !firedBatchedAllyAbilities.add(batchKey)) {
                 continue;
             }
             // The ability's event condition (a Class level, a chosen mode; CR 603.2) as it triggers.
@@ -849,178 +877,6 @@ public class CombatDamageTriggers {
         }
     }
 
-    /**
-     * Checks delayed combat damage loot triggers registered this turn (e.g. Jace, Cunning Castaway's +1).
-     * Each fires once per combat damage step if one or more creatures the controller controls dealt
-     * combat damage to a player.
-     */
-    private void processDelayedCombatDamageLootTriggers(GameData gameData,
-                                                         Map<Permanent, Integer> combatDamageDealtToPlayer,
-                                                         UUID attackerId) {
-        if (!gameData.hasDelayedAction(DelayedCombatDamageLoot.class)) return;
-
-        // Check if any creature controlled by the trigger's controller dealt combat damage to a player
-        for (DelayedCombatDamageLoot loot : gameData.getDelayedActions(DelayedCombatDamageLoot.class)) {
-            boolean creatureDealtDamage = false;
-            if (loot.controllerId().equals(attackerId)) {
-                for (var dmgEntry : combatDamageDealtToPlayer.entrySet()) {
-                    if (dmgEntry.getValue() > 0) {
-                        creatureDealtDamage = true;
-                        break;
-                    }
-                }
-            }
-            if (creatureDealtDamage) {
-                StackEntry se = TriggeredAbilityStackService.madeAbility(
-                        loot.sourceCard(),
-                        loot.controllerId(),
-                        loot.sourceCard().getName() + "'s delayed trigger",
-                        List.of(new DrawCardEffect(loot.drawAmount()),
-                                new DiscardEffect(loot.discardAmount(), DiscardRecipient.CONTROLLER))
-                );
-                se.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, se);
-                gameLogService.append(gameData, GameLog.cardThen(loot.sourceCard(),
-                        "'s delayed trigger fires — draw " + loot.drawAmount()
-                                + ", discard " + loot.discardAmount() + "."));
-            }
-        }
-    }
-
-    private void processDelayedCombatDamageTokenTriggers(GameData gameData,
-                                                           Map<Permanent, Integer> combatDamageDealtToPlayer,
-                                                           UUID attackerId,
-                                                           UUID defenderId) {
-        if (!gameData.hasDelayedAction(DelayedCombatDamageToken.class)) return;
-
-        for (DelayedCombatDamageToken delayed : gameData.getDelayedActions(DelayedCombatDamageToken.class)) {
-            if (!delayed.controllerId().equals(attackerId)
-                    || !delayed.targetPlayerId().equals(defenderId)) {
-                continue;
-            }
-            for (var damageEntry : combatDamageDealtToPlayer.entrySet()) {
-                if (damageEntry.getValue() <= 0) continue;
-                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
-                        delayed.sourceCard(),
-                        delayed.controllerId(),
-                        delayed.sourceCard().getName() + "'s delayed trigger",
-                        List.of(delayed.tokenEffect())
-                );
-                trigger.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, trigger);
-                gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(),
-                        "'s delayed trigger goes on the stack."));
-            }
-        }
-    }
-
-    private void processDelayedCombatDamageBecomeMonarchTriggers(GameData gameData,
-                                                                  CombatDamageState state,
-                                                                  UUID activeId) {
-        if (!gameData.hasDelayedAction(DelayedCombatDamageBecomeMonarch.class)) return;
-
-        for (DelayedCombatDamageBecomeMonarch delayed
-                : gameData.getDelayedActions(DelayedCombatDamageBecomeMonarch.class)) {
-            boolean creatureDealtDamage = state.combatDamageDealtToPlayer.entrySet().stream()
-                    .anyMatch(entry -> entry.getValue() > 0
-                            && delayed.controllerId().equals(
-                            state.combatDamageDealerControllers.getOrDefault(entry.getKey(), activeId)));
-            if (!creatureDealtDamage) continue;
-
-            StackEntry trigger = TriggeredAbilityStackService.madeAbility(
-                    delayed.sourceCard(),
-                    delayed.controllerId(),
-                    delayed.sourceCard().getName() + "'s delayed trigger",
-                    List.of(new BecomeMonarchEffect()));
-            trigger.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, trigger);
-            gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(),
-                    "'s delayed trigger goes on the stack."));
-        }
-    }
-
-    private void processDelayedCombatDamageDrawTriggers(GameData gameData, CombatDamageState state) {
-        if (!gameData.hasDelayedAction(DelayedCombatDamageDraw.class)) return;
-
-        Map<UUID, Permanent> damageSources = new LinkedHashMap<>();
-        for (Permanent creature : state.combatDamageDealtToPlayer.keySet()) {
-            damageSources.put(creature.getId(), creature);
-        }
-        for (Permanent creature : state.combatDamageDealtToPlaneswalker.keySet()) {
-            damageSources.put(creature.getId(), creature);
-        }
-
-        for (CombatDamageState.DelayedCombatDamageDrawQualification qualification
-                : state.delayedCombatDamageDrawQualifications) {
-            DelayedCombatDamageDraw delayed = qualification.delayedAction();
-            for (UUID sourceId : qualification.sourceIds()) {
-                Permanent creature = damageSources.get(sourceId);
-                if (creature == null) continue;
-                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
-                        delayed.sourceCard(),
-                        delayed.controllerId(),
-                        delayed.sourceCard().getName() + "'s delayed trigger",
-                        List.of(new DrawCardEffect(1)));
-                trigger.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, trigger);
-                gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(),
-                        "'s delayed trigger fires — draw a card."));
-            }
-        }
-    }
-
-    private void processDelayedCombatDamageEffects(GameData gameData, CombatDamageState state) {
-        if (state.combatDamageDealtToPlayer.isEmpty()
-                || !gameData.hasDelayedAction(DelayedCombatDamageEffect.class)) {
-            return;
-        }
-
-        for (DelayedCombatDamageEffect delayed
-                : gameData.getDelayedActions(DelayedCombatDamageEffect.class)) {
-            for (var entry : state.combatDamageDealtToPlayer.entrySet()) {
-                Permanent creature = entry.getKey();
-                if (entry.getValue() <= 0) continue;
-
-                UUID controllerId = state.combatDamageDealerControllers.get(creature);
-                if (controllerId == null) controllerId = gameData.findControllerOf(creature);
-                if (!delayed.controllerId().equals(controllerId)) continue;
-
-                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
-                        delayed.sourceCard(),
-                        delayed.controllerId(),
-                        delayed.sourceCard().getName() + "'s delayed trigger",
-                        List.of(delayed.triggerEffect()),
-                        (UUID) null,
-                        delayed.sourcePermanentId());
-                trigger.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, trigger);
-                gameLogService.append(gameData, GameLog.abilityTriggers(delayed.sourceCard()));
-            }
-        }
-    }
-
-    private void processDelayedCombatDamageLookAtHandAndDrawTriggers(GameData gameData,
-                                                                       CombatDamageState state) {
-        for (CombatDamageState.DelayedCombatDamageLookAtHandAndDrawQualification qualification
-                : state.delayedCombatDamageLookAtHandAndDrawQualifications) {
-            DelayedCombatDamageLookAtHandAndDraw delayed = qualification.delayedAction();
-            StackEntry trigger = TriggeredAbilityStackService.madeAbility(
-                    delayed.sourceCard(),
-                    delayed.controllerId(),
-                    delayed.sourceCard().getName() + "'s delayed trigger",
-                    List.of(new LookAtHandEffect(), new DrawCardEffect(1)),
-                    qualification.damagedPlayerId(),
-                    (UUID) null
-            );
-            trigger.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, trigger);
-            gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(),
-                    "'s delayed trigger fires — look at "
-                            + gameData.playerIdToName.get(qualification.damagedPlayerId())
-                            + "'s hand and draw a card."));
-        }
-    }
-
     private void processSelfDealsCombatDamageToPlayerOrPlaneswalkerTriggers(GameData gameData,
                                                                              CombatDamageState state) {
         for (Permanent source : state.combatDamageDealt.keySet()) {
@@ -1051,45 +907,6 @@ public class CombatDamageTriggers {
             damageTriggers.queueSourceDealsCombatDamageToPlayerOrBattleTriggers(
                     gameData, source.getCard(), controllerId, source.getId(), totalDamage,
                     state.combatDamageDealtToPlayer.getOrDefault(source, 0));
-        }
-    }
-
-    /**
-     * Processes combat damage reflection triggers registered this turn (e.g. Harsh Justice).
-     * For each attacking creature that dealt combat damage to a protected player this step, the
-     * creature deals that much damage back to its controller. Each creature reflects separately, with
-     * the attacking creature as the damage source and triggering permanent: "that much" is the entry's
-     * event value and "its controller" the creature's controller as the ability resolves.
-     */
-    private void processCombatDamageReflectionTriggers(GameData gameData,
-                                                       Map<Permanent, Integer> combatDamageDealtToPlayer,
-                                                       UUID attackerId, UUID defenderId) {
-        if (!gameData.hasDelayedAction(DelayedCombatDamageReflection.class)) return;
-
-        for (DelayedCombatDamageReflection reflection : gameData.getDelayedActions(DelayedCombatDamageReflection.class)) {
-            // Combat damage to a player always goes to the defending player in this combat.
-            if (!reflection.protectedPlayerId().equals(defenderId)) continue;
-            for (var dmgEntry : combatDamageDealtToPlayer.entrySet()) {
-                Permanent attacker = dmgEntry.getKey();
-                int damage = dmgEntry.getValue();
-                if (damage <= 0) continue;
-                StackEntry se = TriggeredAbilityStackService.madeAbility(
-                        attacker.getCard(),
-                        reflection.protectedPlayerId(),
-                        reflection.sourceCard().getName() + "'s reflected combat damage",
-                        List.of(new DealDamageToPlayersEffect(new EventValue(),
-                                DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER)),
-                        attackerId,
-                        attacker.getId());
-                se.setNonTargeting(true);
-                se.setEventValue(damage);
-                se.setTriggeringPermanentId(attacker.getId());
-                se.setTriggeringPermanentControllerId(attackerId);
-                triggeredAbilityStackService.putDelayed(gameData, se);
-                gameLogService.append(gameData, GameLog.cardTextCard(reflection.sourceCard(),
-                        " reflects " + damage + " combat damage from ", attacker.getCard(),
-                        " to " + gameData.playerIdToName.get(attackerId) + "."));
-            }
         }
     }
 
@@ -1190,146 +1007,6 @@ public class CombatDamageTriggers {
                 if (triggered) {
                     gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
                 }
-            }
-        }
-    }
-
-    /**
-     * Fires Acidic Dagger's delayed "whenever that creature deals combat damage to a non-Wall
-     * creature this turn, destroy that non-Wall creature" triggers. The registration is not drained:
-     * it lasts the rest of the turn and fires once per damaged non-Wall creature in every combat
-     * damage step, until turn cleanup clears it.
-     */
-    private void processDelayedDestroyCreatureDamagedTriggers(GameData gameData,
-                                                              Map<Permanent, List<UUID>> combatDamageDealtToCreatures) {
-        if (combatDamageDealtToCreatures.isEmpty()
-                || !gameData.hasDelayedAction(DelayedDestroyCreatureDamagedByWatchedCreature.class)) {
-            return;
-        }
-
-        for (DelayedDestroyCreatureDamagedByWatchedCreature delayed
-                : gameData.getDelayedActions(DelayedDestroyCreatureDamagedByWatchedCreature.class)) {
-            for (var entry : combatDamageDealtToCreatures.entrySet()) {
-                if (!delayed.watchedPermanentId().equals(entry.getKey().getId())) continue;
-
-                for (UUID damagedCreatureId : entry.getValue()) {
-                    Permanent damaged = gameQueryService.findPermanentById(gameData, damagedCreatureId);
-                    if (damaged == null || predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, damaged, new PermanentHasSubtypePredicate(CardSubtype.WALL))) {
-                        continue;
-                    }
-
-                    StackEntry trigger = TriggeredAbilityStackService.madeAbility(
-                            delayed.sourceCard(),
-                            delayed.controllerId(),
-                            delayed.sourceCard().getName() + "'s delayed trigger",
-                            new ArrayList<>(List.of(new DestroyTargetPermanentEffect())),
-                            damagedCreatureId,
-                            (UUID) null);
-                    trigger.setNonTargeting(true);
-                    triggeredAbilityStackService.putDelayed(gameData, trigger);
-                    gameLogService.append(gameData, GameLog.abilityTriggers(delayed.sourceCard()));
-                }
-            }
-        }
-    }
-
-    private void processDelayedPlaneswalkerCombatDamageTriggers(GameData gameData,
-                                                                Map<Permanent, Integer> combatDamageDealtToPlaneswalker) {
-        if (combatDamageDealtToPlaneswalker.isEmpty()
-                || !gameData.hasDelayedAction(DelayedDestroyCreatureDealingCombatDamageToPlaneswalker.class)) {
-            return;
-        }
-
-        for (DelayedDestroyCreatureDealingCombatDamageToPlaneswalker delayed
-                : gameData.getDelayedActions(DelayedDestroyCreatureDealingCombatDamageToPlaneswalker.class)) {
-            for (var entry : combatDamageDealtToPlaneswalker.entrySet()) {
-                Permanent creature = entry.getKey();
-                if (entry.getValue() <= 0
-                        || !delayed.planeswalkerId().equals(creature.getAttackTarget())) {
-                    continue;
-                }
-
-                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
-                        delayed.sourceCard(),
-                        delayed.controllerId(),
-                        delayed.sourceCard().getName() + "'s delayed trigger",
-                        List.of(new DestroyTargetPermanentEffect()),
-                        creature.getId(),
-                        (UUID) null
-                );
-                trigger.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, trigger);
-                gameLogService.append(gameData, GameLog.abilityTriggers(delayed.sourceCard()));
-            }
-        }
-    }
-
-    /**
-     * Fires delayed triggers watching creatures for combat damage. {@code combatDamageDealt} already
-     * sums each source's damage to every recipient, so a watched creature that damaged both a blocker
-     * and a player triggers once. Player-only watches additionally use the player-specific damage map.
-     * The trigger is controlled by the player who activated the ability, not by the creature's
-     * controller, so "you draw a card" always draws for them.
-     */
-    private void processDelayedWatchedCreatureCombatDamageTriggers(GameData gameData,
-                                                                   CombatDamageState state) {
-        if (state.combatDamageDealt.isEmpty()
-                || !gameData.hasDelayedAction(DelayedWatchedCreaturesCombatDamage.class)) {
-            return;
-        }
-
-        for (DelayedWatchedCreaturesCombatDamage watch
-                : gameData.getDelayedActions(DelayedWatchedCreaturesCombatDamage.class)) {
-            for (var entry : state.combatDamageDealt.entrySet()) {
-                if (entry.getValue() <= 0
-                        || !watch.watchedPermanentIds().contains(entry.getKey().getId())
-                        || (watch.combatDamageToPlayerOnly()
-                        && state.combatDamageDealtToPlayer.getOrDefault(entry.getKey(), 0) <= 0)) {
-                    continue;
-                }
-
-                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
-                        watch.sourceCard(),
-                        watch.controllerId(),
-                        watch.sourceCard().getName() + "'s delayed trigger",
-                        new ArrayList<>(watch.effects()),
-                        (UUID) null,
-                        entry.getKey().getId());
-                trigger.setGrantingPermanentId(watch.creatingPermanentId());
-                trigger.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, trigger);
-                gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
-            }
-        }
-    }
-
-    private void processDelayedNamedCreatureCombatDamageTriggers(GameData gameData,
-                                                                  CombatDamageState state) {
-        if (state.combatDamageDealtToPlayer.isEmpty()
-                || !gameData.hasDelayedAction(DelayedNamedCreatureCombatDamage.class)) {
-            return;
-        }
-
-        for (DelayedNamedCreatureCombatDamage watch
-                : gameData.getDelayedActions(DelayedNamedCreatureCombatDamage.class)) {
-            for (var entry : state.combatDamageDealtToPlayer.entrySet()) {
-                Permanent creature = entry.getKey();
-                if (entry.getValue() <= 0
-                        || !watch.cardName().equals(gameQueryService.getEffectiveName(gameData, creature))) {
-                    continue;
-                }
-
-                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
-                        watch.sourceCard(),
-                        watch.controllerId(),
-                        watch.sourceCard().getName() + "'s delayed trigger",
-                        new ArrayList<>(watch.effects()),
-                        (UUID) null,
-                        (UUID) null);
-                trigger.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, trigger);
-                gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
             }
         }
     }
@@ -1742,66 +1419,6 @@ public class CombatDamageTriggers {
         }
     }
 
-    private void snapshotDelayedCombatDamageDrawSources(GameData gameData, CombatDamageState state) {
-        if (!gameData.hasDelayedAction(DelayedCombatDamageDraw.class)) return;
-
-        Map<UUID, Permanent> damageSources = new LinkedHashMap<>();
-        for (Permanent creature : state.combatDamageDealtToPlayer.keySet()) {
-            damageSources.put(creature.getId(), creature);
-        }
-        for (Permanent creature : state.combatDamageDealtToPlaneswalker.keySet()) {
-            damageSources.put(creature.getId(), creature);
-        }
-
-        for (DelayedCombatDamageDraw delayed : gameData.getDelayedActions(DelayedCombatDamageDraw.class)) {
-            Set<UUID> qualifyingSources = new LinkedHashSet<>();
-            for (Permanent creature : damageSources.values()) {
-                int playerDamage = state.combatDamageDealtToPlayer.getOrDefault(creature, 0);
-                int planeswalkerDamage = state.combatDamageDealtToPlaneswalker.getOrDefault(creature, 0);
-                if (playerDamage <= 0 && (!delayed.includesPlaneswalkers() || planeswalkerDamage <= 0)) continue;
-
-                UUID controllerId = state.combatDamageDealerControllers.get(creature);
-                if (controllerId == null) controllerId = gameData.findControllerOf(creature);
-                if (!delayed.controllerId().equals(controllerId)) continue;
-                if (delayed.sourcePredicate() != null
-                        && !predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, creature, delayed.sourcePredicate())) continue;
-                qualifyingSources.add(creature.getId());
-            }
-            state.delayedCombatDamageDrawQualifications.add(
-                    new CombatDamageState.DelayedCombatDamageDrawQualification(delayed, qualifyingSources));
-        }
-    }
-
-    private void snapshotDelayedCombatDamageLookAtHandAndDrawSources(GameData gameData,
-                                                                       CombatDamageState state,
-                                                                       UUID damagedPlayerId) {
-        if (!gameData.hasDelayedAction(DelayedCombatDamageLookAtHandAndDraw.class)) return;
-
-        for (DelayedCombatDamageLookAtHandAndDraw delayed
-                : gameData.getDelayedActions(DelayedCombatDamageLookAtHandAndDraw.class)) {
-            boolean qualifyingCreatureDealtDamage = false;
-            for (var damageEntry : state.combatDamageDealtToPlayer.entrySet()) {
-                Permanent creature = damageEntry.getKey();
-                if (damageEntry.getValue() <= 0) continue;
-
-                UUID controllerId = state.combatDamageDealerControllers.get(creature);
-                if (controllerId == null) controllerId = gameData.findControllerOf(creature);
-                if (!delayed.controllerId().equals(controllerId)) continue;
-                if (delayed.sourcePredicate() != null
-                        && !predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, creature, delayed.sourcePredicate())) continue;
-                qualifyingCreatureDealtDamage = true;
-                break;
-            }
-            if (qualifyingCreatureDealtDamage) {
-                state.delayedCombatDamageLookAtHandAndDrawQualifications.add(
-                        new CombatDamageState.DelayedCombatDamageLookAtHandAndDrawQualification(
-                                delayed, damagedPlayerId));
-            }
-        }
-    }
-
     /**
      * Triggers what {@code event}, a stage of a combat damage step, triggers: as the step's damage is dealt (CR 510.2),
      * before the state-based actions, the abilities that see it, those that wait on the stack while the state-based
@@ -1873,8 +1490,6 @@ public class CombatDamageTriggers {
         processAnyCreatureDealtDamageTriggers(gameData, state, damagedCreatureSnapshots);
         List<StackEntry> globalDamageTriggers = new ArrayList<>(
                 gameData.stack.subList(beforeGlobalDamageTriggers, gameData.stack.size()));
-        snapshotDelayedCombatDamageDrawSources(gameData, state);
-        snapshotDelayedCombatDamageLookAtHandAndDrawSources(gameData, state, defenderId);
         Map<UUID, List<Permanent>> allyCombatDamageWatchers =
                 damageTriggers.snapshotAllyCreatureDealsCombatDamageWatchers(gameData);
         Map<UUID, List<com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers.AllyDamageTriggerSnapshot>> allyDamageWatchers =
@@ -1959,16 +1574,6 @@ public class CombatDamageTriggers {
                 damagedCreatureSnapshots);
         processCombatDamageToBlockingCreatureTriggers(gameData, state);
 
-        // Acidic Dagger's delayed "destroy the non-Wall creature that creature damaged" trigger.
-        processDelayedDestroyCreatureDamagedTriggers(gameData, state.combatDamageDealtToCreatures);
-
-        processDelayedPlaneswalkerCombatDamageTriggers(gameData, state.combatDamageDealtToPlaneswalker);
-
-        // Tamiyo, Field Researcher's +1: "until your next turn, whenever either of those creatures
-        // deals combat damage, you draw a card".
-        processDelayedWatchedCreatureCombatDamageTriggers(gameData, state);
-        processDelayedNamedCreatureCombatDamageTriggers(gameData, state);
-
         // Process ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
         gameData.stack.addAll(watcherAllyDamageReflectionTriggers);
         processAllyDealtDamageToCreatureReflectionTriggers(gameData, state, damagedCreatureSnapshots);
@@ -2007,29 +1612,17 @@ public class CombatDamageTriggers {
                             departedWatchersByController, firedOncePerStepAbilities);
                     damageTriggers.checkCreaturesYouControlDealCombatDamageToOpponentTriggers(
                             gameData, controllerId, recipientId, damageBySource);
-                    processDelayedCombatDamageLootTriggers(gameData, damageBySource, controllerId);
-                    processDelayedCombatDamageTokenTriggers(gameData, damageBySource, controllerId, recipientId);
                 }));
-        processDelayedCombatDamageBecomeMonarchTriggers(gameData, state, activeId);
-
-        processDelayedCombatDamageLookAtHandAndDrawTriggers(gameData, state);
-
-        processDelayedCombatDamageEffects(gameData, state);
-
-        // Process delayed combat damage draw triggers (e.g. Flitterwing Nuisance's ability)
-        processDelayedCombatDamageDrawTriggers(gameData, state);
-
         Map<UUID, Set<String>> firedBatchedTriggerKeysByRecipient = new HashMap<>();
         playerDamageByRecipientAndController.forEach((recipientId, damageByController) -> {
             Map<Permanent, Integer> damageBySource = new LinkedHashMap<>();
             damageByController.values().forEach(damageBySource::putAll);
-            processCombatDamageReflectionTriggers(gameData, damageBySource, activeId, recipientId);
             Set<String> firedBatchedTriggerKeys = firedBatchedTriggerKeysByRecipient.computeIfAbsent(
                     recipientId, ignored -> new HashSet<>());
             damageBySource.forEach((source, amount) -> {
                 if (amount <= 0) return;
                 damageTriggers.checkDamageDealtToControllerTriggers(
-                        gameData, recipientId, source.getId(), true, firedBatchedTriggerKeys);
+                        gameData, recipientId, source.getId(), true, firedBatchedTriggerKeys, amount);
                 damageTriggers.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(
                         gameData, recipientId, source.getId(), amount);
                 UUID sourceController = state.combatDamageDealerControllers.getOrDefault(source, activeId);

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -22,6 +21,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -70,7 +70,7 @@ class PostmortemLungeTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
 
         // Creature should be marked for exile at end step
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).anySatisfy(action -> {
+        assertThat(DelayedPermanentMoves.waiting(gd)).anySatisfy(action -> {
             assertThat(action.permanentId()).isEqualTo(creature.getId());
             assertThat(action.kind()).isEqualTo(DelayedPermanentActionKind.EXILE_AT_END_STEP);
         });

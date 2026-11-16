@@ -10,45 +10,16 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
-import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackDamage;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationControl;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackerKeywordGrant;
-import com.github.laxika.magicalvibes.model.action.DelayedBeginningOfCombatTrigger;
-import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageEffect;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageBecomeMonarch;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHandAndDraw;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
-import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageToken;
 import com.github.laxika.magicalvibes.model.action.DelayedDamageDoubling;
-import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDamagedByWatchedCreature;
-import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDealingCombatDamageToPlaneswalker;
-import com.github.laxika.magicalvibes.model.action.DelayedNontokenAttackTokenCreation;
-import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedSourceDamageMultiplication;
-import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerCubeCounter;
-import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerGainLife;
-import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerPowerDamage;
-import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
-import com.github.laxika.magicalvibes.model.action.DestroyChosenCreaturesIfDidNotAttackAtEndStep;
-import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.TargetCreatureMustAttackNextCombat;
 import com.github.laxika.magicalvibes.model.effect.IllusionistsGambitAdditionalCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.IllusionistsGambitAdditionalCombatEffectHandler;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnSkipReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -424,8 +395,6 @@ public class TurnProgressionService {
                 return;
             }
 
-            stepTriggerService.processPendingExileReturns(gameData, next);
-
             if (additionalBeginningPhaseUntap) {
                 if (gameData.interaction.isAwaitingInput()) {
                     return;
@@ -444,10 +413,6 @@ public class TurnProgressionService {
                 stepTriggerService.handlePrecombatMainTriggers(gameData);
             } else if (next == TurnStep.POSTCOMBAT_MAIN) {
                 stepTriggerService.handlePostcombatMainTriggers(gameData);
-                // Conduit of Storms / Emrakul: "add mana at the beginning of your next main phase this turn"
-                // after attacking — the next main is postcombat.
-                stepTriggerService.drainAddManaAtNextMainPhase(gameData, false);
-                stepTriggerService.drainDrawCardsAtNextMainPhase(gameData);
             } else if (next == TurnStep.DRAW) {
                 stepTriggerService.handleDrawStep(gameData);
             } else if (next == TurnStep.BEGINNING_OF_COMBAT) {
@@ -481,13 +446,13 @@ public class TurnProgressionService {
                 }
                 stepTriggerService.handleBeginningOfCombatTriggers(gameData);
             } else if (next == TurnStep.DECLARE_ATTACKERS) {
+                stepTriggerService.handleDeclareAttackersTriggers(gameData);
                 combatService.handleDeclareAttackersStep(gameData);
             } else if (next == TurnStep.DECLARE_BLOCKERS) {
                 handleCombatResult(combatService.handleDeclareBlockersStep(gameData), gameData);
             } else if (next == TurnStep.COMBAT_DAMAGE) {
                 handleCombatResult(combatService.resolveCombatDamage(gameData), gameData);
             } else if (next == TurnStep.END_OF_COMBAT) {
-                processEndOfCombatActions(gameData);
                 stepTriggerService.handleEndOfCombatTriggers(gameData);
             } else if (next == TurnStep.END_STEP) {
                 stepTriggerService.handleEndStepTriggers(gameData);
@@ -560,9 +525,6 @@ public class TurnProgressionService {
         if (gameData.status == GameStatus.FINISHED) {
             return true;
         }
-        if (nextStep != TurnStep.UNTAP) {
-            stepTriggerService.processPendingExileReturns(gameData, nextStep);
-        }
         processRunedTerrorStepStart(gameData, nextStep);
         return true;
     }
@@ -592,7 +554,6 @@ public class TurnProgressionService {
             beginSequentialCombatPhase(gameData);
         } else if (step == TurnStep.POSTCOMBAT_MAIN) {
             stepTriggerService.handlePostcombatMainTriggers(gameData);
-            stepTriggerService.drainAddManaAtNextMainPhase(gameData, false);
         } else if (step == TurnStep.END_STEP) {
             stepTriggerService.handleEndStepTriggers(gameData);
         }
@@ -661,22 +622,6 @@ public class TurnProgressionService {
             return;
         }
         completeTurnAdvance(gameData);
-    }
-
-    /**
-     * Puts the delayed "at end of combat" triggers on the stack as the end of combat step begins
-     * (CR 511.2). One created during the step waits for a later end of combat (CR 603.7).
-     */
-    private void processEndOfCombatActions(GameData gameData) {
-        combatService.processEndOfCombatSacrifices(gameData);
-        combatService.processEndOfCombatCombatOpponentTaps(gameData);
-        combatService.processEndOfCombatExiles(gameData);
-        combatService.processEndOfCombatDestructions(gameData);
-        combatService.processEndOfCombatCombatOpponentDestructions(gameData);
-        combatService.processEndOfCombatCounterRemovals(gameData);
-        combatService.processEndOfCombatDamage(gameData);
-        combatService.processEndOfCombatReturnsToHand(gameData);
-        combatService.processEndOfCombatLibraryTucks(gameData);
     }
 
     private void processAdditionalCombatBeginningEffects(GameData gameData) {
@@ -908,10 +853,8 @@ public class TurnProgressionService {
             extraTurnSequence = gameData.extraTurnSequences.isEmpty()
                     ? null : gameData.extraTurnSequences.pollFirst();
             if (hasApplicableExtraTurnSkipReplacement(gameData, nextActive)) {
-                Long skippedExtraTurnSequence = extraTurnSequence;
-                if (skippedExtraTurnSequence != null) {
-                    gameData.drainDelayedActions(LoseGameAtEndStep.class,
-                            action -> skippedExtraTurnSequence.equals(action.extraTurnSequence()));
+                if (extraTurnSequence != null) {
+                    gameData.endDelayedAbilitiesOfExtraTurn(extraTurnSequence);
                 }
                 String skippedName = gameData.playerIdToName.get(nextActive);
                 gameLogService.append(gameData, GameLog.text(skippedName + " skips their extra turn."));
@@ -934,9 +877,7 @@ public class TurnProgressionService {
             }
             String skippedName = gameData.playerIdToName.get(nextActive);
             if (currentTurnIsExtraTurn && extraTurnSequence != null) {
-                Long skippedExtraTurnSequence = extraTurnSequence;
-                gameData.drainDelayedActions(LoseGameAtEndStep.class,
-                        action -> skippedExtraTurnSequence.equals(action.extraTurnSequence()));
+                gameData.endDelayedAbilitiesOfExtraTurn(extraTurnSequence);
             }
             gameLogService.append(gameData, GameLog.text(skippedName + " skips their turn."));
             log.info("Game {} - {} skips their turn", gameData.id, skippedName);
@@ -998,8 +939,8 @@ public class TurnProgressionService {
         promoteSingleCreatureTaunts(gameData, nextActive);
 
         // Oracle en-Vec: promote the creatures the new active player chose last turn. They attack if
-        // able, every other creature is barred, and each of them is destroyed at this turn's end step
-        // if it didn't attack.
+        // able and every other creature is barred; the delayed ability that destroys those that didn't
+        // attack was made as they were chosen.
         gameData.chosenAttackersThisTurn.clear();
         gameData.attackableCreaturesThisTurn.clear();
         gameData.creaturesAbleToAttackAtDeclareAttackersThisTurn.clear();
@@ -1007,14 +948,6 @@ public class TurnProgressionService {
         Set<UUID> chosenAttackers = gameData.chosenAttackersNextTurn.remove(nextActive);
         if (chosenAttackers != null) {
             gameData.chosenAttackersThisTurn.put(nextActive, chosenAttackers);
-            List<DestroyChosenCreaturesIfDidNotAttackAtEndStep> markedForDestruction =
-                    gameData.chosenAttackersToDestroyNextTurn.remove(nextActive);
-            if (markedForDestruction != null) {
-                markedForDestruction.forEach(gameData::queueDelayedAction);
-            } else if (!chosenAttackers.isEmpty()) {
-                gameData.queueDelayedAction(new DestroyChosenCreaturesIfDidNotAttackAtEndStep(
-                        List.copyOf(chosenAttackers), null, null));
-            }
             gameLogService.append(gameData, GameLog.text("Only the " + chosenAttackers.size()
                     + " creature(s) " + nextActiveName + " chose can attack this turn, and they attack if able."));
             log.info("Game {} - {} is restricted to {} chosen attackers this turn (Oracle en-Vec)",
@@ -1231,31 +1164,9 @@ public class TurnProgressionService {
         gameData.creaturesThatSaddledPermanentThisTurn.clear();
         gameData.creaturesThatCrewedPermanentThisTurn.clear();
         gameData.crewedPermanentSubtypesThisTurn.clear();
-        gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
-        gameData.clearDelayedActions(DelayedCombatDamageToken.class);
-        gameData.clearDelayedActions(DelayedCombatDamageBecomeMonarch.class);
-        gameData.clearDelayedActions(DelayedCombatDamageDraw.class);
-        gameData.clearDelayedActions(DelayedCombatDamageEffect.class);
-        gameData.clearDelayedActions(DelayedCombatDamageLookAtHandAndDraw.class);
-        gameData.clearDelayedActions(DelayedCombatDamageReflection.class);
-        // Conduit of Storms: "next main phase this turn" — drop any that never fired.
-        gameData.clearDelayedActions(AddManaAtNextMainPhase.class, AddManaAtNextMainPhase::thisTurnOnly);
-        gameData.clearDelayedActions(DrawCardsAtNextMainPhase.class);
-        gameData.clearDelayedActions(DelayedBlockerBoost.class);
         gameData.clearDelayedActions(DelayedAttackerDeclarationControl.class);
         gameData.clearDelayedActions(DelayedBlockerDeclarationControl.class);
-        gameData.clearDelayedActions(DelayedAttackerBoost.class);
-        gameData.clearDelayedActions(DelayedAttackerKeywordGrant.class);
-        gameData.clearDelayedActions(DelayedNontokenAttackTokenCreation.class);
-        gameData.clearDelayedActions(DelayedAttackTokenCreation.class);
-        gameData.clearDelayedActions(DelayedAttackDamage.class);
-        gameData.clearDelayedActions(DelayedAttackUntap.class);
-        gameData.clearDelayedActions(DelayedUnblockedAttackerGainLife.class);
-        gameData.clearDelayedActions(DelayedUnblockedAttackerPowerDamage.class);
-        gameData.clearDelayedActions(DelayedUnblockedAttackerCubeCounter.class);
-        gameData.clearDelayedActions(DelayedDestroyCreatureDamagedByWatchedCreature.class);
         gameData.clearDelayedActions(DelayedAdditionalCombatBeginningEffect.class);
-        gameData.clearDelayedActions(DelayedBeginningOfCombatTrigger.class);
         gameData.combatDamageSourceSubtypesThisTurn.clear();
         gameData.combatDamageSourceNamesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
@@ -1412,21 +1323,10 @@ public class TurnProgressionService {
         gameData.forEachPermanent((ignored, permanent) ->
                 permanent.clearProtectionFromPlayersUntilTurnOf(turnStartPlayerId));
         gameData.playerKeywordsUntilNextTurn.remove(nextActive);
-        // Jace, Architect of Thought +1: the delayed "whenever a creature an opponent controls
-        // attacks" trigger lasts until its controller's next turn, so it expires here rather than at
-        // turn cleanup like the other delayed families.
-        gameData.clearDelayedActions(DelayedOpponentAttackerBoost.class,
-                boost -> boost.controllerId().equals(nextActive));
-        gameData.clearDelayedActions(DelayedDestroyCreatureDealingCombatDamageToPlaneswalker.class,
-                trigger -> trigger.controllerId().equals(nextActive));
         gameData.clearDelayedActions(DelayedDamageDoubling.class,
                 doubling -> doubling.controllerId().equals(nextActive));
         gameData.clearDelayedActions(DelayedSourceDamageMultiplication.class,
                 multiplication -> multiplication.controllerId().equals(nextActive));
-        // Tamiyo, Field Researcher +1: the "whenever either of those creatures deals combat damage"
-        // watch lasts until its controller's next turn, so it expires here too.
-        gameData.clearDelayedActions(DelayedWatchedCreaturesCombatDamage.class,
-                watch -> !watch.untilEndOfTurn() && watch.controllerId().equals(nextActive));
         // "Until your next turn" floating continuous effects controlled by the player whose turn
         // is beginning wear off now. An expiring layer-1 copy effect (e.g. Shapesharer) reverts
         // the copied permanent's card — which may sit on any player's battlefield. A newer copy

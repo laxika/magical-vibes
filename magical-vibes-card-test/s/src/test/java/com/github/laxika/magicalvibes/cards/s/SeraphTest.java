@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.cards.r.RaiseDead;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldUnderControl;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -23,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 
 @CardUsed({Seraph.class, BalduvianBears.class, DarkBanishing.class, FolkOfThePines.class,
         GiantGrowth.class, Shyft.class, RaiseDead.class})
@@ -56,7 +56,7 @@ class SeraphTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Balduvian Bears");
         harness.assertNotInGraveyard(player2, "Balduvian Bears");
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test
@@ -83,7 +83,7 @@ class SeraphTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.assertInGraveyard(player2, "Balduvian Bears");
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
 
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.assertNotOnBattlefield(player1, "Balduvian Bears");

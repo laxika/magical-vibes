@@ -49,6 +49,12 @@ public class ReturnSourceAuraToCreatureOnDeathEffectHandler implements NormalEff
                 .findFirst()
                 .orElse(null);
 
+        // An Aura that left the graveyard and came back is a new object (CR 400.7).
+        if (auraCard != null && auraCardId.equals(entry.getTriggeringCardId())
+                && !entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(auraCardId))) {
+            auraCard = null;
+        }
+
         if (auraCard == null) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in a graveyard)."));
             log.info("Game {} - {} not found in a graveyard, death trigger fizzles",

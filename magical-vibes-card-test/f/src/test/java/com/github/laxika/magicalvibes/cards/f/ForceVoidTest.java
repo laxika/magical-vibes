@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -35,10 +36,9 @@ class ForceVoidTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Kjeldoran Warrior");
         harness.assertNotOnBattlefield(player1, "Kjeldoran Warrior");
 
-        List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
+        List<TemporaryGlobalTriggeredAbility> scheduled = gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP);
         assertThat(scheduled).hasSize(1);
         assertThat(scheduled.getFirst().controllerId()).isEqualTo(player2.getId());
-        assertThat(scheduled.getFirst().count()).isEqualTo(1);
     }
 
     @Test
@@ -58,7 +58,7 @@ class ForceVoidTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
+        List<TemporaryGlobalTriggeredAbility> scheduled = gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP);
         assertThat(scheduled).hasSize(1);
         assertThat(scheduled.getFirst().controllerId()).isEqualTo(player2.getId());
 
@@ -85,6 +85,7 @@ class ForceVoidTest extends BaseCardTest {
         int targetControllerHandBefore = gd.playerHands.get(player1.getId()).size();
 
         StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+        gd.turnNumber++;
         gd.activePlayerId = player1.getId();
         gd.turnNumber++;
         harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
@@ -93,7 +94,7 @@ class ForceVoidTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(controllerHandBefore + 1);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(controllerDeckBefore - 1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(targetControllerHandBefore);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -112,7 +113,7 @@ class ForceVoidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Force Void");
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -140,6 +141,6 @@ class ForceVoidTest extends BaseCardTest {
         int handAtLaterUpkeep = gd.playerHands.get(player2.getId()).size();
         harness.passBothPriorities();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handAtLaterUpkeep);
-        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 }

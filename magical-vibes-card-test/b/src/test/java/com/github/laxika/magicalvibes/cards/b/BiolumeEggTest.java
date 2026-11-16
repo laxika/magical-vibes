@@ -120,6 +120,22 @@ class BiolumeEggTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A stolen Egg's delayed return is controlled by the player who controlled the Egg (CR 603.7e)")
+    void delayedReturnOfStolenEggIsControlledByTheTriggerController() {
+        BiolumeEgg card = new BiolumeEgg();
+        card.setOwnerId(player2.getId());
+        Permanent egg = harness.addToBattlefieldAndReturn(player1, card);
+        gd.stolenCreatures.put(egg.getId(), player2.getId());
+        sacrificeEgg(egg);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passUntil(TurnStep.END_STEP));
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getControllerId()).isEqualTo(player1.getId()));
+    }
+
+    @Test
     @DisplayName("Sacrificed opponent-owned Egg returns to its owner")
     void sacrificedStolenEggReturnsToOwner() {
         BiolumeEgg card = new BiolumeEgg();

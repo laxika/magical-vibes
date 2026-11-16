@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AddClueTokenToTokenCreationEffect;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -396,10 +398,16 @@ public class PermanentControlSupport {
             }
 
             if (tokenBlueprint.exileAtEndOfCombat()) {
-                gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
+                DelayedPermanentActions.scheduleForResolution(gameData, controllerId, tokenPermanent,
+                        new DelayedPermanentAction(tokenPermanent.getId(),
+                                DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT),
+                        ActivePlayer.ANY);
             }
             if (tokenBlueprint.exileAtEndStep()) {
-                gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+                DelayedPermanentActions.scheduleForResolution(gameData, controllerId, tokenPermanent,
+                        new DelayedPermanentAction(tokenPermanent.getId(),
+                                DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP),
+                        ActivePlayer.ANY);
             }
 
             String colorDesc;

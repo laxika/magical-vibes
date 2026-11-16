@@ -7,14 +7,15 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,10 +55,10 @@ class ArmsRaceTest extends BaseCardTest {
         Permanent ornithopter = findPermanent(player1, "Ornithopter");
         assertThat(ornithopter.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.getDelayedActions(com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger.class))
-                .anySatisfy(action -> {
-                    assertThat(action.permanentId()).isEqualTo(ornithopter.getId());
-                    assertThat(action.controllerId()).isEqualTo(player1.getId());
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP))
+                .anySatisfy(delayed -> {
+                    assertThat(delayed.watchedPermanentId()).isEqualTo(ornithopter.getId());
+                    assertThat(delayed.controllerId()).isEqualTo(player1.getId());
                 });
     }
 
@@ -74,7 +75,7 @@ class ArmsRaceTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Ornithopter");
         harness.assertNotOnBattlefield(player1, "Ornithopter");
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
+        assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
     }
 
     @Test

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * originally-targeted player or planeswalker — through the normal damage system.
  *
  * <p>Never a directly-castable effect: it is only ever placed on the stack by
- * {@code StepTriggerService} when draining a {@code DamageAtNextUpkeepUnlessPays} delayed action, with
+ * a delayed triggered ability, with
  * both the payer (controllerId) and the damage recipient (targetId) already resolved. Declares no
  * target of its own ({@link TargetSpec#NONE}).
  *

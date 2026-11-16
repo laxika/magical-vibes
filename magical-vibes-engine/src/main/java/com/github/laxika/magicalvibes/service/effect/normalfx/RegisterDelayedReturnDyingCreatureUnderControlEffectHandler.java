@@ -2,15 +2,24 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldUnderControl;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnDelayedGraveyardCardUnderControlEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
 /**
  * Resolves the "put that card onto the battlefield under your control at the beginning of the next
@@ -58,15 +67,25 @@ public class RegisterDelayedReturnDyingCreatureUnderControlEffectHandler impleme
                     .returnAll(true).underOwnersControl(true)
                     .enterWithCounter(e.counterType()).enterWithCounterCount(e.counterAmount())
                     .grantColor(e.grantColor()).grantSubtype(e.grantSubtype()).build();
-            gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger(
-                    entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), null, returnEffect));
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(Triggers.endStep(
+                    ActivePlayer.ANY), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), null,
+                    returnEffect));
             return;
         }
-        gameData.queueDelayedAction(new DelayedGraveyardToBattlefieldUnderControl(
-                dyingCardId, returnControllerId, sourcePermanentId,
-                e.sacrificeOnSourceControlLoss(), e.counterType(), e.counterAmount(),
-                e.grantColor(), e.grantSubtype(), e.returnUnderOwnersControl(), e.requireSourceOnBattlefield(),
-                graveyardEntryVersion, entry.getControllerId(), e.optionalReturn()));
+        var returnEffect = new ReturnDelayedGraveyardCardUnderControlEffect(returnControllerId,
+                e.sacrificeOnSourceControlLoss(), e.counterType(), e.counterAmount(), e.grantColor(),
+                e.grantSubtype());
+        Card dyingCard = gameQueryService.findCardInGraveyardById(gameData, dyingCardId);
+        CardEffect delayedEffect = e.optionalReturn()
+                ? new MayEffect(returnEffect, "Return " + (dyingCard != null ? dyingCard.getName() : "that card")
+                        + " to the battlefield?")
+                : returnEffect;
+        TriggerOptions options = e.requireSourceOnBattlefield()
+                ? TriggerOptions.DEFAULT.withInterveningIf(new SourceIsOnBattlefield()) : TriggerOptions.DEFAULT;
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                entry.getControllerId(), entry.getCard(),
+                new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY), options, delayedEffect),
+                sourcePermanentId, null, null, DelayedReferents.graveyardCard(dyingCardId, graveyardEntryVersion)));
         log.info("Game {} - {} schedules a dying creature to return under control at the next end step",
                 gameData.id, entry.getCard().getName());
     }

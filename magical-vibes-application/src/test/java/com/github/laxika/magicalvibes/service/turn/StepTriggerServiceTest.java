@@ -1,27 +1,23 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffect;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.AbilityZones;
-import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 
 import org.mockito.InOrder;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.ArgumentMatchers.isNull;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.action.DelayedDestroyAllPermanents;
-import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStep;
-import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost;
-import com.github.laxika.magicalvibes.model.action.ExilePermanentAtControllerEndStep;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep;
-import com.github.laxika.magicalvibes.model.action.RandomDiscardCardsAtNextUpkeep;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -31,12 +27,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
-import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
-import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNextEndStep;
-import com.github.laxika.magicalvibes.model.action.DiscardCardsAtNextEndStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -140,7 +132,6 @@ import com.github.laxika.magicalvibes.service.trigger.pipeline.RulesEventPipelin
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerIndex;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
-import com.github.laxika.magicalvibes.service.epic.EpicService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
@@ -172,6 +163,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @ExtendWith(MockitoExtension.class)
 class StepTriggerServiceTest {
@@ -220,9 +212,6 @@ class StepTriggerServiceTest {
     private ParadigmService paradigmService;
 
     @Mock
-    private EpicService epicService;
-
-    @Mock
     private CreatureControlService creatureControlService;
 
     @Mock
@@ -239,18 +228,22 @@ class StepTriggerServiceTest {
     private EffectResolutionService effectResolutionService;
 
     @Test
-    void drawStepExpiresOnlyActivePlayersPaymentObligations() {
+    void drawStepTriggersOnlyActivePlayersPaymentObligations() {
         Card source = new Card();
-        LoseLifeAtNextDrawStepUnlessPays activeObligation =
-                new LoseLifeAtNextDrawStepUnlessPays(player1Id, 1, 1, source);
-        LoseLifeAtNextDrawStepUnlessPays opponentObligation =
-                new LoseLifeAtNextDrawStepUnlessPays(player2Id, 1, 1, source);
-        gd.queueDelayedAction(activeObligation);
-        gd.queueDelayedAction(opponentObligation);
+        TemporaryGlobalTriggeredAbility activeObligation = TemporaryGlobalTriggeredAbility.atNextStepUnlessPaid(
+                player1Id, source, new TriggeredAbility(Triggers.drawStep(ActivePlayer.CHOSEN_PLAYER),
+                        new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PLAYER)),
+                null, null, player1Id, "{1}");
+        TemporaryGlobalTriggeredAbility opponentObligation = TemporaryGlobalTriggeredAbility.atNextStepUnlessPaid(
+                player1Id, source, new TriggeredAbility(Triggers.drawStep(ActivePlayer.CHOSEN_PLAYER),
+                        new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PLAYER)),
+                null, null, player2Id, "{1}");
+        gd.temporaryGlobalTriggeredAbilities.add(activeObligation);
+        gd.temporaryGlobalTriggeredAbilities.add(opponentObligation);
 
         sut.handleDrawStepTriggers(gd);
 
-        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class))
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.DRAW_STEP))
                 .containsExactly(opponentObligation);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
@@ -290,7 +283,6 @@ class StepTriggerServiceTest {
                 triggeredAbilityQueueService,
                 triggerTargetCollector,
                 paradigmService,
-                epicService,
                 validTargetService,
                 creatureControlService,
                 etbTokenTargetService,
@@ -529,18 +521,20 @@ class StepTriggerServiceTest {
         @DisplayName("Random discard delayed trigger waits for the controller's next upkeep")
         void randomDiscardDelayedTriggerWaitsForControllerUpkeep() {
             Card source = createCardWithName("Casey Jones, Vigilante");
-            gd.queueDelayedAction(new RandomDiscardCardsAtNextUpkeep(player1Id, 3, source));
+            gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    Triggers.upkeep(ActivePlayer.YOU), player1Id, source, null, null,
+                    new DiscardEffect(3, DiscardRecipient.CONTROLLER, true)));
 
             gd.activePlayerId = player2Id;
             sut.handleUpkeepTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.getDelayedActions(RandomDiscardCardsAtNextUpkeep.class)).hasSize(1);
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
 
             gd.activePlayerId = player1Id;
             sut.handleUpkeepTriggers(gd);
 
-            assertThat(gd.getDelayedActions(RandomDiscardCardsAtNextUpkeep.class)).isEmpty();
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEffectsToResolve())
                     .containsExactly(new DiscardEffect(3, DiscardRecipient.CONTROLLER, true));
@@ -1540,19 +1534,19 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("TransformSourceAtNextUpkeep pushes delayed transform trigger onto stack")
-        void transformSourceAtNextUpkeepPushesTrigger() {
+        @DisplayName("A delayed transform of the source triggers at the next upkeep of any player")
+        void delayedTransformOfTheSourceTriggersAtTheNextUpkeep() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Archangel Avacyn");
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
-            gd.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.TransformSourceAtNextUpkeep(
-                    perm.getId(), player1Id, card));
+            gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    Triggers.upkeep(ActivePlayer.ANY), player1Id, card, perm.getId(), perm.getId(),
+                    new com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect()));
 
             sut.handleUpkeepTriggers(gd);
 
             assertThat(gd.stack).isNotEmpty();
-            assertThat(gd.stack.getFirst().getDescription()).contains("transform");
             assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
             assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst())
                     .isInstanceOf(com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect.class);
@@ -1901,30 +1895,26 @@ class StepTriggerServiceTest {
         }
     }
 
+    @Test
+    void cleanupStepTriggersDelayedCleanupAbilitiesWithoutResolvingThem() {
+        Card source = createCardWithName("Cleanup source");
+        var effect = new LoseLifeEffect(2);
+        gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.cleanup(), player1Id, source, null, null, effect));
+
+        sut.handleCleanupTriggers(gd);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.CLEANUP)).isEmpty();
+        sut.handleCleanupTriggers(gd);
+        assertThat(gd.stack).hasSize(1);
+    }
+
     @Nested
     @DisplayName("handleEndStepTriggers")
     class HandleEndStepTriggers {
-
-        @Test
-        void delayedEndStepAbilityRetainsControllerAndAffectedObjectAfterSourceLeaves() {
-            Card source = createCardWithName("Delayed destruction source");
-            UUID sourceId = UUID.randomUUID();
-            UUID affectedId = UUID.randomUUID();
-            gd.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger(
-                    player2Id, source, sourceId, affectedId,
-                    new com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect()));
-
-            sut.handleEndStepTriggers(gd);
-
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2Id);
-            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(sourceId);
-            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(affectedId);
-            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
-            assertThat(gd.hasDelayedAction(
-                    com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger.class)).isFalse();
-            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
-        }
 
         @Test
         @DisplayName("Permanent with controller end-step effect pushes trigger onto stack")
@@ -2394,172 +2384,64 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Delegates scheduled end-step zone changes to PermanentRemovalService")
-        void delegatesEndStepDelayedPermanentActions() {
-            sut.handleEndStepTriggers(gd);
-
-            verify(permanentRemovalService).processDelayedPermanentActions(gd,
-                    DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
-            verify(permanentRemovalService).processDelayedPermanentActions(gd,
-                    DelayedPermanentActionKind.EXILE_WARPED_AT_END_STEP);
-            verify(permanentRemovalService).processDelayedPermanentActions(gd,
-                    DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
-            verify(permanentRemovalService).processDelayedPermanentActions(gd,
-                    DelayedPermanentActionKind.DESTROY_AT_END_STEP);
-            verify(permanentRemovalService).processDelayedPermanentActions(gd,
-                    DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
-        }
-
-        @Test
-        @DisplayName("Exiles controller-scoped delayed permanents only on that player's end step")
+        @DisplayName("A controller-scoped delayed exile ability waits for that player's end step")
         void controllerScopedDelayedExileWaitsForControllerEndStep() {
             Card card = createCardWithName("Delayed token");
             Permanent permanent = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(permanent);
-            ExilePermanentAtControllerEndStep action =
-                    new ExilePermanentAtControllerEndStep(permanent.getId(), player1Id);
-            gd.queueDelayedAction(action);
+            gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    Triggers.endStep(ActivePlayer.YOU), player1Id, card, null, permanent.getId(),
+                    new ExileTargetPermanentEffect()));
 
             gd.activePlayerId = player2Id;
             sut.handleEndStepTriggers(gd);
 
-            verify(permanentRemovalService, never()).removePermanentToExile(gd, permanent);
-            assertThat(gd.getDelayedActions(ExilePermanentAtControllerEndStep.class)).containsExactly(action);
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
 
             gd.activePlayerId = player1Id;
-            when(gameQueryService.findPermanentById(gd, permanent.getId())).thenReturn(permanent);
-            when(permanentRemovalService.removePermanentToExile(gd, permanent)).thenReturn(true);
-
             sut.handleEndStepTriggers(gd);
 
-            verify(permanentRemovalService).removePermanentToExile(gd, permanent);
-            assertThat(gd.getDelayedActions(ExilePermanentAtControllerEndStep.class)).isEmpty();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).singleElement()
+                    .isInstanceOf(ExileTargetPermanentEffect.class);
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(permanent.getId());
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
         }
 
         @Test
-        @DisplayName("Sacrifices the delayed target and gains life equal to its toughness")
+        @DisplayName("A delayed sacrifice that gains life goes on the stack about its permanent at the next end step")
         void sacrificesDelayedTargetAndGainsLife() {
             Card sourceCard = createCardWithName("Spinal Embrace");
             Card targetCard = createCardWithName("Target Creature");
             Permanent target = new Permanent(targetCard);
             gd.playerBattlefields.get(player1Id).add(target);
-            gd.queueDelayedAction(new DelayedSacrificeTargetPermanentAtEndStep(
-                    target.getId(), player1Id, sourceCard));
-
-            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
-            when(gameQueryService.getEffectiveToughness(gd, target)).thenReturn(4);
-            when(permanentRemovalService.sacrificePermanentToGraveyard(gd, target)).thenReturn(true);
+            gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    Triggers.endStep(ActivePlayer.ANY), player1Id, sourceCard, null, target.getId(),
+                    new SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffect(true)));
 
             sut.handleEndStepTriggers(gd);
 
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, target);
-            verify(lifeSupport).applyGainLife(
-                    gd, player1Id, 4, "Spinal Embrace", sourceCard,
-                    StackEntryType.TRIGGERED_ABILITY, player1Id);
-            assertThat(gd.getDelayedActions(DelayedSacrificeTargetPermanentAtEndStep.class)).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Sacrifices a delayed target when its mana value is within the limit")
-        void sacrificesDelayedTargetWithinManaValueLimit() {
-            Card targetCard = createCardWithName("Target Creature");
-            Permanent target = new Permanent(targetCard);
-            gd.playerBattlefields.get(player1Id).add(target);
-            gd.queueDelayedAction(new DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost(
-                    target.getId(), player1Id, 3));
-
-            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
-            when(permanentRemovalService.sacrificePermanentToGraveyard(gd, target)).thenReturn(true);
-
-            sut.handleEndStepTriggers(gd);
-
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gd, target);
-            assertThat(gd.getDelayedActions(DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost.class))
-                    .isEmpty();
-        }
-
-        @Test
-        @DisplayName("Pending exile returns return cards from exile to battlefield")
-        void pendingExileReturnsProcessed() {
-            Card card = createCardWithName("Exiled Card");
-            gd.addToExile(player1Id, card);
-            gd.queueDelayedAction(new PendingExileReturn(card, player1Id, false));
-
-            sut.processPendingExileReturns(gd, TurnStep.END_STEP);
-
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(player1Id), any(Permanent.class), any(), any());
-            verify(battlefieldEntryService).handleCreatureEnteredBattlefield(eq(gd), eq(player1Id), eq(card), any(), eq(false));
-            assertThat(gd.getPlayerExiledCards(player1Id)).doesNotContain(card);
-            assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Pending exile returns with returnTapped taps the permanent")
-        void pendingExileReturnsTapped() {
-            Card card = createCardWithName("Exiled Card");
-            gd.addToExile(player1Id, card);
-            gd.queueDelayedAction(new PendingExileReturn(card, player1Id, true));
-
-            sut.processPendingExileReturns(gd, TurnStep.END_STEP);
-
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(player1Id), argThat(Permanent::isTapped), any(), any());
-        }
-
-        @Test
-        @DisplayName("Pending exile returns can tap lands without tapping other permanents")
-        void pendingExileReturnsLandsTappedOnly() {
-            Card land = createCardWithName("Forest");
-            land.setType(CardType.LAND);
-            Card creature = createCardWithName("Grizzly Bears");
-            creature.setType(CardType.CREATURE);
-            gd.addToExile(player1Id, land);
-            gd.addToExile(player1Id, creature);
-            gd.queueDelayedAction(new PendingExileReturn(land, player1Id, false, false,
-                    TurnStep.END_STEP, 0, List.of(creature), false, false, false, false,
-                    null, null, false, false, 0, null, 0, true));
-
-            sut.processPendingExileReturns(gd, TurnStep.END_STEP);
-
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(player1Id), argThat(permanent -> permanent.getCard() == land
-                            && permanent.isTapped()), any(), any());
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(player1Id), argThat(permanent -> permanent.getCard() == creature
-                            && !permanent.isTapped()), any(), any());
-        }
-
-        @Test
-        @DisplayName("Pending exile returns can put a permanent onto the battlefield attacking")
-        void pendingExileReturnsAttacking() {
-            Card card = createCardWithName("Exiled Card");
-            gd.addToExile(player1Id, card);
-            gd.queueDelayedAction(new PendingExileReturn(card, player1Id, true, false,
-                    TurnStep.DECLARE_ATTACKERS, 0, List.of(), true, false, true));
-
-            sut.processPendingExileReturns(gd, TurnStep.DECLARE_ATTACKERS);
-
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(player1Id), argThat(permanent -> permanent.isTapped()
-                            && permanent.isAttacking()
-                            && player2Id.equals(permanent.getAttackTarget())), any(), any());
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).singleElement()
+                    .isInstanceOf(SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffect.class);
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
         }
 
         @Test
         @DisplayName("Memory Jar delayed hand exchange is pushed onto the stack at the next end step")
         void memoryJarDelayedHandExchangeIsPushed() {
             Card source = createCardWithName("Memory Jar");
-            gd.queueDelayedAction(new EachPlayerHandExileReturnAtNextEndStep(
-                    source, player1Id, List.of(
-                            new EachPlayerHandExileReturnAtNextEndStep.PlayerCards(player1Id, List.of()),
-                            new EachPlayerHandExileReturnAtNextEndStep.PlayerCards(player2Id, List.of()))));
+            gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    Triggers.endStep(ActivePlayer.ANY), player1Id, source, null, null,
+                    new DiscardEachPlayerHandAndReturnExiledCardsEffect(List.of(
+                            new DiscardEachPlayerHandAndReturnExiledCardsEffect.PlayerCards(player1Id, List.of()),
+                            new DiscardEachPlayerHandAndReturnExiledCardsEffect.PlayerCards(player2Id, List.of())))));
 
             sut.handleEndStepTriggers(gd);
 
-            assertThat(gd.getDelayedActions(EachPlayerHandExileReturnAtNextEndStep.class)).isEmpty();
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst())
                     .isInstanceOf(DiscardEachPlayerHandAndReturnExiledCardsEffect.class);
@@ -2567,33 +2449,36 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Delayed +1/+1 counter triggers push onto stack")
+        @DisplayName("Each delayed +1/+1 counter ability pushes its own trigger onto the stack")
         void delayedPlusOnePlusOneCountersPushed() {
             Card card = createCardWithName("Protean Hydra");
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
-            // 4 total counters to add = 2 triggers (each adds 2)
-            gd.addDelayedPlusOneCounters(perm.getId(), 4);
-
-            when(gameQueryService.findPermanentById(gd, perm.getId())).thenReturn(perm);
-            when(gameQueryService.findPermanentController(gd, perm.getId())).thenReturn(player1Id);
+            for (int i = 0; i < 2; i++) {
+                gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                        Triggers.endStep(ActivePlayer.ANY), player1Id, card, perm.getId(), null,
+                        new PutCountersOnSourceEffect(1, 1, 2)));
+            }
 
             sut.handleEndStepTriggers(gd);
 
             assertThat(gd.stack).hasSize(2);
             assertThat(gd.stack.getFirst().getDescription()).contains("Protean Hydra");
-            assertThat(gd.getDelayedActions(DelayedPlusOneCounters.class)).isEmpty();
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
         }
 
         @Test
         @DisplayName("Delayed destroy-all-permanents trigger pushes a global wipe onto the stack")
         void delayedDestroyAllPermanentsPushed() {
             Card sourceCard = createCardWithName("Bearer of the Heavens");
-            gd.queueDelayedAction(new DelayedDestroyAllPermanents(player1Id, sourceCard));
+            gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    Triggers.endStep(ActivePlayer.ANY), player1Id, sourceCard, null, null,
+                    new DestroyAllPermanentsEffect(new PermanentTruePredicate())));
 
             sut.handleEndStepTriggers(gd);
 
-            assertThat(gd.getDelayedActions(DelayedDestroyAllPermanents.class)).isEmpty();
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
             assertThat(gd.stack.getFirst().getEffectsToResolve())
@@ -2604,11 +2489,13 @@ class StepTriggerServiceTest {
         @DisplayName("Delayed discard trigger pushes a controller discard onto the stack")
         void delayedDiscardPushed() {
             Card sourceCard = createCardWithName("Ideas Unbound");
-            gd.queueDelayedAction(new DiscardCardsAtNextEndStep(player1Id, 3, sourceCard));
+            gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    Triggers.endStep(ActivePlayer.ANY), player1Id, sourceCard, null, null,
+                    new DiscardEffect(3, DiscardRecipient.CONTROLLER)));
 
             sut.handleEndStepTriggers(gd);
 
-            assertThat(gd.getDelayedActions(DiscardCardsAtNextEndStep.class)).isEmpty();
+            assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
             assertThat(gd.stack.getFirst().getEffectsToResolve())

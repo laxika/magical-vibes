@@ -41,7 +41,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetPermanentT
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentOrGraveyardCardOnTopOrBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreatureDealsDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
@@ -373,9 +372,6 @@ public class TargetPolarityClassifier {
         if (effect instanceof ExploreEffect explore) {
             return explore.targeted() ? TargetPolarity.BENEFICIAL : null;
         }
-        if (effect instanceof RegisterDelayedWatchedCreatureDealsDamageEffect) {
-            return TargetPolarity.BENEFICIAL;
-        }
         if (effect instanceof KeywordGrantingEffect grant) {
             return grant.scope() == GrantScope.TARGET
                     || grant.scope() == GrantScope.TARGET_AND_SHARING_CREATURES
@@ -539,8 +535,7 @@ public class TargetPolarityClassifier {
 
             // Arcbond's watched creature is a strategic choice: either player's creature may be
             // the best center for the later symmetric damage event.
-            entry("RegisterDelayedWatchedCreatureDealtDamageEffect", TargetPolarity.NEUTRAL),
-            entry("RegisterDelayedWatchedCreatureDealtDamageByAttackingCreatureEffect", TargetPolarity.NEUTRAL),
+            entry("RegisterGlobalTriggeredAbilityAboutTargetUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             // The delayed combat-damage reward belongs to the effect's controller, but either
             // player's creature can be the strategically useful watched source.
             entry("RegisterDelayedWatchedCreaturesCombatDamageEffect", TargetPolarity.NEUTRAL),

@@ -2081,8 +2081,7 @@ public sealed interface ChoiceContext {
             UUID controllerId,
             List<CardEffect> effects,
             Card sourceCard,
-            boolean combatDamageToPlayerOnly,
-            boolean untilEndOfTurn
+            UUID sourcePermanentId
     ) implements ChoiceContext {
 
         public ChooseCardNameForDelayedCreatureCombatDamageChoice {

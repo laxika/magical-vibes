@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.ResolveDelayedPermanentActionEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -18,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -37,7 +37,7 @@ class WintersChillTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleListChoice(player2, ChoiceContext.WintersChillPaymentChoice.PAY_NOTHING);
 
-        boolean stillScheduled = gd.getDelayedActions(DelayedPermanentAction.class).stream()
+        boolean stillScheduled = DelayedPermanentMoves.waiting(gd).stream()
                 .anyMatch(a -> a.permanentId().equals(attacker.getId())
                         && a.kind() == DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT);
         boolean delayedTriggerOnStack = gd.stack.stream()
@@ -64,7 +64,7 @@ class WintersChillTest extends BaseCardTest {
 
         assertThat(gd.creaturesWithCombatDamagePreventedThisCombat).contains(attacker.getId());
         assertThat(gd.creaturesPreventedFromDealingCombatDamageThisCombat).contains(attacker.getId());
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
@@ -125,7 +125,7 @@ class WintersChillTest extends BaseCardTest {
 
         assertThat(gd.creaturesWithCombatDamagePreventedThisCombat).doesNotContain(attacker.getId());
         assertThat(gd.creaturesPreventedFromDealingCombatDamageThisCombat).doesNotContain(attacker.getId());
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
     }
 
     @Test

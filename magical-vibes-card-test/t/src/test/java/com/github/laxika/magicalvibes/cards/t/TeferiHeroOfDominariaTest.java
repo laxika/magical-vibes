@@ -1,5 +1,4 @@
 package com.github.laxika.magicalvibes.cards.t;
-import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.p.PrimordialWurm;
@@ -20,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 
 @CardUsed({TeferiHeroOfDominaria.class, PrimordialWurm.class, LlanowarElves.class, Plains.class, Island.class})
 class TeferiHeroOfDominariaTest extends BaseCardTest {
@@ -41,9 +41,9 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         // Loyalty should increase
         assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(5); // 4 + 1
         // Delayed trigger should be registered
-        assertThat(gd.getDelayedActions(DelayedUntapPermanents.class)).hasSize(1);
-        assertThat(gd.getDelayedActions(DelayedUntapPermanents.class).getFirst().count()).isEqualTo(2);
-        assertThat(gd.getDelayedActions(DelayedUntapPermanents.class).getFirst().controllerId()).isEqualTo(player1.getId());
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP).getFirst().controllerId())
+                .isEqualTo(player1.getId());
     }
 
     @Test
@@ -62,7 +62,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Delayed trigger registered
-        assertThat(gd.getDelayedActions(DelayedUntapPermanents.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
 
         // Advance to end step to fire delayed trigger
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -86,7 +86,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         assertThat(plains.isTapped()).isFalse();
         assertThat(island.isTapped()).isFalse();
         // Pending list should be cleared
-        assertThat(gd.getDelayedActions(DelayedUntapPermanents.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test

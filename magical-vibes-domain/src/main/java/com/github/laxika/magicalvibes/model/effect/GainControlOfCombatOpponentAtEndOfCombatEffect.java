@@ -11,9 +11,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * Placed on {@code Triggers.becomesBlocked()} ability with
  * {@code TriggerOptions.EACH_BLOCKER} (one trigger per blocker). The
  * referenced creature is carried as the stack entry's target and the source is the entry's source
- * permanent; the trigger does not target (it can't fizzle). Resolution creates a
- * {@link com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger} carrying a
- * {@link GainControlOfTargetEffect} with the duration, so the control change uses the stack.
+ * permanent; the trigger does not target (it can't fizzle). Resolution registers a delayed "at end of combat"
+ * ability about the creature carrying a {@link GainControlOfTargetEffect} with the duration, so the control change
+ * uses the stack.
  */
 public record GainControlOfCombatOpponentAtEndOfCombatEffect(ControlDuration duration)
         implements ControlStealingEffect {

@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.n.NessianCourser;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.PayManaOrLoseGameAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -43,10 +44,9 @@ class PactOfNegationTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Nessian Courser");
         harness.assertInGraveyard(player1, "Nessian Courser");
 
-        List<PayManaOrLoseGameAtNextUpkeep> scheduled = gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class);
+        List<TemporaryGlobalTriggeredAbility> scheduled = gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP);
         assertThat(scheduled).hasSize(1);
-        assertThat(scheduled.getFirst().playerId()).isEqualTo(player2.getId());
-        assertThat(scheduled.getFirst().manaCost()).isEqualTo("{3}{U}{U}");
+        assertThat(scheduled.getFirst().controllerId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -57,7 +57,7 @@ class PactOfNegationTest extends BaseCardTest {
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
 
     @Test
@@ -74,7 +74,7 @@ class PactOfNegationTest extends BaseCardTest {
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
-        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -121,8 +121,8 @@ class PactOfNegationTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Nessian Courser");
         harness.assertInGraveyard(player2, "Pact of Negation");
-        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class))
-                .singleElement().satisfies(action -> assertThat(action.playerId()).isEqualTo(player1.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP))
+                .singleElement().satisfies(action -> assertThat(action.controllerId()).isEqualTo(player1.getId()));
     }
 
     @Test
@@ -142,8 +142,8 @@ class PactOfNegationTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Nessian Courser");
         harness.assertInGraveyard(player2, "Pact of Negation");
-        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class))
-                .singleElement().satisfies(action -> assertThat(action.playerId()).isEqualTo(player1.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP))
+                .singleElement().satisfies(action -> assertThat(action.controllerId()).isEqualTo(player1.getId()));
     }
 
     @Test

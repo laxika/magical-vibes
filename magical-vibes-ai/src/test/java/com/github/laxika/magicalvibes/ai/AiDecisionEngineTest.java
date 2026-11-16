@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.testutil.DelayedObligations;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AshlingsCommand;
@@ -62,7 +64,6 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -2909,8 +2910,8 @@ class AiDecisionEngineTest {
     }
 
     private Permanent owesNafsAspPaymentWithOnePlains() {
-        gd.queueDelayedAction(new LoseLifeAtNextDrawStepUnlessPays(
-                aiPlayer.getId(), 1, 1, new NafsAsp(), human.getId()));
+        gd.temporaryGlobalTriggeredAbilities.add(DelayedObligations.loseLifeAtDrawStepUnlessPaid(
+                human.getId(), aiPlayer.getId(), new NafsAsp(), 1, 1));
         harness.setHand(aiPlayer, List.of());
         return addUntappedLand(aiPlayer, Plains.class);
     }
@@ -2933,7 +2934,7 @@ class AiDecisionEngineTest {
         ai.handleEvent(AiDecisionKind.GAME_STATE);
 
         assertThat(aiPaidDelayedTrigger()).isTrue();
-        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.DRAW_STEP)).isEmpty();
     }
 
     @Test
@@ -2964,8 +2965,8 @@ class AiDecisionEngineTest {
         harness.clearPriorityPassed();
         plains.untap();
         gd.playerLifeTotals.put(aiPlayer.getId(), 1);
-        gd.queueDelayedAction(new LoseLifeAtNextDrawStepUnlessPays(
-                aiPlayer.getId(), 1, 1, new NafsAsp(), human.getId()));
+        gd.temporaryGlobalTriggeredAbilities.add(DelayedObligations.loseLifeAtDrawStepUnlessPaid(
+                human.getId(), aiPlayer.getId(), new NafsAsp(), 1, 1));
 
         ai.handleEvent(AiDecisionKind.GAME_STATE);
 

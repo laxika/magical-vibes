@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.DelayedReferents;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.action.ExilePermanentAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -49,6 +51,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -493,19 +496,22 @@ public class GraveyardReturnSupport {
         }
 
         if (effect.returnToHandAtEndStep() && returnedPermanent != null) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(
-                    returnedPermanent.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
+            DelayedPermanentActions.schedule(gameData, entry,
+                    new DelayedPermanentAction(returnedPermanent.getId(),
+                            DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP),
+                    ActivePlayer.ANY);
         }
 
         if (effect.returnToHandAtYourNextEndStep() && returnedPermanent != null) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(
-                    returnedPermanent.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP,
-                    controllerId));
+            DelayedPermanentActions.schedule(gameData, entry,
+                    new DelayedPermanentAction(returnedPermanent.getId(),
+                            DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP),
+                    ActivePlayer.YOU);
         }
 
         if (effect.exileAtNextUpkeep() && returnedPermanent != null) {
-            gameData.queueDelayedAction(new ExilePermanentAtNextUpkeep(
-                    controllerId, returnedPermanent.getId(), entry.getCard()));
+            registerNextUpkeepExile(gameData, entry,
+                    Map.of(controllerId, List.of(returnedPermanent.getId())));
         }
 
         if (effect.gainLifeEqualToManaValue()) {
@@ -1142,6 +1148,7 @@ public class GraveyardReturnSupport {
                     gameData.simultaneousCreatureEntryTriggers.clear();
                 }
             }
+            Map<UUID, List<UUID>> exileAtNextUpkeep = new LinkedHashMap<>();
             graveyardService.beginGraveyardLeaveBatch(gameData);
             try {
                 for (Card card : toReturn) {
@@ -1155,12 +1162,13 @@ public class GraveyardReturnSupport {
                                 null, false, losesAllAbilitiesBeforeEntering(effect), 0,
                                 permanent -> { }, deferredEtbs);
                         applyBattlefieldReturnRiders(gameData, controllerId, card, effect, entry, controllerId);
-                        queueNextUpkeepExile(gameData, entry, effect, controllerId, returnedPermanent);
+                        collectNextUpkeepExile(effect, controllerId, returnedPermanent, exileAtNextUpkeep);
                     } else {
                         permanentRemovalService.addCardToHandFromGraveyard(
                                 gameData, controllerId, controllerId, card);
                     }
                 }
+                registerNextUpkeepExile(gameData, entry, exileAtNextUpkeep);
                 for (ReturnedPermanent returned : deferredEtbs) {
                     handleCreatureEtbAndLegendRule(gameData, returned.controllerId(), returned.permanent(),
                             returned.card());
@@ -1223,6 +1231,7 @@ public class GraveyardReturnSupport {
                 gameData.simultaneousCreatureEntryTriggers.clear();
             }
         }
+        Map<UUID, List<UUID>> exileAtNextUpkeep = new LinkedHashMap<>();
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (Map.Entry<UUID, List<Card>> gyEntry : graveyardsToSearch.entrySet()) {
@@ -1278,7 +1287,7 @@ public class GraveyardReturnSupport {
                         }
                         applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect, entry,
                                 gyEntry.getKey(), entersWithPlusOneCounters);
-                        queueNextUpkeepExile(gameData, entry, effect, targetPlayerId, returnedPermanent);
+                        collectNextUpkeepExile(effect, targetPlayerId, returnedPermanent, exileAtNextUpkeep);
                         if (returnedPermanent != null && effect.enterAttacking()) {
                             makeChosenPermanentAttackingEffectHandler.resolve(gameData, entry,
                                     new com.github.laxika.magicalvibes.model.effect.MakeChosenPermanentAttackingEffect(
@@ -1288,6 +1297,7 @@ public class GraveyardReturnSupport {
                     returnedCards.add(card);
                 }
             }
+            registerNextUpkeepExile(gameData, entry, exileAtNextUpkeep);
             deferredEtbs.forEach(returned ->
                     gameData.permanentsEnteringSimultaneously.add(returned.permanent().getId()));
             for (ReturnedPermanent returned : deferredEtbs) {
@@ -1364,6 +1374,7 @@ public class GraveyardReturnSupport {
                 gameData.simultaneousCreatureEntryTriggers.clear();
             }
         }
+        Map<UUID, List<UUID>> exileAtNextUpkeep = new LinkedHashMap<>();
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (Map.Entry<UUID, List<Card>> cardsEntry : cardsByGraveyard.entrySet()) {
@@ -1408,7 +1419,7 @@ public class GraveyardReturnSupport {
                         }
                         applyBattlefieldReturnRiders(
                                 gameData, targetPlayerId, card, effect, entry, graveyardOwnerId);
-                        queueNextUpkeepExile(gameData, entry, effect, targetPlayerId, returnedPermanent);
+                        collectNextUpkeepExile(effect, targetPlayerId, returnedPermanent, exileAtNextUpkeep);
                     } else {
                         permanentRemovalService.addCardToHandFromGraveyard(
                                 gameData, graveyardOwnerId, targetPlayerId, card);
@@ -1416,6 +1427,7 @@ public class GraveyardReturnSupport {
                     returnedCards.add(card);
                 }
             }
+            registerNextUpkeepExile(gameData, entry, exileAtNextUpkeep);
             deferredEtbs.forEach(returned ->
                     gameData.permanentsEnteringSimultaneously.add(returned.permanent().getId()));
             for (ReturnedPermanent returned : deferredEtbs) {
@@ -1440,13 +1452,27 @@ public class GraveyardReturnSupport {
         gameLogService.append(gameData, builder.build());
     }
 
-    private void queueNextUpkeepExile(GameData gameData, StackEntry entry,
-                                      ReturnCardFromGraveyardEffect effect, UUID controllerId,
-                                      Permanent returnedPermanent) {
+    private void collectNextUpkeepExile(ReturnCardFromGraveyardEffect effect, UUID controllerId,
+                                        Permanent returnedPermanent, Map<UUID, List<UUID>> exileAtNextUpkeep) {
         if (effect.exileAtNextUpkeep() && returnedPermanent != null) {
-            gameData.queueDelayedAction(new ExilePermanentAtNextUpkeep(
-                    controllerId, returnedPermanent.getId(), entry.getCard()));
+            exileAtNextUpkeep.computeIfAbsent(controllerId, ignored -> new ArrayList<>())
+                    .add(returnedPermanent.getId());
         }
+    }
+
+    /**
+     * "Exile those creatures at the beginning of your next upkeep": the creatures one resolution returned share one
+     * delayed triggered ability for each player they came back under, and another resolution makes another
+     * (CR 603.7a).
+     */
+    private void registerNextUpkeepExile(GameData gameData, StackEntry entry,
+                                         Map<UUID, List<UUID>> exileAtNextUpkeep) {
+        exileAtNextUpkeep.forEach((controllerId, permanentIds) ->
+                gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                        controllerId, entry.getCard(),
+                        new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), new ExileTargetPermanentEffect()),
+                        entry.getSourcePermanentId(), permanentIds.getFirst(), null,
+                        DelayedReferents.permanents(permanentIds))));
     }
 
     private void resolveReturnAllWithAttachments(GameData gameData, StackEntry entry,
@@ -2729,16 +2755,18 @@ public class GraveyardReturnSupport {
             permanent.setExileIfLeavesBattlefield(true);
         }
         if (exileAtEndStep || exileAtYourNextEndStep) {
-            gameData.queueDelayedAction(exileAtYourNextEndStep
-                    ? new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP,
-                    false, null, controllerId, null, false, delayedTriggerSource)
-                    : new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP,
-                    false, null, null, null, false, delayedTriggerSource));
+            DelayedPermanentActions.schedule(gameData, controllerId,
+                    delayedTriggerSource != null ? delayedTriggerSource : permanent.getCard(),
+                    delayedTriggerSource != null ? null : permanent.getId(),
+                    new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP),
+                    exileAtYourNextEndStep ? ActivePlayer.YOU : ActivePlayer.ANY);
         }
         if (sacrificeAtEndStep) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(),
-                    DelayedPermanentActionKind.SACRIFICE_AT_END_STEP, false, null, null, controllerId, false,
-                    delayedTriggerSource));
+            DelayedPermanentActions.schedule(gameData, controllerId,
+                    delayedTriggerSource != null ? delayedTriggerSource : permanent.getCard(),
+                    delayedTriggerSource != null ? null : permanent.getId(),
+                    new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
+                    ActivePlayer.ANY);
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);

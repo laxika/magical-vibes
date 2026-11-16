@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.ExilePermanentAtControllerEndStep;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -76,8 +76,10 @@ class StoneIdolTrapTest extends BaseCardTest {
         assertThat(token.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.CONSTRUCT);
         assertThat(token.getCard().getKeywords()).containsExactly(Keyword.TRAMPLE);
-        assertThat(gd.getDelayedActions(ExilePermanentAtControllerEndStep.class))
-                .contains(new ExilePermanentAtControllerEndStep(token.getId(), player1.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).anySatisfy(delayed -> {
+            assertThat(delayed.watchedPermanentId()).isEqualTo(token.getId());
+            assertThat(delayed.controllerId()).isEqualTo(player1.getId());
+        });
 
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());

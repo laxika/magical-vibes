@@ -10,9 +10,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * next-N damage prevention shield with no counters.
  * <p>
  * Creature resolution sets the target's {@code damageToCounterPreventionShield}. As that shield
- * prevents damage in {@code DamagePreventionService.applyCreaturePreventionShield}, the prevented
- * amount is accumulated into a {@code DelayedPlusZeroPlusOneCounters} keyed to the creature, which
- * {@code StepTriggerService} drains at the next end step.
+ * prevents damage in {@code DamagePreventionService}, the prevented amount is accumulated into a
+ * {@code DelayedPlusZeroPlusOneCounters} keyed to the creature, which the delayed triggered ability this
+ * effect makes (CR 603.7a) reads as it resolves at the next end step.
  */
 public record PreventNextDamageToTargetAndAddToughnessCountersEffect(int amount, boolean anyTarget)
         implements CardEffect {

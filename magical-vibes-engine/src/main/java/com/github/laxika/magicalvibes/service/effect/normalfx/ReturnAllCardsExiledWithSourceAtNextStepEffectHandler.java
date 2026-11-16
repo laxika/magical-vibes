@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.battlefield.PendingExileReturns;
 
 /**
  * Resolves {@link ReturnAllCardsExiledWithSourceAtNextStepEffect}: queues one delayed return for all
@@ -48,7 +49,7 @@ public class ReturnAllCardsExiledWithSourceAtNextStepEffectHandler implements No
         Map<UUID, UUID> returnControllerByCardId = new LinkedHashMap<>();
         tracked.forEach(exiled -> returnControllerByCardId.put(exiled.card().getId(), exiled.ownerId()));
 
-        gameData.queueDelayedAction(new PendingExileReturn(
+        PendingExileReturns.schedule(gameData,new PendingExileReturn(
                 cards.getFirst(), tracked.getFirst().ownerId(), false, false, e.returnStep(), 0,
                 cards.subList(1, cards.size()), false, false, false, false, null, null, false, false, 0,
                 Set.of(), null, 0, Map.of(), false)

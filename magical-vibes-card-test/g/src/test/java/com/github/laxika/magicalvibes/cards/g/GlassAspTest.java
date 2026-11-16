@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -68,7 +68,7 @@ class GlassAspTest extends BaseCardTest {
         gs.payDelayedTriggerCost(gd, player2, asp.getCard().getId(), player2.getId());
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
-        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.DRAW_STEP)).isEmpty();
         assertThat(gd.stack).isEmpty();
 
         advanceToPlayer2DrawStepObligation();
@@ -106,7 +106,7 @@ class GlassAspTest extends BaseCardTest {
         dealCombatDamageToPlayer2();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
-        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.DRAW_STEP)).isEmpty();
     }
 
     @Test

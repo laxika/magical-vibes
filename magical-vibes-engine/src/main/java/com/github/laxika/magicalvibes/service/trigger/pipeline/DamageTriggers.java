@@ -18,9 +18,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
-import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamage;
-import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamageByAttackingCreature;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -247,7 +244,7 @@ public class DamageTriggers {
                         checkOpponentDealtDamageTriggers(gameData, dealt.playerId(), sourceId, damage));
             }
             case DamageDealtEvent.CombatToCreature dealt -> {
-                checkDelayedWatchedCreatureDealtDamageByAttackingCreatureTriggers(gameData, dealt.source(),
+                checkDelayedCreatureDealtDamageBySourceTriggers(gameData, dealt.source(),
                         dealt.target(), dealt.damage());
                 checkEnchantedCreatureDealtDamageTriggers(gameData, dealt.target(), dealt.damage());
             }
@@ -270,7 +267,7 @@ public class DamageTriggers {
         Permanent reflectionSource = dealt.reflectionSource();
         UUID damagedCreatureControllerId = dealt.damagedCreatureControllerId();
         checkAnyPermanentDealtDamageTriggers(gameData, target, damage);
-        checkDelayedWatchedCreatureDealtDamageByAttackingCreatureTriggers(gameData, dealt.dealer(), target, damage);
+        checkDelayedCreatureDealtDamageBySourceTriggers(gameData, dealt.dealer(), target, damage);
         checkDealtDamageToCreatureTriggers(gameData, target, damage, sourceControllerId, dealt.sourceCard(),
                 dealt.sourceId());
         checkNoncombatDamageToSelfTriggers(gameData, target, damage, sourceControllerId, dealt.sourceCard(),
@@ -741,6 +738,18 @@ public class DamageTriggers {
     public void checkDamageDealtToControllerTriggers(GameData gameData, UUID damagedPlayerId,
                                                      UUID sourcePermanentId, boolean isCombatDamage,
                                                      Set<String> firedBatchedTriggerKeys) {
+        checkDamageDealtToControllerTriggers(gameData, damagedPlayerId, sourcePermanentId, isCombatDamage,
+                firedBatchedTriggerKeys, 0);
+    }
+
+    /**
+     * As {@link #checkDamageDealtToControllerTriggers(GameData, UUID, UUID, boolean, Set)}, {@code amount} being the
+     * combat damage the source dealt, which the delayed "whenever a creature deals combat damage to you" abilities
+     * record as their event value ("that much").
+     */
+    public void checkDamageDealtToControllerTriggers(GameData gameData, UUID damagedPlayerId,
+                                                     UUID sourcePermanentId, boolean isCombatDamage,
+                                                     Set<String> firedBatchedTriggerKeys, int amount) {
         if (sourcePermanentId == null) return;
 
         List<Permanent> damagedPlayerBattlefield = gameData.playerBattlefields.get(damagedPlayerId);
@@ -749,7 +758,7 @@ public class DamageTriggers {
         boolean hasPlanarDamageTrigger = hasPlanarPermanentDamageToYouTrigger(gameData, damagedPlayerId);
         if (damagedPlayerBattlefield == null && !hasPlanarCombatDamageTrigger && !hasPlanarDamageTrigger) return;
 
-        boolean hasTrigger = false;
+        boolean hasTrigger = isCombatDamage && !delayedCombatDamageToYou(gameData, damagedPlayerId).isEmpty();
         if (damagedPlayerBattlefield != null) {
             for (Permanent perm : gameData.permanentsAndFaceUpSchemes(damagedPlayerId)) {
                 if (!abilities(gameData, perm, Triggers.permanentDealsDamageToYou()).isEmpty()
@@ -772,6 +781,7 @@ public class DamageTriggers {
                 queueCreatureCombatDamageToYouTriggers(
                         gameData, damagedPlayerId, sourcePermanent, firedBatchedTriggerKeys);
             }
+            queueDelayedCreatureCombatDamageToYouTriggers(gameData, damagedPlayerId, sourcePermanent, amount);
             queuePlanarCreatureCombatDamageToYouTriggers(gameData, damagedPlayerId, sourcePermanent);
         }
 
@@ -870,6 +880,45 @@ public class DamageTriggers {
                 if (triggered && read.oneOrMore() && firedBatchedTriggerKeys != null) {
                     firedBatchedTriggerKeys.add(perm.getId() + ":" + abilityIndex);
                 }
+            }
+        }
+    }
+
+    /** The delayed abilities {@code damagedPlayerId} controls that wait for "a creature deals combat damage to you". */
+    private List<Watcher> delayedCombatDamageToYou(GameData gameData, UUID damagedPlayerId) {
+        Trigger watch = Triggers.creatureDealsCombatDamageToYou();
+        return eventAbilitySupport.delayedWatchers(gameData).stream()
+                .filter(watcher -> watcher.controllerId().equals(damagedPlayerId)
+                        && !eventAbilitySupport.abilities(gameData, watcher, watch).isEmpty()).toList();
+    }
+
+    /**
+     * The delayed "this turn, whenever a creature deals combat damage to you" abilities (Harsh Justice) of
+     * {@code damagedPlayerId} that {@code sourceCreature}'s combat damage {@code amount} triggers: the creature is the
+     * non-targeting "it" and "that creature", the triggering permanent and the damage's source, the damage "that much".
+     */
+    private void queueDelayedCreatureCombatDamageToYouTriggers(GameData gameData, UUID damagedPlayerId,
+                                                               Permanent sourceCreature, int amount) {
+        if (!gameQueryService.isCreature(gameData, sourceCreature)) return;
+        Trigger watch = Triggers.creatureDealsCombatDamageToYou();
+        TriggerCause cause = TriggerCause.Damage.toPlayer(
+                new TriggerCause.CombatDamageToPlayer(null, sourceCreature.getId(), null, true));
+        UUID creatureControllerId = gameQueryService.findPermanentController(gameData, sourceCreature.getId());
+        for (Watcher watcher : delayedCombatDamageToYou(gameData, damagedPlayerId)) {
+            for (TriggeredAbility ability : eventAbilitySupport.abilities(gameData, watcher, watch)) {
+                requireEachEvent(ability, watch);
+                PermanentPredicate filter = Read.filter(ability, watch);
+                if (filter != null && !damageFilterMatches(gameData, watcher, filter, sourceCreature)) continue;
+                putEventAbility(gameData, ability, watcher, watcher.conditionContext()
+                                .withTriggeringPermanentId(sourceCreature.getId()).withEventValue(amount), cause,
+                        entry -> {
+                            entry.setTargetId(sourceCreature.getId());
+                            entry.setNonTargeting(true);
+                            entry.setEventValue(amount);
+                            entry.setTriggeringPermanentId(sourceCreature.getId());
+                            entry.setTriggeringPermanentControllerId(creatureControllerId);
+                            entry.setEventDamageSource(sourceCreature, creatureControllerId);
+                        });
             }
         }
     }
@@ -1592,20 +1641,22 @@ public class DamageTriggers {
                     entry -> entry.setEventValue(ctx.totalDamage()));
         }
 
-        for (DelayedWatchedCreatureDealsDamage watch
-                : gameData.getDelayedActions(DelayedWatchedCreatureDealsDamage.class)) {
-            if (!watch.watchedPermanentId().equals(sourcePermanentId)) continue;
-
-            StackEntry trigger = TriggeredAbilityStackService.madeAbility(watch.sourceCard(),
-                    watch.controllerId(),
-                    watch.sourceCard().getName() + "'s delayed trigger",
-                    new ArrayList<>(watch.effects()),
-                    watch.watchedPermanentId(),
-                    (UUID) null);
-            trigger.setNonTargeting(true);
-            trigger.setEventValue(totalDamage);
-            triggeredAbilityStackService.putDelayed(gameData, trigger);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
+        // The delayed "whenever that creature deals damage this turn" abilities about it (Spiritualize, CR 603.7c):
+        // the creature is "that creature" and "it", the damage "that much".
+        for (Watcher watcher : sourcePermanentId == null ? List.<Watcher>of()
+                : eventAbilitySupport.delayedWatching(gameData, sourcePermanentId)) {
+            for (TriggeredAbility ability : abilities(gameData, watcher, Triggers.dealsDamage())) {
+                requireEachEvent(ability, Triggers.dealsDamage());
+                putEventAbility(gameData, ability, watcher, watcher.conditionContext()
+                                .withTriggeringPermanentId(sourcePermanentId).withEventValue(ctx.totalDamage()),
+                        ctx.cause(), entry -> {
+                            entry.setTargetId(sourcePermanentId);
+                            entry.setNonTargeting(true);
+                            entry.setEventValue(ctx.totalDamage());
+                            entry.setTriggeringPermanentId(sourcePermanentId);
+                            entry.setTriggeringPermanentControllerId(sourceControllerId);
+                        });
+            }
         }
     }
 
@@ -2083,7 +2134,7 @@ public class DamageTriggers {
         // combat damage step's to this permanent.
         for (List<Read> ability : abilities) {
             Read read = ability.getFirst();
-            if (read.filter() != null) {
+            if (read.filter() != null || damageSourceFilter(read.ability(), watch) != null) {
                 throw new IllegalStateException("The collector of " + watch + " judges no filter: " + read.ability());
             }
             putEventAbility(gameData, read.ability(), damaged.getCard(), damaged, controllerId, conditionContext, ctx.cause(),
@@ -2358,18 +2409,47 @@ public class DamageTriggers {
                 || damagedCreatureId == null || damage <= 0) {
             return;
         }
+        DealsDamageToCreatureEvent event = new DealsDamageToCreatureEvent(damageSource, damageSourceControllerId,
+                damagedCreatureId, damagedCreatureControllerId, damagedCreature, damage, combatDamage);
         collectDealsDamageToCreatureAbilities(gameData, damageSource, damageSourceControllerId,
                 List.of(Triggers.dealsDamageToCreature(),
                         Triggers.creatureYouControlDealsDamageToCreature(),
-                        Triggers.creatureDealsDamageToCreature()),
-                new DealsDamageToCreatureEvent(damageSource, damageSourceControllerId, damagedCreatureId,
-                        damagedCreatureControllerId, damagedCreature, damage, combatDamage));
+                        Triggers.creatureDealsDamageToCreature()), event);
+        // The delayed "whenever that creature deals combat damage to a [creature] this turn" abilities about it
+        // (Acidic Dagger, CR 603.7c): the damaged creature is "that creature", the triggering permanent.
+        Trigger delayedWatch = Triggers.dealsDamageToCreature();
+        TriggerCause cause = TriggerCause.Damage.toPermanent(damagedCreature, damagedCreatureControllerId);
+        for (Watcher watcher : eventAbilitySupport.delayedWatching(gameData, damageSource.getId())) {
+            for (TriggeredAbility ability : abilities(gameData, watcher, delayedWatch)) {
+                requireEachEvent(ability, delayedWatch);
+                DamageTrigger trigger = Read.trigger(ability, delayedWatch);
+                if (trigger.combatOnly() && !combatDamage) continue;
+                if (trigger.damagedFilter() != null && !damageFilterMatches(gameData, watcher,
+                        trigger.damagedFilter(), damagedCreatureOf(gameData, event))) {
+                    continue;
+                }
+                putEventAbility(gameData, ability, watcher, watcher.conditionContext()
+                                .withTriggeringPermanentId(damagedCreatureId).withEventValue(damage), cause,
+                        entry -> {
+                            entry.setNonTargeting(true);
+                            entry.setEventValue(damage);
+                            entry.setTriggeringPermanentId(damagedCreatureId);
+                            entry.setTriggeringPermanentControllerId(damagedCreatureControllerId);
+                            entry.setEventDamageSource(damageSource, damageSourceControllerId);
+                        });
+            }
+        }
     }
 
     public void checkAllyDealtDamageToPlaneswalkerTriggers(GameData gameData, Permanent damageSource,
             UUID damageSourceControllerId, UUID damagedPlaneswalkerId, int damage, boolean combatDamage) {
         checkCreatureDealsDamageToEnchantedPlaneswalkerTriggers(
                 gameData, damageSource, damagedPlaneswalkerId, damage, combatDamage);
+        if (combatDamage && damageSource != null && damagedPlaneswalkerId != null && damage > 0
+                && gameQueryService.isCreature(gameData, damageSource)) {
+            checkCreatureDealsCombatDamageToThisPlaneswalkerTriggers(
+                    gameData, damageSource, damagedPlaneswalkerId, damage);
+        }
         if (damageSource == null || damageSourceControllerId == null || damagedPlaneswalkerId == null || damage <= 0) {
             return;
         }
@@ -2377,27 +2457,27 @@ public class DamageTriggers {
         if (planeswalker == null || !planeswalker.getCard().hasType(CardType.PLANESWALKER)
                 || !gameQueryService.isCreature(gameData, damageSource)) return;
 
-        // "Deals combat damage to a planeswalker" (Zagras, Thief of Heartbeats) only for combat damage.
+        // "Deals combat damage to a planeswalker" (Zagras, Thief of Heartbeats) only for combat damage; "to a player
+        // or planeswalker" (Flitterwing Nuisance's delayed ability) is combat damage too.
         List<Trigger> watches = combatDamage
                 ? List.of(Triggers.creatureYouControlDealsDamageToPlaneswalker(),
-                        Triggers.creatureYouControlDealsCombatDamageToPlaneswalker())
+                        Triggers.creatureYouControlDealsCombatDamageToPlaneswalker(),
+                        Triggers.creatureYouControlDealsCombatDamageToPlayerOrPlaneswalker())
                 : List.of(Triggers.creatureYouControlDealsDamageToPlaneswalker());
-        gameData.forEachPermanent((watcherControllerId, watcher) -> {
-            if (!watcherControllerId.equals(damageSourceControllerId)) return;
+        for (Watcher watcher : eventAbilitySupport.watchers(gameData)) {
+            if (!watcher.controllerId().equals(damageSourceControllerId)) continue;
             for (Trigger toPlaneswalker : watches) {
                 List<TriggeredAbility> abilities = abilities(gameData, watcher, toPlaneswalker);
                 for (TriggeredAbility ability : abilities) {
                     requireEachEvent(ability, toPlaneswalker);
                     // "Whenever a [filtered] creature you control deals damage to a planeswalker": on the creature.
                     PermanentPredicate filter = Read.filter(ability, toPlaneswalker);
-                    if (filter != null && !damageFilterMatches(gameData, watcher, watcherControllerId, filter,
-                            damageSource)) {
+                    if (filter != null && !damageFilterMatches(gameData, watcher, filter, damageSource)) {
                         continue;
                     }
                     // "Destroy that planeswalker" (Zagras): the planeswalker is the non-targeting "that
                     // planeswalker", the creature the triggering permanent.
-                    putEventAbility(gameData, ability, watcher.getCard(), watcher, watcherControllerId,
-                            ConditionContext.forPermanent(watcher, watcherControllerId)
+                    putEventAbility(gameData, ability, watcher, watcher.conditionContext()
                                     .withTriggeringPermanentId(damageSource.getId()).withEventValue(damage), null,
                             entry -> {
                                 entry.setTargetId(damagedPlaneswalkerId);
@@ -2406,7 +2486,35 @@ public class DamageTriggers {
                             });
                 }
             }
-        });
+        }
+    }
+
+    /**
+     * "Whenever a creature deals combat damage to this planeswalker" ({@code damagedPlaneswalkerId}) of the
+     * watchers whose source it is: the creature is the non-targeting "that creature" and triggering permanent.
+     */
+    private void checkCreatureDealsCombatDamageToThisPlaneswalkerTriggers(GameData gameData, Permanent damageSource,
+            UUID damagedPlaneswalkerId, int damage) {
+        Trigger watch = Triggers.creatureDealsCombatDamageToThisPlaneswalker();
+        UUID damageSourceControllerId = gameQueryService.findPermanentController(gameData, damageSource.getId());
+        for (Watcher watcher : eventAbilitySupport.watchers(gameData)) {
+            if (!damagedPlaneswalkerId.equals(watcher.sourcePermanentId())) continue;
+            for (TriggeredAbility ability : abilities(gameData, watcher, watch)) {
+                requireEachEvent(ability, watch);
+                if (Read.filter(ability, watch) != null) {
+                    throw new IllegalStateException("The collector of " + watch + " reads no filter: " + ability);
+                }
+                putEventAbility(gameData, ability, watcher, watcher.conditionContext()
+                                .withTriggeringPermanentId(damageSource.getId()).withEventValue(damage), null,
+                        entry -> {
+                            entry.setTargetId(damageSource.getId());
+                            entry.setTriggeringPermanentId(damageSource.getId());
+                            entry.setTriggeringPermanentControllerId(damageSourceControllerId);
+                            entry.setEventValue(damage);
+                            entry.setNonTargeting(true);
+                        });
+            }
+        }
     }
 
     /**
@@ -2640,28 +2748,21 @@ public class DamageTriggers {
             }
         }
 
-        for (DelayedWatchedCreatureDealtDamage watch
-                : gameData.getDelayedActions(DelayedWatchedCreatureDealtDamage.class)) {
-            if (!watch.watchedPermanentId().equals(damagedCreature.getId())) {
-                continue;
+        // The delayed "whenever that creature is dealt damage this turn" abilities about it (Arcbond, CR 603.7c): the
+        // creature is "it", the triggering permanent, as it was dealt the damage. Those that judge the source of the
+        // damage are handled with it ({@link #checkDelayedCreatureDealtDamageBySourceTriggers}).
+        Trigger dealtDamage = Triggers.dealtDamage();
+        for (Watcher watcher : eventAbilitySupport.delayedWatching(gameData, damagedCreature.getId())) {
+            for (TriggeredAbility ability : abilities(gameData, watcher, dealtDamage)) {
+                requireEachEvent(ability, dealtDamage);
+                if (damageSourceFilter(ability, dealtDamage) != null) {
+                    continue;
+                }
+                putEventAbility(gameData, ability, watcher, watcher.conditionContext()
+                                .withTriggeringPermanentId(damagedCreature.getId()).withEventValue(damageDealt), cause,
+                        damagedPermanentRecord(gameData, watcher.permanent(), damagedCreature,
+                                damagedCreatureControllerId, damageDealt, false, true));
             }
-
-            StackEntry trigger = TriggeredAbilityStackService.madeAbility(watch.sourceCard(),
-                    watch.controllerId(),
-                    watch.sourceCard().getName() + "'s delayed trigger",
-                    new ArrayList<>(watch.effects()),
-                    (UUID) null,
-                    watch.watchedPermanentId());
-            trigger.setNonTargeting(true);
-            trigger.setEventValue(damageDealt);
-            trigger.setDamageSourceCard(damagedCreature.getCard());
-            trigger.setDamageSourceControllerId(
-                    gameQueryService.findPermanentController(gameData, damagedCreature.getId()));
-            trigger.setSourcePermanentSnapshot(new Permanent(damagedCreature));
-            triggeredAbilityStackService.putDelayed(gameData, trigger);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
-            log.info("Game {} - {} delayed trigger fires after damage to watched creature",
-                    gameData.id, watch.sourceCard().getName());
         }
     }
 
@@ -3137,6 +3238,12 @@ public class DamageTriggers {
      * Throws when {@code ability} triggers other than once for each event its collector reports ("once for each
      * source", CR 603.2c, which only the combat damage step's collector reads).
      */
+    /** What the permanent that dealt the damage must be for {@code ability}, a {@code watched} one, or {@code null}. */
+    private static PermanentPredicate damageSourceFilter(TriggeredAbility ability, Trigger watched) {
+        DamageTrigger trigger = Read.trigger(ability, watched);
+        return trigger == null ? null : trigger.damageSourceFilter();
+    }
+
     private static void requireEachEvent(TriggeredAbility ability, Trigger watch) {
         if (ability.options().multiplicity() != TriggerMultiplicity.EACH) {
             throw new IllegalStateException("The collector of " + watch + " reads no "
@@ -3145,31 +3252,35 @@ public class DamageTriggers {
     }
 
     /**
-     * Fires delayed triggers watching a Wall for damage from an attacking creature. The source's
-     * attacking status is checked at the damage event, so noncombat damage from a spell and damage
-     * from a blocking creature do not qualify.
+     * The delayed "whenever that creature is dealt damage by a [filtered] source this turn" abilities about
+     * {@code damagedCreature} (Glyph of Life's "by an attacking creature", CR 603.7c), once for each source that
+     * deals it damage: {@code damageSource} must be a permanent matching the trigger's damage-source filter as it
+     * deals the damage (so an attacking creature has to be attacking then, which noncombat damage from a spell and
+     * damage from a blocking creature never are). The record is the one "that creature is dealt damage" has
+     * ({@link #damagedPermanentRecord}).
      */
-    public void checkDelayedWatchedCreatureDealtDamageByAttackingCreatureTriggers(
-            GameData gameData, Permanent damageSource, Permanent damagedCreature, int damage) {
-        if (damageSource == null || damagedCreature == null || damage <= 0
-                || !damageSource.isAttacking() || !gameQueryService.isCreature(gameData, damageSource)) {
+    public void checkDelayedCreatureDealtDamageBySourceTriggers(GameData gameData, Permanent damageSource,
+                                                                Permanent damagedCreature, int damage) {
+        if (damageSource == null || damagedCreature == null || damage <= 0) {
             return;
         }
 
-        for (DelayedWatchedCreatureDealtDamageByAttackingCreature watch
-                : gameData.getDelayedActions(DelayedWatchedCreatureDealtDamageByAttackingCreature.class)) {
-            if (!watch.watchedPermanentId().equals(damagedCreature.getId())) continue;
-
-            StackEntry trigger = TriggeredAbilityStackService.madeAbility(watch.sourceCard(),
-                    watch.controllerId(),
-                    watch.sourceCard().getName() + "'s delayed trigger",
-                    new ArrayList<>(watch.effects()),
-                    watch.watchedPermanentId(),
-                    (UUID) null);
-            trigger.setNonTargeting(true);
-            trigger.setEventValue(damage);
-            triggeredAbilityStackService.putDelayed(gameData, trigger);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
+        Trigger dealtDamage = Triggers.dealtDamage();
+        UUID damagedControllerId = gameQueryService.findPermanentController(gameData, damagedCreature.getId());
+        for (Watcher watcher : eventAbilitySupport.delayedWatching(gameData, damagedCreature.getId())) {
+            for (TriggeredAbility ability : abilities(gameData, watcher, dealtDamage)) {
+                requireEachEvent(ability, dealtDamage);
+                PermanentPredicate sourceFilter = damageSourceFilter(ability, dealtDamage);
+                if (sourceFilter == null || !predicateEvaluationService.matchesPermanentPredicate(damageSource,
+                        sourceFilter, FilterContext.of(gameData).withSourceControllerId(watcher.controllerId()))) {
+                    continue;
+                }
+                putEventAbility(gameData, ability, watcher, watcher.conditionContext()
+                                .withTriggeringPermanentId(damagedCreature.getId()).withEventValue(damage),
+                        TriggerCause.Damage.toPermanent(damagedCreature, damagedControllerId),
+                        damagedPermanentRecord(gameData, watcher.permanent(), damagedCreature, damagedControllerId,
+                                damage, false, true));
+            }
         }
     }
 

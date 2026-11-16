@@ -52,7 +52,7 @@ public class PutCardFromHandOrGraveyardChoiceInteractionHandler
                     interaction.enterWithCounter(), interaction.enterWithCounterCount(), interaction.grantHaste(),
                     interaction.returnToHandAtEndStep(), interaction.includeGraveyard(),
                     interaction.includeCommandZone(), interaction.delayedAuraCardId(),
-                    interaction.delayedAuraOwnerId(), interaction.handleCreatureEtbAndLegendRule());
+                    interaction.delayedAuraControllerId(), interaction.handleCreatureEtbAndLegendRule());
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

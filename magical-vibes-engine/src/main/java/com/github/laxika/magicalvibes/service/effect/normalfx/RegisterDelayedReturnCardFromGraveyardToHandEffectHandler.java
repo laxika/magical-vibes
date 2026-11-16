@@ -1,5 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
-import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.UUID;
@@ -71,8 +73,9 @@ public class RegisterDelayedReturnCardFromGraveyardToHandEffectHandler implement
             delayedEffect = new com.github.laxika.magicalvibes.model.effect.MayEffect(returnEffect,
                     "Return " + returning.getName() + " to its owner's hand?");
         }
-        gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger(
-                entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), null, delayedEffect));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(Triggers.endStep(
+                ActivePlayer.ANY), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), null,
+                delayedEffect));
         log.info("Game {} - Delayed graveyard-to-hand return registered for card {} (owner {})",
                 gameData.id, cardId, ownerId);
     }

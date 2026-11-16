@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.EndOfTurnStateField;
 import com.github.laxika.magicalvibes.model.EndOfTurnStateShare;
 import com.github.laxika.magicalvibes.model.action.DelayedAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.action.PhasedOutUntilEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -52,9 +51,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.action.DelayedCleanupTrigger;
 
 /**
  * Handles end-of-turn cleanup, mana pool draining, and hand-size calculations.
@@ -96,23 +92,13 @@ public class TurnCleanupService {
     }
 
     /**
-     * Performs the full cleanup-step reset: puts the "at the beginning of the next cleanup step"
-     * triggers (such as sacrificing a permanent) on the stack, clears all "until end of turn" modifiers on every
+     * Performs the full cleanup-step reset: puts the cleanup-step triggers that flagged permanents carry (such as
+     * sacrificing a permanent) on the stack, clears all "until end of turn" modifiers on every
      * permanent and recomputes control of temporarily stolen permanents.
      *
      * @param gameData the current game state to modify
      */
     public void applyCleanupResets(GameData gameData) {
-        for (var delayed : gameData.drainDelayedActions(
-                DelayedCleanupTrigger.class)) {
-            var entry = TriggeredAbilityStackService.madeAbility(
-                    delayed.sourceCard(), delayed.controllerId(),
-                    delayed.sourceCard().getName() + "'s cleanup trigger", List.of(delayed.effect()));
-            entry.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-        }
-        permanentRemovalService.processDelayedPermanentActions(
-                gameData, DelayedPermanentActionKind.EXILE_TOKEN_AT_NEXT_CLEANUP);
         sacrificePermanentsFlaggedForCleanup(gameData);
         returnPermanentsFlaggedForCleanup(gameData);
         removeCountersScheduledForCleanup(gameData);
@@ -126,10 +112,6 @@ public class TurnCleanupService {
                 gameData.skipNextCombatPhaseCount.computeIfPresent(playerId,
                         (id, total) -> total > count ? total - count : null));
         gameData.skipCombatPhaseExpirationsThisTurn.clear();
-        gameData.drainDelayedActions(
-                com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat.class);
-        gameData.drainDelayedActions(
-                com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat.class);
         gameData.retainControlLossUnattachTriggers();
     }
 
@@ -168,7 +150,7 @@ public class TurnCleanupService {
     /**
      * Puts a cleanup trigger on the stack for every permanent still carrying the Mirage flash clause's "sacrifice it
      * at the beginning of the next cleanup step" rider (Ward of Lights cast at instant speed). A resolved spell turns
-     * the rider into its own {@code DelayedCleanupTrigger} as it enters, so this only catches a flag set some other
+     * the rider into its own delayed triggered ability as it enters, so this only catches a flag set some other
      * way. The sacrifice is a resolution step of that trigger, so it can ask its CR 616.1 questions before the
      * permanent leaves; the flag is cleared once the trigger owns it.
      */
@@ -491,6 +473,7 @@ public class TurnCleanupService {
         gameData.temporaryGlobalTriggeredAbilities.removeIf(watcher ->
                 watcher.endsThisTurn()
                         || watcher.untilTriggered() && watcher.watchedPermanentId() != null
+                        && !watcher.waitsForStep()
                         && gameQueryService.findPermanentById(gameData, watcher.watchedPermanentId()) == null
                         || (watcher.untilEndOfNextTurn()
                         && gameData.activePlayerId.equals(watcher.expirationPlayerId() != null
@@ -614,8 +597,6 @@ public class TurnCleanupService {
         gameData.pendingAnyManaTypeForNextSpellThisTurnCount.clear();
         gameData.spellsPaidUsingPendingAnyManaTypeThisTurn.clear();
         gameData.pendingNextInstantSorceryUncounterableThisTurnCount.clear();
-        gameData.creatureEntersDrawSourcesThisTurn.clear();
-        gameData.untapAttackedCreaturesEachCombatThisTurnSources.clear();
         gameData.conspiredSpellCopyCounts.clear();
         gameData.casualtySpellCopyCounts.clear();
 

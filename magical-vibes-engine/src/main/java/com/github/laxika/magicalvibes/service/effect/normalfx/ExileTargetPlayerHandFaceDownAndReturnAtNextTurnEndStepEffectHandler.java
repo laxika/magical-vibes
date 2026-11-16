@@ -1,12 +1,17 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.TargetPlayerHandExileReturnAtNextTurnEndStep;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandFaceDownAndReturnAtNextTurnEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardsToTargetPlayerHandEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
@@ -48,12 +53,13 @@ public class ExileTargetPlayerHandFaceDownAndReturnAtNextTurnEndStepEffectHandle
             exileService.exileCardFaceDown(gameData, targetPlayerId, card, null);
         }
 
-        gameData.queueDelayedAction(new TargetPlayerHandExileReturnAtNextTurnEndStep(
-                targetPlayerId,
-                exiledCards.stream().map(Card::getId).toList(),
-                entry.getCard(),
-                entry.getControllerId(),
-                gameData.turnNumber));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                entry.getControllerId(), entry.getCard(),
+                new TriggeredAbility(Triggers.endStep(ActivePlayer.CHOSEN_PLAYER),
+                        new ReturnExiledCardsToTargetPlayerHandEffect(
+                                targetPlayerId, exiledCards.stream().map(Card::getId).toList())),
+                entry.getSourcePermanentId(), null, targetPlayerId,
+                DelayedReferents.NONE.afterTurn(gameData.turnNumber)));
         gameLogService.append(gameData, GameLog.text(playerName + "'s hand is exiled face down ("
                 + exiledCards.size() + " card" + (exiledCards.size() != 1 ? "s" : "") + ")."));
         log.info("Game {} - {}'s hand ({} cards) exiled face down until their next turn's end step",

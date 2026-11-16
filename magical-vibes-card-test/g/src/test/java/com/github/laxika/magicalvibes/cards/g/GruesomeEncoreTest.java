@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -23,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -69,10 +69,11 @@ class GruesomeEncoreTest extends BaseCardTest {
         assertThat(creature.getGrantedKeywords()).contains(Keyword.HASTE);
 
         // Creature should be marked for exile at end step
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).anyMatch(a ->
+        assertThat(DelayedPermanentMoves.waiting(gd)).anyMatch(a ->
                 a.permanentId().equals(creature.getId())
-                        && a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP
-                        && a.triggerControllerId().equals(player1.getId()));
+                        && a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
+        assertThat(DelayedPermanentMoves.abilities(gd)).singleElement()
+                .satisfies(delayed -> assertThat(delayed.controllerId()).isEqualTo(player1.getId()));
 
         // Creature should be tracked as stolen
         assertThat(gd.stolenCreatures).containsKey(creature.getId());

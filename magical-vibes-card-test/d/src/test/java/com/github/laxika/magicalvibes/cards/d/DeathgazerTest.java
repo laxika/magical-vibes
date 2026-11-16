@@ -10,8 +10,9 @@ import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -43,8 +44,8 @@ class DeathgazerTest extends BaseCardTest {
 
         // Resolving it schedules the blocker for destruction at end of combat
         resolveAllTriggers();
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> a.affectedPermanentId().equals(spider.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> a.watchedPermanentId().equals(spider.getId()));
     }
 
     @Test
@@ -67,8 +68,8 @@ class DeathgazerTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .extracting(TemporaryGlobalTriggeredAbility::watchedPermanentId)
                 .containsExactlyInAnyOrder(firstBlocker.getId(), secondBlocker.getId());
     }
 
@@ -105,7 +106,7 @@ class DeathgazerTest extends BaseCardTest {
         assertThat(gd.stack)
                 .noneMatch(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && se.getCard().getName().equals("Deathgazer"));
-        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).isEmpty();
     }
 
     @Test
@@ -125,8 +126,8 @@ class DeathgazerTest extends BaseCardTest {
                         && se.getTargetId().equals(attacker.getId()));
 
         resolveAllTriggers();
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> a.affectedPermanentId().equals(attacker.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> a.watchedPermanentId().equals(attacker.getId()));
     }
 
     @Test
@@ -142,7 +143,7 @@ class DeathgazerTest extends BaseCardTest {
         assertThat(gd.stack)
                 .noneMatch(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && se.getCard().getName().equals("Deathgazer"));
-        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).isEmpty();
     }
 
     @Test
@@ -185,8 +186,8 @@ class DeathgazerTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .extracting(TemporaryGlobalTriggeredAbility::watchedPermanentId)
                 .containsExactlyInAnyOrder(firstBlocker.getId(), secondBlocker.getId());
     }
 
@@ -202,8 +203,8 @@ class DeathgazerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .extracting(TemporaryGlobalTriggeredAbility::watchedPermanentId)
                 .containsExactly(hengeGuardian.getId());
     }
 
@@ -229,11 +230,11 @@ class DeathgazerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .extracting(TemporaryGlobalTriggeredAbility::watchedPermanentId)
                 .containsExactly(nonblackBlocker.getId());
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .extracting(TemporaryGlobalTriggeredAbility::watchedPermanentId)
                 .doesNotContain(blackBlocker.getId());
     }
 

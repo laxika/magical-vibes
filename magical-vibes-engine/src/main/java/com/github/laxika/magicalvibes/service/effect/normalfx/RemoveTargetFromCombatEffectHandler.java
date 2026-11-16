@@ -22,7 +22,9 @@ public class RemoveTargetFromCombatEffectHandler implements NormalEffectHandlerB
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        var removal = (RemoveTargetFromCombatEffect) effect;
+        var target = gameQueryService.findPermanentById(gameData,
+                removal.triggeringPermanent() ? entry.getTriggeringPermanentId() : entry.getTargetId());
         if (target == null) {
             return;
         }

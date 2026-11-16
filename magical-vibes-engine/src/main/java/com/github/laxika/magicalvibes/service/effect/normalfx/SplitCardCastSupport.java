@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
@@ -735,8 +734,6 @@ public class SplitCardCastSupport {
             gameData.outsideGamePlayPermissions.remove(cardId);
             gameData.outsideGameAdditionalModalModePermissions.remove(cardId);
         } else if (cast.sourceZone() == Zone.EXILE) {
-            gameData.clearDelayedActions(ReturnExiledCardToHandAtNextEndStep.class,
-                    action -> action.cardId().equals(cardId));
             clearExileCastCostChanges(gameData, cardId);
             if (gameData.removeFromExile(cardId) && (cast.exileCast() == null || !cast.exileCast().copy())) {
                 gameData.recordCardPlayedFromExile(cast.controllerId());

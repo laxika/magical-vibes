@@ -38,14 +38,16 @@ public class ReturnAuraFromGraveyardAttachedToPermanentEffectHandler implements 
         }
 
         Card auraCard = gameQueryService.findCardInGraveyardById(gameData, e.auraCardId());
-        if (auraCard == null) {
+        // An Aura that left the graveyard and came back is a new object (CR 400.7).
+        if (auraCard == null || e.auraCardId().equals(entry.getTriggeringCardId())
+                && !entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(e.auraCardId()))) {
             return;
         }
 
         permanentRemovalService.removeCardFromGraveyardById(gameData, e.auraCardId());
         Permanent auraPermanent = new Permanent(auraCard);
         auraPermanent.setAttachedTo(enchantedPermanent.getId());
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, e.auraOwnerId(), auraPermanent);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, e.returnControllerId(), auraPermanent);
         gameLogService.append(gameData, GameLog.builder()
                 .card(auraCard)
                 .text(" returns to the battlefield attached to ")

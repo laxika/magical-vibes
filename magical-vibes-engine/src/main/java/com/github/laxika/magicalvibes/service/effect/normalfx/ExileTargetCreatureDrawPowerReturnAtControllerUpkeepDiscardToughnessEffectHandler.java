@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureDrawPowerR
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PendingExileReturns;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +57,7 @@ public class ExileTargetCreatureDrawPowerReturnAtControllerUpkeepDiscardToughnes
         }
 
         Card card = cards.getFirst();
-        gameData.queueDelayedAction(PendingExileReturn.forControllerNextUpkeepWithToughnessDiscard(
+        PendingExileReturns.schedule(gameData,PendingExileReturn.forControllerNextUpkeepWithToughnessDiscard(
                 card,
                 ownerId,
                 entry.getControllerId(),

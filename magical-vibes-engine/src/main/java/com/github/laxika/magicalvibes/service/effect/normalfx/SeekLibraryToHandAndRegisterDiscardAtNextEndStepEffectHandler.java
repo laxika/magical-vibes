@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DiscardSpecificCardAtNextEndStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -19,6 +18,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.DiscardSpecificCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /** Resolves the seek and binds each selected card to its delayed discard trigger. */
 @Component
@@ -71,8 +75,14 @@ public class SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffectHandler
                     .text("seeks and puts " + chosen.getName() + " into hand.").build());
         }
         if (!soughtCards.isEmpty()) {
-            gameData.queueDelayedAction(new DiscardSpecificCardAtNextEndStep(
-                    controllerId, soughtCards.stream().map(Card::getId).toList(), entry.getCard()));
+            DelayedReferents referents = seek.laterTurn()
+                    ? DelayedReferents.NONE.afterTurn(gameData.turnNumber) : DelayedReferents.NONE;
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    controllerId, entry.getCard(),
+                    new TriggeredAbility(Triggers.endStep(seek.endStepOf()),
+                            soughtCards.stream().<CardEffect>map(card -> new DiscardSpecificCardEffect(card.getId()))
+                                    .toArray(CardEffect[]::new)),
+                    entry.getSourcePermanentId(), null, null, referents));
         }
         ActionEvents.sought(gameData, controllerId, soughtCards);
     }

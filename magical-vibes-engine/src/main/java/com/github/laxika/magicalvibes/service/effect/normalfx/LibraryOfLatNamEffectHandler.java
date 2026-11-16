@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryOfLatNamEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -34,7 +33,10 @@ public class LibraryOfLatNamEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         if (drawThree) {
-            gameData.queueDelayedAction(new DrawCardsAtNextUpkeep(entry.getControllerId(), 3, entry.getCard()));
+            gameData.temporaryGlobalTriggeredAbilities.add(
+                    RegisterDrawCardsAtNextUpkeepEffectHandler.drawAtNextTurnsUpkeep(gameData.turnNumber,
+                            entry.getControllerId(), entry.getControllerId(), 3, false, entry.getCard(),
+                            entry.getSourcePermanentId()));
             log.info("Game {} - Library of Lat-Nam schedules three draws", gameData.id);
             return;
         }

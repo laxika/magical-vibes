@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.e.EmpressGalina;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -40,7 +40,7 @@ class LiberateTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Ardent Soldier");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Ardent Soldier"));
-        assertThat(gd.getDelayedActions(PendingExileReturn.class))
+        assertThat(DelayedPermanentMoves.waitingExileReturns(gd))
                 .anyMatch(action -> action.card().getName().equals("Ardent Soldier"));
     }
 
@@ -188,7 +188,7 @@ class LiberateTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Dromar, the Banisher");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
+        assertThat(DelayedPermanentMoves.waitingExileReturns(gd)).isEmpty();
         harness.assertInGraveyard(player1, "Liberate");
     }
 }

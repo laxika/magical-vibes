@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -56,8 +59,10 @@ public class SetTargetBasePowerToughnessUntilNextUpkeepThenAddCounterEffectHandl
                 new SetBasePowerToughnessEffect(e.power(), e.toughness()), target.getId(), null, null,
                 EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP, 0));
 
-        gameData.queueDelayedAction(new PutCounterOnPermanentAtNextUpkeep(entry.getControllerId(),
-                target.getId(), e.counterType(), e.counterAmount(), entry.getCard()));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.upkeep(ActivePlayer.YOU), entry.getControllerId(), entry.getCard(),
+                entry.getSourcePermanentId(), target.getId(),
+                new PutCounterOnTargetPermanentEffect(e.counterType(), e.counterAmount())));
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " has base power and toughness " + e.power() + "/" + e.toughness()

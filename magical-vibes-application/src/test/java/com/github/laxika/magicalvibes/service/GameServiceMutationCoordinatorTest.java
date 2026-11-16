@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.testutil.DelayedObligations;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.e.EyeForAnEye;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -21,7 +23,8 @@ class GameServiceMutationCoordinatorTest extends BaseCardTest {
     @Test
     void drawStepPaymentCompletesInsideOneOuterAction() {
         GrizzlyBears source = new GrizzlyBears();
-        gd.queueDelayedAction(new LoseLifeAtNextDrawStepUnlessPays(player1.getId(), 1, 1, source));
+        gd.temporaryGlobalTriggeredAbilities.add(DelayedObligations.loseLifeAtDrawStepUnlessPaid(
+                player1.getId(), player1.getId(), source, 1, 1));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player1);
         harness.clearPriorityPassed();
@@ -29,17 +32,17 @@ class GameServiceMutationCoordinatorTest extends BaseCardTest {
 
         gs.payDelayedTriggerCost(gd, player1, source.getId(), player1.getId());
 
-        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.DRAW_STEP)).isEmpty();
         assertThat(gd.domainStateVersion()).isEqualTo(versionBeforeAction + 1);
     }
 
     @Test
     void nonactivePlayerRetainsPriorityToPayMultipleObligations() {
         GrizzlyBears source = new GrizzlyBears();
-        LoseLifeAtNextDrawStepUnlessPays obligation =
-                new LoseLifeAtNextDrawStepUnlessPays(player2.getId(), 1, 1, source);
-        gd.queueDelayedAction(obligation);
-        gd.queueDelayedAction(obligation);
+        TemporaryGlobalTriggeredAbility obligation = DelayedObligations.loseLifeAtDrawStepUnlessPaid(
+                player2.getId(), player2.getId(), source, 1, 1);
+        gd.temporaryGlobalTriggeredAbilities.add(obligation);
+        gd.temporaryGlobalTriggeredAbilities.add(obligation);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player1);
         harness.clearPriorityPassed();
@@ -49,16 +52,16 @@ class GameServiceMutationCoordinatorTest extends BaseCardTest {
         assertThat(gqs.getPriorityPlayerId(gd)).isEqualTo(player2.getId());
         gs.payDelayedTriggerCost(gd, player2, source.getId(), player2.getId());
 
-        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.DRAW_STEP)).isEmpty();
         assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
     }
 
     @Test
     void drawStepPaymentRequiresPriorityBeforeSpendingMana() {
         GrizzlyBears source = new GrizzlyBears();
-        LoseLifeAtNextDrawStepUnlessPays obligation =
-                new LoseLifeAtNextDrawStepUnlessPays(player2.getId(), 1, 1, source);
-        gd.queueDelayedAction(obligation);
+        TemporaryGlobalTriggeredAbility obligation = DelayedObligations.loseLifeAtDrawStepUnlessPaid(
+                player2.getId(), player2.getId(), source, 1, 1);
+        gd.temporaryGlobalTriggeredAbilities.add(obligation);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player1);
         harness.clearPriorityPassed();
@@ -66,7 +69,7 @@ class GameServiceMutationCoordinatorTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.payDelayedTriggerCost(gd, player2, source.getId(), player2.getId()))
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("priority");
 
-        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).containsExactly(obligation);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.DRAW_STEP)).containsExactly(obligation);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isEqualTo(1);
     }
 

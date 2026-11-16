@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReboundCastFromExileEffectHandler;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -12,12 +14,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
-import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
-import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
@@ -43,6 +44,7 @@ import com.github.laxika.magicalvibes.model.rules.RoomEvent;
 import com.github.laxika.magicalvibes.model.rules.SagaEvent;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
@@ -56,6 +58,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnExiledCardToHandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SpellweaverVoluteSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
@@ -491,12 +494,14 @@ public class StackResolutionService {
         permanent.setRepeatedAdditionalCosts(entry.getRepeatedAdditionalCosts());
         if (permanent.isSacrificeAtNextCleanup()) {
             permanent.setSacrificeAtNextCleanup(false);
-            gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedCleanupTrigger(
-                    entry.getControllerId(), entry.getCard(),
-                    new com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect(1,
-                            new com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate(
-                                    permanent.getId()),
-                            com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.EACH_PLAYER)));
+            gameData.temporaryGlobalTriggeredAbilities.add(
+                    com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility.atNextStep(
+                            com.github.laxika.magicalvibes.model.trigger.Triggers.cleanup(), entry.getControllerId(),
+                            entry.getCard(), null, null,
+                            new com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect(1,
+                                    new com.github.laxika.magicalvibes.model.filter
+                                            .PermanentIsSpecificPermanentPredicate(permanent.getId()),
+                                    com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.EACH_PLAYER)));
         }
         gameData.transferCardsExiledByPermanent(entry.getCard().getId(), permanent.getId());
         if (entry.getRepeatedAdditionalCosts().isEmpty() && entry.getConvokeCreatureIds().isEmpty()) {
@@ -536,13 +541,13 @@ public class StackResolutionService {
         // resolves, not an enters-the-battlefield trigger. A printed blitz cost is handled by
         // BattlefieldPlacementService; only a blitz cost granted by another source is queued here.
         if (entry.isGrantedBlitzOnEntry()) {
-            gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedPermanentAction(
-                    permanent.getId(), com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                    false, null, null, controllerId));
+            DelayedPermanentActions.schedule(gameData, entry,
+                    new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
+                    ActivePlayer.ANY);
         }
         if (entry.isAlternateCost() && entry.getCard().getKeywords().contains(Keyword.DASH)) {
-            gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger(
-                    entry.getControllerId(), entry.getCard(), permanent.getId(), permanent.getId(),
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(Triggers.endStep(
+                    ActivePlayer.ANY), entry.getControllerId(), entry.getCard(), permanent.getId(), permanent.getId(),
                     com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.self()));
         }
     }
@@ -550,8 +555,9 @@ public class StackResolutionService {
     private void queueWarpExileIfPresent(GameData gameData, StackEntry entry, Permanent permanent) {
         if (entry.isCastWithWarp()
                 && gameQueryService.findPermanentById(gameData, permanent.getId()) != null) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(
-                    permanent.getId(), DelayedPermanentActionKind.EXILE_WARPED_AT_END_STEP));
+            DelayedPermanentActions.schedule(gameData, entry,
+                    new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_WARPED_AT_END_STEP),
+                    ActivePlayer.ANY);
         }
     }
 
@@ -779,8 +785,9 @@ public class StackResolutionService {
         }
         applySneakAttackState(perm, entry);
         if (entry.isCastWithWarp()) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(
-                    perm.getId(), DelayedPermanentActionKind.EXILE_WARPED_AT_END_STEP));
+            DelayedPermanentActions.schedule(gameData, entry,
+                    new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_WARPED_AT_END_STEP),
+                    ActivePlayer.ANY);
         }
         gameData.transferCardsExiledByPermanent(entry.getPhysicalCard().getId(), perm.getId());
         registerBeheldCardReturn(gameData, entry, perm);
@@ -1251,8 +1258,9 @@ public class StackResolutionService {
             return;
         }
         if (entry.isCastWithWarp()) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(
-                    perm.getId(), DelayedPermanentActionKind.EXILE_WARPED_AT_END_STEP));
+            DelayedPermanentActions.schedule(gameData, entry,
+                    new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_WARPED_AT_END_STEP),
+                    ActivePlayer.ANY);
         }
         applySneakAttackState(perm, entry);
         // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
@@ -1599,8 +1607,8 @@ public class StackResolutionService {
 
         gameData.spellsWithDreamCounterOnResolution.remove(card.getId());
         gameData.addToExile(entry.getOwnerId(), card);
-        gameData.queueDelayedAction(new ReboundAtNextUpkeep(
-                entry.getControllerId(), entry.getOwnerId(), card));
+        gameData.temporaryGlobalTriggeredAbilities.add(
+                ReboundCastFromExileEffectHandler.reboundAbility(entry.getControllerId(), card, false));
         gameLogService.append(gameData, GameLog.cardThen(card, " is exiled with rebound."));
         return true;
     }
@@ -1713,10 +1721,10 @@ public class StackResolutionService {
                 && gameData.pendingReturnToHandOnDiscardType == null) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
-            gameData.queueDelayedAction(new ReturnExiledCardToHandAtNextEndStep(
-                    physicalCard.getId(), ownerId,
+            gameData.temporaryGlobalTriggeredAbilities.add(ReturnExiledCardToHandEffectHandler.returnAtNextEndStep(
+                    gameData, entry.getControllerId(),
                     entry.getExileAndReturnSourceCard() != null ? entry.getExileAndReturnSourceCard() : entry.getCard(),
-                    entry.getControllerId()));
+                    null, List.of(physicalCard.getId()), ownerId, 0, false));
             gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
         } else if (entry.isCastWithFlashback() && exileSpellEffect == null) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
@@ -1850,7 +1858,8 @@ public class StackResolutionService {
     private void exileSpellWithRebound(GameData gameData, UUID controllerId, UUID ownerId, Card card) {
         gameData.spellsWithDreamCounterOnResolution.remove(card.getId());
         gameData.addToExile(ownerId, card);
-        gameData.queueDelayedAction(new ReboundAtNextUpkeep(controllerId, ownerId, card));
+        gameData.temporaryGlobalTriggeredAbilities.add(
+                ReboundCastFromExileEffectHandler.reboundAbility(controllerId, card, false));
         gameLogService.append(gameData, GameLog.cardThen(card, " is exiled with rebound."));
     }
 

@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.d.DeeptreadMerrow;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.w.WingsOfVelisVel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -58,15 +58,13 @@ class ScatteringStrokeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Deeptread Merrow");
 
         // Delayed reward registered for the caster, amount = Deeptread Merrow's mana value (2).
-        assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).hasSize(1);
-        AddManaAtNextMainPhase reward = gd.getDelayedActions(AddManaAtNextMainPhase.class).getFirst();
-        assertThat(reward.controllerId()).isEqualTo(player2.getId());
-        assertThat(reward.amount()).isEqualTo(2);
-        assertThat(reward.color()).isEqualTo(ManaColor.COLORLESS);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE))
+                .allMatch(delayed -> delayed.controllerId().equals(player2.getId()));
 
         // At the caster's next main phase, they may add that much {C}.
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE)).isEmpty();
 
         harness.passBothPriorities(); // resolve the delayed "you may" trigger
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -109,7 +107,7 @@ class ScatteringStrokeTest extends BaseCardTest {
         keepClashCardsOnTop();
 
         harness.assertInGraveyard(player1, "Deeptread Merrow");
-        assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE)).isEmpty();
     }
 
     @Test
@@ -127,7 +125,7 @@ class ScatteringStrokeTest extends BaseCardTest {
         keepClashCardsOnTop();
 
         harness.assertInGraveyard(player1, "Deeptread Merrow");
-        assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE)).isEmpty();
     }
 
     @Test
@@ -150,9 +148,9 @@ class ScatteringStrokeTest extends BaseCardTest {
         keepClashCardsOnTop();
         harness.assertInGraveyard(player1, "Wings of Velis Vel");
 
-        assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE)).hasSize(1);
         harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE)).isEmpty();
 
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -205,6 +203,6 @@ class ScatteringStrokeTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opponentNext, opponentTop);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(casterNext, casterTop);
         harness.assertInGraveyard(player1, "Deeptread Merrow");
-        assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE)).hasSize(1);
     }
 }

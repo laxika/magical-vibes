@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Ability;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -23,10 +22,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -201,31 +198,6 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
             attackTargetsHandler.createdTokensAttack(gameData, entry, tokenController, createdFromIndex, false);
         }
         entry.getCreatedPermanentIds().addAll(createdIds);
-        List<com.github.laxika.magicalvibes.model.action.DelayedPermanentAction> endOfCombatExiles =
-                gameData.drainDelayedActions(
-                        com.github.laxika.magicalvibes.model.action.DelayedPermanentAction.class,
-                        action -> createdIds.contains(action.permanentId())
-                                && action.kind() == com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT
-                                && action.sourceCard() == null);
-        for (com.github.laxika.magicalvibes.model.action.DelayedPermanentAction action : endOfCombatExiles) {
-            gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedPermanentAction(
-                    action.permanentId(), action.kind(), action.cannotBeRegenerated(), action.returnExiledCardId(),
-                    action.controllerId(), action.sacrificingPlayerId(), action.followsPermanentController(),
-                    entry.getCard()));
-        }
-        List<com.github.laxika.magicalvibes.model.action.DelayedPermanentAction> exileActions =
-                gameData.drainDelayedActions(
-                        com.github.laxika.magicalvibes.model.action.DelayedPermanentAction.class,
-                        action -> createdIds.contains(action.permanentId())
-                                && action.kind() == com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
-        if (!exileActions.isEmpty()) {
-            List<UUID> exiledTokenIds = exileActions.stream()
-                    .map(com.github.laxika.magicalvibes.model.action.DelayedPermanentAction::permanentId).toList();
-            gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger(
-                    controllerId, entry.getCard(), entry.getSourcePermanentId(), exiledTokenIds.getFirst(),
-                    new com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect(),
-                    List.of(), exiledTokenIds));
-        }
     }
 
     private boolean hasAvailableTokenCreationReplacement(GameData gameData, UUID controllerId) {

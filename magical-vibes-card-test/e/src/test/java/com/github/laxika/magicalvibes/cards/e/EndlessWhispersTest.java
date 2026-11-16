@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldUnderControl;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 
 @CardUsed({EndlessWhispers.class, DrossCrocodile.class, DevourInShadow.class,
         BeaconOfUnrest.class, Opalescence.class, Naturalize.class})
@@ -39,10 +39,7 @@ class EndlessWhispersTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class))
-                .singleElement()
-                .extracting(DelayedGraveyardToBattlefieldUnderControl::controllerId)
-                .isEqualTo(player2.getId());
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
         harness.assertInGraveyard(player1, "Dross Crocodile");
 
         advanceToEndStep();
@@ -65,10 +62,7 @@ class EndlessWhispersTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class))
-                .singleElement()
-                .extracting(DelayedGraveyardToBattlefieldUnderControl::controllerId)
-                .isEqualTo(player1.getId());
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
 
         advanceToEndStep();
 
@@ -90,7 +84,7 @@ class EndlessWhispersTest extends BaseCardTest {
         advanceToEndStep();
 
         harness.assertNotOnBattlefield(player2, "Dross Crocodile");
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test
@@ -201,7 +195,7 @@ class EndlessWhispersTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
         harness.assertInGraveyard(player1, "Endless Whispers");
     }
 }

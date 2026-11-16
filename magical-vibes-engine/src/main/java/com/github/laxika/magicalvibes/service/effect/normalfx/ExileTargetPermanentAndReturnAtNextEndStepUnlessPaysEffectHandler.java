@@ -5,12 +5,18 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.ReturnExiledCardAtNextEndStepUnlessPays;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtNextEndStepUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -57,7 +63,7 @@ public class ExileTargetPermanentAndReturnAtNextEndStepUnlessPaysEffectHandler
 
             Card exiledCard = cards.getFirst();
             queued = true;
-            gameData.queueDelayedAction(new ReturnExiledCardAtNextEndStepUnlessPays(
+            gameData.temporaryGlobalTriggeredAbilities.add(returnUnlessPaid(
                     exiledCard.getId(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId()));
             gameLogService.append(gameData, GameLog.cardThen(exiledCard,
                     " is exiled. It will return at the beginning of the next end step unless its controller pays {3}{B}."));
@@ -68,10 +74,25 @@ public class ExileTargetPermanentAndReturnAtNextEndStepUnlessPaysEffectHandler
         if (!queued && targetIds.stream().noneMatch(java.util.Objects::nonNull)) {
             // "Up to one" with no target chosen: the delayed trigger is still created and its payment
             // still offered, but there is no card to return.
-            gameData.queueDelayedAction(new ReturnExiledCardAtNextEndStepUnlessPays(
+            gameData.temporaryGlobalTriggeredAbilities.add(returnUnlessPaid(
                     null, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId()));
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * The delayed triggered ability "at the beginning of the next end step, you may pay {3}{B}. If you don't, return
+     * that card to the battlefield under its owner's control" of a spell or ability of {@code sourceCard} controlled by
+     * {@code controllerId} that exiled {@code cardId} (none when it exiled no card).
+     */
+    private static TemporaryGlobalTriggeredAbility returnUnlessPaid(UUID cardId, UUID controllerId, Card sourceCard,
+                                                                    UUID sourcePermanentId) {
+        ForcedCostOrElseEffect payOrReturn = new ForcedCostOrElseEffect(
+                new PayManaCost("{3}{B}"),
+                new ArrayList<>(List.of(new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(cardId))),
+                true);
+        return TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.endStep(ActivePlayer.ANY), controllerId, sourceCard, sourcePermanentId, null, payOrReturn);
     }
 }

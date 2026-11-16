@@ -11,9 +11,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code MultiPermanentChoiceContext.ChooseCreaturesToAttackNextTurn}; the chosen set (possibly
  * empty) is recorded in {@code GameData.chosenAttackersNextTurn}, keyed by that player.
  *
- * <p>When that player's turn begins {@code TurnProgressionService} promotes the set to
- * {@code GameData.chosenAttackersThisTurn} and queues one
- * {@code DestroyPermanentIfDidNotAttackAtEndStep} per chosen creature. During that turn
+ * <p>As the set is recorded, {@code GameData.restrictAttackersNextTurn} makes the delayed triggered ability that
+ * destroys each chosen creature that didn't attack at the beginning of that turn's end step (CR 603.7a). When that
+ * player's turn begins {@code TurnProgressionService} promotes the set to
+ * {@code GameData.chosenAttackersThisTurn}. During that turn
  * {@code AttackLegalityService} bars every creature outside the set from attacking and counts an
  * "attacks if able" requirement for every creature inside it — so an empty choice locks combat
  * down entirely.

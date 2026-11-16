@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySelfAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,8 +51,8 @@ public class DestroySelfAtEndStepEffectHandler implements NormalEffectHandlerBea
 
         // CR 603.7e: the delayed destruction is controlled by the controller of the ability that created it,
         // even if the artifact has changed control since.
-        gameData.queueDelayedAction(new DelayedPermanentAction(sourceId, DelayedPermanentActionKind.DESTROY_AT_END_STEP,
-                false, null, null, null, false, null, entry.getControllerId(), null));
+        DelayedPermanentActions.schedule(gameData, entry,
+                new DelayedPermanentAction(sourceId, DelayedPermanentActionKind.DESTROY_AT_END_STEP), ActivePlayer.ANY);
 
         String logEntry = source.getCard().getName() + " will be destroyed at the beginning of the next end step.";
         gameLogService.append(gameData, GameLog.text(logEntry));

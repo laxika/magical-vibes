@@ -192,7 +192,9 @@ class MeleeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        // Second combat, same setup: the defending player is prompted again.
+        // Second combat, same setup: the defending player is prompted again. It is another combat phase of the
+        // turn, which the harness doesn't count as it forces the steps.
+        gd.combatPhasesThisTurn++;
         attacker.setAttacking(true);
         attacker.tap();
         enterDeclareAttackers();

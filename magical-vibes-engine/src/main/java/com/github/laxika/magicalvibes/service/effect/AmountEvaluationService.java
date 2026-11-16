@@ -200,6 +200,7 @@ import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageBySourceNameOrSubtypeThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesControllerControlledThatDealtCombatDamageToPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageThisTurn;
+import com.github.laxika.magicalvibes.model.amount.PlayersDealtCombatDamageThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithFewerCreaturesThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastTwoMoreLandsThanController;
@@ -798,6 +799,10 @@ public class AmountEvaluationService {
                             .getOrDefault(ctx.controllerId(), java.util.Set.of()).size();
             case OpponentsDealtCombatDamageThisTurn ignored ->
                     opponentsDealtCombatDamageThisTurn(gameData, ctx);
+            case PlayersDealtCombatDamageThisTurn ignored ->
+                    (int) gameData.combatDamageDealtToPlayersThisTurn.keySet().stream()
+                            .filter(gameData.playerIds::contains)
+                            .count();
             case OpponentsDealtCombatDamageBySourceNameOrSubtypeThisTurn sourceAmount ->
                     opponentsDealtCombatDamageBySourceNameOrSubtypeThisTurn(gameData, sourceAmount, ctx);
             case OpponentsWhoLostLifeThisTurn ignored ->

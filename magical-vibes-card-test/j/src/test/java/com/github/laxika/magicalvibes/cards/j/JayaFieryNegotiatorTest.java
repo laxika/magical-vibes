@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
 import com.github.laxika.magicalvibes.cards.i.InThrallToThePit;
 import com.github.laxika.magicalvibes.cards.l.LightningStrike;
 import com.github.laxika.magicalvibes.cards.s.ShoreUp;
@@ -23,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({JayaFieryNegotiator.class, SunbathingRootwalla.class, LightningStrike.class,
-        InThrallToThePit.class, ShoreUp.class})
+        InThrallToThePit.class, ShoreUp.class, ImprisonedInTheMoon.class})
 class JayaFieryNegotiatorTest extends BaseCardTest {
 
     @Test
@@ -190,6 +191,28 @@ class JayaFieryNegotiatorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(chosen.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The delayed damage keeps affecting the chosen permanent that stopped being a creature, asking for "
+            + "no new target")
+    void delayedDamageDoesNotChooseANewTargetWhenTheChosenPermanentStoppedBeingACreature() {
+        addReadyJaya(player1);
+        addCreatureReady(player1, new SunbathingRootwalla());
+        Permanent chosen = addCreatureReady(player2, new SunbathingRootwalla());
+        Permanent other = addCreatureReady(player2, new SunbathingRootwalla());
+        harness.activateAbility(player1, 0, 2, null, chosen.getId());
+        harness.passBothPriorities();
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ImprisonedInTheMoon());
+        aura.setAttachedTo(chosen.getId());
+
+        declareAttackers(List.of(1));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(chosen.getMarkedDamage()).isZero();
+        assertThat(other.getMarkedDamage()).isZero();
     }
 
     @Test

@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.HashSet;
-import com.github.laxika.magicalvibes.model.action.CyclopeanTombUpkeepCleanup;
 import java.util.UUID;
 
 /** Records the land targeted by Cyclopean Tomb on the source permanent's last-known state. */
@@ -48,15 +46,8 @@ public class RememberMireCounterLandEffectHandler implements NormalEffectHandler
                     pending.getSourcePermanentSnapshot().getMireCounterLandIds().addAll(targetIds);
                 }
             }
-            synchronized (gameData.delayedActions) {
-                for (int i = 0; i < gameData.delayedActions.size(); i++) {
-                    if (gameData.delayedActions.get(i) instanceof CyclopeanTombUpkeepCleanup cleanup
-                            && entry.getSourcePermanentId().equals(cleanup.sourcePermanentId())) {
-                        var tracked = new HashSet<>(cleanup.trackedLandIds());
-                        tracked.addAll(targetIds);
-                        gameData.delayedActions.set(i, cleanup.withTrackedLandIds(tracked));
-                    }
-                }
+            if (entry.getSourcePermanentId() != null) {
+                gameData.trackCyclopeanTombLands(entry.getSourcePermanentId(), targetIds);
             }
         }
     }

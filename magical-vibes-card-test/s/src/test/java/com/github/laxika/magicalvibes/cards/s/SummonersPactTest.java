@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.cards.d.DakmorSalvage;
 import com.github.laxika.magicalvibes.cards.l.LlanowarEmpath;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.PayManaOrLoseGameAtNextUpkeep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -42,10 +42,9 @@ class SummonersPactTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(greenCreature);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(land, blueCreature);
-        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class)).singleElement()
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).singleElement()
                 .satisfies(action -> {
-                    assertThat(action.playerId()).isEqualTo(player1.getId());
-                    assertThat(action.manaCost()).isEqualTo("{2}{G}{G}");
+                    assertThat(action.controllerId()).isEqualTo(player1.getId());
                 });
     }
 
@@ -58,7 +57,7 @@ class SummonersPactTest extends BaseCardTest {
         castPact();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(land, blueCreature);
     }
 
@@ -71,10 +70,9 @@ class SummonersPactTest extends BaseCardTest {
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class)).singleElement()
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).singleElement()
                 .satisfies(action -> {
-                    assertThat(action.playerId()).isEqualTo(player1.getId());
-                    assertThat(action.manaCost()).isEqualTo("{2}{G}{G}");
+                    assertThat(action.controllerId()).isEqualTo(player1.getId());
                 });
     }
 
@@ -91,7 +89,7 @@ class SummonersPactTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
-        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test

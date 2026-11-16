@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BoonSatyr;
@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -397,13 +400,15 @@ class TimeStopTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 6);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        SacrificeAtEndOfCombat sacrifice = new SacrificeAtEndOfCombat(creature.getId());
-        gd.queueDelayedAction(sacrifice);
+        TemporaryGlobalTriggeredAbility sacrifice = TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.endOfCombat(), player1.getId(), creature.getCard(), creature.getId(), null,
+                new SacrificeSelfEffect());
+        gd.temporaryGlobalTriggeredAbilities.add(sacrifice);
 
         harness.castAndResolveInstant(player1, 0);
 
         harness.assertOnBattlefield(player1, "Scathe Zombies");
-        assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).contains(sacrifice);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT)).contains(sacrifice);
     }
 
     @Test

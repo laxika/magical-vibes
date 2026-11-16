@@ -5,14 +5,23 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DamageForCardsStillExiledAtNextEndStep;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.amount.CardsInExile;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepAndDamageForEachStillExiledEffect;
+import com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -76,9 +85,12 @@ public class ExileTopCardsMayPlayUntilNextEndStepAndDamageForEachStillExiledEffe
             exiledNames.add(card.getName());
         }
 
-        gameData.queueDelayedAction(new DamageForCardsStillExiledAtNextEndStep(
-                controllerId, sourcePermanentId, entry.getCard(), List.copyOf(exiledCardIds),
-                exileEffect.damagePerCard()));
+        Scaled damage = new Scaled(
+                new CardsInExile(new CardIdSetPredicate(Set.copyOf(exiledCardIds)), CountScope.ANY_PLAYER),
+                exileEffect.damagePerCard());
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.endStep(ActivePlayer.YOU), controllerId, entry.getCard(), sourcePermanentId, null,
+                new DealDamageToPlayersEffect(damage, DamageRecipient.EACH_OPPONENT)));
 
         if (!exiledNames.isEmpty()) {
             String controllerName = gameData.playerIdToName.get(controllerId);

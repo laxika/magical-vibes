@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -250,6 +253,9 @@ public class RulesEventPipeline {
     }
 
     private static int stepRank(List<List<StepGroup>> order, StepGroup group) {
+        if (group == StepGroup.DELAYED) {
+            return -1;
+        }
         for (int rank = 0; rank < order.size(); rank++) {
             if (order.get(rank).contains(group)) {
                 return rank;
@@ -299,7 +305,38 @@ public class RulesEventPipeline {
         if (namesThatPlayer(match.group(), event)) {
             context = context.withTargetId(match.thatPlayerId());
         }
+        TemporaryGlobalTriggeredAbility delayed = match.candidate().delayed();
+        if (delayed != null && delayed.sourcePermanentId() != null) {
+            context = context.withSourcePermanentId(delayed.sourcePermanentId());
+        }
+        if (delayed != null && delayed.watchedPermanentId() != null) {
+            context = context.withTriggeringPermanentId(delayed.watchedPermanentId());
+        }
+        if (delayed != null && delayed.referents().cardIds().size() == 1) {
+            // The card a delayed ability is about, for the conditions that read it ("if you haven't played it").
+            ExiledCardEntry exiled = gameData.findExiledCard(delayed.referents().cardIds().getFirst());
+            if (exiled != null) {
+                context = context.withTriggeringCard(exiled.card());
+            }
+        }
+        if (delayed != null && delayed.lastsWhile() != null
+                && !conditionEvaluationService.isMet(gameData, delayed.lastsWhile(), context)) {
+            // Its "for as long as ..." duration has ended (CR 603.7b).
+            gameData.temporaryGlobalTriggeredAbilities.removeIf(listed -> listed == delayed);
+            return;
+        }
         if (!conditionEvaluationService.eventConditionMet(gameData, options, context)) {
+            if (delayed != null && delayed.triggersOnce()) {
+                gameData.temporaryGlobalTriggeredAbilities.removeIf(listed -> listed == delayed);
+            }
+            return;
+        }
+        if (delayed != null) {
+            TriggerRecord record = EventAbilitySupport.delayedRecord(delayed, delayedStepRecord(event, delayed));
+            if (stackService.put(gameData, new TriggeredAbilityRequest(candidate.ability(), card, null,
+                    candidate.controllerId(), card.getName() + "'s delayed ability", context, record))) {
+                gameLogService.append(gameData, GameLog.abilityTriggers(card));
+            }
             return;
         }
         StepCandidate.ExileCounterAbility counterAbility = match.candidate().counterAbility();
@@ -313,6 +350,42 @@ public class RulesEventPipeline {
                     : GameLog.cardThen(card, counterAbility != null ? counterAbility.logText()
                     : "'s " + kind + " triggers."));
         }
+    }
+
+    /**
+     * What a delayed step ability's stack entry records, whatever its effects are: the player whose step it is as the
+     * active player, the permanent it is about as its non-targeting object and triggering permanent (or else the
+     * player it is about as its non-targeting object), and its other objects (CR 603.7c): the permanents as its
+     * declared objects, the cards as its target cards, a lone card as its triggering card in its graveyard stay.
+     * What was attached to the permanent as it left the battlefield stays with it as last known (CR 608.2h).
+     */
+    private static TriggerRecord delayedStepRecord(StepEvent event, TemporaryGlobalTriggeredAbility delayed) {
+        DelayedReferents referents = delayed.referents();
+        return entry -> {
+            entry.setActivePlayerId(event.activePlayerId());
+            entry.setNonTargeting(true);
+            if (delayed.watchedPermanentId() != null) {
+                entry.setTargetId(delayed.watchedPermanentId());
+                entry.setTriggeringPermanentId(referents.triggeringPermanentId() != null
+                        ? referents.triggeringPermanentId() : delayed.watchedPermanentId());
+                entry.rememberLastKnownPermanentAttachments(delayed.watchedPermanentId(),
+                        referents.permanentAttachments());
+            } else if (delayed.watchedPlayerId() != null) {
+                entry.setTargetId(delayed.watchedPlayerId());
+            }
+            if (!referents.permanentIds().isEmpty()) {
+                entry.setDeclaredTargetIds(referents.permanentIds());
+            }
+            if (!referents.cardIds().isEmpty()) {
+                entry.setTargetCardIds(new ArrayList<>(referents.cardIds()));
+                if (referents.cardIds().size() == 1) {
+                    entry.setTriggeringCardId(referents.cardIds().getFirst());
+                    if (referents.cardEntryVersion() >= 0) {
+                        entry.setTriggeringCardGraveyardEntryVersion(referents.cardEntryVersion());
+                    }
+                }
+            }
+        };
     }
 
     /**

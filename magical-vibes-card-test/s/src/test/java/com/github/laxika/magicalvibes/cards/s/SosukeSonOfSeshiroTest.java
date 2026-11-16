@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.o.OrochiSustainer;
 import com.github.laxika.magicalvibes.cards.v.ViridianLongbow;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,6 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -105,7 +105,7 @@ class SosukeSonOfSeshiroTest extends BaseCardTest {
 
         resolveCombat(); // combat damage — Humble Budoka is not a Warrior
 
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
     }
 
     @Test
@@ -120,7 +120,7 @@ class SosukeSonOfSeshiroTest extends BaseCardTest {
 
         resolveCombat(player2);
 
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
         harness.assertOnBattlefield(player1, "Kami of Old Stone");
     }
 
@@ -137,7 +137,7 @@ class SosukeSonOfSeshiroTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
         harness.assertOnBattlefield(player2, "Kami of Old Stone");
     }
 

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldUnderControl;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 
 @CardUsed({GraveBetrayal.class, GrizzlyBears.class, Shock.class, Recover.class, CorpsejackMenace.class})
 class GraveBetrayalTest extends BaseCardTest {
@@ -51,7 +51,7 @@ class GraveBetrayalTest extends BaseCardTest {
 
         // Nothing happens right away — the return is delayed to the beginning of the next end step.
         harness.assertInGraveyard(player2, "Grizzly Bears");
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
 
         advanceToEndStep();
 
@@ -89,7 +89,7 @@ class GraveBetrayalTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castAndResolveInstant(player2, 0, bearsId);
 
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
 
         advanceToEndStep();
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -106,7 +106,7 @@ class GraveBetrayalTest extends BaseCardTest {
 
         advanceToEndStep();
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test

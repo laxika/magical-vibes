@@ -5,10 +5,17 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DimensionalBreachUpkeepReturn;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.CardsStillInZone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -107,10 +114,30 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
         entry.setEventValue(toExile.size());
 
         if (e.returnOneAtEachUpkeep() && e.trackWithSource() && !toExile.isEmpty()) {
-            gameData.queueDelayedAction(new DimensionalBreachUpkeepReturn(entry.getCard(), entry.getControllerId()));
+            registerUpkeepReturn(gameData, entry, sourcePermanentId);
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * "For as long as any of those cards remain exiled, at the beginning of each player's upkeep, that player returns
+     * one of the exiled cards they own" (Dimensional Breach): a delayed triggered ability of this resolution, its
+     * controller the spell's (CR 603.7e), that triggers at every upkeep while one of the cards it exiled is still
+     * exiled (CR 603.7b).
+     */
+    private void registerUpkeepReturn(GameData gameData, StackEntry entry, UUID sourcePermanentId) {
+        List<UUID> exiledIds = gameData.getCardsExiledByPermanent(sourcePermanentId).stream()
+                .filter(card -> !card.isToken()).map(Card::getId).toList();
+        if (exiledIds.isEmpty()) {
+            return;
+        }
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atEveryStep(
+                entry.getControllerId(), entry.getCard(),
+                new TriggeredAbility(Triggers.upkeep(ActivePlayer.ANY),
+                        ReturnCardExiledWithSourceToBattlefieldEffect.ownedByActivePlayer()),
+                sourcePermanentId, null, DelayedReferents.NONE,
+                new CardsStillInZone(Zone.EXILE, gameData.exileEntryVersionsOf(exiledIds))));
     }
 
     private UUID findSourcePermanentId(GameData gameData, StackEntry entry) {

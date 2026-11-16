@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreatureDealsDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -26,6 +25,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityAboutTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 
 @CardRegistration(set = "KHM", collectorNumber = "225")
 @CardRegistration(set = "KHM", collectorNumber = "289")
@@ -38,7 +39,8 @@ public class NikoAris extends Card {
                 false, null,
                 List.of(
                         new MakeCreatureUnblockableEffect(),
-                        new RegisterDelayedWatchedCreatureDealsDamageEffect(List.of(ReturnToHandEffect.target()))
+                        new RegisterGlobalTriggeredAbilityAboutTargetUntilEndOfTurnEffect(new TriggeredAbility(
+                                Triggers.dealsDamage(), ReturnToHandEffect.target()))
                 ),
                 "+1: Up to one target creature you control can't be blocked this turn. Whenever that creature deals damage this turn, return it to its owner's hand.",
                 TargetFilters.creatureYouControl(),

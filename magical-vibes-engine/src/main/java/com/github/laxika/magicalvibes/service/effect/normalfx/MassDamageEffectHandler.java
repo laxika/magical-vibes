@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSource;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -36,8 +37,11 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
     }
 
     @Override
-    public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+    public void resolve(GameData gameData, StackEntry abilityEntry, CardEffect effect) {
         var e = (MassDamageEffect) effect;
+        StackEntry entry = e.damageSource() == DamageSource.TRIGGERING_PERMANENT
+                ? damageSupport.entryDealtByTriggeringPermanent(gameData, abilityEntry) : abilityEntry;
+        if (entry == null) return;
 
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
 
@@ -50,7 +54,7 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
             source = entry.getSourcePermanentSnapshot();
         }
         int baseDamage = amountEvaluationService.evaluate(gameData, e.amount(),
-                AmountContext.forStackEntry(entry, source));
+                AmountContext.forStackEntry(abilityEntry, source));
         int damage = baseDamage;
 
         // Prefer the permanent's original (front-face) card id so PermanentIsSourceCardPredicate

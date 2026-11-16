@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.s.SpideryGrasp;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -18,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import com.github.laxika.magicalvibes.model.ManaColor;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -136,13 +136,13 @@ class GeistOfSaintTraftTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The Angel token should be in the pending exile at end of combat set
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).hasSize(1);
+        assertThat(DelayedPermanentMoves.waiting(gd)).hasSize(1);
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         Permanent angel = battlefield.stream()
                 .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Angel"))
                 .findFirst().orElseThrow();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).anySatisfy(action -> {
+        assertThat(DelayedPermanentMoves.waiting(gd)).anySatisfy(action -> {
             assertThat(action.permanentId()).isEqualTo(angel.getId());
             assertThat(action.kind()).isEqualTo(DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
         });
@@ -171,7 +171,7 @@ class GeistOfSaintTraftTest extends BaseCardTest {
                 .count()).isEqualTo(1);
 
         // Pending exiles should be cleared
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
+        assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
     }
 
     @Test

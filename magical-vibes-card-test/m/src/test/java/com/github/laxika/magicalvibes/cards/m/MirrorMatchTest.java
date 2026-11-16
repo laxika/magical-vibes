@@ -26,6 +26,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -55,7 +56,7 @@ class MirrorMatchTest extends BaseCardTest {
                 && copy.isBlocking() && copy.getBlockingTargetIds().contains(airElemental.getId()));
         assertThat(copies).anyMatch(copy -> copy.getCard().getName().equals("Grizzly Bears")
                 && copy.isBlocking() && copy.getBlockingTargetIds().contains(grizzlyBears.getId()));
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+        assertThat(DelayedPermanentMoves.waiting(gd))
                 .allMatch(action -> action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
     }
 
@@ -77,7 +78,7 @@ class MirrorMatchTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(copy);
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
+        assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
     }
 
     @Test
@@ -267,7 +268,7 @@ class MirrorMatchTest extends BaseCardTest {
         assertThat(soldiers).hasSize(1);
         assertThat(soldiers.getFirst().getBlockingTargetIds()).containsExactly(attacker.getId());
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+        assertThat(DelayedPermanentMoves.waiting(gd))
                 .filteredOn(action -> action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT)
                 .extracting(DelayedPermanentAction::permanentId)
                 .contains(soldiers.getFirst().getId());

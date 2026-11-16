@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCombatOpponentToHandAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -43,8 +44,9 @@ public class ReturnCombatOpponentToHandAtEndOfCombatEffectHandler implements Nor
             return;
         }
 
-        gameData.queueDelayedAction(new DelayedEndOfCombatTrigger(entry.getControllerId(),
-                entry.getCard(), entry.getSourcePermanentId(), targetId, ReturnToHandEffect.target()));
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                Triggers.endOfCombat(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
+                targetId, ReturnToHandEffect.target()));
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " will be returned to its owner's hand at end of combat."));
     }

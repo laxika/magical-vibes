@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.n.NestInvader;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
-import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -35,7 +34,7 @@ class WorldAtWarTest extends BaseCardTest {
 
         assertThat(attackedBear.isTapped()).isTrue();
         assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(1);
-        assertThat(gd.delayedActions).anyMatch(action -> action instanceof DelayedAdditionalCombatBeginningEffect);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.BEGINNING_OF_COMBAT)).hasSize(1);
 
         harness.getGameService().advanceStep(gd);
         assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
@@ -57,7 +56,7 @@ class WorldAtWarTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gd.stack).isEmpty();
@@ -72,7 +71,7 @@ class WorldAtWarTest extends BaseCardTest {
         assertThat(gd.findExiledCard(card.getId())).isNull();
         harness.assertInGraveyard(player1, "World at War");
         assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(1);
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -138,7 +137,7 @@ class WorldAtWarTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
         assertThat(gd.additionalCombatMainPhasePairs).isZero();
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.AdventureCast;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.AttachmentTriggers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
@@ -51,7 +52,12 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.DelayedReferents;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.condition.TriggeringCardInExile;
+import com.github.laxika.magicalvibes.model.effect.PutUnplayedExiledCardsIntoOwnersGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardInGraveyardUntilEndOfTurnEffect;
@@ -714,24 +720,22 @@ public class LibraryChoiceHandlerService {
                             // The delayed trigger belongs to the ability that searched (e.g. Nahiri, the
                             // Harbinger's -8), not to the fetched permanent, even after control changes.
                             Card searchSourceCard = delayedTriggerSourceCard(gameData, librarySearch);
-                            gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
-                                DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP,
-                                false, null, librarySearch.returnToHandAtControllerEndStepId(), null,
-                                librarySearch.returnToHandAtControllerEndStepId() != null,
-                                searchSourceCard,
-                                searchSourceCard != null ? playerId : null,
-                                searchSourceCard != null ? librarySearch.sourcePermanentId() : null));
+                            DelayedPermanentActions.schedule(gameData, playerId,
+                                    searchSourceCard != null ? searchSourceCard : perm.getCard(),
+                                    searchSourceCard != null ? librarySearch.sourcePermanentId() : perm.getId(),
+                                    new DelayedPermanentAction(perm.getId(),
+                                            DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP),
+                                    ActivePlayer.ANY);
                         }
                     } else if (exileAtEndStep) {
                         // CR 603.7e: the delayed exile is controlled by the searching ability's controller as it
                         // resolved and keeps that ability's source, even if the fetched permanent changes control.
                         Card searchSourceCard = delayedTriggerSourceCard(gameData, librarySearch);
-                        gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
-                                DelayedPermanentActionKind.EXILE_AT_END_STEP,
-                                false, null, null, null, false,
-                                searchSourceCard,
-                                searchSourceCard != null ? playerId : null,
-                                searchSourceCard != null ? librarySearch.sourcePermanentId() : null));
+                        DelayedPermanentActions.schedule(gameData, playerId,
+                                searchSourceCard != null ? searchSourceCard : perm.getCard(),
+                                searchSourceCard != null ? librarySearch.sourcePermanentId() : perm.getId(),
+                                new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP),
+                                ActivePlayer.ANY);
                     }
 
                     if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PLAYER && librarySearch.attachToPlayerId() != null) {
@@ -1766,9 +1770,15 @@ public class LibraryChoiceHandlerService {
             if (destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
                 // Grinning Totem: permission lasts only until the searcher's next upkeep; an unplayed
                 // card is put into its owner's graveyard then.
-                Card sourceCard = (sourceCards != null && !sourceCards.isEmpty()) ? sourceCards.getFirst() : null;
-                gameData.queueDelayedAction(new ExileToOwnerGraveyardAtNextUpkeep(
-                        playerId, chosenCard.getId(), deckOwnerId, sourceCard));
+                Card sourceCard = (sourceCards != null && !sourceCards.isEmpty()) ? sourceCards.getFirst()
+                        : chosenCard;
+                gameData.queueDelayedAction(new RevokeExilePlayPermissionAtNextUpkeep(
+                        playerId, chosenCard.getId(), sourceCard));
+                gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(playerId,
+                        sourceCard, new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                                TriggerOptions.DEFAULT.withEventCondition(new TriggeringCardInExile()),
+                                new PutUnplayedExiledCardsIntoOwnersGraveyardEffect()),
+                        null, null, null, DelayedReferents.cards(List.of(chosenCard.getId()))));
             }
             if (shuffleAfterSelection) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
@@ -3081,18 +3091,14 @@ public class LibraryChoiceHandlerService {
             if (returnToHandAtEndStep) {
                 // The delayed return belongs to the ability that searched (Nahiri, the Harbinger's -8),
                 // not to the fetched permanent, even after control changes or the source has left.
-                gameData.queueDelayedAction(creatingEntry == null || creatingEntry.getSourcePermanentId() == null
-                        ? new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP)
-                        : new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP,
-                                false, null, null, null, false, creatingEntry.getCard(),
-                                creatingEntry.getControllerId(), creatingEntry.getSourcePermanentId()));
+                DelayedPermanentActions.scheduleForResolution(gameData, puttingPlayerId, perm,
+                        new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP),
+                        ActivePlayer.ANY);
             } else if (exileAtEndStep) {
                 // CR 603.7e: the delayed exile keeps the searching ability's source and controller.
-                gameData.queueDelayedAction(creatingEntry == null || creatingEntry.getSourcePermanentId() == null
-                        ? new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP)
-                        : new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP,
-                                false, null, null, null, false, creatingEntry.getCard(),
-                                creatingEntry.getControllerId(), creatingEntry.getSourcePermanentId()));
+                DelayedPermanentActions.scheduleForResolution(gameData, puttingPlayerId, perm,
+                        new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP),
+                        ActivePlayer.ANY);
             }
             permanents.add(perm);
             placedCards.add(card);

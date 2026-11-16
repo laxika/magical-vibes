@@ -2,15 +2,21 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedSourceUntapsOrLeavesTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndAurasUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolvePendingExileReturnEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -28,8 +34,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves the source-linked exile used by Tawnos's Coffin, and creates its delayed "when this artifact leaves the
- * battlefield or becomes untapped, return that exiled card" ability: one {@link DelayedSourceUntapsOrLeavesTrigger}
- * for this resolution's creature and Auras.
+ * battlefield or becomes untapped, return that exiled card" ability: one delayed
+ * triggered ability about the source, for this resolution's creature and Auras.
  */
 @Slf4j
 @Component
@@ -98,9 +104,13 @@ public class ExileTargetCreatureAndAurasUntilSourceLeavesEffectHandler
             PendingExileReturn pending = PendingExileReturn.withCountersAndCardsAttachedToPrimary(
                     primary, ownerId, true, additionalCards, cardsToAttach, counters)
                     .withReturnControllers(owners);
-            gameData.queueDelayedAction(new DelayedSourceUntapsOrLeavesTrigger(entry.getControllerId(),
-                    entry.getCard(), sourcePermanentId, null, new ResolvePendingExileReturnEffect(pending,
-                    gameData.exileEntryVersions.getOrDefault(primary.getId(), 0L))));
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.about(
+                    entry.getControllerId(), entry.getCard(),
+                    new TriggeredAbility(List.of(new TriggerCondition(Triggers.leavesBattlefield(ObjectRelation.THIS)),
+                            new TriggerCondition(Triggers.becomesUntapped())), TriggerOptions.DEFAULT,
+                            List.of(new EffectRegistration(new ResolvePendingExileReturnEffect(pending,
+                                    gameData.exileEntryVersions.getOrDefault(primary.getId(), 0L))))),
+                    sourcePermanentId, sourcePermanentId, false));
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);

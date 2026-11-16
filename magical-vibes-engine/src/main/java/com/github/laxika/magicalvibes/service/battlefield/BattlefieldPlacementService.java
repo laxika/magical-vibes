@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.StaticAbility;
@@ -83,6 +85,8 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersWithCountersEffect;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -651,16 +655,22 @@ public class BattlefieldPlacementService {
         if (permanent.getCard().isSacrificeAtEndStep()) {
             // A non-token card cast this way (Strago and Relm) gains "At the beginning of the end step,
             // sacrifice this creature", which keeps triggering at each end step until it is sacrificed.
-            gameData.queueDelayedAction(permanent.getCard().isToken()
-                    ? new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP)
-                    : DelayedPermanentAction.recurring(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+            if (permanent.getCard().isToken()) {
+                DelayedPermanentActions.scheduleOwn(gameData, controllerId, permanent,
+                        new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
+                        ActivePlayer.ANY);
+            } else {
+                permanent.addPersistentAbility(new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),
+                        new SacrificeSelfEffect()));
+            }
         }
         // CR 702.152a — a spell cast for its printed blitz cost creates the delayed "sacrifice at the
         // beginning of the next end step" trigger as it resolves, independent of any ETB trigger.
         if (permanent.isAlternateCost() && permanent.getCard().getCastingOption(AlternateHandCast.class)
                 .filter(AlternateHandCast::blitz).isPresent()) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(),
-                    DelayedPermanentActionKind.SACRIFICE_AT_END_STEP, false, null, null, controllerId));
+            DelayedPermanentActions.scheduleOwn(gameData, controllerId, permanent,
+                    new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
+                    ActivePlayer.ANY);
         }
         // "As this enters, you may reveal a [subtype] card from your hand; if you don't, it enters
         // tapped." Must run after the permanent is on the battlefield so we can reference/tap it.

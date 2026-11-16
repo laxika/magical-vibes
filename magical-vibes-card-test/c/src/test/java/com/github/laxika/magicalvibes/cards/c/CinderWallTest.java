@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -73,7 +73,7 @@ class CinderWallTest extends BaseCardTest {
 
         // Resolving it schedules Cinder Wall itself for destruction at end of combat
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+        assertThat(DelayedPermanentMoves.waiting(gd))
                 .anyMatch(a -> a.permanentId().equals(cinderWall.getId()));
         harness.assertOnBattlefield(player2, "Cinder Wall");
     }
@@ -107,6 +107,6 @@ class CinderWallTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of()); // Cinder Wall stays back
 
         harness.passBothPriorities();
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
     }
 }

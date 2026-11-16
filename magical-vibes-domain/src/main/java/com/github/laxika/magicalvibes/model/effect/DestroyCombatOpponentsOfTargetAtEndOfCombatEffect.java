@@ -5,10 +5,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * creatures that blocked or were blocked by it this turn (Venomous Breath); the directional mode
  * only destroys creatures blocked by it (Glyph of Doom).
  * <p>
- * At resolution a {@link com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat}
- * delayed action is queued for the target. As the next end of combat step begins,
- * {@code CombatService.processEndOfCombatCombatOpponentDestructions()} puts a delayed trigger
- * carrying this effect on the stack with the creature as its source permanent and no target; that
+ * At resolution a delayed ability that lasts this turn ("at this turn's next end of combat") is registered about the
+ * target and the creatures that blocked or were blocked by it so far. As the next end of combat step begins it goes
+ * on the stack carrying this effect with the creature as its non-targeting object; that
  * trigger computes the creatures to destroy as it resolves, so blocks declared after this spell
  * resolved count too; regeneration and indestructible apply.
  * <p>

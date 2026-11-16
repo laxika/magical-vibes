@@ -397,6 +397,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryCardIdPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredOrCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentReturnedWhenSourceLeftPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentWasCastPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithAdventurePredicate;
@@ -2776,6 +2777,8 @@ public class PredicateEvaluationService {
                     ? permanent.getEnteredFromGraveyardOwnerId() != null
                     : permanent.getEnteredFromZone() == cameFrom.zone())
                     || (permanent.isCast() && permanent.getCastFromZone() == cameFrom.zone());
+            case PermanentReturnedWhenSourceLeftPredicate returned ->
+                    returned.sourcePermanentId().equals(permanent.getReturnedWhenSourceLeftId());
             case PermanentWasCastPredicate ignored -> permanent.isCast();
             case PermanentCastBySourceControllerThisTurnPredicate ignored -> {
                 // "Target creature you cast this turn" â€” identity match against the spells the

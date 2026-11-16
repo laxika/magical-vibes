@@ -3,13 +3,19 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.SacrificePermanentAtControllerEndStepUnlessPays;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSacrificedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -60,7 +66,10 @@ public class CreateTokenCopyOfSacrificedPermanentEffectHandler implements Normal
         tokenCopySupport.createTokenCopiesWithTokenRider(gameData, entry,
                 Collections.nCopies(copyEffect.amount(), sacrificedByTrigger.getCard()), controllerId,
                 new CreateTokenCopyOfTargetPermanentEffect(true, false).withHasteUntilEndOfTurn(),
-                token -> gameData.queueDelayedAction(new SacrificePermanentAtControllerEndStepUnlessPays(
-                        token.getId(), controllerId, entry.getCard(), new PayManaCost(TOKEN_SACRIFICE_COST), true)));
+                token -> gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                        Triggers.endStep(ActivePlayer.YOU), controllerId, entry.getCard(),
+                        token.getId(), token.getId(),
+                        new ForcedCostOrElseEffect(new PayManaCost(TOKEN_SACRIFICE_COST),
+                                new ArrayList<>(List.of(new SacrificeSelfEffect())), true))));
     }
 }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HeatOfBattle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NobleOx.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({NobleOx.class, AirElemental.class, GrizzlyBears.class, HeatOfBattle.class})
 class NobleOxTest extends BaseCardTest {
 
     @Test
@@ -86,6 +87,25 @@ class NobleOxTest extends BaseCardTest {
         Permanent nobleOx = findPermanent(player2, "Noble Ox");
         assertThat(nobleOx.getBlockingTargetIds()).containsExactly(unblockedAttacker.getId());
         assertThat(existingBlocker.getBlockingTargetIds()).containsExactly(blockedAttacker.getId());
+    }
+
+    @Test
+    @DisplayName("A permanent's \"whenever a creature blocks\" ability triggers once as the ETB makes it block two "
+            + "attackers")
+    void creatureBlocksAbilityTriggersOnceForABlockerMadeToBlockSeveralAttackers() {
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new AirElemental());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new HeatOfBattle());
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
+
+        castNobleOxInCombat();
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player2, "Noble Ox").getBlockingTargetIds()).hasSize(2);
+        harness.assertLife(player2, 19);
     }
 
     private void castNobleOxInCombat() {

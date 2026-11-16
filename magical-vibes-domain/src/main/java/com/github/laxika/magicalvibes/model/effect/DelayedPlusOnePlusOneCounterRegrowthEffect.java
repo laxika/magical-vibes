@@ -5,8 +5,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * of the next end step." (e.g. Protean Hydra)
  *
  * Used in a {@code Triggers.plusOneCounterRemovedFromThis()} ability: the ability triggers once for each
- * +1/+1 counter removed, and on resolution registers a delayed trigger in the
- * DelayedPlusOneCounters delayed actions which fires at the next end step.
+ * +1/+1 counter removed, and on resolution makes a delayed triggered ability (CR 603.7a) that puts the counters on
+ * the creature at the beginning of the next end step.
  */
 public record DelayedPlusOnePlusOneCounterRegrowthEffect() implements CardEffect {
 }

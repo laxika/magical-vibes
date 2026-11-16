@@ -6382,7 +6382,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                boolean includeGraveyard,
                                                boolean includeCommandZone,
                                                UUID delayedAuraCardId,
-                                               UUID delayedAuraOwnerId,
+                                               UUID delayedAuraControllerId,
                                                boolean handleCreatureEtbAndLegendRule)
             implements PendingInteraction {
         public PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,

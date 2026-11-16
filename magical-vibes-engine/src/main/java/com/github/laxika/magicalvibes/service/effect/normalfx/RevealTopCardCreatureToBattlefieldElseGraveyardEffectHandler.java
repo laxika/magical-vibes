@@ -11,8 +11,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldElseGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.*;
@@ -76,8 +78,9 @@ public class RevealTopCardCreatureToBattlefieldElseGraveyardEffectHandler implem
 
             if (fx.sacrificeAtEndStep()) {
                 // CR 603.7e: the ability's controller controls the delayed trigger and is the one who sacrifices.
-                gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
-                        DelayedPermanentActionKind.SACRIFICE_AT_END_STEP, false, null, null, controllerId, false));
+                DelayedPermanentActions.schedule(gameData, entry,
+                        new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
+                        ActivePlayer.ANY);
             }
 
             log.info("Game {} - {} puts {} onto the battlefield ({})",

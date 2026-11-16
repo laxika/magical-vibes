@@ -2502,6 +2502,16 @@ public class GameTestHarness {
         gameData.startingPlayerId = player.getId();
     }
 
+    /**
+     * Lets "the next turn's upkeep" abilities made so far wait no longer: another player's turn begins. The turn number
+     * stays as it is, so the first turn's skipped draw step and the other turn-number rules of a test are untouched.
+     */
+    public void beginLaterTurn() {
+        gameData.temporaryGlobalTriggeredAbilities.replaceAll(delayed ->
+                delayed.referents().afterTurn() >= gameData.turnNumber
+                        ? delayed.withReferents(delayed.referents().afterTurn(gameData.turnNumber - 1)) : delayed);
+    }
+
     public void forceStep(TurnStep step) {
         gameData.currentStep = step;
     }

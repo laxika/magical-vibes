@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NestInvader;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -81,7 +81,7 @@ class VirulentSwipeTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Virulent Swipe");
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
         assertThat(first.getPowerModifier()).isZero();
         assertThat(first.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
 
@@ -97,7 +97,7 @@ class VirulentSwipeTest extends BaseCardTest {
         assertThat(first.getPowerModifier()).isZero();
         assertThat(gd.findExiledCard(card.getId())).isNull();
         harness.assertInGraveyard(player1, "Virulent Swipe");
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -115,7 +115,7 @@ class VirulentSwipeTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         harness.assertNotInGraveyard(player1, "Virulent Swipe");
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         advanceToUpkeep(player1);
@@ -139,7 +139,7 @@ class VirulentSwipeTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Virulent Swipe");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
     }
@@ -161,6 +161,6 @@ class VirulentSwipeTest extends BaseCardTest {
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         harness.assertNotInGraveyard(player1, "Virulent Swipe");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 }

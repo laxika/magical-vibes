@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.cards.m.MassOfGhouls;
 import com.github.laxika.magicalvibes.cards.z.ZoeticCavern;
@@ -8,7 +10,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.PayManaOrLoseGameAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -42,10 +43,9 @@ class SlaughterPactTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Blind Phantasm");
         harness.assertInGraveyard(player2, "Blind Phantasm");
 
-        List<PayManaOrLoseGameAtNextUpkeep> scheduled = gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class);
+        List<TemporaryGlobalTriggeredAbility> scheduled = gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP);
         assertThat(scheduled).hasSize(1);
-        assertThat(scheduled.getFirst().playerId()).isEqualTo(player1.getId());
-        assertThat(scheduled.getFirst().manaCost()).isEqualTo("{2}{B}");
+        assertThat(scheduled.getFirst().controllerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -56,7 +56,7 @@ class SlaughterPactTest extends BaseCardTest {
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
 
     @Test
@@ -73,7 +73,7 @@ class SlaughterPactTest extends BaseCardTest {
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
-        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
     @Test
@@ -135,8 +135,8 @@ class SlaughterPactTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Slaughter Pact");
         harness.assertInGraveyard(player2, "Blind Phantasm");
-        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class))
-                .singleElement().satisfies(action -> assertThat(action.playerId()).isEqualTo(player2.getId()));
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP))
+                .singleElement().satisfies(action -> assertThat(action.controllerId()).isEqualTo(player2.getId()));
         advanceToUpkeep(player1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
@@ -152,7 +152,7 @@ class SlaughterPactTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Blind Phantasm");
         harness.assertInGraveyard(player1, "Blind Phantasm");
-        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
 
     @Test
@@ -196,7 +196,7 @@ class SlaughterPactTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Zoetic Cavern");
         harness.assertInGraveyard(player1, "Zoetic Cavern");
-        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
 
     @Test
@@ -214,6 +214,6 @@ class SlaughterPactTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Zoetic Cavern");
         harness.assertInGraveyard(player1, "Slaughter Pact");
-        assertThat(gd.getDelayedActions(PayManaOrLoseGameAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 }

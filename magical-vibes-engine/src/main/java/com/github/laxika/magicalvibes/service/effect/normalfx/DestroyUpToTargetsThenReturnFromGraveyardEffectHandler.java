@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -98,9 +100,9 @@ public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements N
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
 
             if (((DestroyUpToTargetsThenReturnFromGraveyardEffect) effect).sacrificeAtEndStep()) {
-                gameData.queueDelayedAction(new DelayedPermanentAction(
-                        permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                        false, null, controllerId, controllerId));
+                DelayedPermanentActions.schedule(gameData, entry,
+                        new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
+                        ActivePlayer.YOU);
             }
 
             String playerName = gameData.playerIdToName.get(controllerId);

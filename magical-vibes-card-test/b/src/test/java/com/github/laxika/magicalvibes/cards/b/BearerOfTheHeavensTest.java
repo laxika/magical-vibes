@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedDestroyAllPermanents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 
 @CardUsed({BearerOfTheHeavens.class, GrizzlyBears.class, LightningBolt.class, Forest.class, Plains.class})
 class BearerOfTheHeavensTest extends BaseCardTest {
@@ -26,11 +26,11 @@ class BearerOfTheHeavensTest extends BaseCardTest {
         destroyBearer();
 
         harness.assertInGraveyard(player1, "Bearer of the Heavens");
-        assertThat(gd.getDelayedActions(DelayedDestroyAllPermanents.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
 
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DelayedDestroyAllPermanents.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
     }
 
     @Test
@@ -70,7 +70,7 @@ class BearerOfTheHeavensTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.getDelayedActions(DelayedDestroyAllPermanents.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);

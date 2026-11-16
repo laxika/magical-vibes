@@ -12,8 +12,10 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCommanderFromCommandZoneOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -74,9 +76,10 @@ public class PutCommanderFromCommandZoneOntoBattlefieldEffectHandler implements 
         permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, commander);
-        gameData.queueDelayedAction(new DelayedPermanentAction(
-                permanent.getId(), DelayedPermanentActionKind.RETURN_TO_COMMAND_ZONE_AT_END_STEP,
-                false, null, null, null, false, sourceCard));
+        DelayedPermanentActions.schedule(gameData, controllerId, sourceCard, null,
+                new DelayedPermanentAction(permanent.getId(),
+                        DelayedPermanentActionKind.RETURN_TO_COMMAND_ZONE_AT_END_STEP),
+                ActivePlayer.ANY);
         gameLogService.append(gameData, GameLog.entersBattlefieldUnder(
                 commander, gameData.playerIdToName.get(controllerId)));
     }

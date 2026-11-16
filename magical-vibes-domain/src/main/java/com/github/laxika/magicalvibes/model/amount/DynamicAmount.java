@@ -200,6 +200,7 @@ public sealed interface DynamicAmount permits
         OpponentsWithMoreCardsInHandThanController,
         OpponentsAttackedThisTurn,
         OpponentsDealtCombatDamageThisTurn,
+        PlayersDealtCombatDamageThisTurn,
         CreaturesControllerControlledThatDealtCombatDamageToPlayerThisTurn,
         OpponentsDealtCombatDamageBySourceNameOrSubtypeThisTurn,
         OpponentsWhoLostLifeThisTurn,

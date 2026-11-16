@@ -53,6 +53,9 @@ public class RemoveAllMireCountersFromChosenLandEffectHandler implements NormalE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var cleanup = (RemoveAllMireCountersFromChosenLandEffect) effect;
+        if (cleanup.remainingLandIds().isEmpty()) {
+            return;
+        }
         List<UUID> eligibleIds = eligibleIds(gameData, cleanup.permanentFilter());
         if (eligibleIds.isEmpty()) {
             return;

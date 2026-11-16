@@ -25,11 +25,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
-import com.github.laxika.magicalvibes.model.action.UnattachEquipmentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
@@ -47,11 +47,14 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.ActionEvent;
 import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
@@ -60,6 +63,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchS
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -633,8 +637,9 @@ public class PermanentChoiceBattlefieldHandlerService {
                 && gameQueryService.isCreature(gameData, creature)
                 && equipSupport.attachEquipment(gameData, equipment, creature)) {
             if (context.unattachAtNextEndStep()) {
-                gameData.queueDelayedAction(new UnattachEquipmentAtNextEndStep(
-                        context.controllerId(), equipmentId, context.sourceCard()));
+                gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                        Triggers.endStep(ActivePlayer.ANY), context.controllerId(), context.sourceCard(), null, null,
+                        new UnattachEquipmentEffect(equipmentId)));
             }
             gameLogService.append(gameData,
                     GameLog.cardTextCard(equipment.getCard(), " is now attached to ", creature.getCard(), "."));
@@ -3503,8 +3508,9 @@ public class PermanentChoiceBattlefieldHandlerService {
                     auraPerm.setExileIfLeavesBattlefield(true);
                 }
                 if (auraGraveyardReturn.exileAtEndStep()) {
-                    gameData.queueDelayedAction(new DelayedPermanentAction(
-                            auraPerm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
+                    DelayedPermanentActions.scheduleForResolution(gameData, auraControllerId, auraPerm,
+                            new DelayedPermanentAction(auraPerm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP),
+                            ActivePlayer.ANY);
                 }
             }
 

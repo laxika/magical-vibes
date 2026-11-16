@@ -15,7 +15,7 @@ public class AriusFlybyTrawler extends Card {
 
     public AriusFlybyTrawler() {
         addTrigger(Triggers.attacks(),
-                new SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect(
+                SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect.nextEndStep(
                         new CardNotPredicate(new CardSubtypePredicate(CardSubtype.SHARK))));
         addTrigger(Triggers.youDiscardOneOrMoreCards(),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -18,19 +17,9 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.PayBlockCostsEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedBlockOrBecomesBlockedTrigger;
-import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
 import com.github.laxika.magicalvibes.model.action.DelayedCamouflage;
-import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerCubeCounter;
-import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerGainLife;
-import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerPowerDamage;
-import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerUntapRemoveFromCombat;
-import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockerDeclarationControlEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
@@ -40,21 +29,13 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountA
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByFewerThanNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalMustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByMatchingCreatureIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
@@ -255,10 +236,6 @@ public class CombatBlockService {
             }
             emitBlockEvent(gameData, BlockEvent.Kind.NONE_DECLARED, activeId, defenderId, List.of(), List.of(),
                     unblockedAttackers.stream().map(Permanent::getId).toList(), false, false);
-            processDelayedUnblockedAttackerPowerDamageTriggers(gameData, activeId, unblockedAttackers);
-            processDelayedUnblockedAttackerGainLifeTriggers(gameData, activeId, unblockedAttackers);
-            processDelayedUnblockedAttackerCubeCounterTriggers(gameData, activeId, unblockedAttackers);
-            processDelayedUnblockedAttackerUntapRemoveTriggers(gameData, unblockedAttackers);
             // CR 509.4: players still get priority during the declare blockers step even
             // when zero blocks were declared (e.g. the attacker may pump an unblocked
             // creature). AUTO_PASS_ONLY runs that priority round; when nobody can act,
@@ -717,28 +694,6 @@ public class CombatBlockService {
             putFlankingAbilities(gameData, activeId, attacker, blocker);
         }
 
-        // "Whenever a creature you control attacks and isn't blocked, you may have it deal damage
-        // equal to its power to a target creature. If you do, it assigns no combat damage"
-        // (Gaze of Pain delayed trigger).
-        processDelayedUnblockedAttackerPowerDamageTriggers(gameData, activeId, unblockedAttackers);
-
-        processDelayedUnblockedAttackerGainLifeTriggers(gameData, activeId, unblockedAttackers);
-
-        processDelayedUnblockedAttackerCubeCounterTriggers(gameData, activeId, unblockedAttackers);
-
-        // "Whenever a creature attacks and isn't blocked this combat, untap it and remove it from
-        // combat" delayed triggers (Melee).
-        processDelayedUnblockedAttackerUntapRemoveTriggers(gameData, unblockedAttackers);
-
-        // "Whenever a creature blocks this turn, it gets +X/+Y" delayed triggers (Battle Cry).
-        // Once per unique blocker, not once per attacker blocked.
-        processDelayedBlockerBoostTriggers(gameData, blockerAssignments, defenderBattlefield);
-
-        // "Whenever this blocks or becomes blocked by a creature this combat" delayed triggers
-        // (Goblin Flotilla), once per blocking pair.
-        processDelayedBlockOrBecomesBlockedTriggers(gameData, blockerAssignments, attackerBattlefield,
-                defenderBattlefield);
-
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeBlockerTriggers, activeId);
 
@@ -801,11 +756,6 @@ public class CombatBlockService {
                 && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLANKING)) {
             putFlankingAbilities(gameData, activeId, attacker, blocker);
         }
-        processDelayedBlockOrBecomesBlockedTriggers(gameData, assignments, attackerBattlefield,
-                defenderBattlefield);
-        if (!blockerWasBlocking) {
-            processDelayedBlockerBoostTriggers(gameData, assignments, defenderBattlefield);
-        }
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeTriggers, gameData.activePlayerId);
     }
 
@@ -836,224 +786,6 @@ public class CombatBlockService {
                     }));
             if (triggered) {
                 gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(), "'s flanking triggers."));
-            }
-        }
-    }
-
-    /**
-     * Fires delayed "whenever a creature you control attacks and isn't blocked, you may have it
-     * deal damage equal to its power to a target creature; if you do, it assigns no combat damage"
-     * triggers (Gaze of Pain). One may-trigger per unblocked attacker per registered delayed action
-     * whose controller is the attacking player.
-     */
-    private void processDelayedUnblockedAttackerPowerDamageTriggers(GameData gameData,
-                                                                    UUID activeId,
-                                                                    List<Permanent> unblockedAttackers) {
-        if (unblockedAttackers.isEmpty()
-                || !gameData.hasDelayedAction(DelayedUnblockedAttackerPowerDamage.class)) {
-            return;
-        }
-        for (DelayedUnblockedAttackerPowerDamage delayed
-                : gameData.getDelayedActions(DelayedUnblockedAttackerPowerDamage.class)) {
-            if (!delayed.controllerId().equals(activeId)) {
-                continue;
-            }
-            for (Permanent attacker : unblockedAttackers) {
-                MayEffect may = new MayEffect(
-                        SequenceEffect.of(
-                                new DealDamageToTargetCreatureEffect(new SourcePower()),
-                                new AssignNoCombatDamageEffect()),
-                        "have it deal damage equal to its power to a target creature?");
-                // A delayed triggered ability (CR 603.7): its target creature is chosen as it is put on the stack
-                // (CR 603.3d); the "you may" is decided as it resolves (CR 603.5). The source permanent is the
-                // unblocked attacker ("it"); the source card is Gaze of Pain.
-                StackEntry trigger = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
-                        delayed.controllerId(), delayed.sourceCard().getName() + "'s ability", List.of(may), 0,
-                        attacker.getId());
-                trigger.setAttackedTargetId(attacker.getAttackTarget());
-                triggeredAbilityStackService.putDelayed(gameData, trigger);
-                gameLogService.append(gameData, GameLog.cardTextCard(
-                        delayed.sourceCard(), " — ", attacker.getCard(),
-                        " attacks unblocked."));
-                log.info("Game {} - {} delayed unblocked-attacker power damage fires for {}",
-                        gameData.id, delayed.sourceCard().getName(), attacker.getCard().getName());
-            }
-        }
-    }
-
-    /**
-     * Fires Delif's Cone's delayed trigger for the chosen creature when it attacks unblocked.
-     */
-    private void processDelayedUnblockedAttackerGainLifeTriggers(GameData gameData,
-                                                                  UUID activeId,
-                                                                  List<Permanent> unblockedAttackers) {
-        if (unblockedAttackers.isEmpty()
-                || !gameData.hasDelayedAction(DelayedUnblockedAttackerGainLife.class)) {
-            return;
-        }
-        for (DelayedUnblockedAttackerGainLife delayed
-                : gameData.getDelayedActions(DelayedUnblockedAttackerGainLife.class)) {
-            if (!delayed.controllerId().equals(activeId)) {
-                continue;
-            }
-            for (Permanent attacker : unblockedAttackers) {
-                if (!attacker.getId().equals(delayed.watchedPermanentId())
-                        || !gameQueryService.isCreature(gameData, attacker)) {
-                    continue;
-                }
-                MayEffect may = new MayEffect(
-                        SequenceEffect.of(
-                                new GainLifeEffect(new SourcePower()),
-                                new AssignNoCombatDamageEffect()),
-                        "gain life equal to its power?");
-                // A delayed triggered ability (CR 603.7) about the attacker, "it" (its power, the creature that assigns
-                // no combat damage), which it acts on without choosing anything.
-                StackEntry trigger = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
-                        delayed.controllerId(), delayed.sourceCard().getName() + "'s ability", List.of(may),
-                        (UUID) null, attacker.getId());
-                trigger.setNonTargeting(true);
-                trigger.setSourcePermanentSnapshot(new Permanent(attacker));
-                triggeredAbilityStackService.putDelayed(gameData, trigger);
-                gameLogService.append(gameData, GameLog.cardTextCard(
-                        delayed.sourceCard(), " — ", attacker.getCard(),
-                        " attacks unblocked."));
-                log.info("Game {} - {} delayed unblocked-attacker life-gain trigger fires for {}",
-                        gameData.id, delayed.sourceCard().getName(), attacker.getCard().getName());
-            }
-        }
-    }
-
-    /** Fires Delif's Cube's delayed trigger for the chosen creature when it attacks unblocked. */
-    private void processDelayedUnblockedAttackerCubeCounterTriggers(GameData gameData,
-                                                                     UUID activeId,
-                                                                     List<Permanent> unblockedAttackers) {
-        if (unblockedAttackers.isEmpty()
-                || !gameData.hasDelayedAction(DelayedUnblockedAttackerCubeCounter.class)) {
-            return;
-        }
-        for (DelayedUnblockedAttackerCubeCounter delayed
-                : gameData.getDelayedActions(DelayedUnblockedAttackerCubeCounter.class)) {
-            for (Permanent attacker : unblockedAttackers) {
-                if (!attacker.getId().equals(delayed.watchedPermanentId())
-                        || !gameQueryService.isCreature(gameData, attacker)) {
-                    continue;
-                }
-                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
-                        delayed.sourceCard(),
-                        delayed.controllerId(),
-                        delayed.sourceCard().getName() + "'s delayed trigger",
-                        List.of(AssignNoCombatDamageEffect.ofTargetId(),
-                                new PutCountersOnSourceCardEffect(CounterType.CUBE)),
-                        attacker.getId(),
-                        delayed.sourcePermanentId());
-                trigger.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, trigger);
-                gameLogService.append(gameData, GameLog.cardTextCard(
-                        delayed.sourceCard(), " — ", attacker.getCard(),
-                        " attacks unblocked."));
-                log.info("Game {} - {} delayed cube-counter trigger fires for {}",
-                        gameData.id, delayed.sourceCard().getName(), attacker.getCard().getName());
-            }
-        }
-    }
-
-    /**
-     * Fires delayed "whenever a creature attacks and isn't blocked this combat, untap it and remove
-     * it from combat" triggers (Melee). One trigger per unblocked attacker per registered delayed
-     * action; unlike the Gaze of Pain family this is not restricted to the registering player's
-     * creatures, because Melee's trigger reads "whenever a creature attacks".
-     */
-    private void processDelayedUnblockedAttackerUntapRemoveTriggers(GameData gameData,
-                                                                    List<Permanent> unblockedAttackers) {
-        if (unblockedAttackers.isEmpty()
-                || !gameData.hasDelayedAction(DelayedUnblockedAttackerUntapRemoveFromCombat.class)) {
-            return;
-        }
-        for (DelayedUnblockedAttackerUntapRemoveFromCombat delayed
-                : gameData.getDelayedActions(DelayedUnblockedAttackerUntapRemoveFromCombat.class)) {
-            for (Permanent attacker : unblockedAttackers) {
-                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
-                        delayed.sourceCard(),
-                        delayed.controllerId(),
-                        delayed.sourceCard().getName() + "'s delayed trigger",
-                        List.of(new UntapPermanentsEffect(TapUntapScope.TARGET),
-                                new RemoveTargetFromCombatEffect()),
-                        attacker.getId(),
-                        attacker.getId());
-                trigger.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, trigger);
-                gameLogService.append(gameData, GameLog.cardTextCard(
-                        delayed.sourceCard(), " — ", attacker.getCard(),
-                        " is untapped and removed from combat."));
-                log.info("Game {} - {} delayed untap-and-remove-from-combat fires for {}",
-                        gameData.id, delayed.sourceCard().getName(), attacker.getCard().getName());
-            }
-        }
-    }
-
-    /**
-     * Fires delayed "whenever a creature blocks this turn, it gets +X/+Y" triggers (Battle Cry).
-     * One trigger per unique blocker per registered delayed action.
-     */
-    private void processDelayedBlockOrBecomesBlockedTriggers(GameData gameData,
-                                                             List<BlockerAssignment> blockerAssignments,
-                                                             List<Permanent> attackerBattlefield,
-                                                             List<Permanent> defenderBattlefield) {
-        if (blockerAssignments.isEmpty() || !gameData.hasDelayedAction(DelayedBlockOrBecomesBlockedTrigger.class)) {
-            return;
-        }
-        for (DelayedBlockOrBecomesBlockedTrigger delayed
-                : gameData.getDelayedActions(DelayedBlockOrBecomesBlockedTrigger.class)) {
-            for (BlockerAssignment assignment : blockerAssignments) {
-                Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
-                Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
-                Permanent other = delayed.permanentId().equals(blocker.getId()) ? attacker
-                        : delayed.permanentId().equals(attacker.getId()) ? blocker
-                        : null;
-                if (other == null) {
-                    continue;
-                }
-                StackEntry se = TriggeredAbilityStackService.madeAbility(
-                        delayed.sourceCard(),
-                        delayed.controllerId(),
-                        delayed.sourceCard().getName() + "'s delayed trigger",
-                        new ArrayList<>(List.of(delayed.effect())),
-                        other.getId(),
-                        delayed.permanentId());
-                se.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, se);
-                gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(), "'s delayed trigger triggers."));
-            }
-        }
-    }
-
-    private void processDelayedBlockerBoostTriggers(GameData gameData,
-                                                    List<BlockerAssignment> blockerAssignments,
-                                                    List<Permanent> defenderBattlefield) {
-        if (blockerAssignments.isEmpty() || !gameData.hasDelayedAction(DelayedBlockerBoost.class)) {
-            return;
-        }
-        LinkedHashSet<Integer> uniqueBlockerIndices = new LinkedHashSet<>();
-        for (BlockerAssignment assignment : blockerAssignments) {
-            uniqueBlockerIndices.add(assignment.blockerIndex());
-        }
-        for (DelayedBlockerBoost boost : gameData.getDelayedActions(DelayedBlockerBoost.class)) {
-            for (int blockerIdx : uniqueBlockerIndices) {
-                Permanent blocker = defenderBattlefield.get(blockerIdx);
-                StackEntry se = TriggeredAbilityStackService.madeAbility(
-                        boost.sourceCard(),
-                        boost.controllerId(),
-                        boost.sourceCard().getName() + "'s delayed trigger",
-                        List.of(new BoostSelfEffect(boost.power(), boost.toughness())),
-                        blocker.getId(),
-                        blocker.getId());
-                se.setNonTargeting(true);
-                triggeredAbilityStackService.putDelayed(gameData, se);
-                gameLogService.append(gameData, GameLog.cardTextCard(
-                        boost.sourceCard(), " — ", blocker.getCard(),
-                        " gets +" + boost.power() + "/+" + boost.toughness() + " until end of turn."));
-                log.info("Game {} - {} delayed blocker boost fires for {}",
-                        gameData.id, boost.sourceCard().getName(), blocker.getCard().getName());
             }
         }
     }

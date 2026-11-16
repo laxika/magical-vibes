@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandFaceDownWithSourceAndReturnAtNextEndStepEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -47,13 +46,13 @@ public class ExileTargetPlayerHandFaceDownWithSourceAndReturnAtNextEndStepEffect
         }
 
         List<Card> cardsToExile = new ArrayList<>(hand);
-        UUID returnGroupId = UUID.randomUUID();
         hand.clear();
         for (Card card : cardsToExile) {
             exileService.exileCardFaceDown(gameData, targetPlayerId, card, sourcePermanentId);
-            gameData.queueDelayedAction(new ReturnExiledCardToHandAtNextEndStep(
-                    card.getId(), targetPlayerId, entry.getCard(), entry.getControllerId(), returnGroupId));
         }
+        gameData.temporaryGlobalTriggeredAbilities.add(ReturnExiledCardToHandEffectHandler.returnAtNextEndStep(
+                gameData, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
+                cardsToExile.stream().map(Card::getId).toList(), targetPlayerId, 0, false));
 
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         gameLogService.append(gameData, GameLog.text(playerName + " exiles " + cardsToExile.size()

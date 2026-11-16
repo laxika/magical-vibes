@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.NecropotenceSetAsideTopCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -17,8 +16,8 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves Necropotence's "Pay 1 life: Exile the top card of your library face down. Put that card
  * into your hand at the beginning of your next end step." The top library card is exiled and a
- * {@link ReturnExiledCardToHandAtEndStep} delayed action is registered to return it to hand at the
- * controller's next end step (drained in {@code StepTriggerService.handleEndStepTriggers}).
+ * delayed triggered ability is made that returns it to hand at the beginning of the controller's next end step
+ * (CR 603.7a).
  */
 @Slf4j
 @Component
@@ -46,8 +45,8 @@ public class NecropotenceSetAsideTopCardEffectHandler implements NormalEffectHan
 
         Card topCard = deck.removeFirst();
         gameData.addToExile(controllerId, topCard, null, true);
-        gameData.queueDelayedAction(new ReturnExiledCardToHandAtEndStep(
-                topCard.getId(), controllerId, entry.getCard()));
+        gameData.temporaryGlobalTriggeredAbilities.add(ReturnExiledCardToHandEffectHandler.returnAtYourNextEndStep(
+                gameData, controllerId, entry.getCard(), entry.getSourcePermanentId(), topCard.getId(), controllerId));
 
         gameLogService.append(gameData, GameLog.text(controllerName
                 + " exiles the top card of their library face down; it returns to their hand at the beginning of their next end step."));

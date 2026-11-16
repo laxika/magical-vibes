@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 public class PerilousIteration extends Card {
 
     public PerilousIteration() {
-        addSpellEffect(new SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect(
+        addSpellEffect(SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect.nextTurnsEndStep(
                         new CardMaxManaValuePredicate(2)));
-        addSpellEffect(new SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect(
+        addSpellEffect(SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect.nextTurnsEndStep(
                         new CardMinManaValuePredicate(3)));
     }
 }

@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 
 /**
  * Creates, for each opponent, a tapped copy of each card the source exiled attacking that opponent, as one token
@@ -49,9 +51,8 @@ public class CreateTokenCopiesOfExiledCardAttackingOpponentsEffectHandler implem
         var copyEffect = (CreateTokenCopiesOfExiledCardAttackingOpponentsEffect) effect;
         tokenCopySupport.createTokenCopiesAttackingEachOpponent(gameData, entry, List.copyOf(cardsToCopy),
                 controllerId, new CreateTokenCopyOfTargetPermanentEffect(copyEffect.grantHaste(), false, false, true),
-                opponentIds, token -> gameData.queueDelayedAction(new DelayedPermanentAction(
-                        token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                        false, null, controllerId, controllerId, false, entry.getCard())));
+                opponentIds, token -> DelayedPermanentActions.schedule(gameData, entry, new DelayedPermanentAction(
+                        token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP), ActivePlayer.YOU));
     }
 
     private List<UUID> opponentIds(GameData gameData, UUID controllerId) {

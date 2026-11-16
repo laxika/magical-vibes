@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentCastBySourceControll
  *
  * <p>Resolution registers a layer-7b base-P/T floating effect with
  * {@link EffectDuration#UNTIL_CONTROLLERS_NEXT_UPKEEP} — a longer duration than the usual
- * {@link SetBasePowerToughnessEffect}, so the 0/1 survives end-of-turn cleanup — and queues a
- * {@code PutCounterOnPermanentAtNextUpkeep} delayed action for the same permanent. Both end at
+ * {@link SetBasePowerToughnessEffect}, so the 0/1 survives end-of-turn cleanup — and adds a
+ * delayed triggered ability that puts the counter on the same permanent. Both end at
  * the controller's next upkeep, in that order (the base P/T wears off, then the delayed trigger
  * adds the counter).
  *

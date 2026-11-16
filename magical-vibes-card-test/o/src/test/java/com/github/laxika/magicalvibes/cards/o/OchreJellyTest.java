@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedCreateTokenCopy;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 
 @CardUsed({OchreJelly.class, PowerWordKill.class})
 class OchreJellyTest extends BaseCardTest {
@@ -42,7 +42,7 @@ class OchreJellyTest extends BaseCardTest {
 
         destroyWithPowerWordKill(jelly);
 
-        assertThat(gd.getDelayedActions(DelayedCreateTokenCopy.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
         assertThat(findPermanents(player1, "Ochre Jelly")).isEmpty();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -53,7 +53,7 @@ class OchreJellyTest extends BaseCardTest {
         assertThat(copies).hasSize(1);
         assertThat(copies.getFirst().getCard().isToken()).isTrue();
         assertThat(copies.getFirst().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(gd.getDelayedActions(DelayedCreateTokenCopy.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test
@@ -64,7 +64,7 @@ class OchreJellyTest extends BaseCardTest {
 
         destroyWithPowerWordKill(jelly);
 
-        assertThat(gd.getDelayedActions(DelayedCreateTokenCopy.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
         assertThat(findPermanents(player1, "Ochre Jelly")).isEmpty();
     }
 
@@ -81,7 +81,7 @@ class OchreJellyTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Ochre Jelly")).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
-        assertThat(gd.getDelayedActions(DelayedCreateTokenCopy.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     @Test
@@ -106,7 +106,7 @@ class OchreJellyTest extends BaseCardTest {
         assertThat(copies.getFirst().getCard().isToken()).isTrue();
         assertThat(copies.getFirst().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         destroyWithPowerWordKill(copies.getFirst());
-        assertThat(gd.getDelayedActions(DelayedCreateTokenCopy.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
@@ -129,7 +129,7 @@ class OchreJellyTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Ochre Jelly")).isEmpty();
-        assertThat(gd.getDelayedActions(DelayedCreateTokenCopy.class)).hasSize(1);
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(1);
         harness.passUntilWithNoAttackers(player2, TurnStep.POSTCOMBAT_MAIN);
         assertThat(findPermanents(player1, "Ochre Jelly")).isEmpty();
         harness.passUntil(TurnStep.END_STEP);
@@ -138,7 +138,7 @@ class OchreJellyTest extends BaseCardTest {
         List<Permanent> copies = findPermanents(player1, "Ochre Jelly");
         assertThat(copies).hasSize(1);
         assertThat(copies.getFirst().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.getDelayedActions(DelayedCreateTokenCopy.class)).isEmpty();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
     }
 
     private void destroyWithPowerWordKill(Permanent target) {

@@ -547,9 +547,23 @@ public class TriggerIndex {
         }
     }
 
+    /** Whether the turn {@code delayed} is about, if it names one, is the current one (CR 603.7). */
+    private static boolean inItsTurn(GameData gameData, TemporaryGlobalTriggeredAbility delayed) {
+        long sequence = delayed.referents().extraTurnSequence();
+        return sequence < 0
+                || gameData.currentExtraTurnSequence != null && gameData.currentExtraTurnSequence == sequence;
+    }
+
+    /** Whether the combat phase {@code delayed} is about, if it names one, is the current one (CR 500.8). */
+    private static boolean inItsCombatPhase(GameData gameData, TemporaryGlobalTriggeredAbility delayed) {
+        int phase = delayed.referents().combatPhase();
+        return phase < 0 || gameData.combatPhasesThisTurn == phase;
+    }
+
     /**
      * The abilities with a step trigger condition that {@code event}, a step or phase beginning, may trigger, in this
-     * order: the face-up planar objects' (controlled by the active player, CR 901.6), the emblems' (CR 114.4), and for
+     * order: the delayed triggered abilities' ({@link #delayedAbilities}) whose turn to wait past is over, the face-up
+     * planar objects' (controlled by the active player, CR 901.6), the emblems' (CR 114.4), and for
      * each player in APNAP order, beginning with the active player, those of their permanents and face-up schemes
      * (CR 314.4), then of the cards face up in their command zone, in their graveyard and in exile that
      * function there (CR 113.6). A permanent has the abilities the layers leave it: its card's, unless it is face down
@@ -560,6 +574,13 @@ public class TriggerIndex {
      */
     public List<StepCandidate> stepCandidates(GameData gameData, StepEvent event) {
         List<StepCandidate> candidates = new ArrayList<>();
+        for (TemporaryGlobalTriggeredAbility delayed : delayedAbilities(gameData)) {
+            if (gameData.turnNumber > delayed.referents().afterTurn() && inItsTurn(gameData, delayed)
+                    && inItsCombatPhase(gameData, delayed)
+                    && hasStepTrigger(delayed.ability(), event, null)) {
+                candidates.add(StepCandidate.of(delayed));
+            }
+        }
         if (gameData.planechase != null) {
             for (PlanarObject plane : List.copyOf(gameData.planechase.faceUp)) {
                 Card card = plane.getCard();
@@ -732,10 +753,12 @@ public class TriggerIndex {
      * order they were created: each has a stated duration and triggers each time its event occurs until then
      * (CR 603.7b), with the spell or ability that created it as its source and that one's controller as its controller
      * (CR 603.7d, 603.7e), wherever that source now is. A delayed ability is no object's own, so it has no zone to
-     * function from and nothing a permanent loses takes it away.
+     * function from and nothing a permanent loses takes it away. One that names a combat phase ("this combat")
+     * is listed only during that phase (CR 500.8).
      */
     public List<TemporaryGlobalTriggeredAbility> delayedAbilities(GameData gameData) {
-        return List.copyOf(gameData.temporaryGlobalTriggeredAbilities);
+        return gameData.temporaryGlobalTriggeredAbilities.stream()
+                .filter(delayed -> inItsCombatPhase(gameData, delayed)).toList();
     }
 
     /**
@@ -744,7 +767,8 @@ public class TriggerIndex {
      */
     public List<TemporaryGlobalTriggeredAbility> delayedAbilitiesAbout(GameData gameData, UUID permanentId) {
         return gameData.temporaryGlobalTriggeredAbilities.stream()
-                .filter(delayed -> permanentId.equals(delayed.watchedPermanentId())).toList();
+                .filter(delayed -> permanentId.equals(delayed.watchedPermanentId())
+                        && inItsCombatPhase(gameData, delayed)).toList();
     }
 
     /** The triggered abilities of {@code card} in exile or a command zone: its own and its perpetual grants. */
