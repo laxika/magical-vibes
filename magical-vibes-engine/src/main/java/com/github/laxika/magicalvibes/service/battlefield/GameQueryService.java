@@ -6940,6 +6940,102 @@ public class GameQueryService {
         }
     }
 
+    /** Test JVMs set {@code -DverifyStaticSourceCache=true}: every reuse of a pass's {@link StaticSources} is checked
+     *  against a fresh collection (see {@link LayerSystemService.Pass#staticSources}). */
+    private static final boolean STATIC_SOURCE_CACHE_VERIFIED = Boolean.getBoolean("verifyStaticSourceCache");
+
+    /**
+     * The part of a static-bonus assembly that is the same whichever permanent it assembles for: every source with
+     * something to apply, already in CR 613.7 order, and the permanents a floating effect grants a static ability of
+     * their own. Collected once per layered pass ({@link LayerSystemService.Pass#staticSources}). Built only by
+     * {@code GameQueryService}; its entries compare their objects by identity.
+     */
+    public record StaticSources(List<StaticSourceEntry> entries, Set<UUID> selfStaticGrantSourceIds) {
+    }
+
+    /**
+     * One static-ability source as it is collected, not yet wrapped for a target: a battlefield permanent, or the
+     * graveyard card, face-up scheme or spell on the stack that each assembly wraps in a {@code Permanent} of its own,
+     * as it did before the collection was shared.
+     */
+    public record StaticSourceEntry(Permanent permanent, Card card, StackEntry spell, UUID controllerId,
+                                    long timestamp, int position, boolean fromGraveyard) {
+
+        private StaticSource forTarget(UUID targetControllerId) {
+            boolean sameBattlefield = controllerId.equals(targetControllerId);
+            if (permanent != null) {
+                return new StaticSource(permanent, controllerId, sameBattlefield, timestamp, position, false);
+            }
+            if (spell != null) {
+                return new StaticSource(Permanent.forSpellOnStack(spell), controllerId, sameBattlefield,
+                        timestamp, position, false, true);
+            }
+            return new StaticSource(new Permanent(card), controllerId, sameBattlefield, timestamp, position,
+                    fromGraveyard);
+        }
+    }
+
+    /** The pass's static-ability sources for {@code board}, collected on the first assembly of a finished board. */
+    private StaticSources staticSources(GameData gameData, LayerSystemService.LayeredBoardState board) {
+        LayerSystemService.Pass pass = layerSystemService.activePass(gameData);
+        if (pass == null || pass.board() != board) {
+            return collectStaticSources(gameData, board);
+        }
+        return pass.staticSources(() -> collectStaticSources(gameData, board), STATIC_SOURCE_CACHE_VERIFIED);
+    }
+
+    /**
+     * Every static-ability source an assembly against {@code board} applies, in CR 613.7 order (timestamp, then
+     * position: battlefield order, then each player's graveyard and command-zone sources, then spells on the stack).
+     */
+    private StaticSources collectStaticSources(GameData gameData, LayerSystemService.LayeredBoardState board) {
+        List<StaticSourceEntry> entries = new ArrayList<>();
+        int position = 0;
+        // Board-wide, so read at most once per collection, and only once a graveyard holds a static source.
+        Boolean graveyardAbilitiesLost = null;
+        Set<UUID> selfStaticGrantSourceIds = floatingSelfStaticGrantSourceIds(gameData);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent source : bf) {
+                int sourcePosition = position++;
+                if (!hasStaticEffectsToApply(board, source, selfStaticGrantSourceIds)) {
+                    continue;
+                }
+                entries.add(new StaticSourceEntry(
+                        source, null, null, playerId, source.getTimestamp(), sourcePosition, false));
+            }
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard != null) {
+                for (Card card : graveyard) {
+                    if (card.getStaticEffects().stream()
+                            .noneMatch(GraveyardStaticEffect.class::isInstance)) {
+                        continue;
+                    }
+                    if (graveyardAbilitiesLost == null) {
+                        graveyardAbilitiesLost = graveyardCardsHaveLostAllAbilities(gameData);
+                    }
+                    if (graveyardAbilitiesLost) {
+                        break;
+                    }
+                    entries.add(new StaticSourceEntry(null, card, null, playerId, 0, position++, true));
+                }
+            }
+            // CR 314.4: a face-up scheme's static abilities affect the game from the command zone.
+            for (Card scheme : gameData.faceUpSchemes(playerId)) {
+                entries.add(new StaticSourceEntry(null, scheme, null, playerId, 0, position++, false));
+            }
+        }
+        // CR 113.6: an instant or sorcery's abilities function while it is on the stack.
+        for (StackEntry spell : LayerSystemService.stackStaticSources(gameData)) {
+            entries.add(new StaticSourceEntry(null, null, spell, spell.getControllerId(),
+                    spell.getStackTimestamp(), position++, false));
+        }
+        entries.sort(Comparator.comparingLong(StaticSourceEntry::timestamp)
+                .thenComparingInt(StaticSourceEntry::position));
+        return new StaticSources(List.copyOf(entries), selfStaticGrantSourceIds);
+    }
+
     /**
      * Legacy layer 7 accumulator assembly for one permanent, running against the layered board
      * state: sources apply in timestamp order (battlefield position for equal timestamps),
@@ -7027,57 +7123,22 @@ public class GameQueryService {
             List<GrantedEffectAttribution> explainEffects) {
         boolean isNaturalCreature = hasCardType(target, CardType.CREATURE);
         StaticBonusAccumulator accumulator = new StaticBonusAccumulator();
-        List<StaticSource> sources = new ArrayList<>();
         UUID resolvedTargetControllerId = targetControllerId;
-        int position = 0;
-        // Board-wide, so read at most once per assembly, and only once a graveyard holds a static source.
-        Boolean graveyardAbilitiesLost = null;
-        Set<UUID> selfStaticGrantSourceIds = floatingSelfStaticGrantSourceIds(gameData);
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            if (resolvedTargetControllerId == null && bf.contains(target)) {
-                resolvedTargetControllerId = playerId;
-            }
-            boolean targetOnSameBattlefield = playerId.equals(resolvedTargetControllerId);
-            for (Permanent source : bf) {
-                int sourcePosition = position++;
-                if (!hasStaticEffectsToApply(board, source, selfStaticGrantSourceIds)) {
-                    continue;
-                }
-                sources.add(new StaticSource(
-                        source, playerId, targetOnSameBattlefield, source.getTimestamp(), sourcePosition, false));
-            }
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard != null) {
-                for (Card card : graveyard) {
-                    if (card.getStaticEffects().stream()
-                            .noneMatch(GraveyardStaticEffect.class::isInstance)) {
-                        continue;
-                    }
-                    if (graveyardAbilitiesLost == null) {
-                        graveyardAbilitiesLost = graveyardCardsHaveLostAllAbilities(gameData);
-                    }
-                    if (graveyardAbilitiesLost) {
-                        break;
-                    }
-                    sources.add(new StaticSource(new Permanent(card), playerId,
-                            targetOnSameBattlefield, 0, position++, true));
+        if (resolvedTargetControllerId == null) {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+                if (bf != null && bf.contains(target)) {
+                    resolvedTargetControllerId = playerId;
+                    break;
                 }
             }
-            // CR 314.4: a face-up scheme's static abilities affect the game from the command zone.
-            for (Card scheme : gameData.faceUpSchemes(playerId)) {
-                sources.add(new StaticSource(new Permanent(scheme), playerId,
-                        targetOnSameBattlefield, 0, position++, false));
-            }
         }
-        // CR 113.6: an instant or sorcery's abilities function while it is on the stack.
-        for (StackEntry spell : LayerSystemService.stackStaticSources(gameData)) {
-            sources.add(new StaticSource(Permanent.forSpellOnStack(spell), spell.getControllerId(),
-                    spell.getControllerId().equals(resolvedTargetControllerId),
-                    spell.getStackTimestamp(), position++, false, true));
+        StaticSources collected = staticSources(gameData, board);
+        Set<UUID> selfStaticGrantSourceIds = collected.selfStaticGrantSourceIds();
+        List<StaticSource> sources = new ArrayList<>(collected.entries().size());
+        for (StaticSourceEntry entry : collected.entries()) {
+            sources.add(entry.forTarget(resolvedTargetControllerId));
         }
-        sources.sort(Comparator.comparingLong(StaticSource::timestamp).thenComparingInt(StaticSource::position));
         List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
         for (StaticSource sourceSlot : sources) {
             Permanent source = sourceSlot.permanent();

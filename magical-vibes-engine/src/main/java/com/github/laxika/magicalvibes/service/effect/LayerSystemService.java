@@ -422,6 +422,7 @@ public class LayerSystemService {
         private final Map<UUID, GameQueryService.StaticBonus> preliminaryBonusMemo = new HashMap<>();
         private final Map<Permanent, ControlledStaticEffects> activeStaticEffectsMemo = new IdentityHashMap<>();
         private final Map<Object, Boolean> boardScanMemo = new HashMap<>();
+        private GameQueryService.StaticSources staticSources;
         private Map<Long, LayeredBoardState> nestedBoards;
         private ControllerIndex controllerIndex;
         private int controllerLookups;
@@ -509,6 +510,33 @@ public class LayerSystemService {
             boolean answer = compute.getAsBoolean();
             boardScanMemo.put(key, answer);
             return answer;
+        }
+
+        /**
+         * The static-ability sources every static-bonus assembly of this pass reads, collected by {@code compute} the
+         * first time an assembly asks and handed to every later one: what they are does not depend on the permanent
+         * being assembled, so a pass that assembles for every permanent collects them once instead of walking the
+         * battlefields and graveyards per permanent. Memoized only once the board is finished, like {@link #bonusMemo},
+         * and on the same terms: the queries of a pass change nothing the collection reads. When {@code verify} is set
+         * (test JVMs run with {@code -DverifyStaticSourceCache=true}) every hit collects again and throws if the two
+         * differ, so a scope that changes the game state under a cached collection fails instead of reading stale sources.
+         */
+        public GameQueryService.StaticSources staticSources(
+                java.util.function.Supplier<GameQueryService.StaticSources> compute, boolean verify) {
+            if (!boardReady) {
+                return compute.get();
+            }
+            if (staticSources == null) {
+                staticSources = compute.get();
+            } else if (verify) {
+                GameQueryService.StaticSources fresh = compute.get();
+                if (!fresh.equals(staticSources)) {
+                    throw new IllegalStateException("The static-ability sources changed inside one layered pass:"
+                            + " a query scope changed the game state an assembly reads (cached "
+                            + staticSources.entries().size() + " sources, now " + fresh.entries().size() + ")");
+                }
+            }
+            return staticSources;
         }
 
         /**

@@ -859,7 +859,13 @@ the live permanent's `lastKnownPower` (read by `PermanentPowerDifferentFromBaseP
 it is still on the battlefield) and can destroy an attached permanent on unattach. Independent of
 scopes, `assembleStaticBonusUnguarded` leaves out battlefield sources with nothing to apply — no
 printed STATIC effect, no static effect the pass granted them, no floating static grant to
-themselves — so a target's assembly costs the board's static sources, not its size. The `bonusMemo` is keyed by
+themselves — so a target's assembly costs the board's static sources, not its size. Which sources those are (and
+their CR 613.7 order) doesn't depend on the target, so a finished pass collects them once (`Pass.staticSources`,
+on the bonus memo's terms) and each assembly only judges what is per target: the target's controller, and so
+whether each source is on its battlefield. Graveyard cards, schemes and spells are kept as collected and wrapped
+in a fresh `Permanent` per assembly, as before. Test JVMs run with `-DverifyStaticSourceCache=true`, which
+collects again on every reuse and throws if the sources changed — a scope that mutates what an assembly reads
+fails the test instead of reading stale sources. The `bonusMemo` is keyed by
 object identity, not id: a dying permanent's LKI snapshot (`simultaneousDyingPermanents`) shares the
 live permanent's id but assembles on its own, so a scope that reads both never hands one the other's
 bonus. Target legality runs scoped as well: `TargetLegalityService.validateMultiSpellTargets` (every

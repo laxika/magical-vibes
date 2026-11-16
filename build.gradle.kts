@@ -105,6 +105,11 @@ subprojects {
                 "verifyLayerDependencyPruning",
                 System.getProperty("verifyLayerDependencyPruning") ?: "true"
             )
+            // Every reuse of a layered pass's static-ability sources is checked against a fresh collection
+            systemProperty(
+                "verifyStaticSourceCache",
+                System.getProperty("verifyStaticSourceCache") ?: "true"
+            )
             // Forward select system properties to the forked test JVM
             listOf("runCardFuzz", "runAiStress", "fuzzGames",
                     "runScenarioFuzz", "scenarioCard", "scenarioIterations", "scenarioSeed",
