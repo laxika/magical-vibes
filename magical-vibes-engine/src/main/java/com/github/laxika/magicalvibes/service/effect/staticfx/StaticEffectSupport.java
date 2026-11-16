@@ -358,11 +358,16 @@ public class StaticEffectSupport {
         return subtype.isCreatureType();
     }
 
+    /**
+     * Whether a face-up battlefield permanent prints an {@link AnimateNoncreatureArtifactsEffect} (March of the
+     * Machines). A face-down one has no abilities (CR 708.2).
+     */
     public boolean hasAnimateArtifactEffect(GameData gameData) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
             for (Permanent source : bf) {
+                if (source.isFaceDown()) continue;
                 for (CardEffect e : source.getCard().getStaticEffects()) {
                     if (e instanceof AnimateNoncreatureArtifactsEffect) return true;
                 }
@@ -371,12 +376,17 @@ public class StaticEffectSupport {
         return false;
     }
 
+    /**
+     * Whether a face-up battlefield permanent's {@link AllLandsAreCreaturesEffect} animates {@code permanent}, a land
+     * with {@code subtypes}. A face-down source has no abilities (CR 708.2).
+     */
     public boolean matchesAnimateLand(GameData gameData, Permanent permanent,
                                       Collection<CardSubtype> subtypes) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
             for (Permanent source : bf) {
+                if (source.isFaceDown()) continue;
                 for (CardEffect e : source.getCard().getStaticEffects()) {
                     if (e instanceof AllLandsAreCreaturesEffect animateLands
                             && (animateLands.scope() == GrantScope.ALL_LANDS

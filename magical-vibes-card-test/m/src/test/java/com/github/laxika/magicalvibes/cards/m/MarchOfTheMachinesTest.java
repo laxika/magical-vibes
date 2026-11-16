@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.s.SoulSummons;
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
@@ -221,5 +222,20 @@ class MarchOfTheMachinesTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, march)).isTrue();
         assertThat(gqs.getEffectivePower(gd, march)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, march)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A manifested March of the Machines has no abilities, so artifacts stay noncreature artifacts")
+    @CardUsed(SoulSummons.class)
+    void manifestedMarchAnimatesNoArtifacts() {
+        Permanent feather = harness.addToBattlefieldAndReturn(player1, new AngelsFeather());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.setLibrary(player1, List.of(new MarchOfTheMachines()));
+        harness.castFromHand(player1, new SoulSummons(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, feather)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, feather)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(feather);
     }
 }

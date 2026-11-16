@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.s.SoulSummons;
 import com.github.laxika.magicalvibes.cards.b.Bayou;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
@@ -190,5 +191,20 @@ class LivingLandsTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A manifested Living Lands has no abilities, so Forests stay noncreature lands")
+    @CardUsed({SoulSummons.class, GloriousAnthem.class})
+    void manifestedLivingLandsAnimatesNoForests() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.setLibrary(player1, List.of(new LivingLands()));
+        harness.castFromHand(player1, new SoulSummons(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, forest)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(forest);
     }
 }

@@ -3548,7 +3548,7 @@ public class GameQueryService {
     /**
      * Returns {@code true} if an aura attached to the given permanent carries an
      * {@link EnchantedPermanentBecomesCreatureEffect} (e.g. Living Terrain), which continuously
-     * makes the enchanted permanent a creature.
+     * makes the enchanted permanent a creature. A face-down Aura has no abilities (CR 708.2).
      */
     private boolean hasAuraBecomeCreatureEffect(GameData gameData, Permanent permanent) {
         if (!anyBattlefieldPrintsStaticEffect(gameData, EnchantedPermanentBecomesCreatureEffect.class)) {
@@ -3558,7 +3558,7 @@ public class GameQueryService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent source : battlefield) {
-                if (source.isAttached() && permanent.getId().equals(source.getAttachedTo())) {
+                if (!source.isFaceDown() && source.isAttached() && permanent.getId().equals(source.getAttachedTo())) {
                     for (CardEffect effect : source.getCard().getStaticEffects()) {
                         if (effect instanceof EnchantedPermanentBecomesCreatureEffect) {
                             return true;
@@ -10871,7 +10871,7 @@ public class GameQueryService {
      * Returns {@code true} if the permanent is one of the "each other non-Aura enchantment you
      * control" permanents an {@link AnimateControlledEnchantmentsEffect} (Starfield of Nyx) turns
      * into a creature â€” the effect's source must be on the same battlefield and its controller must
-     * control enough enchantments.
+     * control enough enchantments. A face-down source has no abilities (CR 708.2) and animates nothing.
      */
     public boolean isAnimatedByStarfield(GameData gameData, Permanent permanent) {
         if (!anyBattlefieldPrintsStaticEffect(gameData, AnimateControlledEnchantmentsEffect.class)) {
@@ -10882,6 +10882,7 @@ public class GameQueryService {
             if (battlefield == null) continue;
             int enchantmentCount = -1;
             for (Permanent source : battlefield) {
+                if (source.isFaceDown()) continue;
                 for (CardEffect effect : source.getCard().getStaticEffects()) {
                     if (!(effect instanceof AnimateControlledEnchantmentsEffect animate)) continue;
                     if (source.getId().equals(permanent.getId())) continue;
@@ -10904,12 +10905,13 @@ public class GameQueryService {
      * Returns {@code true} if the given land is animated into a creature by an
      * {@link AllLandsAreCreaturesEffect} on any battlefield. An effect with no required subtype
      * animates every land (Nature's Revolt); an effect with a required land subtype (Living Lands:
-     * Forest) animates only lands carrying that subtype.
+     * Forest) animates only lands carrying that subtype. A face-down source has no abilities
+     * (CR 708.2) and animates nothing.
      */
     private boolean matchesAnimateLand(GameData gameData, Permanent permanent) {
         return anyBattlefieldPrintsStaticEffect(gameData, AllLandsAreCreaturesEffect.class)
-                && gameData.anyPermanentMatches(source ->
-                source.getCard().getStaticEffects().stream()
+                && gameData.anyPermanentMatches(source -> !source.isFaceDown()
+                && source.getCard().getStaticEffects().stream()
                         .anyMatch(e -> e instanceof AllLandsAreCreaturesEffect animateLands
                                 && (animateLands.scope() == GrantScope.ALL_LANDS
                                         || (animateLands.scope() == GrantScope.OWN_LANDS

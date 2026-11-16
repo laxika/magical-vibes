@@ -247,4 +247,20 @@ class StarfieldOfNyxTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, stillLife)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, stillLife)).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("A manifested Starfield of Nyx has no abilities, so other enchantments stay noncreatures")
+    @CardUsed(SoulSummons.class)
+    void manifestedStarfieldAnimatesNoEnchantments() {
+        List<Permanent> enchantments = new java.util.ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            enchantments.add(harness.addToBattlefieldAndReturn(player1, new Insight()));
+        }
+        harness.setLibrary(player1, List.of(new StarfieldOfNyx()));
+        harness.castFromHand(player1, new SoulSummons(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(enchantments).noneMatch(enchantment -> gqs.isCreature(gd, enchantment));
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsAll(enchantments);
+    }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import java.util.List;
+import com.github.laxika.magicalvibes.cards.s.SoulSummons;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -202,5 +204,18 @@ class NaturesRevoltTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, village)).isEqualTo(3);
         assertThat(gqs.isLand(gd, village)).isTrue();
         assertThat(gqs.hasKeyword(gd, village, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A manifested Nature's Revolt has no abilities, so lands stay noncreature lands")
+    @CardUsed(SoulSummons.class)
+    void manifestedNaturesRevoltAnimatesNoLands() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.setLibrary(player1, List.of(new NaturesRevolt()));
+        harness.castFromHand(player1, new SoulSummons(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, mountain)).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mountain);
     }
 }
