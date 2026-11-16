@@ -12,11 +12,9 @@ import com.github.laxika.magicalvibes.model.DamagedCreatureDeathTriggerWatcher;
 import com.github.laxika.magicalvibes.model.DelayedEffectOnDeath;
 import com.github.laxika.magicalvibes.model.DelayedReturnOnDeath;
 import com.github.laxika.magicalvibes.model.DelayedSpellCastTrigger;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.ManaCopyRider;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -26,7 +24,6 @@ import com.github.laxika.magicalvibes.model.SacrificeBoonWatcher;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetedCreatureDeathTriggerWatcher;
-import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
@@ -36,7 +33,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTar
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
-import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
@@ -83,10 +79,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -1146,29 +1139,6 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Puts {@code watcher}'s ability, a delayed triggered ability with a stated duration (CR 603.7b), on the stack as
-     * {@code effects} for the event about {@code targetId}, the object or player it acts on without targeting it.
-     */
-    private void enqueueTemporaryGlobalTrigger(GameData gameData,
-                                                TemporaryGlobalTriggeredAbility watcher,
-                                                List<CardEffect> effects,
-                                                UUID targetId, int eventValue, UUID triggeringPermanentId) {
-        StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
-                watcher.sourceCard().getName() + "'s ability", effects);
-        entry.setTargetId(targetId);
-        entry.setEventValue(eventValue);
-        entry.setLinkedExiledCardId(watcher.linkedExiledCardId());
-        if (triggeringPermanentId != null) {
-            entry.setTriggeringPermanentId(triggeringPermanentId);
-        }
-        entry.setNonTargeting(true);
-        triggeredAbilityStackService.putDelayed(gameData, entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-        log.info("Game {} - {} temporary global {} trigger fires",
-                gameData.id, watcher.sourceCard().getName(), LegacySlots.label(watcher.ability()));
-    }
-
-    /**
      * A single "when you next cast a spell with {X} in its mana cost or activate an ability with {X} in
      * its activation cost" delayed trigger (Magus Lucea Kane) is registered as one spell copy and one
      * ability copy; when the ability half fires, the spell half is used up with it.
@@ -1360,111 +1330,11 @@ public class TriggerCollectionService {
     }
 
     /**
-     * The creature-death triggered abilities that aren't abilities of an object the trigger pipeline indexes: the
-     * global ones a resolved spell or ability registered (CR 603.7) and the delayed "when that creature
-     * dies" watchers. They trigger as {@code dyingPermanent}, which
-     * {@code dyingControllerId} controlled, dies.
+     * The delayed "when that creature dies" watchers kept outside the trigger pipeline, which trigger as
+     * {@code dyingPermanent} dies.
      */
-    public void checkCreatureDeathRegisteredTriggers(GameData gameData, UUID dyingControllerId,
-                                                     Permanent dyingPermanent, int dyingPowerAtDeath,
-                                                     int dyingToughnessAtDeath) {
-        Card dyingCard = dyingPermanent.getCard();
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            collectRegisteredCreatureDeathTrigger(gameData, watcher, dyingControllerId, dyingPermanent,
-                    dyingPowerAtDeath, dyingToughnessAtDeath);
-        }
+    public void checkCreatureDeathRegisteredTriggers(GameData gameData, Permanent dyingPermanent) {
         collectCreatureDeathTriggerWatchers(gameData, dyingPermanent);
-    }
-
-    private void collectRegisteredCreatureDeathTrigger(GameData gameData, TemporaryGlobalTriggeredAbility watcher,
-                                                       UUID dyingControllerId, Permanent dyingPermanent,
-                                                       int dyingPowerAtDeath, int dyingToughnessAtDeath) {
-        ZoneChangeTrigger trigger = creatureDeathTrigger(watcher.ability());
-        if (trigger == null) {
-            return;
-        }
-        Card dyingCard = dyingPermanent.getCard();
-        if (watcher.watchedPermanentId() != null) {
-            // "When it dies this turn": a delayed trigger watching one creature (Desperate Measures).
-            if (trigger.relation() != ObjectRelation.THIS
-                    || !dyingPermanent.getId().equals(watcher.watchedPermanentId())) {
-                return;
-            }
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability", temporaryEffects(watcher));
-            entry.setTargetId(dyingControllerId);
-            entry.setTriggeringPermanentId(dyingPermanent.getId());
-            entry.setTriggeringPermanentControllerId(dyingControllerId);
-            entry.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-            return;
-        }
-        if (trigger.relation() == ObjectRelation.THIS) {
-            return;
-        }
-        if (trigger.relation().youControl() && !watcher.controllerId().equals(dyingControllerId)) {
-            return;
-        }
-        // "Until end of turn, whenever a creature dies, its controller ...": the dying creature's controller rides
-        // as the entry's non-targeting player, its toughness as the event value; "a nontoken creature you control
-        // dies" its controller and power; "a nontoken creature dies" binds the card that died (Consumed by History);
-        // "whenever a creature you control dies" names nothing. The other relations and filters are no such ability's.
-        switch (trigger.relation()) {
-            case HAUNTED, EQUIPPED, ENCHANTED_PLAYER_CONTROLS, DAMAGED_BY_THIS, DAMAGED_BY_ATTACHED,
-                 OPPONENT_CONTROLS -> {
-                return;
-            }
-            default -> {
-            }
-        }
-        PermanentPredicate filter = trigger.filter();
-        PermanentPredicate narrowed = filter instanceof PermanentAllOfPredicate allOf
-                && !filter.equals(Triggers.NONTOKEN_CREATURE) && !allOf.predicates().isEmpty()
-                ? allOf.predicates().getFirst() : filter;
-        boolean youControl = trigger.relation().youControl();
-        if (Triggers.NONTOKEN_CREATURE.equals(narrowed)) {
-            if (!dyingCard.isToken()) {
-                if (youControl) {
-                    enqueueRegisteredCreatureDeathTrigger(gameData, watcher, dyingControllerId,
-                            Math.max(0, dyingPowerAtDeath));
-                } else {
-                    enqueueRegisteredCreatureDeathTrigger(gameData, watcher, dyingCard.getId(), 0);
-                }
-            }
-        } else if (Triggers.CREATURE_OR_PLANESWALKER.equals(narrowed)
-                || Triggers.ARTIFACT_OR_CREATURE.equals(narrowed)) {
-            return;
-        } else if (youControl) {
-            enqueueRegisteredCreatureDeathTrigger(gameData, watcher, null, 0);
-        } else {
-            enqueueRegisteredCreatureDeathTrigger(gameData, watcher, dyingControllerId,
-                    Math.max(0, dyingToughnessAtDeath));
-        }
-    }
-
-    private void enqueueRegisteredCreatureDeathTrigger(GameData gameData, TemporaryGlobalTriggeredAbility watcher,
-                                                       UUID targetId, int eventValue) {
-        StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
-                watcher.sourceCard().getName() + "'s ability", temporaryEffects(watcher));
-        entry.setTargetId(targetId);
-        entry.setEventValue(eventValue);
-        entry.setNonTargeting(true);
-        triggeredAbilityStackService.putDelayed(gameData, entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-        log.info("Game {} - {} temporary global creature-death trigger fires",
-                gameData.id, watcher.sourceCard().getName());
-    }
-
-    /** The "whenever a creature dies" trigger condition of {@code ability}, or {@code null} when it has none. */
-    private static ZoneChangeTrigger creatureDeathTrigger(TriggeredAbility ability) {
-        for (TriggerCondition condition : ability.conditions()) {
-            if (condition.trigger() instanceof ZoneChangeTrigger trigger
-                    && trigger.from().equals(Set.of(Zone.BATTLEFIELD)) && trigger.to() == Zone.GRAVEYARD
-                    && trigger.causes().isEmpty()) {
-                return trigger;
-            }
-        }
-        return null;
     }
 
     /**
@@ -1655,19 +1525,6 @@ public class TriggerCollectionService {
                     destination == Zone.GRAVEYARD ? -1L : 0L);
             entry.setNonTargeting(true);
             triggeredAbilityStackService.putDelayed(gameData, entry);
-        }
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (!watcher.ability().conditions().getFirst().trigger()
-                    .equals(Triggers.leavesBattlefield(ObjectRelation.THIS))
-                    || !target.getId().equals(watcher.watchedPermanentId())) {
-                continue;
-            }
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s delayed trigger", temporaryEffects(watcher), (UUID) null,
-                    target.getId());
-            entry.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
         }
     }
 
@@ -2001,49 +1858,6 @@ public class TriggerCollectionService {
         if (enteringPermanent != null && !gameData.deferCreatureEntersBoons) {
             collectAllyBoonTriggers(gameData, controllerId, List.of(enteringPermanent.getId()), true);
         }
-
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (!watcher.ability().hasTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL))
-                    || !watcher.controllerId().equals(controllerId)) {
-                continue;
-            }
-
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability", temporaryEffects(watcher));
-            entry.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-            log.info("Game {} - {} temporary ally creature-enters trigger fires",
-                    gameData.id, watcher.sourceCard().getName());
-        }
-    }
-
-    /**
-     * Whether a temporary global ability has a "whenever a creature [an opponent controls] enters" trigger condition,
-     * one that narrows it down by a further filter ("a nontoken creature an opponent controls") included, which
-     * {@code entering} matches as it entered.
-     */
-    private boolean watchesOpponentCreatureEntering(GameData gameData, TemporaryGlobalTriggeredAbility watcher,
-                                                    Permanent entering) {
-        for (TriggerCondition condition : watcher.ability().conditions()) {
-            if (!(condition.trigger() instanceof ZoneChangeTrigger trigger) || !trigger.entersBattlefield()
-                    || trigger.relation() != ObjectRelation.OPPONENT_CONTROLS
-                    || !Triggers.CREATURE.equals(narrowedFrom(trigger.filter()))) {
-                continue;
-            }
-            if (predicateEvaluationService.matchesPermanentPredicate(entering, trigger.filter(),
-                    FilterContext.of(gameData).withSourceControllerId(watcher.controllerId())
-                            .withSourceCardId(watcher.sourceCard().getId()))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** The filter {@code filter} narrows: the first of an all-of filter's parts, or the filter itself. */
-    private static PermanentPredicate narrowedFrom(PermanentPredicate filter) {
-        return filter instanceof PermanentAllOfPredicate allOf && !allOf.predicates().isEmpty()
-                ? allOf.predicates().getFirst() : filter;
     }
 
     private void collectCreatureSpellBoonTriggers(GameData gameData, Card spellCard,
@@ -2205,57 +2019,11 @@ public class TriggerCollectionService {
         }
     }
 
-    /**
-     * The abilities a spell registered until end of turn that see a creature or an enchantment enter under their
-     * controller's control.
-     */
-    public void checkAnyPermanentEntersTriggers(GameData gameData, UUID enteringControllerId, Card enteringCard) {
-        if (!enteringPermanentHasType(gameData, enteringCard, CardType.CREATURE)
-                && !enteringPermanentHasType(gameData, enteringCard, CardType.ENCHANTMENT)) {
-            return;
-        }
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (!watcher.ability().hasTrigger(Triggers.enters(Triggers.CREATURE_OR_ENCHANTMENT,
-                    ObjectRelation.YOU_CONTROL)) || !watcher.controllerId().equals(enteringControllerId)) {
-                continue;
-            }
-
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability", temporaryEffects(watcher));
-            entry.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-            log.info("Game {} - {} temporary creature-or-enchantment-enter trigger fires",
-                    gameData.id, watcher.sourceCard().getName());
-        }
-    }
-
     /** The boons a noncreature permanent entering under {@code controllerId}'s control uses. */
     public void checkAllyPermanentEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
         Permanent enteringPermanent = findPermanentByCard(gameData, enteringCard);
         if (enteringPermanent != null && !gameQueryService.isCreature(gameData, enteringPermanent)) {
             collectAllyBoonTriggers(gameData, controllerId, List.of(enteringPermanent.getId()), false);
-        }
-    }
-
-    /** The abilities a spell registered until end of turn that see a creature enter under an opponent's control. */
-    public void checkOpponentCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId, Card enteringCreature) {
-        if (!enteringPermanentHasType(gameData, enteringCreature, CardType.CREATURE)) return;
-
-        Permanent enteringPermanent = findPermanentByCard(gameData, enteringCreature);
-        if (enteringPermanent == null) return;
-
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (!watchesOpponentCreatureEntering(gameData, watcher, enteringPermanent)
-                    || watcher.controllerId().equals(enteringCreatureControllerId)) {
-                continue;
-            }
-
-            List<CardEffect> resolvedEffects = temporaryEffects(watcher);
-
-            // "A copy of that creature" (Theoretical Duplication) is the stack entry's triggering permanent.
-            enqueueTemporaryGlobalTrigger(gameData, watcher, resolvedEffects, enteringPermanent.getId(), 0,
-                    enteringPermanent.getId());
         }
     }
 
@@ -2303,18 +2071,6 @@ public class TriggerCollectionService {
                 log.info("Game {} - {} delayed combat trigger queued", gameData.id, sourceCard.getName());
             }
         }
-    }
-
-    /**
-     * The effects of {@code watcher}'s ability, every one of them as written (CR 603.3), its intervening "if" wrapped
-     * around each to be judged again as it resolves (CR 603.4).
-     */
-    private static List<CardEffect> temporaryEffects(TemporaryGlobalTriggeredAbility watcher) {
-        Condition interveningIf = watcher.ability().options().interveningIf();
-        return watcher.ability().effects().stream()
-                .map(EffectRegistration::effect)
-                .map(effect -> interveningIf == null ? effect : (CardEffect) new ConditionalEffect(interveningIf, effect))
-                .toList();
     }
 
     /**

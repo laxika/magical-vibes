@@ -131,16 +131,22 @@ class DamageAndTargetCollectorAbilityStackObjectTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("\"Whenever a creature an opponent controls is dealt damage, draw a card and gain 1 life\" is one object")
+    @DisplayName("\"Whenever a creature an opponent controls is dealt damage, draw a card and gain 1 life\" is one "
+            + "object that names the damaged creature")
     void opponentCreatureDealtDamageAbilityIsOneStackObject() {
         Card card = watcher("Pain Watcher");
         card.addTrigger(Triggers.creatureOpponentControlsDealtDamage(), new DrawCardEffect(1), new GainLifeEffect(1));
         addCreatureReady(player1, card);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.inMutationScope(() -> damageCollectors().checkOpponentCreatureDealtDamageTriggers(gd, player2.getId()));
+        harness.inMutationScope(() -> damageCollectors().checkOpponentCreatureDealtDamageTriggers(gd, bears,
+                player2.getId(), 2));
 
-        assertThat(entriesOf("Pain Watcher")).singleElement()
-                .satisfies(entry -> assertThat(entry.getEffectsToResolve()).hasSize(2));
+        assertThat(entriesOf("Pain Watcher")).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).hasSize(2);
+            assertThat(entry.getTriggeringPermanentId()).isEqualTo(bears.getId());
+            assertThat(entry.getEventValue()).isEqualTo(2);
+        });
     }
 
     @Test

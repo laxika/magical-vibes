@@ -623,21 +623,22 @@ public class CombatDamageTriggers {
                                                                boolean battleDamage, boolean ownerRelativePass,
                                                                List<Permanent> departedWatchers) {
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerId);
-        if (!battleDamage && !ownerRelativePass) {
-            damageTriggers.collectTemporaryGlobalTriggers(
-                    gameData, Triggers.creatureYouControlDealsCombatDamageToPlayer(),
-                    creature.getId(), damageDealt);
-        }
         List<Watcher> watchers = new ArrayList<>();
         if (attackerBattlefield != null) {
             List<Permanent> permanents = new ArrayList<>(attackerBattlefield);
             permanents.addAll(departedWatchers);
             permanents.forEach(permanent -> watchers.add(Watcher.of(permanent, attackerId)));
         }
-        // The player's emblems watch too, from the command zone (CR 114.4).
+        // The player's emblems watch too, from the command zone (CR 114.4), and the delayed abilities they control
+        // (Mistway Spy's "until end of turn, whenever a creature you control deals combat damage to a player").
         for (Emblem emblem : List.copyOf(gameData.emblems)) {
             if (emblem.controllerId().equals(attackerId)) {
                 watchers.add(Watcher.of(emblem));
+            }
+        }
+        for (Watcher delayed : eventAbilitySupport.delayedWatchers(gameData)) {
+            if (delayed.controllerId().equals(attackerId)) {
+                watchers.add(delayed);
             }
         }
         for (Watcher watcher : watchers) {
@@ -1520,7 +1521,7 @@ public class CombatDamageTriggers {
             UUID controllerId = state.combatDamageTargetControllers.get(damagedCreatureId);
             damageTriggers.checkAnyCreatureDealtDamageTriggers(
                     gameData, damaged, controllerId, entry.getValue());
-            damageTriggers.checkTemporaryGlobalOpponentCreatureDealtDamageTriggers(
+            damageTriggers.checkOpponentCreatureDealtDamageTriggers(
                     gameData, damaged, controllerId, entry.getValue());
         }
     }
@@ -1980,18 +1981,6 @@ public class CombatDamageTriggers {
         processCombatDamageReceivedTriggers(gameData, dealtDamageTriggerData);
 
 
-
-        // Process ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers (e.g. Kazarov)
-        for (var entry : state.defDamageTaken.entrySet()) {
-            if (entry.getValue() > 0) {
-                damageTriggers.checkOpponentCreatureDealtDamageTriggers(gameData, defenderId);
-            }
-        }
-        for (var entry : state.atkDamageTaken.entrySet()) {
-            if (entry.getValue() > 0) {
-                damageTriggers.checkOpponentCreatureDealtDamageTriggers(gameData, activeId);
-            }
-        }
 
         // A blocker can also deal combat damage to the defending player (Butcher Orgg).
         // Attribute triggers and damage history to each source's controller.

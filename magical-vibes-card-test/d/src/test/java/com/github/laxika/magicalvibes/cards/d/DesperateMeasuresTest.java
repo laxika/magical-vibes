@@ -39,16 +39,17 @@ class DesperateMeasuresTest extends BaseCardTest {
     }
 
     @Test
-    void opponentDrawsWhenTheirTargetedCreatureDies() {
+    void nobodyDrawsWhenTheTargetDiesUnderAnOpponentsControl() {
+        // "When it dies under your control this turn, draw two cards": an opponent's creature dying doesn't trigger it.
         harness.setHand(player2, List.of());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castOn(creature);
         destroy(player1, creature);
-        harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 
     @Test

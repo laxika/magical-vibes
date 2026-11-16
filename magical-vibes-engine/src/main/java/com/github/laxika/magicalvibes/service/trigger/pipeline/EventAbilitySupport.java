@@ -7,14 +7,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -171,7 +169,8 @@ class EventAbilitySupport {
 
     /**
      * The watchers whose abilities may see an event: the permanents on the battlefield, each under its controller, then
-     * the emblems, whose abilities function in the command zone (CR 114.4).
+     * the emblems, whose abilities function in the command zone (CR 114.4), then the delayed triggered abilities
+     * ({@link TriggerIndex#delayedAbilities}) that watch no particular object.
      */
     List<Watcher> watchers(GameData gameData) {
         List<Watcher> watchers = new ArrayList<>();
@@ -179,19 +178,36 @@ class EventAbilitySupport {
         for (Emblem emblem : List.copyOf(gameData.emblems)) {
             watchers.add(Watcher.of(emblem));
         }
+        watchers.addAll(delayedWatchers(gameData));
         return watchers;
+    }
+
+    /** The delayed triggered abilities ({@link TriggerIndex#delayedAbilities}) that watch no particular object. */
+    List<Watcher> delayedWatchers(GameData gameData) {
+        return triggerIndex.delayedAbilities(gameData).stream()
+                .filter(delayed -> delayed.watchedPermanentId() == null).map(Watcher::of).toList();
+    }
+
+    /**
+     * The delayed triggered abilities about {@code permanentId} ("when that creature dies this turn", "whenever it
+     * attacks this turn"), whose "this" is that permanent (CR 603.7c), as watchers.
+     */
+    List<Watcher> delayedWatching(GameData gameData, UUID permanentId) {
+        return triggerIndex.delayedAbilitiesAbout(gameData, permanentId).stream().map(Watcher::of).toList();
     }
 
     /**
      * The abilities of {@code watcher} with a trigger condition watched as {@code watched}: a permanent's as the layers
-     * leave them ({@link #abilities(GameData, Permanent, Trigger)}), an emblem's as it has them.
+     * leave them ({@link #abilities(GameData, Permanent, Trigger)}), an emblem's as it has them, a delayed ability
+     * itself; an emblem's and a delayed ability's whatever zones their conditions name.
      */
     List<TriggeredAbility> abilities(GameData gameData, Watcher watcher, Trigger watched) {
-        if (watcher.emblem() == null) {
+        if (watcher.permanent() != null) {
             return abilities(gameData, watcher.permanent(), watched);
         }
-        return watcher.emblem().triggeredAbilities().stream()
-                .filter(ability -> ability.hasWatchedTrigger(watched)).toList();
+        List<TriggeredAbility> own = watcher.emblem() != null ? watcher.emblem().triggeredAbilities()
+                : List.of(watcher.delayed().ability());
+        return own.stream().filter(ability -> ability.hasWatchedTrigger(watched)).toList();
     }
 
     /**
@@ -205,11 +221,14 @@ class EventAbilitySupport {
      */
     boolean put(GameData gameData, TriggeredAbility ability, Watcher watcher, ConditionContext context,
                 TriggerRecord record) {
-        if (watcher.emblem() == null) {
+        if (watcher.permanent() != null) {
             return put(gameData, ability, watcher.card(), watcher.permanent(), watcher.controllerId(), context, record);
         }
         if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), context)) {
             return false;
+        }
+        if (watcher.delayed() != null) {
+            return putDelayed(gameData, ability, watcher.delayed(), context, record);
         }
         String description = emblemName(watcher.emblem());
         boolean triggered = stackService.put(gameData, new TriggeredAbilityRequest(ability, watcher.card(), null,
@@ -328,28 +347,69 @@ class EventAbilitySupport {
     }
 
     /**
-     * Puts {@code watcher}'s ability, a delayed triggered ability with a stated duration (CR 603.7b), on the stack as
-     * its effects (its intervening "if" wrapped around each, CR 603.4) for the event about {@code targetId}, the object
-     * or player it acts on without targeting it, {@code triggeringPermanentId} the permanent the event was about.
+     * Hands {@code ability} of {@code delayed}, a delayed triggered ability a resolving spell or ability created
+     * (CR 603.7a), to the stack door, its event condition already judged: its source is that spell's or ability's
+     * card and it is controlled by that spell's or ability's controller (CR 603.7d, 603.7e), and it is no object's own
+     * ability, so no "triggers an additional time" effect counts it (CR 603.2d). The door judges its intervening "if"
+     * (CR 603.4) and chooses its targets (CR 603.3d), restricted by the registration's target filter. {@code record}
+     * stamps the event as it does for any other watcher's ability, and the card its maker's source had exiled with its
+     * linked ability is its linked exiled card (CR 603.7c).
+     *
+     * @return whether it triggered
      */
-    void putTemporaryGlobal(GameData gameData, TemporaryGlobalTriggeredAbility watcher, UUID targetId,
-                            int eventValue, UUID triggeringPermanentId) {
-        Condition interveningIf = watcher.ability().options().interveningIf();
-        List<CardEffect> effects = watcher.ability().effects().stream()
-                .map(EffectRegistration::effect)
-                .map(effect -> interveningIf == null ? effect : (CardEffect) new ConditionalEffect(interveningIf, effect))
-                .toList();
-        StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
-                watcher.sourceCard().getName() + "'s ability", new ArrayList<>(effects));
-        entry.setTargetId(targetId);
-        entry.setEventValue(eventValue);
-        entry.setLinkedExiledCardId(watcher.linkedExiledCardId());
-        if (triggeringPermanentId != null) {
-            entry.setTriggeringPermanentId(triggeringPermanentId);
+    boolean putDelayed(GameData gameData, TriggeredAbility ability, TemporaryGlobalTriggeredAbility delayed,
+                       ConditionContext context, TriggerRecord record) {
+        Card source = delayed.sourceCard();
+        boolean triggered = stackService.put(gameData, new TriggeredAbilityRequest(ability, source, null,
+                delayed.controllerId(), source.getName() + "'s ability", context, delayedRecord(delayed, record)));
+        if (triggered) {
+            gameLogService.append(gameData, GameLog.abilityTriggers(source));
         }
-        entry.setNonTargeting(true);
-        stackService.putDelayed(gameData, entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
+        return triggered;
+    }
+
+    /**
+     * The request {@code ability} of {@code watcher} hands the stack door, its event condition judged by its matcher:
+     * a permanent's, described as {@code description} after its card's name; an emblem's (CR 114.4), which only the
+     * effects that count an emblem's abilities make trigger an additional time; a delayed ability's, as
+     * {@link #putDelayed} hands it. {@code record} stamps the event whatever kind the watcher is.
+     */
+    static TriggeredAbilityRequest request(Watcher watcher, TriggeredAbility ability, String description,
+                                           ConditionContext context, TriggerRecord record) {
+        Card card = watcher.card();
+        if (watcher.permanent() != null) {
+            return new TriggeredAbilityRequest(ability, card, watcher.permanent(), watcher.controllerId(),
+                    card.getName() + description, context, record);
+        }
+        if (watcher.emblem() != null) {
+            return new TriggeredAbilityRequest(ability, card, null, watcher.controllerId(),
+                    emblemName(watcher.emblem()), context, entry -> {
+                        entry.setMadeByResolution(true);
+                        record.stamp(entry);
+                    }).ofEmblem();
+        }
+        return new TriggeredAbilityRequest(ability, card, null, watcher.controllerId(), card.getName() + "'s ability",
+                context, delayedRecord(watcher.delayed(), record));
+    }
+
+    /**
+     * {@code record} of an event of {@code delayed}'s ability, with what the delayed ability itself records: it was
+     * made by a resolution, its maker's source's linked exiled card (CR 603.7c), and the registration's target filter,
+     * which restricts the targets the door chooses (CR 603.3d).
+     */
+    static TriggerRecord delayedRecord(TemporaryGlobalTriggeredAbility delayed, TriggerRecord record) {
+        UUID linkedExiledCardId = delayed.linkedExiledCardId();
+        TargetFilter targetFilter = delayed.targetFilter();
+        return entry -> {
+            entry.setMadeByResolution(true);
+            record.stamp(entry);
+            if (linkedExiledCardId != null) {
+                entry.setLinkedExiledCardId(linkedExiledCardId);
+            }
+            if (targetFilter != null) {
+                entry.setTargetFilter(targetFilter);
+            }
+        };
     }
 
     /**

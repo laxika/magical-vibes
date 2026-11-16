@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentToughness;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
@@ -30,6 +30,7 @@ public class ShrivelingRot extends Card {
                         "Until end of turn, whenever a creature dies, that creature's controller loses life equal to its toughness",
                         new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANY),
-                                new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER)))))));
+                                new LoseLifeEffect(new TriggeringPermanentToughness(),
+                                        LoseLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER)))))));
     }
 }

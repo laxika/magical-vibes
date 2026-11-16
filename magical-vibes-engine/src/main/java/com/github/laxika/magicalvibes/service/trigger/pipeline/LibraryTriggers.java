@@ -3,17 +3,11 @@ package com.github.laxika.magicalvibes.service.trigger.pipeline;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -409,21 +403,16 @@ public class LibraryTriggers {
         });
         anyTriggered |= opponentsTriggered[0];
 
-        if (event.causedByOpponent() && temporaryOpponentDiscards(gameData, discardingPlayerId, discardedCard)) {
-            anyTriggered = true;
-        }
-
-        List<Permanent> ownBattlefield = gameData.playerBattlefields.get(discardingPlayerId);
-        if (ownBattlefield != null) {
-            for (Permanent perm : List.copyOf(ownBattlefield)) {
-                for (TriggeredAbility ability : abilities.abilities(gameData, perm, YOU_DISCARD)) {
-                    Read read = read(ability, YOU_DISCARD);
-                    if (discardedCardMatches(gameData, read, discardedCard, characteristicsKnown, discardingPlayerId)
-                            && controllerDiscardEventMatches(gameData, read, event)
-                            && putDiscardAbility(gameData, ability, perm, discardingPlayerId, discardingPlayerId,
-                            cards, null)) {
-                        anyTriggered = true;
-                    }
+        // The discarding player's watchers' "whenever you discard a card" (Pure Intentions' delayed "whenever a spell
+        // or ability an opponent controls causes you to discard cards this turn" among them).
+        for (Watcher watcher : abilities.watchers(gameData)) {
+            if (!watcher.controllerId().equals(discardingPlayerId)) continue;
+            for (TriggeredAbility ability : abilities.abilities(gameData, watcher, YOU_DISCARD)) {
+                Read read = read(ability, YOU_DISCARD);
+                if (discardedCardMatches(gameData, read, discardedCard, characteristicsKnown, discardingPlayerId)
+                        && controllerDiscardEventMatches(gameData, read, event)
+                        && putDiscardAbility(gameData, ability, watcher, discardingPlayerId, cards, null)) {
+                    anyTriggered = true;
                 }
             }
         }
@@ -467,39 +456,6 @@ public class LibraryTriggers {
                 }
             }, null);
         }
-    }
-
-    /**
-     * The turn-scoped delayed "whenever a spell or ability an opponent controls causes you to discard a card" abilities
-     * of {@code discardingPlayerId}, with the discarding player as "that player" and the card as the event's card.
-     */
-    private boolean temporaryOpponentDiscards(GameData gameData, UUID discardingPlayerId, Card discardedCard) {
-        boolean triggered = false;
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (!watcher.ability().hasTrigger(OPPONENT_DISCARDS)
-                    || !watcher.controllerId().equals(discardingPlayerId)) {
-                continue;
-            }
-            Condition interveningIf = watcher.ability().options().interveningIf();
-            List<CardEffect> effects = watcher.ability().effects().stream()
-                    .map(EffectRegistration::effect)
-                    .map(effect -> interveningIf == null ? effect
-                            : (CardEffect) new ConditionalEffect(interveningIf, effect))
-                    .toList();
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability", new ArrayList<>(effects));
-            entry.setTargetId(discardingPlayerId);
-            entry.setNonTargeting(true);
-            if (discardedCard != null) {
-                entry.setEventCardIds(List.of(discardedCard.getId()));
-            }
-            stackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-            log.info("Game {} - {} temporary global discard trigger fires", gameData.id,
-                    watcher.sourceCard().getName());
-            triggered = true;
-        }
-        return triggered;
     }
 
     /**
@@ -612,29 +568,57 @@ public class LibraryTriggers {
      */
     private boolean putDiscardAbility(GameData gameData, TriggeredAbility ability, Permanent perm,
                                       UUID controllerId, UUID playerId, List<Card> cards, Integer count) {
-        Permanent snapshot = new Permanent(perm);
+        return put(gameData, ability, perm.getCard(), perm, controllerId,
+                ConditionContext.forPermanent(perm, controllerId), discardRecord(gameData, perm, playerId, cards,
+                        count), null);
+    }
+
+    /**
+     * As {@link #putDiscardAbility(GameData, TriggeredAbility, Permanent, UUID, UUID, List, Integer)}, for
+     * {@code ability} of {@code watcher}, which its controller controls: a permanent, an emblem or a delayed ability.
+     */
+    private boolean putDiscardAbility(GameData gameData, TriggeredAbility ability, Watcher watcher, UUID playerId,
+                                      List<Card> cards, Integer count) {
+        if (watcher.permanent() != null) {
+            return putDiscardAbility(gameData, ability, watcher.permanent(), watcher.controllerId(), playerId, cards,
+                    count);
+        }
+        return abilities.put(gameData, ability, watcher, watcher.conditionContext(),
+                discardRecord(gameData, null, playerId, cards, count));
+    }
+
+    /**
+     * The record of {@code playerId}'s discard of {@code cards}: the player as the triggering player and, unless an
+     * effect names another, the non-targeting "that player"; the cards as the event's cards ("those cards") with their
+     * graveyard stays (CR 400.7), the one card as "that card"; {@code count} as the event value, if any; and {@code source} as it was, if a permanent.
+     */
+    private static TriggerRecord discardRecord(GameData gameData, Permanent source, UUID playerId, List<Card> cards,
+                                               Integer count) {
+        Permanent snapshot = source == null ? null : new Permanent(source);
         Map<UUID, Long> stays = new LinkedHashMap<>();
         for (Card card : cards) {
             stays.put(card.getId(), gameData.graveyardEntryVersion(card.getId()));
         }
-        return put(gameData, ability, perm.getCard(), perm, controllerId,
-                ConditionContext.forPermanent(perm, controllerId), entry -> {
-                    entry.setNonTargeting(true);
-                    entry.setSourcePermanentSnapshot(snapshot);
-                    if (count != null) {
-                        entry.setEventValue(count);
-                    }
-                    entry.setTriggeringPlayerId(playerId);
-                    if (entry.getTargetId() == null) {
-                        entry.setTargetId(playerId);
-                    }
-                    entry.setTriggeringCards(cards);
-                    entry.getEventCardGraveyardEntryVersions().putAll(stays);
-                    if (cards.size() == 1) {
-                        Card card = cards.getFirst();
-                        entry.setTriggeringCard(card.getId(), stays.getOrDefault(card.getId(), 0L));
-                    }
-                }, null);
+        return entry -> {
+            entry.setNonTargeting(true);
+            if (snapshot != null) {
+                entry.setSourcePermanentSnapshot(snapshot);
+            }
+            if (count != null) {
+                entry.setEventValue(count);
+            }
+            entry.setTriggeringPlayerId(playerId);
+            if (entry.getTargetId() == null) {
+                entry.setTargetId(playerId);
+            }
+            entry.setTriggeringCards(cards);
+            entry.setEventCardIds(cards.stream().map(Card::getId).toList());
+            entry.getEventCardGraveyardEntryVersions().putAll(stays);
+            if (cards.size() == 1) {
+                Card card = cards.getFirst();
+                entry.setTriggeringCard(card.getId(), stays.getOrDefault(card.getId(), 0L));
+            }
+        };
     }
 
     /**

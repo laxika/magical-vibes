@@ -14,7 +14,7 @@ public class PureIntentions extends Card {
 
     public PureIntentions() {
         addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                new TriggeredAbility(Triggers.opponentDiscardsCard(),
+                new TriggeredAbility(Triggers.opponentCausesYouToDiscardCard(),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .returnAll(true)

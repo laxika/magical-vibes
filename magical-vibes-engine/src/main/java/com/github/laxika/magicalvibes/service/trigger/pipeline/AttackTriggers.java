@@ -11,10 +11,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
@@ -130,13 +126,9 @@ public class AttackTriggers {
         for (Permanent attacker : attackers) {
             ownAttack(attack, attacker, declaredSnapshots);
             attachedAttack(attack, attacker);
-            delayedOwnAttack(attack, attacker);
         }
         youAttack(attack);
         commandZoneYouAttack(attack);
-        if (!attackers.isEmpty()) {
-            delayedYouAttack(attack);
-        }
         youAttackDefender(attack);
         for (Permanent attacker : attackers) {
             creatureYouControlAttacks(attack, attacker);
@@ -157,7 +149,6 @@ public class AttackTriggers {
         for (Permanent attacker : attackers) {
             creatureAttacks(attack, attacker);
             graveyardCreatureAttacks(attack, attacker);
-            delayedCreatureAttacks(attack, attacker);
         }
         for (UUID controllerId : gameData.orderedPlayerIds) {
             for (Permanent permanent : List.copyOf(gameData.playerBattlefields.getOrDefault(controllerId, List.of()))) {
@@ -277,7 +268,6 @@ public class AttackTriggers {
      */
     private void ownAttack(Attack attack, Permanent attacker, List<Permanent> declaredSnapshots) {
         GameData gameData = attack.gameData();
-        UUID playerId = attack.playerId();
         CombatTrigger watched = Triggers.attacks();
         boolean equipmentAttacking = gameQueryService.hasEffectiveSubtype(gameData, attacker, CardSubtype.EQUIPMENT)
                 && !gameQueryService.hasReconfigure(gameData, attacker);
@@ -285,7 +275,30 @@ public class AttackTriggers {
         if (equipmentAttacking) {
             abilities.removeIf(ability -> attacker.getCard().getTriggeredAbilities().contains(ability));
         }
-        ConditionContext context = ConditionContext.forPermanent(attacker, playerId)
+        putOwnAttackAbilities(attack, attacker, declaredSnapshots, Watcher.of(attacker, attack.playerId()), abilities);
+        // The delayed "whenever that creature attacks this turn" abilities about it (Okoye, Mighty and Adored,
+        // CR 603.7c), their source the spell or ability that created them (CR 603.7d, 603.7e).
+        for (TemporaryGlobalTriggeredAbility delayed : triggerIndex.delayedAbilitiesAbout(gameData, attacker.getId())) {
+            Watcher watcher = Watcher.of(delayed);
+            putOwnAttackAbilities(attack, attacker, declaredSnapshots, watcher, abilities(gameData, watcher, watched));
+        }
+    }
+
+    /**
+     * Hands {@code abilities}, "whenever this creature attacks" of {@code watcher} (the attacker itself, or a delayed
+     * ability about it), to the stack door for {@code attacker}'s attack: "for the first time each turn", the filter on
+     * the attacker and the event condition are judged here. The record names, whatever the effects are, the number of
+     * attackers as X, the attacker as the triggering permanent with its power and its attack target and defending
+     * player, the declared attackers, and the attacker as the source as it attacked when it is the source.
+     */
+    private void putOwnAttackAbilities(Attack attack, Permanent attacker, List<Permanent> declaredSnapshots,
+                                       Watcher watcher, List<TriggeredAbility> abilities) {
+        GameData gameData = attack.gameData();
+        UUID playerId = attack.playerId();
+        CombatTrigger watched = Triggers.attacks();
+        boolean own = watcher.permanent() == attacker;
+        ConditionContext context = (own ? ConditionContext.forPermanent(attacker, playerId)
+                : watcher.conditionContext().withTriggeringPermanentId(attacker.getId()))
                 .withXValue(attack.count()).withTargetId(attacker.getAttackTarget());
         UUID defendingPlayerId = gameQueryService.defendingPlayerOfAttackTarget(gameData, attacker.getAttackTarget());
         for (TriggeredAbility ability : abilities) {
@@ -306,16 +319,24 @@ public class AttackTriggers {
             if (!eventConditionMet(gameData, ability, context)) {
                 continue;
             }
-            put(gameData, new TriggeredAbilityRequest(ability, attacker.getCard(), attacker, playerId,
-                    attacker.getCard().getName() + "'s attack trigger", context, entry -> {
+            TriggeredAbilityRequest request = EventAbilitySupport.request(watcher, ability, "'s attack trigger",
+                    context, entry -> {
                         entry.setXValue(attack.count());
                         entry.setAttackedTargetId(attacker.getAttackTarget());
                         entry.setDefendingPlayerId(defendingPlayerId);
-                        entry.setSourcePermanentSnapshot(snapshotAttackingSource(gameData, attacker));
+                        if (own) {
+                            entry.setSourcePermanentSnapshot(snapshotAttackingSource(gameData, attacker));
+                        } else {
+                            entry.setNonTargeting(true);
+                            entry.setTriggeringPermanentId(attacker.getId());
+                            entry.setTriggeringPermanentControllerId(playerId);
+                        }
                         entry.setTriggeringPermanentPowerAtTrigger(gameQueryService.getEffectivePower(gameData,
                                 attacker));
                         entry.setAttackingPermanentSnapshots(declaredSnapshots);
-                    }).causedBySourceAttacking(), attacker.getCard(), "'s attack ability triggers.");
+                    });
+            put(gameData, own ? request.causedBySourceAttacking() : request.causedByAttack(), watcher.card(),
+                    "'s attack ability triggers.");
         }
     }
 
@@ -394,45 +415,6 @@ public class AttackTriggers {
     }
 
     /**
-     * The delayed "whenever this creature attacks" abilities watching {@code attacker} (Okoye, Mighty and Adored): the
-     * resolution that made one is its source and its controller controls it (CR 603.7d, 603.7e).
-     */
-    private void delayedOwnAttack(Attack attack, Permanent attacker) {
-        GameData gameData = attack.gameData();
-        CombatTrigger watched = Triggers.attacks();
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (TriggerMatcher.combatCondition(watcher.ability(), watched, null) == null
-                    || !attacker.getId().equals(watcher.watchedPermanentId())) {
-                continue;
-            }
-            requireNoLimitOrMultiplicity(watcher.ability(), watched);
-            PermanentPredicate filter = filter(watcher.ability(), watched, null);
-            if (filter != null && !predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, filter)) {
-                continue;
-            }
-            StackEntry delayed = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
-                    watcher.controllerId(), watcher.sourceCard().getName() + "'s delayed trigger",
-                    new ArrayList<>(delayedEffects(watcher)), null, attacker.getId());
-            delayed.setNonTargeting(true);
-            delayed.setTriggeringPermanentId(attacker.getId());
-            stackService.putDelayed(gameData, delayed);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-        }
-    }
-
-    /**
-     * The effects of a delayed ability, its intervening "if" wrapped around each to be judged again as it resolves
-     * (CR 603.4).
-     */
-    private static List<CardEffect> delayedEffects(TemporaryGlobalTriggeredAbility watcher) {
-        Condition interveningIf = watcher.ability().options().interveningIf();
-        return watcher.ability().effects().stream()
-                .map(registration -> interveningIf == null ? registration.effect()
-                        : (CardEffect) new ConditionalEffect(interveningIf, registration.effect()))
-                .toList();
-    }
-
-    /**
      * "Whenever you attack" of the attacking player's permanents: once for the declaration, or with "in a band" once
      * for each band of two or more (CR 702.22c). "Whenever you attack with one or more Wraiths" triggers only if a
      * declared attacker matches its filter; "they", "those creatures" and "their total power" are the matching
@@ -449,31 +431,44 @@ public class AttackTriggers {
                 bands.computeIfAbsent(attacker.getBandId(), ignored -> new ArrayList<>()).add(attacker);
             }
         }
-        record Source(Permanent permanent, TriggeredAbility ability, List<Permanent> band) {
+        record Source(Watcher watcher, TriggeredAbility ability, List<Permanent> band) {
+        }
+        // The attacking player's permanents, then the delayed abilities they control that watch no particular object.
+        List<Watcher> watchers = new ArrayList<>();
+        for (Permanent permanent : List.copyOf(gameData.playerBattlefields.getOrDefault(playerId, List.of()))) {
+            watchers.add(Watcher.of(permanent, playerId));
+        }
+        if (!attack.attackers().isEmpty()) {
+            for (TemporaryGlobalTriggeredAbility delayed : triggerIndex.delayedAbilities(gameData)) {
+                if (delayed.watchedPermanentId() == null && delayed.controllerId().equals(playerId)) {
+                    watchers.add(Watcher.of(delayed));
+                }
+            }
         }
         List<Source> sources = new ArrayList<>();
-        for (Permanent permanent : List.copyOf(gameData.playerBattlefields.getOrDefault(playerId, List.of()))) {
-            for (TriggeredAbility ability : abilities(gameData, permanent, watched)) {
+        for (Watcher watcher : watchers) {
+            for (TriggeredAbility ability : abilities(gameData, watcher, watched)) {
                 if (ability.options().multiplicity() == TriggerMultiplicity.EACH_BAND) {
                     for (List<Permanent> members : bands.values()) {
                         if (members.size() >= 2) {
-                            sources.add(new Source(permanent, ability, List.copyOf(members)));
+                            sources.add(new Source(watcher, ability, List.copyOf(members)));
                         }
                     }
                 } else {
-                    sources.add(new Source(permanent, ability, null));
+                    sources.add(new Source(watcher, ability, null));
                 }
             }
         }
         for (Source source : sources) {
-            Permanent permanent = source.permanent();
+            Watcher watcher = source.watcher();
+            Permanent permanent = watcher.permanent();
             TriggeredAbility ability = source.ability();
             TriggerOptions options = ability.options();
-            PermanentPredicate attackerFilter = filter(ability, watched, Zone.BATTLEFIELD);
+            PermanentPredicate attackerFilter = filter(ability, watched, permanent != null ? Zone.BATTLEFIELD : null);
             List<Permanent> declared = source.band() != null ? source.band() : attack.attackers();
             List<Permanent> matching = attackerFilter == null ? declared : declared.stream()
                     .filter(attacker -> predicateEvaluationService.matchesPermanentPredicate(attacker, attackerFilter,
-                            sourceContext(gameData, permanent, playerId)))
+                            sourceContext(gameData, watcher)))
                     .toList();
             if (matching.isEmpty()) {
                 continue;
@@ -486,25 +481,27 @@ public class AttackTriggers {
                 throw new IllegalStateException("No \"whenever you attack\" ability is written with " + options + ": "
                         + ability);
             }
-            ConditionContext context = ConditionContext.forPermanent(permanent, playerId).withXValue(matching.size());
+            ConditionContext context = watcher.conditionContext().withXValue(matching.size());
             if (!eventConditionMet(gameData, ability, context)
                     || (firstTimeForPlayer && !firstQualifyingAttackThisTurn(gameData, playerId))) {
                 continue;
             }
-            boolean sourceAttacked = matching.contains(permanent);
+            boolean sourceAttacked = permanent != null && matching.contains(permanent);
             List<Permanent> attackingSnapshots = attack.declaredSnapshots(matching);
-            TriggeredAbilityRequest request = new TriggeredAbilityRequest(ability, permanent.getCard(), permanent,
-                    playerId, permanent.getCard().getName() + "'s attack trigger", context, entry -> {
+            TriggeredAbilityRequest request = EventAbilitySupport.request(watcher, ability, "'s attack trigger",
+                    context, entry -> {
                         entry.setXValue(matching.size());
                         if (attackerFilter != null) {
                             entry.setEventValue(matching.size());
                             entry.setTriggeringPermanentIds(matching.stream().map(Permanent::getId).toList());
                         }
                         entry.setAttackingPermanentSnapshots(attackingSnapshots);
-                        entry.setSourcePermanentSnapshot(new Permanent(permanent));
+                        if (permanent != null) {
+                            entry.setSourcePermanentSnapshot(new Permanent(permanent));
+                        }
                     });
             if (put(gameData, sourceAttacked ? request.causedBySourceAttacking() : request.causedByAttack(),
-                    permanent.getCard(), "'s attack ability triggers.") && firstTimeForPlayer) {
+                    watcher.card(), "'s attack ability triggers.") && firstTimeForPlayer) {
                 gameData.keyedOncePerTurnTriggersFiredThisTurn
                         .computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet())
                         .add(FIRST_QUALIFYING_ATTACK_KEY + gameData.combatPhasesThisTurn);
@@ -543,24 +540,6 @@ public class AttackTriggers {
                         card.getName() + "'s attack trigger", context, entry -> entry.setXValue(attack.count()))
                         .causedByAttack(), card, "'s attack ability triggers.");
             }
-        }
-    }
-
-    /** The delayed "whenever you attack" abilities of the attacking player (CR 603.7). */
-    private void delayedYouAttack(Attack attack) {
-        GameData gameData = attack.gameData();
-        CombatTrigger watched = Triggers.youAttack();
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (TriggerMatcher.combatCondition(watcher.ability(), watched, null) == null
-                    || !watcher.controllerId().equals(attack.playerId())) {
-                continue;
-            }
-            requireNoFilterLimitOrMultiplicity(watcher.ability(), watched, null);
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability", delayedEffects(watcher));
-            entry.setNonTargeting(true);
-            stackService.putMade(gameData, entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
         }
     }
 
@@ -810,11 +789,10 @@ public class AttackTriggers {
     }
 
     /**
-     * For {@code attacker}: the attacked player's delayed "whenever a creature attacks you [or Tasha]" abilities, then
-     * the attacked player's permanents' "whenever a creature attacks you or a planeswalker you control", "whenever a
-     * creature attacks you" (a player attacked directly) and "whenever a creature an opponent controls attacks, if
-     * you're the defending player" (CR 508.5). The attacker is "that creature", the entry's non-targeting target and
-     * triggering permanent.
+     * For {@code attacker}: the attacked player's watchers' (permanents', emblems', delayed abilities') "whenever a
+     * creature attacks you or a planeswalker you control", "whenever a creature attacks you" (a player attacked
+     * directly) and "whenever a creature an opponent controls attacks, if you're the defending player" (CR 508.5). The
+     * attacker is "that creature", the entry's non-targeting target and triggering permanent.
      */
     private void attacksYou(Attack attack, Permanent attacker) {
         GameData gameData = attack.gameData();
@@ -828,9 +806,6 @@ public class AttackTriggers {
                 : gameQueryService.findPermanentController(gameData, attackedTargetId);
         if (attackedPlayerId == null) {
             return;
-        }
-        if (!battleAttacked) {
-            delayedAttacksYou(gameData, attacker, attackedPlayerId, attackedTargetId);
         }
         List<CombatTrigger> watches = new ArrayList<>();
         if (!battleAttacked) {
@@ -852,6 +827,15 @@ public class AttackTriggers {
                 watchers.add(Watcher.of(emblem));
             }
         }
+        // Then the delayed abilities they control. One about a permanent ("whenever a creature attacks you or Tasha",
+        // Tasha, Unholy Archmage) sees an attack on the player or that permanent only.
+        for (TemporaryGlobalTriggeredAbility delayed : triggerIndex.delayedAbilities(gameData)) {
+            if (delayed.controllerId().equals(attackedPlayerId) && (delayed.watchedPermanentId() == null
+                    || delayed.watchedPermanentId().equals(attackedTargetId)
+                    || attackedPlayerId.equals(attackedTargetId))) {
+                watchers.add(Watcher.of(delayed));
+            }
+        }
         for (Watcher watcher : watchers) {
             ConditionContext context = watcher.conditionContext()
                     .withTriggeringPermanentId(attacker.getId()).withTargetId(attackedTargetId);
@@ -859,21 +843,15 @@ public class AttackTriggers {
                 for (TriggeredAbility ability : abilities(gameData, watcher, watched)) {
                     requireNoLimitOrMultiplicity(ability, watched);
                     PermanentPredicate filter = filter(ability, watched,
-                            watcher.emblem() == null ? Zone.BATTLEFIELD : null);
+                            watcher.permanent() != null ? Zone.BATTLEFIELD : null);
                     if ((filter != null && !predicateEvaluationService.matchesPermanentPredicate(attacker, filter,
                             sourceContext(gameData, watcher)))
                             || !eventConditionMet(gameData, ability, context)) {
                         continue;
                     }
                     Permanent snapshot = watcher.permanent() == null ? null : new Permanent(watcher.permanent());
-                    boolean emblem = watcher.emblem() != null;
-                    TriggeredAbilityRequest request = new TriggeredAbilityRequest(ability, watcher.card(),
-                            watcher.permanent(), attackedPlayerId,
-                            emblem ? EventAbilitySupport.emblemName(watcher.emblem())
-                                    : watcher.card().getName() + "'s trigger", context, entry -> {
-                                if (emblem) {
-                                    entry.setMadeByResolution(true);
-                                }
+                    TriggeredAbilityRequest request = EventAbilitySupport.request(watcher, ability, "'s trigger",
+                            context, entry -> {
                                 entry.setTargetId(attacker.getId());
                                 entry.setNonTargeting(true);
                                 entry.setTriggeringPermanentId(attacker.getId());
@@ -882,7 +860,7 @@ public class AttackTriggers {
                                     entry.setSourcePermanentSnapshot(snapshot);
                                 }
                             }).causedByAttack();
-                    put(gameData, emblem ? request.ofEmblem() : request, watcher.card(), "'s ability triggers.");
+                    put(gameData, request, watcher.card(), "'s ability triggers.");
                 }
             }
         }
@@ -890,14 +868,16 @@ public class AttackTriggers {
 
     /**
      * {@code watcher}'s abilities with a combat trigger condition watched as {@code watched}: a permanent's as the
-     * layers leave them, functioning on the battlefield; an emblem's as it has them (CR 114.4).
+     * layers leave them, functioning on the battlefield; an emblem's as it has them (CR 114.4); a delayed ability
+     * itself. An emblem's and a delayed ability's function whatever zones their conditions name.
      */
     private List<TriggeredAbility> abilities(GameData gameData, Watcher watcher, CombatTrigger watched) {
-        if (watcher.emblem() == null) {
+        if (watcher.permanent() != null) {
             return abilities(gameData, watcher.permanent(), watched);
         }
-        return watcher.emblem().triggeredAbilities().stream()
-                .filter(ability -> TriggerMatcher.combatCondition(ability, watched, null) != null).toList();
+        List<TriggeredAbility> own = watcher.emblem() != null ? watcher.emblem().triggeredAbilities()
+                : List.of(watcher.delayed().ability());
+        return own.stream().filter(ability -> TriggerMatcher.combatCondition(ability, watched, null) != null).toList();
     }
 
     /** The filter context a combat trigger's filter is judged in, with {@code watcher} as its source. */
@@ -905,34 +885,6 @@ public class AttackTriggers {
         FilterContext context = FilterContext.of(gameData).withSourceCardId(watcher.originalCardId())
                 .withSourceControllerId(watcher.controllerId());
         return watcher.permanent() == null ? context : context.withSourcePermanentId(watcher.permanent().getId());
-    }
-
-    /**
-     * The attacked player's delayed "whenever a creature attacks you" abilities; one watching a permanent ("attacks you
-     * or Tasha") triggers only for an attack on the player or that permanent.
-     */
-    private void delayedAttacksYou(GameData gameData, Permanent attacker, UUID attackedPlayerId,
-                                   UUID attackedTargetId) {
-        CombatTrigger watched = Triggers.creatureAttacksYouOrYourPlaneswalker();
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (TriggerMatcher.combatCondition(watcher.ability(), watched, null) == null
-                    || !watcher.controllerId().equals(attackedPlayerId)) {
-                continue;
-            }
-            if (watcher.watchedPermanentId() != null && !watcher.watchedPermanentId().equals(attackedTargetId)
-                    && !attackedPlayerId.equals(attackedTargetId)) {
-                continue;
-            }
-            requireNoFilterLimitOrMultiplicity(watcher.ability(), watched, null);
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability", delayedEffects(watcher), attacker.getId(),
-                    attacker.getId());
-            entry.setTriggeringPermanentId(attacker.getId());
-            entry.setSourcePermanentSnapshot(new Permanent(attacker));
-            entry.setNonTargeting(true);
-            stackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-        }
     }
 
     /**
@@ -1027,33 +979,46 @@ public class AttackTriggers {
         GameData gameData = attack.gameData();
         CombatTrigger watched = Triggers.creatureAttacks();
         UUID attackedTargetId = attacker.getAttackTarget();
+        // Every player's permanents in turn order, then the delayed abilities that watch no particular object.
+        List<Watcher> watchers = new ArrayList<>();
         for (UUID controllerId : gameData.orderedPlayerIds) {
             for (Permanent permanent : List.copyOf(gameData.playerBattlefields.getOrDefault(controllerId,
                     List.of()))) {
-                ConditionContext context = ConditionContext.forPermanent(permanent, controllerId)
-                        .withTriggeringPermanentId(attacker.getId()).withTargetId(attackedTargetId);
-                for (TriggeredAbility ability : abilities(gameData, permanent, watched)) {
-                    requireNoLimitOrMultiplicity(ability, watched);
-                    PermanentPredicate filter = filter(ability, watched, Zone.BATTLEFIELD);
-                    if ((filter != null && !predicateEvaluationService.matchesPermanentPredicate(attacker, filter,
-                            sourceContext(gameData, permanent, controllerId)))
-                            || !eventConditionMet(gameData, ability, context)) {
-                        continue;
-                    }
-                    TriggeredAbilityRequest request = new TriggeredAbilityRequest(ability, permanent.getCard(),
-                            permanent, controllerId, permanent.getCard().getName() + "'s trigger", context, entry -> {
-                                entry.setSourcePermanentSnapshot(new Permanent(permanent));
-                                entry.setAttackingPermanentSnapshots(List.of(new Permanent(attacker)));
-                                entry.setTargetId(attacker.getId());
-                                entry.setNonTargeting(true);
-                                entry.setAttackedTargetId(attacker.getAttackTarget());
-                                entry.setTriggeringPermanentId(attacker.getId());
-                                entry.setTriggeringPermanentControllerId(
-                                        gameQueryService.findPermanentController(gameData, attacker.getId()));
-                            });
-                    put(gameData, permanent == attacker ? request.causedBySourceAttacking() : request.causedByAttack(),
-                            permanent.getCard(), "'s ability triggers.");
+                watchers.add(Watcher.of(permanent, controllerId));
+            }
+        }
+        for (TemporaryGlobalTriggeredAbility delayed : triggerIndex.delayedAbilities(gameData)) {
+            if (delayed.watchedPermanentId() == null) {
+                watchers.add(Watcher.of(delayed));
+            }
+        }
+        for (Watcher watcher : watchers) {
+            Permanent permanent = watcher.permanent();
+            ConditionContext context = watcher.conditionContext()
+                    .withTriggeringPermanentId(attacker.getId()).withTargetId(attackedTargetId);
+            for (TriggeredAbility ability : abilities(gameData, watcher, watched)) {
+                requireNoLimitOrMultiplicity(ability, watched);
+                PermanentPredicate filter = filter(ability, watched, permanent != null ? Zone.BATTLEFIELD : null);
+                if ((filter != null && !predicateEvaluationService.matchesPermanentPredicate(attacker, filter,
+                        sourceContext(gameData, watcher)))
+                        || !eventConditionMet(gameData, ability, context)) {
+                    continue;
                 }
+                TriggeredAbilityRequest request = EventAbilitySupport.request(watcher, ability, "'s trigger", context,
+                        entry -> {
+                            if (permanent != null) {
+                                entry.setSourcePermanentSnapshot(new Permanent(permanent));
+                            }
+                            entry.setAttackingPermanentSnapshots(List.of(new Permanent(attacker)));
+                            entry.setTargetId(attacker.getId());
+                            entry.setNonTargeting(true);
+                            entry.setAttackedTargetId(attacker.getAttackTarget());
+                            entry.setTriggeringPermanentId(attacker.getId());
+                            entry.setTriggeringPermanentControllerId(
+                                    gameQueryService.findPermanentController(gameData, attacker.getId()));
+                        });
+                put(gameData, permanent == attacker ? request.causedBySourceAttacking() : request.causedByAttack(),
+                        watcher.card(), "'s ability triggers.");
             }
         }
     }
@@ -1087,48 +1052,6 @@ public class AttackTriggers {
                             }).causedByAttack(), card, "'s graveyard attack ability triggers.");
                 }
             }
-        }
-    }
-
-    /**
-     * The delayed "whenever a creature attacks this turn" abilities, for {@code attacker}: the filter from the
-     * registering player's point of view, the event condition ("attacks alone", The Last Ronin) with the attacker. One
-     * with a target of its own chooses it as it goes on the stack (CR 603.3d); otherwise the attacker is "it".
-     */
-    private void delayedCreatureAttacks(Attack attack, Permanent attacker) {
-        GameData gameData = attack.gameData();
-        CombatTrigger watched = Triggers.creatureAttacks();
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (TriggerMatcher.combatCondition(watcher.ability(), watched, null) == null) {
-                continue;
-            }
-            requireNoLimitOrMultiplicity(watcher.ability(), watched);
-            PermanentPredicate filter = filter(watcher.ability(), watched, null);
-            if (filter != null && !predicateEvaluationService.matchesPermanentPredicate(attacker, filter,
-                    FilterContext.of(gameData).withSourceControllerId(watcher.controllerId())
-                            .withSourceCardId(watcher.sourceCard().getId()))) {
-                continue;
-            }
-            if (!conditionEvaluationService.triggerConditionsMet(gameData, watcher.ability().options(),
-                    ConditionContext.forPermanent(attacker, watcher.controllerId()))) {
-                continue;
-            }
-            List<CardEffect> effects = delayedEffects(watcher);
-            if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
-                StackEntry targeted = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
-                        watcher.controllerId(), watcher.sourceCard().getName() + "'s ability", effects);
-                targeted.setSourcePermanentSnapshot(new Permanent(attacker));
-                stackService.putMade(gameData, targeted);
-            } else {
-                StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
-                        watcher.controllerId(), watcher.sourceCard().getName() + "'s ability", effects,
-                        attacker.getId(), attacker.getId());
-                entry.setSourcePermanentSnapshot(new Permanent(attacker));
-                entry.setNonTargeting(true);
-                stackService.putDelayed(gameData, entry);
-            }
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
         }
     }
 

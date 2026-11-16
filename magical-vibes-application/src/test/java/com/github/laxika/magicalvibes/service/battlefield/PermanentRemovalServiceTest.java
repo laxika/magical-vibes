@@ -602,7 +602,7 @@ class PermanentRemovalServiceTest {
 
             prs.removePermanentToGraveyard(gd, bears);
 
-            verify(triggerCollectionService).checkCreatureDeathRegisteredTriggers(gd, player1Id, bears, 0, 0);
+            verify(triggerCollectionService).checkCreatureDeathRegisteredTriggers(gd, bears);
         }
 
         @Test

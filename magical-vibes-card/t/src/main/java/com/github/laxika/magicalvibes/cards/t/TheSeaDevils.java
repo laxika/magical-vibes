@@ -33,7 +33,7 @@ public class TheSeaDevils extends Card {
         addTrigger(Triggers.chapter(3), new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                 new TriggeredAbility(Triggers.creatureDealsCombatDamageToPlayer()
                                 .withFilter(new PermanentHasSubtypePredicate(CardSubtype.SALAMANDER)),
-                        new DealDamageToTargetCreatureEffect(new EventValue(), false,
+                        DealDamageToTargetCreatureEffect.byTriggeringPermanent(new EventValue(),
                                 new PermanentControlledByTriggeringPlayerPredicate()))));
     }
 }

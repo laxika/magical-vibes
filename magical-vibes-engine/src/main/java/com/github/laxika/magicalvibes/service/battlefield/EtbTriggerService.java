@@ -486,9 +486,9 @@ public class EtbTriggerService {
     }
 
     /**
-     * What the entering permanent triggers: the card abilities that see it enter, matched by the trigger pipeline,
-     * face-up planes, emblems and schemes among them, then evolve, watchers, boons, abilities a spell registered until
-     * end of turn and exiled voyages.
+     * What the entering permanent triggers: the abilities that see it enter, matched by the trigger pipeline, face-up
+     * planes, emblems, schemes and delayed abilities among them, then the watchers, boons and exiled voyages kept
+     * outside it.
      */
     private void collectEntersTriggers(GameData gameData, UUID controllerId, Card card, boolean faceDown) {
         Permanent entering = findEnteringPermanent(gameData, card);
@@ -498,9 +498,7 @@ public class EtbTriggerService {
         triggerCollectionService.checkAllyPermanentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAllyCreatureEntersTriggers(gameData, controllerId, card);
         Permanent enteringPermanent = findEnteringPermanent(gameData, card);
-        triggerCollectionService.checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkCreatureEntersThisTurnTriggers(gameData, controllerId, card);
-        triggerCollectionService.checkAnyPermanentEntersTriggers(gameData, controllerId, card);
         if (!faceDown && (enteringPermanent == null ? card.hasType(CardType.LAND)
                 : gameQueryService.isLand(gameData, enteringPermanent))) {
             triggerCollectionService.checkAllyLandEntersTriggers(gameData, controllerId, card);

@@ -12,12 +12,10 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.PendingSourceDamage;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
@@ -28,7 +26,6 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
@@ -285,9 +282,7 @@ public class DamageTriggers {
         }
         if (gameQueryService.isCreature(gameData, target)) {
             if (damagedCreatureControllerId != null) {
-                checkOpponentCreatureDealtDamageTriggers(gameData, damagedCreatureControllerId);
-                checkTemporaryGlobalOpponentCreatureDealtDamageTriggers(gameData, target,
-                        damagedCreatureControllerId, damage);
+                checkOpponentCreatureDealtDamageTriggers(gameData, target, damagedCreatureControllerId, damage);
             }
             checkAnyCreatureDealtDamageTriggers(gameData, target, damage);
             queueEnchantedCreatureDealsDamageToCreatureTriggers(gameData, reflectionSource, target.getId(), damage);
@@ -426,56 +421,6 @@ public class DamageTriggers {
         }
     }
 
-    /**
-     * Fires turn-scoped global watchers registered for {@code ON_ANY_CREATURE_COMBAT_DAMAGE_TO_PLAYER}
-     * (e.g. The Sea Devils chapter III). The watcher's trigger source is the dealing creature, so
-     * effects that "it deals damage" use that creature, and the damaged player is bound as the
-     * trigger's target. The trigger's filter is judged on the dealer.
-     */
-    private void enqueueTemporaryAnyCreatureCombatDamageToPlayerTriggers(GameData gameData, Permanent creature,
-                                                                         UUID creatureControllerId,
-                                                                         UUID damagedPlayerId, int damageDealt) {
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (!watcher.ability().hasWatchedTrigger(Triggers.creatureDealsCombatDamageToPlayer())
-                    || watcher.watchedPermanentId() != null) {
-                continue;
-            }
-            Trigger anyCombatDamage = Triggers.creatureDealsCombatDamageToPlayer();
-            List<Read> reads = Read.read(watcher.ability(), anyCombatDamage);
-            Read read = reads.getFirst();
-            Read.requireNoLimitOrMultiplicity(read, anyCombatDamage);
-            if (read.filter() != null
-                    && !predicateEvaluationService.matchesPermanentPredicate(creature, read.filter(),
-                    FilterContext.of(gameData)
-                            .withSourceCardId(watcher.sourceCard().getId())
-                            .withSourceControllerId(watcher.controllerId()))) {
-                continue;
-            }
-            List<CardEffect> resolvedEffects = Read.effectsOf(reads);
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s triggered ability", resolvedEffects, damagedPlayerId,
-                    creature.getId());
-            entry.setTriggeringPermanentId(creature.getId());
-            entry.setTriggeringPermanentControllerId(creatureControllerId);
-            entry.setEventValue(damageDealt);
-            entry.setNonTargeting(true);
-            // "That player" is the player dealt damage, recorded whatever the ability chooses.
-            entry.setTriggeringPlayerId(damagedPlayerId);
-            entry.setAttackedTargetId(damagedPlayerId);
-            if (resolvedEffects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
-                // The target is chosen as the trigger is put on the stack (CR 603.3d), by the watcher's
-                // controller; "that much" is the damage dealt.
-                triggeredAbilityStackService.putMade(gameData, entry);
-                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-                continue;
-            }
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-            log.info("Game {} - {} temporary global ON_ANY_CREATURE_COMBAT_DAMAGE_TO_PLAYER trigger fires",
-                    gameData.id, watcher.sourceCard().getName());
-        }
-    }
-
     public void checkAnyCreatureCombatDamageToOpponentTriggers(GameData gameData, Permanent creature,
                                                                UUID creatureControllerId,
                                                                UUID damagedPlayerId, int damageDealt,
@@ -484,30 +429,32 @@ public class DamageTriggers {
             return;
         }
 
-        enqueueTemporaryAnyCreatureCombatDamageToPlayerTriggers(gameData, creature, creatureControllerId,
-                damagedPlayerId, damageDealt);
-
         // The creature dealing combat damage to a player is the cause the "triggers an additional time" effects judge.
         TriggerCause cause = new SourceDealsCombatDamage(creature.getCard(), creatureControllerId,
                 creature.getId(), damageDealt, damageDealt).cause();
-        gameData.forEachPermanent((controllerId, source) -> {
-            if (source.isLosesAllAbilitiesUntilEndOfTurn()) {
-                return;
+        // Every watcher: the permanents, the emblems and the delayed abilities ("until end of turn, whenever a
+        // Salamander deals combat damage to a player", The Sea Devils).
+        for (Watcher watcher : eventAbilitySupport.watchers(gameData)) {
+            UUID controllerId = watcher.controllerId();
+            if (watcher.permanent() != null && watcher.permanent().isLosesAllAbilitiesUntilEndOfTurn()) {
+                continue;
             }
 
             // Each ability, of either watch, is handed whole to the stack door (CR 603.3); its filter, conditions and
             // "one or more" are judged once, for the ability.
             List<List<Read>> toOpponent = controllerId.equals(damagedPlayerId)
                     ? List.of()
-                    : combatReads(gameData, source, Triggers.creatureDealsCombatDamageToOpponent());
+                    : Read.readByAbility(abilities(gameData, watcher, Triggers.creatureDealsCombatDamageToOpponent()),
+                    Triggers.creatureDealsCombatDamageToOpponent());
             List<List<Read>> abilities = new ArrayList<>(toOpponent);
-            abilities.addAll(combatReads(gameData, source, Triggers.creatureDealsCombatDamageToPlayer()));
+            abilities.addAll(Read.readByAbility(abilities(gameData, watcher,
+                    Triggers.creatureDealsCombatDamageToPlayer()), Triggers.creatureDealsCombatDamageToPlayer()));
             FilterContext dealerContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
             for (int abilityIndex = 0; abilityIndex < abilities.size(); abilityIndex++) {
                 Read read = abilities.get(abilityIndex).getFirst();
                 // The ability's place among the source's abilities of its watch, the same whichever player was dealt
                 // the damage.
-                String abilityKey = source.getId() + (abilityIndex < toOpponent.size()
+                String abilityKey = watcher.id() + (abilityIndex < toOpponent.size()
                         ? ":opponent:" + abilityIndex : ":player:" + (abilityIndex - toOpponent.size()));
                 if (read.limit() != TriggerLimit.NONE || read.eachBlocker()) {
                     throw new IllegalStateException("The \"a creature deals combat damage to a player\" collector "
@@ -524,21 +471,25 @@ public class DamageTriggers {
                 if (read.oneOrMore() && firedOncePerStepAbilities.contains(abilityKey)) {
                     continue;
                 }
-                boolean triggered = putEventAbility(gameData, read.ability(), source.getCard(), source, controllerId,
-                        ConditionContext.forPermanent(source, controllerId).withTargetId(damagedPlayerId), cause,
+                // "That player" is the player dealt the damage; "it" the creature that dealt it, "that much" the
+                // damage it dealt.
+                boolean triggered = putEventAbility(gameData, read.ability(), watcher,
+                        watcher.conditionContext().withTargetId(damagedPlayerId), cause,
                         entry -> {
                             entry.setTargetId(damagedPlayerId);
+                            entry.setTriggeringPlayerId(damagedPlayerId);
                             entry.setNonTargeting(true);
                             if (!read.oneOrMore()) {
                                 entry.setTriggeringPermanentId(creature.getId());
                                 entry.setTriggeringPermanentControllerId(creatureControllerId);
+                                entry.setEventValue(damageDealt);
                             }
                         });
                 if (triggered && read.oneOrMore()) {
                     firedOncePerStepAbilities.add(abilityKey);
                 }
             }
-        });
+        }
 
         if (gameData.planechase == null || gameData.planechase.controllerId == null
                 || gameData.planechase.controllerId.equals(damagedPlayerId)) {
@@ -2186,7 +2137,7 @@ public class DamageTriggers {
                                                  boolean namedObject) {
         Permanent lastKnown = lastKnownDamageSource(gameData, damaged);
         Integer power = recordPower ? gameQueryService.getEffectivePower(gameData, damaged) : null;
-        Permanent snapshot = new Permanent(watcher);
+        Permanent snapshot = watcher == null ? null : new Permanent(watcher);
         return entry -> {
             entry.setNonTargeting(true);
             if (namedObject) {
@@ -2200,7 +2151,9 @@ public class DamageTriggers {
             if (power != null) {
                 entry.setTriggeringPermanentPowerAtTrigger(power);
             }
-            entry.setSourcePermanentSnapshot(snapshot);
+            if (snapshot != null) {
+                entry.setSourcePermanentSnapshot(snapshot);
+            }
         };
     }
 
@@ -2245,36 +2198,25 @@ public class DamageTriggers {
     }
 
     /**
-     * Fires ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers on permanents whose controller
-     * is different from the damaged creature's controller (i.e. the damaged creature is
-     * an opponent's creature from the perspective of the permanent's controller).
-     * Called once per damaged creature — each call produces one trigger per listening permanent.
+     * "Whenever a creature an opponent controls is dealt damage" of every watcher whose controller is an opponent of
+     * {@code damagedCreatureControllerId} (Kazarov, Sengir Pureblood; Green Dragon's delayed one), once for each
+     * damaged creature: the record names the creature as the triggering permanent and non-targeting "that creature"
+     * ("destroy it") and the damage as the event value ({@link #damagedPermanentRecord}).
      */
-    public void checkOpponentCreatureDealtDamageTriggers(GameData gameData, UUID damagedCreatureControllerId) {
-        Trigger watch = Triggers.creatureOpponentControlsDealtDamage();
-        gameData.forEachPermanent((playerId, perm) -> {
-            // Only fire when the damaged creature was controlled by an opponent of this permanent's controller
-            if (playerId.equals(damagedCreatureControllerId)) return;
-            for (TriggeredAbility ability : printedWatchedAbilities(gameData, perm, watch)) {
-                requireNothingToJudge(ability, watch);
-                putEventAbility(gameData, ability, perm.getCard(), perm, playerId,
-                        ConditionContext.forPermanent(perm, playerId), null, entry -> {
-                        });
-            }
-        });
-    }
-
-    /** Fires turn-scoped global triggers for damage dealt to an opponent's creature. */
-    public void checkTemporaryGlobalOpponentCreatureDealtDamageTriggers(
-            GameData gameData, Permanent damagedCreature, UUID damagedCreatureControllerId, int damageDealt) {
+    public void checkOpponentCreatureDealtDamageTriggers(GameData gameData, Permanent damagedCreature,
+                                                         UUID damagedCreatureControllerId, int damageDealt) {
         if (damagedCreature == null || damagedCreatureControllerId == null || damageDealt <= 0) return;
-
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (!watcher.ability().hasWatchedTrigger(Triggers.creatureOpponentControlsDealtDamage())
-                    || watcher.controllerId().equals(damagedCreatureControllerId)) {
-                continue;
+        Trigger watch = Triggers.creatureOpponentControlsDealtDamage();
+        for (Watcher watcher : eventAbilitySupport.watchers(gameData)) {
+            // Only an opponent of the damaged creature's controller watches it.
+            if (watcher.controllerId().equals(damagedCreatureControllerId)) continue;
+            for (TriggeredAbility ability : abilities(gameData, watcher, watch)) {
+                requireNothingToJudge(ability, watch);
+                putEventAbility(gameData, ability, watcher, watcher.conditionContext()
+                                .withTriggeringPermanentId(damagedCreature.getId()).withEventValue(damageDealt), null,
+                        damagedPermanentRecord(gameData, watcher.permanent(), damagedCreature,
+                                damagedCreatureControllerId, damageDealt, false, true));
             }
-            enqueueTemporaryGlobalTrigger(gameData, watcher, damagedCreature.getId(), damageDealt);
         }
     }
 
@@ -2549,19 +2491,20 @@ public class DamageTriggers {
             putEventAbility(gameData, ability, sourceCard, abilitySource, sourceControllerId,
                     context.withEventValue(totalDamage), ctx.cause(), entry -> entry.setEventValue(totalDamage));
         }
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (!watcher.ability().hasWatchedTrigger(watch)
-                    || !sourcePermanentId.equals(watcher.watchedPermanentId())) continue;
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
-                    watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s delayed trigger",
-                    new ArrayList<>(Read.effects(List.of(watcher.ability()), watch)),
-                    null,
-                    sourcePermanentId);
-            entry.setEventValue(totalDamage);
-            entry.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
+        // The delayed "whenever that creature deals combat damage this turn" abilities about the source (Vigorous
+        // Charge, Hunter's Insight, CR 603.7c): the creature is "that creature", the damage "that much".
+        for (Watcher watcher : eventAbilitySupport.delayedWatching(gameData, sourcePermanentId)) {
+            for (TriggeredAbility ability : abilities(gameData, watcher, watch)) {
+                requirePlainCombatAbility(ability, watch);
+                putEventAbility(gameData, ability, watcher, watcher.conditionContext()
+                                .withTriggeringPermanentId(sourcePermanentId).withEventValue(totalDamage), ctx.cause(),
+                        entry -> {
+                            entry.setNonTargeting(true);
+                            entry.setEventValue(totalDamage);
+                            entry.setTriggeringPermanentId(sourcePermanentId);
+                            entry.setTriggeringPermanentControllerId(sourceControllerId);
+                        });
+            }
         }
     }
 
@@ -2680,24 +2623,22 @@ public class DamageTriggers {
         TriggerCause cause = TriggerCause.Damage.toPermanent(damagedCreature, damagedCreatureControllerId);
         Trigger creatureDealtDamage = Triggers.creatureDealtDamage();
         Trigger watched = creatureDealtDamage;
-        gameData.forEachPermanent((playerId, perm) -> {
-            for (TriggeredAbility ability : abilities(gameData, perm, creatureDealtDamage)) {
+        // Every watcher: the permanents, the emblems and the delayed abilities ("until end of turn, whenever a creature
+        // is dealt damage, destroy it", Shriveling Rot).
+        for (Watcher watcher : eventAbilitySupport.watchers(gameData)) {
+            for (TriggeredAbility ability : abilities(gameData, watcher, creatureDealtDamage)) {
                 requireEachEvent(ability, creatureDealtDamage);
                 // "Whenever a [filtered] creature is dealt damage": the filter is on the damaged creature.
                 PermanentPredicate filter = Read.filter(ability, watched);
-                if (filter != null && !damageFilterMatches(gameData, perm, playerId, filter, damagedCreature)) {
+                if (filter != null && !damageFilterMatches(gameData, watcher, filter, damagedCreature)) {
                     continue;
                 }
-                putEventAbility(gameData, ability, perm.getCard(), perm, playerId,
-                        ConditionContext.forPermanent(perm, playerId)
+                putEventAbility(gameData, ability, watcher, watcher.conditionContext()
                                 .withTriggeringPermanentId(damagedCreature.getId()).withEventValue(damageDealt), cause,
-                        damagedPermanentRecord(gameData, perm, damagedCreature, damagedCreatureControllerId,
-                                damageDealt, false, true));
+                        damagedPermanentRecord(gameData, watcher.permanent(), damagedCreature,
+                                damagedCreatureControllerId, damageDealt, false, true));
             }
-        });
-
-        collectTemporaryGlobalTriggers(gameData, Triggers.creatureDealtDamage(),
-                damagedCreature.getId(), damageDealt);
+        }
 
         for (DelayedWatchedCreatureDealtDamage watch
                 : gameData.getDelayedActions(DelayedWatchedCreatureDealtDamage.class)) {
@@ -2758,76 +2699,6 @@ public class DamageTriggers {
                                 damageDealt, true, false));
             }
         });
-    }
-
-    /**
-     * Puts each turn-scoped "whenever …" ability registered for the damage or combat-damage trigger {@code watched}
-     * (a delayed triggered ability with a stated duration, CR 603.7b) on the stack for the event about
-     * {@code targetId}: its filter, if it has one, is judged on that permanent; "a creature you control deals combat
-     * damage to a player" only sees a creature its controller controls.
-     */
-    public void collectTemporaryGlobalTriggers(GameData gameData, Trigger watched, UUID targetId, int eventValue) {
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (!watcher.ability().hasWatchedTrigger(watched) || watcher.watchedPermanentId() != null) {
-                continue;
-            }
-            boolean allyCombatDamage = watched.equals(Triggers.creatureYouControlDealsCombatDamageToPlayer());
-            if (allyCombatDamage && !watcher.controllerId().equals(
-                    gameQueryService.findPermanentController(gameData, targetId))) {
-                continue;
-            }
-            Read read = Read.of(watcher.ability(), watched);
-            if (!allyCombatDamage) {
-                read.requireNoLimitOrMultiplicity(watched);
-                if (read.filter() != null) {
-                    Permanent triggeringPermanent = targetId == null ? null
-                            : gameQueryService.findPermanentById(gameData, targetId);
-                    if (triggeringPermanent == null || !predicateEvaluationService.matchesPermanentPredicate(
-                            triggeringPermanent, read.filter(), FilterContext.of(gameData)
-                                    .withSourceCardId(watcher.sourceCard().getId())
-                                    .withSourceControllerId(watcher.controllerId()))) {
-                        continue;
-                    }
-                }
-            }
-            enqueueTemporaryGlobalTrigger(gameData, watcher, temporaryEffects(watcher), targetId, eventValue);
-        }
-    }
-
-    private void enqueueTemporaryGlobalTrigger(GameData gameData,
-                                                TemporaryGlobalTriggeredAbility watcher,
-                                                UUID targetId, int eventValue) {
-        enqueueTemporaryGlobalTrigger(gameData, watcher, temporaryEffects(watcher), targetId, eventValue);
-    }
-
-    private void enqueueTemporaryGlobalTrigger(GameData gameData,
-                                                TemporaryGlobalTriggeredAbility watcher,
-                                                List<CardEffect> effects,
-                                                UUID targetId, int eventValue) {
-        enqueueTemporaryGlobalTrigger(gameData, watcher, effects, targetId, eventValue, null);
-    }
-
-    /**
-     * Puts {@code watcher}'s ability, a delayed triggered ability with a stated duration (CR 603.7b), on the stack as
-     * {@code effects} for the event about {@code targetId}, the object or player it acts on without targeting it.
-     */
-    private void enqueueTemporaryGlobalTrigger(GameData gameData,
-                                                TemporaryGlobalTriggeredAbility watcher,
-                                                List<CardEffect> effects,
-                                                UUID targetId, int eventValue, UUID triggeringPermanentId) {
-        StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
-                watcher.sourceCard().getName() + "'s ability", effects);
-        entry.setTargetId(targetId);
-        entry.setEventValue(eventValue);
-        entry.setLinkedExiledCardId(watcher.linkedExiledCardId());
-        if (triggeringPermanentId != null) {
-            entry.setTriggeringPermanentId(triggeringPermanentId);
-        }
-        entry.setNonTargeting(true);
-        triggeredAbilityStackService.putDelayed(gameData, entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-        log.info("Game {} - {} temporary global {} trigger fires",
-                gameData.id, watcher.sourceCard().getName(), LegacySlots.label(watcher.ability()));
     }
 
     /** The filter context of a predicate {@code watcher}, a permanent with a triggered ability, judges. */
@@ -2960,18 +2831,6 @@ public class DamageTriggers {
                         entry -> entry.setEventValue(amount));
             }
         }
-    }
-
-    /**
-     * The effects of {@code watcher}'s ability, every one of them as written (CR 603.3), its intervening "if" wrapped
-     * around each to be judged again as it resolves (CR 603.4).
-     */
-    private static List<CardEffect> temporaryEffects(TemporaryGlobalTriggeredAbility watcher) {
-        Condition interveningIf = watcher.ability().options().interveningIf();
-        return watcher.ability().effects().stream()
-                .map(EffectRegistration::effect)
-                .map(effect -> interveningIf == null ? effect : (CardEffect) new ConditionalEffect(interveningIf, effect))
-                .toList();
     }
 
     /**
@@ -3183,6 +3042,49 @@ public class DamageTriggers {
 
     private List<TriggeredAbility> printedWatchedAbilities(GameData gameData, Permanent perm, Trigger watch) {
         return abilities(gameData, perm, watch);
+    }
+
+    /**
+     * The abilities of {@code watcher} watched as {@code watched}: a permanent's as
+     * {@link #abilities(GameData, Permanent, Trigger)} reads them, an emblem's or a delayed ability's as
+     * {@link EventAbilitySupport#abilities(GameData, Watcher, Trigger)} does.
+     */
+    private List<TriggeredAbility> abilities(GameData gameData, Watcher watcher, Trigger watched) {
+        return watcher.permanent() != null ? abilities(gameData, watcher.permanent(), watched)
+                : eventAbilitySupport.abilities(gameData, watcher, watched);
+    }
+
+    /** As {@link #damageFilterMatches(GameData, Permanent, UUID, PermanentPredicate, Permanent)}, for any watcher. */
+    private boolean damageFilterMatches(GameData gameData, Watcher watcher, PermanentPredicate filter,
+                                        Permanent subject) {
+        if (watcher.permanent() != null) {
+            return damageFilterMatches(gameData, watcher.permanent(), watcher.controllerId(), filter, subject);
+        }
+        return subject != null && predicateEvaluationService.matchesPermanentPredicate(subject, filter,
+                FilterContext.of(gameData).withSourceCardId(watcher.card().getId())
+                        .withSourceControllerId(watcher.controllerId()));
+    }
+
+    /**
+     * As {@link #putEventAbility(GameData, TriggeredAbility, Card, Permanent, UUID, ConditionContext, TriggerCause,
+     * TriggerRecord)}, for {@code ability} of {@code watcher}: a permanent, an emblem or a delayed ability
+     * ({@link EventAbilitySupport#request}).
+     */
+    private boolean putEventAbility(GameData gameData, TriggeredAbility ability, Watcher watcher,
+                                    ConditionContext context, TriggerCause cause, TriggerRecord record) {
+        if (watcher.permanent() != null) {
+            return putEventAbility(gameData, ability, watcher.card(), watcher.permanent(), watcher.controllerId(),
+                    context, cause, record);
+        }
+        if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), context)) {
+            return false;
+        }
+        boolean triggered = triggeredAbilityStackService.put(gameData,
+                EventAbilitySupport.request(watcher, ability, "'s ability", context, record).withCause(cause));
+        if (triggered) {
+            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.card()));
+        }
+        return triggered;
     }
 
 

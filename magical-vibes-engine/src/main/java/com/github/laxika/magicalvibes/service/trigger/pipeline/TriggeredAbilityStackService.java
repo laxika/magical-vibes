@@ -193,9 +193,12 @@ public class TriggeredAbilityStackService extends StackDoor {
         Card card = candidate.sourceCard();
         Permanent lastKnown = event.permanent();
         boolean creatureDied = event.died() && lastKnown != null && lastKnown.getCard().hasType(CardType.CREATURE);
+        TriggeredAbilityRequest.TriggerRecord record = ownZoneChangeRecord(gameData, candidate, event);
+        // A delayed ability about the permanent (CR 603.7c) has its maker's source as its own (CR 603.7d, 603.7e).
         TriggeredAbilityRequest request = new TriggeredAbilityRequest(candidate.ability(), card,
                 candidate.sourcePermanent(), abilityControllerId(gameData, candidate), card.getName() + "'s ability",
-                context, ownZoneChangeRecord(gameData, candidate, event));
+                context, candidate.delayed() == null ? record
+                : EventAbilitySupport.delayedRecord(candidate.delayed(), record));
         if (creatureDied) {
             // A creature dying is told apart, so "a creature you control" doublers (Delney, Streetwise Lookout) judge
             // the creature by its last-known controller and see one that died in the same event (CR 603.10a); one
@@ -1420,7 +1423,7 @@ public class TriggeredAbilityStackService extends StackDoor {
             return true;
         }
         return targeting.stream().anyMatch(effect -> declaresTarget(card, effect)
-                || !namedObjectFits(gameData, entry.getTargetId(), effect));
+                || !namedObjectFits(gameData, entry, effect));
     }
 
     /**
@@ -1454,11 +1457,13 @@ public class TriggeredAbilityStackService extends StackDoor {
     }
 
     /**
-     * Whether the object {@code namedId} the event names is what {@code effect} acts on: the effect could target only
-     * objects of its kind (a player, or a permanent of its type). An effect that could also target another kind ("any
-     * target", "target permanent or player") names a target of its own.
+     * Whether the object the event names ({@code entry}'s non-targeting target) is what {@code effect} acts on: the
+     * effect could target only objects of its kind (a player, or a permanent of its type, its restriction judged for
+     * the ability's controller). An effect that could also target another kind ("any target", "target permanent or
+     * player") names a target of its own.
      */
-    private boolean namedObjectFits(GameData gameData, UUID namedId, CardEffect effect) {
+    private boolean namedObjectFits(GameData gameData, StackEntry entry, CardEffect effect) {
+        UUID namedId = entry.getTargetId();
         TargetSpec spec = effect.targetSpec();
         boolean player = gameData.playerIds.contains(namedId);
         for (TargetPredicate.Kind kind : TargetPredicate.Kind.values()) {
@@ -1474,8 +1479,12 @@ public class TriggeredAbilityStackService extends StackDoor {
         }
         Permanent named = gameQueryService.findPermanentById(gameData, namedId);
         PermanentPredicate restriction = effect.targetSpec().targetPredicate().permanentRestriction().orElse(null);
+        // The restriction is the ability's: "an opponent controls" is judged for its controller.
         return named == null || restriction == null
-                || predicateEvaluationService.matchesPermanentPredicate(gameData, named, restriction);
+                || predicateEvaluationService.matchesPermanentPredicate(named, restriction, FilterContext.of(gameData)
+                .withSourceControllerId(entry.getControllerId())
+                .withSourceCardId(entry.getCard() == null ? null : entry.getCard().getId())
+                .withSourcePermanentId(entry.getSourcePermanentId()));
     }
 
     /**

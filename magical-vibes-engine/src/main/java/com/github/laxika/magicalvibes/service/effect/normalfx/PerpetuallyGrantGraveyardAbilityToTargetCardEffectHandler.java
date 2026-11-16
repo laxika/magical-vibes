@@ -25,14 +25,20 @@ public class PerpetuallyGrantGraveyardAbilityToTargetCardEffectHandler implement
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID targetCardId = !entry.getTargetCardIds().isEmpty()
-                ? entry.getTargetCardIds().getFirst()
+        var perpetual = (PerpetuallyGrantGraveyardAbilityToTargetCardEffect) effect;
+        UUID targetCardId = perpetual.triggeringCard() ? entry.getTriggeringCardId()
+                : !entry.getTargetCardIds().isEmpty() ? entry.getTargetCardIds().getFirst()
                 : entry.getTargetId();
         if (targetCardId == null || gameQueryService.findCardInGraveyardById(gameData, targetCardId) == null) {
             return;
         }
+        // The trigger event's card is the one it became in the graveyard; once it has left and returned it is a new
+        // object (CR 400.7).
+        if (perpetual.triggeringCard() && entry.getTriggeringCardGraveyardEntryVersion() > 0
+                && gameData.graveyardEntryVersion(targetCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
+            return;
+        }
 
-        var perpetual = (PerpetuallyGrantGraveyardAbilityToTargetCardEffect) effect;
         gameData.perpetualGraveyardAbilities.compute(targetCardId, (ignored, existing) -> {
             java.util.List<ActivatedAbility> updated =
                     new java.util.ArrayList<>(existing == null ? java.util.List.of() : existing);

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -47,8 +46,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *       life".</li>
  *   <li>A payment: the paying player's "whenever you pay life".</li>
  *   <li>A gain: the gaining player's "whenever you gain life", the other players' "whenever an opponent gains life",
- *       the graveyard abilities of both, the delayed "whenever you gain life this turn" and "whenever a player gains
- *       life" abilities, and the emblems' "whenever you gain life".</li>
+ *       the graveyard abilities of both, the delayed "whenever you gain life this turn" abilities, and every
+ *       watcher's "whenever a player gains life".</li>
  * </ul>
  */
 @Slf4j
@@ -191,7 +190,7 @@ public class LifeTriggers {
         graveyardControllerLifeGain(gameData, gainingPlayerId, lifeGainedAmount);
         graveyardOpponentLifeGain(gameData, gainingPlayerId, lifeGainedAmount);
         lifeGainOpponentLifeLoss(gameData, gainingPlayerId, lifeGainedAmount);
-        temporaryPlayerGainsLife(gameData, gainingPlayerId, lifeGainedAmount);
+        playerGainsLife(gameData, gainingPlayerId, lifeGainedAmount);
         triggeredAbilityQueueService.beginStackDoorChoices(gameData);
     }
 
@@ -306,16 +305,15 @@ public class LifeTriggers {
     }
 
     /**
-     * The delayed "whenever a player gains life" abilities with a stated duration (False Cure, CR 603.7b): the player
-     * who gained life is "that player", the amount its event value. They are read with no count, limit or spell.
+     * Every watcher's "whenever a player gains life" (False Cure's delayed one, CR 603.7b): the player who gained life
+     * is "that player", the amount its event value. They are read with no count, limit or spell.
      */
-    private void temporaryPlayerGainsLife(GameData gameData, UUID gainingPlayerId, int lifeGainedAmount) {
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (!watcher.ability().hasWatchedTrigger(PLAYER_GAINS_LIFE) || watcher.watchedPermanentId() != null) {
-                continue;
+    private void playerGainsLife(GameData gameData, UUID gainingPlayerId, int lifeGainedAmount) {
+        for (Watcher watcher : abilities.watchers(gameData)) {
+            for (TriggeredAbility ability : abilities.abilities(gameData, watcher, PLAYER_GAINS_LIFE)) {
+                requireNothingToJudge(ability, PLAYER_GAINS_LIFE);
+                putLifeAbility(gameData, watcher, ability, gainingPlayerId, lifeGainedAmount);
             }
-            requireNothingToJudge(watcher.ability(), PLAYER_GAINS_LIFE);
-            abilities.putTemporaryGlobal(gameData, watcher, gainingPlayerId, lifeGainedAmount, null);
         }
     }
 

@@ -438,7 +438,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | random artifact card in hand perpetually costs less | `f/FoundryBeetle.java` + `PerpetuallyReduceRandomMatchingHandCardCostEffect` |
 | nontoken artifact trigger seeks a random nonland artifact with lesser mana value and grants cast permission through the next turn | `j/JunkyardScrapper.java` + `SeekLibraryEffect(..., EXILE_WITH_SOURCE, ManaValueBound(SourceCardManaValue, false, -1), false, true)` |
 | creature card in your graveyard without unearth perpetually gains unearth; max speed makes first unearth free | `h/HighwayReaver.java` + `PerpetuallyGrantUnearthToTargetCreatureCardEffect` + `MaxSpeedFreeFirstUnearthEffect` |
-| temporary global nontoken death trigger perpetually grants fixed-cost unearth, then deals mass creature damage | `c/ConsumedByHistory.java` + `RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(Triggers.nontokenCreatureDies(ANY), PerpetuallyGrantGraveyardAbilityToTargetCardEffect(Card.unearthAbility("{5}")))` + `MassDamageEffect(3)` |
+| temporary global nontoken death trigger perpetually grants fixed-cost unearth, then deals mass creature damage | `c/ConsumedByHistory.java` + `RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(Triggers.nontokenCreatureDies(ANY), PerpetuallyGrantGraveyardAbilityToTargetCardEffect.toTriggeringCard(Card.unearthAbility("{5}")))` + `MassDamageEffect(3)` |
 | enchantment spell and Room unlock cost reduction | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | ETB, enters the battlefield | CARD_PATTERNS_CREATURES_ETB.md |
 | face-down top-library exile plus two-player hidden 1/2/3 match ability | `e/ExpertLevelSafe.java` + `ExpertLevelSafeEffect` |

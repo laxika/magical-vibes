@@ -15,7 +15,7 @@ public class ConsumedByHistory extends Card {
     public ConsumedByHistory() {
         addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                 new TriggeredAbility(Triggers.nontokenCreatureDies(ObjectRelation.ANY),
-                new PerpetuallyGrantGraveyardAbilityToTargetCardEffect(Card.unearthAbility("{5}")))));
+                PerpetuallyGrantGraveyardAbilityToTargetCardEffect.toTriggeringCard(Card.unearthAbility("{5}")))));
         addSpellEffect(new MassDamageEffect(3));
     }
 }

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -132,6 +133,7 @@ public class TriggerIndex {
         graveyardCandidates(gameData, batch, candidates);
         exileCandidates(gameData, batch, candidates);
         commandZoneObjectCandidates(gameData, batch, true, candidates);
+        delayedObserverCandidates(gameData, candidates);
         return candidates;
     }
 
@@ -162,6 +164,7 @@ public class TriggerIndex {
         exileCandidates(gameData, batch, into);
         commandZoneCandidates(gameData, into);
         commandZoneObjectCandidates(gameData, batch, false, into);
+        delayedObserverCandidates(gameData, into);
     }
 
     /**
@@ -185,13 +188,29 @@ public class TriggerIndex {
         for (Emblem emblem : List.copyOf(gameData.emblems)) {
             for (TriggeredAbility ability : emblem.triggeredAbilities()) {
                 if (ability.conditions().stream().anyMatch(c -> c.trigger() instanceof ZoneChangeTrigger)) {
-                    into.add(new TriggerCandidate(emblem.sourceCard(), null, emblem.controllerId(), Zone.COMMAND,
-                            ability, null, emblem));
+                    into.add(TriggerCandidate.of(emblem, ability));
                 }
             }
         }
         gameData.forEachFaceUpSchemeSource((ownerId, scheme) ->
                 battlefieldCandidates(gameData, batch, departure, scheme, ownerId, into));
+    }
+
+    /**
+     * The zone-change abilities of the delayed triggered abilities ({@link #delayedAbilities}) that watch no particular
+     * object ("until end of turn, whenever a nontoken creature you control dies"). A delayed ability is no object's
+     * own, so an event can't change what it is: it is listed as it is for a departure and for any other move alike.
+     */
+    private void delayedObserverCandidates(GameData gameData, List<TriggerCandidate> into) {
+        for (TemporaryGlobalTriggeredAbility delayed : delayedAbilities(gameData)) {
+            if (delayed.watchedPermanentId() == null && hasZoneChangeCondition(delayed.ability())) {
+                into.add(TriggerCandidate.of(delayed));
+            }
+        }
+    }
+
+    private static boolean hasZoneChangeCondition(TriggeredAbility ability) {
+        return ability.conditions().stream().anyMatch(condition -> condition.trigger() instanceof ZoneChangeTrigger);
     }
 
     /** The cards in command zones, under their owners' control, with the abilities that function there. */
@@ -519,6 +538,13 @@ public class TriggerIndex {
         for (TriggeredAbility ability : gained) {
             into.add(new TriggerCandidate(event.card(), lastKnown, event.controllerId(), Zone.BATTLEFIELD, ability));
         }
+        // The delayed abilities about it ("when it dies this turn", Desperate Measures; "when that creature leaves the
+        // battlefield this turn", Valiant Farewell, CR 603.7c), whose "this" is the permanent that left.
+        for (TemporaryGlobalTriggeredAbility delayed : delayedAbilitiesAbout(gameData, lastKnown.getId())) {
+            if (hasZoneChangeCondition(delayed.ability())) {
+                into.add(TriggerCandidate.of(delayed));
+            }
+        }
     }
 
     /**
@@ -699,6 +725,26 @@ public class TriggerIndex {
     public List<TriggeredAbility> graveyardAbilities(GameData gameData, Card card) {
         return withoutLost(gameData, card.getId(), gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData,
                 card));
+    }
+
+    /**
+     * The delayed triggered abilities resolving spells and abilities created (CR 603.7a) that haven't expired, in the
+     * order they were created: each has a stated duration and triggers each time its event occurs until then
+     * (CR 603.7b), with the spell or ability that created it as its source and that one's controller as its controller
+     * (CR 603.7d, 603.7e), wherever that source now is. A delayed ability is no object's own, so it has no zone to
+     * function from and nothing a permanent loses takes it away.
+     */
+    public List<TemporaryGlobalTriggeredAbility> delayedAbilities(GameData gameData) {
+        return List.copyOf(gameData.temporaryGlobalTriggeredAbilities);
+    }
+
+    /**
+     * The delayed triggered abilities ({@link #delayedAbilities}) about the permanent {@code permanentId} ("when that
+     * creature dies this turn", "whenever it attacks this turn"), whose "this" is that permanent (CR 603.7c).
+     */
+    public List<TemporaryGlobalTriggeredAbility> delayedAbilitiesAbout(GameData gameData, UUID permanentId) {
+        return gameData.temporaryGlobalTriggeredAbilities.stream()
+                .filter(delayed -> permanentId.equals(delayed.watchedPermanentId())).toList();
     }
 
     /** The triggered abilities of {@code card} in exile or a command zone: its own and its perpetual grants. */

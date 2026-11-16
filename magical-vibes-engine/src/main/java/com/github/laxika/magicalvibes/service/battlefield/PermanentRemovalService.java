@@ -3264,11 +3264,10 @@ public class PermanentRemovalService {
                     subtypePowers.merge(subtype, dyingPowerAtDeath, Integer::sum);
                 }
                 if (!creatureDeathTriggersSuppressed) {
-                    // "Whenever a creature dies" abilities of objects trigger through the rules event pipeline as the
-                    // death's event ends; these are the registered ones no object has.
+                    // "Whenever a creature dies" abilities trigger through the rules event pipeline as the death's
+                    // event ends, delayed ones among them; these are the watchers kept outside it.
                     collectTriggersInScope(gameData, () -> triggerCollectionService
-                            .checkCreatureDeathRegisteredTriggers(gameData, controllerId, target,
-                                    dyingPowerAtDeath, dyingToughnessAtDeath));
+                            .checkCreatureDeathRegisteredTriggers(gameData, target));
                     triggerCollectionService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
                     collectUndyingTrigger(gameData, target, controllerId, undyingInstances);
                     collectPersistTriggers(gameData, target, controllerId, persistInstances);

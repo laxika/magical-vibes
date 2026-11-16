@@ -17,10 +17,8 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -168,7 +166,7 @@ public class SpellTriggers {
         gameData.forEachPermanent((playerId, perm) -> dispatchSpellWatch(gameData, perm, playerId, PLAYER_CASTS,
                 event));
         dispatchFaceUpSchemes(gameData, PLAYER_CASTS, event, ownerId -> true);
-        collectTemporaryGlobalSpellCastTriggers(gameData, spellCard, castingPlayerId);
+        dispatchDelayed(gameData, PLAYER_CASTS, event, controllerId -> true);
         if (gameData.planechase != null && gameData.planechase.controllerId != null) {
             for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
                 dispatchCardSpellAbilities(gameData, object.getCard(), gameData.planechase.controllerId,
@@ -189,7 +187,7 @@ public class SpellTriggers {
                         event, object);
             }
         }
-        collectTemporaryControllerSpellCastTriggers(gameData, event);
+        dispatchDelayed(gameData, YOU_CAST, event, castingPlayerId::equals);
 
         gameData.forEachPermanent((playerId, perm) -> {
             if (!playerId.equals(castingPlayerId)) {
@@ -197,6 +195,7 @@ public class SpellTriggers {
             }
         });
         dispatchFaceUpSchemes(gameData, OPPONENT_CASTS, event, ownerId -> !ownerId.equals(castingPlayerId));
+        dispatchDelayed(gameData, OPPONENT_CASTS, event, controllerId -> !controllerId.equals(castingPlayerId));
         dispatchSuspendedExiledCardSpellCastTriggers(gameData, castingPlayerId, event);
 
         // The emblems' cast abilities (Ajani, Jace, Telepath Unbound, Ral, Garruk, Caller of Beasts, Venser, ...),
@@ -336,7 +335,8 @@ public class SpellTriggers {
                         Zone.BATTLEFIELD, event, object);
             }
         }
-        collectTemporaryControllerLandPlayTriggers(gameData, event);
+        dispatchDelayed(gameData, YOU_PLAY_LAND, event, playingPlayerId::equals);
+        dispatchDelayed(gameData, OPPONENT_PLAYS_LAND, event, controllerId -> !controllerId.equals(playingPlayerId));
     }
 
     /**
@@ -765,108 +765,6 @@ public class SpellTriggers {
         };
     }
 
-    private void collectTemporaryControllerSpellCastTriggers(GameData gameData, SpellEvent.Cast cast) {
-        Card spellCard = cast.spellCard();
-        UUID castingPlayerId = cast.castingPlayerId();
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (!watcher.controllerId().equals(castingPlayerId)) {
-                continue;
-            }
-            // A cast trigger with a spell filter ("until end of turn, whenever you cast an instant or sorcery spell")
-            // is judged and put on the stack by the generic cast collector, which gives it the spell as "that spell";
-            // its "a card exiled with this" (Apple of Eden, Isu Relic) names the permanent that registered it.
-            SpellFilter filter = watchedSpellFilter(watcher.ability(), YOU_CAST, Zone.BATTLEFIELD, true);
-            if (filter != null) {
-                requireNoLimit(watcher.ability(), watcher.sourceCard());
-                collectCastAbility(registeredMatch(gameData, watcher), CastAbility.of(watcher.ability(), filter), cast,
-                        false);
-                continue;
-            }
-            if (!watcher.ability().hasTrigger(YOU_CAST)) {
-                continue;
-            }
-
-            StackEntry triggerEntry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
-                    watcher.controllerId(), watcher.sourceCard().getName() + "'s ability", temporaryEffects(watcher));
-            triggerEntry.setNonTargeting(true);
-            triggerEntry.setTriggeringCardId(spellCard.getId());
-            if (watcher.targetFilter() != null) {
-                // Its target, restricted by the registration's filter, is chosen as it goes on the stack (CR 603.3d).
-                triggerEntry.setTargetFilter(watcher.targetFilter());
-                triggeredAbilityStackService.putMade(gameData, triggerEntry);
-            } else {
-                triggeredAbilityStackService.putDelayed(gameData, triggerEntry);
-            }
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-        }
-    }
-
-    /**
-     * The abilities a resolving ability registered that trigger whenever a player casts a spell: each goes on the stack
-     * as written, recording the spell as its triggering spell and the caster as its triggering player and non-targeting
-     * "that player", whatever the effects are. "Whenever they cast a spell" (Nuka-Nuke Launcher) is the filter
-     * {@link StackEntryControlledByWatchedPlayerPredicate}, judged against the player the registration recorded; this
-     * reader judges no other spell filter.
-     */
-    private void collectTemporaryGlobalSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
-        for (TemporaryGlobalTriggeredAbility watcher
-                : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            SpellFilter filter = watchedSpellFilter(watcher.ability(), PLAYER_CASTS, Zone.BATTLEFIELD, true);
-            if (filter == null && !watcher.ability().hasTrigger(PLAYER_CASTS)) {
-                continue;
-            }
-            if (filter != null) {
-                if (!filter.equals(SpellFilter.ANY.withStackEntry(new StackEntryControlledByWatchedPlayerPredicate()))) {
-                    throw new IllegalStateException("The registered any-player cast reader judges only the watched "
-                            + "player: " + watcher.ability());
-                }
-                if (!castingPlayerId.equals(watcher.watchedPlayerId())) {
-                    continue;
-                }
-            }
-            requireNoLimit(watcher.ability(), watcher.sourceCard());
-
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability", temporaryEffects(watcher));
-            entry.setTargetId(castingPlayerId);
-            entry.setTriggeringPlayerId(castingPlayerId);
-            entry.setTriggeringCardId(spellCard.getId());
-            StackEntry spellEntry = findStackEntryByCardId(gameData, spellCard.getId());
-            if (spellEntry != null) {
-                entry.setTriggeringSpell(spellEntry);
-            }
-            entry.setNonTargeting(true);
-            triggeredAbilityStackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-            log.info("Game {} - {} temporary global spell-cast trigger fires",
-                    gameData.id, watcher.sourceCard().getName());
-        }
-    }
-
-    /**
-     * The abilities a resolving ability registered that trigger whenever their controller plays a land, read as the
-     * land-play reader reads a printed one:
-     * "a land exiled with this" (Apple of Eden, Isu Relic) names the permanent that registered the ability.
-     */
-    private void collectTemporaryControllerLandPlayTriggers(GameData gameData, SpellEvent.LandPlayed landPlayed) {
-        UUID playingPlayerId = landPlayed.playingPlayerId();
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (!watcher.controllerId().equals(playingPlayerId)) {
-                continue;
-            }
-            LandPlayTrigger landPlay = watchedLandPlayTrigger(watcher.ability(),
-                    YOU_PLAY_LAND, Zone.BATTLEFIELD, true);
-            if (landPlay == null) {
-                if (!watcher.ability().hasTrigger(YOU_PLAY_LAND)) {
-                    continue;
-                }
-                landPlay = (LandPlayTrigger) YOU_PLAY_LAND;
-            }
-            requireNoLimit(watcher.ability(), watcher.sourceCard());
-            collectLandPlayAbility(registeredMatch(gameData, watcher), watcher.ability(), landPlay, landPlayed);
-        }
-    }
-
     /**
      * "When you spend this mana to cast ..." riders on a mana ability are delayed triggers created when the
      * mana is produced (CR 106.6), so they still fire if the producing permanent has left the battlefield
@@ -1232,7 +1130,8 @@ public class SpellTriggers {
             }
         };
         TriggeredAbilityRequest request = new TriggeredAbilityRequest(trigger.ability(), sourceCard, source,
-                match.controllerId(), abilityDescription(sourceCard), interveningContext, record)
+                match.controllerId(), abilityDescription(sourceCard), interveningContext,
+                match.delayed() == null ? record : EventAbilitySupport.delayedRecord(match.delayed(), record))
                 .withCause(new TriggerCause.SpellCastOrCopied(spellCard, castingPlayerId));
         boolean triggered = triggeredAbilityStackService.put(match.gameData(), request);
         // "Whenever a player kicks a spell": once for each time it was kicked.
@@ -1319,6 +1218,11 @@ public class SpellTriggers {
         }
         if (predicate instanceof StackEntryCouldTargetAnotherPermanentPredicate couldTarget) {
             return couldTargetAnotherPermanent(match, spellEntry, couldTarget);
+        }
+        // "Whenever they cast a spell": the player the delayed ability's maker named (Nuka-Nuke Launcher).
+        if (predicate instanceof StackEntryControlledByWatchedPlayerPredicate) {
+            UUID watchedPlayerId = match.delayed() == null ? null : match.delayed().watchedPlayerId();
+            return watchedPlayerId != null && watchedPlayerId.equals(spellEntry.getControllerId());
         }
         if (predicate instanceof StackEntryAllOfPredicate allOf) {
             return allOf.predicates().stream().allMatch(nested ->
@@ -1468,19 +1372,21 @@ public class SpellTriggers {
         Permanent source = match.permanent();
         PlanarObject planarObject = match.sourcePlanarObject();
         Card land = landPlayed.landCard();
+        TriggerRecord record = entry -> {
+            entry.setTargetId(landPlayed.playingPlayerId());
+            entry.setNonTargeting(true);
+            entry.setTriggeringCardId(land.getId());
+            entry.setTriggeringCards(List.of(land));
+            if (source != null) {
+                entry.setSourcePermanentSnapshot(new Permanent(source));
+            }
+            if (planarObject != null) {
+                entry.setSourcePlanarObject(planarObject);
+            }
+        };
         boolean triggered = triggeredAbilityStackService.put(match.gameData(), new TriggeredAbilityRequest(ability,
-                sourceCard, source, match.controllerId(), sourceCard.getName() + "'s ability", context, entry -> {
-                    entry.setTargetId(landPlayed.playingPlayerId());
-                    entry.setNonTargeting(true);
-                    entry.setTriggeringCardId(land.getId());
-                    entry.setTriggeringCards(List.of(land));
-                    if (source != null) {
-                        entry.setSourcePermanentSnapshot(new Permanent(source));
-                    }
-                    if (planarObject != null) {
-                        entry.setSourcePlanarObject(planarObject);
-                    }
-                }));
+                sourceCard, source, match.controllerId(), sourceCard.getName() + "'s ability", context,
+                match.delayed() == null ? record : EventAbilitySupport.delayedRecord(match.delayed(), record)));
         if (triggered) {
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         }
@@ -1635,6 +1541,44 @@ public class SpellTriggers {
     }
 
     /**
+     * The delayed triggered abilities ({@link TriggerIndex#delayedAbilities}) watched as {@code watched} that watch no
+     * particular object, whose controller {@code related} relates to the event's player, read as an emblem's are
+     * ({@link #dispatchEmblems}): a delayed ability is no object's own, so it functions whatever zones its conditions
+     * name. Its match context carries it ({@link TriggerMatchContext#ofDelayed}), so "a card exiled with this" names
+     * the permanent that created it, "they" the player its maker named, and its entry records what it does
+     * ({@link EventAbilitySupport#delayedRecord}). A delayed copy ability isn't read: none is written.
+     */
+    private void dispatchDelayed(GameData gameData, Trigger watched, SpellEvent event, Predicate<UUID> related) {
+        for (TemporaryGlobalTriggeredAbility delayed : triggerIndex.delayedAbilities(gameData)) {
+            if (delayed.watchedPermanentId() != null || !related.test(delayed.controllerId())) {
+                continue;
+            }
+            TriggeredAbility ability = delayed.ability();
+            TriggerMatchContext match = TriggerMatchContext.ofDelayed(gameData, delayed);
+            SpellFilter filter = collectedSpellFilter(ability, watched, Zone.COMMAND, true);
+            if (filter != null) {
+                if (!(event instanceof SpellEvent.Cast cast)) {
+                    throw new IllegalStateException("No delayed copy ability is read: " + ability);
+                }
+                requireNoLimit(ability, delayed.sourceCard());
+                collectCastAbility(match, CastAbility.of(ability, filter), cast, false);
+                continue;
+            }
+            LandPlayTrigger landPlay = watchedLandPlayTrigger(ability, watched, Zone.COMMAND, true);
+            if (landPlay != null) {
+                requireNoLimit(ability, delayed.sourceCard());
+                collectLandPlayAbility(match, ability, landPlay, (SpellEvent.LandPlayed) event);
+                continue;
+            }
+            if (ability.hasWatchedTrigger(watched)) {
+                requireNoLimit(ability, delayed.sourceCard());
+                collectUnfilteredAbility(gameData, null, delayed.sourceCard(), delayed.controllerId(), event, ability,
+                        UnaryOperator.identity(), null, delayed);
+            }
+        }
+    }
+
+    /**
      * {@code abilities} of {@code card}, a card that isn't a permanent, watched as {@code watched} from {@code zone}
      * (from any zone when {@code anyZone}), each read as its trigger is: a spell filter, a land play, or neither.
      */
@@ -1674,6 +1618,18 @@ public class SpellTriggers {
     private boolean collectUnfilteredAbility(GameData gameData, Permanent perm, Card sourceCard, UUID controllerId,
                                              SpellEvent event, TriggeredAbility ability,
                                              UnaryOperator<CardEffect> transform, PlanarObject planarObject) {
+        return collectUnfilteredAbility(gameData, perm, sourceCard, controllerId, event, ability, transform,
+                planarObject, null);
+    }
+
+    /**
+     * As {@link #collectUnfilteredAbility(GameData, Permanent, Card, UUID, SpellEvent, TriggeredAbility,
+     * UnaryOperator, PlanarObject)}, for {@code delayed}'s ability when it isn't {@code null}.
+     */
+    private boolean collectUnfilteredAbility(GameData gameData, Permanent perm, Card sourceCard, UUID controllerId,
+                                             SpellEvent event, TriggeredAbility ability,
+                                             UnaryOperator<CardEffect> transform, PlanarObject planarObject,
+                                             TemporaryGlobalTriggeredAbility delayed) {
         if (ability.options().multiplicity() != TriggerMultiplicity.EACH) {
             throw new IllegalStateException("No spell, land-play or activation reader reads "
                     + ability.options().multiplicity() + ": " + ability);
@@ -1696,7 +1652,9 @@ public class SpellTriggers {
         }
         boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
                 changed ? ability.withEffects(transformed) : ability, sourceCard, perm, controllerId,
-                sourceCard.getName() + "'s ability", context, spellWatchRecord(event, perm, planarObject))
+                sourceCard.getName() + "'s ability", context, delayed == null
+                ? spellWatchRecord(event, perm, planarObject)
+                : EventAbilitySupport.delayedRecord(delayed, spellWatchRecord(event, perm, planarObject)))
                 .withCause(doublerCause(event)));
         if (triggered) {
             gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
@@ -1786,27 +1744,6 @@ public class SpellTriggers {
         return collectLandPlayAbility(new TriggerMatchContext(gameData, perm, controllerId, List.of(), sourceCard,
                         planarObject == null ? null : planarObject.copy()),
                 ability, trigger, (SpellEvent.LandPlayed) event);
-    }
-
-    /**
-     * The effects of {@code watcher}'s ability, every one of them as written (CR 603.3), its intervening "if" wrapped
-     * around each to be judged again as it resolves (CR 603.4).
-     */
-    private static List<CardEffect> temporaryEffects(TemporaryGlobalTriggeredAbility watcher) {
-        Condition interveningIf = watcher.ability().options().interveningIf();
-        return watcher.ability().effects().stream()
-                .map(EffectRegistration::effect)
-                .map(effect -> interveningIf == null ? effect : (CardEffect) new ConditionalEffect(interveningIf, effect))
-                .toList();
-    }
-
-    /**
-     * The match context of an ability a resolving ability registered: no permanent of its own, its source card the
-     * registering card, and the permanent that registered it as its "this" (CR 603.7e).
-     */
-    private static TriggerMatchContext registeredMatch(GameData gameData, TemporaryGlobalTriggeredAbility watcher) {
-        return new TriggerMatchContext(gameData, null, watcher.controllerId(), temporaryEffects(watcher),
-                watcher.sourceCard(), null, null, false, watcher.sourcePermanentId());
     }
 
     private static void requireNoLimit(TriggeredAbility ability, Card card) {

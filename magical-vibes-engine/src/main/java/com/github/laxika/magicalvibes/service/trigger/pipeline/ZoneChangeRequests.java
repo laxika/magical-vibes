@@ -86,6 +86,10 @@ public class ZoneChangeRequests {
                 entry.setSourcePlanarObject(plane);
             }
         };
+        if (candidate.delayed() != null) {
+            // A delayed ability records what its maker gave it (CR 603.7c).
+            record = EventAbilitySupport.delayedRecord(candidate.delayed(), record);
+        }
         TriggeredAbilityRequest request = new TriggeredAbilityRequest(watchedAbility(gameData, candidate), sourceCard,
                 source, candidate.controllerId(),
                 sourceCard.getName() + (emblem ? "'s emblem" : "'s ability"), ifContext, record);

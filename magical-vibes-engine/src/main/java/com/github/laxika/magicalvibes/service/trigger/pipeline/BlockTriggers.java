@@ -9,9 +9,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.rules.BlockEvent;
@@ -435,149 +432,136 @@ public class BlockTriggers {
     }
 
     /**
-     * "Whenever a creature blocks" of every permanent, once for each blocking creature (CR 509.3a): the filter on the
-     * blocker from the watcher's point of view, the blocker "that creature"; then the delayed ones watching every
-     * blocker ("a creature an opponent controls blocks", Benefactor's Draught).
+     * "Whenever a creature blocks" of every watcher, once for each blocking creature (CR 509.3a): the permanents, then
+     * the delayed abilities that watch no particular object ("this turn, whenever a creature an opponent controls
+     * blocks", Benefactor's Draught). The filter on the blocker is judged from the watcher's point of view, and the
+     * blocker is "that creature".
      */
     private void creatureBlocks(GameData gameData, List<Pair> pairs) {
         CombatTrigger watched = Triggers.creatureBlocks();
         Set<Permanent> blockers = new java.util.LinkedHashSet<>();
         pairs.forEach(pair -> blockers.add(pair.blocker()));
         for (Permanent blocker : blockers) {
-            for (UUID controllerId : gameData.orderedPlayerIds) {
-                for (Permanent watcher : List.copyOf(gameData.playerBattlefields.getOrDefault(controllerId,
-                        List.of()))) {
-                    ConditionContext context = ConditionContext.forPermanent(watcher, controllerId)
-                            .withTriggeringPermanentId(blocker.getId());
-                    for (TriggeredAbility ability : abilities(gameData, watcher, watched)) {
-                        requireEach(ability, watched);
-                        PermanentPredicate filter = filter(ability, watched);
-                        if ((filter != null && !predicateEvaluationService.matchesPermanentPredicate(blocker, filter,
-                                FilterContext.of(gameData).withSourceCardId(watcher.getCard().getId())
-                                        .withSourceControllerId(controllerId)))
-                                || !eventConditionMet(gameData, ability, context)) {
-                            continue;
-                        }
-                        put(gameData, new TriggeredAbilityRequest(ability, watcher.getCard(), watcher, controllerId,
-                                watcher.getCard().getName() + "'s block trigger", context, entry -> {
-                                    entry.setTargetId(blocker.getId());
-                                    entry.setNonTargeting(true);
-                                    entry.getRemovedPermanentControllers().put(blocker.getId(),
-                                            gameQueryService.findPermanentController(gameData, blocker.getId()));
-                                }), watcher.getCard(), "'s ability triggers.");
+            for (Watcher watcher : permanentAndDelayedWatchers(gameData)) {
+                UUID controllerId = watcher.controllerId();
+                ConditionContext context = watcher.conditionContext().withTriggeringPermanentId(blocker.getId());
+                for (TriggeredAbility ability : abilities(gameData, watcher, watched)) {
+                    requireEach(ability, watched);
+                    PermanentPredicate filter = filter(ability, watched);
+                    if ((filter != null && !predicateEvaluationService.matchesPermanentPredicate(blocker, filter,
+                            FilterContext.of(gameData).withSourceCardId(watcher.card().getId())
+                                    .withSourceControllerId(controllerId)))
+                            || !eventConditionMet(gameData, ability, context)) {
+                        continue;
                     }
+                    put(gameData, EventAbilitySupport.request(watcher, ability, "'s block trigger", context, entry -> {
+                        entry.setTargetId(blocker.getId());
+                        entry.setNonTargeting(true);
+                        entry.getRemovedPermanentControllers().put(blocker.getId(),
+                                gameQueryService.findPermanentController(gameData, blocker.getId()));
+                    }), watcher.card(), "'s ability triggers.");
                 }
             }
-            delayedCreatureBlocks(gameData, blocker);
         }
-    }
-
-    /** The delayed "whenever a creature blocks this turn" abilities watching every blocker, for {@code blocker}. */
-    private void delayedCreatureBlocks(GameData gameData, Permanent blocker) {
-        CombatTrigger watched = Triggers.creatureBlocks();
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (TriggerMatcher.combatCondition(watcher.ability(), watched, null) == null
-                    || watcher.watchedPermanentId() != null) {
-                continue;
-            }
-            if (watcher.ability().options().limit() != TriggerLimit.NONE
-                    || watcher.ability().options().multiplicity() != TriggerMultiplicity.EACH) {
-                throw new IllegalStateException("No delayed " + watched + " ability is written with "
-                        + watcher.ability().options() + ": " + watcher.ability());
-            }
-            PermanentPredicate filter = filter(watcher.ability(), watched);
-            if (filter != null && !predicateEvaluationService.matchesPermanentPredicate(blocker, filter,
-                    FilterContext.of(gameData).withSourceCardId(watcher.sourceCard().getId())
-                            .withSourceControllerId(watcher.controllerId()))) {
-                continue;
-            }
-            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability", delayedEffects(watcher));
-            entry.setTargetId(blocker.getId());
-            entry.setEventValue(0);
-            entry.setLinkedExiledCardId(watcher.linkedExiledCardId());
-            entry.setNonTargeting(true);
-            stackService.putDelayed(gameData, entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-        }
-    }
-
-    private static List<CardEffect> delayedEffects(TemporaryGlobalTriggeredAbility watcher) {
-        Condition interveningIf = watcher.ability().options().interveningIf();
-        return watcher.ability().effects().stream()
-                .map(registration -> interveningIf == null ? registration.effect()
-                        : (CardEffect) new ConditionalEffect(interveningIf, registration.effect()))
-                .toList();
     }
 
     /**
-     * {@code attacker}'s own "whenever this creature becomes blocked": the delayed ones watching it first (Okoye-like
-     * "this combat"), then, once (CR 509.3c) when it is {@code newlyBlocked}, the ones that trigger once, a filter on
-     * the blockers ("becomes blocked by one or more Walls"; with no blockers, CR 509.1h, only those with none), then
-     * "becomes blocked by a creature" ({@code EACH_BLOCKER}) once for each of {@code blockers} (CR 509.3d) with that
-     * blocker as "that creature". The event condition is read from the attacker.
+     * The permanents on the battlefield, each player's in turn order under that player, then the delayed abilities
+     * that watch no particular object ({@link TriggerIndex#delayedAbilities}).
+     */
+    private List<Watcher> permanentAndDelayedWatchers(GameData gameData) {
+        List<Watcher> watchers = new ArrayList<>();
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            for (Permanent permanent : List.copyOf(gameData.playerBattlefields.getOrDefault(controllerId,
+                    List.of()))) {
+                watchers.add(Watcher.of(permanent, controllerId));
+            }
+        }
+        for (TemporaryGlobalTriggeredAbility delayed : triggerIndex.delayedAbilities(gameData)) {
+            if (delayed.watchedPermanentId() == null) {
+                watchers.add(Watcher.of(delayed));
+            }
+        }
+        return watchers;
+    }
+
+    /**
+     * {@code watcher}'s abilities with a combat trigger condition watched as {@code watched}: a permanent's as the
+     * layers leave them, functioning on the battlefield; a delayed ability itself, whatever zones it names.
+     */
+    private List<TriggeredAbility> abilities(GameData gameData, Watcher watcher, CombatTrigger watched) {
+        if (watcher.permanent() != null) {
+            return abilities(gameData, watcher.permanent(), watched);
+        }
+        TriggeredAbility ability = watcher.delayed().ability();
+        return TriggerMatcher.combatCondition(ability, watched, null) == null ? List.of() : List.of(ability);
+    }
+
+    /**
+     * "Whenever this creature becomes blocked" of {@code attacker}, its "this" the attacker: the delayed ones about it
+     * ("when that creature becomes blocked this turn", Barreling Attack, CR 603.7c) first, then the attacker's own.
+     * Once (CR 509.3c) when it is {@code newlyBlocked}, the ones that trigger once, a filter on the blockers ("becomes
+     * blocked by one or more Walls"; with no blockers, CR 509.1h, only those with none), then "becomes blocked by a
+     * creature" ({@code EACH_BLOCKER}) once for each of {@code blockers} (CR 509.3d) with that blocker as "that
+     * creature". The event condition is read from the attacker. A delayed ability's source is the spell or ability that
+     * created it (CR 603.7d, 603.7e), not the attacker.
      */
     private void becomesBlocked(GameData gameData, Permanent attacker, UUID activeId, List<Permanent> blockers,
                                 boolean newlyBlocked) {
         CombatTrigger watched = Triggers.becomesBlocked();
-        if (newlyBlocked) {
-            for (TemporaryGlobalTriggeredAbility delayed : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-                if (TriggerMatcher.combatCondition(delayed.ability(), watched, null) == null
-                        || !attacker.getId().equals(delayed.watchedPermanentId())) {
-                    continue;
-                }
-                if (filter(delayed.ability(), watched) != null
-                        || delayed.ability().options().limit() != TriggerLimit.NONE
-                        || delayed.ability().options().multiplicity() != TriggerMultiplicity.EACH) {
-                    throw new IllegalStateException("No delayed becomes-blocked ability is written with a filter, "
-                            + "limit or multiplicity: " + delayed.ability());
-                }
-                StackEntry entry = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
-                        delayed.controllerId(), delayed.sourceCard().getName() + "'s delayed becomes-blocked trigger",
-                        delayedEffects(delayed), attacker.getId(), (UUID) null);
-                entry.setNonTargeting(true);
-                stackService.putDelayed(gameData, entry);
+        List<Watcher> watchers = new ArrayList<>();
+        for (TemporaryGlobalTriggeredAbility delayed : triggerIndex.delayedAbilities(gameData)) {
+            if (attacker.getId().equals(delayed.watchedPermanentId())) {
+                watchers.add(Watcher.of(delayed));
             }
         }
-        List<TriggeredAbility> abilities = abilities(gameData, attacker, watched);
+        watchers.add(Watcher.of(attacker, activeId));
         ConditionContext attackerContext = ConditionContext.forPermanent(attacker, activeId);
-        if (newlyBlocked) {
-            for (TriggeredAbility ability : abilities) {
-                PermanentPredicate filter = filter(ability, watched);
-                boolean blockersMatch = filter == null || blockers.stream().anyMatch(blocker ->
-                        predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, filter));
-                if (ability.options().multiplicity() == TriggerMultiplicity.EACH_BLOCKER || !blockersMatch
-                        || !eventConditionMet(gameData, ability, attackerContext)) {
-                    continue;
+        for (Watcher watcher : watchers) {
+            List<TriggeredAbility> abilities = abilities(gameData, watcher, watched);
+            ConditionContext context = watcher.permanent() != null ? attackerContext
+                    : watcher.conditionContext().withTriggeringPermanentId(attacker.getId());
+            Permanent snapshot = watcher.permanent() == null ? null : new Permanent(attacker);
+            if (newlyBlocked) {
+                for (TriggeredAbility ability : abilities) {
+                    PermanentPredicate filter = filter(ability, watched);
+                    boolean blockersMatch = filter == null || blockers.stream().anyMatch(blocker ->
+                            predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, filter));
+                    if (ability.options().multiplicity() == TriggerMultiplicity.EACH_BLOCKER || !blockersMatch
+                            || !eventConditionMet(gameData, ability, context)) {
+                        continue;
+                    }
+                    UUID attackedTarget = attacker.getAttackTarget();
+                    put(gameData, EventAbilitySupport.request(watcher, ability, "'s becomes-blocked trigger", context,
+                            entry -> {
+                                entry.setTargetId(attacker.getId());
+                                entry.setNonTargeting(true);
+                                if (snapshot != null) {
+                                    entry.setSourcePermanentSnapshot(snapshot);
+                                }
+                                entry.setAttackedTargetId(attackedTarget);
+                                if (attackedTarget != null) {
+                                    entry.setDefendingPlayerId(gameQueryService.defendingPlayerOfAttackTarget(
+                                            gameData, attackedTarget));
+                                }
+                            }), watcher.card(), "'s becomes-blocked ability triggers.");
                 }
-                UUID attackedTarget = attacker.getAttackTarget();
-                put(gameData, new TriggeredAbilityRequest(ability, attacker.getCard(), attacker, activeId,
-                        attacker.getCard().getName() + "'s becomes-blocked trigger", attackerContext, entry -> {
-                            entry.setTargetId(attacker.getId());
-                            entry.setNonTargeting(true);
-                            entry.setSourcePermanentSnapshot(new Permanent(attacker));
-                            entry.setAttackedTargetId(attackedTarget);
-                            if (attackedTarget != null) {
-                                entry.setDefendingPlayerId(gameQueryService.defendingPlayerOfAttackTarget(gameData,
-                                        attackedTarget));
-                            }
-                        }), attacker.getCard(), "'s becomes-blocked ability triggers.");
             }
-        }
-        for (Permanent blocker : blockers) {
-            ConditionContext blockerContext = attackerContext.withTriggeringPermanentId(blocker.getId());
-            for (TriggeredAbility ability : abilities) {
-                PermanentPredicate filter = filter(ability, watched);
-                if (ability.options().multiplicity() != TriggerMultiplicity.EACH_BLOCKER
-                        || (filter != null && !predicateEvaluationService.matchesPermanentPredicate(gameData, blocker,
-                        filter)) || !eventConditionMet(gameData, ability, blockerContext)) {
-                    continue;
+            for (Permanent blocker : blockers) {
+                ConditionContext blockerContext = context.withTriggeringPermanentId(blocker.getId());
+                for (TriggeredAbility ability : abilities) {
+                    PermanentPredicate filter = filter(ability, watched);
+                    if (ability.options().multiplicity() != TriggerMultiplicity.EACH_BLOCKER
+                            || (filter != null && !predicateEvaluationService.matchesPermanentPredicate(gameData,
+                            blocker, filter)) || !eventConditionMet(gameData, ability, blockerContext)) {
+                        continue;
+                    }
+                    put(gameData, EventAbilitySupport.request(watcher, ability, "'s becomes-blocked trigger",
+                            blockerContext, entry -> {
+                                entry.setTargetId(blocker.getId());
+                                recordCombatOpponent(gameData, entry, blocker);
+                            }), watcher.card(), "'s becomes-blocked ability triggers.");
                 }
-                put(gameData, new TriggeredAbilityRequest(ability, attacker.getCard(), attacker, activeId,
-                        attacker.getCard().getName() + "'s becomes-blocked trigger", blockerContext, entry -> {
-                            entry.setTargetId(blocker.getId());
-                            recordCombatOpponent(gameData, entry, blocker);
-                        }), attacker.getCard(), "'s becomes-blocked ability triggers.");
             }
         }
     }

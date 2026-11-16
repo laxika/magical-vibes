@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
@@ -29,9 +30,9 @@ import java.util.function.Function;
  *                                           the source's once-per-turn allowance
  * @param triggersOnlyOnceEachTurn whether the ability "triggers only once each turn" ({@code
  *                                 TriggerLimit.ONCE_EACH_TURN}), which nothing can make trigger additional times
- * @param registeringPermanentId for an ability a resolving ability registered, the permanent that was that ability's
- *                               source and so this one's (CR 603.7e), which may have left the battlefield; {@code null}
- *                               otherwise
+ * @param delayed      for a delayed triggered ability a resolving spell or ability created (CR 603.7a), that ability,
+ *                     which records the permanent that was its maker's source and so its own (CR 603.7e), which may have
+ *                     left the battlefield, and the player its maker named; {@code null} otherwise
  */
 public record TriggerMatchContext(
         GameData gameData,
@@ -42,7 +43,7 @@ public record TriggerMatchContext(
         PlanarObject sourcePlanarObject,
         String onceEachTurnActionKey,
         boolean triggersOnlyOnceEachTurn,
-        UUID registeringPermanentId
+        TemporaryGlobalTriggeredAbility delayed
 ) {
 
     public TriggerMatchContext {
@@ -110,12 +111,22 @@ public record TriggerMatchContext(
 
     /**
      * The object "a card exiled with this" names: the source permanent, else the face-up plane, else the permanent that
-     * registered the ability; {@code null} for none. A card cast or played from exile names the object it was exiled
-     * with in its event, since it has left exile by then.
+     * created the delayed ability; {@code null} for none. A card cast or played from exile names the object it was
+     * exiled with in its event, since it has left exile by then.
      */
     public UUID exiledWithSourceId() {
         return permanent != null ? permanent.getId()
-                : sourcePlanarObject != null ? sourcePlanarObject.getId() : registeringPermanentId;
+                : sourcePlanarObject != null ? sourcePlanarObject.getId()
+                : delayed != null ? delayed.sourcePermanentId() : null;
+    }
+
+    /**
+     * The delayed ability for {@code delayed} of {@code gameData}: no permanent of its own, the card of the spell or
+     * ability that created it as its source card, its controller as the controller (CR 603.7d, 603.7e).
+     */
+    public static TriggerMatchContext ofDelayed(GameData gameData, TemporaryGlobalTriggeredAbility delayed) {
+        return new TriggerMatchContext(gameData, null, delayed.controllerId(), List.of(), delayed.sourceCard(), null,
+                null, false, delayed);
     }
 
     /** The ability's effects as a new mutable list, for the one stack entry or target choice that carries them. */
@@ -201,6 +212,6 @@ public record TriggerMatchContext(
     /** This ability with {@code effects} as its effects. */
     public TriggerMatchContext withEffects(List<CardEffect> effects) {
         return new TriggerMatchContext(gameData, permanent, controllerId, effects, sourceCard, sourcePlanarObject,
-                onceEachTurnActionKey, triggersOnlyOnceEachTurn, registeringPermanentId);
+                onceEachTurnActionKey, triggersOnlyOnceEachTurn, delayed);
     }
 }

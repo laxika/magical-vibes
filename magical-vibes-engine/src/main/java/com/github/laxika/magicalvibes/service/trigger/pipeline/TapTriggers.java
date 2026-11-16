@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
@@ -581,10 +580,11 @@ public class TapTriggers {
 
     /**
      * {@code event.permanent()} became tapped: the creature's taps this turn are counted (for "for the first time
-     * during each of your turns"); then the delayed "whenever a creature becomes tapped" abilities, the emblems', the
-     * Auras' "whenever enchanted permanent becomes tapped", the tapped permanent's controller's "whenever a permanent
-     * you control becomes tapped", the other players' "whenever a permanent an opponent controls becomes tapped", the
-     * delayed ones of both, and the tapping player's "whenever you tap a permanent an opponent controls".
+     * during each of your turns"); then every watcher's "whenever a creature becomes tapped", the Auras' "whenever
+     * enchanted permanent becomes tapped", the tapped permanent's controller's watchers' "whenever a permanent you
+     * control becomes tapped", the other players' watchers' "whenever a permanent an opponent controls becomes
+     * tapped", and the tapping player's "whenever you tap a permanent an opponent controls". A watcher is a permanent,
+     * an emblem or a delayed ability ({@link EventAbilitySupport#watchers}).
      */
     private void becameTapped(GameData gameData, TapEvent.BecameTapped event) {
         Permanent tappedPermanent = event.permanent();
@@ -608,11 +608,21 @@ public class TapTriggers {
         int creatureTapCount = gameQueryService.isCreature(gameData, tappedPermanent)
                 ? gameData.creatureTapCountsThisTurn.merge(tappedPermanent.getId(), 1, Integer::sum)
                 : 0;
-        if (creatureTapCount > 0) {
-            temporaryTapped(gameData, CREATURE_TAPPED, tappedPermanent, null);
-        }
-
         UUID controllerId = tappedPermanentControllerId;
+
+        // "Whenever a creature becomes tapped" (Don't Move's delayed one).
+        if (creatureTapCount > 0) {
+            for (Watcher watcher : abilities.watchers(gameData)) {
+                for (TriggeredAbility ability : abilities.abilities(gameData, watcher, CREATURE_TAPPED)) {
+                    TapRead read = read(ability, CREATURE_TAPPED).getFirst();
+                    if (read.firstTime()) {
+                        throw new IllegalStateException("No \"whenever a creature becomes tapped\" matcher counts a "
+                                + "first time: " + ability);
+                    }
+                    putTapAbility(gameData, watcher, read, tappedPermanent, controllerId);
+                }
+            }
+        }
 
         // "Whenever enchanted permanent becomes tapped": the ability is the Aura's (CR 113.7); the tapped permanent's
         // controller is the non-targeting "that player" ("that player mills three cards"), and a "choose one" (Relic
@@ -655,9 +665,6 @@ public class TapTriggers {
             }
         }
 
-        temporaryTapped(gameData, PERMANENT_YOU_CONTROL_TAPPED, tappedPermanent, controllerId);
-        temporaryTapped(gameData, PERMANENT_OPPONENT_CONTROLS_TAPPED, tappedPermanent, controllerId);
-
         // "Whenever you tap an untapped creature an opponent controls": the tapping player is tracked apart from the
         // tapped permanent's controller, as an effect may instruct another player to tap their own permanent.
         if (tappingPlayerId == null || tappingPlayerId.equals(controllerId)) {
@@ -670,40 +677,6 @@ public class TapTriggers {
                 putTapAbility(gameData, watcher, read(ability, YOU_TAP_OPPONENT_PERMANENT).getFirst(),
                         tappedPermanent, controllerId);
             }
-        }
-    }
-
-    /**
-     * The delayed "whenever a creature becomes tapped" and "whenever a permanent you control / an opponent controls
-     * becomes tapped" abilities with a stated duration (CR 603.7b) for {@code tapped}: "you control" and "an opponent
-     * controls" are judged against {@code tappedControllerId}, a filter on the tapped permanent ("a creature an
-     * opponent controls") as the ability's; the tapped permanent is the triggering permanent and the non-targeting
-     * object it acts on. They are read with no "first time", "one or more" or limit.
-     */
-    private void temporaryTapped(GameData gameData, Trigger watched, Permanent tapped, UUID tappedControllerId) {
-        for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (!watcher.ability().hasWatchedTrigger(watched) || watcher.watchedPermanentId() != null) {
-                continue;
-            }
-            if (watched == PERMANENT_YOU_CONTROL_TAPPED
-                    && (tappedControllerId == null || !watcher.controllerId().equals(tappedControllerId))) {
-                continue;
-            }
-            if (watched == PERMANENT_OPPONENT_CONTROLS_TAPPED
-                    && (tappedControllerId == null || watcher.controllerId().equals(tappedControllerId))) {
-                continue;
-            }
-            TapRead read = read(watcher.ability(), watched).getFirst();
-            if (read.firstTime() || read.oneOrMore() || read.limit() != TriggerLimit.NONE) {
-                throw new IllegalStateException("No delayed tap ability reads a first time, \"one or more\" or a "
-                        + "limit: " + watcher.ability());
-            }
-            if (read.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(tapped, read.filter(),
-                    FilterContext.of(gameData).withSourceCardId(watcher.sourceCard().getId())
-                            .withSourceControllerId(watcher.controllerId()))) {
-                continue;
-            }
-            abilities.putTemporaryGlobal(gameData, watcher, tapped.getId(), 0, tapped.getId());
         }
     }
 

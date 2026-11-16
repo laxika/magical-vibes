@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -82,7 +83,7 @@ final class TriggerMatcher {
                                             boolean movingObject) {
         for (TriggerCondition condition : candidate.ability().conditions()) {
             if (condition.trigger() instanceof ZoneChangeTrigger trigger
-                    && (candidate.commandZoneObject() || condition.zones().functionsIn(candidate.zone()))
+                    && (candidate.functionsAnywhere() || condition.zones().functionsIn(candidate.zone()))
                     && trigger.matchesMove(event.from(), event.to(), event.cause())
                     && (!trigger.duringYourTurn() || gameData.activePlayerId != null
                     && gameData.activePlayerId.equals(candidate.controllerId()))
@@ -438,7 +439,8 @@ final class TriggerMatcher {
                 .withSourceControllerId(candidate.controllerId())
                 .withSourceCardId(moved.getOriginalCard().getId())
                 .withSourcePermanentSnapshot(moved)
-                .withSourcePermanentId(moved.getId());
+                .withSourcePermanentId(moved.getId())
+                .withTriggeringPermanentControllerId(event.leftBattlefield() ? event.controllerId() : null);
         return lastKnownMatches(predicates, filter, moved, event.permanent() == null ? null : event.attachments(),
                 context);
     }
@@ -459,6 +461,11 @@ final class TriggerMatcher {
                     !attachments.auraCardIds().isEmpty();
             case PermanentIsEquippedPredicate ignored when attachments != null ->
                     !attachments.equipmentPermanentIds().isEmpty();
+            // "Under your control": who controlled it as it left (CR 603.10a), a delayed ability's "you" being its
+            // controller ("when it dies under your control this turn", Desperate Measures).
+            case PermanentControlledBySourceControllerPredicate ignored
+                    when context.triggeringPermanentControllerId() != null ->
+                    context.triggeringPermanentControllerId().equals(context.sourceControllerId());
             default -> {
                 Boolean stats = moved.getLastKnownToughness() == null ? null
                         : matchesDyingStats(predicate, moved.getLastKnownPower() != null

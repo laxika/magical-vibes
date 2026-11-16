@@ -31,8 +31,10 @@ public class OkoyeMightyAndAdored extends Card {
                                 new TriggeredAbility(Triggers.attacks()
                                                 .withFilter(new PermanentIsAttackingMonarchPredicate()),
                                         SequenceEffect.of(
-                                                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF),
-                                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF))),
+                                                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE,
+                                                        GrantScope.TRIGGERING_PERMANENT),
+                                                new GrantKeywordEffect(Keyword.TRAMPLE,
+                                                        GrantScope.TRIGGERING_PERMANENT))),
                                 true)));
     }
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.trigger.pipeline;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
@@ -24,25 +25,44 @@ import java.util.UUID;
  *                        command zone (CR 901.7), or {@code null}
  * @param emblem          the emblem whose ability it is, whose abilities function from the command zone (CR 114.4),
  *                        or {@code null}
+ * @param delayed         the delayed triggered ability a resolving spell or ability created (CR 603.7a), which is no
+ *                        object's own and so functions wherever its source is, or {@code null}; its source card is
+ *                        that spell's or ability's and its controller that one's (CR 603.7d, 603.7e)
  */
 public record TriggerCandidate(Card sourceCard, Permanent sourcePermanent, UUID controllerId, Zone zone,
-                               TriggeredAbility ability, PlanarObject plane, Emblem emblem) {
+                               TriggeredAbility ability, PlanarObject plane, Emblem emblem,
+                               TemporaryGlobalTriggeredAbility delayed) {
 
-    /** A candidate whose source is neither a planar object nor an emblem. */
+    /** A candidate whose source is neither a planar object, an emblem nor a delayed ability's maker. */
     public TriggerCandidate(Card sourceCard, Permanent sourcePermanent, UUID controllerId, Zone zone,
                             TriggeredAbility ability) {
-        this(sourceCard, sourcePermanent, controllerId, zone, ability, null, null);
+        this(sourceCard, sourcePermanent, controllerId, zone, ability, null, null, null);
     }
 
     /** A candidate whose source is the face-up planar object {@code plane}. */
     public TriggerCandidate(Card sourceCard, Permanent sourcePermanent, UUID controllerId, Zone zone,
                             TriggeredAbility ability, PlanarObject plane) {
-        this(sourceCard, sourcePermanent, controllerId, zone, ability, plane, null);
+        this(sourceCard, sourcePermanent, controllerId, zone, ability, plane, null, null);
     }
 
-    /** Whether the source is a planar object or an emblem, whose abilities function from the command zone. */
-    public boolean commandZoneObject() {
-        return plane != null || emblem != null;
+    /** A candidate whose source is {@code emblem} in the command zone (CR 114.4). */
+    public static TriggerCandidate of(Emblem emblem, TriggeredAbility ability) {
+        return new TriggerCandidate(emblem.sourceCard(), null, emblem.controllerId(), Zone.COMMAND, ability, null,
+                emblem, null);
+    }
+
+    /** The candidate of {@code delayed}'s ability. */
+    public static TriggerCandidate of(TemporaryGlobalTriggeredAbility delayed) {
+        return new TriggerCandidate(delayed.sourceCard(), null, delayed.controllerId(), Zone.COMMAND,
+                delayed.ability(), null, null, delayed);
+    }
+
+    /**
+     * Whether the ability functions whatever zones its conditions name: a planar object's and an emblem's function from
+     * the command zone (CR 901.7, 114.4), and a delayed ability is no object's own.
+     */
+    public boolean functionsAnywhere() {
+        return plane != null || emblem != null || delayed != null;
     }
 
     /** The source as a permanent, for conditions that read one; a card in another zone gets a stand-in. */

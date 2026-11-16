@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.r.RatOut;
+import com.github.laxika.magicalvibes.cards.t.TeysaKarlov;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GnawingCrescendo.class, RatOut.class, GrizzlyBears.class})
+@CardUsed({GnawingCrescendo.class, RatOut.class, GrizzlyBears.class, TeysaKarlov.class})
 class GnawingCrescendoTest extends BaseCardTest {
 
     @Test
@@ -36,6 +37,21 @@ class GnawingCrescendoTest extends BaseCardTest {
         List<Permanent> rats = findPermanents(player1, "Rat");
         assertThat(rats).hasSize(1);
         assertThat(bls.canBlock(gd, rats.getFirst())).isFalse();
+    }
+
+    @Test
+    void aCreatureDyingDoesNotMakeTheDelayedAbilityTriggerAnAdditionalTime() {
+        // Teysa doubles abilities of permanents a creature dying triggers, never a delayed ability (CR 603.2d).
+        harness.addToBattlefield(player1, new TeysaKarlov());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castGnawingCrescendo();
+
+        ownCreature.setMarkedDamage(4);
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Rat")).hasSize(1);
     }
 
     @Test
