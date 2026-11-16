@@ -59,7 +59,7 @@ class AdaptiveTrainingPostTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(post.getCounterCount(CounterType.CHARGE)).isZero();
-        assertThat(harness.getGameData().pendingSpellCopyCount(player1.getId()))
+        assertThat(pendingNextAbilityCount(player1))
                 .isEqualTo(1);
 
         harness.setHand(player1, List.of(new LightningBolt()));
@@ -67,9 +67,8 @@ class AdaptiveTrainingPostTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
-        assertThat(gd.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && entry.getDescription().contains("Copy Lightning Bolt"));
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
+        assertThat(gd.stack).anyMatch(entry -> copiesSpell(entry, "Lightning Bolt"));
+        assertThat(pendingNextAbilityCount(player1)).isZero();
     }
 
     @Test
@@ -122,8 +121,7 @@ class AdaptiveTrainingPostTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
 
         assertThat(harness.getGameData().stack.stream()
-                .filter(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && entry.getDescription().contains("Copy Lightning Bolt")))
+                .filter(entry -> copiesSpell(entry, "Lightning Bolt")))
                 .hasSize(2);
     }
 

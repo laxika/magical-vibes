@@ -574,7 +574,6 @@ public class TurnCleanupService {
         gameData.nextSpellFreeCastPermissionsThisTurn.clear();
         gameData.nextCreatureSpellEmpowermentsThisTurn.clear();
         gameData.nextCreatureSpellCascadeThisTurn.clear();
-        gameData.nextCreatureSpellDelayedTriggersThisTurn.clear();
         gameData.spellAdditionalEnterCounters.clear();
         gameData.spellAdditionalEnterCounterAmounts.clear();
         gameData.spellEntryCounters.clear();
@@ -609,19 +608,12 @@ public class TurnCleanupService {
         gameData.playersExilingCardsInsteadOfGraveyardThisTurn.clear();
         gameData.playersMayPlayFaceUpCardsFromExileThisTurn.clear();
         gameData.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn.clear();
-        gameData.spellCopyGrantsUntilEndOfTurn.clear();
-        gameData.pendingNextInstantSorceryCopies.clear();
         gameData.pendingNextInstantSorceryStormThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.clear();
-        gameData.pendingNextSpellCopyThisTurnCount.clear();
-        gameData.pendingNextFilteredSpellCopiesThisTurn.clear();
-        gameData.pendingNextXActivatedAbilityCopyThisTurnCount.clear();
         gameData.pendingNextSpellUncounterableThisTurnCount.clear();
         gameData.pendingAnyManaTypeForNextSpellThisTurnCount.clear();
         gameData.spellsPaidUsingPendingAnyManaTypeThisTurn.clear();
         gameData.pendingNextInstantSorceryUncounterableThisTurnCount.clear();
-        gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.clear();
-        gameData.pendingNextLoyaltyAbilityCopySourcesThisTurn.clear();
         // A retained id's "until end of turn" choice was made during another player's phase (Runed Terror ruling,
         // CR 514.2): it keeps its chosen type, and the id is put back when the retained state is re-applied below.
         Set<UUID> retainedTemporaryChosenSubtypes = Set.copyOf(retainedGameState.<UUID>elements(
@@ -638,8 +630,6 @@ public class TurnCleanupService {
         }
         gameData.temporaryChosenSubtypePermanentIds.clear();
         gameData.chosenSubtypeActivationCopiesThisTurn.clear();
-        gameData.pendingNextExhaustAbilityCopyThisTurnCount.clear();
-        gameData.pendingNextExhaustAbilityCopySourcesThisTurn.clear();
         gameData.creatureEntersDrawSourcesThisTurn.clear();
         gameData.untapAttackedCreaturesEachCombatThisTurnSources.clear();
         gameData.conspiredSpellCopyCounts.clear();

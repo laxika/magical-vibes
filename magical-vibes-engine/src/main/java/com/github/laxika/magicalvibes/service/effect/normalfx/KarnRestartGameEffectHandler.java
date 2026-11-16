@@ -245,10 +245,10 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.activatedAbilityUsesThisTurn.clear();
         gameData.crimeCandidatesThisTurn.clear();
         gameData.playersWhoActivatedExhaustAbilityThisTurn.clear();
+        // The restarted game ended (CR 728.1): no delayed triggered ability of it lasts into the new one.
+        gameData.temporaryGlobalTriggeredAbilities.clear();
         gameData.playersWhoActivatedEquipAbilityThisTurn.clear();
         gameData.playersWhoActivatedArtifactAbilityThisTurn.clear();
-        gameData.pendingNextExhaustAbilityCopyThisTurnCount.clear();
-        gameData.pendingNextExhaustAbilityCopySourcesThisTurn.clear();
         gameData.activatedAbilityUsesThisGame.clear();
         gameData.nonPrintedAbilityUseKeys.clear();
         gameData.permanentAbilityResolutionsThisTurn.clear();

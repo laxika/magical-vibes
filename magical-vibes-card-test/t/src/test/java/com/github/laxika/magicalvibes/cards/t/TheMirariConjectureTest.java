@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -171,8 +173,31 @@ class TheMirariConjectureTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Chapter III adds controller to spell copy set")
+    @DisplayName("Chapter III gives its controller a copy ability until end of turn")
     void chapterIIIGrantsSpellCopy() {
+        resolveChapterIII();
+
+        assertThat(gd.temporaryGlobalTriggeredAbilities).singleElement()
+                .satisfies(delayed -> {
+                    assertThat(delayed.controllerId()).isEqualTo(player1.getId());
+                    assertThat(delayed.endsThisTurn()).isTrue();
+                });
+    }
+
+    @Test
+    @DisplayName("Chapter III copies every instant or sorcery spell cast that turn, not just the next")
+    void chapterIIICopiesEverySpellThisTurn() {
+        resolveChapterIII();
+
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack).anyMatch(MirariCopyAbility::is);
+        assertThat(gd.temporaryGlobalTriggeredAbilities).hasSize(1);
+    }
+
+    private void resolveChapterIII() {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheMirariConjecture());
         saga.setCounterCount(CounterType.LORE, 2);
 
@@ -184,15 +209,22 @@ class TheMirariConjectureTest extends BaseCardTest {
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(3);
 
         harness.passBothPriorities(); // resolve chapter III
+        resolveAllTriggers();
+    }
 
-        assertThat(gd.spellCopyGrantsUntilEndOfTurn).containsKey(player1.getId());
+    /** The chapter III copy ability on the stack. */
+    private static final class MirariCopyAbility {
+        static boolean is(StackEntry entry) {
+            return entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                    && entry.getCard().getName().equals("The Mirari Conjecture")
+                    && entry.getEffectsToResolve().stream().anyMatch(CopyTriggeringSpellEffect.class::isInstance);
+        }
     }
 
     @Test
     @DisplayName("After chapter III, casting an instant creates a copy on the stack")
     void chapterIIICopiesInstantSpell() {
-        // Set up the copy effect directly
-        gd.spellCopyGrantsUntilEndOfTurn.put(player1.getId(), 1);
+        resolveChapterIII();
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -201,14 +233,13 @@ class TheMirariConjectureTest extends BaseCardTest {
 
         // Stack should have: original Lightning Bolt + copy triggered ability
         assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getDescription().contains("Copy"));
+        assertThat(gd.stack).anyMatch(MirariCopyAbility::is);
     }
 
     @Test
     @DisplayName("After chapter III, casting a sorcery creates a copy on the stack")
     void chapterIIICopiesSorcerySpell() {
-        gd.spellCopyGrantsUntilEndOfTurn.put(player1.getId(), 1);
+        resolveChapterIII();
 
         harness.setHand(player1, List.of(new Divination()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -218,14 +249,13 @@ class TheMirariConjectureTest extends BaseCardTest {
 
         // Stack should have: original Divination + copy triggered ability
         assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getDescription().contains("Copy"));
+        assertThat(gd.stack).anyMatch(MirariCopyAbility::is);
     }
 
     @Test
     @DisplayName("Copy triggered ability resolves and creates a spell copy")
     void copyTriggerResolvesCreatingCopy() {
-        gd.spellCopyGrantsUntilEndOfTurn.put(player1.getId(), 1);
+        resolveChapterIII();
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -248,7 +278,7 @@ class TheMirariConjectureTest extends BaseCardTest {
     @Test
     @DisplayName("Spell copy effect does not apply to creature spells")
     void spellCopyDoesNotApplyToCreatures() {
-        gd.spellCopyGrantsUntilEndOfTurn.put(player1.getId(), 1);
+        resolveChapterIII();
 
         Card creature = new com.github.laxika.magicalvibes.cards.g.GrizzlyBears();
         harness.setHand(player1, List.of(creature));
@@ -258,15 +288,14 @@ class TheMirariConjectureTest extends BaseCardTest {
 
         // Stack should only have the creature spell, no copy trigger
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getDescription().contains("Copy"));
+        assertThat(gd.stack).noneMatch(MirariCopyAbility::is);
     }
 
     @Test
     @DisplayName("Spell copy effect is cleared at end of turn")
     void spellCopyIsClearedAtEndOfTurn() {
-        gd.spellCopyGrantsUntilEndOfTurn.put(player1.getId(), 1);
-        assertThat(gd.spellCopyGrantsUntilEndOfTurn).isNotEmpty();
+        resolveChapterIII();
+        assertThat(gd.temporaryGlobalTriggeredAbilities).isNotEmpty();
 
         // Simulate end-of-turn by advancing through the end step → cleanup
         harness.forceActivePlayer(player1);
@@ -274,7 +303,7 @@ class TheMirariConjectureTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advance through end step → cleanup clears the set
 
-        assertThat(gd.spellCopyGrantsUntilEndOfTurn).isEmpty();
+        assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
     }
 
     @Test

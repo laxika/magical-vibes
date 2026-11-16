@@ -93,7 +93,7 @@ class WashAwayTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Wash Away");
         harness.passBothPriorities();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(1);
+        assertThat(pendingNextAbilityCount(player1)).isEqualTo(1);
     }
 
     @Test

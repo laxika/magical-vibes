@@ -7,8 +7,11 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -279,6 +282,28 @@ public abstract class BaseCardTest {
      * anything that triggers on the way. Starts from {@link TurnStep#UNTAP} because untap and upkeep
      * are reached by a single priority round-trip.
      */
+    /**
+     * How many "when you next cast or activate ... this turn" delayed triggered abilities {@code player} controls that
+     * haven't triggered yet.
+     */
+    protected long pendingNextAbilityCount(Player player) {
+        return harness.getGameData().temporaryGlobalTriggeredAbilities.stream()
+                .filter(delayed -> delayed.next() && delayed.controllerId().equals(player.getId()))
+                .count();
+    }
+
+    /**
+     * Whether {@code entry} is a triggered ability that copies the spell it triggered on ("copy that spell"), that
+     * spell named {@code spellName} ({@code null} for any spell).
+     */
+    protected boolean copiesSpell(StackEntry entry, String spellName) {
+        return entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && entry.getEffectsToResolve().stream().anyMatch(effect -> effect instanceof CopyTriggeringSpellEffect
+                || effect instanceof CopyTriggeringSpellOrAbilityEffect)
+                && entry.getTriggeringCardSnapshot() != null
+                && (spellName == null || entry.getTriggeringCardSnapshot().getName().equals(spellName));
+    }
+
     protected void advanceToUpkeep(Player activePlayer) {
         harness.performUntapStep(activePlayer);
         harness.forceStep(TurnStep.UNTAP);

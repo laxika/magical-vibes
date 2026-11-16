@@ -528,6 +528,18 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Ends a \"when you next ... this turn\" delayed ability that hasn't triggered")
+        void clearsNextDelayedAbilityThatHasNotTriggered() {
+            gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.nextThisTurn(player1Id,
+                    createCardWithName("Teach by Example"),
+                    new TriggeredAbility(Triggers.youCastSpell(), new LoseLifeEffect(1)), null));
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
+        }
+
+        @Test
         @DisplayName("Keeps a delayed ability with no stated duration while the permanent it is about remains")
         void keepsUntilTriggeredDelayedAbilityAboutAPermanentStillOnTheBattlefield() {
             Permanent watched = new Permanent(createCardWithName("Merieke Ri Berit"));

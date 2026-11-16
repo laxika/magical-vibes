@@ -7,12 +7,10 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CreatureEntersTriggerWatcher;
-import com.github.laxika.magicalvibes.model.DelayedSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCopyRider;
-import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -32,7 +30,6 @@ import com.github.laxika.magicalvibes.model.effect.CommanderCreaturesDealPowerDa
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -53,7 +50,6 @@ import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -85,7 +81,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -210,27 +205,6 @@ public class TriggerCollectionService {
                     delayed.sourceCard(), "'s delayed trigger fires for ", spellCard, "."));
             log.info("Game {} - {} delayed spell-cast trigger fires for {}",
                     gameData.id, delayed.sourceCard().getName(), spellCard.getName());
-        }
-    }
-
-    /**
-     * Uses up the loyalty-ability half of the delayed ability {@code link} names, whose instant-or-sorcery half just
-     * triggered ("copy the next instant or sorcery spell you cast or loyalty ability you activate this turn").
-     */
-    private static void removeLinkedLoyaltyCopies(GameData gameData, UUID playerId, UUID link) {
-        List<GameData.PendingCopySource> sources = gameData.pendingNextLoyaltyAbilityCopySourcesThisTurn.get(playerId);
-        if (sources == null) {
-            return;
-        }
-        int before = sources.size();
-        sources.removeIf(source -> link.equals(source.link()));
-        int removed = before - sources.size();
-        if (removed > 0) {
-            gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.computeIfPresent(playerId,
-                    (ignored, count) -> count - removed > 0 ? count - removed : null);
-        }
-        if (sources.isEmpty()) {
-            gameData.pendingNextLoyaltyAbilityCopySourcesThisTurn.remove(playerId);
         }
     }
 
@@ -484,21 +458,6 @@ public class TriggerCollectionService {
                     gameData.id, pendingCreatureSpellCascades, spellCard.getName());
         }
 
-        // "When you next cast a creature spell this turn, ..." delayed triggers (Yuna, Grand Summoner):
-        // each goes on the stack above the spell as its own triggered ability.
-        for (DelayedSpellCastTrigger delayed : gameData.consumeNextCreatureSpellDelayedTriggers(
-                castingPlayerId, spellCard)) {
-            StackEntry delayedTrigger = TriggeredAbilityStackService.madeAbility(delayed.source(),
-                    castingPlayerId,
-                    delayed.source().getName() + "'s ability",
-                    new ArrayList<>(List.of(delayed.effect())));
-            delayedTrigger.setTriggeringCardId(spellCard.getId());
-            triggeredAbilityStackService.putDelayed(gameData, delayedTrigger);
-            gameLogService.append(gameData, GameLog.abilityTriggers(delayed.source()));
-            log.info("Game {} - delayed cast trigger of {} queued for {}",
-                    gameData.id, delayed.source().getName(), spellCard.getName());
-        }
-
         ManaPool spellPaymentPool = gameData.playerManaPools.get(castingPlayerId);
         if (spellPaymentPool != null) {
             boolean instantOrSorcery = spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY);
@@ -510,64 +469,6 @@ public class TriggerCollectionService {
             }
             if (instantOrSorcery && red) {
                 queueManaLinkedSpellCopyTriggers(gameData, spellCard, castingPlayerId, gogglesCopies);
-            }
-        }
-
-        // "When you next cast an instant or sorcery spell this turn, copy that spell" (Chandra, the Firebrand's −2,
-        // Teach by Example, Sea Gate Stormcaller): each pending delayed ability that applies to the spell triggers
-        // and is used up, one stack object each (CR 603.7), with the object that made it as its source (CR 603.7e).
-        List<GameData.PendingSpellCopy> pendingCopies = gameData.pendingNextInstantSorceryCopies.get(castingPlayerId);
-        if (pendingCopies != null && !pendingCopies.isEmpty()
-                && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))) {
-            StackEntry spellEntry = null;
-            for (StackEntry se : gameData.stack) {
-                if (se.getTargetableId().equals(spellCard.getId())) {
-                    spellEntry = se;
-                    break;
-                }
-            }
-            if (spellEntry != null) {
-                int manaValue = spellCard.getManaValue();
-                if (spellCard.getParsedManaCost() != null) {
-                    manaValue += spellEntry.getXValue() * spellCard.getParsedManaCost().getXSymbolCount();
-                }
-                List<GameData.PendingSpellCopy> triggered = new ArrayList<>();
-                synchronized (pendingCopies) {
-                    for (GameData.PendingSpellCopy pending : List.copyOf(pendingCopies)) {
-                        int limitsMet = 0;
-                        for (int limit : pending.maxManaValues()) {
-                            if (manaValue <= limit) {
-                                limitsMet++;
-                            }
-                        }
-                        if (!pending.maxManaValues().isEmpty() && limitsMet == 0) {
-                            continue;
-                        }
-                        pendingCopies.remove(pending);
-                        triggered.add(pending.maxManaValues().isEmpty() ? pending
-                                : new GameData.PendingSpellCopy(pending.sourceCard(), pending.sourcePermanentId(),
-                                limitsMet, null, List.of(), pending.resolution(), pending.link()));
-                    }
-                }
-                StackEntry snapshot = new StackEntry(spellEntry);
-                for (GameData.PendingSpellCopy copy : triggered) {
-                    CopyControllerCastSpellEffect copyEffect = copy.dynamicCopies() != null
-                            // How many copies it makes is counted as it resolves.
-                            ? new CopyControllerCastSpellEffect(new StackEntry(spellEntry), castingPlayerId,
-                            copy.dynamicCopies())
-                            : new CopyControllerCastSpellEffect(snapshot, castingPlayerId, copy.copies());
-                    triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
-                            copy.sourceCard() != null ? copy.sourceCard() : spellCard, castingPlayerId,
-                            "Copy " + spellCard.getName(), List.of(copyEffect), 0, copy.sourcePermanentId()));
-                    if (copy.link() != null) {
-                        removeLinkedLoyaltyCopies(gameData, castingPlayerId, copy.link());
-                    }
-                }
-                if (!triggered.isEmpty()) {
-                    gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
-                    log.info("Game {} - {} delayed spell-copy trigger(s) queued for {}",
-                            gameData.id, triggered.size(), spellCard.getName());
-                }
             }
         }
 
@@ -590,131 +491,6 @@ public class TriggerCollectionService {
                 gameData.pendingNextInstantSorceryStormThisTurnCount.remove(castingPlayerId);
                 log.info("Game {} - {} delayed Storm grant(s) applied to {}",
                         gameData.id, pendingStorms, spellCard.getName());
-            }
-        }
-
-        Integer pendingSpellCopies = gameData.pendingNextSpellCopyThisTurnCount.get(castingPlayerId);
-        if (pendingSpellCopies != null && pendingSpellCopies > 0) {
-            StackEntry spellEntry = null;
-            for (StackEntry se : gameData.stack) {
-                if (se.getTargetableId().equals(spellCard.getId())) {
-                    spellEntry = se;
-                    break;
-                }
-            }
-            if (spellEntry != null) {
-                boolean permanentSpell = switch (spellEntry.getEntryType()) {
-                    case CREATURE_SPELL, ENCHANTMENT_SPELL, ARTIFACT_SPELL, PLANESWALKER_SPELL, BATTLE_SPELL -> true;
-                    default -> false;
-                };
-                StackEntry snapshot = new StackEntry(spellEntry);
-                // Each "copy the next spell you cast this turn" is a delayed triggered ability of the resolution
-                // that created it, so each is a stack object of its own (CR 603.7a).
-                for (int i = 0; i < pendingSpellCopies; i++) {
-                    triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(spellCard,
-                            castingPlayerId,
-                            "Copy " + spellCard.getName(),
-                            new ArrayList<>(List.of(new CopyControllerCastSpellEffect(
-                                    snapshot, castingPlayerId, Set.of(), Set.of(), permanentSpell, true)))
-                    ));
-                }
-                gameData.pendingNextSpellCopyThisTurnCount.remove(castingPlayerId);
-                gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
-                log.info("Game {} - {} all-spell copy trigger(s) queued for {}",
-                        gameData.id, pendingSpellCopies, spellCard.getName());
-            }
-        }
-
-        List<CopyNextSpellCastThisTurnEffect> pendingFilteredCopies =
-                gameData.pendingNextFilteredSpellCopiesThisTurn.get(castingPlayerId);
-        if (pendingFilteredCopies != null && !pendingFilteredCopies.isEmpty()) {
-            StackEntry spellEntry = null;
-            for (StackEntry se : gameData.stack) {
-                if (se.getTargetableId().equals(spellCard.getId())) {
-                    spellEntry = se;
-                    break;
-                }
-            }
-            if (spellEntry != null) {
-                Card spellOnStack = SpellTriggers.spellOnStackWithChosenX(
-                        spellCard, spellEntry.getXValue());
-                List<CopyNextSpellCastThisTurnEffect> matchingCopies = new ArrayList<>();
-                List<CopyNextSpellCastThisTurnEffect> remainingCopies = new ArrayList<>();
-                for (CopyNextSpellCastThisTurnEffect copyEffect : pendingFilteredCopies) {
-                    // "{X} in its mana cost" is read off the printed cost, which the chosen X is substituted into
-                    // on the stack.
-                    Card filterSubject = copyEffect.spellFilter() instanceof CardHasXInManaCostPredicate
-                            ? spellCard : spellOnStack;
-                    if (copyEffect.spellFilter() == null
-                            || predicateEvaluationService.matchesCardPredicate(
-                            filterSubject, copyEffect.spellFilter(), null, gameData, castingPlayerId)) {
-                        matchingCopies.add(copyEffect);
-                    } else {
-                        remainingCopies.add(copyEffect);
-                    }
-                }
-                if (!matchingCopies.isEmpty()) {
-                    boolean permanentSpell = switch (spellEntry.getEntryType()) {
-                        case CREATURE_SPELL, ENCHANTMENT_SPELL, ARTIFACT_SPELL, PLANESWALKER_SPELL, BATTLE_SPELL -> true;
-                        default -> false;
-                    };
-                    StackEntry snapshot = new StackEntry(spellEntry);
-                    // Each "when you next cast a ... spell this turn, copy it" is a delayed triggered ability of
-                    // the resolution that created it, so each is a stack object of its own (CR 603.7a).
-                    for (CopyNextSpellCastThisTurnEffect copyEffect : matchingCopies) {
-                        triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(spellCard,
-                                castingPlayerId,
-                                "Copy " + spellCard.getName(),
-                                new ArrayList<>(List.of(new CopyControllerCastSpellEffect(
-                                        snapshot, castingPlayerId, Set.of(), Set.of(),
-                                        copyEffect.removedSupertypes(), permanentSpell, true)))
-                        ));
-                    }
-                    int linkedXCopies = (int) matchingCopies.stream()
-                            .filter(copyEffect -> copyEffect.spellFilter() instanceof CardHasXInManaCostPredicate)
-                            .count();
-                    if (linkedXCopies > 0) {
-                        consumeLinkedXAbilityCopies(gameData, castingPlayerId, linkedXCopies);
-                    }
-                    if (remainingCopies.isEmpty()) {
-                        gameData.pendingNextFilteredSpellCopiesThisTurn.remove(castingPlayerId);
-                    } else {
-                        gameData.pendingNextFilteredSpellCopiesThisTurn.put(castingPlayerId, remainingCopies);
-                    }
-                    gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
-                    log.info("Game {} - {} filtered spell-copy trigger(s) queued for {}",
-                            gameData.id, matchingCopies.size(), spellCard.getName());
-                }
-            }
-        }
-
-        // "Until end of turn, whenever you cast an instant or sorcery spell, copy it"
-        // (e.g. The Mirari Conjecture chapter III). Each granting ability triggers on its own.
-        int spellCopyGrants = gameData.spellCopyGrantsUntilEndOfTurn.getOrDefault(castingPlayerId, 0);
-        if (spellCopyGrants > 0
-                && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))) {
-            // Find the spell on the stack to create a snapshot
-            StackEntry spellEntry = null;
-            for (StackEntry se : gameData.stack) {
-                if (se.getTargetableId().equals(spellCard.getId())) {
-                    spellEntry = se;
-                    break;
-                }
-            }
-            if (spellEntry != null) {
-                for (int grant = 0; grant < spellCopyGrants; grant++) {
-                    StackEntry snapshot = new StackEntry(spellEntry);
-                    CopyControllerCastSpellEffect copyEffect =
-                            new CopyControllerCastSpellEffect(snapshot, castingPlayerId);
-                    triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(spellCard,
-                            castingPlayerId,
-                            "Copy " + spellCard.getName(),
-                            new ArrayList<>(List.of(copyEffect))
-                    ));
-                    gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied (The Mirari Conjecture)."));
-                    log.info("Game {} - {} spell-copy trigger queued for {}",
-                            gameData.id, spellCard.getName(), castingPlayerId);
-                }
             }
         }
 
@@ -1127,39 +903,6 @@ public class TriggerCollectionService {
     }
 
     /**
-     * A single "when you next cast a spell with {X} in its mana cost or activate an ability with {X} in
-     * its activation cost" delayed trigger (Magus Lucea Kane) is registered as one spell copy and one
-     * ability copy; when the ability half fires, the spell half is used up with it.
-     */
-    private void consumeLinkedXSpellCopies(GameData gameData, UUID playerId, int count) {
-        List<CopyNextSpellCastThisTurnEffect> pending = gameData.pendingNextFilteredSpellCopiesThisTurn.get(playerId);
-        if (pending == null) {
-            return;
-        }
-        List<CopyNextSpellCastThisTurnEffect> remaining = new ArrayList<>(pending);
-        for (int i = 0; i < count; i++) {
-            CopyNextSpellCastThisTurnEffect linked = remaining.stream()
-                    .filter(copyEffect -> copyEffect.spellFilter() instanceof CardHasXInManaCostPredicate)
-                    .findFirst().orElse(null);
-            if (linked == null) {
-                break;
-            }
-            remaining.remove(linked);
-        }
-        if (remaining.isEmpty()) {
-            gameData.pendingNextFilteredSpellCopiesThisTurn.remove(playerId);
-        } else {
-            gameData.pendingNextFilteredSpellCopiesThisTurn.put(playerId, remaining);
-        }
-    }
-
-    /** The spell half of a linked X delayed trigger used up its ability half; see {@link #consumeLinkedXSpellCopies}. */
-    private void consumeLinkedXAbilityCopies(GameData gameData, UUID playerId, int count) {
-        gameData.pendingNextXActivatedAbilityCopyThisTurnCount.computeIfPresent(playerId,
-                (id, pendingCount) -> pendingCount - count > 0 ? pendingCount - count : null);
-    }
-
-    /**
      * One activation of an activated ability, as it is once the ability is on the stack and its costs are paid, which
      * is when "whenever [a player] activates an ability" abilities trigger (CR 602.2b, CR 601.2i).
      *
@@ -1179,9 +922,9 @@ public class TriggerCollectionService {
                              boolean manaAbility) {}
 
     /**
-     * An activated ability was activated: it is on the stack and its costs are paid (CR 602.2b, 601.2i). The delayed
-     * "when you next activate ..., copy that ability" abilities trigger first ({@link #collectDelayedActivationCopies}),
-     * then the activation is the rules event the "whenever [a player] activates an ability" abilities trigger on
+     * An activated ability was activated: it is on the stack and its costs are paid (CR 602.2b, 601.2i). Leori's
+     * delayed copies trigger first ({@link #collectDelayedActivationCopies}), then the activation is the rules event the
+     * "whenever [a player] activates an ability" abilities, delayed ones among them, trigger on
      * ({@link SpellEvent.Activated}), with the life paid to activate it; then the abilities that choose their targets as
      * they go on the stack (CR 603.3d) choose them, above the activated ability.
      */
@@ -1209,90 +952,17 @@ public class TriggerCollectionService {
     }
 
     /**
-     * The delayed triggered abilities an earlier resolution created that trigger on {@code activation} (CR 603.7): "when
-     * you next activate an ability with {X} in its activation cost this turn, copy that ability" (Magus Lucea Kane),
-     * and for an ability that isn't a mana ability "when you next activate a loyalty ability" and "... an exhaust
-     * ability" and "until end of turn, whenever you activate an ability of a planeswalker of the chosen type" (Leori,
-     * Sparktouched Hunter). Each is a stack object of its own (CR 603.7a) that copies the ability as it was activated.
+     * The "until end of turn, whenever you activate an ability of a planeswalker of the chosen type, copy that ability"
+     * delayed abilities (Leori, Sparktouched Hunter) that trigger on {@code activation} (CR 603.7), each a stack object
+     * of its own that copies the ability as it was activated.
      */
     private void collectDelayedActivationCopies(GameData gameData, Activation activation) {
         UUID activatingPlayerId = activation.activatingPlayerId();
         StackEntry abilityEntry = activation.abilityEntry();
         ActivatedAbility ability = activation.ability();
-
-        Integer pendingXCopies = gameData.pendingNextXActivatedAbilityCopyThisTurnCount.get(activatingPlayerId);
-        if (pendingXCopies != null && pendingXCopies > 0
-                && ability.getManaCost() != null && new ManaCost(ability.getManaCost()).hasX()) {
-            StackEntry snapshot = new StackEntry(abilityEntry);
-            for (int i = 0; i < pendingXCopies; i++) {
-                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(abilityEntry.getCard(),
-                        activatingPlayerId,
-                        "Copy " + abilityEntry.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(
-                                new CopyControllerActivatedAbilityEffect(snapshot, ability, activatingPlayerId)))
-                ));
-            }
-            gameData.pendingNextXActivatedAbilityCopyThisTurnCount.remove(activatingPlayerId);
-            consumeLinkedXSpellCopies(gameData, activatingPlayerId, pendingXCopies);
-            gameLogService.append(gameData, GameLog.cardThen(abilityEntry.getCard(), "'s ability is copied."));
-            log.info("Game {} - {} delayed X-ability copy trigger(s) queued for {}",
-                    gameData.id, pendingXCopies, abilityEntry.getCard().getName());
-        }
         if (activation.manaAbility()) {
             return;
         }
-
-        Integer pendingLoyaltyCopies = gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.get(activatingPlayerId);
-        if (pendingLoyaltyCopies != null && pendingLoyaltyCopies > 0 && ability.getLoyaltyCost() != null) {
-            StackEntry snapshot = new StackEntry(abilityEntry);
-            List<GameData.PendingCopySource> sources =
-                    gameData.pendingNextLoyaltyAbilityCopySourcesThisTurn.getOrDefault(activatingPlayerId, List.of());
-            for (int i = 0; i < pendingLoyaltyCopies; i++) {
-                GameData.PendingCopySource source = i < sources.size() ? sources.get(i) : null;
-                Card copySourceCard = source != null ? source.card() : abilityEntry.getCard();
-                UUID copySourcePermanentId = source != null ? source.sourcePermanentId() : null;
-                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(copySourceCard,
-                        activatingPlayerId,
-                        "Copy " + abilityEntry.getCard().getName() + "'s loyalty ability",
-                        List.of(new CopyControllerActivatedAbilityEffect(snapshot, ability, activatingPlayerId)),
-                        0,
-                        copySourcePermanentId
-                ));
-            }
-            gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.remove(activatingPlayerId);
-            gameData.pendingNextLoyaltyAbilityCopySourcesThisTurn.remove(activatingPlayerId);
-            // A delayed ability shared with the next instant or sorcery spell is used up (Repeated Reverberation).
-            Set<UUID> links = sources.stream().map(GameData.PendingCopySource::link)
-                    .filter(java.util.Objects::nonNull).collect(java.util.stream.Collectors.toSet());
-            List<GameData.PendingSpellCopy> spellCopies = gameData.pendingNextInstantSorceryCopies.get(activatingPlayerId);
-            if (spellCopies != null && !links.isEmpty()) {
-                spellCopies.removeIf(copy -> copy.link() != null && links.contains(copy.link()));
-            }
-        }
-
-        Integer pendingExhaustCopies = gameData.pendingNextExhaustAbilityCopyThisTurnCount.get(activatingPlayerId);
-        if (pendingExhaustCopies != null && pendingExhaustCopies > 0 && ability.isExhaustAbility()) {
-            StackEntry snapshot = new StackEntry(abilityEntry);
-            List<GameData.PendingCopySource> sources = gameData.pendingNextExhaustAbilityCopySourcesThisTurn
-                    .getOrDefault(activatingPlayerId, List.of());
-            for (int i = 0; i < pendingExhaustCopies; i++) {
-                GameData.PendingCopySource source = i < sources.size() ? sources.get(i) : null;
-                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(source != null ? source.card() : abilityEntry.getCard(),
-                        activatingPlayerId,
-                        "Copy " + abilityEntry.getCard().getName() + "'s exhaust ability",
-                        new ArrayList<>(List.of(
-                                new CopyControllerActivatedAbilityEffect(snapshot, ability, activatingPlayerId))),
-                        0,
-                        source != null ? source.sourcePermanentId() : null
-                ));
-            }
-            gameData.pendingNextExhaustAbilityCopyThisTurnCount.remove(activatingPlayerId);
-            gameData.pendingNextExhaustAbilityCopySourcesThisTurn.remove(activatingPlayerId);
-            gameLogService.append(gameData, GameLog.cardThen(abilityEntry.getCard(), "'s exhaust ability is copied."));
-            log.info("Game {} - {} delayed exhaust-ability copy trigger(s) queued for {}",
-                    gameData.id, pendingExhaustCopies, abilityEntry.getCard().getName());
-        }
-
         Permanent activatedPermanent = activation.activatedPermanent();
         for (GameData.ChosenSubtypeActivationCopy delayedCopy : gameData.chosenSubtypeActivationCopiesThisTurn) {
             if (!delayedCopy.controllerId().equals(activatingPlayerId) || activatedPermanent == null

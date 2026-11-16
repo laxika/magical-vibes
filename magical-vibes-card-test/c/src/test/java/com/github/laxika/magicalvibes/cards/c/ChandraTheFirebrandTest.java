@@ -60,15 +60,14 @@ class ChandraTheFirebrandTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(1);
+        assertThat(pendingNextAbilityCount(player1)).isEqualTo(1);
 
         harness.setHand(player1, List.of(new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, player2.getId());
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getDescription().contains("Copy Shock"));
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
+        assertThat(gd.stack).anyMatch(e -> copiesSpell(e, "Shock"));
+        assertThat(pendingNextAbilityCount(player1)).isZero();
     }
 
     @Test
@@ -83,7 +82,7 @@ class ChandraTheFirebrandTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(1);
+        assertThat(pendingNextAbilityCount(player1)).isEqualTo(1);
     }
 
     @Test
@@ -100,9 +99,8 @@ class ChandraTheFirebrandTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getDescription().startsWith("Copy "));
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(1);
+        assertThat(gd.stack).noneMatch(e -> copiesSpell(e, null));
+        assertThat(pendingNextAbilityCount(player1)).isEqualTo(1);
     }
 
     @Test

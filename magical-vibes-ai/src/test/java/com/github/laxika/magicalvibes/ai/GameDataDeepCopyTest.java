@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.DepartureSnapshot;
 import com.github.laxika.magicalvibes.model.DepartureStage;
 import com.github.laxika.magicalvibes.model.EachPlayerRummageState;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -344,16 +345,18 @@ class GameDataDeepCopyTest {
     }
 
     @Test
-    @DisplayName("Deep copy gives each player's pending spell-copy abilities a list of its own")
-    void deepCopyGivesPendingSpellCopiesTheirOwnList() {
-        gd.addPendingSpellCopy(player1.getId(), new GameData.PendingSpellCopy(new SerraAngel(), null, 1, null,
-                List.of(2), 7L, null));
+    @DisplayName("Deep copy keeps a \"when you next ...\" delayed ability, which triggers once, in a list of its own")
+    void deepCopyKeepsNextDelayedAbilities() {
+        TemporaryGlobalTriggeredAbility next = TemporaryGlobalTriggeredAbility.nextThisTurn(player1.getId(),
+                new SerraAngel(), new CopyNextInstantOrSorceryCastThisTurnEffect(2).delayedAbility(), null);
+        gd.temporaryGlobalTriggeredAbilities.add(next);
 
         GameData copy = gd.simulationCopy();
-        copy.pendingNextInstantSorceryCopies.get(player1.getId()).clear();
+        assertThat(copy.temporaryGlobalTriggeredAbilities).singleElement()
+                .satisfies(delayed -> assertThat(delayed.triggersOnce()).isTrue());
+        copy.temporaryGlobalTriggeredAbilities.clear();
 
-        assertThat(gd.pendingNextInstantSorceryCopies.get(player1.getId())).singleElement()
-                .satisfies(pending -> assertThat(pending.maxManaValues()).containsExactly(2));
+        assertThat(gd.temporaryGlobalTriggeredAbilities).containsExactly(next);
     }
 
     @Test

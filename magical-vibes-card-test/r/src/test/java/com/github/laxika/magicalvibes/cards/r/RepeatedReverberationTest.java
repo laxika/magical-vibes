@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -38,7 +39,7 @@ class RepeatedReverberationTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         GameData gd = harness.getGameData();
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
+        assertThat(pendingNextAbilityCount(player1)).isZero();
 
         resolveAllTriggers();
 
@@ -54,15 +55,31 @@ class RepeatedReverberationTest extends BaseCardTest {
         castRepeatedReverberation();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.pendingNextLoyaltyAbilityCopyThisTurnCount.get(player1.getId())).isEqualTo(2);
+        assertThat(pendingNextAbilityCount(player1)).isEqualTo(1);
 
         harness.activateAbility(player1, 0, 0, null, null);
-        assertThat(gd.pendingNextLoyaltyAbilityCopyThisTurnCount).doesNotContainKey(player1.getId());
+        assertThat(pendingNextAbilityCount(player1)).isZero();
 
         resolveAllTriggers();
 
         assertThat(elemental.getPowerModifier()).isEqualTo(6);
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("The next loyalty ability triggers one ability that copies it twice")
+    void loyaltyActivationTriggersOneAbilityThatCopiesTwice() {
+        addReadyChandra(player1, 5);
+        harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        castRepeatedReverberation();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        // "Copy that spell or ability twice" is one delayed triggered ability making two copies (CR 603.7b).
+        assertThat(gd.stack).filteredOn(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && entry.getCard().getName().equals("Repeated Reverberation")).singleElement()
+                .satisfies(entry -> assertThat(entry.getEffectsToResolve()).singleElement()
+                        .isEqualTo(new CopyTriggeringSpellOrAbilityEffect().withCopies(2)));
     }
 
     @Test
@@ -222,7 +239,7 @@ class RepeatedReverberationTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(2);
+        assertThat(pendingNextAbilityCount(player1)).isEqualTo(1);
     }
 
     private Permanent addReadyChandra(Player player, int loyalty) {

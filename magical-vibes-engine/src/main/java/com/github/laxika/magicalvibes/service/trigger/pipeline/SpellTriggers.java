@@ -366,6 +366,36 @@ public class SpellTriggers {
             }
         });
         collectGraveyardActivationTriggers(gameData, activation, lifePaid);
+        collectDelayedActivationTriggers(gameData, activation, lifePaid);
+    }
+
+    /**
+     * The delayed triggered abilities ({@link TriggerIndex#delayedAbilities}) that watch no particular object and
+     * trigger on {@code activation} ("when you next activate a loyalty ability this turn, copy that ability"): a
+     * delayed ability is no object's own, so it is read as a permanent's activation ability is, from the point of view
+     * of its controller, with no source permanent, and its record is the activation's
+     * ({@link #activationRecord}) with what the delayed ability records ({@link EventAbilitySupport#delayedRecord}).
+     */
+    private void collectDelayedActivationTriggers(GameData gameData, SpellEvent.Activated activation, int lifePaid) {
+        for (TemporaryGlobalTriggeredAbility delayed : triggerIndex.delayedAbilities(gameData)) {
+            if (delayed.watchedPermanentId() != null) continue;
+            UUID controllerId = delayed.controllerId();
+            for (ActivationAbility watching : activationAbilities(List.of(delayed.ability()), Zone.BATTLEFIELD)) {
+                if (!watching.triggersOn(activation, controllerId)) continue;
+                ConditionContext context = ConditionContext.forCard(delayed.sourceCard(), controllerId)
+                        .withTreasureManaSpentToActivate(activation.treasureManaSpent());
+                if (!activationTriggers(gameData, null, controllerId, watching, activation, lifePaid, context)) {
+                    continue;
+                }
+                boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                        watching.ability(), delayed.sourceCard(), null, controllerId,
+                        delayed.sourceCard().getName() + "'s ability", context,
+                        EventAbilitySupport.delayedRecord(delayed, activationRecord(watching, activation, lifePaid))));
+                if (triggered) {
+                    gameLogService.append(gameData, GameLog.abilityTriggers(delayed.sourceCard()));
+                }
+            }
+        }
     }
 
 
@@ -662,7 +692,8 @@ public class SpellTriggers {
     }
 
     /**
-     * Whether {@code watching}, an ability of {@code watcher}, triggers on {@code activation}: the kind of ability ("a
+     * Whether {@code watching}, an ability of {@code watcher} (or a delayed ability, of none), triggers on
+     * {@code activation}: the kind of ability ("a
      * loyalty ability", "without {T} in its activation cost"), the permanent whose ability it is ("an ability of an
      * artifact", judged as it last existed and from {@code watcher}'s point of view; an ability of a card that isn't a
      * permanent has none, CR 109.2), the activated ability on the stack with its targets ("that targets only Bill
@@ -680,9 +711,12 @@ public class SpellTriggers {
         }
         if (trigger.source() != null) {
             if (activation.activatedPermanent() == null) return false;
+            FilterContext filterContext = watcher == null
+                    ? FilterContext.of(gameData).withSourceControllerId(watcherControllerId)
+                    : activatedPermanentFilterContext(gameData, watcher, watcherControllerId,
+                    activation.activatedPermanent());
             if (!predicateEvaluationService.matchesPermanentPredicate(activation.activatedPermanent(),
-                    trigger.source(), activatedPermanentFilterContext(gameData, watcher, watcherControllerId,
-                            activation.activatedPermanent()))) {
+                    trigger.source(), filterContext)) {
                 return false;
             }
         }
@@ -695,7 +729,7 @@ public class SpellTriggers {
         }
         TriggerOptions options = watching.ability().options();
         if (options.multiplicity() != TriggerMultiplicity.EACH) {
-            throw new IllegalStateException(watcher.getCard().getName() + "'s activation ability has a multiplicity "
+            throw new IllegalStateException(watching.ability() + ": an activation ability has a multiplicity "
                     + "the activation collector doesn't judge: " + options);
         }
         return conditionEvaluationService.eventConditionMet(gameData, options, context);

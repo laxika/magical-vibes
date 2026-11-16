@@ -59,6 +59,24 @@ class MagusLuceaKaneTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The delayed copy ability's source is Magus Lucea Kane, not the spell it copies")
+    void delayedCopyAbilityHasMagusAsItsSource() {
+        Permanent magus = addCreatureReady(player1, new MagusLuceaKane());
+        harness.setHand(player1, List.of(new DevilsPlay()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.castSorcery(player1, 0, 2, player2.getId());
+
+        // A delayed triggered ability made by an activated ability has that ability's source (CR 603.7e).
+        assertThat(gd.stack).filteredOn(entry -> copiesSpell(entry, "Devil's Play")).singleElement()
+                .satisfies(entry -> {
+                    assertThat(entry.getCard().getName()).isEqualTo("Magus Lucea Kane");
+                    assertThat(entry.getSourcePermanentId()).isEqualTo(magus.getId());
+                });
+    }
+
+    @Test
     @DisplayName("Copies the next activated ability with X in its activation cost")
     void copiesNextXActivatedAbility() {
         addCreatureReady(player1, new MagusLuceaKane());

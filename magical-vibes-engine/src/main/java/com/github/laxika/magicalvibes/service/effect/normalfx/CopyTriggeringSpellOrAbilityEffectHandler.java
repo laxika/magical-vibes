@@ -31,11 +31,14 @@ public class CopyTriggeringSpellOrAbilityEffectHandler implements NormalEffectHa
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var copy = (CopyTriggeringSpellOrAbilityEffect) effect;
         if (entry.getTriggeringActivatedAbility() != null) {
             StackEntry ability = entry.getTriggeringSpellSnapshot();
-            copyControllerActivatedAbilityEffectHandler.resolve(gameData, entry,
-                    new CopyControllerActivatedAbilityEffect(ability == null ? null : new StackEntry(ability),
-                            entry.getTriggeringActivatedAbility(), entry.getControllerId()));
+            for (int i = 0; i < copy.copies(); i++) {
+                copyControllerActivatedAbilityEffectHandler.resolve(gameData, entry,
+                        new CopyControllerActivatedAbilityEffect(ability == null ? null : new StackEntry(ability),
+                                entry.getTriggeringActivatedAbility(), entry.getControllerId()));
+            }
             return;
         }
         StackEntry triggering = entry.getTriggeringSpellSnapshot();
@@ -46,6 +49,8 @@ public class CopyTriggeringSpellOrAbilityEffectHandler implements NormalEffectHa
                     new CopyTriggeredAbilityFromSnapshotEffect(new StackEntry(triggering)));
             return;
         }
-        copyTriggeringSpellEffectHandler.resolve(gameData, entry, new CopyTriggeringSpellEffect());
+        CopyTriggeringSpellEffect spellCopy = new CopyTriggeringSpellEffect().withCopies(copy.copies());
+        copyTriggeringSpellEffectHandler.resolve(gameData, entry,
+                copy.permanentSpellToken() ? spellCopy.permanentSpellCopiesAreTokens() : spellCopy);
     }
 }

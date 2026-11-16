@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnForXValueEffect;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,9 +25,10 @@ public class CopyNextInstantOrSorceryCastThisTurnForXValueEffectHandler implemen
             return;
         }
 
-        // "Copy it X times": one delayed triggered ability making X copies (CR 603.7).
-        gameData.addPendingSpellCopy(entry.getControllerId(), new GameData.PendingSpellCopy(entry.getCard(),
-                entry.getSourcePermanentId(), copies, null, java.util.List.of(), gameData.resolutionOrdinal, null));
+        // "Copy that spell X times": one delayed triggered ability making X copies, X fixed as it is made (CR 603.7b).
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.nextThisTurn(
+                entry.getControllerId(), entry.getCard(),
+                new CopyNextInstantOrSorceryCastThisTurnEffect().delayedAbility(copies), entry.getSourcePermanentId()));
         log.info("Game {} - {} will copy their next instant or sorcery spell {} times this turn",
                 gameData.id, entry.getControllerId(), copies);
     }

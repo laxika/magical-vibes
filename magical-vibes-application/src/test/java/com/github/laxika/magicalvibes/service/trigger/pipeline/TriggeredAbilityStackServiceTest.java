@@ -421,6 +421,27 @@ class TriggeredAbilityStackServiceTest {
     }
 
     @Test
+    @DisplayName("A \"when you next ...\" delayed ability ends as it triggers; one for the turn stays")
+    void nextDelayedAbilityEndsOnceItTriggers() {
+        Card maker = createCreature("Teach by Example", 0, 0);
+        TriggeredAbility copy = new TriggeredAbility(Triggers.youCastSpell(), new DrawCardEffect(1));
+        TemporaryGlobalTriggeredAbility next = TemporaryGlobalTriggeredAbility.nextThisTurn(PLAYER1_ID, maker, copy,
+                null);
+        TemporaryGlobalTriggeredAbility thisTurn = new TemporaryGlobalTriggeredAbility(PLAYER1_ID, maker, copy);
+        gd.temporaryGlobalTriggeredAbilities.add(next);
+        gd.temporaryGlobalTriggeredAbilities.add(thisTurn);
+
+        for (TemporaryGlobalTriggeredAbility delayed : List.of(next, thisTurn)) {
+            assertThat(stackService.put(gd, new TriggeredAbilityRequest(copy, maker, null, PLAYER1_ID,
+                    "Teach by Example's ability", ConditionContext.forCard(maker, PLAYER1_ID),
+                    EventAbilitySupport.delayedRecord(delayed, entry -> { })))).isTrue();
+        }
+
+        assertThat(gd.stack).hasSize(2).allMatch(StackEntry::isMadeByResolution);
+        assertThat(gd.temporaryGlobalTriggeredAbilities).containsExactly(thisTurn);
+    }
+
+    @Test
     @DisplayName("A death entry keeps the card the source had exiled as its linked exiled card")
     void deathEntryKeepsTheLinkedExiledCard() {
         Card card = createCreature("Hoarding Dragon", 4, 4);

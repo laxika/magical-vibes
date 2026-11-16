@@ -28,7 +28,7 @@ class TeachByExampleTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(1);
+        assertThat(pendingNextAbilityCount(player1)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Teach by Example");
     }
 
@@ -44,9 +44,8 @@ class TeachByExampleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, player2.getId());
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getDescription().contains("Copy Lightning Bolt"));
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
+        assertThat(gd.stack).anyMatch(e -> copiesSpell(e, "Lightning Bolt"));
+        assertThat(pendingNextAbilityCount(player1)).isZero();
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -69,9 +68,8 @@ class TeachByExampleTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getDescription().startsWith("Copy "));
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(1);
+        assertThat(gd.stack).noneMatch(e -> copiesSpell(e, null));
+        assertThat(pendingNextAbilityCount(player1)).isEqualTo(1);
     }
 
     @Test

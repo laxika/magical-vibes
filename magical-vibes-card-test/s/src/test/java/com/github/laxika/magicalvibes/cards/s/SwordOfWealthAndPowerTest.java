@@ -48,7 +48,7 @@ class SwordOfWealthAndPowerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Treasure")).isOne();
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(1);
+        assertThat(pendingNextAbilityCount(player1)).isEqualTo(1);
     }
 
     @Test
@@ -69,7 +69,7 @@ class SwordOfWealthAndPowerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
+        assertThat(pendingNextAbilityCount(player1)).isZero();
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

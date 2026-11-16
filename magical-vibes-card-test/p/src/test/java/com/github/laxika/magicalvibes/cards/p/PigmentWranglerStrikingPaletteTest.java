@@ -39,15 +39,14 @@ class PigmentWranglerStrikingPaletteTest extends BaseCardTest {
 
         GameData gameData = harness.getGameData();
         assertThat(wrangler.isPrepared()).isFalse();
-        assertThat(gameData.pendingSpellCopyCount(player1.getId())).isEqualTo(1);
+        assertThat(pendingNextAbilityCount(player1)).isEqualTo(1);
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
 
-        assertThat(gameData.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && entry.getDescription().contains("Copy Lightning Bolt"));
-        assertThat(gameData.pendingSpellCopyCount(player1.getId())).isZero();
+        assertThat(gameData.stack).anyMatch(entry -> copiesSpell(entry, "Lightning Bolt"));
+        assertThat(pendingNextAbilityCount(player1)).isZero();
     }
 
     @Test

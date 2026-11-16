@@ -3,14 +3,19 @@ package com.github.laxika.magicalvibes.service.effect.manafx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.UUID;
 
+/**
+ * Creates {@link CopyNextSpellCastThisTurnEffect#delayedAbility()} for a mana ability: a delayed triggered ability that triggers only the next time
+ * its event occurs this turn (CR 603.7b), controlled by the player who activated the mana ability and with its source
+ * (CR 603.7e). A mana ability resolves on no stack, so each activation creates its own.
+ */
 @Slf4j
 @Component
 public class CopyNextSpellCastThisTurnManaAbilityEffectHandler implements ManaAbilityEffectHandler {
@@ -23,14 +28,9 @@ public class CopyNextSpellCastThisTurnManaAbilityEffectHandler implements ManaAb
     @Override
     public void resolve(GameData gameData, UUID playerId, Player player, Permanent permanent,
                         CardEffect effect, int manaMultiplier, boolean creatureSource) {
-        CopyNextSpellCastThisTurnEffect copyEffect = (CopyNextSpellCastThisTurnEffect) effect;
-        if (copyEffect.spellFilter() == null && copyEffect.removedSupertypes().isEmpty()) {
-            gameData.pendingNextSpellCopyThisTurnCount.merge(playerId, 1, Integer::sum);
-        } else {
-            gameData.pendingNextFilteredSpellCopiesThisTurn
-                    .computeIfAbsent(playerId, ignored -> new ArrayList<>())
-                    .add(copyEffect);
-        }
+        var delayedEffect = (CopyNextSpellCastThisTurnEffect) effect;
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.nextThisTurn(playerId,
+                permanent.getCard(), delayedEffect.delayedAbility(), permanent.getId()));
         log.info("Game {} - {} will copy their next matching spell this turn", gameData.id, playerId);
     }
 }

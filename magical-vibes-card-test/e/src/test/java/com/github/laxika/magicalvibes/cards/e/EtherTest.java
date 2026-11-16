@@ -29,7 +29,7 @@ class EtherTest extends BaseCardTest {
                 .extracting(card -> card.getName())
                 .contains("Ether");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(1);
+        assertThat(pendingNextAbilityCount(player1)).isEqualTo(1);
     }
 
     @Test
@@ -41,9 +41,8 @@ class EtherTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
 
-        assertThat(gd.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && entry.getDescription().startsWith("Copy Lightning Bolt"));
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
+        assertThat(gd.stack).anyMatch(entry -> copiesSpell(entry, "Lightning Bolt"));
+        assertThat(pendingNextAbilityCount(player1)).isZero();
     }
 
     @Test
@@ -55,9 +54,8 @@ class EtherTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        assertThat(gd.stack).noneMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && entry.getDescription() != null && entry.getDescription().startsWith("Copy "));
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(1);
+        assertThat(gd.stack).noneMatch(entry -> copiesSpell(entry, null));
+        assertThat(pendingNextAbilityCount(player1)).isEqualTo(1);
     }
 
     @Test

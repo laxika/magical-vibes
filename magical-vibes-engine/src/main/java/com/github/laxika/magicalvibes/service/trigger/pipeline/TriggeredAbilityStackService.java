@@ -483,8 +483,8 @@ public class TriggeredAbilityStackService extends StackDoor {
             // trigger" (Elesh Norn, Mother of Machines).
             return false;
         }
-        if (request.record() instanceof EventAbilitySupport.DelayedRecord delayed && delayed.delayed().untilTriggered()) {
-            // It triggered: one with no stated duration triggers only this once (CR 603.7b).
+        if (request.record() instanceof EventAbilitySupport.DelayedRecord delayed && delayed.delayed().triggersOnce()) {
+            // It triggered: one with no stated duration, or a "when you next ...", triggers only this once (CR 603.7b).
             gameData.temporaryGlobalTriggeredAbilities.removeIf(listed -> listed == delayed.delayed());
         }
         List<CardEffect> written = new ArrayList<>(ability.effects().size());

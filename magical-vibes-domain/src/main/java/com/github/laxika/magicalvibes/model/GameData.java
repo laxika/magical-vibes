@@ -22,10 +22,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounter
 import com.github.laxika.magicalvibes.model.action.DelayedStillExiledCardsEndStepTrigger;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
@@ -2401,10 +2399,6 @@ public class GameData {
      *  {@link #recordSpellCast}. Cleared at end of turn. */
     public final Map<UUID, List<CreatureSpellEmpowerment>> nextCreatureSpellEmpowermentsThisTurn = new ConcurrentHashMap<>();
 
-    /** Pending "When you next cast a creature spell this turn, ..." delayed triggers, keyed by player.
-     *  All fire on the next creature spell cast and are cleared at end of turn. */
-    public final Map<UUID, List<DelayedSpellCastTrigger>> nextCreatureSpellDelayedTriggersThisTurn = new ConcurrentHashMap<>();
-
     /** Pending one-shot grants that give the next creature spell cascade, keyed by player. */
     public final Map<UUID, Integer> nextCreatureSpellCascadeThisTurn = new ConcurrentHashMap<>();
     /** Persistent one-time creature-spell boons, keyed by player and consumed by {@link #recordSpellCast}. */
@@ -2637,11 +2631,6 @@ public class GameData {
     public final Map<UUID, List<GraveyardCardCastPermission>> graveyardCardCastPermissionGrantsUntilEndOfTurn =
             new ConcurrentHashMap<>();
 
-    /** Number of separate "whenever you cast an instant or sorcery spell, copy it" abilities each player
-     *  controls until end of turn (e.g. one per The Mirari Conjecture chapter III resolution). Each one
-     *  triggers on its own. Cleared at end of turn. */
-    public final Map<UUID, Integer> spellCopyGrantsUntilEndOfTurn = new ConcurrentHashMap<>();
-
     /** Number of conspire copies still to queue for each spell cast with conspire cost(s) paid
      *  (CR 702.78). Each instance of conspire is paid separately and queues its own "copy it, you
      *  may choose a new target" trigger. Consumed by {@code TriggerCollectionService} when the
@@ -2659,27 +2648,11 @@ public class GameData {
      *  source permanent id, then by rider, to the number of units still to be tagged. */
     public final Map<UUID, Map<ManaCopyRider, Integer>> pendingCopyRiderManaChoices = new ConcurrentHashMap<>();
 
-    /**
-     * The pending "when you next cast an instant or sorcery spell this turn, copy that spell" delayed triggered
-     * abilities of each player (Chandra, the Firebrand's −2, Teach by Example, Sea Gate Stormcaller), one element per
-     * ability, in the order they were made: when the next such spell is cast, each element that applies to it is one
-     * stack object (CR 603.7), and is used up. A mana ability's has resolution 0. Unlike Primal Wellspring's mana-linked copy rider these survive mana
-     * drain; they are cleared at end of turn.
-     */
-    public final Map<UUID, List<PendingSpellCopy>> pendingNextInstantSorceryCopies = new ConcurrentHashMap<>();
     /** Pending one-shot grants that give the next instant or sorcery spell Storm this turn. */
     public final Map<UUID, Integer> pendingNextInstantSorceryStormThisTurnCount = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> pendingNextInstantSorceryCastFromHandToHandThisTurnCount =
             new ConcurrentHashMap<>();
 
-    /** Pending one-shot "when you next cast a spell this turn, copy that spell" delayed triggers. */
-    public final Map<UUID, Integer> pendingNextSpellCopyThisTurnCount = new ConcurrentHashMap<>();
-    /** Pending one-shot filtered spell-copy triggers for the current turn. */
-    public final Map<UUID, List<CopyNextSpellCastThisTurnEffect>> pendingNextFilteredSpellCopiesThisTurn =
-            new ConcurrentHashMap<>();
-    /** Pending one-shot copies for the next activated ability with X in its activation cost. */
-    public final Map<UUID, Integer> pendingNextXActivatedAbilityCopyThisTurnCount =
-            new ConcurrentHashMap<>();
 
     /** Pending one-shot grants that make the next spell cast this turn uncounterable. */
     public final Map<UUID, Integer> pendingNextSpellUncounterableThisTurnCount = new ConcurrentHashMap<>();
@@ -2692,83 +2665,6 @@ public class GameData {
 
     /** Pending one-shot grants that make the next instant or sorcery cast this turn uncounterable. */
     public final Map<UUID, Integer> pendingNextInstantSorceryUncounterableThisTurnCount = new ConcurrentHashMap<>();
-
-    /** Pending one-shot loyalty-ability copy triggers for the current turn. */
-    public final Map<UUID, Integer> pendingNextLoyaltyAbilityCopyThisTurnCount = new ConcurrentHashMap<>();
-
-    /**
-     * The source of each pending loyalty-ability copy in {@link #pendingNextLoyaltyAbilityCopyThisTurnCount},
-     * in the order the copies were granted, so each copy trigger keeps the object that created it.
-     */
-    public final Map<UUID, List<PendingCopySource>> pendingNextLoyaltyAbilityCopySourcesThisTurn =
-            new ConcurrentHashMap<>();
-
-    /**
-     * The card and permanent (null for a non-permanent source) that granted a pending copy, and the delayed ability it
-     * shares with a pending spell copy ({@link PendingSpellCopy#link()}), or {@code null}.
-     */
-    public record PendingCopySource(Card card, UUID sourcePermanentId, UUID link) {
-
-        public PendingCopySource(Card card, UUID sourcePermanentId) {
-            this(card, sourcePermanentId, null);
-        }
-    }
-
-    /**
-     * One pending "when you next cast an instant or sorcery spell this turn, copy that spell" delayed triggered ability
-     * (CR 603.7): its source, how many copies it makes ({@code copies}, or {@code dynamicCopies} counted as it resolves),
-     * the mana value limits a spell must meet ("with mana value 2 or less", one per copy of a kicked Sea Gate
-     * Stormcaller's "copy that spell twice instead"; empty for none), the resolution that made it, and {@code link}: the
-     * id it shares with the pending loyalty-ability copy of the same ability ("the next instant or sorcery spell you cast
-     * or loyalty ability you activate", Repeated Reverberation), whichever event uses it up, or {@code null}.
-     */
-    public record PendingSpellCopy(Card sourceCard, UUID sourcePermanentId, int copies, DynamicAmount dynamicCopies,
-                                   List<Integer> maxManaValues, long resolution, UUID link) {
-
-        public PendingSpellCopy {
-            maxManaValues = List.copyOf(maxManaValues);
-        }
-
-        /** This ability with {@code maxManaValue} as one more limit (one more copy, CR 603.7). */
-        public PendingSpellCopy withLimit(int maxManaValue) {
-            List<Integer> limits = new ArrayList<>(maxManaValues);
-            limits.add(maxManaValue);
-            return new PendingSpellCopy(sourceCard, sourcePermanentId, copies, dynamicCopies, limits, resolution, link);
-        }
-    }
-
-    /**
-     * How many copies {@code playerId}'s pending "copy the next instant or sorcery spell" abilities make with a fixed
-     * count, over all of them.
-     */
-    public int pendingSpellCopyCount(UUID playerId) {
-        List<PendingSpellCopy> pending = pendingNextInstantSorceryCopies.getOrDefault(playerId, List.of());
-        synchronized (pending) {
-            return pending.stream().mapToInt(copy -> copy.maxManaValues().isEmpty() ? copy.copies()
-                    : copy.maxManaValues().size()).sum();
-        }
-    }
-
-    /**
-     * Makes {@code copy} a pending ability of {@code playerId}'s. A limit made by the same resolution of the same source
-     * as the last pending limited copy is one more copy of that ability (a kicked Sea Gate Stormcaller's "twice
-     * instead"), not an ability of its own.
-     */
-    public void addPendingSpellCopy(UUID playerId, PendingSpellCopy copy) {
-        List<PendingSpellCopy> pending = pendingNextInstantSorceryCopies.computeIfAbsent(playerId,
-                ignored -> Collections.synchronizedList(new ArrayList<>()));
-        synchronized (pending) {
-            if (copy.maxManaValues().size() == 1 && !pending.isEmpty()) {
-                PendingSpellCopy last = pending.getLast();
-                if (!last.maxManaValues().isEmpty() && copy.resolution() > 0 && last.resolution() == copy.resolution()
-                        && last.sourceCard() == copy.sourceCard() && last.link() == null && copy.link() == null) {
-                    pending.set(pending.size() - 1, last.withLimit(copy.maxManaValues().getFirst()));
-                    return;
-                }
-            }
-            pending.add(copy);
-        }
-    }
 
     /** Permanents whose source subtype choice is temporary and expires during cleanup. */
     public final Set<UUID> temporaryChosenSubtypePermanentIds = ConcurrentHashMap.newKeySet();
@@ -2784,17 +2680,6 @@ public class GameData {
     /** One delayed "copy abilities of planeswalkers of this type" trigger and the object that created it. */
     public record ChosenSubtypeActivationCopy(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
                                               CardSubtype subtype) {}
-
-    /** Pending one-shot non-mana exhaust-ability copy triggers for the current turn. */
-    public final Map<UUID, Integer> pendingNextExhaustAbilityCopyThisTurnCount = new ConcurrentHashMap<>();
-
-    /**
-     * The source of each pending copy in {@link #pendingNextExhaustAbilityCopyThisTurnCount}, in the
-     * order the copies were granted, so each copy trigger keeps the object that created it.
-     */
-    public final Map<UUID, List<PendingCopySource>> pendingNextExhaustAbilityCopySourcesThisTurn =
-            new ConcurrentHashMap<>();
-
 
     /** "Whenever a creature enters this turn, you may draw a card" delayed triggers (Beck). */
     public final Map<UUID, List<Card>> creatureEntersDrawSourcesThisTurn = new ConcurrentHashMap<>();
@@ -5233,8 +5118,6 @@ public class GameData {
             case GAME_NEXT_SPELL_PAY_LIFE_EQUAL_TO_MANA_VALUE -> new HashMap<>(nextSpellPayLifeEqualToManaValueThisTurn);
             case GAME_NEXT_SPELL_FREE_CAST_PERMISSIONS -> synchronizedListMapEntries(nextSpellFreeCastPermissionsThisTurn);
             case GAME_NEXT_CREATURE_SPELL_EMPOWERMENTS -> synchronizedListMapEntries(nextCreatureSpellEmpowermentsThisTurn);
-            case GAME_NEXT_CREATURE_SPELL_DELAYED_TRIGGERS ->
-                    synchronizedListMapEntries(nextCreatureSpellDelayedTriggersThisTurn);
             case GAME_NEXT_CREATURE_SPELL_CASCADE -> new HashMap<>(nextCreatureSpellCascadeThisTurn);
             case GAME_SPELL_COLOR_OVERRIDES -> Set.copyOf(plainMapEntries(spellColorOverridesUntilEndOfTurn));
             case GAME_CARDS_GRANTED_FLASHBACK -> cardsGrantedFlashbackUntilEndOfTurn;
@@ -5261,13 +5144,9 @@ public class GameData {
             case GAME_GRAVEYARD_CARD_CAST_PERMISSION_GRANTS -> listMapEntries(graveyardCardCastPermissionGrantsUntilEndOfTurn);
             case GAME_GRAVEYARD_CAST_FILTER_PERMISSIONS -> new ArrayList<>(graveyardCastFilterPermissionsThisTurn);
             case GAME_GRAVEYARD_PLAY_FILTER_PERMISSIONS -> new ArrayList<>(graveyardPlayFilterPermissionsThisTurn);
-            case GAME_SPELL_COPY_GRANTS -> new HashMap<>(spellCopyGrantsUntilEndOfTurn);
             case GAME_NEXT_INSTANT_SORCERY_STORM -> new HashMap<>(pendingNextInstantSorceryStormThisTurnCount);
             case GAME_NEXT_INSTANT_SORCERY_CAST_FROM_HAND_TO_HAND ->
                     new HashMap<>(pendingNextInstantSorceryCastFromHandToHandThisTurnCount);
-            case GAME_NEXT_SPELL_COPIES -> new HashMap<>(pendingNextSpellCopyThisTurnCount);
-            case GAME_NEXT_FILTERED_SPELL_COPIES -> listMapEntries(pendingNextFilteredSpellCopiesThisTurn);
-            case GAME_NEXT_X_ACTIVATED_ABILITY_COPIES -> new HashMap<>(pendingNextXActivatedAbilityCopyThisTurnCount);
             case GAME_NEXT_SPELL_UNCOUNTERABLE -> new HashMap<>(pendingNextSpellUncounterableThisTurnCount);
             case GAME_NEXT_INSTANT_SORCERY_UNCOUNTERABLE ->
                     new HashMap<>(pendingNextInstantSorceryUncounterableThisTurnCount);
@@ -5291,11 +5170,6 @@ public class GameData {
                     listMapEntries(playerNextDamageFromMatchingSourcesPrevented);
             case GAME_NEXT_ENCHANTMENT_CREATURE_ENTRY_ADDITIONAL_COUNTERS ->
                     new HashMap<>(pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn);
-            case GAME_NEXT_INSTANT_SORCERY_COPIES -> synchronizedListMapEntries(pendingNextInstantSorceryCopies);
-            case GAME_NEXT_LOYALTY_ABILITY_COPIES -> new HashMap<>(pendingNextLoyaltyAbilityCopyThisTurnCount);
-            case GAME_NEXT_LOYALTY_ABILITY_COPY_SOURCES -> listMapEntries(pendingNextLoyaltyAbilityCopySourcesThisTurn);
-            case GAME_NEXT_EXHAUST_ABILITY_COPIES -> new HashMap<>(pendingNextExhaustAbilityCopyThisTurnCount);
-            case GAME_NEXT_EXHAUST_ABILITY_COPY_SOURCES -> listMapEntries(pendingNextExhaustAbilityCopySourcesThisTurn);
             case GAME_SEN_TRIPLETS_HAND_PERMISSION -> senControllerPlayerId == null || senControlledPlayerId == null
                     ? null : Map.entry(senControllerPlayerId, senControlledPlayerId);
             case GAME_EXILE_PLAY_PERMISSIONS_ENDING_THIS_TURN -> exilePlayPermissionsExpireEndOfTurn;
@@ -5557,8 +5431,6 @@ public class GameData {
                     nextSpellFreeCastPermissionsThisTurn, (List<Map.Entry<UUID, CardPredicate>>) value);
             case GAME_NEXT_CREATURE_SPELL_EMPOWERMENTS -> addSynchronizedListMapEntries(
                     nextCreatureSpellEmpowermentsThisTurn, (List<Map.Entry<UUID, CreatureSpellEmpowerment>>) value);
-            case GAME_NEXT_CREATURE_SPELL_DELAYED_TRIGGERS -> addSynchronizedListMapEntries(
-                    nextCreatureSpellDelayedTriggersThisTurn, (List<Map.Entry<UUID, DelayedSpellCastTrigger>>) value);
             case GAME_NEXT_CREATURE_SPELL_CASCADE -> addCounts(nextCreatureSpellCascadeThisTurn, (Map<UUID, Integer>) value);
             case GAME_SPELL_COLOR_OVERRIDES -> ((Set<Map.Entry<UUID, Set<CardColor>>>) value)
                     .forEach(entry -> spellColorOverridesUntilEndOfTurn.putIfAbsent(entry.getKey(), entry.getValue()));
@@ -5597,16 +5469,10 @@ public class GameData {
                     graveyardCastFilterPermissionsThisTurn.addAll((List<GraveyardCastFilterPermission>) value);
             case GAME_GRAVEYARD_PLAY_FILTER_PERMISSIONS ->
                     graveyardPlayFilterPermissionsThisTurn.addAll((List<GraveyardPlayFilterPermission>) value);
-            case GAME_SPELL_COPY_GRANTS -> addCounts(spellCopyGrantsUntilEndOfTurn, (Map<UUID, Integer>) value);
             case GAME_NEXT_INSTANT_SORCERY_STORM ->
                     addCounts(pendingNextInstantSorceryStormThisTurnCount, (Map<UUID, Integer>) value);
             case GAME_NEXT_INSTANT_SORCERY_CAST_FROM_HAND_TO_HAND ->
                     addCounts(pendingNextInstantSorceryCastFromHandToHandThisTurnCount, (Map<UUID, Integer>) value);
-            case GAME_NEXT_SPELL_COPIES -> addCounts(pendingNextSpellCopyThisTurnCount, (Map<UUID, Integer>) value);
-            case GAME_NEXT_FILTERED_SPELL_COPIES -> addListMapEntries(pendingNextFilteredSpellCopiesThisTurn,
-                    (List<Map.Entry<UUID, CopyNextSpellCastThisTurnEffect>>) value);
-            case GAME_NEXT_X_ACTIVATED_ABILITY_COPIES ->
-                    addCounts(pendingNextXActivatedAbilityCopyThisTurnCount, (Map<UUID, Integer>) value);
             case GAME_NEXT_SPELL_UNCOUNTERABLE ->
                     addCounts(pendingNextSpellUncounterableThisTurnCount, (Map<UUID, Integer>) value);
             case GAME_NEXT_INSTANT_SORCERY_UNCOUNTERABLE ->
@@ -5638,19 +5504,6 @@ public class GameData {
                     playerNextDamageFromMatchingSourcesPrevented, (List<Map.Entry<UUID, PermanentPredicate>>) value);
             case GAME_NEXT_ENCHANTMENT_CREATURE_ENTRY_ADDITIONAL_COUNTERS ->
                     addCounts(pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn, (Map<UUID, Integer>) value);
-            case GAME_NEXT_INSTANT_SORCERY_COPIES -> ((List<Map.Entry<UUID, PendingSpellCopy>>) value)
-                    .forEach(entry -> pendingNextInstantSorceryCopies.computeIfAbsent(entry.getKey(),
-                            key -> Collections.synchronizedList(new ArrayList<>())).add(entry.getValue()));
-            case GAME_NEXT_LOYALTY_ABILITY_COPIES ->
-                    addCounts(pendingNextLoyaltyAbilityCopyThisTurnCount, (Map<UUID, Integer>) value);
-            case GAME_NEXT_LOYALTY_ABILITY_COPY_SOURCES -> ((List<Map.Entry<UUID, PendingCopySource>>) value)
-                    .forEach(entry -> pendingNextLoyaltyAbilityCopySourcesThisTurn
-                            .computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).add(entry.getValue()));
-            case GAME_NEXT_EXHAUST_ABILITY_COPIES ->
-                    addCounts(pendingNextExhaustAbilityCopyThisTurnCount, (Map<UUID, Integer>) value);
-            case GAME_NEXT_EXHAUST_ABILITY_COPY_SOURCES -> ((List<Map.Entry<UUID, PendingCopySource>>) value)
-                    .forEach(entry -> pendingNextExhaustAbilityCopySourcesThisTurn
-                            .computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).add(entry.getValue()));
             case GAME_SEN_TRIPLETS_HAND_PERMISSION -> {
                 Map.Entry<UUID, UUID> permission = (Map.Entry<UUID, UUID>) value;
                 senControllerPlayerId = permission.getKey();
@@ -7284,20 +7137,6 @@ public class GameData {
         nextCreatureSpellEmpowermentsThisTurn
                 .computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>()))
                 .add(empowerment);
-    }
-
-    /** Registers a delayed trigger for the player's next creature spell this turn. */
-    public void addNextCreatureSpellDelayedTrigger(UUID playerId, DelayedSpellCastTrigger trigger) {
-        nextCreatureSpellDelayedTriggersThisTurn
-                .computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>()))
-                .add(trigger);
-    }
-
-    /** Removes and returns every delayed trigger waiting for the next creature spell the player casts. */
-    public List<DelayedSpellCastTrigger> consumeNextCreatureSpellDelayedTriggers(UUID playerId, Card card) {
-        if (card == null || !card.hasType(CardType.CREATURE)) return List.of();
-        List<DelayedSpellCastTrigger> triggers = nextCreatureSpellDelayedTriggersThisTurn.remove(playerId);
-        return triggers == null ? List.of() : new ArrayList<>(triggers);
     }
 
     /** Adds one pending cascade grant for the next creature spell this turn. */
@@ -10317,17 +10156,6 @@ public class GameData {
         copy.exiledVoyageControllerIds.putAll(this.exiledVoyageControllerIds);
         copy.foretoldCardCosts.putAll(this.foretoldCardCosts);
         copy.foretoldCardTurnsTaken.putAll(this.foretoldCardTurnsTaken);
-        this.pendingNextInstantSorceryCopies.forEach((playerId, copies) -> {
-            synchronized (copies) {
-                copy.pendingNextInstantSorceryCopies.put(playerId,
-                        Collections.synchronizedList(new ArrayList<>(copies)));
-            }
-        });
-        copy.pendingNextSpellCopyThisTurnCount.putAll(this.pendingNextSpellCopyThisTurnCount);
-        this.pendingNextFilteredSpellCopiesThisTurn.forEach((playerId, effects) ->
-                copy.pendingNextFilteredSpellCopiesThisTurn.put(playerId, new ArrayList<>(effects)));
-        copy.pendingNextXActivatedAbilityCopyThisTurnCount
-                .putAll(this.pendingNextXActivatedAbilityCopyThisTurnCount);
         this.notedMana.forEach((cardId, mana) -> copy.notedMana.put(cardId, new EnumMap<>(mana)));
         this.abilityActivationManaSpent.forEach((cardId, mana) ->
                 copy.abilityActivationManaSpent.put(cardId, new EnumMap<>(mana)));
@@ -11366,8 +11194,6 @@ public class GameData {
         copy.senControllerPlayerId = this.senControllerPlayerId;
         copy.senControlledPlayerId = this.senControlledPlayerId;
 
-        // --- Spell copy until end of turn (The Mirari Conjecture chapter III) ---
-        copy.spellCopyGrantsUntilEndOfTurn.putAll(this.spellCopyGrantsUntilEndOfTurn);
         copy.conspiredSpellCopyCounts.putAll(this.conspiredSpellCopyCounts);
         copy.casualtySpellCopyCounts.putAll(this.casualtySpellCopyCounts);
 
@@ -11383,16 +11209,8 @@ public class GameData {
         copy.spellsPaidUsingPendingAnyManaTypeThisTurn.addAll(this.spellsPaidUsingPendingAnyManaTypeThisTurn);
         copy.pendingNextInstantSorceryUncounterableThisTurnCount.putAll(
                 this.pendingNextInstantSorceryUncounterableThisTurnCount);
-        copy.pendingNextLoyaltyAbilityCopyThisTurnCount.putAll(this.pendingNextLoyaltyAbilityCopyThisTurnCount);
-        this.pendingNextLoyaltyAbilityCopySourcesThisTurn.forEach((playerId, sources) ->
-                copy.pendingNextLoyaltyAbilityCopySourcesThisTurn.put(playerId, new ArrayList<>(sources)));
-        copy.pendingNextXActivatedAbilityCopyThisTurnCount
-                .putAll(this.pendingNextXActivatedAbilityCopyThisTurnCount);
         copy.temporaryChosenSubtypePermanentIds.addAll(this.temporaryChosenSubtypePermanentIds);
         copy.chosenSubtypeActivationCopiesThisTurn.addAll(this.chosenSubtypeActivationCopiesThisTurn);
-        copy.pendingNextExhaustAbilityCopyThisTurnCount.putAll(this.pendingNextExhaustAbilityCopyThisTurnCount);
-        this.pendingNextExhaustAbilityCopySourcesThisTurn.forEach((playerId, sources) ->
-                copy.pendingNextExhaustAbilityCopySourcesThisTurn.put(playerId, new ArrayList<>(sources)));
         this.creatureEntersDrawSourcesThisTurn.forEach((playerId, cards) ->
                 copy.creatureEntersDrawSourcesThisTurn.put(playerId, new ArrayList<>(cards)));
         this.untapAttackedCreaturesEachCombatThisTurnSources.forEach((playerId, cards) ->
@@ -11647,8 +11465,6 @@ public class GameData {
         this.nextCreatureSpellEmpowermentsThisTurn.forEach((k, v) ->
                 copy.nextCreatureSpellEmpowermentsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.nextCreatureSpellCascadeThisTurn.putAll(this.nextCreatureSpellCascadeThisTurn);
-        this.nextCreatureSpellDelayedTriggersThisTurn.forEach((k, v) ->
-                copy.nextCreatureSpellDelayedTriggersThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         this.nextCreatureSpellEmpowerments.forEach((k, v) ->
                 copy.nextCreatureSpellEmpowerments.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.spellAdditionalEnterCounters.putAll(this.spellAdditionalEnterCounters);

@@ -34,7 +34,7 @@ class JayasPhoenixTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
 
-        assertThat(gd.pendingNextLoyaltyAbilityCopyThisTurnCount.get(player1.getId())).isEqualTo(1);
+        assertThat(pendingNextAbilityCount(player1)).isEqualTo(1);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(chandra), 0, null, null);
         resolveAllTriggers();
 

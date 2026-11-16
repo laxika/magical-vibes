@@ -28,23 +28,19 @@ package com.github.laxika.magicalvibes.model;
  * {@code (player, grant)} entries or a {@link Kind#COUNTS} by player; casting the spell consumes them, so a used
  * grant is not restored. Per-card "this turn" casting permissions and granted alternative costs (flashback,
  * unearth, graveyard / library-top cast permissions) are {@link Kind#SET}s of card ids or map entries.
- * The other pending one-shot "next spell / ability this turn" grants that are not paired with a source map (Storm,
- * copy, uncounterable and any-mana-type grants, the X-ability copies) are {@link Kind#COUNTS} by player or a
- * {@link Kind#LIST} of {@code (player, grant)} entries; the "this turn" delayed triggers (The Mirari Conjecture's copy
- * grants, Beck, Leori) and the source-linked exile / foretold cast grants are counts or {@link Kind#LIST}s of their
- * records. A grant used up in between is not restored.
+ * The other pending one-shot "next spell this turn" grants that are not paired with a source map (Storm,
+ * uncounterable and any-mana-type grants) are {@link Kind#COUNTS} by player or a {@link Kind#LIST} of
+ * {@code (player, grant)} entries; the "this turn" delayed triggers (Beck, Leori) and the source-linked exile /
+ * foretold cast grants are counts or {@link Kind#LIST}s of their records. A grant used up in between is not restored.
  * The whole-turn chosen-source prevention (Auriok Replica, Samite Ministration) is a {@link Kind#SET} of
  * {@code (player, source)} entries, with its colour rider a {@link Kind#SET} of {@code ((player, source), colours)}
  * entries and its life-gain rider another {@code (player, source)} {@link Kind#SET}; Circle of Solace's one-shot
  * "next damage from a matching source" shields are a {@link Kind#LIST} of {@code (player, predicate)} entries, and
  * Storyweave's pending extra counters for the next enchantment creature entry are {@link Kind#COUNTS} by player
  * (a used shield or entry grant is not restored).
- * The "when you next cast an instant or sorcery spell this turn, copy it" delayed triggers are a {@link Kind#LIST} of
- * {@code (player, GameData.PendingSpellCopy)} entries, one per ability; the "activate a loyalty or exhaust ability"
- * ones keep their counts as {@link Kind#COUNTS} by player and their sources as a {@link Kind#LIST} of
- * {@code (player, source)} entries, a source sharing its ability with a spell copy by its link. A used trigger is not
- * restored. Sen Triplets' "play from that player's hand this turn" pair is a {@link Kind#VALUE}
- * {@code (controller, controlled player)} entry.
+ * The "when you next cast or activate ... this turn" delayed triggered abilities are records of the "until end of
+ * turn" global triggered abilities' {@link Kind#LIST}; a used one is not restored. Sen Triplets' "play from that
+ * player's hand this turn" pair is a {@link Kind#VALUE} {@code (controller, controlled player)} entry.
  * The per-card "you may play that card this turn" exile and graveyard permissions (impulse draw, Ark of Hunger) are
  * tracked through the {@link Kind#SET}s of card ids whose permission ends this turn; the cleanup step removes the
  * permission records only for the ids not retained for another player. Their current-turn any-mana-type riders are a
@@ -299,7 +295,6 @@ public enum EndOfTurnStateField {
     GAME_NEXT_SPELL_PAY_LIFE_EQUAL_TO_MANA_VALUE(Kind.COUNTS),
     GAME_NEXT_SPELL_FREE_CAST_PERMISSIONS(Kind.LIST),
     GAME_NEXT_CREATURE_SPELL_EMPOWERMENTS(Kind.LIST),
-    GAME_NEXT_CREATURE_SPELL_DELAYED_TRIGGERS(Kind.LIST),
     GAME_NEXT_CREATURE_SPELL_CASCADE(Kind.COUNTS),
     GAME_SPELL_COLOR_OVERRIDES(Kind.SET),
     GAME_CARDS_GRANTED_FLASHBACK(Kind.SET),
@@ -323,12 +318,8 @@ public enum EndOfTurnStateField {
     GAME_GRAVEYARD_CARD_CAST_PERMISSION_GRANTS(Kind.LIST),
     GAME_GRAVEYARD_CAST_FILTER_PERMISSIONS(Kind.LIST),
     GAME_GRAVEYARD_PLAY_FILTER_PERMISSIONS(Kind.LIST),
-    GAME_SPELL_COPY_GRANTS(Kind.COUNTS),
     GAME_NEXT_INSTANT_SORCERY_STORM(Kind.COUNTS),
     GAME_NEXT_INSTANT_SORCERY_CAST_FROM_HAND_TO_HAND(Kind.COUNTS),
-    GAME_NEXT_SPELL_COPIES(Kind.COUNTS),
-    GAME_NEXT_FILTERED_SPELL_COPIES(Kind.LIST),
-    GAME_NEXT_X_ACTIVATED_ABILITY_COPIES(Kind.COUNTS),
     GAME_NEXT_SPELL_UNCOUNTERABLE(Kind.COUNTS),
     GAME_NEXT_INSTANT_SORCERY_UNCOUNTERABLE(Kind.COUNTS),
     GAME_ANY_MANA_TYPE_FOR_NEXT_SPELL(Kind.COUNTS),
@@ -343,11 +334,6 @@ public enum EndOfTurnStateField {
     GAME_PLAYER_SOURCE_DAMAGE_PREVENTION_LIFE_GAIN_IDS(Kind.SET),
     GAME_PLAYER_NEXT_DAMAGE_FROM_MATCHING_SOURCES_PREVENTED(Kind.LIST),
     GAME_NEXT_ENCHANTMENT_CREATURE_ENTRY_ADDITIONAL_COUNTERS(Kind.COUNTS),
-    GAME_NEXT_INSTANT_SORCERY_COPIES(Kind.LIST),
-    GAME_NEXT_LOYALTY_ABILITY_COPIES(Kind.COUNTS),
-    GAME_NEXT_LOYALTY_ABILITY_COPY_SOURCES(Kind.LIST),
-    GAME_NEXT_EXHAUST_ABILITY_COPIES(Kind.COUNTS),
-    GAME_NEXT_EXHAUST_ABILITY_COPY_SOURCES(Kind.LIST),
     GAME_SEN_TRIPLETS_HAND_PERMISSION(Kind.VALUE),
     GAME_EXILE_PLAY_PERMISSIONS_ENDING_THIS_TURN(Kind.SET),
     GAME_GRAVEYARD_PLAY_PERMISSIONS_ENDING_THIS_TURN(Kind.SET),

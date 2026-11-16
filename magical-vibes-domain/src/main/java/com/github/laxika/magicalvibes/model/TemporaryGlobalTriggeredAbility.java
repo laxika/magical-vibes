@@ -32,6 +32,9 @@ import java.util.UUID;
  *                           and lasts until then (CR 603.7b), so no turn's end removes it; "when that creature leaves
  *                           the battlefield or becomes untapped" (Merieke Ri Berit). One about a permanent that left the
  *                           battlefield without triggering it never can: the permanent is gone (CR 400.7)
+ * @param next               whether it triggers only the next time its trigger event occurs within its stated
+ *                           duration: "when you next cast an instant or sorcery spell this turn, copy that spell"
+ *                           triggers once and ends with the turn if it hasn't (CR 603.7b)
  */
 public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
                                               TargetFilter targetFilter,
@@ -42,7 +45,20 @@ public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard
                                               UUID sourcePermanentId,
                                               UUID watchedPlayerId,
                                               UUID linkedExiledCardId,
-                                              boolean untilTriggered) {
+                                              boolean untilTriggered,
+                                              boolean next) {
+
+    /** {@code ability} that triggers on every event of its duration, or with no stated duration (CR 603.7b). */
+    public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
+                                           TargetFilter targetFilter,
+                                           boolean untilEndOfNextTurn, boolean untilNextTurn,
+                                           int registrationTurnNumber, UUID expirationPlayerId,
+                                           UUID watchedPermanentId, UUID sourcePermanentId, UUID watchedPlayerId,
+                                           UUID linkedExiledCardId, boolean untilTriggered) {
+        this(controllerId, sourceCard, ability, targetFilter, untilEndOfNextTurn, untilNextTurn,
+                registrationTurnNumber, expirationPlayerId, watchedPermanentId, sourcePermanentId, watchedPlayerId,
+                linkedExiledCardId, untilTriggered, false);
+    }
 
     /** {@code ability} with a stated duration (CR 603.7b). */
     public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
@@ -78,6 +94,23 @@ public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard
                                                            TriggeredAbility ability, UUID sourcePermanentId) {
         return new TemporaryGlobalTriggeredAbility(controllerId, sourceCard, ability, null, false, false, -1, null,
                 null, sourcePermanentId, null, null, false);
+    }
+
+    /**
+     * {@code ability} of the delayed triggered ability "when you next [event] this turn, ..." a resolving spell or
+     * ability (or a mana ability) with the source {@code sourceCard} and {@code sourcePermanentId} (or none) created,
+     * controlled by {@code controllerId}: it triggers only the next time its event occurs this turn (CR 603.7b), and
+     * ends with the turn if it hasn't.
+     */
+    public static TemporaryGlobalTriggeredAbility nextThisTurn(UUID controllerId, Card sourceCard,
+                                                               TriggeredAbility ability, UUID sourcePermanentId) {
+        return new TemporaryGlobalTriggeredAbility(controllerId, sourceCard, ability, null, false, false, -1, null,
+                null, sourcePermanentId, null, null, false, true);
+    }
+
+    /** Whether it triggers only once: it has no stated duration, or it is a "when you next ..." (CR 603.7b). */
+    public boolean triggersOnce() {
+        return untilTriggered || next;
     }
 
     /** Whether a turn's end removes it: it has a stated duration that ends then (CR 603.7b, 514.2). */

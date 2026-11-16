@@ -23,11 +23,11 @@ class HowlOfTheHordeTest extends BaseCardTest {
         castHowlAndResolve();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(1);
+        assertThat(pendingNextAbilityCount(player1)).isEqualTo(1);
 
         castDivinationAndResolve();
 
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
+        assertThat(pendingNextAbilityCount(player1)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
     }
 
@@ -38,11 +38,11 @@ class HowlOfTheHordeTest extends BaseCardTest {
         castHowlAndResolve();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(2);
+        assertThat(pendingNextAbilityCount(player1)).isEqualTo(2);
 
         castDivinationAndResolve();
 
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
+        assertThat(pendingNextAbilityCount(player1)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(6);
     }
 

@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.CopyNextExhaustAbilityThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -302,6 +305,24 @@ class KarnLiberatedTest extends BaseCardTest {
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
             assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
             assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
+        }
+
+        @Test
+        @DisplayName("−14 ends the delayed triggered abilities of the restarted game")
+        void restartEndsDelayedAbilities() {
+            Permanent karn = addReadyKarn(player1);
+            karn.setCounterCount(CounterType.LOYALTY, 14);
+            gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.nextThisTurn(player1.getId(),
+                    new GrizzlyBears(), new CopyNextExhaustAbilityThisTurnEffect().delayedAbility(), null));
+            gd.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(player2.getId(),
+                    new GrizzlyBears(), new CopyNextInstantOrSorceryCastThisTurnEffect().delayedAbility()));
+
+            harness.activateAbility(player1, 0, 2, null, null);
+            harness.passBothPriorities();
+
+            // The restarted game ended (CR 728.1); the new one has none of its delayed abilities.
+            assertThat(gd.status).isEqualTo(GameStatus.MULLIGAN);
+            assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
         }
 
         @Test

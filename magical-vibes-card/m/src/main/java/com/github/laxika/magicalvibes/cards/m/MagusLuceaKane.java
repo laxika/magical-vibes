@@ -6,16 +6,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyNextActivatedAbilityWithXThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyNextSpellOrAbilityWithXThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "40K", collectorNumber = "7")
 @CardRegistration(set = "40K", collectorNumber = "174")
@@ -30,8 +27,7 @@ public class MagusLuceaKane extends Card {
                 null,
                 List.of(
                         new AwardManaEffect(ManaColor.COLORLESS, 2),
-                        new CopyNextSpellCastThisTurnEffect(new CardHasXInManaCostPredicate(), Set.of()),
-                        new CopyNextActivatedAbilityWithXThisTurnEffect()),
+                        new CopyNextSpellOrAbilityWithXThisTurnEffect()),
                 "{T}: Add {C}{C}. When you next cast a spell with {X} in its mana cost or activate an ability with {X} in its activation cost this turn, copy that spell or ability. You may choose new targets for the copy."
         ));
     }

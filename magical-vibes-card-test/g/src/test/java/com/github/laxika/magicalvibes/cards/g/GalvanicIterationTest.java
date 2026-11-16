@@ -28,7 +28,7 @@ class GalvanicIterationTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(1);
+        assertThat(pendingNextAbilityCount(player1)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Galvanic Iteration");
     }
 
@@ -45,9 +45,8 @@ class GalvanicIterationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, player2.getId());
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getDescription().contains("Copy Lightning Bolt"));
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
+        assertThat(gd.stack).anyMatch(e -> copiesSpell(e, "Lightning Bolt"));
+        assertThat(pendingNextAbilityCount(player1)).isZero();
 
         // Resolve the copy trigger, which creates the copy and offers a retarget choice.
         harness.passBothPriorities();
@@ -72,7 +71,7 @@ class GalvanicIterationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(1);
+        assertThat(pendingNextAbilityCount(player1)).isEqualTo(1);
         harness.assertNotInGraveyard(player1, "Galvanic Iteration");
         assertThat(gd.exiledCards)
                 .anyMatch(entry -> "Galvanic Iteration".equals(entry.card().getName()));

@@ -34,8 +34,7 @@ class DualStrikeTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
-        assertThat(gd.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && entry.getDescription().contains("Copy Lightning Bolt"));
+        assertThat(gd.stack).anyMatch(entry -> copiesSpell(entry, "Lightning Bolt"));
 
         resolveCopyAndOriginal();
 
@@ -52,16 +51,14 @@ class DualStrikeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
-        assertThat(gd.stack).noneMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && entry.getDescription().contains("Copy Lava Axe"));
+        assertThat(gd.stack).noneMatch(entry -> copiesSpell(entry, "Lava Axe"));
         harness.passBothPriorities();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
-        assertThat(gd.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && entry.getDescription().contains("Copy Lightning Bolt"));
+        assertThat(gd.stack).anyMatch(entry -> copiesSpell(entry, "Lightning Bolt"));
 
         resolveCopyAndOriginal();
 
@@ -91,8 +88,7 @@ class DualStrikeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         assertThat(harness.getGameData().stack).anyMatch(stackEntry ->
-                stackEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && stackEntry.getDescription().contains("Copy Counsel of the Soratami"));
+                copiesSpell(stackEntry, "Counsel of the Soratami"));
     }
 
     private void castDualStrike() {

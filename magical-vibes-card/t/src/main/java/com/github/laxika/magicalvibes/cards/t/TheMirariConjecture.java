@@ -4,10 +4,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.GrantInstantSorceryCopyUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 /**
  * The Mirari Conjecture — {4}{U} Enchantment — Saga
@@ -38,6 +43,9 @@ public class TheMirariConjecture extends Card {
 
         // Chapter III: Until end of turn, whenever you cast an instant or sorcery spell,
         // copy it. You may choose new targets for the copy.
-        addTrigger(Triggers.chapter(3), new GrantInstantSorceryCopyUntilEndOfTurnEffect());
+        addTrigger(Triggers.chapter(3), new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
+                Triggers.youCastSpell().withFilter(new CardAnyOfPredicate(List.of(
+                        new CardTypePredicate(CardType.INSTANT), new CardTypePredicate(CardType.SORCERY)))),
+                new CopyTriggeringSpellEffect())));
     }
 }

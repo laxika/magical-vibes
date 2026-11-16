@@ -2,17 +2,19 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-
+/**
+ * Creates {@link CopyNextInstantOrSorceryCastThisTurnEffect#delayedAbility()}, a delayed triggered ability of the resolving spell or ability that triggers
+ * only the next time its event occurs this turn (CR 603.7b), its source and controller those of the resolving object
+ * (CR 603.7d, 603.7e).
+ */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class CopyNextInstantOrSorceryCastThisTurnEffectHandler implements NormalEffectHandlerBean {
 
     @Override
@@ -22,16 +24,9 @@ public class CopyNextInstantOrSorceryCastThisTurnEffectHandler implements Normal
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        CopyNextInstantOrSorceryCastThisTurnEffect copyEffect =
-                (CopyNextInstantOrSorceryCastThisTurnEffect) effect;
-        // One delayed triggered ability of this resolution (CR 603.7), its source the object whose ability made it
-        // (CR 603.7e).
-        gameData.addPendingSpellCopy(entry.getControllerId(), new GameData.PendingSpellCopy(entry.getCard(),
-                entry.getSourcePermanentId(), copyEffect.dynamicCopyCount() == null ? 1 : 0,
-                copyEffect.dynamicCopyCount(),
-                copyEffect.maxManaValue() == null ? java.util.List.of() : java.util.List.of(copyEffect.maxManaValue()),
-                gameData.resolutionOrdinal, null));
-        log.info("Game {} - {} will copy their next instant or sorcery spell this turn",
-                gameData.id, entry.getControllerId());
+        var copyEffect = (CopyNextInstantOrSorceryCastThisTurnEffect) effect;
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.nextThisTurn(
+                entry.getControllerId(), entry.getCard(), copyEffect.delayedAbility(), entry.getSourcePermanentId()));
+        log.info("Game {} - {} will copy their next instant or sorcery spell this turn", gameData.id, entry.getControllerId());
     }
 }

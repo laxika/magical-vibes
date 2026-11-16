@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.model.effect.CopyNextLoyaltyAbilityThisTurnEffect;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -146,6 +149,8 @@ class SpellTriggersTest {
     private TriggerCollectionService triggerCollectionService;
     @Mock
     private TriggerTargetCollector triggerTargetCollector;
+    @Mock
+    private TriggerIndex triggerIndex;
 
     @InjectMocks
     private SpellTriggers sut;
@@ -289,6 +294,37 @@ class SpellTriggersTest {
             assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.AttackTriggerTarget.class::isInstance)
                     .hasSize(1);
         }
+    }
+
+    @Test
+    @DisplayName("A \"when you next activate a loyalty ability\" delayed ability triggers on its controller's next one only")
+    void delayedActivationAbilityTriggersOnTheNextMatchingActivationOnly() {
+        Card maker = createCard("Jaya's Phoenix");
+        TemporaryGlobalTriggeredAbility next = TemporaryGlobalTriggeredAbility.nextThisTurn(player1Id, maker,
+                new CopyNextLoyaltyAbilityThisTurnEffect().delayedAbility(), null);
+        gd.temporaryGlobalTriggeredAbilities.add(next);
+        when(triggerIndex.delayedAbilities(gd))
+                .thenAnswer(invocation -> List.copyOf(gd.temporaryGlobalTriggeredAbilities));
+        Card walker = createCard("Chandra");
+        ActivatedAbility loyalty = new ActivatedAbility(1, List.of(new DrawCardEffect(1)), "+1: Draw a card.");
+        ActivatedAbility tap = new ActivatedAbility(true, null, List.of(new DrawCardEffect(1)), "{T}: Draw a card.");
+        StackEntry loyaltyEntry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, walker, player1Id,
+                "Chandra's ability", List.of(new DrawCardEffect(1)));
+
+        sut.trigger(gd, new SpellEvent.Activated(player1Id, loyaltyEntry, tap, null, player1Id, false, 0, false));
+        sut.trigger(gd, new SpellEvent.Activated(player2Id, loyaltyEntry, loyalty, null, player2Id, false, 0, false));
+        assertThat(gd.stack).isEmpty();
+
+        sut.trigger(gd, new SpellEvent.Activated(player1Id, loyaltyEntry, loyalty, null, player1Id, false, 0, false));
+        sut.trigger(gd, new SpellEvent.Activated(player1Id, loyaltyEntry, loyalty, null, player1Id, false, 0, false));
+
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getCard()).isSameAs(maker);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getTriggeringActivatedAbility()).isSameAs(loyalty);
+            assertThat(entry.isMadeByResolution()).isTrue();
+        });
+        assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
     }
 
     @Test
