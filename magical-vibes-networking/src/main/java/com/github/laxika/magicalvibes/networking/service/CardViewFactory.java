@@ -47,8 +47,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.stream.IntStream;
 
 @Service
@@ -58,6 +61,17 @@ public class CardViewFactory {
             CardSubtype.FOREST, CardSubtype.MOUNTAIN, CardSubtype.ISLAND, CardSubtype.PLAINS,
             CardSubtype.SWAMP, CardSubtype.AURA, CardSubtype.EQUIPMENT, CardSubtype.AJANI,
             CardSubtype.KOTH, CardSubtype.BOLAS);
+
+    /** Test JVMs set {@code -DverifyCardViewCache=true}: every reuse of a frozen card's view is checked against a
+     *  fresh one (see {@link #create(Card)}). */
+    private static final boolean CARD_VIEW_CACHE_VERIFIED = Boolean.getBoolean("verifyCardViewCache");
+
+    /**
+     * The views of frozen cards. A frozen card never changes (every mutator throws once it is live) and its view
+     * reads nothing but the card, so each one is built once however many state messages show it. Weakly keyed, so a
+     * card no game holds any more is let go; {@code Card} keeps {@code Object}'s identity equality.
+     */
+    private final Map<Card, CardView> frozenCardViews = Collections.synchronizedMap(new WeakHashMap<>());
 
     /**
      * Creates a CardView with additional granted subtypes merged in.
@@ -110,7 +124,28 @@ public class CardViewFactory {
         return result;
     }
 
+    /**
+     * The view of {@code card}'s own characteristics and abilities. A frozen card's view is built once and handed out
+     * again after; a card that can still change (a runtime copy before it freezes) is built every time. When the check
+     * is on, a reuse is compared against a fresh view and throws if they differ.
+     */
     public CardView create(Card card) {
+        if (!card.isFrozen()) {
+            return build(card);
+        }
+        CardView cached = frozenCardViews.get(card);
+        if (cached != null) {
+            if (CARD_VIEW_CACHE_VERIFIED && !cached.equals(build(card))) {
+                throw new IllegalStateException("The view of frozen card " + card.getName() + " changed");
+            }
+            return cached;
+        }
+        CardView built = build(card);
+        frozenCardViews.put(card, built);
+        return built;
+    }
+
+    private CardView build(Card card) {
         List<ActivatedAbilityView> abilityViews = card.getActivatedAbilities(Zone.BATTLEFIELD).stream()
                 .map(this::createAbilityView)
                 .toList();

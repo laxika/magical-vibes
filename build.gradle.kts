@@ -115,6 +115,11 @@ subprojects {
                 "verifyTargetCandidateCache",
                 System.getProperty("verifyTargetCandidateCache") ?: "true"
             )
+            // Every reuse of a frozen card's view is checked against a fresh one
+            systemProperty(
+                "verifyCardViewCache",
+                System.getProperty("verifyCardViewCache") ?: "true"
+            )
             // Forward select system properties to the forked test JVM
             listOf("runCardFuzz", "runAiStress", "fuzzGames",
                     "runScenarioFuzz", "scenarioCard", "scenarioIterations", "scenarioSeed",

@@ -137,4 +137,39 @@ class CardViewFactoryTest {
 
         assertThat(factory.create(creature).needsTarget()).isFalse();
     }
+
+    @Test
+    @DisplayName("A frozen card's view is built once and is the view a fresh build gives")
+    void frozenCardViewIsBuiltOnce() {
+        Card bear = card("Grizzly Bears", CardType.CREATURE);
+        bear.setManaCost("{1}{G}");
+        bear.freeze();
+
+        CardView first = factory.create(bear);
+
+        assertThat(factory.create(bear)).isSameAs(first);
+        assertThat(new CardViewFactory().create(bear)).isEqualTo(first);
+    }
+
+    @Test
+    @DisplayName("A card that isn't frozen yet is viewed as it is now")
+    void unfrozenCardIsViewedAsItIsNow() {
+        Card card = card("Runtime Copy", CardType.CREATURE);
+        assertThat(factory.create(card).name()).isEqualTo("Runtime Copy");
+
+        card.setName("Changed Copy");
+
+        assertThat(factory.create(card).name()).isEqualTo("Changed Copy");
+    }
+
+    @Test
+    @DisplayName("A card changed before it freezes is viewed as it was frozen")
+    void cardChangedBeforeFreezingIsViewedAsFrozen() {
+        Card card = card("Runtime Copy", CardType.CREATURE);
+        factory.create(card);
+        card.setName("Baked Copy");
+        card.freeze();
+
+        assertThat(factory.create(card).name()).isEqualTo("Baked Copy");
+    }
 }
