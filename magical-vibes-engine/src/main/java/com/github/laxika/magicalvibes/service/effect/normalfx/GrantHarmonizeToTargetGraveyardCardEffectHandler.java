@@ -51,7 +51,7 @@ public class GrantHarmonizeToTargetGraveyardCardEffectHandler implements NormalE
         }
 
         gameData.addCardEffect(entry, GrantedCardAbilityEffect.of(GrantedCardAbilityEffect.Ability.HARMONIZE),
-                targetCardId, Duration.UNTIL_END_OF_TURN);
+                targetCardId, Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN);
         gameLogService.append(gameData, GameLog.cardTextCard(
                 entry.getCard(), " grants harmonize to ", targetCard, " until end of turn."));
         log.info("Game {} - {} grants harmonize to {} until end of turn",

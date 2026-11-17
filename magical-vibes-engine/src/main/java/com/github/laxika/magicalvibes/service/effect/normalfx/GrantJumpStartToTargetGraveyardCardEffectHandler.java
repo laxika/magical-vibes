@@ -51,7 +51,7 @@ public class GrantJumpStartToTargetGraveyardCardEffectHandler implements NormalE
         }
 
         gameData.addCardEffect(entry, GrantedCardAbilityEffect.of(GrantedCardAbilityEffect.Ability.JUMP_START),
-                targetCardId, Duration.UNTIL_END_OF_TURN);
+                targetCardId, Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN);
         gameLogService.append(gameData, GameLog.cardTextCard(
                 entry.getCard(), " grants jump-start to ", targetCard, " until end of turn."));
         log.info("Game {} - {} grants jump-start to {} until end of turn",

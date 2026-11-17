@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.testutil;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -307,7 +308,7 @@ public abstract class BaseCardTest {
     /** Lets {@code playerId} play the card {@code cardId} from the graveyard until end of turn. */
     protected void grantGraveyardPlay(UUID cardId, UUID playerId) {
         gd.addFloatingEffect(FloatingContinuousEffect.onCard("Test", null, playerId,
-                new GameData.GraveyardCardPlayGrant(playerId, false), cardId, Duration.UNTIL_END_OF_TURN));
+                new GameData.GraveyardCardPlayGrant(playerId, false), cardId, Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN));
     }
 
     /**

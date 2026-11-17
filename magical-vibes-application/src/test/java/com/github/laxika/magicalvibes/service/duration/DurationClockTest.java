@@ -339,9 +339,9 @@ class DurationClockTest extends BaseCardTest {
         Card exiled = new GrizzlyBears();
         gd.addToExile(player1.getId(), exiled);
         FloatingContinuousEffect now = gd.addFloatingEffect(FloatingContinuousEffect.onCard("Test", null,
-                player1.getId(), new BoostTargetCreatureEffect(1, 1), exiled.getId(), Duration.UNTIL_END_OF_TURN));
+                player1.getId(), new BoostTargetCreatureEffect(1, 1), exiled.getId(), Zone.EXILE, Duration.UNTIL_END_OF_TURN));
         gd.addFloatingEffect(FloatingContinuousEffect.onCard("Test", null, player1.getId(),
-                new BoostTargetCreatureEffect(1, 1), exiled.getId(), Duration.AFTER_THIS_TURN));
+                new BoostTargetCreatureEffect(1, 1), exiled.getId(), Zone.EXILE, Duration.AFTER_THIS_TURN));
 
         assertThat(gd.floatingEffectsOnCard(exiled.getId(), BoostTargetCreatureEffect.class)).containsExactly(now);
         assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), BoostTargetCreatureEffect.class)).isFalse();
@@ -393,13 +393,28 @@ class DurationClockTest extends BaseCardTest {
     void cardEnteringAHandEndsEffectsOnIt() {
         Card card = new GrizzlyBears();
         gd.addFloatingEffect(FloatingContinuousEffect.onCard("Test", null, player1.getId(),
-                GrantedCardAbilityEffect.of(GrantedCardAbilityEffect.Ability.FLASHBACK), card.getId(),
+                GrantedCardAbilityEffect.of(GrantedCardAbilityEffect.Ability.FLASHBACK), card.getId(), Zone.GRAVEYARD,
                 Duration.UNTIL_END_OF_TURN));
         assertThat(gd.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.FLASHBACK)).isTrue();
 
         gd.addCardToHand(player1.getId(), card);
 
         assertThat(gd.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.FLASHBACK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A card leaving a graveyard ends only the effects on it in the graveyard, not those it got in exile")
+    void cardLeavingAZoneEndsOnlyThatZonesEffects() {
+        Card card = new GrizzlyBears();
+        FloatingContinuousEffect flashback = gd.addFloatingEffect(FloatingContinuousEffect.onCard("Test", null,
+                player1.getId(), GrantedCardAbilityEffect.of(GrantedCardAbilityEffect.Ability.FLASHBACK), card.getId(),
+                Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN));
+        gd.addToExile(player1.getId(), card);
+        FloatingContinuousEffect permission = gd.grantExilePlayPermission(card.getId(), player1.getId(),
+                Duration.PERMANENT);
+
+        assertThat(gd.endFloatingEffectsOnCard(card.getId(), Zone.GRAVEYARD)).containsExactly(flashback);
+        assertThat(gd.floatingEffects).containsExactly(permission);
     }
 
     @Test

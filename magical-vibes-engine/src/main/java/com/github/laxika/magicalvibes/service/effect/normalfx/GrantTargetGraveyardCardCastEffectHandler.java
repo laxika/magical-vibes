@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -71,7 +72,7 @@ public class GrantTargetGraveyardCardCastEffectHandler implements NormalEffectHa
         gameData.addCardEffect(entry, new GameData.GraveyardCardCastPermission(entry.getSourcePermanentId(),
                 entry.getControllerId(), false, e.exileInsteadOfGraveyard(), e.additionalGenericCost(),
                 e.anyManaType(), e.withoutPayingManaCost(), e.additionalGraveyardExileCount(), e.escape()),
-                targetCard.getId(), Duration.UNTIL_END_OF_TURN);
+                targetCard.getId(), Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " allows ", targetCard,
                 " to be cast from a graveyard."));

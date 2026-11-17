@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -72,7 +73,7 @@ public class PerpetuallyMakeRandomGraveyardPermanentFoodEffectHandler implements
             }
         }
         gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, false),
-                modifiedCard.getId(), Duration.PERMANENT);
+                modifiedCard.getId(), Zone.GRAVEYARD, Duration.PERMANENT);
     }
 
     private boolean isEligible(Card card) {

@@ -1136,7 +1136,7 @@ public class PermanentRemovalService {
         for (Card card : cards) {
             if (hand.stream().anyMatch(handCard -> handCard.getId().equals(card.getId()))) {
                 gameData.addFloatingEffect(FloatingContinuousEffect.onCard(source.getCard().getName(), source.getId(),
-                        ownerId, new CardRevealedInHandEffect(), card.getId(), Duration.UNTIL_YOUR_NEXT_TURN));
+                        ownerId, new CardRevealedInHandEffect(), card.getId(), Zone.HAND, Duration.UNTIL_YOUR_NEXT_TURN));
             }
         }
     }
@@ -1150,7 +1150,7 @@ public class PermanentRemovalService {
         for (Card card : cards) {
             if (hand.stream().anyMatch(handCard -> handCard.getId().equals(card.getId()))) {
                 gameData.addFloatingEffect(FloatingContinuousEffect.onCard(source.getCard().getName(), source.getId(),
-                        ownerId, new CardCantBePlayedFromHandEffect(), card.getId(), Duration.UNTIL_YOUR_NEXT_TURN));
+                        ownerId, new CardCantBePlayedFromHandEffect(), card.getId(), Zone.HAND, Duration.UNTIL_YOUR_NEXT_TURN));
             }
         }
     }
@@ -2054,7 +2054,7 @@ public class PermanentRemovalService {
                 if (allTracked != null) {
                     allTracked.remove(cardId);
                 }
-                gameData.endFloatingEffectsOnCard(cardId);
+                gameData.endFloatingEffectsOnCard(cardId, Zone.GRAVEYARD);
                 graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, leaving);
                 return;
             }

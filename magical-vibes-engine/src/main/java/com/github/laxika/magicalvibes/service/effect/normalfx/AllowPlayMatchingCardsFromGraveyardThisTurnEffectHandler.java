@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -39,7 +40,7 @@ public class AllowPlayMatchingCardsFromGraveyardThisTurnEffectHandler implements
             for (Card card : List.copyOf(graveyard)) {
                 if (predicateEvaluationService.matchesCardPredicate(card, permissionEffect.filter(), null)) {
                     gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, false),
-                            card.getId(), Duration.UNTIL_END_OF_TURN);
+                            card.getId(), Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN);
                 }
             }
         }

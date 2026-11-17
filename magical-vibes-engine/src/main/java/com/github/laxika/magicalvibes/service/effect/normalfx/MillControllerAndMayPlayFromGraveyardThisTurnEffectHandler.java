@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -44,7 +45,7 @@ public class MillControllerAndMayPlayFromGraveyardThisTurnEffectHandler implemen
         graveyardService.resolveMillPlayer(gameData, controllerId, 1);
 
         gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, false),
-                milledCard.getId(), Duration.UNTIL_END_OF_TURN);
+                milledCard.getId(), Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN);
 
         
         gameLogService.append(gameData, GameLog.builder().text(controllerName + " mills ").card(milledCard).text(" and may play it from their graveyard this turn.").build());

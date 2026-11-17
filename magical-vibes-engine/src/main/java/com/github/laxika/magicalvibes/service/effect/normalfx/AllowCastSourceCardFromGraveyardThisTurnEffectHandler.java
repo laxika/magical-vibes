@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -40,6 +41,6 @@ public class AllowCastSourceCardFromGraveyardThisTurnEffectHandler implements No
         }
 
         gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, false),
-                sourceCard.getId(), Duration.UNTIL_END_OF_TURN);
+                sourceCard.getId(), Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN);
     }
 }

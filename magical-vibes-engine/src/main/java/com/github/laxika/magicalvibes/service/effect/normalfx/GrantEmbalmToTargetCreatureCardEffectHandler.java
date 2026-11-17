@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -55,7 +56,7 @@ public class GrantEmbalmToTargetCreatureCardEffectHandler implements NormalEffec
         }
 
         gameData.addCardEffect(entry, GrantedCardAbilityEffect.of(GrantedCardAbilityEffect.Ability.EMBALM),
-                targetCard.getId(), Duration.UNTIL_END_OF_TURN);
+                targetCard.getId(), Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN);
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " grants embalm to ", targetCard, " until end of turn."));
         log.info("Game {} - {} grants embalm to {}", gameData.id, entry.getCard().getName(), targetCard.getName());
     }

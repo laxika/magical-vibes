@@ -634,10 +634,6 @@ public class LibraryChoiceHandlerService {
                         || destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD) {
                     exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard,
                             librarySearch.sourcePermanentId(), playerId);
-                    if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD) {
-                        // The permission is to cast the card, not to play it, so an exiled land stays unplayable.
-                        gameData.updateExilePlayPermission(chosenCard.getId(), granted -> granted.withSpellFilter(new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
-                    }
                     if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_WITH_HATCHING_COUNTER_REST_TO_BOTTOM) {
                         gameData.exiledCardsWithHatchingCounters.add(chosenCard.getId());
                         gameData.grantExileLookPermission(chosenCard.getId(), playerId);
@@ -648,6 +644,11 @@ public class LibraryChoiceHandlerService {
                     }
                     if (librarySearch.grantExilePlayPermission()) {
                         gameData.grantExilePlayPermission(chosenCard.getId(), playerId, Duration.PERMANENT);
+                        if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD) {
+                            // The permission is to cast the card, not to play it, so an exiled land stays unplayable.
+                            gameData.updateExilePlayPermission(chosenCard.getId(), granted -> granted.withSpellFilter(
+                                    new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
+                        }
                         if (librarySearch.allowAnyManaType()) {
                             gameData.updateExilePlayPermission(chosenCard.getId(), granted -> granted.withAnyManaType(true));
                         }

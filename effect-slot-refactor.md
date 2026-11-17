@@ -718,6 +718,7 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Moments moved without effect on play: Master Warcraft's attacker control ends at cleanup, not the next turn's start (CR 514.2); a phase-in when the source leaves runs in the clock's `sourceLeft`; Karn's restart drops a pending Plots That Span Centuries replacement.
 - Kept, with reasons in `scripts/duration-inventory.py` `KEPT`: per-event bookkeeping, pending choices, use counts, perpetual and per-spell riders, extra-turn attributes, the counted "skip your next …" replacements (CR 614.10).
 - Left: `DelayedAdditionalCombatBeginningEffect` (with the onlyLand/onlyPermanent/aggressive combat flags), the outside-the-game permissions, the "exile it instead" rider, `Permanent`'s 79 end-of-turn fields, and part 3's open phasing item. Then step 6.
+- Decided (user): the counted "skip your next turn / untap / draw / combat" queues (`skipNextTurnCount`, `skipNextUntapStepCount`, `skipNextDrawStepCount`, `skipNextCombatPhaseCount`) become one floating effect per resolution on the affected player, `Duration.PERMANENT`, ended as it applies: each skip is its own replacement effect (CR 614.10, 614.10a), ordered by the affected player (CR 616.1). Take them out of `KEPT` in `scripts/duration-inventory.py`.
 
 ## Prompt
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -111,10 +112,10 @@ public class ChooseCardFromGraveyardAndGrantCastPermissionEffectHandler implemen
         if (effect.withoutPayingManaCost()) {
             gameData.addCardEffect(entry, new GameData.GraveyardCardCastPermission(
                             entry.getSourcePermanentId(), controllerId, false,
-                            effect.exileInsteadOfGraveyard(), true), cardId, Duration.UNTIL_END_OF_TURN);
+                            effect.exileInsteadOfGraveyard(), true), cardId, Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN);
         } else {
             gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, false),
-                    cardId, Duration.UNTIL_END_OF_TURN);
+                    cardId, Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN);
             if (effect.exileInsteadOfGraveyard()) {
                 gameData.exileInsteadOfGraveyard.add(cardId);
             }

@@ -4990,7 +4990,8 @@ public class ChoiceHandlerService {
                 gameData.addFloatingEffect(com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect.onCard(
                         ctx.sourceCardName(), null, ctx.controllerId(),
                         new com.github.laxika.magicalvibes.model.effect.SpellColorUntilEndOfTurnEffect(chosenColor),
-                        ctx.targetId(), com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));
+                        ctx.targetId(), com.github.laxika.magicalvibes.model.Zone.STACK,
+                        com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));
                 gameLogService.append(gameData,
                         GameLog.cardThen(targetSpell.getCard(), " becomes " + colorName + " until end of turn."));
                 log.info("Game {} - spell {} becomes {} until end of turn",

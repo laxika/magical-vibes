@@ -733,7 +733,7 @@ class GameDataDeepCopyTest {
     void deepCopyPreservesUntilEndOfTurnPermissions() {
         UUID cardId = UUID.randomUUID();
         gd.addFloatingEffect(FloatingContinuousEffect.onCard("Past in Flames", null, player1.getId(),
-                GrantedCardAbilityEffect.of(GrantedCardAbilityEffect.Ability.FLASHBACK), cardId,
+                GrantedCardAbilityEffect.of(GrantedCardAbilityEffect.Ability.FLASHBACK), cardId, Zone.GRAVEYARD,
                 Duration.UNTIL_END_OF_TURN));
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Bosium Strip", null, player1.getId(),
                 new MayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurnEffect(), player1.getId(),

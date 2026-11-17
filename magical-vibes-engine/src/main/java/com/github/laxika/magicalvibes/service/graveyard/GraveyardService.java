@@ -2195,7 +2195,7 @@ public class GraveyardService {
 
     private void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, int count, List<Card> cards) {
         // A card that left the graveyard is a new object (CR 400.7): what a resolution granted it ends.
-        cards.forEach(card -> gameData.endFloatingEffectsOnCard(card.getId()));
+        cards.forEach(card -> gameData.endFloatingEffectsOnCard(card.getId(), Zone.GRAVEYARD));
         cards.forEach(card -> gameData.markGraveyardExit(card.getId()));
         // A card that left the graveyard is a new object (CR 400.7), so a later return to the graveyard
         // is not a discard or cycling made this turn.

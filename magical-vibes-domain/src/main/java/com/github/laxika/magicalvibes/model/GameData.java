@@ -4221,12 +4221,36 @@ public class GameData {
     }
 
     /**
-     * Ends every floating effect on the card {@code cardId}, begun or not, as the card leaves its zone: it becomes a
-     * new object (CR 400.7). Returns the ended effects that had begun.
+     * Ends every floating effect on the card {@code cardId}, begun or not, in whatever zone: a token that ceases to
+     * exist. Returns the ended effects that had begun.
      */
     public List<FloatingContinuousEffect> endFloatingEffectsOnCard(UUID cardId) {
         scheduledFloatingEffects.removeIf(effect -> cardId.equals(effect.affectedCardId()));
         return expireFloatingEffects(effect -> cardId.equals(effect.affectedCardId()));
+    }
+
+    /**
+     * Ends the floating effects on the card {@code cardId} in {@code zone}, begun or not, as the card leaves that
+     * zone: it becomes a new object (CR 400.7). An effect on the card in another zone stays, so a late report of the
+     * card leaving a graveyard does not end what it was given after it reached exile. Returns the ended effects that
+     * had begun.
+     */
+    public List<FloatingContinuousEffect> endFloatingEffectsOnCard(UUID cardId, Zone zone) {
+        Predicate<FloatingContinuousEffect> inZone = effect -> cardId.equals(effect.affectedCardId())
+                && zone == effect.affectedCardZone();
+        scheduledFloatingEffects.removeIf(inZone);
+        return expireFloatingEffects(inZone);
+    }
+
+    /**
+     * Ends the floating effects on the card {@code cardId} in any zone but {@code zone}, begun or not, as the card is
+     * put into {@code zone}: it left whichever zone it was in (CR 400.7). Returns the ended effects that had begun.
+     */
+    public List<FloatingContinuousEffect> endFloatingEffectsOnCardOutside(UUID cardId, Zone zone) {
+        Predicate<FloatingContinuousEffect> elsewhere = effect -> cardId.equals(effect.affectedCardId())
+                && zone != effect.affectedCardZone();
+        scheduledFloatingEffects.removeIf(elsewhere);
+        return expireFloatingEffects(elsewhere);
     }
 
     /**
@@ -4688,10 +4712,11 @@ public class GameData {
      * "it gains flashback until end of turn", "you may play that card this turn". It ends as the card leaves its zone
      * (CR 400.7).
      */
-    public FloatingContinuousEffect addCardEffect(StackEntry entry, CardEffect effect, UUID cardId, Duration duration) {
+    public FloatingContinuousEffect addCardEffect(StackEntry entry, CardEffect effect, UUID cardId, Zone zone,
+                                                  Duration duration) {
         return addFloatingEffect(FloatingContinuousEffect.onCard(
                 entry.getCard() == null ? null : entry.getCard().getName(), entry.getSourcePermanentId(),
-                entry.getControllerId(), effect, cardId, duration));
+                entry.getControllerId(), effect, cardId, zone, duration));
     }
 
     /** The newest "play this card from the graveyard" grant on the card {@code cardId}, if any. */
@@ -7499,7 +7524,7 @@ public class GameData {
     public void addCardToHand(UUID playerId, Card card) {
         card = restoreBombardmentCardForZoneChange(card);
         if (deferCommanderZoneMove(card, Zone.HAND, -1)) return;
-        endFloatingEffectsOnCard(card.getId());
+        endFloatingEffectsOnCardOutside(card.getId(), Zone.HAND);
         countersPreservedAcrossZoneChanges.remove(card.getId());
         // Returning from the graveyard makes the card a new object (CR 400.7), so graveyard permissions
         // and the exile-instead-of-graveyard replacement granted to the old object no longer apply.
@@ -8158,7 +8183,7 @@ public class GameData {
             exiledCardHitCounters.remove(cardId);
             suspendedSpellExiles.removeIf(pending -> cardId.equals(pending.cardId()));
             // Whatever it was granted while exiled ends as it leaves: it becomes a new object (CR 400.7).
-            endFloatingEffectsOnCard(cardId);
+            endFloatingEffectsOnCard(cardId, Zone.EXILE);
             // A grant that lasts for as long as its card remains exiled ends as the card leaves (CR 611.2b).
             expireFloatingEffects(fe -> Duration.WHILE_SOURCE_CARD_EXILED.equals(fe.duration())
                     && fe.effect() instanceof com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect grant
@@ -8338,7 +8363,7 @@ public class GameData {
                                                               Duration duration) {
         endExilePlayPermission(cardId);
         return addFloatingEffect(FloatingContinuousEffect.onCard(exiledCardName(cardId), sourcePermanentId,
-                controllerId, permission, cardId, duration));
+                controllerId, permission, cardId, Zone.EXILE, duration));
     }
 
     /** Changes the play permission on the exiled card (begun or not); returns whether the card has one. */
@@ -8354,7 +8379,7 @@ public class GameData {
         }
         FloatingContinuousEffect replacement = new FloatingContinuousEffect(fe.id(), fe.sourceCardName(),
                 fe.sourcePermanentId(), fe.controllerId(), updated, null, null, null, fe.duration(),
-                fe.timestamp(), false, cardId);
+                fe.timestamp(), false, cardId, Zone.EXILE);
         synchronized (scheduledFloatingEffects) {
             int index = scheduledFloatingEffects.indexOf(fe);
             if (index >= 0) {
@@ -8451,7 +8476,7 @@ public class GameData {
      */
     public void grantExileAnyManaType(UUID cardId, UUID controllerId, Duration duration) {
         addFloatingEffect(FloatingContinuousEffect.onCard(exiledCardName(cardId), null, controllerId,
-                new ExileAnyManaTypeEffect(), cardId, duration));
+                new ExileAnyManaTypeEffect(), cardId, Zone.EXILE, duration));
     }
 
     /** Lets mana of any type be spent to cast the exiled card {@code cardId} for {@code duration}. */
@@ -8475,7 +8500,7 @@ public class GameData {
             return;
         }
         addFloatingEffect(FloatingContinuousEffect.onCard(exiledCardName(cardId), null, modifier.permittedPlayerId(),
-                modifier, cardId, Duration.PERMANENT));
+                modifier, cardId, Zone.EXILE, Duration.PERMANENT));
     }
 
     /**
@@ -8489,7 +8514,7 @@ public class GameData {
             return;
         }
         addFloatingEffect(FloatingContinuousEffect.onCard(exiledCardName(cardId), null, null,
-                new ExileCastWithoutPayingManaCostEffect(), cardId, Duration.PERMANENT));
+                new ExileCastWithoutPayingManaCostEffect(), cardId, Zone.EXILE, Duration.PERMANENT));
     }
 
     /** Whether the exiled card {@code cardId} may be cast without paying its mana cost, by its permission or alone. */
@@ -8522,7 +8547,7 @@ public class GameData {
     public void grantExileLookPermission(UUID cardId, UUID viewerId) {
         if (!mayLookAtExiledCard(cardId, viewerId)) {
             addFloatingEffect(FloatingContinuousEffect.onCard(exiledCardName(cardId), null, viewerId,
-                    new ExileLookPermissionEffect(viewerId), cardId, Duration.PERMANENT));
+                    new ExileLookPermissionEffect(viewerId), cardId, Zone.EXILE, Duration.PERMANENT));
         }
     }
 
@@ -8549,7 +8574,7 @@ public class GameData {
     public void grantLukkaExileCastPermission(UUID cardId, UUID playerId) {
         endFloatingEffectsOnCard(cardId, LukkaExileCastPermissionEffect.class);
         addFloatingEffect(FloatingContinuousEffect.onCard(exiledCardName(cardId), null, playerId,
-                new LukkaExileCastPermissionEffect(playerId), cardId, Duration.PERMANENT));
+                new LukkaExileCastPermissionEffect(playerId), cardId, Zone.EXILE, Duration.PERMANENT));
     }
 
     /** The player who may cast the exiled card {@code cardId} through Lukka's permission, or {@code null}. */
@@ -8564,7 +8589,7 @@ public class GameData {
      */
     public void grantExilePlayPermissionRenewalOnLoreCounter(UUID cardId, UUID sagaPermanentId, UUID playerId) {
         addFloatingEffect(FloatingContinuousEffect.onCard(exiledCardName(cardId), sagaPermanentId, playerId,
-                new RenewExilePlayPermissionOnLoreCounterEffect(sagaPermanentId), cardId, Duration.PERMANENT));
+                new RenewExilePlayPermissionOnLoreCounterEffect(sagaPermanentId), cardId, Zone.EXILE, Duration.PERMANENT));
     }
 
     /** The exiled cards that renew their play permission as a lore counter is put on {@code sagaPermanentId}. */
@@ -8612,7 +8637,7 @@ public class GameData {
     public void grantExileCastPermission(ExileCastPermission permission) {
         addFloatingEffect(FloatingContinuousEffect.onCard(exiledCardName(permission.cardId()),
                 permission.sourcePermanentId(), permission.castingPlayerId(), permission, permission.cardId(),
-                Duration.UNTIL_END_OF_TURN));
+                Zone.EXILE, Duration.UNTIL_END_OF_TURN));
     }
 
     /** The one-card source-linked exile cast grants that apply now, oldest first. */

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameData.GraveyardCardAnimation;
@@ -44,6 +45,6 @@ public class AnimateTargetGraveyardCardEffectHandler implements NormalEffectHand
                         animation.grantedColors(),
                         Set.copyOf(animation.grantedSubtypes()),
                         animation.grantedCardTypes()),
-                targetCardId, Duration.UNTIL_END_OF_TURN);
+                targetCardId, Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN);
     }
 }

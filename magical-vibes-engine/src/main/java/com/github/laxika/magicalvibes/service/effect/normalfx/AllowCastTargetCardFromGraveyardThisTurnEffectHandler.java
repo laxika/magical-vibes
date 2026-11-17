@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -64,7 +65,7 @@ public class AllowCastTargetCardFromGraveyardThisTurnEffectHandler implements No
             // The card stays in the graveyard; the permission and the exile replacement both hold
             // until turn cleanup drops them, so the controller may cast it whenever timing allows.
             gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, permission.entersTapped()),
-                    targetCard.getId(), Duration.UNTIL_END_OF_TURN);
+                    targetCard.getId(), Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN);
             if (permission.exileInsteadOfGraveyard()) {
                 gameData.exileInsteadOfGraveyard.add(targetCard.getId());
             }

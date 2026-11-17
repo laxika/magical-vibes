@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -22,7 +23,7 @@ public class GrantWarpToChosenCardUntilEndOfTurnEffectHandler implements NormalE
         Card chosenCard = entry.getChosenObjectCard();
         if (chosenCard != null) {
             gameData.addCardEffect(entry, GrantedCardAbilityEffect.of(GrantedCardAbilityEffect.Ability.WARP),
-                    chosenCard.getId(), Duration.UNTIL_END_OF_TURN);
+                    chosenCard.getId(), Zone.HAND, Duration.UNTIL_END_OF_TURN);
         }
     }
 }

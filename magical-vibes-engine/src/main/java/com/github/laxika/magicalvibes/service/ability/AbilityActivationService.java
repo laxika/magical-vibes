@@ -2679,7 +2679,7 @@ public class AbilityActivationService {
                 com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND, List.of(card));
         if (gameData.currentStep == TurnStep.UPKEEP) {
             gameData.addFloatingEffect(FloatingContinuousEffect.onCard(card.getName(), null, playerId,
-                    new CardRevealedInHandEffect(), card.getId(), Duration.UNTIL_END_OF_UPKEEP));
+                    new CardRevealedInHandEffect(), card.getId(), Zone.HAND, Duration.UNTIL_END_OF_UPKEEP));
         }
     }
 

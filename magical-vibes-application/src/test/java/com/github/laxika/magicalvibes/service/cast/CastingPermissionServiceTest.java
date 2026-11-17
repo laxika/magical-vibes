@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -1076,7 +1077,7 @@ class CastingPermissionServiceTest {
         void perCardGrantStillWorks() {
             Card card = zombieCard();
             gd.addFloatingEffect(FloatingContinuousEffect.onCard("Test", null, player1Id,
-                    new GameData.GraveyardCardPlayGrant(player1Id, false), card.getId(), Duration.UNTIL_END_OF_TURN));
+                    new GameData.GraveyardCardPlayGrant(player1Id, false), card.getId(), Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN));
 
             assertThat(svc.hasGraveyardPlayPermission(gd, card, player1Id)).isTrue();
         }

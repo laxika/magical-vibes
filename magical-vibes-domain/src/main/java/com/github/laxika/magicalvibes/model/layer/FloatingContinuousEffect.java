@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.layer;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterConditionedControlEffect;
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfAuraAttachedPerm
 import com.github.laxika.magicalvibes.model.effect.MonarchBoundControlEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -41,6 +43,8 @@ import java.util.UUID;
  * @param affectedCardId      the single card affected outside the battlefield (a card in exile, a graveyard or a
  *                            hand), or {@code null}; the effect ends as that card leaves its zone, since the card
  *                            then becomes a new object (CR 400.7)
+ * @param affectedCardZone    the zone {@link #affectedCardId} is in as the effect applies to it, or {@code null} when
+ *                            the effect names no card; the effect ends as the card leaves that zone, not another
  */
 public record FloatingContinuousEffect(
         UUID id,
@@ -54,14 +58,15 @@ public record FloatingContinuousEffect(
         Duration duration,
         long timestamp,
         boolean expiresWhenScopeNoLongerMatches,
-        UUID affectedCardId) {
+        UUID affectedCardId,
+        Zone affectedCardZone) {
 
     public FloatingContinuousEffect(UUID id, String sourceCardName, UUID sourcePermanentId, UUID controllerId,
                                     CardEffect effect, UUID affectedPermanentId, UUID affectedPlayerId,
                                     PermanentPredicate scope, Duration duration, long timestamp,
                                     boolean expiresWhenScopeNoLongerMatches) {
         this(id, sourceCardName, sourcePermanentId, controllerId, effect, affectedPermanentId, affectedPlayerId,
-                scope, duration, timestamp, expiresWhenScopeNoLongerMatches, null);
+                scope, duration, timestamp, expiresWhenScopeNoLongerMatches, null, null);
     }
 
     public FloatingContinuousEffect(UUID id, String sourceCardName, UUID sourcePermanentId, UUID controllerId,
@@ -94,14 +99,14 @@ public record FloatingContinuousEffect(
     }
 
     /**
-     * An effect on the card {@code cardId} in a zone other than the battlefield (CR 611.2a): "you may play that card
-     * this turn", "it gains flashback until end of turn". It ends as the card leaves that zone (CR 400.7). Its
-     * timestamp is stamped as it is added.
+     * An effect on the card {@code cardId} in {@code zone}, a zone other than the battlefield (CR 611.2a): "you may
+     * play that card this turn", "it gains flashback until end of turn". It ends as the card leaves that zone
+     * (CR 400.7). Its timestamp is stamped as it is added.
      */
     public static FloatingContinuousEffect onCard(String sourceCardName, UUID sourcePermanentId, UUID controllerId,
-                                                  CardEffect effect, UUID cardId, Duration duration) {
+                                                  CardEffect effect, UUID cardId, Zone zone, Duration duration) {
         return new FloatingContinuousEffect(UUID.randomUUID(), sourceCardName, sourcePermanentId, controllerId, effect,
-                null, null, null, duration, 0, false, cardId);
+                null, null, null, duration, 0, false, cardId, Objects.requireNonNull(zone, "zone"));
     }
 
     /** Whether this effect applies to {@code playerId}: it names that player, or it names no object at all. */
@@ -129,12 +134,12 @@ public record FloatingContinuousEffect(
     public FloatingContinuousEffect withEffect(CardEffect effect) {
         return new FloatingContinuousEffect(id, sourceCardName, sourcePermanentId, controllerId,
                 effect, affectedPermanentId, affectedPlayerId, scope, duration, timestamp, expiresWhenScopeNoLongerMatches,
-                affectedCardId);
+                affectedCardId, affectedCardZone);
     }
 
     public FloatingContinuousEffect withTimestamp(long timestamp) {
         return new FloatingContinuousEffect(id, sourceCardName, sourcePermanentId, controllerId,
                 effect, affectedPermanentId, affectedPlayerId, scope, duration, timestamp, expiresWhenScopeNoLongerMatches,
-                affectedCardId);
+                affectedCardId, affectedCardZone);
     }
 }

@@ -16571,7 +16571,7 @@ public class SpellCastingService {
             GameData.GraveyardCardCastPermission capturedPermission,
             List<GameData.GraveyardCardCastPermission> capturedGrants) {
         GameData.GraveyardCardCastPermission permission = capturedPermission;
-        gameData.endFloatingEffectsOnCard(castCard.getId());
+        gameData.endFloatingEffectsOnCard(castCard.getId(), Zone.GRAVEYARD);
         List<GameData.GraveyardCardCastPermission> riders = new ArrayList<>();
         for (GameData.GraveyardCardCastPermission grant : capturedGrants) {
             if (grant.copySourceActivatedAbilities() && playerId.equals(grant.castingPlayerId())) {
