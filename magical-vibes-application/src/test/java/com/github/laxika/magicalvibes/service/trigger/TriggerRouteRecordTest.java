@@ -534,8 +534,8 @@ class TriggerRouteRecordTest extends BaseCardTest {
     }
 
     /**
-     * The watches run 17z17 added: the damage, counter, tap, zone-change, combat and step collectors the first list
-     * reaches through one trigger only, each on another of its triggers.
+     * Further watches: the damage, counter, tap, zone-change, combat and step families the first list reaches through
+     * one trigger only, each on another of its triggers.
      */
     private static List<Watch> furtherWatches() {
         return List.of(

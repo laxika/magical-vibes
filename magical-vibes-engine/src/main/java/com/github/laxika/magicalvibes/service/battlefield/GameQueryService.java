@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.DamageBonusGrant;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -2760,16 +2759,6 @@ public class GameQueryService {
             }
         }
         return state != null && state.isLosesAllAbilities();
-    }
-
-    /** Returns a graveyard card's effects in the given slot, respecting global ability loss. */
-    public List<CardEffect> getEffectiveGraveyardEffects(GameData gameData, Card card, EffectSlot slot) {
-        if (graveyardCardsHaveLostAllAbilities(gameData)) {
-            return List.of();
-        }
-        List<CardEffect> effects = new ArrayList<>(card.getEffects(slot));
-        effects.addAll(gameData.perpetualAbilityEffects(card.getId(), slot));
-        return List.copyOf(effects);
     }
 
     /**

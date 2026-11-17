@@ -45,7 +45,7 @@ public class GrantEffectToSourceUntilNextUpkeepEffectHandler implements NormalEf
         }
 
         GrantTriggeredAbilityEffect continuousGrant = new GrantTriggeredAbilityEffect(
-                grant.slot(), grant.grantedEffect(), GrantScope.SELF);
+                grant.grantedAbility(), GrantScope.SELF);
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), sourceId, entry.getControllerId(),
                 continuousGrant, sourceId, null, null,
@@ -55,7 +55,7 @@ public class GrantEffectToSourceUntilNextUpkeepEffectHandler implements NormalEf
                 .card(source.getCard())
                 .text(" gains a triggered ability until your next upkeep.")
                 .build());
-        log.info("Game {} - {} gains a {} ability until the controller's next upkeep",
-                gameData.id, source.getCard().getName(), grant.slot());
+        log.info("Game {} - {} gains a triggered ability until the controller's next upkeep",
+                gameData.id, source.getCard().getName());
     }
 }

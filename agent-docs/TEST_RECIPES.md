@@ -95,7 +95,7 @@ game, declare it.
 
 **Do NOT test Scryfall metadata** (name, type, mana cost, color, power, toughness, subtypes, keywords) — it is auto-loaded from Scryfall.
 
-**Do NOT write white-box "wiring" tests** (e.g. a `hasCorrectProperties` that constructs the card and asserts on `card.getEffects(EffectSlot.…)`, `EffectResolution.needsTarget(card)`, effect `instanceof`, or effect field values). They duplicate the behavioral tests and break on every effect refactor. Only test engine logic by observing behavior: effects, abilities, targeting, game interactions.
+**Do NOT write white-box "wiring" tests** (e.g. a `hasCorrectProperties` that constructs the card and asserts on `card.getSpellEffects()` / `getTriggeredAbilities()`, `EffectResolution.needsTarget(card)`, effect `instanceof`, or effect field values). They duplicate the behavioral tests and break on every effect refactor. Only test engine logic by observing behavior: effects, abilities, targeting, game interactions.
 
 ## Adding mana in tests
 

@@ -2,13 +2,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -337,7 +336,7 @@ public class PermanentControlSupport {
         boolean hasNativeDevour = tokenBlueprints.stream().anyMatch(blueprint ->
                 blueprint.tokenEffects() != null && blueprint.tokenEffects().stream()
                         .filter(com.github.laxika.magicalvibes.model.StaticAbility.class::isInstance)
-                        .flatMap(ability -> LegacySlots.effectsOf(ability).stream())
+                        .flatMap(ability -> AbilityEffects.effectsOf(ability).stream())
                         .anyMatch(com.github.laxika.magicalvibes.model.effect.DevourEffect.class::isInstance));
         List<com.github.laxika.magicalvibes.model.BattlefieldEntryCard> nativeEntries = new ArrayList<>();
         if (hasNativeDevour) {

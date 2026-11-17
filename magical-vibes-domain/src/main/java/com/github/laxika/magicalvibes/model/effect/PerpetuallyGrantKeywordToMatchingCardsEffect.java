@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Ability;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
@@ -18,25 +17,14 @@ public record PerpetuallyGrantKeywordToMatchingCardsEffect(
         CardPredicate graveyardFilter,
         CardPredicate libraryFilter) implements KeywordGrantingEffect {
 
-    /** The grant as the slot and effect that stand for it. */
-    public PerpetuallyGrantKeywordToMatchingCardsEffect(CardPredicate handFilter,
-                                                        PermanentPredicate permanentFilter,
-                                                        Set<Keyword> keywords,
-                                                        EffectSlot triggeredAbilitySlot,
-                                                        CardEffect triggeredAbility,
-                                                        CardPredicate graveyardFilter,
-                                                        CardPredicate libraryFilter) {
+    public PerpetuallyGrantKeywordToMatchingCardsEffect {
         keywords = Set.copyOf(keywords);
-        if ((triggeredAbilitySlot == null) != (triggeredAbility == null)) {
-            throw new IllegalArgumentException("Triggered ability slot and effect must be provided together");
-        }
-        this(handFilter, permanentFilter, keywords, LegacySlots.grant(triggeredAbilitySlot, triggeredAbility), graveyardFilter, libraryFilter);
     }
 
     public PerpetuallyGrantKeywordToMatchingCardsEffect(CardPredicate handFilter,
                                                          PermanentPredicate permanentFilter,
                                                          Set<Keyword> keywords) {
-        this(handFilter, permanentFilter, keywords, null, null, null, null);
+        this(handFilter, permanentFilter, keywords, null, null, null);
     }
 
     /** Keywords and {@code grantedAbility} for matching cards in hand and matching permanents. */
@@ -44,15 +32,7 @@ public record PerpetuallyGrantKeywordToMatchingCardsEffect(
                                                          PermanentPredicate permanentFilter,
                                                          Set<Keyword> keywords,
                                                          Ability grantedAbility) {
-        this(handFilter, permanentFilter, Set.copyOf(keywords), grantedAbility, null, null);
-    }
-
-    public PerpetuallyGrantKeywordToMatchingCardsEffect(CardPredicate handFilter,
-                                                         PermanentPredicate permanentFilter,
-                                                         Set<Keyword> keywords,
-                                                         EffectSlot triggeredAbilitySlot,
-                                                         CardEffect triggeredAbility) {
-        this(handFilter, permanentFilter, keywords, triggeredAbilitySlot, triggeredAbility, null, null);
+        this(handFilter, permanentFilter, keywords, grantedAbility, null, null);
     }
 
     @Override
@@ -65,13 +45,8 @@ public record PerpetuallyGrantKeywordToMatchingCardsEffect(
         return permanentFilter;
     }
 
-    /** The slot of {@link #grantedAbility}, or {@code null} when there is none. */
-    public EffectSlot triggeredAbilitySlot() {
-        return grantedAbility == null ? null : LegacySlots.slotOf(grantedAbility);
-    }
-
     /** The effect of {@link #grantedAbility}, or {@code null} when there is none. */
     public CardEffect triggeredAbility() {
-        return grantedAbility == null ? null : LegacySlots.effectsOf(grantedAbility).getFirst();
+        return grantedAbility == null ? null : AbilityEffects.effectsOf(grantedAbility).getFirst();
     }
 }

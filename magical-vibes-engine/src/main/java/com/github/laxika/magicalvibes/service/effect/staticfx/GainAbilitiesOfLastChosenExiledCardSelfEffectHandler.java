@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -44,14 +43,8 @@ public class GainAbilitiesOfLastChosenExiledCardSelfEffectHandler implements Sta
                     .map(gainedEffect -> linkGainedEffect(gainedEffect, link)).toList()));
         }
 
-        for (EffectSlot slot : EffectSlot.values()) {
-            for (CardEffect triggeredEffect : chosenCard.getEffects(slot)) {
-                accumulator.addGrantedEffect(new GrantTriggeredAbilityEffect(
-                        slot, triggeredEffect, GrantScope.SELF));
-            }
-        }
 
-        for (TriggeredAbility ability : chosenCard.getUnslottedTriggeredAbilities()) {
+        for (TriggeredAbility ability : chosenCard.getTriggeredAbilities()) {
 
             accumulator.addGrantedEffect(new GrantTriggeredAbilityEffect(ability, GrantScope.SELF));
 

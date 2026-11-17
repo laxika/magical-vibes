@@ -7,9 +7,9 @@ Purpose: a minimal workflow for adding cards with fewer repeated lookups and low
 1. **Reprint check** — run `grep -r --include=*.java "class CardName " magical-vibes-card/` (replace `CardName` with the PascalCase class name). If the class already exists, just add a `@CardRegistration` annotation for the new set/collector-number and stop — no new code or tests needed.
 2. Find a similar card in `CARD_PATTERN_INDEX.md` for reference.
 3. Reuse existing effects from `EFFECTS_INDEX.md`.
-4. Check `ACTIVATED_ABILITY_GUIDE.md` for constructor patterns and EffectSlot reference.
+4. Check `ACTIVATED_ABILITY_GUIDE.md` for constructor patterns and the trigger quick reference.
 5. Add card class + `@CardRegistration` in `magical-vibes-card/{letter}/` — or in `magical-vibes-card/shared/` if a card of another letter constructs it (back face, meld partner, conjure target), since letter modules can't depend on each other.
-6. Use `target(filter).addEffect(slot, effect)` for targeting spells.
+6. Use `target(filter).addSpellEffect(effect)` for a targeting spell and `target(filter).addTrigger(Triggers.x(), effect)` for a targeted triggered ability.
 7. Write focused tests extending `BaseCardTest` (provides `harness`, `player1`, `player2`, `gs`, `gqs`, `gd`). Do NOT test Scryfall metadata.
 8. Only if needed: add new effect record + `NormalEffectHandlerBean` handler (see below).
 
@@ -19,8 +19,9 @@ Purpose: a minimal workflow for adding cards with fewer repeated lookups and low
 @CardRegistration(set = "10E", collectorNumber = "000")
 public class ExampleCard extends Card {
     public ExampleCard() {
-        // For targeting spells: target(filter).addEffect(slot, effect)
-        // For non-targeting effects: addEffect(slot, effect)
+        // Spell effects: addSpellEffect(effect); targeting: target(filter).addSpellEffect(effect)
+        // Static abilities: addStaticEffect(effect)
+        // Triggered abilities: addTrigger(Triggers.x(), effects...); targeting: target(filter).addTrigger(...)
         // For multi-target: multiple target() calls, one per target
         // For activated abilities: addActivatedAbility(...)
     }
@@ -224,7 +225,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/b/src/main/java/com/github/laxika/magicalvibes/cards/b/BlightsteelColossus.java`, `magical-vibes-card/l/src/main/java/com/github/laxika/magicalvibes/cards/l/LegacyWeapon.java`
 
 - Discard-to-battlefield replacement effect ("if opponent causes you to discard this card, put it onto the battlefield instead"):
-  - `addStaticEffect(new EnterBattlefieldOnDiscardEffect())` (a replacement effect of a static ability that functions in the hand, CR 113.6m; not a trigger) — checked in `CardChoiceHandlerService` during both self-discard-choice and revealed-hand-choice flows. Only applies when `gameData.discardCausedByOpponent` is true. Filtered out from triggered ability processing in `TriggerCollectionService`. ETB triggers still fire normally.
+  - `addStaticEffect(new EnterBattlefieldOnDiscardEffect())` (a replacement effect of a static ability that functions in the hand, CR 113.6m; not a trigger) — checked in `CardChoiceHandlerService` during both self-discard-choice and revealed-hand-choice flows. Only applies when `gameData.discardCausedByOpponent` is true. ETB triggers still fire normally.
   - For the variant that enters with counters, use `new EnterBattlefieldOnDiscardEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)`; the counters are applied during battlefield entry only for the discard replacement.
   - Example: `magical-vibes-card/o/src/main/java/com/github/laxika/magicalvibes/cards/o/ObstinateBaloth.java`
 
@@ -275,7 +276,7 @@ harness.handleMayAbilityChosen(player1, true);  // or false to decline
         new MayEffect(new YourInnerEffect(), "Do the thing?"))
 ```
 
-For `ETB_TRIGGERED` and other slots, `MayEffect` also works — the resolution system handles it uniformly.
+`MayEffect` works the same way in any triggered ability (`Triggers.enters(ObjectRelation.THIS)` and the rest): the "you may" is asked as the ability resolves.
 
 ## When a new effect is actually required
 
@@ -352,7 +353,7 @@ Then do all of:
 
 Domain model classes use Lombok `@Getter`/`@Setter`. Access fields via `getFieldName()`, not `fieldName()`. For example:
 - `ActivatedAbility` → `ability.getEffects()`, `ability.getDescription()`, `ability.getManaCost()`
-- `Card` → `card.getActivatedAbilities()`, `card.getEffects(slot)`, `card.getName()`
+- `Card` → `card.getActivatedAbilities()`, `card.getSpellEffects()`, `card.getStaticEffects()`, `card.getTriggeredAbilities()`, `card.getName()`
 - `Permanent` → `perm.getAttachedTo()`, `perm.isTapped()`, `perm.getCard()`
 - `StackEntry` → `entry.getSourcePermanentId()`, `entry.getTargetId()`, `entry.getControllerId()`
 
@@ -554,7 +555,7 @@ public class BackFace extends Card {
 
 ## ConditionalEffect context reference
 
-Which engine layers support each condition. Check this before using a conditional in a new context. "Trigger Time" means the condition works as a triggered ability's intervening "if" or event condition, written as `TriggerOptions.DEFAULT.withInterveningIf(condition)` / `withEventCondition(condition)`, never as a `ConditionalEffect` around the effects. A condition that is part of the trigger event — "whenever this and at least two other creatures attack", "whenever you attack with three or more creatures", "attacks while saddled", "attacks a battle / an opponent / the monarch", "whenever all non-Wall creatures you control attack" — is `TriggerOptions.DEFAULT.withEventCondition(condition)`, judged only as the ability triggers; `withInterveningIf` is only for an "if" that immediately follows the trigger condition (CR 603.4), checked again as the ability resolves. So is a condition on which the ability exists (a Class's level, a solved Case, a Siege's mode, an unlocked door). `ConditionalEffect(condition, effect)` is the "if" of an effect, checked only as the effect resolves. A triggered ability's intervening "if" ("When/Whenever/At [trigger event], if [condition], [effect]", CR 603.4) is never a `ConditionalEffect`: write it as `TriggerOptions.DEFAULT.withInterveningIf(condition)`, which the collector checks as the ability triggers and wraps around its effects to check again as it resolves; a condition of the trigger event is `withEventCondition(condition)` (CR 603.2). An "if" anywhere else in the text ("draw a card if …", "Then if …", "If …, instead …") is a `ConditionalEffect`.
+Which engine layers support each condition. Check this before using a conditional in a new context. "Trigger Time" means the condition works as a triggered ability's intervening "if" or event condition, written as `TriggerOptions.DEFAULT.withInterveningIf(condition)` / `withEventCondition(condition)`, never as a `ConditionalEffect` around the effects. A condition that is part of the trigger event — "whenever this and at least two other creatures attack", "whenever you attack with three or more creatures", "attacks while saddled", "attacks a battle / an opponent / the monarch", "whenever all non-Wall creatures you control attack" — is `TriggerOptions.DEFAULT.withEventCondition(condition)`, judged only as the ability triggers; `withInterveningIf` is only for an "if" that immediately follows the trigger condition (CR 603.4), checked again as the ability resolves. So is a condition on which the ability exists (a Class's level, a solved Case, a Siege's mode, an unlocked door). `ConditionalEffect(condition, effect)` is the "if" of an effect, checked only as the effect resolves. A triggered ability's intervening "if" ("When/Whenever/At [trigger event], if [condition], [effect]", CR 603.4) is never a `ConditionalEffect`: write it as `TriggerOptions.DEFAULT.withInterveningIf(condition)`, which the stack door checks as the ability triggers and wraps around its effects to check again as it resolves; a condition of the trigger event is `withEventCondition(condition)` (CR 603.2). An "if" anywhere else in the text ("draw a card if …", "Then if …", "If …, instead …") is a `ConditionalEffect`.
 
 | ConditionalEffect | Static | Effect Resolution | Trigger Time |
 |---|---|---|---|

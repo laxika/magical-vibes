@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
-import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 
 import java.util.AbstractMap;
@@ -2085,10 +2084,6 @@ public class Permanent {
                 ? List.of() : List.copyOf(repeatedAdditionalCosts);
     }
 
-    public void addTemporaryTriggeredEffect(EffectSlot slot, CardEffect effect) {
-        addTemporaryAbility(LegacySlots.ability(slot, effect));
-    }
-
     /** Grants {@code ability} until end of turn. */
     public void addTemporaryAbility(Ability ability) {
         temporaryAbilities.add(ability);
@@ -2130,22 +2125,6 @@ public class Permanent {
             }
         }
         return triggered;
-    }
-
-    /** The effects in {@code slot} of the abilities granted until end of turn, end of combat or next upkeep. */
-    public List<CardEffect> getTemporaryTriggeredEffects(EffectSlot slot) {
-        List<CardEffect> effects = LegacySlots.effectsIn(temporaryAbilities, slot);
-        List<CardEffect> untilEndOfCombat = LegacySlots.effectsIn(combatAbilities, slot);
-        List<CardEffect> untilNextUpkeep = getUntilNextUpkeepTriggeredEffects(slot);
-        if (untilEndOfCombat.isEmpty() && untilNextUpkeep.isEmpty()) {
-            return effects;
-        }
-        List<CardEffect> combined = new ArrayList<>(effects.size()
-                + untilEndOfCombat.size() + untilNextUpkeep.size());
-        combined.addAll(effects);
-        combined.addAll(untilEndOfCombat);
-        combined.addAll(untilNextUpkeep);
-        return combined;
     }
 
     /**
@@ -2196,10 +2175,10 @@ public class Permanent {
      * that order.
      */
     public List<CardEffect> getTemporaryStaticEffects() {
-        List<CardEffect> effects = LegacySlots.staticEffectsIn(temporaryAbilities);
-        List<CardEffect> untilEndOfCombat = LegacySlots.staticEffectsIn(combatAbilities);
+        List<CardEffect> effects = AbilityEffects.staticEffectsIn(temporaryAbilities);
+        List<CardEffect> untilEndOfCombat = AbilityEffects.staticEffectsIn(combatAbilities);
         List<CardEffect> untilNextUpkeep = new ArrayList<>();
-        untilNextUpkeepAbilities.values().forEach(abilities -> untilNextUpkeep.addAll(LegacySlots.staticEffectsIn(abilities)));
+        untilNextUpkeepAbilities.values().forEach(abilities -> untilNextUpkeep.addAll(AbilityEffects.staticEffectsIn(abilities)));
         if (untilEndOfCombat.isEmpty() && untilNextUpkeep.isEmpty()) {
             return effects;
         }
@@ -2209,10 +2188,6 @@ public class Permanent {
         combined.addAll(untilEndOfCombat);
         combined.addAll(untilNextUpkeep);
         return combined;
-    }
-
-    public void addCombatTriggeredEffect(EffectSlot slot, CardEffect effect) {
-        addCombatAbility(LegacySlots.ability(slot, effect));
     }
 
     /** Grants {@code ability} until end of combat. */
@@ -2227,18 +2202,9 @@ public class Permanent {
         this.transformed = transformed;
     }
 
-    public void addPersistentTriggeredEffect(EffectSlot slot, CardEffect effect) {
-        addPersistentAbility(LegacySlots.ability(slot, effect));
-    }
-
     /** Grants {@code ability} indefinitely. */
     public void addPersistentAbility(Ability ability) {
         persistentAbilities.add(ability);
-    }
-
-    /** Removes the indefinitely granted abilities in {@code slot} whose effect matches {@code filter}. */
-    public void removePersistentTriggeredEffectsIf(EffectSlot slot, Predicate<CardEffect> filter) {
-        removePersistentTriggeredEffectsIf(new LegacySlotTrigger(slot), filter);
     }
 
     /**
@@ -2248,7 +2214,7 @@ public class Permanent {
     public void removePersistentTriggeredEffectsIf(Trigger trigger, Predicate<CardEffect> filter) {
         persistentAbilities.removeIf(ability -> ability instanceof TriggeredAbility triggered
                 && triggered.hasTrigger(trigger)
-                && LegacySlots.effectsOf(ability).stream().anyMatch(filter));
+                && AbilityEffects.effectsOf(ability).stream().anyMatch(filter));
     }
 
     public void addDelayedDeathEffect(CardEffect effect) {
@@ -2259,14 +2225,9 @@ public class Permanent {
         return List.copyOf(delayedDeathEffects);
     }
 
-    /** The effects in {@code slot} of the abilities granted indefinitely. */
-    public List<CardEffect> getPersistentTriggeredEffects(EffectSlot slot) {
-        return LegacySlots.effectsIn(persistentAbilities, slot);
-    }
-
     /** The effects of the static abilities granted indefinitely. */
     public List<CardEffect> getPersistentStaticEffects() {
-        return LegacySlots.staticEffectsIn(persistentAbilities);
+        return AbilityEffects.staticEffectsIn(persistentAbilities);
     }
 
     /** Removes the indefinitely granted static abilities whose effect matches {@code filter}. */
@@ -2275,24 +2236,11 @@ public class Permanent {
                 && statik.effects().stream().anyMatch(filter));
     }
 
-    public void addUntilNextUpkeepTriggeredEffect(UUID expiryPlayerId, EffectSlot slot, CardEffect effect) {
-        addUntilNextUpkeepAbility(expiryPlayerId, LegacySlots.ability(slot, effect));
-    }
-
     /** Grants {@code ability} until the next upkeep of {@code expiryPlayerId}. */
     public void addUntilNextUpkeepAbility(UUID expiryPlayerId, Ability ability) {
         untilNextUpkeepAbilities
                 .computeIfAbsent(expiryPlayerId, ignored -> new ArrayList<>())
                 .add(ability);
-    }
-
-    private List<CardEffect> getUntilNextUpkeepTriggeredEffects(EffectSlot slot) {
-        if (untilNextUpkeepAbilities.isEmpty()) {
-            return List.of();
-        }
-        List<CardEffect> effects = new ArrayList<>();
-        untilNextUpkeepAbilities.values().forEach(abilities -> effects.addAll(LegacySlots.effectsIn(abilities, slot)));
-        return effects;
     }
 
     public void clearUntilNextUpkeepTriggeredEffects(UUID expiryPlayerId) {

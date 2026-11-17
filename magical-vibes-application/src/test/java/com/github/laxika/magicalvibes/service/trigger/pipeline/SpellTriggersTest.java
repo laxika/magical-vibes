@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.service.trigger.TriggerMatchContext;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -206,8 +205,8 @@ class SpellTriggersTest {
         return new Permanent(createCard(name));
     }
 
-    private TriggerMatchContext match(Permanent perm, UUID controllerId, CardEffect effect) {
-        return new TriggerMatchContext(gd, perm, controllerId, effect);
+    private SpellTriggers.SpellMatch match(Permanent perm, UUID controllerId, CardEffect effect) {
+        return new SpellTriggers.SpellMatch(gd, perm, controllerId, perm != null ? perm.getCard() : null, null, null);
     }
 
     /** The ability of {@code trigger}, a filtered cast trigger, and {@code effects}, as the spell-cast collector judges it. */
@@ -221,7 +220,7 @@ class SpellTriggersTest {
     }
 
     /** The match of {@code ability}'s source, its first effect the matched effect. */
-    private TriggerMatchContext match(Permanent perm, UUID controllerId, CastAbility ability) {
+    private SpellTriggers.SpellMatch match(Permanent perm, UUID controllerId, CastAbility ability) {
         return match(perm, controllerId, ability.effects().getFirst());
     }
 

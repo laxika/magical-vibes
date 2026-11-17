@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import java.util.List;
 import java.util.Set;
@@ -14,8 +13,7 @@ import java.util.Set;
  * so they are carried by the copy's characteristics and inherited by later copies of it.
  *
  * <p>{@code retainedTrigger} names the triggered ability holding this effect that the copy keeps ("except it has
- * this ability"), or is {@code null} when it keeps none. A {@link LegacySlotTrigger} keeps the registration of its
- * slot that holds this effect. {@code additionalRetainedTriggers} names the other triggered abilities the copy keeps
+ * this ability"), or is {@code null} when it keeps none. {@code additionalRetainedTriggers} names the other triggered abilities the copy keeps
  * ("it has this ability and 'whenever this deals combat damage to a player, …'").
  */
 public record BecomeCopyOfTargetCreaturePermanentlyEffect(

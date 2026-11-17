@@ -42,7 +42,7 @@ public class TapOrUntapTargetPermanentEffectHandler implements NormalEffectHandl
                     new ChooseOneEffect(List.of(
                             new ChooseOneEffect.ChooseOneOption("Tap", new TapPermanentsEffect(TapUntapScope.TARGET)),
                             new ChooseOneEffect.ChooseOneOption("Untap", new UntapPermanentsEffect(TapUntapScope.TARGET)))),
-                    false, entry.getSourcePermanentId());
+                    entry.getSourcePermanentId());
             return;
         }
         // Multi-target: an unbound effect reads the whole flat target list, so a single instance

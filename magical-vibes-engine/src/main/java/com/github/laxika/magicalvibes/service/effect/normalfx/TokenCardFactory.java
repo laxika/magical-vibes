@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -116,7 +116,7 @@ final class TokenCardFactory {
         }
         if (token.tokenEffects() != null) {
             token.tokenEffects().stream()
-                    .flatMap(ability -> LegacySlots.effectsOf(ability).stream())
+                    .flatMap(ability -> AbilityEffects.effectsOf(ability).stream())
                     .filter(BandsWithOtherEffect.class::isInstance)
                     .map(BandsWithOtherEffect.class::cast)
                     .findFirst()

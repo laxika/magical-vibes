@@ -75,7 +75,6 @@ public class ForageEffectHandler implements NormalEffectHandlerBean {
                             new ChooseOneEffect.ChooseOneOption(
                                     "Exile three cards from your graveyard.", exileCards),
                             new ChooseOneEffect.ChooseOneOption("Sacrifice a Food.", sacrificeFood))),
-                    false,
                     entry.getSourcePermanentId());
             return;
         }

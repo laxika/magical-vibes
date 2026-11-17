@@ -28,7 +28,7 @@ public class PhantasmalSphere extends Card {
     public PhantasmalSphere() {
         // At the beginning of your upkeep, put a +1/+1 counter on this creature, then sacrifice
         // this creature unless you pay {1} for each +1/+1 counter on it. One sequence, so the
-        // counter lands before the payment is sized (two slot effects would be two stack entries).
+        // counter lands before the payment is sized.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new PutCountersOnSourceEffect(1, 1, 1),
                 new DestroyUnlessPaysPerCounterEffect(CounterType.PLUS_ONE_PLUS_ONE, "{1}", true)

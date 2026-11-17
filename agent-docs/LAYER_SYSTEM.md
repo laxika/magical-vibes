@@ -7,8 +7,8 @@
 > actions (`MayEffect(PregameChoiceEffect)`), and the graveyard for dredge. "Enters with" and "as this enters"
 > abilities (CR 614.1c) are static abilities too, never `Triggers.enters(ObjectRelation.THIS)`. An ability that states its
 > zones, such as Eminence, is written `addStaticEffect(AbilityZones.of(...), e)`. In a token's or a
-> copy's ability list it is `StaticAbility.of(e)`, next to `LegacySlots.triggered(EffectSlot.X, e)` for
-> a trigger. Readers use `getStaticEffects()`. There is no `EffectSlot.STATIC`.
+> copy's ability list it is `StaticAbility.of(e)`, next to `new TriggeredAbility(Triggers.x(), e)` for
+> a trigger. Readers use `getStaticEffects()`.
 
 Entry replacement checks use `LayerSystemService.beginPassWithEnteringPermanent` through `GameQueryService.hasLostPrintedAbilitiesAsEntering` to evaluate the entering permanent in a temporary layered board, without adding it to the battlefield or caching the prospective board. This allows ability-removal effects to suppress the permanent's own enters-tapped and enters-with-counters abilities.
 
@@ -17,7 +17,7 @@ Dependency-trial operations for granted abilities use their effect and cost valu
 **Summary for card-implementation sessions.** Continuous effects are resolved by a
 whole-battlefield CR 613 layered pass, not stored on permanents: `LayerSystemService` builds one
 `CharacteristicState` per permanent and applies every continuous effect — the static abilities (`getStaticEffects()`)
-slots plus `GameData.floatingEffects` — in layer (L1 copy → L2 control → L3 text → L4 types →
+plus `GameData.floatingEffects` — in layer (L1 copy → L2 control → L3 text → L4 types →
 L5 colors → L6 abilities → 7a-7d P/T), CDA-first, timestamp (CR 613.7), and dependency
 (CR 613.8, layers 4-6) order; `GameQueryService.computeStaticBonus` assembles the finished
 states into the per-permanent `StaticBonus` consumed by every query and view. The finished
@@ -202,7 +202,7 @@ whole-battlefield pass for **layers 4, 5, and 6** (`LayeredBoardState`: per-perm
 the managed-L4 replay records, the per-filter-instance layer-4 verdicts consumed per CR 613.6,
 the managed-L5/L6 effect instances, and the set of permanents whose color/ability state the
 pass touched). Layer 4 is applied with hand-written semantics as in step 4. **Layers 5 and 6**
-apply their classified instances (STATIC slots + floating effects) in CDA-first, then
+apply their classified instances (static abilities + floating effects) in CDA-first, then
 (timestamp, position) order by invoking the legacy staticfx handlers into a throwaway
 accumulator and harvesting the per-target result into the states (`applyStaticInstanceViaHandlers`
 — all scope/filter logic stays in the handlers); floating one-shots (Incite, Merfolk
@@ -299,12 +299,12 @@ only, applies ONLY when no 7b entry exists — any real setter beats it regardle
 order; cleanup debt): the AWAKENING-counter 8/8 (counters carry no timestamp; writers in
 `MultiPermanentChoiceHandlerService`). **Cleanup debt — direct `Permanent.getEffectivePower()/
 getEffectiveToughness()` callers that bypass the layered numbers** (the mana-spent-vs-P/T
-checks in `TriggerCollectionService`/`IncrementTriggerEffectHandler` were migrated to the
+checks of the trigger code were migrated to the
 layered queries in step 7): the power/toughness predicate leaves (`PredicateEvaluationService`)
 and `AmountEvaluationService` toughness-based amounts
 — **all migrated in step 16** to `GameQueryService.powerForStaticFilter`, which keeps the direct
 `Permanent` read only as the bottom tier (mid-pass, and as the cycle breaker);
-`DeathTriggerCollectorService` last-known-information power (the permanent has left the
+the trigger pipeline's last-known-information power (`TriggerMatcher`, `TriggeredAbilityStackService`) (the permanent has left the
 battlefield, so the layered pass carries no state; since step 7 this LKI read also misses an
 active 7d switch — the floating effect can't be resolved against a departed permanent), and
 `PermanentViewFactory`'s raw term (already corrected by the broadcast diff, which since step 7
@@ -349,10 +349,10 @@ recursing through AllOf/AnyOf/Not), stack-entry color predicates inside target-s
 and the wrappers `GrantEffectEffect`/`ConditionalEffect`/
 `EnchantedPermanentConditionalEffect` (recursing into what they wrap). An unchanged effect
 comes back as the SAME instance — the pass's managed/filter-verdict maps are identity-keyed.
-Wiring: (a) `LayerSystemService.collectInstances` transforms every STATIC-slot effect with its
+Wiring: (a) `LayerSystemService.collectInstances` transforms every static-ability effect with its
 source's replacements before any layer applies it; `EffectInstance` carries the transformed
 effect plus the `original`, which keys `managedL4Effects`/`l4Contributions`/`managedL56Effects`
-(the assembly looks effects up by the instance it iterates off the card's slot);
+(the assembly looks effects up by the instance it iterates off the card's static abilities);
 (b) `seedLegacyColorAndAbilityState` seeds the object's own printed protection with its
 replacements applied, plus protection tied to that object's chosen-as-enters color; (c)
 `applyTextChangesToPrintedLandTypes` applies replacements to the
@@ -362,7 +362,7 @@ setter simply overwrites the entry; (d) both handler loops in
 `GameQueryService.assembleStaticBonus` pass the transformed view to the legacy handlers (managed
 suppression still checks the original), so unmanaged outputs (7c boosts behind text-changed
 filters, self CDAs counting a text-changed land word) follow the rewritten text too;
-(e) `TriggerCollectionService` transforms each battlefield trigger with the permanent's own and
+(e) the trigger pipeline (`EventAbilitySupport`, `ZoneChangeRequests`) transforms each battlefield triggered ability with the permanent's own and
 global replacements before matching, and `dispatchSpellWatch` a cast trigger's `SpellFilter`
 (`TextChangeTransformer.transformSpellFilter`, on `Triggers.youCastSpell().withFilter(...)`'s
 `CardColorPredicate`/`CardSubtypePredicate`, recursing through card AllOf/AnyOf/Not), so it
@@ -479,7 +479,7 @@ Reasoning behind the non-obvious mappings:
   L6 + 7c (keywordless → 7c only). `AnimateNoncreatureArtifactsEffect` (March of the
   Machines) → L4 + 7b per CR 613.4: the artifact stays a creature via L4 even when a later 7b
   setter (Lignify/Diminish) overrides the MV-based base P/T.
-- **7a vs 7b.** `SetPowerToughnessToAmountEffect` from the creature's own STATIC slot is the
+- **7a vs 7b.** `SetPowerToughnessToAmountEffect` from the creature's own static ability is the
   `*/*` characteristic-defining ability → 7a with the CDA flag; anywhere else (granted,
   one-shot) → 7b. `SetBasePowerToughnessEffect` ("has base power and toughness X/Y") is
   ALWAYS 7b, even self-applied.
@@ -528,7 +528,7 @@ Reasoning behind the non-obvious mappings:
   printed abilities is a consequence of the land-type override itself (CR 305.7), not a
   separate L6 contribution. Since step 11 this is modeled concretely: every land-type setter
   (`setLandType`) marks the state `printedAbilitiesRemoved`, which kills the land's own
-  static-slot effects from layer 4 onward (§8 "Dependency" — existence).
+  static-ability effects from layer 4 onward (§8 "Dependency" — existence).
 - **Ability grants are L6 regardless of the granted ability's content**:
   `GrantEffectEffect`, `GrantActivatedAbilityEffect`, `GrantEquipByManaValueEffect` add an
   ability to the object; what that ability later does is the ability's business.
@@ -545,11 +545,11 @@ Reasoning behind the non-obvious mappings:
   Classification alone does not admit a wrapper to the pass — see `admitsConditionalWrapper`
   (§5, step 17).
 - **`AnimatePermanentsEffect` is L4** (step 17): "~ becomes a P/T creature" from an object's own
-  STATIC slot, always behind a condition today (Rusted Relic, Warden of the Wall). The creature
+  static ability, always behind a condition today (Rusted Relic, Warden of the Wall). The creature
   card type and the granted subtypes/card types are the layer-4 contribution; base P/T (7b),
   colour (5) and keywords (6) stay with the legacy self-handler in the accumulator pass — the
   same split `AllLandsAreCreaturesEffect` and `EnchantedPermanentBecomesCreatureEffect` use.
-  Outside a STATIC slot the effect is a one-shot resolution (manlands, Crew) that registers its
+  Outside a static ability the effect is a one-shot resolution (manlands, Crew) that registers its
   own floating 7b entry and never reaches classification.
 - **One-shot continuous effects** (future floating effects) are classified alongside the
   statics: copy (`BecomeCopyOfTargetCreature*`,
@@ -631,7 +631,7 @@ the dependency relation), `orderByDependency`:
    remaining instance applies next.
 
 **Existence** is modeled in the apply path itself (`staticSourceAbilitiesGone`), which is what
-the trials detect: a STATIC-slot instance is skipped when its source's state has
+the trials detect: a static-ability instance is skipped when its source's state has
 `printedAbilitiesRemoved` (set by `setLandType` as part of the L4 type change, CR 305.7 —
 checked from layer 4 onward) or `losesAllAbilities` (an L6 removal — checked from **layer 6**
 onward only: ability removal is not retroactive on layers 1-5, a changeling under a lose-all
@@ -642,7 +642,7 @@ doctrine), and a Blood-Mooned land's static grants stop entirely.
 **Exception (CR 613.6):** an effect that already started applying in an earlier layer keeps applying
 to the same objects in later layers even if its ability is removed. A card declares that a 7b setter
 and a layer-4 effect are one ability with `SetBasePowerToughnessEffect#partOfSameAbilityAs(layer4Effect)`
-(the argument is the exact instance added to the STATIC slot, e.g. the `ConditionalEffect` wrapper
+(the argument is the exact instance passed to `addStaticEffect`, e.g. the `ConditionalEffect` wrapper
 for Goddric; Graaz's "are Juggernauts ... base 5/3"). The 7b step then keeps the setter, per target,
 only where `board.hasL4Contribution(layer4Effect, target)` — ungrouped effects are unchanged. A
 grouped `ConditionalEffect(SetBasePowerToughnessEffect)` is admitted in 7b by `admitsConditionalWrapper`
@@ -748,7 +748,7 @@ authoritative per-step record; this section is the reconciled summary.
   real 7b entry beats it regardless of relative order. (`animatedUntilEndOfCombat` now also
   adds an `UNTIL_END_OF_COMBAT` floating base P/T, expired with the other end-of-combat effects.)
 - **LKI misses layered state**: a dying creature's last-known power
-  (`DeathTriggerCollectorService`) misses an active 7d switch — the departed permanent has no
+  (read by the trigger pipeline, `TriggerMatcher`/`TriggeredAbilityStackService`) misses an active 7d switch — the departed permanent has no
   state in the pass.
 - **Dependency limits** (§8): computed once per layer, not re-evaluated per application;
   blind to applicability conditions living outside `CharacteristicState`; 7b/7d and layers 1-3
@@ -808,10 +808,9 @@ protection pairs) once per damage step; the dealing loop then runs on that pre-d
 (CR 510.4 simultaneity), while casualty determination stays on live queries so it sees infect
 counters placed during the step. `GameQueryService.getEffectiveCombatDamage` also opens a scope
 internally to share one pass across its power/toughness/battlefield-scan reads.
-`TargetTriggers.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers`
-detect every becomes-the-target trigger of one targeting event inside one scope (CR 603.2: they
-all trigger on the same event). Each target runs ~20 collectors that each scan the controller's
-battlefield, so unscoped this was targets × collectors × permanents fingerprints of an O(board)
+`TargetTriggers.trigger` detects every becomes-the-target trigger of one targeting event inside
+one scope (CR 603.2: they all trigger on the same event). Each target runs a scan of the
+controller's battlefield per kind of becomes-the-target ability, so unscoped this was targets × scans × permanents fingerprints of an O(board)
 hash — a 100-target Fireball over 100 creatures spent ~20 s re-confirming an unchanged board.
 Detection writes inside the scope, but only state neither the board nor the assembly reads
 (triggered abilities on the stack, log lines, queued choices/may abilities, once-per-turn
@@ -854,19 +853,17 @@ the board changes between removals; instead each removal's read-only source scan
 watcher record, the battlefield exile replacement's ability-loss reads) open their own, as do
 `deathExileReplacementOptions` as a whole, the batch's snapshot loop (`DepartureService.perform`,
 before anything is published or removed) and the look-back reads `removePermanentToGraveyard` takes
-just before the permanent leaves (`lookBackAtDeath`). So does each death's trigger detection —
-`PermanentRemovalService.collectTriggersInScope` around the put-into-a-graveyard collectors, the
-look-back `checkCreaturePutIntoOwnersGraveyard…` call, the creature-death collectors and the
-leaves-the-battlefield collectors after the `processDelayed…` steps, and the trigger checks of
-`GraveyardService.addCardToGraveyard` (same CR 603.2 argument and write audit as
-becomes-the-target). State an assembly may read — the death counts and the
+just before the permanent leaves (`lookBackAtDeath`). So does each batch of zone-change trigger
+detection — `RulesEventPipeline` judges every observer's and moving object's ability for one batch of
+zone-change events in one scope, since matching only puts abilities through the stack door (same
+CR 603.2 argument and write audit as becomes-the-target). State an assembly may read — the death counts and the
 `graveyardLookBackExcludedCardIds` set/cleared around the look-back call — is written between those
 scopes, never inside one; the `processDelayedSacrifice…` steps stay unscoped because they can
 sacrifice permanents on the spot, and so do `removeFromBattlefield`'s last-known reads, which write
 the live permanent's `lastKnownPower` (read by `PermanentPowerDifferentFromBasePowerPredicate` while
 it is still on the battlefield) and can destroy an attached permanent on unattach. Independent of
 scopes, `assembleStaticBonusUnguarded` leaves out battlefield sources with nothing to apply — no
-printed STATIC effect, no static effect the pass granted them, no floating static grant to
+printed static effect, no static effect the pass granted them, no floating static grant to
 themselves — so a target's assembly costs the board's static sources, not its size. Which sources those are (and
 their CR 613.7 order) doesn't depend on the target, so a finished pass collects them once (`Pass.staticSources`,
 on the bonus memo's terms) and each assembly only judges what is per target: the target's controller, and so
@@ -955,7 +952,7 @@ against the aggregate fields, which stay authoritative. Pinned by `ModifierExpla
   behavior (also how the benchmark measures before/after from one build).
 - **Known gap**: mutating the one unfrozen runtime copy card in place after a query was
   cached would not invalidate (identity + printed values are hashed, added abilities only by
-  relevant effect-slot counts); today Cryptoplasm/Evil Twin exception baking happens inside the same
+  relevant ability counts); today Cryptoplasm/Evil Twin exception baking happens inside the same
   resolution as the copy swap, so no query can intervene.
 
 ### Benchmark
@@ -974,7 +971,7 @@ layered queries per permanent (96 external queries/sweep), time-boxed. 2026-07-1
 The mutating case still wins big because a sweep is 96 queries: before, every query recomputed
 the board; after, only the first query after the mutation does.
 
-2026-10-30, hashing frozen cards by identity only (no `EffectSlot` walk per card per
+2026-10-30, hashing frozen cards by identity only (no walk of each card's abilities per
 fingerprint), same build otherwise: steady state 433.9 → 753.0 sweeps/s, one tap-toggle per sweep
 351.5 → 538.0 sweeps/s.
 
@@ -1044,7 +1041,7 @@ and any deviations from this document.
    `StaticEffectHandlerRegistry` plus the one-shot continuous effects SevenLayerTest exercises
    (copy/control/text/type-loss/color/base-P/T/boost/switch). Full reasoning in the new §7
    "Classification notes"; headline calls: `StaticBoostEffect` w/ keywords → L6+7c,
-   `AnimateNoncreatureArtifactsEffect` → L4+7b, `SetPowerToughnessToAmountEffect` own-STATIC-slot
+   `AnimateNoncreatureArtifactsEffect` → L4+7b, `SetPowerToughnessToAmountEffect` own-static-ability
    → 7a CDA else 7b, Cairn-Wanderer-family self scans → L6 with a (rules-inexact, documented)
    CDA flag, wrappers delegate to their wrapped effect. Deviation from the step's plan found by
    oracle-text check: Deep Freeze's "is a blue Wall" is ADDITIVE ("in addition to its other
@@ -1059,7 +1056,7 @@ and any deviations from this document.
    Added `LayerSystemService` (engine `service/effect/`): `computeBoardState(GameData)` seeds a
    `CharacteristicState` per permanent (constructor seeding plus engine-side transient granted
    card types and transient subtypes — one-shot type state is not yet floating effects), collects
-   every L4-classified effect from STATIC slots and `gameData.floatingEffects` into uniform
+   every L4-classified effect from static abilities and `gameData.floatingEffects` into uniform
    instances (source, effect, timestamp, CDA flag; unclassified types — e.g. the conditional
    self-animations wrapping `AnimatePermanentsEffect` — are skipped and stay legacy-only), and
    applies them CDA-first then (timestamp, battlefield position) order. Real L4 semantics:
@@ -1118,7 +1115,7 @@ and any deviations from this document.
 
 5. **2026-07-10 — Step 5: first-class layers 5 (colors) and 6 (abilities).** The
    whole-battlefield pass now applies L5 and L6 with real CR 613 semantics (see the rewritten
-   §5 status note for the architecture): instances collected from STATIC slots + floating
+   §5 status note for the architecture): instances collected from static abilities + floating
    effects, CDA-first then (timestamp, position, removal-before-grant) order, static instances
    applied by invoking their legacy staticfx handlers into a throwaway accumulator and
    harvesting into `CharacteristicState` (which grew protection colors, a colors-overridden
@@ -1185,7 +1182,7 @@ and any deviations from this document.
    fallback for direct readers (list in §5) and no longer decides layered precedence.
    **Deviation:** the one-shot `SetBasePowerToughnessEffect` handlers DUAL-WRITE the legacy
    UEOT fields instead of dropping them (step-5 precedent: last-known-information reads —
-   `DeathTriggerCollectorService` — plus predicate leaves and white-box card tests read the
+   the death-trigger last-known power read — plus predicate leaves and white-box card tests read the
    fields directly; the floating instance is what drives precedence). **Animation flags
    migrated** (dual-write flag + floating 7b entry): `animatedUntilEndOfTurn`,
    `animatedUntilNextTurn`, `permanentlyAnimated` (both writers, incl. Awakener Druid's
@@ -1232,7 +1229,7 @@ and any deviations from this document.
    mana-spent-vs-P/T checks) migrated to the layered queries; the remaining direct readers
    are re-listed in the step-6 debt note with reasons (predicate leaves and
    `StaticEffectSupport` can run mid-pass, `AmountEvaluationService`'s static branch is a
-   recursion guard, `DeathTriggerCollectorService` LKI has no battlefield state — a dying
+   recursion guard, the death trigger's LKI has no battlefield state — a dying
    switched creature's LKI power now misses the switch, new debt), plus
    `PermanentViewFactory`'s raw term. **Rules adjudication** (cache + live Scryfall):
    Turtleshell Changeling is **1/4**, not the 0/4 the test setup claimed —
@@ -1267,7 +1264,7 @@ and any deviations from this document.
    `reconcileControl` additionally auto-creates missing Aura effects as the reattach safety
    net, e.g. Aura Graft), `GainControlOfEnchantedTargetEffectHandler` (PERMANENT + the
    while-enchanted condition enforced in reconcile, keyed on the wrapped effect type),
-   `TargetPlayerGainsControlOfSource`/`ClashForControl`/`DamageTriggerCollectorService`
+   `TargetPlayerGainsControlOfSource`/`ClashForControl`/the damage-trigger code
    (PERMANENT), and `GraveyardReturnSupport.trackStolenCreature` (now takes the controller,
    creates the PERMANENT effect). GameData deletions: `untilEndOfTurnStolenCreatures`
    (replaced by the derived `isStolenUntilEndOfTurn` — newest effect is UEOT AND control
@@ -1312,7 +1309,7 @@ and any deviations from this document.
    OgreGeargrabber, SleeperAgent, JinxedIdol, AdmiralBeckettBrass, SavingGrasp, Daydream,
    SirensRuse, KarnLiberated), the affected unit suites (CreatureControl, AuraAttachment,
    GainControlOfTargetEffectHandler, TurnCleanup, EndTurnEffectHandler, StackResolution,
-   DamageTriggerCollector, PermanentRemoval, PermanentTimestamp, FloatingEffectLifecycle,
+   PermanentRemoval, PermanentTimestamp, FloatingEffectLifecycle,
    Flicker, ReturnToHand, ExileUntilSourceLeaves, both graveyard-steal handlers) and the
    full AI module suite — all green.
 
@@ -1323,9 +1320,9 @@ and any deviations from this document.
    survive turns and are not copiable) now rewrite the color words, basic-land-type words,
    landwalk keywords, and filter predicates of every effect instance that source contributes,
    applied in composition order. Wiring: `LayerSystemService.collectInstances` transforms
-   STATIC-slot effects before ANY layer applies them (`EffectInstance` grew an `original` field
+   static-ability effects before ANY layer applies them (`EffectInstance` grew an `original` field
    that keys the identity-based managed/contribution maps, since the assembly iterates the
-   card's untransformed slots); the object's own printed protection is seeded transformed
+   card's untransformed abilities); the object's own printed protection is seeded transformed
    (`seedLegacyColorAndAbilityState`); the object's own printed basic land types are rewritten
    at seed time and recorded as the land-type override so a Mind Bent Forest taps for blue
    (`applyTextChangesToPrintedLandTypes` — CR 305.6; a later-timestamp L4 setter overwrites);
@@ -1406,7 +1403,7 @@ and any deviations from this document.
     apply path** (`staticSourceAbilitiesGone`): `setLandType` marks the new
     `CharacteristicState.printedAbilitiesRemoved` as part of the L4 type change (CR 305.7 —
     Blood Moon's "loses abilities" was previously modeled only as the mana-ability override),
-    killing the land's static-slot instances from L4 onward; `losesAllAbilities` kills the
+    killing the land's static-ability instances from L4 onward; `losesAllAbilities` kills the
     source's static instances from L6 onward only (not retroactive on L4/L5 — changeling
     doctrine, §3); both flags also gate the 7b static setters and, via a new per-source
     `sourceAbilitiesGone` skip in `assembleStaticBonus` (after the managed-L4 replay branch),
@@ -1685,7 +1682,7 @@ and any deviations from this document.
     type change is what the rest of the pass and the recursion-safe filter leaves have to see
     mid-pass, whereas a conditional grant landing in layers 5-7 changes nothing another layer
     reads and stays with the per-query assembly. A survey of the card pool (recorded in the
-    migration doc) found 149 STATIC-slot conditional cards using 20 of the 102 `Condition`
+    migration doc) found 149 static-ability conditional cards using 20 of the 102 `Condition`
     variants, of which only nine conditions read anything outside the fingerprint (life totals,
     `activePlayerId`, `isAttacking`/`isBlocking`, poison, library size, and four per-turn
     trackers). **C1:** the real blocker was not the wrapper skip — `LayerClassifier` already
@@ -1744,7 +1741,7 @@ and any deviations from this document.
     The engine already had the right convention: ~50 blocking/attacking/untap restriction effect
     types carry no `LayerClassifier` entry and no static handler, and are read straight off
     `addStaticEffect` by `BlockLegalityService` / `AttackLegalityService` / `UntapStepService` via
-    the fully layered `matchesPermanentPredicate`. A pool survey found 17 P/T-filtered STATIC-slot
+    the fully layered `matchesPermanentPredicate`. A pool survey found 17 P/T-filtered static-ability
     effects across 16 cards, of which Tetsuko was the **only** layer-classified one. **Change:** new
     `ControlledCreaturesMatchingCantBeBlockedEffect(PermanentPredicate filter)` (domain
     `model/effect/`), consumed by `GameQueryService.controllerMakesMatchingCreaturesUnblockable` off

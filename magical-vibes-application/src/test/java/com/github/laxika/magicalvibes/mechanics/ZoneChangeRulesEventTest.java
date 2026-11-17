@@ -26,7 +26,7 @@ import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.ShadowTriggerRecorder;
+import com.github.laxika.magicalvibes.testutil.RulesEventRecorder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -40,11 +40,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class ZoneChangeRulesEventTest extends BaseCardTest {
 
-    private ShadowTriggerRecorder recorder;
+    private RulesEventRecorder recorder;
 
     @BeforeEach
     void startRecording() {
-        recorder = harness.getShadowRecorder();
+        recorder = harness.getRulesEventRecorder();
         recorder.clear();
     }
 
@@ -340,22 +340,6 @@ class ZoneChangeRulesEventTest extends BaseCardTest {
 
         assertThat(gd.rulesEvents.pending()).isEmpty();
         assertThat(recorder.zoneChanges()).isNotEmpty();
-    }
-
-    @Test
-    void theSlotCollectorsTriggersAreRecorded() {
-        Card bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.setHand(player2, List.of());
-        harness.addToBattlefield(player2, new SoulWarden());
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-
-        assertThat(recorder.oldPath()).anySatisfy(queued ->
-                assertThat(queued.trigger().effectClasses()).isNotEmpty());
-        assertThat(recorder.differences().isEmpty()).isTrue();
     }
 
     private void castAndResolveSorcery() {

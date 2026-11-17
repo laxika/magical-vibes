@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Ability;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 
 /**
- * When resolved, grants the targeted permanent a triggered ability for the given slot.
+ * When resolved, grants the targeted permanent an ability.
  * Duration {@link EffectDuration#PERMANENT} stores it on
- * {@link com.github.laxika.magicalvibes.model.Permanent#addPersistentTriggeredEffect} (survives
+ * {@link com.github.laxika.magicalvibes.model.Permanent#addPersistentAbility} (survives
  * end-of-turn cleanup). Duration {@link EffectDuration#UNTIL_END_OF_TURN} uses
- * {@link com.github.laxika.magicalvibes.model.Permanent#addTemporaryTriggeredEffect} (cleared by
+ * {@link com.github.laxika.magicalvibes.model.Permanent#addTemporaryAbility} (cleared by
  * {@code resetModifiers()}).
  *
  * <p>Example: Balduvian Shaman grants {@code Triggers.upkeep(ActivePlayer.YOU)} +
@@ -30,50 +29,20 @@ public record GrantEffectToTargetEffect(
         GrantScope scope
 ) implements CardEffect {
 
-    /** The grant as the slot and effect that stand for it. */
-    public GrantEffectToTargetEffect(EffectSlot slot,
-                                     CardEffect grantedEffect,
-                                     EffectDuration duration,
-                                     boolean skipIfAlreadyPresent,
-                                     GrantScope scope) {
-        this(LegacySlots.grant(slot, grantedEffect), duration, skipIfAlreadyPresent, scope);
-    }
-
-    /** Indefinite grant (Balduvian Shaman). */
-    public GrantEffectToTargetEffect(EffectSlot slot, CardEffect grantedEffect) {
-        this(slot, grantedEffect, EffectDuration.PERMANENT, true);
-    }
-
-    /** The grant of {@code grantedAbility}, such as a static ability, which has no slot. */
+    /** The grant of {@code grantedAbility}. */
     public GrantEffectToTargetEffect(Ability grantedAbility) {
         this(grantedAbility, EffectDuration.PERMANENT, true);
     }
 
-    /** Grant with an explicit duration, skipping equal existing grants by default. */
-    public GrantEffectToTargetEffect(EffectSlot slot, CardEffect grantedEffect, EffectDuration duration) {
-        this(slot, grantedEffect, duration, true);
-    }
-
-    /** The grant of {@code grantedAbility}, such as a static ability, which has no slot. */
+    /** The grant of {@code grantedAbility}. */
     public GrantEffectToTargetEffect(Ability grantedAbility, EffectDuration duration) {
         this(grantedAbility, duration, true);
     }
 
-    public GrantEffectToTargetEffect(EffectSlot slot, CardEffect grantedEffect, EffectDuration duration,
-                                     boolean skipIfAlreadyPresent) {
-        this(slot, grantedEffect, duration, skipIfAlreadyPresent, GrantScope.TARGET);
-    }
-
-    /** The grant of {@code grantedAbility}, such as a static ability, which has no slot. */
+    /** The grant of {@code grantedAbility}. */
     public GrantEffectToTargetEffect(Ability grantedAbility, EffectDuration duration,
                                      boolean skipIfAlreadyPresent) {
         this(grantedAbility, duration, skipIfAlreadyPresent, GrantScope.TARGET);
-    }
-
-    /** Indefinite grant to the source permanent (Kellan, Planar Trailblazer). */
-    public static GrantEffectToTargetEffect toSourcePermanent(EffectSlot slot, CardEffect grantedEffect) {
-        return new GrantEffectToTargetEffect(slot, grantedEffect, EffectDuration.PERMANENT, true,
-                GrantScope.SELF);
     }
 
     /** Indefinite grant of {@code grantedAbility} to the source permanent. */
@@ -86,12 +55,6 @@ public record GrantEffectToTargetEffect(
         return new GrantEffectToTargetEffect(grantedAbility, duration, false, GrantScope.ENCHANTED_PERMANENT);
     }
 
-    /** Grants a triggered ability to the resolving source permanent without targeting it. */
-    public static GrantEffectToTargetEffect toSource(EffectSlot slot, CardEffect grantedEffect,
-                                                     EffectDuration duration) {
-        return new GrantEffectToTargetEffect(slot, grantedEffect, duration, true, GrantScope.SELF);
-    }
-
     /** Grants {@code grantedAbility} to the resolving source permanent without targeting it. */
     public static GrantEffectToTargetEffect toSource(Ability grantedAbility, EffectDuration duration) {
         return new GrantEffectToTargetEffect(grantedAbility, duration, true, GrantScope.SELF);
@@ -102,13 +65,8 @@ public record GrantEffectToTargetEffect(
         return scope == GrantScope.TARGET ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
     }
 
-    /** The slot of {@link #grantedAbility}, or {@code null} when there is none. */
-    public EffectSlot slot() {
-        return grantedAbility == null ? null : LegacySlots.slotOf(grantedAbility);
-    }
-
     /** The effect of {@link #grantedAbility}, or {@code null} when there is none. */
     public CardEffect grantedEffect() {
-        return grantedAbility == null ? null : LegacySlots.effectsOf(grantedAbility).getFirst();
+        return grantedAbility == null ? null : AbilityEffects.effectsOf(grantedAbility).getFirst();
     }
 }

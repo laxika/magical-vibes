@@ -25,7 +25,7 @@ public class VesuvanDoppelganger extends Card {
                 new PermanentIsCreaturePredicate(), "creature", Set.of(),
                 List.of(
                         new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), 
-                        new BecomeCopyOfTargetCreatureEffect(null, false, true))),
+                        new BecomeCopyOfTargetCreatureEffect(false, true))),
                 false
         ));
     }

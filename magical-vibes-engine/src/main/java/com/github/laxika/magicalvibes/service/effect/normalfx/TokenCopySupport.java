@@ -9,11 +9,10 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -1118,15 +1117,7 @@ public class TokenCopySupport {
         tokenCard.addCastingCostsAndSpellEffectsFrom(sourceCard,
                 copied -> !hasPTOverride || !copied.isPowerToughnessDefining());
         tokenCard.addStaticAbilitiesFrom(sourceCard, copied -> !hasPTOverride || !copied.isPowerToughnessDefining());
-        for (EffectSlot slot : EffectSlot.values()) {
-            for (EffectRegistration registration : sourceCard.getEffectRegistrations(slot)) {
-                if (hasPTOverride && registration.effect().isPowerToughnessDefining()) {
-                    continue;
-                }
-                tokenCard.addEffect(slot, registration.effect());
-            }
-        }
-        for (TriggeredAbility ability : sourceCard.getUnslottedTriggeredAbilities()) {
+        for (TriggeredAbility ability : sourceCard.getTriggeredAbilities()) {
             if (!hasPTOverride || ability.effects().stream()
                     .noneMatch(registration -> registration.effect().isPowerToughnessDefining())) {
                 tokenCard.addTriggeredAbility(ability);
@@ -1141,23 +1132,11 @@ public class TokenCopySupport {
                 if (deathGrantsOnPermanent && isDeathAbility(ability)) {
                     continue;
                 }
-                if (ability instanceof TriggeredAbility triggered && LegacySlots.slotOf(ability) == null) {
-                    if (triggered.conditions().stream().anyMatch(condition -> condition.trigger()
-                            instanceof com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger move
-                            && !move.ownEntry() || condition.trigger()
-                            instanceof com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger)) {
-                        // The trigger pipeline puts a zone-change or permanent-change ability on the stack as one
-                        // object of its own (CR 603.3).
-                        tokenCard.addTriggeredAbility(triggered);
-                        continue;
-                    }
+                if (ability instanceof TriggeredAbility triggered) {
                     // The token's added abilities are its own objects on the stack, as every triggered ability is,
                     // not part of the copied card's abilities (CR 603.3).
                     tokenCard.addTriggeredAbility(triggered);
-                    continue;
                 }
-                EffectSlot slot = LegacySlots.slotOf(ability);
-                LegacySlots.effectsOf(ability).forEach(additionalEffect -> tokenCard.addEffect(slot, additionalEffect));
             }
         }
         for (ActivatedAbility ability : sourceCard.getActivatedAbilities(Zone.BATTLEFIELD)) {
@@ -1166,7 +1145,7 @@ public class TokenCopySupport {
         tokenCard.copyTargetingFrom(sourceCard);
         if (targetingSourceCard != null && effect.additionalAbilities() != null) {
             List<CardEffect> additionalEffects = effect.additionalAbilities().stream()
-                    .flatMap(ability -> LegacySlots.effectsOf(ability).stream()).toList();
+                    .flatMap(ability -> AbilityEffects.effectsOf(ability).stream()).toList();
             tokenCard.appendSpellTargetingForEffectsFrom(targetingSourceCard, additionalEffects);
         }
         return tokenCard;

@@ -34,7 +34,7 @@ public class ChooseOneAtResolutionEffectHandler implements NormalEffectHandlerBe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var choice = withoutImpossibleCounterRemovals(gameData, entry, ((ChooseOneAtResolutionEffect) effect).choice());
         playerInputService.beginChooseModeChoice(gameData, entry.getControllerId(), entry.getCard(),
-                choice, false, entry.getSourcePermanentId());
+                choice, entry.getSourcePermanentId());
     }
 
     private ChooseOneEffect withoutImpossibleCounterRemovals(GameData gameData, StackEntry entry,

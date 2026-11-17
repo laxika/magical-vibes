@@ -203,7 +203,7 @@ public class GameTestHarness {
     private final UntapStepService untapStepService;
     private final DeclaredEtbTargets declaredEtbTargets;
     private final DeclaredDivisions declaredDivisions;
-    private final ShadowTriggerRecorder shadowRecorder;
+    private final RulesEventRecorder rulesEventRecorder;
 
     public GameTestHarness() {
         initServices();
@@ -267,16 +267,12 @@ public class GameTestHarness {
         this.declaredEtbTargets = new DeclaredEtbTargets(gameData, gameService, targetLegalityService,
                 GameTestEngineContext.get().getBean(ETBTokenTargetService.class), List.of(player1, player2));
         this.declaredDivisions = new DeclaredDivisions(gameData, gameService, List.of(player1, player2));
-        this.shadowRecorder = ShadowTriggerRecorder.attach(gameData);
+        this.rulesEventRecorder = RulesEventRecorder.attach(gameData);
     }
 
-    /**
-     * The shadow recorder watching this game: the rules events it emits and the triggered abilities the slot
-     * collectors queue. {@code BaseCardTest} fails a test whose two trigger paths disagree for the families its
-     * {@link ShadowComparison} covers.
-     */
-    public ShadowTriggerRecorder getShadowRecorder() {
-        return shadowRecorder;
+    /** The recorder watching this game: the rules events it emits, and the triggered abilities it hands the ledger. */
+    public RulesEventRecorder getRulesEventRecorder() {
+        return rulesEventRecorder;
     }
 
     /**

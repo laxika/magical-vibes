@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.trigger.DamageTrigger;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -45,7 +44,6 @@ import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.StepEvent;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
-import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
@@ -480,16 +478,6 @@ final class TriggerMatcher {
     }
 
     /**
-     * Whether {@code event} meets the trigger {@code effect}, a registration in {@code slot}, will have once its
-     * family moves ({@link LegacySlotTriggers}), functioning from that trigger's default zones.
-     */
-    static boolean matchesAsMoved(EffectSlot slot, CardEffect effect, TriggerCandidate candidate,
-                                  ZoneChangeEvent event) {
-        ZoneChangeTrigger trigger = LegacySlotTriggers.of(slot, effect);
-        return trigger != null && matches(trigger, trigger.defaultZones().functionsIn(candidate.zone()), event);
-    }
-
-    /**
      * Whether a static ability such as Hushbringer's keeps {@code event}, a creature dying, from triggering the
      * ability. It doesn't keep "when you sacrifice this" from triggering.
      */
@@ -506,23 +494,6 @@ final class TriggerMatcher {
         return false;
     }
 
-    /** {@link #suppressed} for a slot registration, with the trigger it will have once its family moves. */
-    static boolean suppressedAsMoved(EffectSlot slot, CardEffect effect, ZoneChangeEvent event) {
-        ZoneChangeTrigger trigger = LegacySlotTriggers.of(slot, effect);
-        return event.died() && event.deathTriggersSuppressed() && trigger != null
-                && !trigger.causes().contains(ZoneChangeCause.SACRIFICE);
-    }
-
-    /** The slot of a candidate whose ability is still held in one, or {@code null}. */
-    static EffectSlot legacySlot(TriggerCandidate candidate) {
-        return candidate.ability().conditions().getFirst().trigger() instanceof LegacySlotTrigger legacy
-                ? legacy.slot() : null;
-    }
-
-    private static boolean matches(ZoneChangeTrigger trigger, boolean functions, ZoneChangeEvent event) {
-        return functions && trigger.relation() == ObjectRelation.THIS
-                && trigger.matchesMove(event.from(), event.to(), event.cause());
-    }
     /**
      * How {@code event}, a step or phase beginning, meets one of the candidate's step trigger conditions, or
      * {@code null} when it meets none: the player whose step it is relates to the ability's controller (or to what

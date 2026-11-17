@@ -243,9 +243,9 @@ rewriting `LayeredBoardCacheTest.conditionalStaticGrantsToggleWithoutInvalidatin
 
 - [x] C0 decided and recorded here.
 
-#### Survey: conditions in STATIC slots (2026-07-31)
+#### Survey: conditions in static abilities (2026-07-31)
 
-149 card classes construct a conditional wrapper in an `addStaticEffect` slot, using **20 of
+149 card classes construct a conditional wrapper in an `addStaticEffect` call, using **20 of
 the 102** `Condition` variants. Of those 20, only these read state the fingerprint does **not**
 cover — everything else is admissible as far as staleness goes:
 
@@ -289,7 +289,7 @@ nothing else can reach it yet — list them when C2 widens admission past layer 
       now-inaccurate notes on `classifyOrNull` and `computeBoardFingerprint`.
 
 **Scope actually admitted:** `admitsConditionalWrapper` requires layer 4 **and** a stable
-condition, so of the 149 STATIC-slot conditional cards exactly **one** enters the pass —
+condition, so of the 149 static-ability conditional cards exactly **one** enters the pass —
 `Rusted Relic`. `Warden of the Wall` is the only other conditional self-animation, but its
 `NotControllerTurn` reads `activePlayerId`, so it stays legacy-only with today's behavior.
 
@@ -330,7 +330,7 @@ The engine already models every other blocking/attacking/untap restriction this 
 effect types carry **no** `LayerClassifier` entry and no static handler, and are read straight off
 `addStaticEffect` by `BlockLegalityService` / `AttackLegalityService` / `UntapStepService` using
 the fully layered `matchesPermanentPredicate`. A survey of the pool found **17 P/T-filtered
-STATIC-slot effects across 16 cards, of which Tetsuko was the only layer-classified one** — it
+static-ability effects across 16 cards, of which Tetsuko was the only layer-classified one** — it
 reached layer 6 solely because it was written as `GrantEffectEffect(CantBeBlockedEffect, …)`.
 
 **Fix:** new `ControlledCreaturesMatchingCantBeBlockedEffect(PermanentPredicate filter)`

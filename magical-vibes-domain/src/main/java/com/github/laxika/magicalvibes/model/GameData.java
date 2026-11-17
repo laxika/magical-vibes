@@ -34,7 +34,6 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import java.time.LocalDateTime;
@@ -104,18 +103,12 @@ public class GameData {
     public final RulesEventLog rulesEvents = new RulesEventLog(this::rulesEventBatchClosed,
             this::resolvingControllerForRulesEvents);
     /**
-     * Test-only watcher of rules events and of the triggered abilities collectors queue (the shadow recorder);
+     * Test-only watcher of rules events and of the triggered abilities put toward the stack (the rules event recorder);
      * {@code null} in real games and never copied into simulations.
      */
     public RulesObserver rulesObserver;
     /** The engine's trigger pipeline, handed every rules event batch as it closes; set at game setup. */
     private transient volatile BiConsumer<GameData, RulesEventBatch> rulesEventListener;
-    /**
-     * The slot whose collector is putting triggered abilities toward the stack right now, and the effect it is
-     * dispatching, or {@code null}s. Only {@link #rulesObserver} reads them, to tell which family an old-path
-     * trigger belongs to and which effect it was before the collector rewrote it.
-     */
-    private transient CollectingTrigger collectingTrigger;
     /**
      * The record of a trigger event on its way to the triggered ability it belongs to: the entry the ability's
      * collector builds for an ability that chooses nothing ({@link #handOffTriggerRecord}), taken once by whatever
@@ -8125,7 +8118,7 @@ public class GameData {
     /** Reports a triggered ability (or the question leading to one) put on {@code route} to {@link #rulesObserver}. */
     public void observeTrigger(RulesObserver.Route route, Object item) {
         if (rulesObserver != null && !rulesEvents.isSuppressed()) {
-            rulesObserver.triggerQueued(route, item, collectingTrigger);
+            rulesObserver.triggerQueued(route, item);
         }
     }
 
@@ -8139,27 +8132,6 @@ public class GameData {
         if (listener != null) {
             listener.accept(this, batch);
         }
-    }
-
-    /**
-     * What a slot collector is collecting, for {@link #rulesObserver}: its slot, the effect it dispatches and the
-     * card whose ability that is ({@code null}s for a collector that doesn't dispatch one effect at a time).
-     */
-    public record CollectingTrigger(EffectSlot slot, CardEffect effect, Card sourceCard) {
-    }
-
-    /**
-     * Marks what a slot collector is about to queue triggered abilities for, and returns the previous mark (or
-     * {@code null}) for {@link #endCollectingTrigger}.
-     */
-    public CollectingTrigger beginCollectingTrigger(CollectingTrigger collecting) {
-        CollectingTrigger previous = collectingTrigger;
-        collectingTrigger = collecting;
-        return previous;
-    }
-
-    public void endCollectingTrigger(CollectingTrigger previous) {
-        collectingTrigger = previous;
     }
 
     /**
@@ -11477,34 +11449,15 @@ public class GameData {
         from.forEach((key, grants) -> to.put(key, new CopyOnWriteArrayList<>(grants)));
     }
 
-    /**
-     * Perpetually grants the card {@code cardId} the ability that {@code effect} in {@code slot}
-     * stands for. Each grant is its own instance of the ability (CR 113.2c), so a repeated grant
-     * stacks.
-     */
-    public void grantPerpetualAbility(UUID cardId, EffectSlot slot, CardEffect effect) {
-        grantPerpetualAbility(cardId, LegacySlots.ability(slot, effect));
-    }
-
     /** Perpetually grants the card {@code cardId} {@code ability}; a repeated grant stacks (CR 113.2c). */
     public void grantPerpetualAbility(UUID cardId, Ability ability) {
         perpetualTriggeredAbilityGrants.merge(cardId, List.of(ability), GameData::concatAbilities);
-    }
-
-    /** Like {@link #grantPerpetualAbility}, but does nothing when the card already has an equal grant. */
-    public void grantPerpetualAbilityOnce(UUID cardId, EffectSlot slot, CardEffect effect) {
-        grantPerpetualAbilityOnce(cardId, LegacySlots.ability(slot, effect));
     }
 
     /** Like {@link #grantPerpetualAbility(UUID, Ability)}, but does nothing when the card already has an equal grant. */
     public void grantPerpetualAbilityOnce(UUID cardId, Ability ability) {
         perpetualTriggeredAbilityGrants.merge(cardId, List.of(ability),
                 (existing, added) -> existing.contains(ability) ? existing : concatAbilities(existing, added));
-    }
-
-    /** Removes the perpetual grants of the card {@code cardId} in {@code slot} whose effect matches {@code filter}. */
-    public void removePerpetualAbilitiesIf(UUID cardId, EffectSlot slot, Predicate<CardEffect> filter) {
-        removePerpetualAbilitiesIf(cardId, new LegacySlotTrigger(slot), filter);
     }
 
     /**
@@ -11515,7 +11468,7 @@ public class GameData {
         perpetualTriggeredAbilityGrants.computeIfPresent(cardId, (ignored, existing) -> {
             List<Ability> kept = existing.stream()
                     .filter(ability -> !(ability instanceof TriggeredAbility triggered && triggered.hasTrigger(trigger))
-                            || LegacySlots.effectsOf(ability).stream().noneMatch(filter))
+                            || AbilityEffects.effectsOf(ability).stream().noneMatch(filter))
                     .toList();
             return kept.isEmpty() ? null : kept;
         });
@@ -11524,11 +11477,6 @@ public class GameData {
     /** The perpetual grants of the card {@code cardId}, in grant order. */
     public List<Ability> perpetualAbilities(UUID cardId) {
         return perpetualTriggeredAbilityGrants.getOrDefault(cardId, List.of());
-    }
-
-    /** The effects in {@code slot} of the perpetual grants of the card {@code cardId}, in grant order. */
-    public List<CardEffect> perpetualAbilityEffects(UUID cardId, EffectSlot slot) {
-        return LegacySlots.effectsIn(perpetualAbilities(cardId), slot);
     }
 
     /**
@@ -11547,7 +11495,7 @@ public class GameData {
 
     /** The effects of the static abilities perpetually granted to the card {@code cardId}, in grant order. */
     public List<CardEffect> perpetualStaticEffects(UUID cardId) {
-        return LegacySlots.staticEffectsIn(perpetualAbilities(cardId));
+        return AbilityEffects.staticEffectsIn(perpetualAbilities(cardId));
     }
 
     private static List<Ability> concatAbilities(List<Ability> existing, List<Ability> added) {

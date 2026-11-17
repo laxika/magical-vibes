@@ -1,7 +1,7 @@
 # Cast-Cost Modification Handlers (`costmod`)
 
-One-shot reductions use `ReduceCastCostForNextSpellOfTypesThisTurnEffect` when the spell types are sufficient; its normal-effect handler evaluates the dynamic amount when it resolves, stores a pending player-scoped reduction, and `CastingCostService` exposes it only while computing the next matching spell. `ReduceCastCostForNextMatchingSpellEffect` supports arbitrary card predicates; its ordinary dynamic amounts are evaluated at cast time, while `EventValue` amounts are snapshotted when the one-shot effect resolves. Its `faceDownOnly` form ignores face-up casts and remains pending until a matching face-down spell is cast. `GameData.recordSpellCast` consumes type-based reductions after a successful matching cast; matching-predicate floating reductions are consumed by `TriggerCollectionService` when the spell is cast.
-`IncreaseCastCostForNextMatchingSpellEffect` is the targeted tax counterpart: its normal-effect handler captures the selected player in a floating modifier, and its battlefield cost handler contributes the generic increase only to that player's next matching spell. `TriggerCollectionService` consumes it after the matching cast.
+One-shot reductions use `ReduceCastCostForNextSpellOfTypesThisTurnEffect` when the spell types are sufficient; its normal-effect handler evaluates the dynamic amount when it resolves, stores a pending player-scoped reduction, and `CastingCostService` exposes it only while computing the next matching spell. `ReduceCastCostForNextMatchingSpellEffect` supports arbitrary card predicates; its ordinary dynamic amounts are evaluated at cast time, while `EventValue` amounts are snapshotted when the one-shot effect resolves. Its `faceDownOnly` form ignores face-up casts and remains pending until a matching face-down spell is cast. `GameData.recordSpellCast` consumes type-based reductions after a successful matching cast; matching-predicate floating reductions are consumed by `SpellEvents.cast` when the spell is cast.
+`IncreaseCastCostForNextMatchingSpellEffect` is the targeted tax counterpart: its normal-effect handler captures the selected player in a floating modifier, and its battlefield cost handler contributes the generic increase only to that player's next matching spell. `SpellEvents.cast` consumes it after the matching cast.
 
 `ReduceColoredCastCostForMatchingSpellsEffectHandler` handles battlefield reductions that remove
 only matching colored components from a spell's mana cost. Unmatched colored reduction does not
@@ -275,7 +275,7 @@ another player's dash costs.
 
 Temporary reductions are represented by `ReduceCastCostForMatchingSpellsUntilEndOfTurnEffect`, whose normal-effect handler adds the existing `ReduceCastCostForMatchingSpellsEffect` as an until-end-of-turn floating effect. `CastingCostService` includes active floating cost modifiers in its snapshot so preview and payment use the same result.
 
-One-shot reductions use `ReduceCastCostForNextMatchingSpellEffect`; its floating effect remains visible to both cost previews and payment, then `TriggerCollectionService` removes it after the controller casts a matching spell (or during end-of-turn cleanup if unused).
+One-shot reductions use `ReduceCastCostForNextMatchingSpellEffect`; its floating effect remains visible to both cost previews and payment, then `SpellEvents.cast` removes it after the controller casts a matching spell (or during end-of-turn cleanup if unused).
 
 **First check whether it's a spell-self reduction** ("this spell costs {N} less to cast …"). If so,
 use `ReduceOwnCastCostEffect(DynamicAmount)` for generic mana, or

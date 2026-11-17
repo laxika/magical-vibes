@@ -4,10 +4,9 @@ import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StaticAbility;
@@ -220,16 +219,10 @@ public class TurnFaceUpCopyService {
                         .forEach(additional -> copiedCard.addStaticEffect(statik.zones(), additional));
                 continue;
             }
-            if (ability instanceof TriggeredAbility triggered && LegacySlots.slotOf(ability) == null) {
-                if (!copiedCard.getTriggeredAbilities().contains(triggered)) {
-                    copiedCard.addTriggeredAbility(triggered);
-                }
-                continue;
+            if (ability instanceof TriggeredAbility triggered
+                    && !copiedCard.getTriggeredAbilities().contains(triggered)) {
+                copiedCard.addTriggeredAbility(triggered);
             }
-            EffectSlot slot = LegacySlots.slotOf(ability);
-            LegacySlots.effectsOf(ability).stream()
-                    .filter(additional -> !copiedCard.getEffects(slot).contains(additional))
-                    .forEach(additional -> copiedCard.addEffect(slot, additional));
         }
     }
 

@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.trigger.CounterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.DamageTrigger;
 import com.github.laxika.magicalvibes.model.trigger.DayNightTrigger;
 import com.github.laxika.magicalvibes.model.trigger.FinalChapterTrigger;
-import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LibraryTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LifeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectActionTrigger;
@@ -47,11 +46,8 @@ import java.util.UUID;
  * effects. Each time it triggers it is one object on the stack (CR 603.3).
  *
  * @param conditions the trigger conditions, at least one; the ability triggers when any of them is
- *                   met ("When this creature enters or attacks"). A {@link LegacySlotTrigger} is the
- *                   only condition of its ability.
- * @param options    the intervening "if", limit and multiplicity. An ability with a
- *                   {@link LegacySlotTrigger} gets these from its slot's collectors and wrapper
- *                   effects instead, so its options are {@link TriggerOptions#DEFAULT}.
+ *                   met ("When this creature enters or attacks").
+ * @param options    the intervening "if", limit and multiplicity.
  * @param effects    the effects in the order they resolve, at least one. Effects marked simultaneous
  *                   happen at the same time as the effect before them, so the first one can't be.
  * @param chapterTargets the targets of a Saga chapter ability, or {@link SagaChapterTargets#NONE}.
@@ -91,15 +87,6 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         }
         if (effects.getFirst().simultaneousWithPrevious()) {
             throw new IllegalArgumentException("The first effect of a triggered ability has no effect before it");
-        }
-        if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof LegacySlotTrigger)) {
-            if (conditions.size() > 1) {
-                throw new IllegalArgumentException("A legacy slot trigger is the only condition of its ability");
-            }
-            if (!options.equals(TriggerOptions.DEFAULT)) {
-                throw new IllegalArgumentException("A legacy slot trigger takes its options from its slot's "
-                        + "collectors and wrapper effects, not from TriggerOptions");
-            }
         }
         requireReadableMultiplicity(conditions, options.multiplicity());
         if (!options.equals(TriggerOptions.DEFAULT)
@@ -263,8 +250,8 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     }
 
     /**
-     * Whether {@code trigger} is one of step 13's family 11 (a player or keyword action, control change, attach,
-     * day and night, state or planar trigger), whose collectors read no "one or more", as
+     * Whether {@code trigger} is a player or keyword action, control change, attach, day and night, state or planar
+     * trigger, whose matchers read no "one or more", as
      * {@link #requireReadableMultiplicity} says.
      */
     private static boolean isFamilyElevenTrigger(Trigger trigger) {
@@ -419,9 +406,8 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
 
     /**
      * This ability's registrations in the form the "when this enters" collector ({@code EtbTriggerService}) and the
-     * code inspecting a card's enters abilities read them, until step 15 of effect-slot-refactor.md makes the effects
-     * read the event: the intervening "if" a {@link ConditionalEffect} of it around each effect, so it is checked again
-     * as the ability resolves (CR 603.4). The collector judges the intervening "if" and the event condition as the
+     * code inspecting a card's enters abilities read them: the intervening "if" a {@link ConditionalEffect} of it
+     * around each effect, so it is checked again as the ability resolves (CR 603.4). The collector judges the intervening "if" and the event condition as the
      * ability triggers (CR 603.2), and the limit ({@link #limitKey()}), from the ability's options. An ability without
      * an intervening "if" returns its registrations as they are. Throws for an ability without a "when this enters"
      * condition ({@link #hasOwnEntry()}), whose collectors read the ability itself.

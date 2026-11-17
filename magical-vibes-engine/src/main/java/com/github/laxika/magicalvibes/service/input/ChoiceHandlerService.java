@@ -4522,14 +4522,14 @@ public class ChoiceHandlerService {
         if (chosenLabels.size() < ctx.effect().choicesRequired()) {
             gameData.interaction.clearAwaitingInput();
             playerInputService.beginChooseModeChoice(gameData, ctx.controllerId(), ctx.sourceCard(), ctx.effect(),
-                    ctx.triggerTime(), ctx.sourcePermanentId(), chosenLabels);
+                    ctx.sourcePermanentId(), chosenLabels);
             return;
         }
         if (ctx.effect().variableModeCount() && chosenLabels.size() < ctx.effect().choicesMax()
                 && !ChooseOneEffect.FINISH_MODE_SELECTION.equals(chosenLabel)) {
             gameData.interaction.clearAwaitingInput();
             playerInputService.beginChooseModeChoice(gameData, ctx.controllerId(), ctx.sourceCard(), ctx.effect(),
-                    ctx.triggerTime(), ctx.sourcePermanentId(), chosenLabels);
+                    ctx.sourcePermanentId(), chosenLabels);
             return;
         }
 

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -168,12 +167,7 @@ public class EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEf
                     && grant.scope() == GrantScope.SELF && grant.filter() == null;
             return !definesColor && !definesTypes;
         });
-        for (EffectSlot slot : EffectSlot.values()) {
-            for (var registration : original.getEffectRegistrations(slot)) {
-                copy.addEffect(slot, registration.effect());
-            }
-        }
-        original.getUnslottedTriggeredAbilities().forEach(copy::addTriggeredAbility);
+        original.getTriggeredAbilities().forEach(copy::addTriggeredAbility);
         original.getActivatedAbilities().forEach(copy::addActivatedAbility);
         copy.copyTargetingFrom(original);
         return copy;

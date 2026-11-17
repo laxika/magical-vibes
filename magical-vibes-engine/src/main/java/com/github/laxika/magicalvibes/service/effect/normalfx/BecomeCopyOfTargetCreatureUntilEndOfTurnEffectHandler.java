@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -113,9 +112,7 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
         }
         if (retainedRegistration != null) {
             sourcePermanent.getCard().copyTargetingFrom(originalCard);
-            if (copyEffect.retainedTrigger() instanceof LegacySlotTrigger legacy) {
-                sourcePermanent.getCard().addEffect(legacy.slot(), retainedRegistration.effect());
-            } else if (retainedAbility != null) {
+            if (retainedAbility != null) {
                 // "Except it has this ability": the ability as the card wrote it, its trigger's filter included.
                 sourcePermanent.getCard().addTriggeredAbility(retainedAbility);
             } else {
@@ -144,7 +141,7 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
      */
     private TriggeredAbility findRetainedAbility(Card sourceCard,
                                                  BecomeCopyOfTargetCreatureUntilEndOfTurnEffect copyEffect) {
-        if (copyEffect.retainedTrigger() == null || copyEffect.retainedTrigger() instanceof LegacySlotTrigger) {
+        if (copyEffect.retainedTrigger() == null) {
             return null;
         }
         return sourceCard.getTriggeredAbilities().stream()

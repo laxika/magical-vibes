@@ -15,6 +15,6 @@ public class ArtisanOfForms extends Card {
         target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell()
                         .withStackEntryFilter(new StackEntryTargetsSourcePredicate()),
                 // "Target creature": Artisan itself is a legal target.
-                new BecomeCopyOfTargetCreatureEffect(null, true, true));
+                new BecomeCopyOfTargetCreatureEffect(true, true));
     }
 }

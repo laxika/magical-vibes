@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingTokenCreationReplacement;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -276,7 +276,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
 
     private static boolean isDeathReturnPlaceholder(Ability ability) {
         return ability instanceof TriggeredAbility triggered && triggered.hasTrigger(Triggers.dies(ObjectRelation.THIS))
-                && LegacySlots.effectsOf(ability).getFirst()
+                && AbilityEffects.effectsOf(ability).getFirst()
                 instanceof ReturnExiledCardToBattlefieldUnderOwnerControlEffect returnEffect
                 && returnEffect.exiledCardId() == null;
     }

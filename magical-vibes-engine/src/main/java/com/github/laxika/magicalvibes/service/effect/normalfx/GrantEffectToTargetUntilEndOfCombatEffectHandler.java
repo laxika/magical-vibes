@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -55,16 +55,16 @@ public class GrantEffectToTargetUntilEndOfCombatEffectHandler implements NormalE
     private void grantTo(GameData gameData, StackEntry entry,
                          GrantEffectToTargetUntilEndOfCombatEffect grant, Permanent target) {
         target.addCombatAbility(grantedBySource(entry,
-                LegacySlots.withEffect(grant.grantedAbility(), grant.grantedEffect())));
+                AbilityEffects.withEffect(grant.grantedAbility(), grant.grantedEffect())));
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
-                .text(" grants a temporary " + LegacySlots.label(grant.grantedAbility()) + " ability to ")
+                .text(" grants a temporary " + AbilityEffects.label(grant.grantedAbility()) + " ability to ")
                 .card(target.getCard())
                 .text(" for this combat.")
                 .build());
         log.info("Game {} - {} grants temporary {} effect to {} for this combat",
-                gameData.id, entry.getCard().getName(), LegacySlots.label(grant.grantedAbility()), target.getCard().getName());
+                gameData.id, entry.getCard().getName(), AbilityEffects.label(grant.grantedAbility()), target.getCard().getName());
     }
 
     /**

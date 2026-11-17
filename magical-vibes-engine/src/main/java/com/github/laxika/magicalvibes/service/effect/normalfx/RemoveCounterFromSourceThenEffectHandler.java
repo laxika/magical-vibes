@@ -58,7 +58,7 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
             if (options.size() > 1) {
                 playerInputService.beginChooseModeChoice(gameData, entry.getControllerId(), entry.getCard(),
                         new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect(options),
-                        false, entry.getSourcePermanentId());
+                        entry.getSourcePermanentId());
                 return;
             }
         }

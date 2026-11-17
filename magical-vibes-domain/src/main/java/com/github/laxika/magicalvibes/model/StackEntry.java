@@ -1894,17 +1894,9 @@ public class StackEntry {
         this.triggerRecordSettled = true;
     }
 
-    public void addGrantedTriggeredEffectOnEntry(EffectSlot slot, CardEffect effect) {
-        grantedAbilitiesOnEntry.add(LegacySlots.ability(slot, effect));
-    }
-
     /** The abilities the permanent this spell becomes gains until end of turn as it enters. */
     public List<Ability> getGrantedAbilitiesOnEntry() {
         return Collections.unmodifiableList(grantedAbilitiesOnEntry);
-    }
-
-    public void addPersistentTriggeredEffectOnEntry(EffectSlot slot, CardEffect effect) {
-        addPersistentAbilityOnEntry(LegacySlots.ability(slot, effect));
     }
 
     /** Has the permanent this spell becomes gain {@code ability} indefinitely as it enters. */

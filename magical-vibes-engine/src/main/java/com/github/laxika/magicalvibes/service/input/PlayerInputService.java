@@ -1078,40 +1078,35 @@ public class PlayerInputService {
 
     public void beginChooseModeChoice(GameData gameData, UUID controllerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect) {
-        beginChooseModeChoice(gameData, controllerId, sourceCard, effect, false, null);
+        beginChooseModeChoice(gameData, controllerId, sourceCard, effect, null);
     }
 
     /**
-     * Mode pick for a modal ability. With {@code triggerTime} the mode is being chosen as the ability
-     * goes on the stack and {@code sourcePermanentId} records which permanent consumed it (Demonic
-     * Pact); otherwise the pick happens during resolution and the mode's effects are spliced in.
+     * Mode pick for a modal ability as it resolves: the chosen mode's effects are spliced into the resolution.
+     * {@code sourcePermanentId} is the permanent whose counters a mode may remove.
      */
     public void beginChooseModeChoice(GameData gameData, UUID controllerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, boolean triggerTime,
-            UUID sourcePermanentId) {
-        beginChooseModeChoice(gameData, controllerId, sourceCard, effect, triggerTime, sourcePermanentId,
-                false, List.of());
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId) {
+        beginChooseModeChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId, false, List.of());
     }
 
     public void beginChooseModeChoice(GameData gameData, UUID controllerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, boolean triggerTime,
-            UUID sourcePermanentId, boolean consumeMode) {
-        beginChooseModeChoice(gameData, controllerId, sourceCard, effect, triggerTime, sourcePermanentId,
-                consumeMode, List.of());
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
+            boolean consumeMode) {
+        beginChooseModeChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId, consumeMode, List.of());
     }
 
     public void beginChooseModeChoice(GameData gameData, UUID controllerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, boolean triggerTime,
-            UUID sourcePermanentId, List<String> chosenLabels) {
-        beginChooseModeChoice(gameData, controllerId, sourceCard, effect, triggerTime, sourcePermanentId,
-                false, chosenLabels);
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
+            List<String> chosenLabels) {
+        beginChooseModeChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId, false, chosenLabels);
     }
 
     public void beginChooseModeChoice(GameData gameData, UUID controllerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, boolean triggerTime,
-            UUID sourcePermanentId, boolean consumeMode, List<String> chosenLabels) {
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
+            boolean consumeMode, List<String> chosenLabels) {
         ChoiceContext.ChooseModeChoice ctx =
-                new ChoiceContext.ChooseModeChoice(sourceCard, controllerId, effect, triggerTime,
+                new ChoiceContext.ChooseModeChoice(sourceCard, controllerId, effect,
                         sourcePermanentId, consumeMode, chosenLabels, false);
         List<String> optionLabels = effect.options().stream()
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
@@ -1168,7 +1163,7 @@ public class PlayerInputService {
                                 mode, List.of()))
                         .toList(), false, choicesRequired, choicesRequired, false);
         ChoiceContext.ChooseModeChoice ctx = new ChoiceContext.ChooseModeChoice(
-                sourceCard, controllerId, effect, false, sourcePermanentId, false, chosenLabels, true);
+                sourceCard, controllerId, effect, sourcePermanentId, false, chosenLabels, true);
         List<String> availableModes = modes.stream()
                 .filter(mode -> !ctx.chosenLabels().contains(mode))
                 .toList();
@@ -1197,7 +1192,7 @@ public class PlayerInputService {
                                 mode, List.of()))
                         .toList(), false, 1, 1, false);
         ChoiceContext.ChooseModeChoice ctx = new ChoiceContext.ChooseModeChoice(
-                sourceCard, controllerId, effect, false, sourcePermanentId, false, chosenLabels, true);
+                sourceCard, controllerId, effect, sourcePermanentId, false, chosenLabels, true);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 controllerId, sourcePermanentId, null, ctx, modes,
                 sourceCard.getName() + " - Choose one."));

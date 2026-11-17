@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PrimalClayForm;
@@ -148,15 +147,7 @@ public class PermanentCopierService {
                 copy.addStaticEffect(chosen);
             }
         }
-        for (EffectSlot slot : EffectSlot.values()) {
-            for (EffectRegistration registration : original.getEffectRegistrations(slot)) {
-                CardEffect chosen = chosenModeEffect(copy, permanent, registration.effect());
-                if (chosen != null) {
-                    copy.addEffect(slot, chosen);
-                }
-            }
-        }
-        for (TriggeredAbility ability : original.getUnslottedTriggeredAbilities()) {
+        for (TriggeredAbility ability : original.getTriggeredAbilities()) {
             for (EffectRegistration registration : ability.effects()) {
                 CardEffect chosen = chosenModeEffect(copy, permanent, registration.effect());
                 if (chosen != null) {
@@ -234,17 +225,7 @@ public class PermanentCopierService {
         // CR 707.9d: when a copy effect provides specific P/T values,
         // characteristic-defining abilities that define P/T are not copied
         copy.addStaticAbilitiesFrom(target, effect -> !hasPTOverride || !effect.isPowerToughnessDefining());
-        for (EffectSlot slot : EffectSlot.values()) {
-            for (EffectRegistration reg : target.getEffectRegistrations(slot)) {
-                // CR 707.9d: when a copy effect provides specific P/T values,
-                // characteristic-defining abilities that define P/T are not copied
-                if (hasPTOverride && reg.effect().isPowerToughnessDefining()) {
-                    continue;
-                }
-                copy.addEffect(slot, reg.effect());
-            }
-        }
-        for (TriggeredAbility ability : target.getUnslottedTriggeredAbilities()) {
+        for (TriggeredAbility ability : target.getTriggeredAbilities()) {
             if (!hasPTOverride || ability.effects().stream()
                     .noneMatch(reg -> reg.effect().isPowerToughnessDefining())) {
                 copy.addTriggeredAbility(ability);

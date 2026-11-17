@@ -316,7 +316,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                         new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
                                 "Exile " + target.getCard().getName(),
                                 e.withScope(com.github.laxika.magicalvibes.model.effect.FlickerScope.TARGET)))),
-                false, entry.getSourcePermanentId());
+                entry.getSourcePermanentId());
     }
 
     private void resolvePlayersPermanentsAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {

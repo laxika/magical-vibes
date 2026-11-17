@@ -58,9 +58,9 @@ import java.util.UUID;
  *       the effective card it left as (also the source the stack entry names), those granted to it until it
  *       leaves, and those other objects' static abilities granted it, all on the event's snapshot. A permanent
  *       that had lost all its abilities has none of those, and a face-down one has none of its card's. Abilities
- *       granted until end of turn count either way, as the slot collectors count them. Its delayed "when this
- *       dies" triggers aren't abilities of it, so they count either way too; until delayed triggers move they
- *       ride on the snapshot as effects, matched as "when this dies" abilities.</li>
+ *       granted until end of turn count either way. Its delayed "when this dies" triggers aren't abilities of it,
+ *       so they count either way too; they ride on the snapshot as effects, matched as "when this dies"
+ *       abilities.</li>
  *   <li>Every moved card, a departed permanent's included, also triggers as it exists after the move, in the
  *       zone it went to (CR 603.10): its card's abilities and its perpetual grants. That is where "when this is
  *       put into a graveyard from anywhere" triggers from, even for a move from the battlefield (CR 603.6c).
@@ -528,7 +528,7 @@ public class TriggerIndex {
             triggered(event.grantedAbilities(), gained);
         }
         // An ability granted until end of turn has a later timestamp than most "loses all abilities" effects
-        // (Infuse with Vitality after Humble), so, as the slot collectors do, it stays.
+        // (Infuse with Vitality after Humble), so it stays.
         gained.addAll(lastKnown.getTemporaryTriggeredAbilities());
         for (CardEffect delayed : lastKnown.getDelayedDeathEffects()) {
             gained.add(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), delayed));

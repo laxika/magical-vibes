@@ -49,7 +49,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
-import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.StateTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
@@ -70,7 +69,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiPredicate;
@@ -352,9 +350,9 @@ public class Card {
      */
     @Getter(AccessLevel.NONE)
     private List<Ability> abilities = new ArrayList<>();
-    /** The per-slot view of {@link #abilities}, built on first use and dropped whenever they change. */
+    /** The index of {@link #abilities}, built on first use and dropped whenever they change. */
     @Getter(AccessLevel.NONE)
-    private volatile SlotIndex slotIndex;
+    private volatile AbilityIndex abilityIndex;
     /**
      * The additional costs to cast this card (CR 601.2b, 601.2f), in the order they were added; see
      * {@link #getCastingCosts()}. They are not part of its spell ability.
@@ -509,7 +507,7 @@ public class Card {
         this.attachRestriction = source.attachRestriction;
         this.abilities = new ArrayList<>(source.abilities);
         // The index holds no reference to its card, so the copy shares it until either changes.
-        this.slotIndex = source.slotIndex;
+        this.abilityIndex = source.abilityIndex;
         this.castingCosts = new ArrayList<>(source.castingCosts);
         this.activatedAbilities = new ArrayList<>(source.activatedAbilities);
         this.activatedAbilitiesByZone = source.activatedAbilitiesByZone;
@@ -555,7 +553,7 @@ public class Card {
                 : EnumSet.copyOf(textSource.keywords);
 
         copy.abilities = new ArrayList<>(textSource.abilities);
-        copy.slotIndex = textSource.slotIndex;
+        copy.abilityIndex = textSource.abilityIndex;
 
         copy.castingCosts = new ArrayList<>(textSource.castingCosts);
 
@@ -644,7 +642,7 @@ public class Card {
         this.flashCastCondition = face.flashCastCondition;
         this.attachRestriction = face.attachRestriction;
         this.abilities = new ArrayList<>(face.abilities);
-        this.slotIndex = face.slotIndex;
+        this.abilityIndex = face.abilityIndex;
         this.castingCosts = new ArrayList<>(face.castingCosts);
         this.activatedAbilities = new ArrayList<>(face.activatedAbilities);
         this.activatedAbilitiesByZone = face.activatedAbilitiesByZone;
@@ -874,7 +872,7 @@ public class Card {
         targetGroups.clear();
         effectTargetIndexMap.clear();
         abilities.clear();
-        slotIndex = null;
+        abilityIndex = null;
         castingCosts.clear();
         activatedAbilities.clear();
         activatedAbilitiesByZone = null;
@@ -893,7 +891,7 @@ public class Card {
     public void clearRulesTextAndAbilities() {
         assertMutable();
         abilities.clear();
-        slotIndex = null;
+        abilityIndex = null;
         castingCosts.clear();
         targetGroups.clear();
         effectTargetIndexMap.clear();
@@ -1337,8 +1335,8 @@ public class Card {
 
     /**
      * Every target group the card declares, in order: the spell ability's first (see
-     * {@link #getSpellTargetGroups()}), then those bound to its other abilities' effects, which stay
-     * here until their trigger families leave {@link EffectSlot}. A group's index is its position.
+     * {@link #getSpellTargetGroups()}), then those bound to its other abilities' effects. A group's index is its
+     * position.
      */
     public List<TargetGroup> getTargetGroups() {
         return Collections.unmodifiableList(targetGroups);
@@ -1482,10 +1480,7 @@ public class Card {
      *
      * <p>{@link #addSpellEffect} and {@link #addSimultaneousSpellEffects} build the one
      * {@link SpellAbility}, and {@link #addStaticEffect} adds a {@link StaticAbility} for each effect.
-     * Until each other family leaves {@link EffectSlot}, the rest are built from slot registrations by
-     * {@link #addEffect(EffectSlot, CardEffect)} and {@link #addSimultaneousEffects}: a
-     * slot's effects form {@link TriggeredAbility}s with a {@link LegacySlotTrigger}, one for each
-     * registration or group of simultaneous registrations. The collectors still read the slot views.
+     * {@link #addTrigger} and {@link #addTriggeredAbility} add the {@link TriggeredAbility}s.
      */
     public List<Ability> getAbilities() {
         return Collections.unmodifiableList(abilities);
@@ -1499,7 +1494,7 @@ public class Card {
     /** The effects of the card's spell ability in the order they resolve; empty when it has none. */
     public List<CardEffect> getSpellEffects() {
         SpellAbility spell = spellAbilityOrNull();
-        return spell == null ? List.of() : LegacySlots.effectsOf(spell);
+        return spell == null ? List.of() : AbilityEffects.effectsOf(spell);
     }
 
     /** The registrations of the card's spell ability in the order they resolve; empty when it has none. */
@@ -1541,7 +1536,7 @@ public class Card {
 
     /**
      * Adds the casting costs and spell effects of {@code source} that {@code keep} accepts, each spell
-     * effect on its own, as the engine's copy paths copy every other slot's effects.
+     * effect on its own, as the engine's copy paths copy every other ability's effects.
      */
     public void addCastingCostsAndSpellEffectsFrom(Card source, Predicate<CardEffect> keep) {
         assertMutable();
@@ -1569,7 +1564,7 @@ public class Card {
      */
     public void addSimultaneousSpellEffects(CardEffect... effects) {
         assertMutable();
-        addSpellRegistrations(simultaneousGroup(effects, null));
+        addSpellRegistrations(simultaneousGroup(effects));
     }
 
     /**
@@ -1588,12 +1583,12 @@ public class Card {
     public void addStaticEffect(AbilityZones zones, CardEffect effect) {
         assertMutable();
         abilities.add(new StaticAbility(List.of(effect), zones));
-        slotIndex = null;
+        abilityIndex = null;
     }
 
     /** The card's static abilities, in the order they were added; each holds one effect. */
     public List<StaticAbility> getStaticAbilities() {
-        return slotIndex().staticAbilities();
+        return abilityIndex().staticAbilities();
     }
 
     /**
@@ -1602,7 +1597,7 @@ public class Card {
      * so most readers use this; {@link #getStaticEffects(Zone)} filters by zone.
      */
     public List<CardEffect> getStaticEffects() {
-        return slotIndex().staticEffects();
+        return abilityIndex().staticEffects();
     }
 
     /** The effects of the static abilities that function while the card is in {@code zone}, in order. */
@@ -1622,7 +1617,7 @@ public class Card {
 
     /**
      * Adds the static abilities of {@code source} whose effect {@code keep} accepts, with their zones,
-     * as the engine's copy paths copy every slot's effects.
+     * as the engine's copy paths copy every ability's effects.
      */
     public void addStaticAbilitiesFrom(Card source, Predicate<CardEffect> keep) {
         assertMutable();
@@ -1635,18 +1630,6 @@ public class Card {
         }
     }
 
-    /** The effects of every ability in {@code slot}, in the order they were added. */
-    public List<CardEffect> getEffects(EffectSlot slot) {
-        SlotView view = slotIndex().find(slot);
-        return view == null ? List.of() : view.effects();
-    }
-
-    /** The registrations of every ability in {@code slot}, in the order they were added. */
-    public List<EffectRegistration> getEffectRegistrations(EffectSlot slot) {
-        SlotView view = slotIndex().find(slot);
-        return view == null ? List.of() : view.registrations();
-    }
-
     public void removeKeyword(Keyword keyword) {
         assertMutable();
         if (keywords.contains(keyword)) {
@@ -1656,26 +1639,15 @@ public class Card {
         }
     }
 
-    /** Removes every registered effect matching {@code filter} from every slot, such as a copy exception's omissions. */
+    /** Removes every registered effect matching {@code filter} from every ability, such as a copy exception's omissions. */
     public void removeEffectsIf(Predicate<CardEffect> filter) {
-        removeSlotEffectsIf((slot, effect) -> filter.test(effect));
-    }
-
-    /**
-     * Removes every registered effect for which {@code filter} holds, given the effect's slot, which is
-     * {@code null} for a spell effect, a static effect or a casting cost. An ability left without effects
-     * is removed; an effect that was simultaneous with a removed one becomes the first of its ability,
-     * so it is no longer marked simultaneous.
-     */
-
-    public void removeSlotEffectsIf(BiPredicate<EffectSlot, CardEffect> filter) {
-        removeAbilityEffectsIf((ability, effect) -> filter.test(ability == null ? null : slotOf(ability), effect));
+        removeAbilityEffectsIf((ability, effect) -> filter.test(effect));
     }
 
     /**
      * Removes every registered effect for which {@code filter} holds, given the ability that holds the
-     * effect, which is {@code null} for a casting cost. An ability left without effects is removed, as
-     * for {@link #removeSlotEffectsIf}.
+     * effect, which is {@code null} for a casting cost. An ability left without effects is removed; an effect that
+     * was simultaneous with a removed one becomes the first of its ability, so it is no longer marked simultaneous.
      */
     public void removeAbilityEffectsIf(BiPredicate<Ability, CardEffect> filter) {
         assertMutable();
@@ -1687,30 +1659,12 @@ public class Card {
             }
         }
         abilities = kept;
-        slotIndex = null;
+        abilityIndex = null;
         castingCosts.removeIf(cost -> filter.test(null, cost));
         syncSpellTargets();
     }
 
-    public void addEffect(EffectSlot slot, CardEffect effect) {
-        assertMutable();
-        addRegistrations(slot, List.of(new EffectRegistration(effect)));
-    }
-
-    /**
-     * Adds effects that happen at the same time ("deals 4 damage to any target and 2 damage to
-     * you"), so the damage they deal is one damage event: a lifelink source gains life once for all
-     * of it. Every separate effect is otherwise its own event. Effects bound to different target
-     * groups are attached with {@code SpellTarget.bindEffect} first and added here. Steps inside a
-     * wrapper effect or an activated ability's effect list go in a
-     * {@code SequenceEffect.simultaneous} instead. The effects are always one ability.
-     */
-    public void addSimultaneousEffects(EffectSlot slot, CardEffect... effects) {
-        assertMutable();
-        addRegistrations(slot, simultaneousGroup(effects, slot));
-    }
-
-    private List<EffectRegistration> simultaneousGroup(CardEffect[] effects, EffectSlot slot) {
+    private List<EffectRegistration> simultaneousGroup(CardEffect[] effects) {
         if (effects.length < 2) {
             throw new IllegalArgumentException("Simultaneous effects need at least two effects, got " + effects.length);
         }
@@ -1722,8 +1676,8 @@ public class Card {
     }
 
     /**
-     * Adds {@code ability} the way {@link #addEffect} and {@link #addSimultaneousEffects} add its
-     * effects, so it joins an ability of its slot that it would have joined as registrations.
+     * Adds {@code ability}: a static ability as one static ability per effect, a triggered ability as
+     * {@link #addTriggeredAbility} adds it, and a spell ability's effects to this card's spell ability.
      */
     public void addAbility(Ability ability) {
         assertMutable();
@@ -1732,32 +1686,14 @@ public class Card {
             statik.effects().forEach(effect -> addStaticEffect(statik.zones(), effect));
             return;
         }
-        EffectSlot slot = slotOf(ability);
-        if (ability instanceof TriggeredAbility triggered && slot == null) {
-            addTriggeredAbility(triggered);
-            return;
-        }
-        List<EffectRegistration> registrations = switch (ability) {
+        switch (ability) {
+            case TriggeredAbility triggered -> addTriggeredAbility(triggered);
             // Its target groups are this card's first groups, so they follow from this card's own.
-            case SpellAbility spell -> spell.effects();
-            case TriggeredAbility triggered -> triggered.effects();
+            case SpellAbility spell -> addSpellRegistrations(spell.effects());
             case StaticAbility statik -> throw new IllegalStateException("Added above");
             case ActivatedAbility activated -> throw new IllegalArgumentException(
                     "Activated abilities are added with addActivatedAbility");
-        };
-        if (slot == null) {
-            addSpellRegistrations(registrations);
-            return;
         }
-        List<EffectRegistration> group = new ArrayList<>();
-        for (EffectRegistration registration : registrations) {
-            if (!registration.simultaneousWithPrevious() && !group.isEmpty()) {
-                addRegistrations(slot, group);
-                group = new ArrayList<>();
-            }
-            group.add(registration);
-        }
-        addRegistrations(slot, group);
     }
 
     /**
@@ -1808,7 +1744,7 @@ public class Card {
      */
     public void addSimultaneousTrigger(Trigger trigger, CardEffect... effects) {
         addTriggeredAbility(new TriggeredAbility(trigger, TriggerOptions.DEFAULT,
-                simultaneousGroup(effects, null)));
+                simultaneousGroup(effects)));
     }
 
     /**
@@ -1817,12 +1753,12 @@ public class Card {
      * that creature" is {@link TriggerOptions#EACH_BLOCKER} (CR 509.3d).
      */
     public void addSimultaneousTrigger(Trigger trigger, TriggerOptions options, CardEffect... effects) {
-        addTriggeredAbility(new TriggeredAbility(trigger, options, simultaneousGroup(effects, null)));
+        addTriggeredAbility(new TriggeredAbility(trigger, options, simultaneousGroup(effects)));
     }
 
     /**
      * Adds {@code ability} as it is, for an ability with several trigger conditions or simultaneous effects.
-     * An ability with a {@link LegacySlotTrigger} is added the way its slot groups registrations instead. A Saga's
+     * A Saga's
      * chapter ability ({@link ChapterTrigger}) joins the card's ability of the same chapter when it has one, since a
      * Saga has one chapter ability per chapter number (CR 715.2b): its effects follow that ability's, and the chapter
      * keeps its targets, or takes {@code ability}'s when it has none.
@@ -1830,10 +1766,6 @@ public class Card {
     public void addTriggeredAbility(TriggeredAbility ability) {
         assertMutable();
         validateStateTriggerEffects(ability);
-        if (slotOf(ability) != null) {
-            addAbility(ability);
-            return;
-        }
         int chapterIndex = ability.conditions().size() == 1
                 && ability.conditions().getFirst().trigger() instanceof ChapterTrigger chapter
                 ? indexOfChapterAbility(chapter) : -1;
@@ -1850,7 +1782,7 @@ public class Card {
         } else {
             abilities.add(asItsOwnInstance(ability));
         }
-        slotIndex = null;
+        abilityIndex = null;
     }
 
     /**
@@ -1867,7 +1799,7 @@ public class Card {
         return instance;
     }
 
-    /** The card's triggered abilities in the order they were added, those still held in a slot included. */
+    /** The card's triggered abilities in the order they were added. */
     public List<TriggeredAbility> getTriggeredAbilities() {
         List<TriggeredAbility> triggered = new ArrayList<>();
         for (Ability ability : abilities) {
@@ -1885,7 +1817,7 @@ public class Card {
      * themselves and judges their options.
      */
     public List<TriggeredAbility> getTriggeredAbilities(Trigger trigger, Zone zone) {
-        if (!slotIndex().byTrigger().containsKey(trigger)) {
+        if (!abilityIndex().byTrigger().containsKey(trigger)) {
             return List.of();
         }
         List<TriggeredAbility> triggered = new ArrayList<>();
@@ -1902,7 +1834,7 @@ public class Card {
      * in the order they were added: the abilities of a face-up plane, which are read wherever the plane is.
      */
     public List<TriggeredAbility> getTriggeredAbilities(Trigger trigger) {
-        if (!slotIndex().byTrigger().containsKey(trigger)) {
+        if (!abilityIndex().byTrigger().containsKey(trigger)) {
             return List.of();
         }
         List<TriggeredAbility> triggered = new ArrayList<>();
@@ -1914,21 +1846,7 @@ public class Card {
         return triggered;
     }
 
-    /**
-     * The card's triggered abilities with a real trigger, which no slot holds and no slot view shows. Code that walks
-     * the slots to read or copy a card's triggered abilities walks these too, until {@code EffectSlot} is gone.
-     */
-    public List<TriggeredAbility> getUnslottedTriggeredAbilities() {
-        List<TriggeredAbility> unslotted = new ArrayList<>();
-        for (TriggeredAbility ability : getTriggeredAbilities()) {
-            if (slotOf(ability) == null) {
-                unslotted.add(ability);
-            }
-        }
-        return unslotted;
-    }
-
-    /** The effects of all the card's triggered abilities, those held in a slot and the others, in order. */
+    /** The effects of all the card's triggered abilities, in order. */
     public List<CardEffect> getTriggeredEffects() {
         List<CardEffect> effects = new ArrayList<>();
         for (TriggeredAbility ability : getTriggeredAbilities()) {
@@ -1943,7 +1861,7 @@ public class Card {
      * its "when this dies" effects.
      */
     public List<CardEffect> getTriggerEffects(Trigger trigger) {
-        TriggerView view = slotIndex().byTrigger().get(trigger);
+        TriggerView view = abilityIndex().byTrigger().get(trigger);
         return view == null ? List.of() : view.effects();
     }
 
@@ -1952,7 +1870,7 @@ public class Card {
      * conditions, in the order the abilities were added, with their trigger modes.
      */
     public List<EffectRegistration> getTriggerEffectRegistrations(Trigger trigger) {
-        TriggerView view = slotIndex().byTrigger().get(trigger);
+        TriggerView view = abilityIndex().byTrigger().get(trigger);
         return view == null ? List.of() : view.registrations();
     }
 
@@ -1960,12 +1878,12 @@ public class Card {
      * The effects of this card's "when this enters" abilities ({@link TriggeredAbility#hasOwnEntry()}, CR 603.6a), in
      * the order the abilities were added, each in the form {@link TriggeredAbility#ownEntryEffects()} gives: the
      * intervening "if" a {@code ConditionalEffect} around it. The "when this enters" collector and the code that
-     * inspects a card's enters abilities (targeting, kicker and modal checks, the AI, the card view) read these until
-     * step 15 of effect-slot-refactor.md. The wrapped effects are built once, with the index, so they keep their
+     * inspects a card's enters abilities (targeting, kicker and modal checks, the AI, the card view) read these. The
+     * wrapped effects are built once, with the index, so they keep their
      * identity across calls.
      */
     public List<CardEffect> getOwnEntryEffects() {
-        return slotIndex().ownEntry().effects();
+        return abilityIndex().ownEntry().effects();
     }
 
     /**
@@ -1973,7 +1891,7 @@ public class Card {
      * {@link #getOwnEntryEffects()} says.
      */
     public List<EffectRegistration> getOwnEntryEffectRegistrations() {
-        return slotIndex().ownEntry().registrations();
+        return abilityIndex().ownEntry().registrations();
     }
 
     /** This card's "when this enters" abilities ({@link TriggeredAbility#hasOwnEntry()}), in the order they were added. */
@@ -1999,7 +1917,7 @@ public class Card {
      * each ability's limit before it reads its effects.
      */
     public List<EffectRegistration> getOwnEntryEffectRegistrations(TriggeredAbility ability) {
-        List<EffectRegistration> ownEntry = slotIndex().ownEntryByAbility().get(ability);
+        List<EffectRegistration> ownEntry = abilityIndex().ownEntryByAbility().get(ability);
         return ownEntry != null ? ownEntry : ability.ownEntryEffects();
     }
 
@@ -2017,7 +1935,7 @@ public class Card {
      * functioning in {@code zone}, in the order the abilities were added, with their trigger modes.
      */
     public List<EffectRegistration> getTriggerEffectRegistrations(Trigger trigger, Zone zone) {
-        if (!slotIndex().byTrigger().containsKey(trigger)) {
+        if (!abilityIndex().byTrigger().containsKey(trigger)) {
             return List.of();
         }
         List<EffectRegistration> registrations = new ArrayList<>();
@@ -2043,7 +1961,7 @@ public class Card {
                 }
             }
         }
-        for (EffectRegistration reg : slotIndex().ownEntry().registrations()) {
+        for (EffectRegistration reg : abilityIndex().ownEntry().registrations()) {
             if (reg.effect() == effect) {
                 return reg.simultaneousWithPrevious();
             }
@@ -2074,15 +1992,6 @@ public class Card {
                         + "StateTriggerEffect's");
             }
         }
-    }
-
-    /**
-     * Adds {@code group}, one registration or a group of simultaneous ones, as a new ability of
-     * {@code slot}. A group always stays in one ability.
-     */
-    private void addRegistrations(EffectSlot slot, List<EffectRegistration> group) {
-        abilities.add(new TriggeredAbility(new LegacySlotTrigger(slot), TriggerOptions.DEFAULT, group));
-        slotIndex = null;
     }
 
     /**
@@ -2201,15 +2110,11 @@ public class Card {
         return kept;
     }
 
-    private static EffectSlot slotOf(Ability ability) {
-        return LegacySlots.slotOf(ability);
-    }
-
-    private SlotIndex slotIndex() {
-        SlotIndex index = slotIndex;
+    private AbilityIndex abilityIndex() {
+        AbilityIndex index = abilityIndex;
         if (index == null) {
-            index = SlotIndex.of(abilities);
-            slotIndex = index;
+            index = AbilityIndex.of(abilities);
+            abilityIndex = index;
         }
         return index;
     }
@@ -2219,25 +2124,16 @@ public class Card {
     }
 
     /**
-     * One slot's view: the registrations and effects of its abilities in the order they were added,
-     * and the slot's first triggered ability, which holds a Saga chapter's targets.
-     */
-    private record SlotView(EffectSlot slot, List<EffectRegistration> registrations, List<CardEffect> effects,
-                            TriggeredAbility firstTriggeredAbility) {
-    }
-
-    /**
-     * The views of every slot that holds abilities, in slot order, and the static abilities and their
-     * effects in the order they were added. It is immutable and refers to no card, so frozen cards and
+     * The static abilities and their effects in the order they were added, and the registrations and effects of the
+     * triggered abilities by trigger and of those that are their own stack entries. It is immutable and refers to no card, so frozen cards and
      * their copies can share it across threads; two threads that both build it build the same index.
      */
-    private record SlotIndex(List<SlotView> views, List<StaticAbility> staticAbilities,
+    private record AbilityIndex(List<StaticAbility> staticAbilities,
                              List<CardEffect> staticEffects, Map<Trigger, TriggerView> byTrigger,
                              TriggerView ownEntry,
                              Map<TriggeredAbility, List<EffectRegistration>> ownEntryByAbility) {
 
-        static SlotIndex of(List<Ability> abilities) {
-            Map<EffectSlot, List<TriggeredAbility>> bySlot = new TreeMap<>();
+        static AbilityIndex of(List<Ability> abilities) {
             List<StaticAbility> statics = new ArrayList<>();
             List<CardEffect> staticEffects = new ArrayList<>();
             Map<Trigger, List<EffectRegistration>> registrationsByTrigger = new LinkedHashMap<>();
@@ -2247,8 +2143,6 @@ public class Card {
                 if (ability instanceof StaticAbility statik) {
                     statics.add(statik);
                     staticEffects.addAll(statik.effects());
-                } else if (ability instanceof TriggeredAbility triggered && slotOf(triggered) != null) {
-                    bySlot.computeIfAbsent(slotOf(triggered), slot -> new ArrayList<>()).add(triggered);
                 } else if (ability instanceof TriggeredAbility triggered) {
                     triggered.conditions().stream().map(TriggerCondition::trigger).distinct().forEach(trigger ->
                             registrationsByTrigger.computeIfAbsent(trigger, ignored -> new ArrayList<>())
@@ -2263,16 +2157,7 @@ public class Card {
             Map<Trigger, TriggerView> byTrigger = viewsByTrigger(registrationsByTrigger);
             TriggerView ownEntry = new TriggerView(List.copyOf(ownEntryRegistrations),
                     ownEntryRegistrations.stream().map(EffectRegistration::effect).toList());
-            List<SlotView> views = new ArrayList<>(bySlot.size());
-            bySlot.forEach((slot, slotAbilities) -> {
-                List<EffectRegistration> registrations = new ArrayList<>();
-                for (TriggeredAbility triggered : slotAbilities) {
-                    registrations.addAll(triggered.effects());
-                }
-                views.add(new SlotView(slot, List.copyOf(registrations),
-                        registrations.stream().map(EffectRegistration::effect).toList(), slotAbilities.getFirst()));
-            });
-            return new SlotIndex(List.copyOf(views), List.copyOf(statics), List.copyOf(staticEffects),
+            return new AbilityIndex(List.copyOf(statics), List.copyOf(staticEffects),
                     byTrigger, ownEntry, Collections.unmodifiableMap(ownEntryByAbility));
         }
 
@@ -2283,15 +2168,6 @@ public class Card {
                     new TriggerView(List.copyOf(registrations),
                             registrations.stream().map(EffectRegistration::effect).toList())));
             return Collections.unmodifiableMap(views);
-        }
-
-        SlotView find(EffectSlot slot) {
-            for (SlotView view : views) {
-                if (view.slot() == slot) {
-                    return view;
-                }
-            }
-            return null;
         }
     }
 
@@ -2555,7 +2431,7 @@ public class Card {
         }
         TriggeredAbility ability = (TriggeredAbility) abilities.get(index);
         abilities.set(index, ability.withChapterTargets(change.apply(ability.chapterTargets())));
-        slotIndex = null;
+        abilityIndex = null;
     }
 
     /** The index of this card's chapter ability {@code trigger} in {@link #abilities}, or -1 when it has none. */

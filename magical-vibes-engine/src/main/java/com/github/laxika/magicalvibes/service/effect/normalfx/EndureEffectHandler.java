@@ -109,7 +109,6 @@ public class EndureEffectHandler implements NormalEffectHandlerBean {
                 tokenControllerId,
                 entry.getCard(),
                 tokenChoice,
-                false,
                 entry.getSourcePermanentId());
     }
 

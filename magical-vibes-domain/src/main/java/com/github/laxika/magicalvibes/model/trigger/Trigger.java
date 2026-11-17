@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
  */
 public sealed interface Trigger permits AbilityTrigger, AttachTrigger, ChapterTrigger, CombatTrigger,
         ControlChangeTrigger, CounterTrigger, DamageTrigger, DayNightTrigger, FinalChapterTrigger, LandPlayTrigger,
-        LegacySlotTrigger, LibraryTrigger, LifeTrigger, ObjectActionTrigger, PermanentChangeTrigger, PlanarTrigger,
+        LibraryTrigger, LifeTrigger, ObjectActionTrigger, PermanentChangeTrigger, PlanarTrigger,
         PlayerActionTrigger, SpellTrigger, StateTrigger, StepTrigger, TapTrigger, TargetTrigger, ZoneChangeTrigger {
 
     /**

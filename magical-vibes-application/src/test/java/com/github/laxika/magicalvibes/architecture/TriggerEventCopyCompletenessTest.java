@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Ratchet for {@link StackEntry#copyTriggerEventFrom}: the one place that copies what a trigger event was about, which
  * both the copy constructor and a copied ability ({@code CopySupport.createCopyStackEntry}) use. A trigger-event field
  * copied only by the copy constructor would again be lost by every copy of a triggered ability (Strionic Resonator,
- * Lithoform Engine, Tawnos), as the triggering permanent was after step 15 run 2 of the EffectSlot refactor.
+ * Lithoform Engine, Tawnos).
  *
  * <p>A trigger-event field is one whose name starts with {@code triggering} or {@code event}, or ends with
  * {@code AtTrigger}.

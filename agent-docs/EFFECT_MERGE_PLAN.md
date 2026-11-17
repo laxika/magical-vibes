@@ -75,10 +75,10 @@ high-churn or needs a design call and is optional.
 | 5 | Combat-requirement / must-attack | 6 | LOW | **DONE** — premise held for all six handlers; the audit undercounted by one (5b absorbs 2 classes, not 1, so 6 records + 6 handlers went). One unlisted axis found: `MustBlockThisTurnIfAbleEffect` alone carried a `PermanentIsCreaturePredicate` in its spec, preserved by branching `targetSpec()`. Zero behavior change |
 | 6 | `SetLifeTotalEffect` | 6 | LOW | **DONE** — premise held for all four listed handlers; the audit undercounted (4 records, not 3) and the optional stretch fell out easily, so both each-player siblings went too: 6 records + 6 handlers. `EACH_PLAYER` now evaluates the amount once per player, which is what made the stretch free |
 | 7 | `SkipNextEffect` | 4 | MED | **DONE** — premise held for all four handlers; the audit undercounted (4 records, not 3). One correction: `boolean targetsPlayer` cannot express the family — Blinding Angel is `targetId`-bound but non-targeting — so the second component is a 3-value `SkipRecipient`, which keeps "which player" off the `SkipKind` axis. Polarity unified on `benign` |
-| 8 | Phase-out + attached-counter placement | 6 | LOW | **DONE** — premise held for all six handlers; the optional 8b fold was taken, so 6 records + 6 handlers went. The audit missed that `@CollectsTrigger` is class-keyed: two collector annotations had to be re-keyed. Zero behavior change beyond one redundant guard dropped |
+| 8 | Phase-out + attached-counter placement | 6 | LOW | **DONE** — premise held for all six handlers; the optional 8b fold was taken, so 6 records + 6 handlers went. Zero behavior change beyond one redundant guard dropped |
 | 9 | Destroy-referenced-permanent | 4 | LOW | **DONE** — premise held for all four handlers; `ENCHANTED` became `PermanentReference.ATTACHED` as the note directed and the enum gained `SOURCE`. One correction: the Ajani half needed no player target filter but **did** need `DestroyAllPermanentsEffect.targetSpec()`, which the two sibling scoped effects already had and it was silently missing |
 | 10 | Search-target-library + sacrifice costs | 5 | LOW | **DONE** — 10a's premise held in shape but not in detail (the audit's "only `.destination()` varies" is wrong on four other axes) and the audit undercounted: a fourth sibling, the play-permission form, folds in as two destinations, so 5 records + 5 handlers went. The reconcile picked `checkSearchRestriction` — `isSearchPrevented` shuffled the *searcher's* library, not the searched one. The 10b stretch was not taken (reason in the step body) |
-| 11 | Tap / untap scopes and costs | 3 | LOW | **DONE** — all three premises held. Two corrections: the `Triggers.creatureDies(ANY)` collector for 11a was already occupied by an identical `UntapPermanentsEffect` one (a deletion, not a re-key), and 11c's `DynamicAmount` count cannot be evaluated inside the handler (`requiredCount()` takes no game state), so a new `TapCostSupport` resolves it at construction and `toPermanentChoiceCostHandler` gained a `GameData` parameter. The MED stretch was not taken |
+| 11 | Tap / untap scopes and costs | 3 | LOW | **DONE** — all three premises held. One correction: 11c's `DynamicAmount` count cannot be evaluated inside the handler (`requiredCount()` takes no game state), so a new `TapCostSupport` resolves it at construction and `toPermanentChoiceCostHandler` gained a `GameData` parameter. The MED stretch was not taken |
 | 12 | `Grant*` low-risk batch | 6 | LOW | **DONE** — all five premises held; the audit's net count is one high (5, not 6 — the sixth would have been folding away the `SpellCastingAbilityGrantingEffect` capability interface, which is deliberately kept). One correction: the hand-size row is a rename, not an extension — `GrantPermanentNoMaxHandSizeEffect` would have lied once `UNTIL_NEXT_TURN` was folded in |
 | 13 | Cost-modification batch | 6 | LOW | **DONE** — all four premises held; the audit's net count is two low (6 records + 3 handlers, not 4). One correction: the tax scope reuses the existing `CostModificationScope`, not a new `CostTaxScope`. Two rules fixes shipped, both from `getType()` → `hasType` (CR 205.2b) |
 | 14 | Remove-counter batch | 4 | LOW–MED | **DONE** — all four premises held; the audit's count is two low (6 records + 5 handlers, not 4). Two corrections: both `fromTarget` booleans became a shared `CounterRemovalSubject` enum, and the two "identical" gain-life handlers were not identical (one rendered the counter name, the other the enum constant). The flagged decision went **for** adding `sourceCountersRemoved()` to the survivor — rationale in the step body |
@@ -178,7 +178,7 @@ Net: 7 records and 5 handlers deleted, 1 record and 1 handler added.
   does). Gating is covered by `ImpalerShrikeTest.noDrawWhenShrikeLeavesBeforeResolution` and
   `MindstabThrullTest.unblockedNoDiscardWhenThrullLeavesBeforeResolution`.
 - **`SacrificeSelfThenDealDamageToTargetPlayerEffect` was not unused.** `DrawService:700` constructs it
-  at runtime for Booby Trap's draw trigger (its static marker is gone since effect-slot-refactor.md step 15, run 17z5). Deleting it
+  at runtime for Booby Trap's draw trigger (its static marker is gone). Deleting it
   outright would have removed Booby Trap's trigger. It is absorbed by `SacrificeSelfThenEffect` instead,
   with `DealDamageToPlayersEffect(10, DamageRecipient.TARGET_PLAYER)` as the payload.
 
@@ -317,7 +317,7 @@ the enchanted-land-tap trigger.
   restricted-bucket activation must not be parked as revertable.
 - The virtual-pool contributions in `PotentialManaService` (`buildVirtualManaPool` /
   `buildLandOnlyVirtualManaPool`) also require `restriction == NONE`.
-- `hasOnTapManaEffects` is gone: since step 7 of the EffectSlot refactor every mana ability is an
+- `hasOnTapManaEffects` is gone: every mana ability is an
   activated ability, so the any-colour producers are all read through the activated-ability paths.
 
 ---
@@ -481,8 +481,8 @@ view, no serialization. Turn-engine consumers were untouched.
   `admits(PERMANENT)`, and `GameSimulator.rankAbilityTargets` only ranks *activated-ability*
   targets (none of the eight cards is one).
 - **`combatDamageTriggerContext()` is now `null` except for `DAMAGED_PLAYER`.** The absorbed record
-  returned `DAMAGED_PLAYER` unconditionally, including for its targeted form, which never sits in
-  the `Triggers.dealsCombatDamageToPlayer()` slot. The merged record implements the interface for *every*
+  returned `DAMAGED_PLAYER` unconditionally, including for its targeted form, which is never
+  an effect of a `Triggers.dealsCombatDamageToPlayer()` ability. The merged record implements the interface for *every*
   kind, so this was checked against all four readers — `CombatDamageService:1219`,
   `TriggerCollectionService:801`, `SequenceEffect:77`, `SacrificeSelfThenEffect:38` — and every one
   calls the method rather than using `instanceof` as a bare marker, with `null` documented as "no
@@ -546,14 +546,6 @@ than a fourth class. The enum is deliberately named for Step 9 to extend with `S
 The plan's `PutCounterOnAttachedPermanentEffect` name would have lied once `TRIGGERING` was folded
 in, hence `PutCounterOnReferencedPermanentEffect`.
 
-**What the audit missed — `@CollectsTrigger` is class-keyed.** `TriggerCollectorRegistry` keys on
-the exact `(EffectSlot, effect.getClass())` pair, so two collector annotations had to be re-keyed to
-the merged class: `TapTriggers` (`Triggers.enchantedPermanentBecomesTapped()`, Spirit Shackle)
-and `DeathTriggerCollectorService:1149` (`Triggers.creatureDies(ANY)`, Sadistic Glee). Both stay
-slot-scoped, and no card puts a `TRIGGERING` reference in either slot, so the re-key is inert; had it
-been missed, both cards' triggers would have silently stopped firing. Neither trigger-collection
-lookup nor `Triggers.upkeep(ActivePlayer.YOU)` (which is generic) needed anything else.
-
 **Other call sites updated**
 - `DestructionSupport:520` matched `elseEffect instanceof PhaseOutSelfEffect` for the "unless you pay
   {cost}, this creature phases out" fallback (Vaporous Djinn); now `instanceof PhaseOutEffect p &&
@@ -614,17 +606,6 @@ other effects). Rather than only throwing from the handler arm, the record's **c
 rejects `SOURCE`, so the mistake fails at card-construction time; the switch arm throws as documented
 dead code.
 
-**What the audit missed — `@CollectsTrigger` is class-keyed, three times.** As in Step 8, the
-collector annotations key on the exact `(EffectSlot, effect.getClass())` pair, so three had to be
-re-keyed to the merged class: `TapTriggers` (`Triggers.enchantedPermanentBecomesTapped()`),
-`DeathTriggerCollectorService:1133` (`Triggers.creatureDies(ANY)`) and `DamageTriggerCollectorService:295`
-(`Triggers.enchantedCreatureDealtDamage()`). Two of those slots now hold **two** merged-class collectors
-each — Step 8's `PutCounterOnReferencedPermanentEffect` and this one — which is fine because the
-registry key includes the class. Each re-key widens the key from "the enchanted-destroy record" to
-"any referenced-destroy record" in that slot; no card puts a `SOURCE` or `TRIGGERING` reference in
-any of the three slots, so the widening is inert. Had the re-key been missed, Spreading Algae /
-Blight / Brink of Disaster, Yoke of the Damned and Mortal Wound / Hot Soup would have silently
-stopped triggering.
 
 **Other call sites updated**
 - `DestructionSupport:552` matched `elseEffect instanceof DestroySourcePermanentEffect` for the
@@ -850,13 +831,6 @@ mean the same thing.
   character-identical across the two cost handlers.
 
 **What the audit missed**
-- **The `Triggers.creatureDies(ANY)` collector was already occupied.** Steps 8 and 9 both had to *re-key* a
-  class-keyed `@CollectsTrigger` onto the merged class; here `DeathTriggerCollectorService` already
-  carried an `UntapPermanentsEffect` collector on that slot for Galvanic Juggernaut's `SELF` untap,
-  and it is character-identical to the Equipment one (same `StackEntry`, same
-  `logAnyCreatureDeath`). Re-keying would have registered two collectors under the same
-  `(slot, class)` key; the equipment method is simply deleted and Thornbite Staff now rides the
-  surviving one. Its comment gained the `ENCHANTED` case.
 - **`requiredCount()` has no game state, so the handler cannot evaluate a `DynamicAmount`.** The
   plan's "widen `count` to `DynamicAmount`" stops one step short: the interface method takes no
   arguments, and widening it would touch all 13 `PermanentChoiceCostHandler` implementations. The
@@ -909,7 +883,7 @@ here) and `VitalizeTest.untapsWithoutPromptingForAChoice` (the `chosenCount == 0
 CONTROLLED untap must not fall into the up-to-N prompt branch).
 
 Ran green: the 6 card tests plus `TeferiHeroOfDominariaTest`, `GalvanicJuggernautTest`,
-`EnterTriggerCollectorServiceTest`, `CostEffectClassificationTest`, the other 22
+`CostEffectClassificationTest`, the other 22
 `TapUntapScope.CONTROLLED` cards (`VitalizeTest` included), all 31 `TapMultiplePermanentsCost` cards, `SwarmIntelligenceTest`,
 `ClovenCastingTest`, `TapCreatureCostHandlerTest` and `MultiplePermanentSacrificeCostHandlerTest`.
 
@@ -984,12 +958,9 @@ there). Widening any of these means wiring the consumer at the same time.
   are still one-liners and every caller is untouched.
 - `TargetPolarityClassifier` (magical-vibes-ai) re-keys its single name entry from
   `GrantChosenKeywordToTargetEffect` to `GrantChosenKeywordEffect`. No `instanceof` branch was needed:
-  the SELF form appears only in an activated ability and an `Triggers.upkeep(ActivePlayer.YOU)` slot, never in
-  SPELL / Triggers.enters(ObjectRelation.THIS), and the sibling `GrantProtectionChoiceUntilEndOfTurnEffect` entry has
+  the SELF form appears only in an activated ability and a `Triggers.upkeep(ActivePlayer.YOU)` ability, never in
+  a spell or a `Triggers.enters(ObjectRelation.THIS)` ability, and the sibling `GrantProtectionChoiceUntilEndOfTurnEffect` entry has
   already been name-keyed across its own scopes since Step 8. `TargetPolarityGuardTest` passes.
-- **Nothing else.** Unlike Steps 8 and 9, no `@CollectsTrigger` collector is keyed on any of these
-  nine classes — all five families live in SPELL / STATIC / activated-ability slots — so there was no
-  re-key to miss.
 
 **Deliberate delta** (one)
 - **The until-next-turn grant now writes a game-log line.** The rest-of-game handler logged
@@ -1236,7 +1207,7 @@ the survivor rather than against it:
 
 **Other call sites updated**
 - `DestructionSupport:560` gates its `ForcedCostOrElse` fallback on `subject == SOURCE` (Step 9's
-  precedent), so a `TARGET` form in that slot falls through to the existing unsupported-fallback
+  precedent), so a `TARGET` form there falls through to the existing unsupported-fallback
   `log.warn` instead of silently reading the payer as a permanent id. Rogue Skycaptain unchanged.
 - `PutCounterOnSelfThenTransformIfThresholdEffectHandler:101` **constructs** the record at runtime
   for Primal Amulet's may-transform — a write site, not just a read site.
@@ -1400,21 +1371,18 @@ The chosen-type-count handlers really do share the whole two-phase choice protoc
   `GameOutcomeService` injection to go with it). Both are preserved on the any-target branch only:
   the creature branch cannot reduce a player's life total, so calling the win check there would let
   an unrelated 0-life player lose at a moment they previously did not.
-- **`@ValidatesTarget` is class-keyed, like `@CollectsTrigger`.** Folding the two records makes the
+- **`@ValidatesTarget` is class-keyed.** Folding the two records makes the
   opponent-only validator run for the plain "target player" form too, so its whole body is gated on
   `playerRelation() == OPPONENT`. `TargetValidationService:63` treats a null validator and a no-op
   validator identically, so the `ANY` form validates exactly as it did — via the spec alone.
 
 **Other call sites updated**
-- `CombatDamageService:1753` and the `@CollectsTrigger` in `DamageTriggerCollectorService:155` both
-  re-key to the merged class and gate on `OPPONENT`. Only the opponent wording has a single implied
-  player to auto-target. The collector's non-`OPPONENT` arm calls `addDealtDamageEntry` directly —
-  that is what the slot's `CardEffect.class` default collector (`DamageTriggerCollectorService:618`)
-  used to do for the `ANY` form, and returning `false` instead would have skipped it. Inert today:
-  Sun-Crowned Hunters is the only card with either form in `Triggers.dealtDamage()`.
+- `CombatDamageService:1753` re-keys to the merged class and gates on `OPPONENT`. Only the opponent
+  wording has a single implied player to auto-target. Sun-Crowned Hunters is the only card with either
+  form on a `Triggers.dealtDamage()` ability.
 - `TargetPolarityClassifier` loses two of its four name-keyed entries — both merges collapse a pair
   that already mapped to the same `HARMFUL_DAMAGE`, so no `instanceof` branch was needed.
-- Relic Bind's damage mode (its own `ChooseOneEffect` mode since effect-slot-refactor.md step 15, run 17z13c) and
+- Relic Bind's damage mode (its own `ChooseOneEffect` mode) and
   `DamageTargetPlayerOrPlaneswalkerUnlessPaysHandler:68` (Quenchable Fire's delayed damage) both
   **construct** the survivor; the `(int)` / `(DynamicAmount)` sugar keeps them `ANY`,
   which is what both cards print.
@@ -1535,10 +1503,9 @@ Four corrections:
   **only** for `TARGET_OPPONENT`, `null` otherwise — exactly the component-dependent pattern that
   interface's javadoc prescribes, and `null` is dispatch-identical to not implementing it, so the
   `CONTROLLER`/`EACH_PLAYER` cards are unaffected.
-- The `@CollectsTrigger` / `@ValidatesTarget` class-keying worry does not bite: **no** collector or
-  validator is keyed on any of these three classes, despite Grimoire Thief
-  (`Triggers.permanentYouControlBecomesTapped()`), Nightveil Specter (`Triggers.dealsCombatDamageToPlayer()`) and three
-  ETB cards using trigger slots.
+- The `@ValidatesTarget` class-keying worry does not bite: **no** validator is keyed on any of these
+  three classes, despite Grimoire Thief (`Triggers.permanentYouControlBecomesTapped()`), Nightveil
+  Specter (`Triggers.dealsCombatDamageToPlayer()`) and three ETB cards using them in triggered abilities.
 - The fizzle log is **not** shared: the opponent handler said *"opponent-exile fizzles"*. Unified on
   *"exile-top-cards fizzles"* (`log.info` only, not player-visible). The opponent handler also
   **lacked** the by-card-id battlefield fallback the other two had; the survivor keeps the fallback
@@ -1583,7 +1550,7 @@ really are the same nine lines (`forEachPermanent` → attachment guard → STAT
 wrappers over a private `getEnchantedCreatureCombatTax(gameData, creature, kind)`, so the two
 `CombatBlockService:1527-1528` call sites and `getCreatureAttackTax` were untouched. The second
 Step 17 warning also came back clean: none of the five records carries a capability interface, a
-`TargetSpec`, a `@CollectsTrigger`, a `@ValidatesTarget`, an AI polarity entry or a frontend
+`TargetSpec`, a `@ValidatesTarget`, an AI polarity entry or a frontend
 reference.
 
 **What the audit missed**
@@ -1653,27 +1620,24 @@ all green.
 **Absorbs**: `EnteringCreatureMinPowerConditionalEffect` (5),
 `EnteringCreatureMaxPowerConditionalEffect` (1), `EnteringCreatureExactStatsConditionalEffect` (1).
 All three implement the same interface and are consumed by a **single** dispatch site,
-`TriggerCollectionService.unwrapEnterCreatureConditional:4121`, which only calls
+the then trigger-collection code's `unwrapEnterCreatureConditional`, which only calls
 `testEnteringCreature()`, `triggerDescription()`, `wrapped()`. There is no per-class handler.
 `CardPowerAtLeastPredicate` / `CardPowerAtMostPredicate` already exist with matching
 null-power-never-matches semantics, so Min+Max collapse for free (LOW). Folding in `ExactStats`
 needs one new toughness predicate (`CardAllOfPredicate` composes it) — still net −2 (MED).
-**19a status**: done another way. Min and Max are gone, and effect-slot-refactor.md step 15 run 17t removed
-`ExactStats` and `EnterCreatureConditionalEffect`: Sigil Captain's "if that creature is 1/1" is the ability's
-intervening "if" `TriggeringPermanentMatches` on the entering creature, so no wrapper class is left to merge.
-**19a status**: done another way. Min and Max are gone, and effect-slot-refactor.md step 15 run 17t removed
+**19a status**: done another way. Min and Max are gone, and so are
 `ExactStats` and `EnterCreatureConditionalEffect`: Sigil Captain's "if that creature is 1/1" is the ability's
 intervening "if" `TriggeringPermanentMatches` on the entering creature, so no wrapper class is left to merge.
 
 **19b Target**
 ```java
-GrantEffectToTargetEffect(EffectSlot slot, CardEffect grantedEffect, EffectDuration duration,
+GrantEffectToTargetEffect(Ability grantedAbility, EffectDuration duration,
                           boolean skipIfAlreadyPresent, GrantScope scope, TargetPredicate declaredTarget)
 ```
 **Absorbs**: `GrantEffectToTargetUntilEndOfTurnEffect` (6),
 `GrantEffectToSourceUntilEndOfTurnEffect` (1), `GrantEffectToOwnCreaturesUntilEndOfTurnEffect` (2).
-All four converge on `permanent.addTemporaryTriggeredEffect(e.slot(), e.grantedEffect())`; the only
-branch is the survivor's `duration() == UNTIL_END_OF_TURN ? addTemporary… : addPersistent…`, which is
+All four converge on `permanent.addTemporaryAbility(e.grantedAbility())`; the only
+branch is the survivor's `duration() == UNTIL_END_OF_TURN ? addTemporaryAbility : addPersistentAbility`, which is
 exactly the axis the other three hardcode. Recipient selection uses three shapes that already exist
 verbatim in `GrantProtectionChoiceUntilEndOfTurnEffectHandler.resolveRecipientIds`.
 **Two deltas to preserve**: `skipIfAlreadyPresent` defaults `true` on the survivor but the absorbed
@@ -1690,8 +1654,8 @@ Independent, all LOW. Do as many as land cleanly; note any that don't.
 |---|---|---|
 | `BoostEquippedCreatureUntilEndOfTurnEffect(DynamicAmount, DynamicAmount, Set<Keyword>)` | `BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect` | 11 + 3 |
 | `AwardManaOfColorsAmongControlledEffect(PermanentPredicate, boolean oneOfEach)` | `AwardOneManaOfEachColorAmongControlledEffect` | 1 + 1 |
-| `AddManaWhenLandOfSubtypeTappedForManaEffect(+ ManaRestriction)` | **Done differently** (step 15, run 17z13e2): the subtype is the trigger's filter, the fixed-color form is `AddManaWhenTappedForManaEffect`, the restricted one `AddRestrictedManaWhenLandTappedForManaEffect` | — |
-| `AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly)` + the trigger's `withFilter` | `AddProducedManaWhenLandOfSubtypeTappedEffect`, `AddProducedManaWhenSnowLandTappedEffect` (and `TappedSnowLandDoesntUntapEffect`): **Gone** (effect-slot-refactor.md step 15, run 17z4b) | 1 + 1 |
+| `AddManaWhenLandOfSubtypeTappedForManaEffect(+ ManaRestriction)` | **Done differently**: the subtype is the trigger's filter, the fixed-color form is `AddManaWhenTappedForManaEffect`, the restricted one `AddRestrictedManaWhenLandTappedForManaEffect` | — |
+| `AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly)` + the trigger's `withFilter` | `AddProducedManaWhenLandOfSubtypeTappedEffect`, `AddProducedManaWhenSnowLandTappedEffect` (and `TappedSnowLandDoesntUntapEffect`): **Gone** | 1 + 1 |
 | `PlayWithHandRevealedEffect(boolean controllerOnly)` | `PlayWithHandsRevealedEffect`, `PlayWithOwnHandRevealedEffect` (+ delete the `PubliclyRevealedHandEffect` interface) | 1 + 1 |
 | `PayXManaThenEffect(String manaCost, CardEffect payload)` | `PayXManaGainXLifeEffect`, `PayXManaCreateXTokensEffect` | 1 + 1 |
 | `TargetPlayerChoosesCreatureEffect(boolean exile)` | `TargetPlayerChoosesCreatureDestroyEffect`, `TargetPlayerChoosesCreatureExileEffect` | 2 + 1 |
@@ -1707,8 +1671,8 @@ Independent, all LOW. Do as many as land cleanly; note any that don't.
   **Surfaces a latent bug**: the `AwardOneManaOfEachColor` branch multiplies by `manaMultiplier` and
   calls `pool.addCreatureMana` when `isCreatureSource`; the other branch does neither (`:680` adds a
   flat 1). Decide deliberately.
-- Land-tap trio: done in effect-slot-refactor.md step 15, run 17z4b. The land qualification is the trigger's `withFilter`
-  (judged by `TriggerCollectionService.landTapMatches` through the layer-aware predicate path), and the
+- Land-tap trio: done. The land qualification is the trigger's `withFilter`
+  (judged by `TapTriggers` through the layer-aware predicate path), and the
   survivor resolves by its own handler, so it lost its `landFilter` component as well.
 - `PlayWithHandRevealed*`: both records have **zero components** and exist solely to hardcode a
   boolean behind an interface, read at exactly one site (`GameViewProjectionFactory:293`).
@@ -1789,7 +1753,7 @@ source-restriction axis handled in `DamageSupport.dealCreatureDamage`.
 
 **23a Target**: `AttachSourceToTargetPermanentEffect()` — source attaches to `targetId`.
 **Absorbs**: `AttachSourceAuraToTargetCreatureEffect` (2),
-`AttachSourceEquipmentToTargetCreatureEffect` (3). Both have a non-targeting form reading the stack entry's triggering permanent (`AttachSourceAuraToTargetCreatureEffect.ofTriggeringPermanent()`, `AttachSourceEquipmentToTargetCreatureEffect.forTriggeringCreature()`, step 15 run 17x3b) that the merged effect keeps.
+`AttachSourceEquipmentToTargetCreatureEffect` (3). Both have a non-targeting form reading the stack entry's triggering permanent (`AttachSourceAuraToTargetCreatureEffect.ofTriggeringPermanent()`, `AttachSourceEquipmentToTargetCreatureEffect.forTriggeringCreature()`) that the merged effect keeps.
 
 **23b Target**: `AttachTargetToTargetPermanentEffect()` — `targetIds[0]` attaches to `targetIds[1]`.
 **Absorbs**: `AttachTargetAuraToTargetCreatureEffect` (2),
@@ -1798,7 +1762,7 @@ source-restriction axis handled in `DamageSupport.dealCreatureDamage`.
 All four handlers share the identical core — `expireFloatingEffectsForUnattachedSource(x.getId())` →
 `x.setAttachedTo(target.getId())` → `x.setTimestamp(gameData.nextTimestamp())` with the same CR 613.7e
 comment. The two type-specific tails are **already self-guarding**, so the union is safe with no branch:
-`TriggerCollectionService.checkAuraAttachedTriggers:3782` returns immediately unless the card has the
+`AttachmentTriggers.trigger` judges the Aura-attached abilities only when the card has the
 `AURA` subtype, and `EquipSupport.applySacrificeOnUnattachIfNeeded:45` returns immediately unless the
 card has a `Triggers.becomesUnattachedFromPermanent()` ability. The equipment handlers' extra card-id fallback
 (`equipSupport.findEquipmentByCardId`, for the death-trigger path) is harmless on both.
@@ -1838,7 +1802,7 @@ which is exactly why colorless needed its own record.
 
 ### Step 25 — Copy-spell-for-each-other
 
-**Target**: `CopySpellForEachOtherMatchingPermanentEffect(PermanentPredicate filter)` (the effects read the triggering spell from the stack entry since effect-slot-refactor.md step 15, run 17w4).
+**Target**: `CopySpellForEachOtherMatchingPermanentEffect(PermanentPredicate filter)` (the effects read the triggering spell from the stack entry).
 **Absorbs**: `CopySpellForEachOtherControlledCreatureEffect` (1),
 `CopySpellForEachOtherSubtypePermanentEffect` (1).
 
@@ -1933,7 +1897,7 @@ Do these individually; each is self-contained. Reassess before starting — seve
 | `PutAuraFromHandOntoSelfEffect(capByX, exileIfDeclined)` | 2 classes | X variant passes an extra arg to `beginTargetedCardChoice` for the decline path |
 | `LookAtTopCardMayPutMatchingOntoBattlefieldEffect` | `LookAtTopCardPutLandOrCreatureWithinLoyaltyEffect` (1) | Both mayfx handlers already delegate to the same method; needs a library-card predicate for "MV ≤ loyalty counters" |
 | `GrantFlashbackToGraveyardCardsEffect(+ targeted)` | 1 class | Mass path skips cards with a native `FlashbackCast`; target path has fizzle logging. Both must survive |
-| `AssignNoCombatDamageAndDefendingPlayerDiscardsEffect` → composition | 1 class | **Blocked**: `CombatBlockService:940-957` bakes the defender into `targetId`, but `DiscardEffectHandler`'s `DEFENDING_PLAYER` branch reads `getAttackedTargetId()` (`:104`). Fix the collector first |
+| `AssignNoCombatDamageAndDefendingPlayerDiscardsEffect` → composition | 1 class | **Blocked**: `CombatBlockService:940-957` bakes the defender into `targetId`, but `DiscardEffectHandler`'s `DEFENDING_PLAYER` branch reads `getAttackedTargetId()` (`:104`). Fix the block-trigger code first |
 | `BoostSelfWhenCombatOpponentMatchesEffect` | `BoostSelfWhenBlockingKeywordEffect` (3) | **Rules question, not mechanical**: keyword variant is checked at trigger time, survivor re-checks at resolution. Settle which is right (verify the CR with the `rules` MCP) before merging |
 | `CreateTokenCopyOfSourceEffect` + subject selector | `CreateTokenCopyOfEquippedCreatureEffect` (1) | Prefer extracting a shared `TokenCopyFactory` over merging the records |
 
@@ -1961,14 +1925,14 @@ Checked and found to differ semantically. Do not re-propose without new evidence
 - `BecomeCopyOfTargetCreatureEffect` vs `…UntilEndOfTurnEffect` — deferred `PendingMayAbility` vs immediate `applyCloneCopy` + layer-1 revert.
 - `ReturnTargetCardsFromGraveyardToHandEffect` vs `…ToBattlefieldEffect` — 3-line delegation vs the full ETB pipeline. A rewrite, not a merge.
 - `DrawCardEffect` (423) / `DrawCardForTargetPlayerEffect` (30) — the target variant carries a CR 603.4 intervening-if re-check and multi-target fan-out.
-- `AwardManaEffect` (192) — read structurally by the land-tap collectors (`instanceof AwardManaEffect` to discover what a land produces).
+- `AwardManaEffect` (192) — read structurally by the mana-source readers (`instanceof AwardManaEffect` to discover what a land produces).
 - `SetPowerToughnessToAmountEffect` (67) vs `SetBasePowerToughnessEffect` — CDA vs one-shot layer-7b setter.
 - `SacrificeCreatureCost` vs `SacrificePermanentCost` — see Step 10.
 - `TapOrUntapTargetPermanentEffect` (17) — a resolution-time mode *choice*, not a fixed tap or untap.
 - `TargetPlayerLosesGameEffect` vs `WinGameEffect` — `resolveLoss` (loss replacement applies) vs `canPlayerWinGame` (bypasses it). Both handlers carry comments explaining why.
 - `CantLoseGameEffect` vs `CantLoseGameFromLifeEffect` — the former also stops opponents winning.
 - `ChooseNumberEffect` vs `ChooseNumberOnEnterEffect` — marker read via interface at `StackResolutionService:659` vs a registered handler. Merging without an ETB exclusion would double-prompt.
-- Gone (step 15 of effect-slot-refactor.md, run 17z11f4): `IfWonClashEffect` / `IfLostClashEffect`; "if you won" is a `ConditionalEffect` on the clash trigger's event value.
+- Gone: `IfWonClashEffect` / `IfLostClashEffect`; "if you won" is a `ConditionalEffect` on the clash trigger's event value.
 - `GainLifeEqualToDamageDealt/ControlledCreatureCombatDamage` — marker records with **no handlers**, matched by `instanceof` at trigger-collection time. Reworking that is out of scope for an effect merge.
 - Capability interfaces (`AttackCostEffect`, `BlockCostEffect`, `BoardWipeEffect`, `CounterUnlessEffect`, the `ProtectionGrantingEffect` family, …) — these *are* the consolidation mechanism, not duplication.
 - Already-consolidated survivors: `ExileGraveyardCardsEffect`, `ReturnCardFromGraveyardEffect`, `ReturnToHandEffect`, `PreventDamageEffect`, `TapPermanentsEffect`, `UntapPermanentsEffect`.

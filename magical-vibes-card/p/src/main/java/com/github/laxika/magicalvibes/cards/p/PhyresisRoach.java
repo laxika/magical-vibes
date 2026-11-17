@@ -24,7 +24,6 @@ public class PhyresisRoach extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.INSECT),
                         Set.of(Keyword.TOXIC),
                         null,
-                        null,
                         insectCard,
                         insectCard));
     }

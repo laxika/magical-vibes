@@ -56,7 +56,7 @@ public class DraftFromSpellbookEffectHandler implements NormalEffectHandlerBean 
                     .toList();
             playerInputService.beginChooseModeChoice(
                     gameData, entry.getControllerId(), entry.getCard(), new ChooseOneEffect(options),
-                    false, entry.getSourcePermanentId());
+                    entry.getSourcePermanentId());
             return;
         }
 

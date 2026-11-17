@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -97,10 +97,10 @@ public class ExileDyingCreatureCardAndCreateTokenEffectHandler implements Normal
         for (Ability ability : tokenEffects) {
             if (ability instanceof TriggeredAbility triggered
                     && triggered.hasWatchedTrigger(Triggers.dealsCombatDamageToPlayer())) {
-                CardEffect combatDamageEffect = LegacySlots.effectsOf(ability).getFirst();
+                CardEffect combatDamageEffect = AbilityEffects.effectsOf(ability).getFirst();
                 CardEffect bound = bindReturn(combatDamageEffect, exiledCardId);
                 if (bound != combatDamageEffect) {
-                    boundTokenEffects.add(LegacySlots.withEffect(ability, bound));
+                    boundTokenEffects.add(AbilityEffects.withEffect(ability, bound));
                     changed = true;
                     continue;
                 }

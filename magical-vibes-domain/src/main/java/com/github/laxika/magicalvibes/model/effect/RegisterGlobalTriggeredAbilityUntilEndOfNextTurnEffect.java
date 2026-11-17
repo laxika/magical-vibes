@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Ability;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 
 /**
@@ -20,13 +19,6 @@ public record RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect(Ability gra
         this(grantedAbility, targetFilter, false);
     }
 
-    /** The grant as the slot and effect that stand for it. */
-    public RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect(EffectSlot slot,
-                                                                  CardEffect triggeredEffect,
-                                                                  TargetFilter targetFilter) {
-        this(LegacySlots.grant(slot, triggeredEffect), targetFilter);
-    }
-
     /**
      * "Until the end of [that player]'s next turn, [ability]": through the end of the next turn of the player the
      * resolving ability names (its target, or the defending player of an attack trigger).
@@ -36,13 +28,8 @@ public record RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect(Ability gra
         return new RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect(grantedAbility, null, true);
     }
 
-    /** The slot of {@link #grantedAbility}, or {@code null} when there is none. */
-    public EffectSlot slot() {
-        return grantedAbility == null ? null : LegacySlots.slotOf(grantedAbility);
-    }
-
     /** The effect of {@link #grantedAbility}, or {@code null} when there is none. */
     public CardEffect triggeredEffect() {
-        return grantedAbility == null ? null : LegacySlots.effectsOf(grantedAbility).getFirst();
+        return grantedAbility == null ? null : AbilityEffects.effectsOf(grantedAbility).getFirst();
     }
 }

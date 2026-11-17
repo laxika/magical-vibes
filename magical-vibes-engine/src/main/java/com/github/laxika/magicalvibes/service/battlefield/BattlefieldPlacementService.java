@@ -24,8 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -1549,7 +1548,7 @@ public class BattlefieldPlacementService {
         for (Ability ability : new java.util.LinkedHashSet<>(grants)) {
             if (ability instanceof StaticAbility statik) {
                 for (CardEffect effect : new java.util.LinkedHashSet<>(statik.effects())) {
-                    long granted = LegacySlots.staticEffectsIn(grants).stream().filter(effect::equals).count();
+                    long granted = AbilityEffects.staticEffectsIn(grants).stream().filter(effect::equals).count();
                     long present = permanent.getPersistentStaticEffects().stream().filter(effect::equals).count();
                     for (long i = present; i < granted; i++) {
                         permanent.addPersistentAbility(new StaticAbility(List.of(effect), statik.zones()));
@@ -1557,22 +1556,10 @@ public class BattlefieldPlacementService {
                 }
                 continue;
             }
-            EffectSlot slot = LegacySlots.slotOf(ability);
-            if (slot == null) {
-                long granted = grants.stream().filter(ability::equals).count();
-                long present = permanent.getPersistentTriggeredAbilities().stream().filter(ability::equals).count();
-                for (long i = present; i < granted; i++) {
-                    permanent.addPersistentAbility(ability);
-                }
-                continue;
-            }
-            for (CardEffect effect : new java.util.LinkedHashSet<>(LegacySlots.effectsOf(ability))) {
-                long granted = LegacySlots.effectsIn(grants, slot).stream().filter(effect::equals).count();
-                long present = permanent.getPersistentTriggeredEffects(slot).stream()
-                        .filter(effect::equals).count();
-                for (long i = present; i < granted; i++) {
-                    permanent.addPersistentTriggeredEffect(slot, effect);
-                }
+            long granted = grants.stream().filter(ability::equals).count();
+            long present = permanent.getPersistentTriggeredAbilities().stream().filter(ability::equals).count();
+            for (long i = present; i < granted; i++) {
+                permanent.addPersistentAbility(ability);
             }
         }
     }

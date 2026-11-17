@@ -2632,38 +2632,16 @@ public sealed interface ChoiceContext {
      * {@link ChooseOneEffect}'s options; the chosen mode's effects are spliced into the paused
      * resolution. Used by non-targeting modal upkeep triggers such as Etherwrought Page.
      *
-     * <p>A "choose one that hasn't been chosen" trigger (Demonic Pact) instead picks its mode as the
-     * ability goes on the stack: {@code triggerTime} is true, {@code sourcePermanentId} identifies the
-     * permanent whose consumed modes are recorded, and the chosen mode's effects become their own
-     * triggered ability (with that mode's targets) rather than being spliced into a resolution.
-     * A targeted modal trigger also sets {@code triggerTime} without setting {@code consumeMode}.
-     * {@code asEnters} records a named mode on a permanent before its ETB abilities are collected.
+     * <p>{@code sourcePermanentId} identifies the permanent whose consumed modes are recorded when
+     * {@code consumeMode} is set. {@code asEnters} records a named mode on a permanent before its ETB
+     * abilities are collected.
      */
     record ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
-                            boolean triggerTime, UUID sourcePermanentId, boolean consumeMode,
+                            UUID sourcePermanentId, boolean consumeMode,
                             List<String> chosenLabels, boolean asEnters) implements ChoiceContext {
 
         public ChooseModeChoice {
             chosenLabels = chosenLabels == null ? List.of() : List.copyOf(chosenLabels);
-        }
-
-        public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect) {
-            this(sourceCard, controllerId, effect, false, null, false, List.of(), false);
-        }
-
-        public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
-                                boolean triggerTime, UUID sourcePermanentId, boolean consumeMode) {
-            this(sourceCard, controllerId, effect, triggerTime, sourcePermanentId, consumeMode, List.of(), false);
-        }
-
-        public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
-                                boolean triggerTime, UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effect, triggerTime, sourcePermanentId, false, List.of(), false);
-        }
-
-        public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
-                                UUID sourcePermanentId, boolean asEnters) {
-            this(sourceCard, controllerId, effect, false, sourcePermanentId, false, List.of(), asEnters);
         }
     }
 

@@ -74,7 +74,6 @@ import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerMatchContext;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
@@ -1025,7 +1024,7 @@ public class SpellTriggers {
      *
      * @return whether the ability triggered
      */
-    boolean collectCastAbility(TriggerMatchContext match, CastAbility ability, SpellEvent.Cast sc,
+    boolean collectCastAbility(SpellMatch match, CastAbility ability, SpellEvent.Cast sc,
                                       boolean perManaFromSource) {
         int copies = perManaFromSource && ability.filter().paidWithManaFromThis() && match.permanent() != null
                 ? match.gameData().getSpellCastManaSourceAmount(sc.spellCard().getId(), match.permanent().getId())
@@ -1045,7 +1044,7 @@ public class SpellTriggers {
      *
      * @return whether the ability triggered
      */
-    boolean collectCardAdvantageAbility(TriggerMatchContext match, TriggeredAbility ability,
+    boolean collectCardAdvantageAbility(SpellMatch match, TriggeredAbility ability,
                                                 SpellEvent.CardAdvantage event) {
         Card sourceCard = match.sourceCard() != null ? match.sourceCard() : match.permanent().getCard();
         ConditionContext context = match.permanent() == null
@@ -1086,7 +1085,7 @@ public class SpellTriggers {
      *
      * @return whether the ability triggered
      */
-    boolean collectCopyAbility(TriggerMatchContext match, TriggeredAbility ability, SpellFilter filter,
+    boolean collectCopyAbility(SpellMatch match, TriggeredAbility ability, SpellFilter filter,
                                        SpellEvent.Copied copied) {
         StackEntry copy = copied.copy();
         boolean isSpell = switch (copy.getEntryType()) {
@@ -1142,7 +1141,7 @@ public class SpellTriggers {
         };
     }
 
-    private boolean handleGenericSpellCastTrigger(TriggerMatchContext match, CastAbility trigger,
+    private boolean handleGenericSpellCastTrigger(SpellMatch match, CastAbility trigger,
                                                     SpellEvent.Cast spellCast) {
         return handleGenericSpellCastTrigger(match, trigger, spellCast.spellCard(), spellCast.castingPlayerId(),
                 spellCast.exiledSourcePermanentId(), spellCast.castZone());
@@ -1170,7 +1169,7 @@ public class SpellTriggers {
         return onStack;
     }
 
-    private boolean handleGenericSpellCastTrigger(TriggerMatchContext match, CastAbility trigger,
+    private boolean handleGenericSpellCastTrigger(SpellMatch match, CastAbility trigger,
                                                     Card spellCard, UUID castingPlayerId,
                                                     UUID exiledSourcePermanentId, Zone castZone) {
         // An ability the source gives the spell ("spells you cast … have cascade, cascade") is the spell's: the spell is
@@ -1178,9 +1177,8 @@ public class SpellTriggers {
         // spell ("the next creature spell you cast this turn has cascade") is used up by the spell it applied to.
         if (trigger.filter().grantedToTheSpell() && match.sourceCard() != spellCard) {
             boolean queued = false;
-            TriggerMatchContext spellSourced = new TriggerMatchContext(match.gameData(), null,
-                    match.controllerId(), List.of(), spellCard, match.sourcePlanarObject(),
-                    match.onceEachTurnActionKey(), match.triggersOnlyOnceEachTurn());
+            SpellMatch spellSourced = new SpellMatch(match.gameData(), null, match.controllerId(), spellCard,
+                    match.sourcePlanarObject(), null);
             for (EffectRegistration cascade : trigger.ability().effects()) {
                 queued |= handleGenericSpellCastTrigger(spellSourced,
                         CastAbility.of(trigger.ability().withEffects(List.of(cascade)), trigger.filter()),
@@ -1439,7 +1437,7 @@ public class SpellTriggers {
         return indexes;
     }
 
-    private boolean matchesCastSpellPredicate(TriggerMatchContext match, StackEntry spellEntry,
+    private boolean matchesCastSpellPredicate(SpellMatch match, StackEntry spellEntry,
                                                StackEntryPredicate predicate, UUID exiledSourcePermanentId) {
         // "A card exiled with this": the card was cast from exile while exiled with the ability's source, the
         // permanent, the face-up plane (The Matrix of Time) or the permanent that registered the ability (Apple of
@@ -1480,7 +1478,7 @@ public class SpellTriggers {
      * controller, other than the permanents it targets (and, for "another opponent", controlled by a player other than
      * its target's controller): an intervening "if" (CR 603.4) the copy effect checks again as it resolves.
      */
-    private boolean couldTargetAnotherPermanent(TriggerMatchContext match, StackEntry spellEntry,
+    private boolean couldTargetAnotherPermanent(SpellMatch match, StackEntry spellEntry,
                                                 StackEntryCouldTargetAnotherPermanentPredicate predicate) {
         GameData gameData = match.gameData();
         Set<UUID> spellTargets = new java.util.HashSet<>(spellEntry.getDeclaredTargetIds());
@@ -1600,7 +1598,7 @@ public class SpellTriggers {
      *
      * @return whether the ability triggered
      */
-    private boolean collectLandPlayAbility(TriggerMatchContext match, TriggeredAbility ability, LandPlayTrigger trigger,
+    private boolean collectLandPlayAbility(SpellMatch match, TriggeredAbility ability, LandPlayTrigger trigger,
                                           SpellEvent.LandPlayed landPlayed) {
         if (trigger.playedFrom() != null && landPlayed.playZone() != trigger.playedFrom()
                 || trigger.notPlayedFrom() != null && landPlayed.playZone() == trigger.notPlayedFrom()) {
@@ -1753,8 +1751,8 @@ public class SpellTriggers {
                 continue;
             }
             if (watched.equals(CARD_ADVANTAGE)) {
-                triggered |= collectCardAdvantageAbility(new TriggerMatchContext(gameData, perm, controllerId,
-                        List.of(), card), ability, (SpellEvent.CardAdvantage) event);
+                triggered |= collectCardAdvantageAbility(new SpellMatch(gameData, perm, controllerId, card,
+                        null, null), ability, (SpellEvent.CardAdvantage) event);
                 continue;
             }
             // Layer 3 (CR 612.1): the trigger condition is read from the permanent's text-changed words.
@@ -1804,7 +1802,7 @@ public class SpellTriggers {
      * The delayed triggered abilities ({@link TriggerIndex#delayedAbilities}) watched as {@code watched} that watch no
      * particular object, whose controller {@code related} relates to the event's player, read as an emblem's are
      * ({@link #dispatchEmblems}): a delayed ability is no object's own, so it functions whatever zones its conditions
-     * name. Its match context carries it ({@link TriggerMatchContext#ofDelayed}), so "a card exiled with this" names
+     * name. Its match context carries it ({@link SpellMatch#ofDelayed}), so "a card exiled with this" names
      * the permanent that created it, "they" the player its maker named, and its entry records what it does
      * ({@link EventAbilitySupport#delayedRecord}). A delayed copy ability isn't read: none is written.
      */
@@ -1814,7 +1812,7 @@ public class SpellTriggers {
                 continue;
             }
             TriggeredAbility ability = delayed.ability();
-            TriggerMatchContext match = TriggerMatchContext.ofDelayed(gameData, delayed);
+            SpellMatch match = SpellMatch.ofDelayed(gameData, delayed);
             SpellFilter filter = collectedSpellFilter(ability, watched, Zone.COMMAND, true);
             if (filter != null) {
                 if (!(event instanceof SpellEvent.Cast cast)) {
@@ -1983,8 +1981,8 @@ public class SpellTriggers {
     private boolean collectSpellAbility(GameData gameData, Permanent perm, Card sourceCard, UUID controllerId,
                                         Trigger watched, SpellEvent event, TriggeredAbility ability,
                                         SpellFilter filter, PlanarObject planarObject) {
-        TriggerMatchContext match = new TriggerMatchContext(gameData, perm, controllerId, List.of(), sourceCard,
-                planarObject == null ? null : planarObject.copy());
+        SpellMatch match = new SpellMatch(gameData, perm, controllerId, sourceCard,
+                planarObject == null ? null : planarObject.copy(), null);
         if (event instanceof SpellEvent.Cast cast) {
             return collectCastAbility(match, CastAbility.of(ability, filter), cast, watched.equals(YOU_CAST));
         }
@@ -1993,7 +1991,7 @@ public class SpellTriggers {
 
     /**
      * Triggers {@code ability}, whose land-play trigger {@code trigger} has a filter or a zone, for the land play
-     * {@code event}, through the land-play reader ({@link #collectLandPlayAbility(TriggerMatchContext,
+     * {@code event}, through the land-play reader ({@link #collectLandPlayAbility(SpellMatch,
      * TriggeredAbility, LandPlayTrigger, SpellEvent.LandPlayed)}).
      *
      * @return whether the ability triggered
@@ -2001,8 +1999,8 @@ public class SpellTriggers {
     private boolean collectLandPlayAbility(GameData gameData, Permanent perm, Card sourceCard, UUID controllerId,
                                            SpellEvent event, TriggeredAbility ability, LandPlayTrigger trigger,
                                            PlanarObject planarObject) {
-        return collectLandPlayAbility(new TriggerMatchContext(gameData, perm, controllerId, List.of(), sourceCard,
-                        planarObject == null ? null : planarObject.copy()),
+        return collectLandPlayAbility(new SpellMatch(gameData, perm, controllerId, sourceCard,
+                        planarObject == null ? null : planarObject.copy(), null),
                 ability, trigger, (SpellEvent.LandPlayed) event);
     }
 
@@ -2059,5 +2057,42 @@ public class SpellTriggers {
                 .filter(entry -> entry.getCard() != null && entry.getCard().getId().equals(cardId))
                 .findFirst()
                 .orElse(null);
+    }
+
+    /**
+     * The object whose spell ability triggered, as the spell matchers judge it.
+     *
+     * @param gameData           the current game state
+     * @param permanent          the permanent whose ability triggered, or {@code null} for an ability of a card in
+     *                           exile, a graveyard or the command zone, or of a spell
+     * @param controllerId       the ability's controller
+     * @param sourceCard         the card whose ability triggered
+     * @param sourcePlanarObject the face-up plane or scheme whose ability triggered, or {@code null}
+     * @param delayed            for a delayed triggered ability a resolving spell or ability created (CR 603.7a), that
+     *                           ability, which records the permanent that was its maker's source and so its own
+     *                           (CR 603.7e), which may have left the battlefield, and the player its maker named;
+     *                           {@code null} otherwise
+     */
+    record SpellMatch(GameData gameData, Permanent permanent, UUID controllerId, Card sourceCard,
+                      PlanarObject sourcePlanarObject, TemporaryGlobalTriggeredAbility delayed) {
+
+        /**
+         * The delayed ability for {@code delayed} of {@code gameData}: no permanent of its own, the card of the spell
+         * or ability that created it as its source card, its controller as the controller (CR 603.7d, 603.7e).
+         */
+        static SpellMatch ofDelayed(GameData gameData, TemporaryGlobalTriggeredAbility delayed) {
+            return new SpellMatch(gameData, null, delayed.controllerId(), delayed.sourceCard(), null, delayed);
+        }
+
+        /**
+         * The object "a card exiled with this" names: the source permanent, else the face-up plane, else the permanent
+         * that created the delayed ability; {@code null} for none. A card cast or played from exile names the object it
+         * was exiled with in its event, since it has left exile by then.
+         */
+        UUID exiledWithSourceId() {
+            return permanent != null ? permanent.getId()
+                    : sourcePlanarObject != null ? sourcePlanarObject.getId()
+                    : delayed != null ? delayed.sourcePermanentId() : null;
+        }
     }
 }

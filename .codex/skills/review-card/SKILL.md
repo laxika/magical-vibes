@@ -43,9 +43,9 @@ Using oracle text from Step 1, verify:
 
 1. **Oracle fidelity / rules accuracy** — every ability and mode is implemented; no invented behavior; ambiguous text checked against official rulings when needed.
 2. **Reuse over creation** — effects/predicates composed from existing building blocks; no unnecessary new effect/predicate classes.
-3. **Slots, targeting, costs** — correct `EffectSlot`s, target filters/`TargetSpec`, triggered/activated ability wiring. Grep `agent-docs/` when unsure (never read those docs in full): `CARD_PATTERN_INDEX.md`, `ORACLE_TEXT_EFFECT_MAP.md`, `EFFECTS_QUICK_REFERENCE.md`, `TRIGGER_SLOT_TARGETING.md`, `ACTIVATED_ABILITY_GUIDE.md`, `PREDICATES_REFERENCE.md`.
+3. **Abilities, targeting, costs** — spell effects via `addSpellEffect`, additional cast costs via `addCastingCost` (never as spell effects), static abilities via `addStaticEffect` ("enters with" / "as this enters" abilities are static, never `Triggers.enters(ObjectRelation.THIS)`), triggered abilities via one `addTrigger(Triggers.…, effects)` per Oracle ability with the `Triggers` factory whose Javadoc matches the wording, a restriction on the triggering object as the trigger's `.withFilter(…)`, intervening "if" / event condition / limit / "one or more" as `TriggerOptions` (never a `ConditionalEffect` or wrapper effect around the ability's effects), a triggered "choose one —" as `ChooseOneAtTriggerTimeEffect`, grants of abilities as `new TriggeredAbility(…)` / `StaticAbility.of(…)`; target filters/`TargetSpec`, activated ability wiring. Grep `agent-docs/` when unsure (never read those docs in full): `CARD_PATTERN_INDEX.md`, `ORACLE_TEXT_EFFECT_MAP.md`, `EFFECTS_QUICK_REFERENCE.md`, `TRIGGERED_ABILITY_TARGETS.md`, `ACTIVATED_ABILITY_GUIDE.md`, `PREDICATES_REFERENCE.md`.
 4. **Constructor hygiene** — constructor is engine logic only; no manual metadata setters.
-5. **Tests** — present when required (not basic land / vanilla); exercise behavior through the harness (`harness`/`gs`/`gd`), not Scryfall metadata or white-box wiring (`getEffects`, `EffectSlot`, reflection); contain no unused imports, variables, setup, helpers, or dead test code. Remove every unused piece you find. Skip running the full suite; optionally run the focused test via `scripts/run-card-test.ps1` only if needed to confirm a suspected bug.
+5. **Tests** — present when required (not basic land / vanilla); exercise behavior through the harness (`harness`/`gs`/`gd`), not Scryfall metadata or white-box wiring (`getSpellEffects`, `getStaticEffects`, `getTriggeredAbilities`, reflection); contain no unused imports, variables, setup, helpers, or dead test code. Remove every unused piece you find. Skip running the full suite; optionally run the focused test via `scripts/run-card-test.ps1` only if needed to confirm a suspected bug.
 
 ## Step 4 — Improve test coverage (encouraged)
 
@@ -58,7 +58,7 @@ Add tests when:
 
 Do **not** add tests for:
 - Basic lands / true vanillas with nothing to assert beyond metadata.
-- Scryfall-loaded fields or white-box wiring (`getEffects`, `EffectSlot`, reflection).
+- Scryfall-loaded fields or white-box wiring (`getSpellEffects`, `getStaticEffects`, `getTriggeredAbilities`, reflection).
 - Pure style/convention nits with no behavioral stake.
 
 If you add tests:

@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -76,19 +75,10 @@ public class CreateTokenWithTriggeredAbilitiesOfExiledCardsEffectHandler impleme
         if (sourcePermanentId == null) {
             return List.of();
         }
-        Map<EffectSlot, List<EffectRegistration>> slotted = new EnumMap<>(EffectSlot.class);
         List<Ability> abilities = new ArrayList<>();
         for (Card card : gameData.getCardsExiledByPermanent(sourcePermanentId)) {
-            for (EffectSlot slot : EffectSlot.values()) {
-                List<EffectRegistration> registrations = card.getEffectRegistrations(slot);
-                if (!registrations.isEmpty()) {
-                    slotted.computeIfAbsent(slot, ignored -> new ArrayList<>()).addAll(registrations);
-                }
-            }
-            abilities.addAll(card.getUnslottedTriggeredAbilities());
+            abilities.addAll(card.getTriggeredAbilities());
         }
-        List<Ability> result = new ArrayList<>(LegacySlots.registrationAbilities(slotted));
-        result.addAll(abilities);
-        return result;
+        return abilities;
     }
 }

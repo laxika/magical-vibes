@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Ability;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 
 /**
  * Grants the source permanent a triggered ability until its controller's next upkeep.
@@ -14,18 +13,8 @@ public record GrantEffectToSourceUntilNextUpkeepEffect(
         Ability grantedAbility
 ) implements CardEffect {
 
-    /** The grant as the slot and effect that stand for it. */
-    public GrantEffectToSourceUntilNextUpkeepEffect(EffectSlot slot, CardEffect grantedEffect) {
-        this(LegacySlots.grant(slot, grantedEffect));
-    }
-
-    /** The slot of {@link #grantedAbility}, or {@code null} when there is none. */
-    public EffectSlot slot() {
-        return grantedAbility == null ? null : LegacySlots.slotOf(grantedAbility);
-    }
-
     /** The effect of {@link #grantedAbility}, or {@code null} when there is none. */
     public CardEffect grantedEffect() {
-        return grantedAbility == null ? null : LegacySlots.effectsOf(grantedAbility).getFirst();
+        return grantedAbility == null ? null : AbilityEffects.effectsOf(grantedAbility).getFirst();
     }
 }

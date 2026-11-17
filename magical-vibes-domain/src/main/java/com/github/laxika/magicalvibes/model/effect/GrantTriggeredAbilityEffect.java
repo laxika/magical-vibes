@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Ability;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -22,30 +21,13 @@ public record GrantTriggeredAbilityEffect(Ability grantedAbility,
                                           GrantScope scope,
                                           PermanentPredicate filter) implements CardEffect {
 
-    /** The grant as the slot and effect that stand for it. */
-    public GrantTriggeredAbilityEffect(EffectSlot slot,
-                                       CardEffect grantedEffect,
-                                       GrantScope scope,
-                                       PermanentPredicate filter) {
-        this(LegacySlots.grant(slot, grantedEffect), scope, filter);
-    }
-
-    public GrantTriggeredAbilityEffect(EffectSlot slot, CardEffect grantedEffect, GrantScope scope) {
-        this(slot, grantedEffect, scope, null);
-    }
-
-    /** The grant of {@code grantedAbility}, such as a static ability, which has no slot. */
+    /** The grant of {@code grantedAbility}. */
     public GrantTriggeredAbilityEffect(Ability grantedAbility, GrantScope scope) {
         this(grantedAbility, scope, null);
     }
 
-    /** The slot of {@link #grantedAbility}, or {@code null} when there is none. */
-    public EffectSlot slot() {
-        return grantedAbility == null ? null : LegacySlots.slotOf(grantedAbility);
-    }
-
     /** The effect of {@link #grantedAbility}, or {@code null} when there is none. */
     public CardEffect grantedEffect() {
-        return grantedAbility == null ? null : LegacySlots.effectsOf(grantedAbility).getFirst();
+        return grantedAbility == null ? null : AbilityEffects.effectsOf(grantedAbility).getFirst();
     }
 }

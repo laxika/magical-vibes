@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Emblem;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -808,17 +807,8 @@ public class LayerSystemService {
         copy.addCastingCostsAndSpellEffectsFrom(original,
                 effect -> !copy.getCastingCostsAndSpellEffects().contains(effect));
         copy.addStaticAbilitiesFrom(original, effect -> !copy.getStaticEffects().contains(effect));
-        for (EffectSlot slot : EffectSlot.values()) {
-            for (var registration : original.getEffectRegistrations(slot)) {
-                boolean alreadyPresent = copy.getEffectRegistrations(slot).stream()
-                        .anyMatch(existing -> existing.effect().equals(registration.effect()));
-                if (!alreadyPresent) {
-                    copy.addEffect(slot, registration.effect());
-                }
-            }
-        }
-        for (TriggeredAbility ability : original.getUnslottedTriggeredAbilities()) {
-            if (!copy.getUnslottedTriggeredAbilities().contains(ability)) {
+        for (TriggeredAbility ability : original.getTriggeredAbilities()) {
+            if (!copy.getTriggeredAbilities().contains(ability)) {
                 copy.addTriggeredAbility(ability);
             }
         }

@@ -48,7 +48,6 @@ public class GarthOneEyeEffectHandler implements NormalEffectHandlerBean {
                 entry.getControllerId(),
                 entry.getCard(),
                 new ChooseOneEffect(options),
-                false,
                 entry.getSourcePermanentId(),
                 alreadyChosen.stream().toList());
     }

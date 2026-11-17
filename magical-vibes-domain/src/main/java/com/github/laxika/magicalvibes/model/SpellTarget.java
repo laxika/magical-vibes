@@ -70,16 +70,6 @@ public final class SpellTarget {
     }
 
     /**
-     * Adds an effect to {@code slot} and binds it to this group. The effect is registered on the
-     * card's abilities and mapped to this group's index for resolution.
-     */
-    public SpellTarget addEffect(EffectSlot slot, CardEffect effect) {
-        card.addEffect(slot, effect);
-        card.registerEffectTargetIndex(effect, this.index);
-        return this;
-    }
-
-    /**
      * Adds a triggered ability with {@code trigger} and {@code effects} ({@link Card#addTrigger}) and binds the
      * effects to this group: "when this creature dies, it deals 2 damage to target creature".
      */

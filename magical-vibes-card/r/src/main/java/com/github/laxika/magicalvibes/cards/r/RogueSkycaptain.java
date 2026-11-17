@@ -22,7 +22,7 @@ public class RogueSkycaptain extends Card {
         // At the beginning of your upkeep, put a wage counter on this creature. You may pay {2}
         // for each wage counter on it. If you don't, remove all wage counters from this creature
         // and an opponent gains control of it. One sequence, so the new counter lands before the
-        // payment is sized (two slot effects would be two separate stack entries).
+        // payment is sized.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.WAGE),
                 new PayPerCounterOrElseEffect(CounterType.WAGE, "{2}", List.of(

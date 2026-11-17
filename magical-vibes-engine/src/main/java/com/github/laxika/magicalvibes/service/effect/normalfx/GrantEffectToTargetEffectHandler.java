@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Ability;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StaticAbility;
@@ -108,12 +107,12 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
         };
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
-                .text(" grants a " + LegacySlots.label(e.grantedAbility()) + " ability to ")
+                .text(" grants a " + AbilityEffects.label(e.grantedAbility()) + " ability to ")
                 .card(target.getCard())
                 .text(durationText + ".")
                 .build());
         log.info("Game {} - {} grants {} effect to {}{}",
-                gameData.id, entry.getCard().getName(), LegacySlots.label(e.grantedAbility()),
+                gameData.id, entry.getCard().getName(), AbilityEffects.label(e.grantedAbility()),
                 target.getCard().getName(), durationText);
     }
 
@@ -123,20 +122,13 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
                     || target.getPersistentStaticEffects().contains(granted)
                     || target.getTemporaryStaticEffects().contains(granted);
         }
-        EffectSlot slot = LegacySlots.slotOf(ability);
-        if (slot == null && ability instanceof TriggeredAbility triggered) {
+        if (ability instanceof TriggeredAbility triggered) {
             Trigger trigger = triggered.conditions().getFirst().trigger();
             return target.getCard().getTriggerEffects(trigger).contains(granted)
                     || target.getPersistentTriggerEffects(trigger).contains(granted)
                     || target.getTemporaryTriggerEffects(trigger).contains(granted);
         }
-        if (target.getCard().getEffects(slot).contains(granted)) {
-            return true;
-        }
-        if (target.getPersistentTriggeredEffects(slot).contains(granted)) {
-            return true;
-        }
-        return target.getTemporaryTriggeredEffects(slot).contains(granted);
+        return false;
     }
 
     private boolean alreadyHasRampage(GameData gameData, Permanent target, Ability ability,

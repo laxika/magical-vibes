@@ -165,8 +165,7 @@ public class ZoneChangeRequests {
     }
 
     /**
-     * {@code candidate}'s ability with its effects read through its source's text changes (layer 3, CR 612.1), as the
-     * old slot collectors dispatched them.
+     * {@code candidate}'s ability with its effects read through its source's text changes (layer 3, CR 612.1).
      */
     private TriggeredAbility watchedAbility(GameData gameData, TriggerCandidate candidate) {
         return candidate.sourcePermanent() == null ? candidate.ability()

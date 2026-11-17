@@ -34,7 +34,7 @@ steps, so every step must be self-contained: this file is the only state that ca
    anywhere.
 6. Update the relevant `agent-docs/` files — `EFFECTS_INDEX.md` (the category table at lines
    ~115-133 is the canonical spec and **must** be rewritten), `PREDICATES_REFERENCE.md`,
-   `TRIGGER_SLOT_TARGETING.md`, `CARD_IMPLEMENTATION_PLAYBOOK.md`, `architecture/casting-stack.md`.
+   `TRIGGERED_ABILITY_TARGETS.md`, `CARD_IMPLEMENTATION_PLAYBOOK.md`, `architecture/casting-stack.md`.
 7. Add or update tests. **Never run the full test suite** — run only the affected test classes
    with `--tests` filters.
 8. Mark the step `DONE` in the Step Index, with a one-line note if anything deviated.
@@ -254,7 +254,7 @@ mechanical high-churn. Phase 4 is deletion.
 | 3 | Route `MayAbilityHandlerService` through the shared evaluator; delete both copies of the open-coded switch (defect 3). Add a regression test for a `LAND`-spec may-ability. | MED | **DONE** — see "Step 3 outcome". Defect 3 confirmed verbatim; both copies collapsed into one helper. No implemented card has a `LAND` may-ability, so that regression is a service test; `PLAYER_OR_PLANESWALKER` had a real card (Boggart Shenanigans) and got a card test. |
 | 4 | Migrate the ~400 effect records' `targetSpec()` to the factories. Mechanical and scriptable; the Step 1 equivalence harness is the safety net. Batch by category, smallest first (`EXILE_CARD` 2, `CONTROLLERS_GRAVEYARD_CARD` 2, `LAND` 4, `PLAYER_OR_PLANESWALKER` 4 … `PLAYER` 155 last). | MED | **DONE** — see "Step 4 outcome". Batching was unnecessary (one scripted sweep, no import churn); `TargetSpec` now *stores* the declared target and `category()` became a bridge. |
 | 5 | Collapse the three graveyard categories onto `GraveyardCards.scope`; delete the five hand-copied scope mappings. | LOW | **DONE** — see "Step 5 outcome". Not LOW and not five: there were **fourteen** copies and they disagreed, so six effects were declaring a scope they did not mean. Six rules-visible fixes. |
-| 6 | Migrate the derived-boolean readers (`includesPermanents` / `includesPlayers` / `isGraveyard`) in the trigger collectors, `StepTriggerService`, AI, and `EffectResolution.collectTargetTypes`. ~30 call sites across engine + AI. | MED | **DONE** — see "Step 6 outcome". 152 call sites, not ~30, across 31 files; `TargetSpec.admits` was changed to read `declaredTarget()` so it stops allocating. |
+| 6 | Migrate the derived-boolean readers (`includesPermanents` / `includesPlayers` / `isGraveyard`) in the trigger target code, `StepTriggerService`, AI, and `EffectResolution.collectTargetTypes`. ~30 call sites across engine + AI. | MED | **DONE** — see "Step 6 outcome". 152 call sites, not ~30, across 31 files; `TargetSpec.admits` was changed to read `declaredTarget()` so it stops allocating. |
 | 7 | Delete `TargetCategory`; update `TargetSpecRatchetTest`, `scripts/targetspec-audit.py`, and the `EFFECTS_INDEX.md` category table. | LOW | **DONE** — see "Step 7 outcome". Genuinely LOW; the two `== ANY_TARGET` readers became `TargetSpec.declares(...)`, a new identity reader added for exactly that purpose. |
 | 8 | **Optional, separate decision.** Add `PermanentIsBattlePredicate` and include battles in the `ANY_TARGET` factory per CR 115.4 (defect 4). Needs a rules review of the battle-damage path first — do not bundle into Step 7. | MED | **DONE** — see "Step 8 outcome". Battles are targetable. One site the review and 8a/8b both missed (`SoulBurnEffectHandler`) was found by asking which *resolution* paths read a permanent's type after any-target damage, and fixed here. |
 | 8a | **Prerequisite for Step 8.** Teach the divided-damage and any-target damage paths to treat a battle as a damage recipient (CR 120.3h), and replace the two hand-rolled creature-or-planeswalker enumerations that bypass the declared predicate. See "Step 8 review outcome" for the exact sites. | MED | **DONE** — see "Step 8a outcome". Rows 1-4 fixed. The review under-counted the hand-rolled enumerations: **five more** were found, and Step 8 is still blocked on them plus row 5. |
@@ -523,7 +523,7 @@ reader expects: a card-level `TargetFilter` or an effect-level `PermanentPredica
 (`EffectResolution.targetPredicateOf`) *replaces* the spec's type restriction rather than stacking
 with it. Only when the ability declares neither does the spec restrict anything — and that is the arm
 that now evaluates `targetSpec().targetPredicate()` through the shared evaluator. Documented in
-`TRIGGER_SLOT_TARGETING.md` under "May-ability target enumeration".
+`TRIGGERED_ABILITY_TARGETS.md`.
 
 Behaviour changes, both in the rules-correct direction and both pinned by a failing-before test:
 
@@ -725,7 +725,7 @@ It read `targetPredicate()`, which rebuilds the composed predicate on every call
 `AnyOf` that means an `EnumSet`, an `ArrayList`, a sort and a `List.copyOf` per question. Fact 2
 above says the narrowing is irrelevant to the answer, so `admits` and `graveyardScope()` now read
 `declaredTarget()` directly. That matters because these readers sit in per-effect loops in the
-trigger collectors, `StepTriggerService` and target enumeration — the step would otherwise have made
+trigger target code, `StepTriggerService` and target enumeration — the step would otherwise have made
 those loops measurably more expensive than the enum lookup they replaced.
 
 ### Two arms migrated beyond the literal three booleans
@@ -997,7 +997,7 @@ will be enumerated in one place and rejected in another:
 |---|---|
 | `TriggeredAbilityQueueService.processNextDiscardTrigger` (~:445) | `DiscardTriggerAnyTarget` target list |
 | `TriggeredAbilityQueueService.processNextSpellTargetTrigger` (~:490) | `SpellTargetTriggerAnyTarget`, the filterless branch |
-| `TriggeredAbilityQueueService` (~:630) | `EnteringPermanentAnyTargetTrigger` target list (gone: effect-slot-refactor.md step 15, run 17z12f; Flayer of the Hatebound chooses through `EntersTriggerTarget`) |
+| `TriggeredAbilityQueueService` (~:630) | `EnteringPermanentAnyTargetTrigger` target list (gone since; Flayer of the Hatebound's target is chosen as its ability is put on the stack) |
 | `SpellCastingService` (~:1786) | cast-time validation of each divided-damage **assignment** target — would throw on a battle before resolution ever ran |
 | `DamageTargetValidators.validateDealDividedDamage` (~:66) | the `@ValidatesTarget` escape hatch for `DealDividedDamageEffect`; message reads "Target must be a creature, planeswalker, or player" |
 
@@ -1202,7 +1202,7 @@ Nothing blocks anything, but three known items outlive the plan:
   for whatever `Permanent` reaches it. Step 8a flagged this; it already mis-fires for a non-creature
   planeswalker today and now does the same for a battle. Gating it on `gameQueryService.isCreature` is
   rules-correct for both and is a change on its own merits. *(Done — see "Follow-up: the
-  creature-trigger gate", which also caught a third slot in the same block:
+  creature-trigger gate", which also caught a third ability in the same block:
   `Triggers.creatureYouControlDealsDamageToCreature()`.)*
 
 ---
@@ -1211,16 +1211,16 @@ Nothing blocks anything, but three known items outlive the plan:
 
 Not a numbered step — the third bullet above, executed on its own merits.
 
-**The premise held verbatim.** `DamageSupport.dealCreatureDamage` queued both slots for whatever
+**The premise held verbatim.** `DamageSupport.dealCreatureDamage` queued both abilities for whatever
 `Permanent` reached its `damage > 0` block, with no creature test. Both cards are worded
 "a creature ... is dealt damage" (re-verified on Scryfall: Kazarov, Sengir Pureblood DOM 96 —
 *"Whenever a creature an opponent controls is dealt damage, put a +1/+1 counter on Kazarov"*;
 Death Pits of Rath TMP 127 — *"Whenever a creature is dealt damage, destroy it. It can't be
 regenerated."*), so a non-creature permanent does not match the trigger event (CR 603.2, verified).
 
-**A third slot in the same block had the identical defect and is fixed here too.**
+**A third ability in the same block had the identical defect and is fixed here too.**
 `checkAllyDealtDamageToCreatureTriggers` (`Triggers.creatureYouControlDealsDamageToCreature()`) guards only
-`damageSource != null` and never checks the damaged permanent's type, while all three cards on the slot
+`damageSource != null` and never checks the damaged permanent's type, while all three cards with that ability
 — one per effect type — are worded "deals damage **to a creature**": Greatbow Doyen (MOR 125,
 verified: *"Whenever an Archer you control deals damage to a creature, that Archer deals that much
 damage to that creature's controller"*), Bellowing Fiend (TMP 108, verified: *"Whenever this creature
@@ -1294,7 +1294,7 @@ whole block and was also left alone: its only callers are
 
 Checked and **not** a defect: `checkCreatureDamageToYouOrYourPermanentTriggers` (Mangara's Equity)
 applies `trigger.damagedPermanentFilter()` through `PredicateEvaluationService` in
-`DamageTriggerCollectorService:480`, so the damaged permanent is already filtered; and
+the damage-trigger code, so the damaged permanent is already filtered; and
 `checkDealtDamageToCreatureTriggers` (`Triggers.dealtDamage()`, Nested Ghoul) is self-referential — the
 watcher *is* the damaged permanent, so "whenever this is dealt damage" is correct for any type.
 

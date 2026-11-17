@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -14,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import lombok.RequiredArgsConstructor;
@@ -58,15 +56,11 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
 
         Card originalCard = source.getCard();
         TriggeredAbility retainedAbility = findRetainedAbility(originalCard, copyEffect);
-        EffectRegistration retainedRegistration = findRetainedRegistration(originalCard, copyEffect);
         List<TriggeredAbility> additionalRetainedAbilities = copyEffect.additionalRetainedTriggers().stream()
                 .flatMap(trigger -> originalCard.getTriggeredAbilities().stream()
                         .filter(ability -> ability.hasTrigger(trigger)))
                 .toList();
         List<CardEffect> retainedTargetingEffects = new ArrayList<>();
-        if (retainedRegistration != null) {
-            retainedTargetingEffects.add(retainedRegistration.effect());
-        }
         if (retainedAbility != null) {
             retainedAbility.effects().forEach(registration -> retainedTargetingEffects.add(registration.effect()));
         }
@@ -84,10 +78,6 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
             keywords.addAll(copyEffect.additionalKeywords());
             source.getCard().setKeywords(Set.copyOf(keywords));
         }
-        if (retainedRegistration != null) {
-            EffectSlot slot = ((LegacySlotTrigger) copyEffect.retainedTrigger()).slot();
-            source.getCard().addEffect(slot, retainedRegistration.effect());
-        }
         if (retainedAbility != null) {
             source.getCard().addTriggeredAbility(retainedAbility);
         }
@@ -96,27 +86,16 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
         log.info("Game {} - {} becomes a copy of {}", gameData.id, originalName, target.getCard().getName());
     }
 
-    /** The source's triggered ability with a real trigger that holds the copy effect and that the copy keeps. */
+    /** The source's triggered ability that holds the copy effect and that the copy keeps. */
     private TriggeredAbility findRetainedAbility(
             Card sourceCard, BecomeCopyOfTargetCreaturePermanentlyEffect copyEffect) {
-        if (copyEffect.retainedTrigger() == null || copyEffect.retainedTrigger() instanceof LegacySlotTrigger) {
+        if (copyEffect.retainedTrigger() == null) {
             return null;
         }
         return sourceCard.getTriggeredAbilities().stream()
                 .filter(ability -> ability.hasTrigger(copyEffect.retainedTrigger()))
                 .filter(ability -> ability.effects().stream()
                         .anyMatch(registration -> containsEffect(registration.effect(), copyEffect)))
-                .findFirst()
-                .orElse(null);
-    }
-
-    private EffectRegistration findRetainedRegistration(
-            Card sourceCard, BecomeCopyOfTargetCreaturePermanentlyEffect copyEffect) {
-        if (!(copyEffect.retainedTrigger() instanceof LegacySlotTrigger legacy)) {
-            return null;
-        }
-        return sourceCard.getEffectRegistrations(legacy.slot()).stream()
-                .filter(registration -> containsEffect(registration.effect(), copyEffect))
                 .findFirst()
                 .orElse(null);
     }

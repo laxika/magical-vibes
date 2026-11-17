@@ -63,7 +63,7 @@ public class SacrificePermanentOrDiscardCardThenDrawAndBoostSelfEffectHandler
                             "Sacrifice " + e.sacrificeDescription(), sacrifice),
                     new ChooseOneEffect.ChooseOneOption("Discard a card", discard)));
             playerInputService.beginChooseModeChoice(gameData, controllerId, entry.getCard(), choice,
-                    false, entry.getSourcePermanentId());
+                    entry.getSourcePermanentId());
             return;
         }
 

@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Abilities granted at runtime are stored as {@link Ability} values and read back by trigger, and how
- * {@link LegacySlots} treats abilities that no slot holds.
+ * {@link AbilityEffects} reads and adjusts each kind of ability.
  */
 class GrantedAbilitiesTest {
 
@@ -34,37 +34,29 @@ class GrantedAbilitiesTest {
     private static final CardEffect GAIN_ONE = new GainLifeEffect(1);
 
     @Test
-    void aTriggeredAbilityWithARealTriggerIsInNoSlot() {
+    void aTriggeredAbilityKeepsItsTriggerWithAnotherEffect() {
         Ability ability = new TriggeredAbility(LOSES_CONTROL, DRAW_ONE);
 
-        assertThat(LegacySlots.slotOf(ability)).isNull();
-        assertThat(LegacySlots.effectsOf(ability)).containsExactly(DRAW_ONE);
-        assertThat(LegacySlots.label(ability)).isEqualTo("TRIGGERED");
-        assertThat(LegacySlots.withEffect(ability, GAIN_ONE)).isEqualTo(new TriggeredAbility(LOSES_CONTROL, GAIN_ONE));
+        assertThat(AbilityEffects.effectsOf(ability)).containsExactly(DRAW_ONE);
+        assertThat(AbilityEffects.label(ability)).isEqualTo("TRIGGERED");
+        assertThat(AbilityEffects.withEffect(ability, GAIN_ONE)).isEqualTo(new TriggeredAbility(LOSES_CONTROL, GAIN_ONE));
     }
 
     @Test
-    void aStaticAbilityIsInNoSlot() {
+    void aStaticAbilityKeepsItsZonesWithAnotherEffect() {
         StaticAbility statik = new StaticAbility(List.of(DRAW_ONE), AbilityZones.COMMAND);
 
-        assertThat(LegacySlots.slotOf(statik)).isNull();
-        assertThat(LegacySlots.effectsOf(statik)).containsExactly(DRAW_ONE);
-        assertThat(LegacySlots.label(statik)).isEqualTo("STATIC");
-        assertThat(LegacySlots.withEffect(statik, GAIN_ONE))
+        assertThat(AbilityEffects.effectsOf(statik)).containsExactly(DRAW_ONE);
+        assertThat(AbilityEffects.label(statik)).isEqualTo("STATIC");
+        assertThat(AbilityEffects.withEffect(statik, GAIN_ONE))
                 .isEqualTo(new StaticAbility(List.of(GAIN_ONE), AbilityZones.COMMAND));
     }
 
     @Test
-    void anOptionalGrantWithoutAnEffectIsNoAbility() {
-        assertThat(LegacySlots.grant(null, null)).isNull();
-    }
-
-    @Test
-    void aSpellAbilityIsInNoSlot() {
+    void aSpellAbilitysEffectsAreReadInOrder() {
         SpellAbility spell = new SpellAbility(List.of(new EffectRegistration(DRAW_ONE)));
 
-        assertThat(LegacySlots.slotOf(spell)).isNull();
-        assertThat(LegacySlots.effectsOf(spell)).containsExactly(DRAW_ONE);
+        assertThat(AbilityEffects.effectsOf(spell)).containsExactly(DRAW_ONE);
     }
 
     @Test
@@ -74,11 +66,11 @@ class GrantedAbilitiesTest {
                 StaticAbility.of(GAIN_ONE),
                 StaticAbility.of(DRAW_TWO));
 
-        assertThat(LegacySlots.staticEffectsIn(abilities)).containsExactly(GAIN_ONE, DRAW_TWO);
+        assertThat(AbilityEffects.staticEffectsIn(abilities)).containsExactly(GAIN_ONE, DRAW_TWO);
     }
 
     @Test
-    void anAddedAbilityJoinsTheCardsSlotViews() {
+    void anAddedAbilityJoinsTheCardsAbilities() {
         Card card = new Card();
         card.addSpellEffect(DRAW_ONE);
 

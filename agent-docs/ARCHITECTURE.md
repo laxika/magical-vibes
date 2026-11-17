@@ -17,7 +17,7 @@ Javadoc of the owner class.
 | A new effect or handler, prompts, parked resolutions, the resolution scratchpad | [architecture/resolution.md](architecture/resolution.md) |
 | Replacement and prevention, damage, death replacements, losing the game, token creation | [architecture/replacement-damage.md](architecture/replacement-damage.md) |
 | How permanents enter the battlefield | [architecture/entry.md](architecture/entry.md) |
-| Triggered abilities, rules events, what a stack entry records about its trigger | [architecture/triggers.md](architecture/triggers.md): 137 KB, grep it, never read it whole |
+| Triggered abilities, rules events, what a stack entry records about its trigger | [architecture/triggers.md](architecture/triggers.md): 86 KB, grep its ` |
 | Turn, dungeon, suspend, face-down exile state; domain events | [architecture/game-state.md](architecture/game-state.md), [DOMAIN_EVENTS.md](DOMAIN_EVENTS.md) |
 | Card metadata loading, the card and card-data modules | [architecture/oracle-data.md](architecture/oracle-data.md) |
 | Static and continuous effects | [LAYER_SYSTEM.md](LAYER_SYSTEM.md) |

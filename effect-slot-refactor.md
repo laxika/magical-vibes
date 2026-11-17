@@ -7,7 +7,7 @@ takes a whole family, routes it through the one service, and deletes the family'
 History: the earlier plan, with 22,000 lines of findings for steps 1 to 15, is
 `git show feeb04cb67:effect-slot-refactor.md` (2.9 MB). Never read it whole. To look something up,
 grep its `^#### Run` headings and read that range. The invariants those runs established are in
-`agent-docs/architecture/triggers.md` (137 KB: grep it, never read it whole), and that is the place to read them.
+`agent-docs/architecture/triggers.md` (86 KB: grep it, never read it whole), and that is the place to read them.
 
 ## Status
 
@@ -31,7 +31,7 @@ grep its `^#### Run` headings and read that range. The invariants those runs est
 | R2 | Keyword abilities and departed sources are candidates; abilities as the layers leave them | done |
 | R3 | One delayed-ability model (temporary-global abilities and every delayed list), listed for every family | done but: C51 |
 | R4 | Cast bookkeeping at the cast's completion; `TriggerCollectionService` deleted | done |
-| F | Delete the legacy types; docs | open |
+| F | Delete the legacy types; docs | done |
 | D | Durations: one `Duration` on floating effects, ended by a clock on the rules events; `DelayedAction` deleted | open |
 
 A row's status is `open`, `done`, or `done but: <ids from Carried over>`. Nothing else goes in it.
@@ -124,8 +124,8 @@ This comes before everything else in a sweep, including finishing it.
   an effect class and reads of an ability's `effects()`. A committed allowlist holds the exact
   count per file. The test fails when a count is above or below its entry, so the list is always
   the true remainder and can only be lowered.
-- **Ledger.** A test-fixture recorder on `RulesObserver.triggerQueued` (the hook
-  `ShadowTriggerRecorder` uses). With an environment variable set, it appends one line per
+- **Ledger.** `TriggerLedger`, fed by the test fixtures' `RulesEventRecorder` on
+  `RulesObserver.triggerQueued` (env var `MV_TRIGGER_LEDGER`). With an environment variable set, it appends one line per
   triggered ability that reaches the stack: test id, source name, effect classes in order, and the
   record fields by role (source, player, target), not by raw id. Run it over a sweep's card test
   classes before and after, and diff.
@@ -669,6 +669,13 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Ledger (2,206 card classes and the route tests): no ability gained, lost or reordered; every line is the granted cascade / storm / demonstrate gaining the cast record ("that player", event value, triggering card), or random (Breeches' coin flip, route-fixture draws, discards, dice, clashes, combat damage order).
 - Gone too: Path of Ancestry's dead restrictions (`PATH_OF_ANCESTRY`, `COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY`), their mana tag, pending choices and `PathOfAncestryManaColorChoice` (the card uses `paidWithManaFromThis`).
 - Open: boons and the watcher lists aren't delayed abilities yet (D or later).
+
+**F (part 4: legacy types, docs).**
+- Gone: `EffectSlot`, `LegacySlotTrigger`, `LegacySlots` (its kind-neutral readers are `AbilityEffects`), `LegacySlotTriggers`, `Card.addEffect` / `addSimultaneousEffects` / `getEffects(slot)` / `getEffectRegistrations(slot)` / `getUnslottedTriggeredAbilities`, every slot-keyed grant constructor and `Permanent` / `GameData` / `StackEntry` / `SpellTarget` helper, `TriggerMatchContext` (now `SpellTriggers.SpellMatch`), `ChooseModeChoice.triggerTime`, `BecomeCopyOfTargetCreatureEffect.retainedEffectSlot`, `scripts/step*`, `scripts/effect-slot-*`.
+- Shadow mode is gone (`ShadowTriggerRecorder`, `ShadowComparison`, `RulesObserver.shadowedSlots` / `wouldTrigger`, `GameData.CollectingTrigger`). `RulesEventRecorder` (`harness.getRulesEventRecorder()`) records drained rules event batches and hands stack entries to `TriggerLedger`.
+- No behaviour change and no ledger pass: every removed branch was unreachable, `EffectSlot` having no constant. `GrantEffectToSourceUntilNextUpkeepEffect` (no card uses it) granted a null ability through the slot path; it now grants its ability.
+- Docs: `triggers.md` rewritten as the model; `TRIGGER_SLOT_TARGETING.md` replaced by `TRIGGERED_ABILITY_TARGETS.md`; refactor references dropped from `agent-docs/`, both card skills (`.claude`, `.codex`) and Javadoc.
+- Open: ~18 `ORACLE_TEXT_EFFECT_MAP.md` rows still use the removed `SpellCastTriggerEffect(...)` shorthand (the file's note says how to write it); dated history in the other plan docs still names `TriggerCollectionService`.
 
 ## Prompt
 

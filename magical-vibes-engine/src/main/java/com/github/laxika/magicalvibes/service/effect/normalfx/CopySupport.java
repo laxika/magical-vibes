@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DeferredSpellCopy;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -486,15 +485,7 @@ public class CopySupport {
 
         copy.addCastingCostsAndSpellEffectsFrom(original, effect -> !withoutEpic || !(effect instanceof EpicEffect));
         copy.addStaticAbilitiesFrom(original, effect -> !withoutEpic || !(effect instanceof EpicEffect));
-        for (EffectSlot slot : EffectSlot.values()) {
-            for (var reg : original.getEffectRegistrations(slot)) {
-                if (withoutEpic && reg.effect() instanceof EpicEffect) {
-                    continue;
-                }
-                copy.addEffect(slot, reg.effect());
-            }
-        }
-        for (TriggeredAbility ability : original.getUnslottedTriggeredAbilities()) {
+        for (TriggeredAbility ability : original.getTriggeredAbilities()) {
             if (!withoutEpic || ability.effects().stream().noneMatch(reg -> reg.effect() instanceof EpicEffect)) {
                 copy.addTriggeredAbility(ability);
             }

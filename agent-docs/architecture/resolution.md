@@ -7,7 +7,7 @@ The effect system, parked resolutions, prompts, the resolution scratchpad.
 ### Adding a new effect
 1. A record implementing `CardEffect` in `magical-vibes-domain/.../model/effect/`.
 2. A `@Component` declaring `handledEffect()`: `NormalEffectHandlerBean` in `service/effect/normalfx/` (stack), `StaticEffectHandlerBean` in `staticfx/` (static, `LAYER_SYSTEM.md`), `MayEffectHandlerBean` in `mayfx/` (own "you may" flow).
-3. If it targets: override `targetSpec()`; a `@ValidatesTarget` method under `service/validate/` only for what the spec cannot express (`TRIGGER_SLOT_TARGETING.md`, `EFFECTS_INDEX.md`).
+3. If it targets: override `targetSpec()`; a `@ValidatesTarget` method under `service/validate/` only for what the spec cannot express (`EFFECTS_INDEX.md`; a triggered ability's targets: `TRIGGERED_ABILITY_TARGETS.md`).
 4. If the AI scores its family: its capability interface (`RemovalEffect`, ...; `EFFECTS_QUICK_REFERENCE.md`).
 
 ### Effects are dispatched by class
@@ -16,7 +16,7 @@ Owner: `EffectHandlerRegistry`, `MayEffectHandlerRegistry`, `CardEffect`.
 Why: no build check catches a branch the registries don't know.
 
 ### A "you may" answer chooses no target (CR 603.5, 603.3d, 608.2b)
-A triggered ability's targets, its optional effect's included, are chosen by its collector as it goes on the stack; the answer only pays costs and resumes the resolution.
+A triggered ability's targets, its optional effect's included, are chosen by the stack door (`TriggeredAbilityStackService`) as it goes on the stack; the answer only pays costs and resumes the resolution.
 Owner: `MayAbilityHandlerService.handleResolutionTimeMayChoice`.
 Why: targets are fixed on the stack; an ability with none resolves without one.
 

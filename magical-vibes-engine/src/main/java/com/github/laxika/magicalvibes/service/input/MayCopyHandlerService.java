@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -760,27 +759,18 @@ public class MayCopyHandlerService {
                 .map(BecomeCopyOfTargetCreatureEffect.class::cast)
                 .findFirst()
                 .orElseThrow();
-        EffectSlot retainedEffectSlot = copyEffect.retainedEffectSlot();
-        TriggeredAbility retainedTrigger = retainedEffectSlot != null ? null
-                : sourcePermanent.getCard().getTriggeredAbilities().stream()
+        TriggeredAbility retainedTrigger = sourcePermanent.getCard().getTriggeredAbilities().stream()
                 .filter(candidate -> candidate.effects().stream()
                         .anyMatch(registration -> registration.effect().equals(copyEffect)))
                 .findFirst()
                 .orElse(null);
-        CardEffect retainedAbility = retainedEffectSlot == null ? copyEffect
-                : sourcePermanent.getCard().getEffects(retainedEffectSlot).stream()
-                .filter(candidate -> candidate.equals(copyEffect))
-                .findFirst()
-                .orElse(copyEffect);
         // Apply the copy
         String originalName = sourcePermanent.getCard().getName();
         permanentCopierService.applyCloneCopy(sourcePermanent, targetPerm.getCard(), null, null, Set.of(),
                 List.of(), copyEffect.copyColor());
 
         Card copiedCard = sourcePermanent.getCard();
-        if (retainedEffectSlot != null) {
-            copiedCard.addEffect(retainedEffectSlot, retainedAbility);
-        } else if (retainedTrigger != null) {
+        if (retainedTrigger != null) {
             copiedCard.addTriggeredAbility(retainedTrigger);
         }
 

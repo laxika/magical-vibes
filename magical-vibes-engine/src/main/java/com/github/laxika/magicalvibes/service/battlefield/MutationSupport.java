@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -161,13 +160,7 @@ public class MutationSupport {
         merged.addCastingCostsAndSpellEffectsFrom(underlying, effect -> true);
         merged.addStaticAbilitiesFrom(underlying, effect -> true);
         inheritedEffects.addAll(underlying.getStaticEffects());
-        for (EffectSlot slot : EffectSlot.values()) {
-            for (var registration : underlying.getEffectRegistrations(slot)) {
-                merged.addEffect(slot, registration.effect());
-                inheritedEffects.add(registration.effect());
-            }
-        }
-        for (TriggeredAbility ability : underlying.getUnslottedTriggeredAbilities()) {
+        for (TriggeredAbility ability : underlying.getTriggeredAbilities()) {
             merged.addTriggeredAbility(ability);
             ability.effects().forEach(registration -> inheritedEffects.add(registration.effect()));
         }

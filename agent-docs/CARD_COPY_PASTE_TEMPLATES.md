@@ -35,7 +35,6 @@ Also covers: pump + conditional keyword (fateful hour, morbid, raid, etc.) — s
 package com.github.laxika.magicalvibes.cards.LETTER;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -56,7 +55,6 @@ package com.github.laxika.magicalvibes.cards.LETTER;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -154,7 +152,6 @@ Reference: `s/Shock.java` (instant, 2 dmg), `l/LightningBolt.java` (instant, 3 d
 package com.github.laxika.magicalvibes.cards.LETTER;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -248,7 +245,6 @@ Reference: `c/CounselOfTheSoratami.java` (sorcery, draw 2)
 package com.github.laxika.magicalvibes.cards.LETTER;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -323,7 +319,6 @@ Reference: `t/Terror.java` (instant, nonblack nonartifact), `m/Murder.java` (ins
 package com.github.laxika.magicalvibes.cards.LETTER;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -407,7 +402,8 @@ Reference: `a/AngelOfMercy.java` (ETB gain 3 life), `k/KavuClimber.java` (ETB dr
 package com.github.laxika.magicalvibes.cards.LETTER;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.EFFECT_CLASS;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -482,7 +478,6 @@ Reference: `o/Overrun.java` (+3/+3, trample)
 package com.github.laxika.magicalvibes.cards.LETTER;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -535,7 +530,6 @@ Reference: `c/Cancel.java`
 package com.github.laxika.magicalvibes.cards.LETTER;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -618,7 +612,6 @@ package com.github.laxika.magicalvibes.cards.LETTER;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.BONUS_EFFECT_CLASS;
@@ -657,7 +650,8 @@ package com.github.laxika.magicalvibes.cards.LETTER;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -692,7 +686,6 @@ Best test reference: `SensoryDeprivationTest.java` (covers casting, resolution, 
 package com.github.laxika.magicalvibes.cards.LETTER;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.STATIC_EFFECT_CLASS;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -777,7 +770,6 @@ package com.github.laxika.magicalvibes.cards.LETTER;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GRANTED_EFFECT_CLASS;

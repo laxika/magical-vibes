@@ -36,6 +36,6 @@ public class ChooseOneEffectHandler implements NormalEffectHandlerBean {
                 && entry.getActivePlayerId() != null
                 ? entry.getActivePlayerId() : entry.getControllerId();
         playerInputService.beginChooseModeChoice(gameData, choicePlayerId, entry.getCard(),
-                (ChooseOneEffect) effect, false, entry.getSourcePermanentId());
+                (ChooseOneEffect) effect, entry.getSourcePermanentId());
     }
 }

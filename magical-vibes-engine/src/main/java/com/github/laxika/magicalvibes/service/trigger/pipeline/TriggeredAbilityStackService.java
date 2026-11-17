@@ -71,7 +71,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 /**
- * Puts a triggered ability that the pipeline matched on the stack, for every family moved off {@code EffectSlot}:
+ * Puts a triggered ability that the pipeline matched on the stack:
  *
  * <ul>
  *   <li>the intervening "if" is checked as it triggers, and wraps its effects so it is checked again as it
@@ -1570,7 +1570,7 @@ public class TriggeredAbilityStackService extends StackDoor {
      * The controller of {@code candidate}'s ability: its source's controller, but for the ability Dance of Many gives
      * its token ("when the token leaves the battlefield, sacrifice Dance of Many"), which is the enchantment's and
      * controlled by the enchantment's controller while it is on the battlefield. The engine makes that ability, so it
-     * rides on the token (effect-slot-refactor.md step 16).
+     * rides on the token.
      */
 
     private UUID abilityControllerId(GameData gameData, TriggerCandidate candidate) {

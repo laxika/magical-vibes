@@ -27,8 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * The triggers of the last slots to leave {@code EffectSlot}: {@link PlanarTrigger}, {@link ControlChangeTrigger},
- * {@link AttachTrigger}, {@link DayNightTrigger}, {@link StateTrigger}, and the crew, saddle, station, door and Room
+ * The planar, control-change, attach, day and night, state and action triggers: {@link PlanarTrigger},
+ * {@link ControlChangeTrigger}, {@link AttachTrigger}, {@link DayNightTrigger}, {@link StateTrigger}, and the crew, saddle, station, door and Room
  * actions of {@link ObjectActionTrigger} and {@link PlayerActionTrigger}: what each names, what its watch key drops
  * for its matcher to judge, and that none of them has a legacy view.
  */

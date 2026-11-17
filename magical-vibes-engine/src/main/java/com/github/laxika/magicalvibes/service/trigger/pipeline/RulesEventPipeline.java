@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.trigger.pipeline;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DelayedReferents;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -36,7 +35,6 @@ import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.RoomEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
-import com.github.laxika.magicalvibes.model.rules.RulesObserver;
 import com.github.laxika.magicalvibes.model.rules.SagaEvent;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.rules.StepEvent;
@@ -81,22 +79,16 @@ import org.springframework.stereotype.Service;
  * {@link TriggerMultiplicity#ONE_OR_MORE} once for the batch (CR 603.2c).
  *
  * <p>The abilities of the objects that see another object move (a creature dies) are put on the stack first, those
- * that trigger for each event in event order and then the "one or more" ones, as the old slot collectors queued
- * them while the objects were still moving. The moving objects' own abilities follow, each event's in the order of
+ * that trigger for each event in event order and then the "one or more" ones, while the objects are still moving.
+ * The moving objects' own abilities follow, each event's in the order of
  * {@link TriggeredAbilityStackService.OwnZoneChange}: leaves the battlefield, arrives in a zone, dies, sacrificed. Their controller
  * orders them later all the same (CR 603.3b).
  *
  * <p>A permanent entering is seen by every permanent on the battlefield after the event, the newcomers and the
  * entering permanent itself included (CR 603.6a). Those abilities, but for the token watches, are matched as the
- * entering permanent's own enters abilities are processed ({@link #triggerEnteringObservers}), where the old slot
- * collectors ran, once the permanents that entered with it are all on the battlefield. The entering permanent's own
+ * entering permanent's own enters abilities are processed ({@link #triggerEnteringObservers}), once the permanents that entered with it are all on the battlefield. The entering permanent's own
  * "when this enters" abilities are put on the stack there too, by {@code EtbTriggerService}, below the others. A permanent phasing, transforming or being turned face up is a {@link PermanentChangeEvent},
  * matched against permanent-change triggers: the "one or more" abilities once for the batch, then each event's.
- *
- * <p>Abilities still held in an {@code EffectSlot} are the slot collectors' business. For the slots a test puts in
- * shadow mode ({@link RulesObserver#shadowedSlots()}), the pipeline also works out what those abilities would
- * trigger once their family moves, and reports it to
- * the observer instead of the stack, so the shadow recorder can compare the two paths.
  */
 @Service
 public class RulesEventPipeline {
@@ -598,7 +590,7 @@ public class RulesEventPipeline {
     /**
      * The abilities that see a permanent phase, transform or be turned face up. The "one or more" abilities trigger
      * once for the batch first, then, for each event in order, the other permanents' abilities and the changed
-     * permanent's own, as the old slot collectors queued them.
+     * permanent's own.
      */
     private void triggerPermanentChanges(GameData gameData, List<PermanentChangeEvent> events) {
         Map<OneOrMoreKey, ObservedChanges> oneOrMore = new LinkedHashMap<>();
@@ -776,23 +768,16 @@ public class RulesEventPipeline {
         return effect;
     }
 
-    /** The moving objects' own abilities, and the slot abilities shadow mode reports. */
+    /** The moving objects' own abilities. */
     private void triggerMovingObjects(GameData gameData, List<ZoneChangeEvent> events,
                                       Set<OneOrMoreKey> triggeredForBatch) {
-        RulesObserver observer = gameData.rulesObserver;
-        Set<EffectSlot> shadowedSlots = observer == null ? Set.of() : observer.shadowedSlots();
         for (ZoneChangeEvent zoneChange : events) {
             List<Match> matches = new ArrayList<>();
             for (TriggerCandidate candidate : triggerIndex.movingObjectCandidates(gameData, zoneChange)) {
-                EffectSlot slot = TriggerMatcher.legacySlot(candidate);
-                if (slot == null) {
-                    ZoneChangeTrigger trigger = TriggerMatcher.matchedTrigger(gameData, predicateEvaluationService,
-                            candidate, zoneChange, true);
-                    if (trigger != null && !TriggerMatcher.suppressed(candidate.ability(), zoneChange)) {
-                        matches.add(new Match(candidate, trigger));
-                    }
-                } else if (shadowedSlots.contains(slot)) {
-                    reportWouldTrigger(gameData, observer, slot, candidate, zoneChange);
+                ZoneChangeTrigger trigger = TriggerMatcher.matchedTrigger(gameData, predicateEvaluationService,
+                        candidate, zoneChange, true);
+                if (trigger != null && !TriggerMatcher.suppressed(candidate.ability(), zoneChange)) {
+                    matches.add(new Match(candidate, trigger));
                 }
             }
             matches.sort(Comparator.comparing(match -> TriggeredAbilityStackService.ownZoneChangeOf(match.trigger())));
@@ -803,18 +788,6 @@ public class RulesEventPipeline {
                     stackService.trigger(gameData, candidate, zoneChange, match.trigger());
                 }
             }
-        }
-    }
-
-    /** Reports each of a slot ability's registrations that would trigger, as its slot's collector treats each one. */
-    private void reportWouldTrigger(GameData gameData, RulesObserver observer, EffectSlot slot,
-                                    TriggerCandidate candidate, ZoneChangeEvent event) {
-        for (EffectRegistration registration : candidate.ability().effects()) {
-            if (!TriggerMatcher.matchesAsMoved(slot, registration.effect(), candidate, event)
-                    || TriggerMatcher.suppressedAsMoved(slot, registration.effect(), event)) {
-                continue;
-            }
-            observer.wouldTrigger(slot, candidate.sourceCard(), List.of(registration.effect()));
         }
     }
 

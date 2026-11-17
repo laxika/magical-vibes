@@ -118,7 +118,7 @@ Why: the first life total that changes closes the rerun window.
 ## Damage events of a resolution
 
 ### Each effect is its own damage event unless declared simultaneous
-`SequenceEffect.simultaneous`, `Card.addSimultaneousEffects` and `addSimultaneousTrigger` share one event; a card dealing damage at the same time must use them (`EFFECTS_QUICK_REFERENCE.md`).
+`SequenceEffect.simultaneous`, `Card.addSimultaneousSpellEffects` and `addSimultaneousTrigger` share one event; a card dealing damage at the same time must use them (`EFFECTS_QUICK_REFERENCE.md`).
 Owner: `StackEntry` (`damageEventAt`), `DamageSupport` (`beginDamageEvent`).
 Why: it decides how often preventions and triggers apply.
 

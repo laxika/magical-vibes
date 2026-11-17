@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -46,6 +46,6 @@ public class RegisterGlobalTriggeredAbilityUntilNextTurnEffectHandler implements
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " registers a global triggered ability until their next turn."));
         log.info("Game {} - {} registers a global {} trigger until their next turn",
-                gameData.id, entry.getCard().getName(), LegacySlots.label(ability));
+                gameData.id, entry.getCard().getName(), AbilityEffects.label(ability));
     }
 }
