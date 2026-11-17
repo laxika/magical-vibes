@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.r.RaiseDead;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -29,8 +30,8 @@ class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
         UUID copyId = osteomancer.getPreparedSpellCardId();
         assertThat(copyId).isNotNull();
         assertThat(gd.findExiledCard(copyId)).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(copyId)).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(copyId);
+        assertThat(gd.exilePlayPermissionHolder(copyId)).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(copyId);
     }
 
     @Test
@@ -51,7 +52,7 @@ class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.findExiledCard(copyId)).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(copyId);
     }
 
     @Test
@@ -139,7 +140,7 @@ class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(osteomancer);
         assertThat(gd.findExiledCard(copyId)).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(copyId);
     }
 
     @Test

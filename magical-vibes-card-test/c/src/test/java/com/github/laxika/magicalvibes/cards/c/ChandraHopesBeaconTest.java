@@ -74,7 +74,7 @@ class ChandraHopesBeaconTest extends BaseCardTest {
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
         assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
                 .containsExactly(bolt.getId(), bears.getId(), opt.getId(), secondBolt.getId(), secondOpt.getId());
-        assertThat(gd.exilePlayPermissions).containsEntry(bolt.getId(), player1.getId())
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(bolt.getId(), player1.getId())
                 .containsEntry(opt.getId(), player1.getId())
                 .containsEntry(secondBolt.getId(), player1.getId())
                 .containsEntry(secondOpt.getId(), player1.getId())
@@ -137,7 +137,7 @@ class ChandraHopesBeaconTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(giant);
-        assertThat(gd.exilePlayPermissions).containsEntry(giant.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(giant.getId(), player1.getId());
     }
 
     @Test

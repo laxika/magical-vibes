@@ -164,7 +164,7 @@ class StormkeldCuratorTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).containsEntry(card.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(card.getId(), player1.getId());
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castFromExile(player1, card.getId());

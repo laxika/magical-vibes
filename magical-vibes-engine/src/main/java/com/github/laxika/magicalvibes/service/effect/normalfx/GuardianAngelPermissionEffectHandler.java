@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -33,9 +35,9 @@ public class GuardianAngelPermissionEffectHandler implements NormalEffectHandler
             return;
         }
 
-        gameData.guardianAngelTargetsUntilEndOfTurn
-                .computeIfAbsent(controllerId, ignored -> ConcurrentHashMap.newKeySet())
-                .add(targetId);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), controllerId, new GuardianAngelPermissionEffect(targetId), controllerId,
+                Duration.UNTIL_END_OF_TURN));
         gameLogService.append(gameData, GameLog.text(
                 "The controller may pay {1} any time they could cast an instant to prevent the next 1 damage to the Guardian Angel target."));
         log.info("Game {} - {} gains Guardian Angel prevention permission for target {}",

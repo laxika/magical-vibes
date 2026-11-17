@@ -35,7 +35,7 @@ class HeroesHangoutTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
 
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(second.getId(), player1.getId())
                 .doesNotContainKey(first.getId());
         harness.castFromExile(player1, second.getId());
@@ -135,12 +135,12 @@ class HeroesHangoutTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(chosen.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(chosen.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(chosen);
     }
 

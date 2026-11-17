@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.t.ThrivingIbex;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -186,7 +185,7 @@ class WispweaverAngelTest extends BaseCardTest {
     private void gainControl(Player newController, Permanent permanent) {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
                 .applyControlEffect(gd, newController.getId(), permanent,
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT,
+                        new GainControlOfTargetEffect(Duration.PERMANENT), Duration.PERMANENT,
                         null, "Test setup"));
     }
 

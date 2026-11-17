@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -40,6 +40,6 @@ public class OffspringsRevenge extends Card {
                         1,
                         1),
                 new GrantKeywordEffect(HASTE, GrantScope.TOKENS_CREATED_THIS_RESOLUTION,
-                        GrantDuration.UNTIL_YOUR_NEXT_TURN)));
+                        Duration.UNTIL_YOUR_NEXT_TURN)));
     }
 }

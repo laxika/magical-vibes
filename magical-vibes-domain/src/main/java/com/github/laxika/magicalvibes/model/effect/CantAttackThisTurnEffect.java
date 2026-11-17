@@ -19,10 +19,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param filter optional predicate narrowing the scanned scopes (null = no restriction)
  */
 public record CantAttackThisTurnEffect(TapUntapScope scope, PermanentPredicate filter,
-                                      GrantDuration duration) implements CardEffect {
+                                      Duration duration) implements CardEffect {
 
     public CantAttackThisTurnEffect(TapUntapScope scope, PermanentPredicate filter) {
-        this(scope, filter, GrantDuration.END_OF_TURN);
+        this(scope, filter, Duration.UNTIL_END_OF_TURN);
     }
 
     public CantAttackThisTurnEffect(TapUntapScope scope) {

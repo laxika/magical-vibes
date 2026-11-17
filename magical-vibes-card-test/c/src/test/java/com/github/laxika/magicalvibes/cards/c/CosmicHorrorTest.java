@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.d.DarksteelPlate;
 import com.github.laxika.magicalvibes.cards.p.Phyresis;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -219,6 +220,6 @@ class CosmicHorrorTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Cosmic Horror");
         harness.assertOnBattlefield(player1, "Circle of Protection: Black");
         harness.assertLife(player1, lifeBefore);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 }

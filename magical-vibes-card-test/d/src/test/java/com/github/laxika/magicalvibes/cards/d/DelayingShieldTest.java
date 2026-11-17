@@ -194,7 +194,7 @@ class DelayingShieldTest extends BaseCardTest {
     void preventionShieldAppliedFirstLeavesTheRestForTheChosenShield() {
         Permanent first = shield();
         Permanent second = shield();
-        gd.playerDamagePreventionShields.put(player1.getId(), 2);
+        gd.addPlayerDamagePreventionShield(player1.getId(), 2);
 
         dealThreeDamageTo(player1);
         assertThat(replacementChoice().options()).hasSize(3);
@@ -205,21 +205,21 @@ class DelayingShieldTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(first.getCounterCount(CounterType.DELAY)).isEqualTo(1);
         assertThat(second.getCounterCount(CounterType.DELAY)).isZero();
-        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player1.getId());
+        assertThat(gd.playerDamagePreventionShields()).doesNotContainKey(player1.getId());
         harness.assertLife(player1, 20);
     }
 
     @Test
     void shieldAppliedFirstLeavesThePreventionShieldUnused() {
         Permanent first = shield();
-        gd.playerDamagePreventionShields.put(player1.getId(), 2);
+        gd.addPlayerDamagePreventionShield(player1.getId(), 2);
 
         dealThreeDamageTo(player1);
         chooseReplacement("Delaying Shield");
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(first.getCounterCount(CounterType.DELAY)).isEqualTo(3);
-        assertThat(gd.playerDamagePreventionShields.get(player1.getId())).isEqualTo(2);
+        assertThat(gd.playerDamagePreventionShields().get(player1.getId())).isEqualTo(2);
         harness.assertLife(player1, 20);
     }
 

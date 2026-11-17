@@ -60,7 +60,7 @@ class BoneDancerTest extends BaseCardTest {
                 .doesNotContain(topCreature.getId());
 
         // "If you do, this creature assigns no combat damage this turn."
-        assertThat(gd.creaturesAssigningNoCombatDamageThisTurn).contains(attacker.getId());
+        assertThat(gd.assignsNoCombatDamage(attacker.getId())).isTrue();
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
         harness.assertLife(player2, 20);
     }

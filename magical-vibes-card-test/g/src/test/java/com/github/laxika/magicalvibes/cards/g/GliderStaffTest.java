@@ -56,7 +56,7 @@ class GliderStaffTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(creature.getOriginalCard().getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(creature.getOriginalCard().getId()))
+        assertThat(gd.exilePlayPermissionHolder(creature.getOriginalCard().getId()))
                 .isEqualTo(player2.getId());
     }
 

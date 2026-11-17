@@ -12,8 +12,8 @@ public record TargetPlayerGainsControlOfTargetPermanentsAndDrawPerPermanentEffec
         int permanentTargetGroupIndex) implements ControlStealingEffect, CardDrawingEffect {
 
     @Override
-    public ControlDuration controlDuration() {
-        return ControlDuration.PERMANENT;
+    public Duration controlDuration() {
+        return Duration.PERMANENT;
     }
 
     @Override

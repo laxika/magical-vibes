@@ -34,7 +34,7 @@ class SunspineLynxTest extends BaseCardTest {
     @DisplayName("ETB still resolves after Lynx leaves, but its damage can then be prevented")
     void triggerResolvesWithPreventionAfterSourceLeaves() {
         harness.addToBattlefield(player2, new Wasteland());
-        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 10);
         harness.setHand(player1, List.of(new SunspineLynx()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -46,7 +46,7 @@ class SunspineLynxTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(9);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(9);
     }
 
     @Test
@@ -92,8 +92,8 @@ class SunspineLynxTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player2, new Wasteland());
         harness.addToBattlefield(player2, new Forest());
-        gd.playerDamagePreventionShields.put(player1.getId(), 10);
-        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player1.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 10);
 
         harness.setHand(player1, List.of(new SunspineLynx()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -104,8 +104,8 @@ class SunspineLynxTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 19);
-        assertThat(gd.playerDamagePreventionShields.get(player1.getId())).isEqualTo(10);
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(10);
+        assertThat(gd.playerDamagePreventionShields().get(player1.getId())).isEqualTo(10);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(10);
     }
 
     @Test

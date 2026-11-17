@@ -41,8 +41,8 @@ class GrenzoCrookedJailerTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(chosen.getId())).isNotNull();
         assertThat(gd.findExiledCard(chosen.getId()).faceDown()).isTrue();
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(chosen.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(chosen.getId());
     }
 
     @Test

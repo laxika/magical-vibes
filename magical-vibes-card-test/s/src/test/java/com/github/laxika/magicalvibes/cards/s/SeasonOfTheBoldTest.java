@@ -40,7 +40,7 @@ class SeasonOfTheBoldTest extends BaseCardTest {
         cast(mode(1));
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
-        assertThat(gd.exilePlayPermissions).containsEntry(first.getId(), player1.getId())
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
     }
 
@@ -115,7 +115,7 @@ class SeasonOfTheBoldTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1)
                 .allMatch(Permanent::isTapped);
         for (Card card : List.of(first, second, third, fourth)) {
-            assertThat(gd.exilePlayPermissions).containsEntry(card.getId(), player1.getId());
+            assertThat(gd.exilePlayPermissionHolders()).containsEntry(card.getId(), player1.getId());
         }
     }
 
@@ -128,7 +128,7 @@ class SeasonOfTheBoldTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(onlyCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).containsEntry(onlyCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(onlyCard.getId(), player1.getId());
     }
 
     @Test
@@ -226,7 +226,7 @@ class SeasonOfTheBoldTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.exilePlayPermissions).containsEntry(land.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(land.getId(), player1.getId());
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -236,7 +236,7 @@ class SeasonOfTheBoldTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(land.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(land);
     }
 

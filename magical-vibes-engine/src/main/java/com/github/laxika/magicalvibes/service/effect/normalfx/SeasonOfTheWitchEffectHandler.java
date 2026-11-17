@@ -32,8 +32,7 @@ public class SeasonOfTheWitchEffectHandler implements NormalEffectHandlerBean, A
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID activePlayerId = gameData.activePlayerId;
         if (activePlayerId == null
-                || gameData.skippedStepOrPhasesThisTurn.getOrDefault(activePlayerId, Set.of())
-                .contains(SkipStepOrPhaseKind.COMBAT_PHASE)) {
+                || gameData.skipsStepOrPhase(activePlayerId, SkipStepOrPhaseKind.COMBAT_PHASE)) {
             return;
         }
 

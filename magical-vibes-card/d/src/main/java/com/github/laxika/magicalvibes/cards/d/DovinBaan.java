@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticOrbEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,7 +23,7 @@ public class DovinBaan extends Card {
                 false,
                 null,
                 List.of(
-                        new BoostTargetCreatureEffect(-3, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN),
+                        new BoostTargetCreatureEffect(-3, 0, Duration.UNTIL_YOUR_NEXT_TURN),
                         new LockTargetPermanentEffect(false, false, true, Duration.UNTIL_YOUR_NEXT_TURN)),
                 "+1: Until your next turn, up to one target creature gets -3/-0 and its activated abilities can't be activated.",
                 null,

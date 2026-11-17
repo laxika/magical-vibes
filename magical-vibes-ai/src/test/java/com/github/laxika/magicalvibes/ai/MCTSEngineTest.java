@@ -89,8 +89,9 @@ class MCTSEngineTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
         gd.stack.clear();
-        gd.senControllerPlayerId = player1.getId();
-        gd.senControlledPlayerId = player2.getId();
+        gd.addFloatingEffect(com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect.onPlayer("Sen Triplets",
+                null, player1.getId(), new com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect(),
+                player2.getId(), com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));
 
         SimulationAction action = engine.search(gd, player1.getId(), 100);
 

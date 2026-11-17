@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -84,8 +85,8 @@ class PracticedScrollsmithTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(shock);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(shock);
-        assertThat(gd.exilePlayPermissions.get(shock.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd).containsKey(shock.getId());
+        assertThat(gd.exilePlayPermissionHolder(shock.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)).containsKey(shock.getId());
     }
 
     @Test
@@ -100,7 +101,7 @@ class PracticedScrollsmithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(shock.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(shock.getId());
     }
 
     @Test
@@ -131,11 +132,11 @@ class PracticedScrollsmithTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Island(), new Island()));
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions.get(shock.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(shock.getId())).isEqualTo(player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions.get(shock.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(shock.getId())).isEqualTo(player1.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(shock.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(shock.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(shock);
         harness.addMana(player1, ManaColor.RED, 1);
         assertThatThrownBy(() -> harness.castFromExile(player1, shock.getId(), player2.getId()))
@@ -205,7 +206,7 @@ class PracticedScrollsmithTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(shock);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(shock);
-        assertThat(gd.exilePlayPermissions.get(shock.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(shock.getId())).isEqualTo(player1.getId());
     }
 
     @Test

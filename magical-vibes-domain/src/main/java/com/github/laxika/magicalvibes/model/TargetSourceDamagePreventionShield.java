@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import java.util.UUID;
 
 /**
@@ -18,7 +19,7 @@ public record TargetSourceDamagePreventionShield(
         UUID sourceId,
         int remainingAmount,
         boolean allDamage
-) {
+) implements CardEffect {
     public TargetSourceDamagePreventionShield(UUID targetId, UUID sourceId, int remainingAmount) {
         this(targetId, sourceId, remainingAmount, false);
     }

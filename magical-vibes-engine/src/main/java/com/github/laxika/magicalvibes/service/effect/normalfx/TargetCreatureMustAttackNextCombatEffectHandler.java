@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackNextCombatEffect;
-import com.github.laxika.magicalvibes.model.action.TargetCreatureMustAttackNextCombat;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +44,10 @@ public class TargetCreatureMustAttackNextCombatEffectHandler implements NormalEf
             if (target == null) {
                 continue;
             }
-            gameData.queueDelayedAction(new TargetCreatureMustAttackNextCombat(targetId));
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(),
+                    new MatchingCreaturesMustAttackEffect(new PermanentIsCreaturePredicate()), targetId,
+                    Duration.DURING_AFFECTED_CONTROLLERS_NEXT_COMBAT));
             gameLogService.append(gameData,
                     GameLog.cardThen(target.getCard(), " must attack during its controller's next combat phase if able."));
             log.info("Game {} - {} must attack during its controller's next combat phase",

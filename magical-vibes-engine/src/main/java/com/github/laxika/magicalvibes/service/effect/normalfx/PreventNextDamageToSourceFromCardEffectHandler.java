@@ -31,7 +31,7 @@ public class PreventNextDamageToSourceFromCardEffectHandler implements NormalEff
         if (targetId == null || sourceCardId == null) {
             return;
         }
-        gameData.targetSourceDamagePreventionShields.add(
+        gameData.addShield(
                 new TargetSourceDamagePreventionShield(targetId, sourceCardId, 1));
         Card sourceCard = gameData.stack.stream()
                 .filter(stackEntry -> stackEntry.getTargetableId().equals(sourceCardId))

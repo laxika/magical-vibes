@@ -34,8 +34,8 @@ class TabletOfDiscoveryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Shock");
-        assertThat(gd.graveyardPlayPermissions.get(shock.getId())).isEqualTo(player1.getId());
-        assertThat(gd.graveyardPlayPermissionsExpireEndOfTurn).contains(shock.getId());
+        assertThat(graveyardPlayPermissionsByCard().get(shock.getId())).isEqualTo(player1.getId());
+        assertThat(graveyardPlayPermissionsByCard().keySet()).contains(shock.getId());
     }
 
     @Test

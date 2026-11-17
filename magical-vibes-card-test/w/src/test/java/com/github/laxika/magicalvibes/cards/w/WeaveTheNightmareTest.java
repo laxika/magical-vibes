@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -50,7 +49,7 @@ class WeaveTheNightmareTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).extracting(Card::getId)
                 .contains(chosen.getId());
-        assertThat(gd.exilePlayPermissions.get(chosen.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(chosen.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -131,7 +130,7 @@ class WeaveTheNightmareTest extends BaseCardTest {
         gd.stolenCreatures.put(stolenCreature.getId(), player2.getId());
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
                 .applyControlEffect(gd, player1.getId(), stolenCreature,
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        new GainControlOfTargetEffect(Duration.PERMANENT),
                         Duration.PERMANENT, null, "Test setup"));
         return stolenCreature;
     }

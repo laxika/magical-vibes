@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.OpponentGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PayPerCounterOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -27,7 +27,7 @@ public class RogueSkycaptain extends Card {
                 new PutCountersOnSelfEffect(CounterType.WAGE),
                 new PayPerCounterOrElseEffect(CounterType.WAGE, "{2}", List.of(
                         new RemoveAllCountersEffect(CounterType.WAGE),
-                        new OpponentGainsControlOfSourceCreatureEffect(ControlDuration.PERMANENT)
+                        new OpponentGainsControlOfSourceCreatureEffect(Duration.PERMANENT)
                 ))
         ));
     }

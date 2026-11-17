@@ -106,7 +106,7 @@ class BlessedHippogriffTyrsBlessingTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Blessed Hippogriff").getCard()).isSameAs(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -122,6 +122,6 @@ class BlessedHippogriffTyrsBlessingTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 }

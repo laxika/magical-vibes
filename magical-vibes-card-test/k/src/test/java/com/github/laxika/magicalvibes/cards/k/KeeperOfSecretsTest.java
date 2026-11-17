@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -23,7 +24,7 @@ class KeeperOfSecretsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KeeperOfSecrets());
         GrizzlyBears spell = new GrizzlyBears();
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 2);
         int lifeBefore = gd.getLife(player2.getId());
 
@@ -59,7 +60,7 @@ class KeeperOfSecretsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KeeperOfSecrets());
         GrizzlyBears spell = new GrizzlyBears();
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castFromExile(player1, spell.getId());
@@ -77,7 +78,7 @@ class KeeperOfSecretsTest extends BaseCardTest {
         harness.addToBattlefield(player2, new KeeperOfSecrets());
         KeeperOfSecrets spell = new KeeperOfSecrets();
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.RED, 6);
         int lifeBefore = gd.getLife(player1.getId());
 
@@ -93,7 +94,7 @@ class KeeperOfSecretsTest extends BaseCardTest {
     void doesNotTriggerForItsOwnCast() {
         KeeperOfSecrets spell = new KeeperOfSecrets();
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.RED, 6);
         int lifeBefore = gd.getLife(player2.getId());
 
@@ -110,7 +111,7 @@ class KeeperOfSecretsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KeeperOfSecrets());
         KeeperOfSecrets spell = new KeeperOfSecrets();
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.RED, 6);
         int lifeBefore = gd.getLife(player2.getId());
 
@@ -130,7 +131,7 @@ class KeeperOfSecretsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KeeperOfSecrets());
         GrizzlyBears spell = new GrizzlyBears();
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castFromExile(player1, spell.getId());
         harness.handlePermanentChosen(player1, player2.getId());

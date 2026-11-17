@@ -45,7 +45,7 @@ class CaitSithFortuneTellerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
@@ -79,7 +79,7 @@ class CaitSithFortuneTellerTest extends BaseCardTest {
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
     }
@@ -139,7 +139,7 @@ class CaitSithFortuneTellerTest extends BaseCardTest {
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         assertThat(gqs.getEffectivePower(gd, cait)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, cait)).isEqualTo(3);
     }

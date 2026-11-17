@@ -19,30 +19,30 @@ import java.util.Set;
  * the keyword grant. Use {@link #toTargetIf(Keyword, PermanentPredicate)} to build one.
  */
 public record GrantKeywordEffect(Set<Keyword> keywords, GrantScope scope, PermanentPredicate filter,
-                                 GrantDuration duration, PermanentPredicate grantCondition)
+                                 Duration duration, PermanentPredicate grantCondition)
         implements KeywordGrantingEffect {
 
     public GrantKeywordEffect(Keyword keyword, GrantScope scope) {
-        this(Set.of(keyword), scope, null, GrantDuration.END_OF_TURN, null);
+        this(Set.of(keyword), scope, null, Duration.UNTIL_END_OF_TURN, null);
     }
 
     public GrantKeywordEffect(Keyword keyword, GrantScope scope, PermanentPredicate filter) {
-        this(Set.of(keyword), scope, filter, GrantDuration.END_OF_TURN, null);
+        this(Set.of(keyword), scope, filter, Duration.UNTIL_END_OF_TURN, null);
     }
 
     public GrantKeywordEffect(Set<Keyword> keywords, GrantScope scope) {
-        this(keywords, scope, null, GrantDuration.END_OF_TURN, null);
+        this(keywords, scope, null, Duration.UNTIL_END_OF_TURN, null);
     }
 
     public GrantKeywordEffect(Set<Keyword> keywords, GrantScope scope, PermanentPredicate filter) {
-        this(keywords, scope, filter, GrantDuration.END_OF_TURN, null);
+        this(keywords, scope, filter, Duration.UNTIL_END_OF_TURN, null);
     }
 
-    public GrantKeywordEffect(Keyword keyword, GrantScope scope, GrantDuration duration) {
+    public GrantKeywordEffect(Keyword keyword, GrantScope scope, Duration duration) {
         this(Set.of(keyword), scope, null, duration, null);
     }
 
-    public GrantKeywordEffect(Set<Keyword> keywords, GrantScope scope, GrantDuration duration) {
+    public GrantKeywordEffect(Set<Keyword> keywords, GrantScope scope, Duration duration) {
         this(keywords, scope, null, duration, null);
     }
 
@@ -52,7 +52,7 @@ public record GrantKeywordEffect(Set<Keyword> keywords, GrantScope scope, Perman
      * (any legal target of the spell/ability); only the keyword grant is conditional.
      */
     public static GrantKeywordEffect toTargetIf(Keyword keyword, PermanentPredicate grantCondition) {
-        return new GrantKeywordEffect(Set.of(keyword), GrantScope.TARGET, null, GrantDuration.END_OF_TURN, grantCondition);
+        return new GrantKeywordEffect(Set.of(keyword), GrantScope.TARGET, null, Duration.UNTIL_END_OF_TURN, grantCondition);
     }
 
     @Override

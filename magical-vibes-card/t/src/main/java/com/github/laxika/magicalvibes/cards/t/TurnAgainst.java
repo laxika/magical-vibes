@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -16,7 +16,7 @@ public class TurnAgainst extends Card {
 
     public TurnAgainst() {
         target(TargetFilters.creature())
-                .addSpellEffect(new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
+                .addSpellEffect(new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }

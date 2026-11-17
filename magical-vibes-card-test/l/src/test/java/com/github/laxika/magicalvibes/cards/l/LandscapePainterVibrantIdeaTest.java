@@ -25,7 +25,7 @@ class LandscapePainterVibrantIdeaTest extends BaseCardTest {
         UUID copyId = painter.getPreparedSpellCardId();
         assertThat(copyId).isNotNull();
         assertThat(gd.findExiledCard(copyId)).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(copyId)).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(copyId)).isEqualTo(player1.getId());
     }
 
     @Test
@@ -43,7 +43,7 @@ class LandscapePainterVibrantIdeaTest extends BaseCardTest {
         assertThat(painter.isPrepared()).isFalse();
         assertThat(painter.getPreparedSpellCardId()).isNull();
         assertThat(gd.findExiledCard(copyId)).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(copyId);
     }
 
     @Test
@@ -75,7 +75,7 @@ class LandscapePainterVibrantIdeaTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.findExiledCard(copyId)).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(copyId);
 
         harness.passBothPriorities();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
@@ -97,7 +97,7 @@ class LandscapePainterVibrantIdeaTest extends BaseCardTest {
         assertThat(painter.isPrepared()).isTrue();
         assertThat(painter.getPreparedSpellCardId()).isEqualTo(copyId);
         assertThat(gd.findExiledCard(copyId)).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(copyId)).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(copyId)).isEqualTo(player1.getId());
         assertThat(gd.stack).isEmpty();
     }
 

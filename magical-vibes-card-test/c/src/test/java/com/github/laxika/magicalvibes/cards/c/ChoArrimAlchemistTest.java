@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.k.KrisMage;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -36,7 +37,7 @@ class ChoArrimAlchemistTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 22);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
         harness.assertInGraveyard(player1, "Cinder Elemental");
     }
 
@@ -60,7 +61,7 @@ class ChoArrimAlchemistTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 18);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(shield -> shield.sourceId().equals(chosenSource.getId()));
     }
 
@@ -104,7 +105,7 @@ class ChoArrimAlchemistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test

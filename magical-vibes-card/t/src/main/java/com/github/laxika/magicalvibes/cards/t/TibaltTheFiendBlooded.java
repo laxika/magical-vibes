@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -45,7 +45,7 @@ public class TibaltTheFiendBlooded extends Card {
         // The untap and haste riders run after the steal, so "all creatures" are creatures we now control.
         addActivatedAbility(new ActivatedAbility(
                 -6,
-                List.of(new GainControlOfAllPermanentsMatchingEffect(new PermanentIsCreaturePredicate(), ControlDuration.END_OF_TURN),
+                List.of(new GainControlOfAllPermanentsMatchingEffect(new PermanentIsCreaturePredicate(), Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)),
                 "−6: Gain control of all creatures until end of turn. Untap them. They gain haste until end of turn."

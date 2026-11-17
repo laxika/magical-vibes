@@ -32,7 +32,7 @@ public class RedirectAllDamageToTargetCreatureToControllerEffectHandler implemen
             return;
         }
 
-        gameData.creatureDamageRedirectShields.add(new CreatureDamageRedirectShield(
+        gameData.addShield(new CreatureDamageRedirectShield(
                 targetId, null, CreatureDamageRedirectShield.UNLIMITED, controllerId));
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -45,8 +46,8 @@ class CapriciousSliverTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(topCard.getId()));
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(topCard.getId());
     }
 
     @Test
@@ -62,7 +63,7 @@ class CapriciousSliverTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(topCard.getId()));
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -77,7 +78,7 @@ class CapriciousSliverTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(topCard);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
     }
 
     @Test
@@ -95,7 +96,7 @@ class CapriciousSliverTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(firstTopCard.getId(), secondTopCard.getId());
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(firstTopCard.getId(), player1.getId())
                 .containsEntry(secondTopCard.getId(), player1.getId());
     }
@@ -112,7 +113,7 @@ class CapriciousSliverTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(topCard);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
     }
 
     @Test
@@ -131,7 +132,7 @@ class CapriciousSliverTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(firstTopCard.getId(), secondTopCard.getId());
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(firstTopCard.getId(), player1.getId())
                 .containsEntry(secondTopCard.getId(), player1.getId());
     }
@@ -146,7 +147,7 @@ class CapriciousSliverTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -164,7 +165,7 @@ class CapriciousSliverTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -253,8 +254,8 @@ class CapriciousSliverTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(topCard.getId());
     }
 
     private Permanent addAttackingCreature(Player player, Card card) {

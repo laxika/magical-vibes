@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -40,12 +41,12 @@ class ExtractPowerTest extends BaseCardTest {
         assertThat(opponentEntry.faceDown()).isTrue();
         assertThat(ownEntry.exilerId()).isEqualTo(player1.getId());
         assertThat(opponentEntry.exilerId()).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(ownTop.getId(), player1.getId())
                 .containsEntry(opponentTop.getId(), player1.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost)
+        assertThat(gd.exilePlayWithoutPayingCardIds())
                 .contains(ownTop.getId(), opponentTop.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn)
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN))
                 .doesNotContain(ownTop.getId(), opponentTop.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownRemainder);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentRemainder);

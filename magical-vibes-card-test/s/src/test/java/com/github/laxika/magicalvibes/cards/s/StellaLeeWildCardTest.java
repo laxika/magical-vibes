@@ -36,7 +36,7 @@ class StellaLeeWildCardTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
     }
 
     @Test
@@ -100,11 +100,11 @@ class StellaLeeWildCardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
         harness.addMana(player1, ManaColor.RED, 1);
         assertThatThrownBy(() -> harness.castFromExile(player1, top.getId(), player2.getId()))
@@ -148,9 +148,9 @@ class StellaLeeWildCardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
     }
 
     @Test

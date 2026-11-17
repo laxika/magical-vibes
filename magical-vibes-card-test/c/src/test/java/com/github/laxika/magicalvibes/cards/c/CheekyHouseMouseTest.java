@@ -32,7 +32,7 @@ class CheekyHouseMouseTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -113,7 +113,7 @@ class CheekyHouseMouseTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(card.getId()));
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
@@ -132,7 +132,7 @@ class CheekyHouseMouseTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

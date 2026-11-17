@@ -42,7 +42,7 @@ class DecadentDragonExpensiveTasteTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.findExiledCard(first.getId()).faceDown()).isTrue();
         assertThat(gd.findExiledCard(second.getId()).faceDown()).isTrue();
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
 
@@ -125,7 +125,7 @@ class DecadentDragonExpensiveTasteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(dragon.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsEntry(dragon.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(dragon.getId(), player1.getId());
         harness.assertNotInGraveyard(player1, "Decadent Dragon");
     }
 

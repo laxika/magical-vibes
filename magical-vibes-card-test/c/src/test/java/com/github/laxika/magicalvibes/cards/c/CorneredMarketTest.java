@@ -134,7 +134,7 @@ class CorneredMarketTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CloudSprite());
         CloudSprite exiled = new CloudSprite();
         harness.setExile(player2, List.of(exiled));
-        gd.exilePlayPermissions.put(exiled.getId(), player2.getId());
+        gd.grantExilePlayPermission(exiled.getId(), player2.getId(), Duration.PERMANENT);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -172,7 +172,7 @@ class CorneredMarketTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HickoryWoodlot());
         HickoryWoodlot exiled = new HickoryWoodlot();
         harness.setExile(player2, List.of(exiled));
-        gd.exilePlayPermissions.put(exiled.getId(), player2.getId());
+        gd.grantExilePlayPermission(exiled.getId(), player2.getId(), Duration.PERMANENT);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

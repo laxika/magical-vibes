@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -70,8 +71,7 @@ public class ExileTopCardsChooseOneMayPlayThisTurnEffectHandler implements Norma
 
         if (!exiledIds.isEmpty() && !exileEffect.chooseOnExile()) {
             for (UUID exiledId : exiledIds) {
-                gameData.exilePlayPermissions.put(exiledId, controllerId);
-                gameData.exilePlayPermissionsExpireEndOfTurn.add(exiledId);
+                gameData.grantExilePlayPermission(exiledId, controllerId, Duration.UNTIL_END_OF_TURN);
             }
             gameData.registerExilePlayPermissionGroup(UUID.randomUUID(), 1, exiledIds);
             gameLogService.append(gameData, GameLog.text(

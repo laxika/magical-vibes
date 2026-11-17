@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -88,10 +89,10 @@ class BardClassTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(first.getId(), second.getId());
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn)
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN))
                 .contains(first.getId(), second.getId());
     }
 
@@ -218,7 +219,7 @@ class BardClassTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, card.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }

@@ -67,10 +67,10 @@ public class RedirectNextDamageEffectHandler implements NormalEffectHandlerBean 
         }
 
         if (protectedPermanent == null) {
-            gameData.playerNextDamageRedirectShields.add(
+            gameData.addShield(
                     new PlayerNextDamageRedirectShield(protectedId, amount, destinationId));
         } else {
-            gameData.creatureDamageRedirectShields.add(new CreatureDamageRedirectShield(
+            gameData.addShield(new CreatureDamageRedirectShield(
                     protectedId, null, e.nextEvent() ? CreatureDamageRedirectShield.NEXT_EVENT : amount,
                     destinationId));
         }
@@ -110,7 +110,7 @@ public class RedirectNextDamageEffectHandler implements NormalEffectHandlerBean 
             sourcePermanentId = null;
         }
 
-        gameData.sourcePermanentAndControllerNextDamageRedirectShields.add(
+        gameData.addShield(
                 new SourcePermanentAndControllerNextDamageRedirectShield(
                         sourcePermanentId, controllerId, destinationId));
         gameLogService.append(gameData, GameLog.text(

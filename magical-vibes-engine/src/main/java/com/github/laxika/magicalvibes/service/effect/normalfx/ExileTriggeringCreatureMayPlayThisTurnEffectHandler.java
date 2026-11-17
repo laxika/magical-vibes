@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -60,8 +61,7 @@ public class ExileTriggeringCreatureMayPlayThisTurnEffectHandler implements Norm
             return;
         }
 
-        gameData.exilePlayPermissions.put(exiledCard.getId(), entry.getControllerId());
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(exiledCard.getId());
+        gameData.grantExilePlayPermission(exiledCard.getId(), entry.getControllerId(), Duration.UNTIL_END_OF_TURN);
         gameLogService.append(gameData, GameLog.cardThen(exiledCard,
                 " is exiled; the ability's controller may play it this turn."));
         log.info("Game {} - {} exiles {} and may play it this turn",

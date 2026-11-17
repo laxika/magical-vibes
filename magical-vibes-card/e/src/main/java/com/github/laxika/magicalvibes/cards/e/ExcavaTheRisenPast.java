@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -49,7 +49,7 @@ public class ExcavaTheRisenPast extends Card {
                         .battlefieldEffectGrants(List.of(
                                 new GrantCardTypeEffect(CardType.CREATURE, GrantScope.TARGET),
                                 SetBasePowerToughnessEffect.indefinitely(1, 1),
-                                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, GrantDuration.INDEFINITE)))
+                                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, Duration.PERMANENT)))
                         .build());
     }
 }

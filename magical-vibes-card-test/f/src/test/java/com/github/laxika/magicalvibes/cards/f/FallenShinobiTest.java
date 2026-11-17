@@ -32,10 +32,10 @@ class FallenShinobiTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(first, second);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remainder);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost)
+        assertThat(gd.exilePlayWithoutPayingCardIds())
                 .contains(first.getId(), second.getId());
     }
 

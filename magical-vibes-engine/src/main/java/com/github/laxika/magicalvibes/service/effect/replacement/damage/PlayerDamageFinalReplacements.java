@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 
+import com.github.laxika.magicalvibes.model.effect.SoulEchoUpkeepEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -198,7 +199,7 @@ class PlayerDamageFinalReplacements extends PlayerDamageCandidateSource {
                         (ctx, permanent) -> damageSupport.getObject().applySoulEchoCounterRemoval(
                                 ctx.gameData(), ctx.playerId(), permanent, ctx.amount())).whole(),
                 wholeEventReplacement("SoulEchoGone", "Soul Echo: remove echo counters instead",
-                        ctx -> ctx.gameData().soulEchoReplacementPlayers.contains(ctx.playerId())
+                        ctx -> ctx.gameData().hasFloatingEffectOnPlayer(ctx.playerId(), SoulEchoUpkeepEffect.class)
                                 && ctx.gameData().playerBattlefields.getOrDefault(ctx.playerId(), List.of()).stream()
                                 .noneMatch(Permanent::isEchoDamageRedirectionActive),
                         PlayerDamageContext::amount,

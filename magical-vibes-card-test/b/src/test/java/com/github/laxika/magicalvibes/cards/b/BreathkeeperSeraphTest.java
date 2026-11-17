@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -197,7 +196,7 @@ class BreathkeeperSeraphTest extends BaseCardTest {
         gd.stolenCreatures.put(bears.getId(), player2.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 "Control change", null, player1.getId(),
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT), bears.getId(),
+                new GainControlOfTargetEffect(Duration.PERMANENT), bears.getId(),
                 null, null, Duration.PERMANENT, 0));
     }
 

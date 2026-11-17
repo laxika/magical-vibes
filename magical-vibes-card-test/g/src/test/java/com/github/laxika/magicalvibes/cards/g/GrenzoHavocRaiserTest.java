@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -62,9 +63,9 @@ class GrenzoHavocRaiserTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(topCard.getId());
-        assertThat(gd.exilePlayAnyManaType).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(topCard.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(topCard.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -89,9 +90,9 @@ class GrenzoHavocRaiserTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(topCard.getId());
-        assertThat(gd.exilePlayAnyManaType).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(topCard.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(topCard.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -113,7 +114,7 @@ class GrenzoHavocRaiserTest extends BaseCardTest {
         resolveGrenzoTrigger("Exile the top card");
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, topCard.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -203,9 +204,9 @@ class GrenzoHavocRaiserTest extends BaseCardTest {
 
         resolveGrenzoTrigger(EXILE_MODE);
 
-        assertThat(gd.exilePlayPermissions).isEmpty();
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).isEmpty();
-        assertThat(gd.exilePlayAnyManaType).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).isEmpty();
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).isEmpty();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
@@ -221,9 +222,9 @@ class GrenzoHavocRaiserTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(topCard.getId());
-        assertThat(gd.exilePlayAnyManaType).doesNotContain(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(topCard.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).doesNotContain(topCard.getId());
     }
 
 }

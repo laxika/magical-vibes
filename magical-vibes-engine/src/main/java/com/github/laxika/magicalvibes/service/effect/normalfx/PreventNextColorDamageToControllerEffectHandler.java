@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -24,8 +26,7 @@ public class PreventNextColorDamageToControllerEffectHandler implements NormalEf
         if (chosenColor == null) return;
 
         UUID controllerId = entry.getControllerId();
-        gameData.playerColorDamagePreventionCount
-                .computeIfAbsent(controllerId, k -> new ConcurrentHashMap<>())
-                .merge(chosenColor, 1, Integer::sum);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), controllerId, e, controllerId, Duration.UNTIL_END_OF_TURN));
     }
 }

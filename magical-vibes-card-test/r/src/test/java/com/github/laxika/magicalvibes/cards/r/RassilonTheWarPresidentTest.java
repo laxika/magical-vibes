@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -32,9 +33,9 @@ class RassilonTheWarPresidentTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(topCard.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(topCard.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)).doesNotContainKey(topCard.getId());
     }
 
     @Test
@@ -65,7 +66,7 @@ class RassilonTheWarPresidentTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RassilonTheWarPresident());
         Card exiledSpell = new ThinkTwice();
         gd.addToExile(player1.getId(), exiledSpell);
-        gd.exilePlayPermissions.put(exiledSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(exiledSpell.getId(), player1.getId(), Duration.PERMANENT);
 
         assertThat(gqs.hasSpellCastingAbilityGrant(
                 gd, player1.getId(), exiledSpell, Keyword.CONSPIRE, Zone.EXILE)).isTrue();
@@ -112,7 +113,7 @@ class RassilonTheWarPresidentTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -155,6 +156,6 @@ class RassilonTheWarPresidentTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player2, spell.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
-        assertThat(gd.exilePlayPermissions).containsEntry(spell.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(spell.getId(), player1.getId());
     }
 }

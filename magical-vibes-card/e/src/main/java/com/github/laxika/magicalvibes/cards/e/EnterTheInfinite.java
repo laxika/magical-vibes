@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
 import com.github.laxika.magicalvibes.model.effect.PutControllerCardFromHandOnTopOfLibraryEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "34")
@@ -16,6 +16,6 @@ public class EnterTheInfinite extends Card {
     public EnterTheInfinite() {
         addSpellEffect(new DrawCardEffect(new CardsInLibrary(CountScope.CONTROLLER)));
         addSpellEffect(new PutControllerCardFromHandOnTopOfLibraryEffect());
-        addSpellEffect(new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.UNTIL_NEXT_TURN));
+        addSpellEffect(new GrantNoMaximumHandSizeEffect(Duration.UNTIL_YOUR_NEXT_TURN));
     }
 }

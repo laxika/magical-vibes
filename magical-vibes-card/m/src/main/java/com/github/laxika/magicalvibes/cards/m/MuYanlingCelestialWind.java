@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -21,7 +21,7 @@ public class MuYanlingCelestialWind extends Card {
         // +1: Until your next turn, up to one target creature gets -5/-0.
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new BoostTargetCreatureEffect(-5, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN)),
+                List.of(new BoostTargetCreatureEffect(-5, 0, Duration.UNTIL_YOUR_NEXT_TURN)),
                 "+1: Until your next turn, up to one target creature gets -5/-0.",
                 null, +1, null, null,
                 List.<TargetFilter>of(TargetFilters.creature()), 0, 1

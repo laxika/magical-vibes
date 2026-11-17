@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -110,8 +111,8 @@ class DaredevilManWithoutFearTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topHero);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topHero.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(topHero.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topHero.getId(), player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(topHero.getId());
         assertThat(gqs.getEffectivePower(gd, daredevil)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, daredevil)).isEqualTo(5);
     }
@@ -163,6 +164,6 @@ class DaredevilManWithoutFearTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, daredevil)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, daredevil)).isEqualTo(4);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topHero.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topHero.getId());
     }
 }

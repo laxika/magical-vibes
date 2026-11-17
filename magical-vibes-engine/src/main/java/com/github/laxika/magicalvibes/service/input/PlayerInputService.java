@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -1341,11 +1340,11 @@ public class PlayerInputService {
     }
 
     public void beginKeywordChoice(GameData gameData, UUID playerId, UUID targetId, List<Keyword> options) {
-        beginKeywordChoice(gameData, playerId, targetId, options, GrantDuration.END_OF_TURN, null, null);
+        beginKeywordChoice(gameData, playerId, targetId, options, Duration.UNTIL_END_OF_TURN, null, null);
     }
 
     public void beginKeywordChoice(GameData gameData, UUID playerId, UUID targetId, List<Keyword> options,
-                                   GrantDuration duration, String sourceCardName, UUID sourcePermanentId) {
+                                   Duration duration, String sourceCardName, UUID sourcePermanentId) {
         ChoiceContext.KeywordGrantChoice choiceContext = new ChoiceContext.KeywordGrantChoice(
                 targetId, options, duration, sourceCardName, sourcePermanentId);
 

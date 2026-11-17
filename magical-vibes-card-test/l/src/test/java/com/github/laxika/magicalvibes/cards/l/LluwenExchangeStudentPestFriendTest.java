@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -26,8 +27,8 @@ class LluwenExchangeStudentPestFriendTest extends BaseCardTest {
         UUID copyId = lluwen.getPreparedSpellCardId();
         assertThat(copyId).isNotNull();
         assertThat(gd.findExiledCard(copyId)).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(copyId)).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(copyId);
+        assertThat(gd.exilePlayPermissionHolder(copyId)).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(copyId);
     }
 
     @Test

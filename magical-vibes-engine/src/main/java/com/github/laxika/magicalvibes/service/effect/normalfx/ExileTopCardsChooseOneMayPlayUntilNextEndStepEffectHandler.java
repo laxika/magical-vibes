@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ExilePlayDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -73,7 +73,7 @@ public class ExileTopCardsChooseOneMayPlayUntilNextEndStepEffectHandler implemen
             for (UUID exiledId : exiledIds) {
                 exileSupport.grantPlayUntilOwnersNextEndStep(gameData, exiledId, permissionPlayerId);
                 if (exileEffect.withoutPayingManaCost()) {
-                    gameData.exilePlayWithoutPayingManaCost.add(exiledId);
+                    gameData.setExilePlayWithoutPayingManaCost(exiledId, true);
                 }
             }
             gameData.registerExilePlayPermissionGroup(UUID.randomUUID(), 1, exiledIds);
@@ -83,7 +83,7 @@ public class ExileTopCardsChooseOneMayPlayUntilNextEndStepEffectHandler implemen
         } else if (!exiledIds.isEmpty()) {
             interactionHandlerRegistry.begin(gameData,
                     new PendingInteraction.ExiledCardMayPlayChoice(
-                            permissionPlayerId, exiledIds, ExilePlayDuration.NEXT_END_STEP,
+                            permissionPlayerId, exiledIds, Duration.UNTIL_YOUR_NEXT_END_STEP,
                             false, exileEffect.withoutPayingManaCost()));
             log.info("Game {} - {} chooses one card among {} exiled cards to play until next end step",
                     gameData.id, entry.getCard().getName(), exiledIds.size());

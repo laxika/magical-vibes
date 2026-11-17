@@ -31,7 +31,7 @@ class TwoHeadedHunterTest extends BaseCardTest {
 
         assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
@@ -96,7 +96,7 @@ class TwoHeadedHunterTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Two-Headed Hunter");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

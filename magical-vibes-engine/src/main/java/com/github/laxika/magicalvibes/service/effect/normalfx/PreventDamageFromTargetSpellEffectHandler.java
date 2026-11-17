@@ -35,7 +35,7 @@ public class PreventDamageFromTargetSpellEffectHandler implements NormalEffectHa
             return;
         }
 
-        gameData.targetSpellDamagePreventionShields.add(new TargetSpellDamagePreventionShield(
+        gameData.addShield(new TargetSpellDamagePreventionShield(
                 targetSpell.getCard().getId(), e.gainLife() ? entry.getControllerId() : null));
         gameLogService.append(gameData, GameLog.cardThen(targetSpell.getCard(), "'s damage is prevented this turn."));
     }

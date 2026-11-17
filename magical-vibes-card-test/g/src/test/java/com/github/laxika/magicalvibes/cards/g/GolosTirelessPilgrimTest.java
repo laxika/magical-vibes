@@ -81,11 +81,11 @@ class GolosTirelessPilgrimTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(first.getId(), second.getId(), third.getId());
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId())
                 .containsEntry(third.getId(), player1.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost)
+        assertThat(gd.exilePlayWithoutPayingCardIds())
                 .contains(first.getId(), second.getId(), third.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
     }
@@ -160,8 +160,8 @@ class GolosTirelessPilgrimTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
         assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(creature.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(creature.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(creature.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(creature.getId());
     }
 
     @Test

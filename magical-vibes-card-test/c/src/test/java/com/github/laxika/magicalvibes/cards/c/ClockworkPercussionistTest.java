@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -29,8 +30,8 @@ class ClockworkPercussionistTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd).containsKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)).containsKey(topCard.getId());
     }
 
     @Test
@@ -45,8 +46,8 @@ class ClockworkPercussionistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player2.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainValue(player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player2.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainValue(player1.getId());
     }
 
     @Test
@@ -92,7 +93,7 @@ class ClockworkPercussionistTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Clockwork Percussionist");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -107,12 +108,12 @@ class ClockworkPercussionistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
     }
 }

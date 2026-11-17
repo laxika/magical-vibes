@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -38,9 +39,9 @@ class AbbotOfKeralKeepTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getId().equals(below.getId()));
-        assertThat(gd.exilePlayPermissions.get(below.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(below.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(below.getId());
+        assertThat(gd.exilePlayPermissionHolder(below.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(below.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(below.getId());
 
         // Only the single top card is exiled.
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(top.getId());
@@ -53,7 +54,7 @@ class AbbotOfKeralKeepTest extends BaseCardTest {
 
         castAbbot(player1);
 
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test
@@ -63,12 +64,12 @@ class AbbotOfKeralKeepTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(top));
 
         castAbbot(player1);
-        assertThat(gd.exilePlayPermissions).containsKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(top.getId());
 
         harness.inMutationScope(() ->
                 GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
     }
 
     @Test

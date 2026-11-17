@@ -139,7 +139,7 @@ class DeathGraspTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.setLife(player1, 10);
         harness.setLife(player2, 20);
-        gd.playerDamagePreventionShields.put(player2.getId(), 3);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 3);
 
         harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
 

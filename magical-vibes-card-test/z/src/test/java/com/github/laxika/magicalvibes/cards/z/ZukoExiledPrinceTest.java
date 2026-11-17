@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -45,13 +46,13 @@ class ZukoExiledPrinceTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(topCard.getId());
 
         harness.inMutationScope(() ->
                 GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
     }
 
     @Test
@@ -69,7 +70,7 @@ class ZukoExiledPrinceTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -99,7 +100,7 @@ class ZukoExiledPrinceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }

@@ -18,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 @CardUsed({LostInMemories.class, GrizzlyBears.class, GiantGrowth.class, LavaAxe.class, ThinkTwice.class, DeepAnalysis.class, Naturalize.class})
 class LostInMemoriesTest extends BaseCardTest {
@@ -46,7 +47,7 @@ class LostInMemoriesTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(spell.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).containsExactly(spell.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).containsExactly(spell.getId());
     }
 
     @Test
@@ -151,7 +152,7 @@ class LostInMemoriesTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(spell.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).containsExactly(spell.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).containsExactly(spell.getId());
     }
 
     @Test
@@ -166,7 +167,7 @@ class LostInMemoriesTest extends BaseCardTest {
 
         harness.assertLife(player2, 17);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).isEmpty();
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).isEmpty();
     }
 
     @Test
@@ -182,7 +183,7 @@ class LostInMemoriesTest extends BaseCardTest {
 
         harness.assertLife(player2, 18);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).isEmpty();
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).isEmpty();
     }
 
     @Test
@@ -195,7 +196,7 @@ class LostInMemoriesTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handleMultipleCardsChosen(player1, List.of(spell.getId()));
         harness.passBothPriorities();
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(spell.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).contains(spell.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -203,7 +204,7 @@ class LostInMemoriesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.ensurePriority(player1);
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).doesNotContain(spell.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).doesNotContain(spell.getId());
         assertThatThrownBy(() -> harness.castFlashback(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -286,7 +287,7 @@ class LostInMemoriesTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Lost in Memories");
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(spell.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).contains(spell.getId());
     }
 
     private void attachAura(Permanent creature) {

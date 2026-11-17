@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -63,8 +64,8 @@ class HeavenSentTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(1);
         assertThat(gd.findExiledCard(saga.getCard().getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsEntry(saga.getCard().getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(saga.getCard().getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(saga.getCard().getId(), player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(saga.getCard().getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

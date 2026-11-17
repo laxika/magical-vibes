@@ -33,7 +33,7 @@ class BankJobTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, bottomNonCreature);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(creature);
-        assertThat(gd.exilePlayPermissions).containsEntry(creature.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(creature.getId(), player1.getId());
     }
 
     @Test

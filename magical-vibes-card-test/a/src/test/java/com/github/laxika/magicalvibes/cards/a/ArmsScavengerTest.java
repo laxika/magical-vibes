@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -59,8 +60,8 @@ class ArmsScavengerTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(drafted);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drafted);
-        assertThat(gd.exilePlayPermissions).containsEntry(drafted.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(drafted.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(drafted.getId(), player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(drafted.getId());
     }
 
     @Test
@@ -106,7 +107,7 @@ class ArmsScavengerTest extends BaseCardTest {
         harness.inMutationScope(() ->
                 GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(drafted.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(drafted.getId());
         assertThat(gd.findExiledCard(drafted.getId())).isNotNull();
     }
 
@@ -200,7 +201,7 @@ class ArmsScavengerTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(drafted);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContainAnyElementsOf(choice.cards());
         for (Card unchosen : choice.cards().subList(1, 3)) {
-            assertThat(gd.exilePlayPermissions).doesNotContainKey(unchosen.getId());
+            assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(unchosen.getId());
         }
     }
 

@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.CreatureSpellEmpowerment;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -162,6 +161,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 @Slf4j
 @Service
@@ -1647,9 +1648,8 @@ public class ActivatedAbilityExecutionService {
                 // Mana abilities resolve inline rather than through the normal effect-handler path.
                 // Grand Summon's mana ability uses this rider to register its one-shot creature
                 // spell empowerment alongside the mana it produces.
-                gameData.addNextCreatureSpellEmpowerment(playerId,
-                        new CreatureSpellEmpowerment(
-                                empower.uncounterable(), empower.additionalPlusOneCounters()));
+                gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(permanent.getCard().getName(),
+                        permanent.getId(), playerId, empower, playerId, Duration.UNTIL_MATCHING_SPELL_CAST));
                 gameLogService.append(gameData, GameLog.builder()
                         .card(permanent.getCard())
                         .text(" empowers its controller's next creature spell this turn.")
@@ -1933,9 +1933,8 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof RegisterDelayedControllerSpellCastTriggerEffect delayed) {
                 // "When you next cast an artifact spell this turn" on a mana ability (Solar Array): a delayed triggered
                 // ability the mana ability creates as it resolves (CR 603.7a), with the permanent as its source.
-                gameData.temporaryGlobalTriggeredAbilities.add(delayed.duration().delayed(playerId,
-                        permanent.getCard(), delayed.delayedAbility(), permanent.getId(), gameData.turnNumber,
-                        delayed.targetFilter()));
+                gameData.temporaryGlobalTriggeredAbilities.add(delayed.delayed(playerId,
+                        permanent.getCard(), permanent.getId(), gameData.turnNumber));
             } else if (effect instanceof DrawCardEffect draw) {
                 int amount = amountEvaluationService.evaluate(gameData, draw.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue));

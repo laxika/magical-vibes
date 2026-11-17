@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -53,8 +54,8 @@ class HedronDetonatorTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(topCard.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
                 .extracting(permanent -> permanent.getCard().getName())
                 .isEqualTo("Hedron Detonator");

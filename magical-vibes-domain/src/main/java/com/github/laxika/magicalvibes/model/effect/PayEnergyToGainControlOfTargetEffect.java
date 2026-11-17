@@ -7,8 +7,8 @@ public record PayEnergyToGainControlOfTargetEffect(DynamicAmount energyAmount)
         implements ControlStealingEffect {
 
     @Override
-    public ControlDuration controlDuration() {
-        return ControlDuration.PERMANENT;
+    public Duration controlDuration() {
+        return Duration.PERMANENT;
     }
 
     @Override

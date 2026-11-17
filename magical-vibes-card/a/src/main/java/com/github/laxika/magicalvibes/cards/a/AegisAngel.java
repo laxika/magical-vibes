@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -27,6 +27,6 @@ public class AegisAngel extends Card {
         target(new PermanentPredicateTargetFilter(another, "Target must be another permanent"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new GrantKeywordEffect(
                         Set.of(Keyword.INDESTRUCTIBLE), GrantScope.TARGET, another,
-                        GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD, null));
+                        Duration.WHILE_SOURCE_ON_BATTLEFIELD, null));
     }
 }

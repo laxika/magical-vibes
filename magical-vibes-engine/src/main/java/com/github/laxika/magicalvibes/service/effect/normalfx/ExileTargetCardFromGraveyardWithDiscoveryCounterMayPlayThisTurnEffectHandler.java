@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -87,8 +88,7 @@ public class ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffe
             return;
         }
         for (UUID cardId : playable) {
-            gameData.exilePlayPermissions.put(cardId, entry.getControllerId());
-            gameData.exilePlayPermissionsExpireEndOfTurn.add(cardId);
+            gameData.grantExilePlayPermission(cardId, entry.getControllerId(), Duration.UNTIL_END_OF_TURN);
         }
         gameData.registerExilePlayPermissionGroup(UUID.randomUUID(), 1, playable);
     }

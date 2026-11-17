@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.r.RuinRat;
@@ -78,14 +79,14 @@ class SavingGraceTest extends BaseCardTest {
     void redirectionWearsOffAtEndOfTurn() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         enchantAndResolve(bears);
-        assertThat(gd.turnDamageRedirectToCreatureShields).isNotEmpty();
+        assertThat(gd.shields(TurnDamageRedirectToCreatureShield.class)).isNotEmpty();
 
         // Advance to the cleanup step — turn-scoped effects wear off.
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.turnDamageRedirectToCreatureShields).isEmpty();
+        assertThat(gd.shields(TurnDamageRedirectToCreatureShield.class)).isEmpty();
     }
 
     @Test

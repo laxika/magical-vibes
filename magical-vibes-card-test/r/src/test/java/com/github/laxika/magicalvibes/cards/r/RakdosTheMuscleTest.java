@@ -42,8 +42,8 @@ class RakdosTheMuscleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiledSpell, exiledLand);
-        assertThat(gd.exilePlayPermissions.get(exiledSpell.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(exiledSpell.getId(), exiledLand.getId());
+        assertThat(gd.exilePlayPermissionHolder(exiledSpell.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(exiledSpell.getId(), exiledLand.getId());
 
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castFromExile(player1, exiledSpell.getId());
@@ -117,11 +117,11 @@ class RakdosTheMuscleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiled.getId(), player1.getId());
 
         harness.passUntil(player1, TurnStep.END_STEP);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiled.getId());
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiled);
     }
 

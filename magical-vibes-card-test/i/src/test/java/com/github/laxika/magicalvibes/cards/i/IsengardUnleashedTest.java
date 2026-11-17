@@ -32,7 +32,7 @@ class IsengardUnleashedTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.damageCantBePreventedThisTurn).isTrue();
+        assertThat(gd.damageCantBePreventedThisTurn()).isTrue();
         assertThat(gqs.isDamagePreventable(gd)).isFalse();
 
         harness.castInstant(player1, 0, player2.getId());

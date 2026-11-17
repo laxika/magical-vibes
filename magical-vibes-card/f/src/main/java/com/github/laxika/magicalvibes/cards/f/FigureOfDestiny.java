@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureTypeWithBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
@@ -39,9 +39,9 @@ public class FigureOfDestiny extends Card {
                 List.of(
                         new BecomeCreatureTypeWithBasePowerToughnessEffect(8, 8, CardSubtype.AVATAR, CardSubtype.WARRIOR),
                         new ConditionalEffect(new SourceHasSubtype(CardSubtype.AVATAR),
-                                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF, GrantDuration.INDEFINITE)),
+                                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF, Duration.PERMANENT)),
                         new ConditionalEffect(new SourceHasSubtype(CardSubtype.AVATAR),
-                                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF, GrantDuration.INDEFINITE))),
+                                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF, Duration.PERMANENT))),
                 "{R/W}{R/W}{R/W}{R/W}{R/W}{R/W}: If this creature is a Warrior, it becomes a Kithkin Spirit Warrior Avatar with base power and toughness 8/8, flying, and first strike."));
     }
 }

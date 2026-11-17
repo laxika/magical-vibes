@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 @CardUsed({Flashback.class, Shock.class, GrizzlyBears.class, LavaAxe.class, BumpInTheNight.class})
 class FlashbackTest extends BaseCardTest {
@@ -30,7 +31,7 @@ class FlashbackTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, shock.getId());
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(shock.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).contains(shock.getId());
     }
 
     @Test

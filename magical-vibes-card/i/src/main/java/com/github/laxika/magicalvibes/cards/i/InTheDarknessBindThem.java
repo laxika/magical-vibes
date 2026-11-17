@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -35,7 +35,7 @@ public class InTheDarknessBindThem extends Card {
         target(target, 0, 99)
                 .addTrigger(Triggers.chapter(4),
                         GainControlOfTargetEffect.withTargetPredicate(
-                                ControlDuration.END_OF_TURN, target.predicate()),
+                                Duration.UNTIL_END_OF_TURN, target.predicate()),
                         new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
                         new RingTemptsYouEffect());

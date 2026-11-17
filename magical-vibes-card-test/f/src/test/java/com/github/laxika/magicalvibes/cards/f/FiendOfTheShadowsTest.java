@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BlackCat;
 import com.github.laxika.magicalvibes.cards.c.ChosenOfMarkov;
 import com.github.laxika.magicalvibes.cards.n.NiblisOfTheMist;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -61,9 +62,9 @@ class FiendOfTheShadowsTest extends BaseCardTest {
 
         Card exiled = gd.getPlayerExiledCards(player2.getId()).stream()
                 .filter(c -> c.getName().equals("Black Cat")).findFirst().orElseThrow();
-        assertThat(gd.exilePlayPermissions.get(exiled.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(exiled.getId())).isEqualTo(player1.getId());
         // "for as long as it remains exiled" — not impulse, so it must not expire end of turn
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(exiled.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(exiled.getId());
     }
 
     @Test
@@ -82,7 +83,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Fiend of the Shadows"));
 
-        assertThat(gd.exilePlayPermissions.get(exiled.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(exiled.getId())).isEqualTo(player1.getId());
     }
 
     @Test

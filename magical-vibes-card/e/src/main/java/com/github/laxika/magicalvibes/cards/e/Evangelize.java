@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -15,7 +15,7 @@ public class Evangelize extends Card {
 
     public Evangelize() {
         addStaticEffect(new BuybackEffect("{2}{W}{W}"));
-        target(TargetFilters.creature()).addSpellEffect(GainControlOfTargetEffect.opponentChosenTarget(ControlDuration.PERMANENT));
+        target(TargetFilters.creature()).addSpellEffect(GainControlOfTargetEffect.opponentChosenTarget(Duration.PERMANENT));
         addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

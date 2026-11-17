@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -69,8 +70,8 @@ public class ExileNonlandCardFromTargetHandOrGraveyardChoiceInteractionHandler
         }
         exileService.exileCard(gameData, targetPlayerId, chosenCard);
         if (interaction.grantPlayPermission()) {
-            gameData.exilePlayPermissions.put(chosenCardId, interaction.playerId());
-            gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCardId);
+            gameData.grantExilePlayPermission(chosenCardId, interaction.playerId(), Duration.PERMANENT);
+            gameData.updateExilePlayPermission(chosenCardId, granted -> granted.withAnyManaType(true));
         }
 
         String chooserName = gameData.playerIdToName.get(interaction.playerId());

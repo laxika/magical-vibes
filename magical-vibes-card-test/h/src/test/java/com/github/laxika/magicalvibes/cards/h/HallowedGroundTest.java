@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -78,7 +77,7 @@ class HallowedGroundTest extends BaseCardTest {
                 "Test control effect",
                 null,
                 player1.getId(),
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                new GainControlOfTargetEffect(Duration.PERMANENT),
                 plains.getId(),
                 null,
                 null,

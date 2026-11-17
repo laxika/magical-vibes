@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
@@ -74,7 +75,7 @@ class SwansOfBrynArgollTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 1);
-        gd.damageCantBePreventedThisTurn = true;
+        gd.addShield(new DamageCantBePreventedThisTurnEffect());
 
         harness.castAndResolveInstant(player1, 0, swans.getId());
 

@@ -488,6 +488,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 /**
  * The single evaluation point for the predicate and target-filter hierarchies
@@ -896,7 +897,7 @@ public class PredicateEvaluationService {
                     isAuraEnchantingCreature(card);
             case CardHasFlashbackPredicate ignored ->
                     card.getCastingOption(FlashbackCast.class).isPresent()
-                            || gameData != null && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
+                            || gameData != null && gameData.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.FLASHBACK);
             case CardHasUnearthPredicate ignored ->
                     gameData != null && gameQueryService.cardHasUnearthAbility(gameData, cardOwnerId, card);
             case CardHasXInManaCostPredicate ignored ->

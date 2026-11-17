@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.m.Mortify;
 import com.github.laxika.magicalvibes.cards.o.OstiaryThrull;
 import com.github.laxika.magicalvibes.cards.p.PilloryOfTheSleepless;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -162,7 +161,7 @@ class NecromancersMagemarkTest extends BaseCardTest {
         gd.stolenCreatures.put(creature.getId(), player2.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 "Control change", null, player1.getId(),
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT), creature.getId(),
+                new GainControlOfTargetEffect(Duration.PERMANENT), creature.getId(),
                 null, null, Duration.PERMANENT, 0));
         attach(new NecromancersMagemark(), creature, player1);
 

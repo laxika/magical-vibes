@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -24,7 +24,7 @@ public class SpinalEmbrace extends Card {
 
         target(TargetFilters.creatureAnOpponentControls())
                 .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addSpellEffect(new GainControlOfTargetEffect(ControlDuration.PERMANENT))
+                .addSpellEffect(new GainControlOfTargetEffect(Duration.PERMANENT))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
                 .addSpellEffect(new SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffect());
     }

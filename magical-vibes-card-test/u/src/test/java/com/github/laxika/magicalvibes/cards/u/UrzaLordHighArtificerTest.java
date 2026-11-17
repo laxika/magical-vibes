@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -69,9 +70,9 @@ class UrzaLordHighArtificerTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(top.getId()));
-        assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(top.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(top.getId());
+        assertThat(gd.exilePlayPermissionHolder(top.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(top.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(top.getId());
     }
 
     @Test
@@ -215,8 +216,8 @@ class UrzaLordHighArtificerTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(spell.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(spell.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(spell.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(spell.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -294,8 +295,8 @@ class Mh1UrzaLordHighArtificerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(card -> card.getId().equals(top.getId()));
-        assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(top.getId());
+        assertThat(gd.exilePlayPermissionHolder(top.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(top.getId());
 
         gd.playerManaPools.get(player1.getId()).clear();
         harness.castFromExile(player1, top.getId());

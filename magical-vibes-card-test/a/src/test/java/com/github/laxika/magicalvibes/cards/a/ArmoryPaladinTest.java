@@ -37,7 +37,7 @@ class ArmoryPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -55,7 +55,7 @@ class ArmoryPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -125,7 +125,7 @@ class ArmoryPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Leonin Scimitar");
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test
@@ -143,13 +143,13 @@ class ArmoryPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         finishTurnAndAdvanceToMain(player2);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
         finishTurnAndAdvanceToMain(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
         finishTurnAndAdvanceToMain(player2);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
     }
 
@@ -189,10 +189,10 @@ class ArmoryPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         finishTurnAndAdvanceToMain(player1);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
         finishTurnAndAdvanceToMain(player2);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
     }
 

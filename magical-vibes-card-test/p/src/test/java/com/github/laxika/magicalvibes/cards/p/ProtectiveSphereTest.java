@@ -36,7 +36,7 @@ class ProtectiveSphereTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, redSource.getId());
 
-        assertThat(gd.playerSourceDamagePreventionIds.get(player1.getId())).contains(redSource.getId());
+        assertThat(Prevention.sourceIds(gd, player1.getId())).contains(redSource.getId());
         assertThat(Prevention.preventedFromDealing(gd)).doesNotContain(redSource.getId());
     }
 
@@ -52,7 +52,7 @@ class ProtectiveSphereTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerSourceDamagePreventionIds).doesNotContainKey(player1.getId());
+        assertThat(Prevention.sourceIds(gd, player1.getId())).isEmpty();
     }
 
     @Test
@@ -100,14 +100,14 @@ class ProtectiveSphereTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, redSource.getId());
 
-        assertThat(gd.playerSourceDamagePreventionIds.get(player1.getId())).contains(redSource.getId());
+        assertThat(Prevention.sourceIds(gd, player1.getId())).contains(redSource.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerSourceDamagePreventionIds).doesNotContainKey(player1.getId());
+        assertThat(Prevention.sourceIds(gd, player1.getId())).isEmpty();
     }
 
     @Test

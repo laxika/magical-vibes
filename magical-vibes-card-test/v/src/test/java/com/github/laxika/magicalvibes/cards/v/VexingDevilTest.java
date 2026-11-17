@@ -59,7 +59,7 @@ class VexingDevilTest extends BaseCardTest {
 
     @Test
     void acceptingStillSacrificesWhenAllDamageIsPrevented() {
-        gd.playerDamagePreventionShields.put(player2.getId(), 4);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 4);
         castAndResolveToChoice();
 
         harness.handleMayAbilityChosen(player2, true);
@@ -71,7 +71,7 @@ class VexingDevilTest extends BaseCardTest {
 
     @Test
     void acceptingStillSacrificesWhenSomeDamageIsPrevented() {
-        gd.playerDamagePreventionShields.put(player2.getId(), 2);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 2);
         castAndResolveToChoice();
 
         harness.handleMayAbilityChosen(player2, true);

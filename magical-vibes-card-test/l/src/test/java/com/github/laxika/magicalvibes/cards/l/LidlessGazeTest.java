@@ -27,10 +27,10 @@ class LidlessGazeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(ownTopCard.getId(), player1.getId())
                 .containsEntry(opponentTopCard.getId(), player1.getId());
-        assertThat(gd.exilePlayAnyManaType).contains(opponentTopCard.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(opponentTopCard.getId());
         assertThatThrownBy(() -> harness.castFromExile(player2, opponentTopCard.getId()))
                 .isInstanceOf(IllegalStateException.class);
 

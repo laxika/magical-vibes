@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -39,10 +40,10 @@ class ActOnImpulseTest extends BaseCardTest {
         for (Card card : List.of(first, second, third)) {
             assertThat(gd.getPlayerExiledCards(player1.getId()))
                     .anyMatch(c -> c.getId().equals(card.getId()));
-            assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
-            assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(card.getId());
+            assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
+            assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(card.getId());
             // Normal costs and timing — never a free play.
-            assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(card.getId());
+            assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(card.getId());
         }
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
@@ -57,7 +58,7 @@ class ActOnImpulseTest extends BaseCardTest {
         castActOnImpulse(player1);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).containsKey(only.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(only.getId());
     }
 
     @Test
@@ -67,12 +68,12 @@ class ActOnImpulseTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, new ActOnImpulse(), new ActOnImpulse()));
 
         castActOnImpulse(player1);
-        assertThat(gd.exilePlayPermissions).containsKey(first.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(first.getId());
 
         harness.inMutationScope(() ->
                 GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(first.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(first.getId());
     }
 
     @Test
@@ -82,7 +83,7 @@ class ActOnImpulseTest extends BaseCardTest {
         castActOnImpulse(player1);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test

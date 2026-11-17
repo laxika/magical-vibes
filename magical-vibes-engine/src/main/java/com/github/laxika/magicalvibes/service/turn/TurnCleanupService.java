@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.EndOfTurnStateField;
 import com.github.laxika.magicalvibes.model.EndOfTurnStateShare;
 import com.github.laxika.magicalvibes.model.action.DelayedAction;
-import com.github.laxika.magicalvibes.model.action.PhasedOutUntilEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerMaxHandSizeEffect;
@@ -103,24 +102,8 @@ public class TurnCleanupService {
         removeCountersScheduledForCleanup(gameData);
         gameData.restoreBombardmentCards();
         resetEndOfTurnModifiers(gameData);
-        expirePhasingRestrictionsAtEndOfNextTurn(gameData);
         creatureControlService.reconcileControl(gameData);
-        gameData.skipCombatPhaseExpirationsThisTurn.forEach((playerId, count) ->
-                gameData.skipNextCombatPhaseCount.computeIfPresent(playerId,
-                        (id, total) -> total > count ? total - count : null));
-        gameData.skipCombatPhaseExpirationsThisTurn.clear();
         gameData.retainControlLossUnattachTriggers();
-    }
-
-    /** Releases Teferi's mass phase-out restriction after the controller's next turn ends. */
-    private void expirePhasingRestrictionsAtEndOfNextTurn(GameData gameData) {
-        UUID activePlayerId = gameData.activePlayerId;
-        if (activePlayerId == null) {
-            return;
-        }
-        gameData.drainDelayedActions(PhasedOutUntilEndOfNextTurn.class,
-                action -> activePlayerId.equals(action.controllerId())
-                        && gameData.turnNumber > action.registeredTurnNumber());
     }
 
     /**
@@ -215,7 +198,6 @@ public class TurnCleanupService {
             gameData.phaseSequenceAttributedEndOfTurnState.clear();
         }
         gameData.rulesEvents.occur(new TurnEvent.Cleanup(gameData.activePlayerId));
-        gameData.temporaryGraveyardCardAnimationsUntilEndOfTurn.clear();
 
         List<UUID> controllersWithOpponentDamagePersistence = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
@@ -281,77 +263,16 @@ public class TurnCleanupService {
                 p.addEndOfTurnState(retained);
             }
         });
-        gameData.endSacredBoonShieldsAtCleanup();
 
-        gameData.playerDamagePreventionShields.clear();
-        gameData.playerCombatDamagePreventionShields.clear();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            EndOfTurnStateShare retained = retainedState.get(playerId);
-            if (retained != null) {
-                addPlayerEndOfTurnState(gameData, playerId, retained);
-            }
-        }
-        gameData.combatDamagePreventionTokenShields.clear();
-        gameData.channelHarmShields.clear();
-        gameData.damageRedirectShields.clear();
-        gameData.comeuppanceDamagePreventionShields.clear();
-        gameData.judgmentOfAlexanderDamagePreventionShields.clear();
-        gameData.sourceDamageRedirectShields.clear();
-        gameData.creatureDamageRedirectShields.clear();
-        gameData.waitingRedirectDamageSourceCards.clear();
-        gameData.turnDamageRedirectToCreatureShields.clear();
-        gameData.turnSourceDamageRedirectToControllerShields.clear();
-        gameData.playerNextDamageRedirectShields.clear();
-        gameData.sourcePermanentAndControllerNextDamageRedirectShields.clear();
-        gameData.playerNextInstantOrSorceryDamageRedirectShields.clear();
-        gameData.sourceNextCombatDamageToOpponentRedirectShields.clear();
-        gameData.targetSourceDamagePreventionShields.clear();
-        gameData.damagePreventionLifeGainShields.clear();
-        gameData.globalDamagePreventionShield = 0;
         gameData.combatDamageExemptPredicate = null;
         gameData.combatDamageExemptControllerId = null;
-        gameData.allPermanentsEnterTappedThisTurn = false;
-        gameData.permanentEnterTappedFiltersThisTurn.clear();
-        gameData.additionalEnterCountersThisTurn.clear();
-        gameData.pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn.clear();
         gameData.activeAdditionalCountersForEnchantmentCreatureEntryBatch.clear();
-        gameData.skippedStepOrPhasesThisTurn.clear();
-        gameData.matchingCreatureBlockRestrictionsThisTurn.clear();
-        gameData.combatDamageRedirectTarget = null;
-        gameData.combatDamageRedirectPlayer = null;
-        gameData.playerColorDamagePreventionCount.clear();
-        gameData.colorDamagePreventionUntilEndOfTurn.clear();
-        gameData.colorlessDamagePreventionUntilEndOfTurn.clear();
-        gameData.playerSourceDamagePreventionIds.clear();
-        gameData.playerSourceDamagePreventionRequiredColors.clear();
-        gameData.playerSourceDamagePreventionLifeGainIds.clear();
-        gameData.playerSourceNextDamageShields.clear();
-        gameData.sourceNextDamageToAnyTargetShields.clear();
-        gameData.eyeForAnEyeShields.clear();
-        gameData.reflectDamageToSourceControllerShields.clear();
-        gameData.sourceNextCombatDamageToControllerShields.clear();
-        gameData.sourceNextDamageRedirectToPermanentShields.clear();
         gameData.sourceRedirectShieldsUsedInOpenEvent.clear();
         gameData.playerSourceShieldsUsedInOpenEvent.clear();
-        gameData.playerSourceNextDamageRedirectShields.clear();
         gameData.pendingEyeForAnEyeReflections.clear();
         gameData.pendingSourceDamageForReflection.clear();
-        gameData.clearDelayedActions(DelayedAction.class, GameData::isThisTurnDelayedAction);
-        gameData.creaturesProtectedFromTargetingDamage.clear();
-        gameData.targetSpellDamagePreventionShields.clear();
-        gameData.targetSorceryDamageRedirectShields.clear();
-        gameData.playersRedirectingAllCreatureDamage.clear();
-        gameData.combatDamagePreventionTokenShields.clear();
-        gameData.playerNextDamageFromMatchingSourcesPrevented.clear();
         gameData.playersWhoPlayedCardFromExileThisTurn.clear();
         gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.clear();
-        gameData.creaturesAssigningNoCombatDamageThisTurn.clear();
-        gameData.creaturesAssigningNoCombatDamageThisCombat.clear();
-        gameData.damageCantBePreventedThisTurn = false;
-        gameData.clearDamageLifeFloorsUntilEndOfTurn();
-        gameData.damageReplacementsThisTurn.clear();
-        gameData.playersCantSearchLibrariesThisTurn = false;
-        gameData.playerCreaturesCantAttackThisTurn.clear();
         gameData.opponentGraveyardLifeLossWatchers.clear();
         gameData.lifeGainOpponentLifeLossWatchers.clear();
         gameData.playersWhoseSpeedIncreasedThisTurn.clear();
@@ -365,46 +286,12 @@ public class TurnCleanupService {
                         ? watcher.expirationPlayerId() : watcher.controllerId())
                         && gameData.turnNumber != watcher.registrationTurnNumber()));
         gameData.allyCreatureEntersTriggerWatchers.clear();
-        gameData.drawReplacementTargetToController.clear();
         gameData.chainsDrawReplacementsApplied.clear();
         gameData.drawStepFirstDrawTaken.clear();
         gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.clear();
-        gameData.pendingNextDrawLookAtTop.clear();
-        gameData.pendingNextDrawGainLife.clear();
-        gameData.pendingNextDrawCreateBears.clear();
-        gameData.pendingNextDrawDamage.clear();
-        gameData.pendingNextDrawReturnPermanents.clear();
-        gameData.pendingNextDrawDiscardOpponents.clear();
-        gameData.pendingNextDrawFromExiledPile.clear();
-        gameData.pendingNextDrawFromOutsideGame.clear();
-        gameData.pendingNextDrawExileTopCard.clear();
-        gameData.pendingMysticReflections.clear();
         gameData.activeMysticReflectionsForEntryBatch.clear();
         gameData.drawStepFirstDrawTaken.clear();
         gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.clear();
-        gameData.spellColorOverridesUntilEndOfTurn.clear();
-        gameData.extraManaOnLandSubtypeTapThisTurn.clear();
-        gameData.playerExtraLoyaltyActivationsThisTurn.clear();
-        gameData.playersAllowedTwiceLoyaltyActivationsThisTurn.clear();
-        gameData.senControllerPlayerId = null;
-        gameData.senControlledPlayerId = null;
-        gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
-        gameData.cardsGrantedFlashbackDespiteLostAbilitiesUntilEndOfTurn.clear();
-        gameData.cardsGrantedFlashbackCostsUntilEndOfTurn.clear();
-        gameData.cardsGrantedWarpUntilEndOfTurn.clear();
-        gameData.cardsGrantedHarmonizeUntilEndOfTurn.clear();
-        gameData.cardsGrantedJumpStartUntilEndOfTurn.clear();
-        gameData.cardsGrantedEmbalmUntilEndOfTurn.clear();
-        gameData.cardsGrantedUnearthUntilEndOfTurn.clear();
-        gameData.cardsGrantedUnearthGraveyardVersions.clear();
-        gameData.playersWhoMayLookAtFaceDownCreaturesThisTurn.clear();
-        gameData.nextSpellFlashGrantsThisTurn.clear();
-        gameData.nextSpellChosenSubtypeFlashGrantsThisTurn.clear();
-        gameData.nextSpellConvokeGrantsThisTurn.clear();
-        gameData.nextSpellCostReductionsThisTurn.clear();
-        gameData.nextSpellPayLifeEqualToManaValueThisTurn.clear();
-        gameData.nextSpellFreeCastPermissionsThisTurn.clear();
-        gameData.nextCreatureSpellEmpowermentsThisTurn.clear();
         gameData.spellAdditionalEnterCounters.clear();
         gameData.spellAdditionalEnterCounterAmounts.clear();
         gameData.spellEntryCounters.clear();
@@ -412,34 +299,11 @@ public class TurnCleanupService {
         gameData.spellsGrantedHasteOnEntry.clear();
         gameData.spellsGrantedPermanentHasteOnEntry.clear();
         gameData.spellsGrantedRiotOnEntry.clear();
-        gameData.guardianAngelTargetsUntilEndOfTurn.clear();
-        gameData.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn.clear();
-        gameData.graveyardCardCastPermissionsUntilEndOfTurn.clear();
-        gameData.graveyardCardCastPermissionGrantsUntilEndOfTurn.clear();
         EndOfTurnStateShare retainedGameState = retainedState.getOrDefault(
                 GameData.GAME_END_OF_TURN_STATE_ID, EndOfTurnStateShare.EMPTY);
-        // A retained id's permission belongs to another player's phase (Runed Terror ruling, CR 514.2): its records
-        // stay, and the id is put back on the expiry list when the retained state is re-applied below.
-        Set<UUID> retainedGraveyardPlayPermissions = Set.copyOf(retainedGameState.<UUID>elements(
-                EndOfTurnStateField.GAME_GRAVEYARD_PLAY_PERMISSIONS_ENDING_THIS_TURN));
-        for (var cardId : gameData.graveyardPlayPermissionsExpireEndOfTurn) {
-            if (retainedGraveyardPlayPermissions.contains(cardId)) {
-                continue;
-            }
-            gameData.graveyardPlayPermissions.remove(cardId);
-            gameData.graveyardCardsEnterTapped.remove(cardId);
-        }
-        gameData.graveyardPlayPermissionsExpireEndOfTurn.clear();
-        gameData.graveyardCastFilterPermissionsThisTurn.clear();
         gameData.outsideGamePlayPermissions.clear();
         gameData.outsideGameAdditionalModalModePermissions.clear();
-        gameData.graveyardPlayFilterPermissionsThisTurn.clear();
-        gameData.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn.clear();
-        gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.clear();
-        gameData.pendingNextSpellUncounterableThisTurnCount.clear();
-        gameData.pendingAnyManaTypeForNextSpellThisTurnCount.clear();
         gameData.spellsPaidUsingPendingAnyManaTypeThisTurn.clear();
-        gameData.pendingNextInstantSorceryUncounterableThisTurnCount.clear();
         gameData.conspiredSpellCopyCounts.clear();
         gameData.casualtySpellCopyCounts.clear();
 
@@ -453,60 +317,10 @@ public class TurnCleanupService {
         gameData.cardsLeftGraveyardCountThisTurn.clear();
         gameData.creatureExileCountThisTurn.clear();
 
-        // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)
-        Set<UUID> retainedExilePlayPermissions = Set.copyOf(retainedGameState.<UUID>elements(
-                EndOfTurnStateField.GAME_EXILE_PLAY_PERMISSIONS_ENDING_THIS_TURN));
-        for (var cardId : gameData.exilePlayPermissionsExpireEndOfTurn) {
-            if (retainedExilePlayPermissions.contains(cardId)) {
-                continue;
-            }
-            gameData.exilePlayPermissions.remove(cardId);
-            gameData.exilePlayPermissionSpellFilters.remove(cardId);
-            gameData.clearExilePlayPermissionGroup(cardId);
-            gameData.exilePlayForLifeEqualToManaValue.remove(cardId);
-            gameData.exilePlayCostModifiers.remove(cardId);
-            gameData.exilePlayWithoutPayingManaCost.remove(cardId);
-        }
-        gameData.exilePlayPermissionsExpireEndOfTurn.clear();
-        gameData.exilePlayUntilEndOfTurnGrantsBySource.clear();
-
-        // Per-card "this turn" exile-cast riders (e.g. Nita, Forum Conciliator) end with the turn.
-        // Keep any-mana permission attached to a card whose play permission lasts through a later
-        // turn; the expiry map below removes it when that permission ends.
-        gameData.exilePlayAnyManaType.removeIf(cardId ->
-                !gameData.exilePlayPermissionsExpireAtTurnEnd.containsKey(cardId));
-        gameData.exileCastPermissionsUntilEndOfTurn.clear();
-        gameData.exileCastWildcardPermissionsUntilEndOfTurn.clear();
-        gameData.foretoldCardCastPermissionsThisTurn.clear();
         gameData.playersWhoForetoldThisTurn.clear();
         gameData.exileInsteadOfGraveyard.clear();
 
         int currentTurn = gameData.turnNumber;
-        Set<UUID> expiredDiscordCopies = gameData.exilePlayPermissionsExpireAtTurnEnd.entrySet().stream()
-                .filter(entry -> entry.getValue() <= currentTurn)
-                .map(Map.Entry::getKey)
-                .filter(gameData.discordCopySourcePermanents::containsKey)
-                .collect(java.util.stream.Collectors.toSet());
-        gameData.exilePlayPermissionsExpireAtTurnEnd.entrySet().removeIf(entry -> {
-            if (entry.getValue() <= currentTurn) {
-                gameData.exilePlayPermissions.remove(entry.getKey());
-                gameData.exilePlayPermissionSpellFilters.remove(entry.getKey());
-                gameData.clearExilePlayPermissionGroup(entry.getKey());
-                gameData.exilePlayCostModifiers.remove(entry.getKey());
-                gameData.exilePlayWithoutPayingManaCost.remove(entry.getKey());
-                gameData.exilePlayAnyManaType.remove(entry.getKey());
-                return true;
-            }
-            return false;
-        });
-        for (UUID cardId : expiredDiscordCopies) {
-            if (gameData.findExiledCard(cardId) != null) {
-                gameData.removeFromExile(cardId);
-            }
-            gameData.discordCopySourcePermanents.remove(cardId);
-        }
-        gameData.graveyardAdventureCastPermissions.entrySet()
-                .removeIf(entry -> entry.getValue().expireTurn() <= currentTurn);
         gameData.addGameEndOfTurnState(retainedGameState);
 
         // Clear persistent mana tracking so the next drain empties pools fully
@@ -576,33 +390,14 @@ public class TurnCleanupService {
         return retained;
     }
 
-    /** The current "until end of turn" state of every battlefield permanent and every player, by id, plus
+    /** The current "until end of turn" state of every battlefield permanent, by id, plus
      *  the game-wide state under {@link GameData#GAME_END_OF_TURN_STATE_ID}. */
     private Map<UUID, EndOfTurnStateShare> captureEndOfTurnStates(GameData gameData) {
         Map<UUID, EndOfTurnStateShare> states = new HashMap<>();
         gameData.forEachPermanent((ownerId, permanent) ->
                 states.put(permanent.getId(), permanent.captureEndOfTurnState()));
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            Map<EndOfTurnStateField, Object> raw = new EnumMap<>(EndOfTurnStateField.class);
-            raw.put(EndOfTurnStateField.PLAYER_DAMAGE_PREVENTION_SHIELD,
-                    gameData.playerDamagePreventionShields.get(playerId));
-            raw.put(EndOfTurnStateField.PLAYER_COMBAT_DAMAGE_PREVENTION_SHIELD,
-                    gameData.playerCombatDamagePreventionShields.get(playerId));
-            states.put(playerId, EndOfTurnStateShare.of(raw));
-        }
         states.put(GameData.GAME_END_OF_TURN_STATE_ID, gameData.captureGameEndOfTurnState());
         return states;
-    }
-
-    private void addPlayerEndOfTurnState(GameData gameData, UUID playerId, EndOfTurnStateShare share) {
-        int shield = share.intValue(EndOfTurnStateField.PLAYER_DAMAGE_PREVENTION_SHIELD);
-        if (shield > 0) {
-            gameData.playerDamagePreventionShields.merge(playerId, shield, Integer::sum);
-        }
-        int combatShield = share.intValue(EndOfTurnStateField.PLAYER_COMBAT_DAMAGE_PREVENTION_SHIELD);
-        if (combatShield > 0) {
-            gameData.playerCombatDamagePreventionShields.merge(playerId, combatShield, Integer::sum);
-        }
     }
 
     private boolean isCreatureForCleanup(GameData gameData, Permanent permanent) {

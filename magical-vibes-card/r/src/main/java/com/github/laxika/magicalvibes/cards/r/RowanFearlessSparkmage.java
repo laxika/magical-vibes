@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -61,7 +61,7 @@ public class RowanFearlessSparkmage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -9,
                 List.of(
-                        new GainControlOfAllPermanentsMatchingEffect(creature, ControlDuration.END_OF_TURN),
+                        new GainControlOfAllPermanentsMatchingEffect(creature, Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(TapUntapScope.CONTROLLED, creature),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES)
                 ),

@@ -48,7 +48,7 @@ class MasterApothecaryTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, cleric.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(2);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(2);
     }
 
     @Test
@@ -68,7 +68,7 @@ class MasterApothecaryTest extends BaseCardTest {
         resolveCombat(player1);
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test
@@ -87,7 +87,7 @@ class MasterApothecaryTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test
@@ -278,12 +278,12 @@ class MasterApothecaryTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(2);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 }

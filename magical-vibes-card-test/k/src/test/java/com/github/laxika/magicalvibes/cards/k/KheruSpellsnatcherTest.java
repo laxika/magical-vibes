@@ -47,8 +47,8 @@ class KheruSpellsnatcherTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getId().equals(bears.getId()));
-        assertThat(gd.exilePlayPermissions.get(bears.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(bears.getId());
+        assertThat(gd.exilePlayPermissionHolder(bears.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(bears.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

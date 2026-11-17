@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.cards.a.AnabaShaman;
 import com.github.laxika.magicalvibes.cards.a.AysenCrusader;
 import com.github.laxika.magicalvibes.cards.d.DeathSpeakers;
@@ -55,8 +56,8 @@ class HazduhrTheAbbotTest extends BaseCardTest {
 
         activateHazduhr(hazduhr, 2, target);
 
-        assertThat(gd.creatureDamageRedirectShields).hasSize(1);
-        var shield = gd.creatureDamageRedirectShields.getFirst();
+        assertThat(gd.shields(CreatureDamageRedirectShield.class)).hasSize(1);
+        var shield = gd.shields(CreatureDamageRedirectShield.class).getFirst();
         assertThat(shield.protectedPermanentId()).isEqualTo(target.getId());
         assertThat(shield.damageSourceId()).isNull();
         assertThat(shield.remainingAmount()).isEqualTo(2);

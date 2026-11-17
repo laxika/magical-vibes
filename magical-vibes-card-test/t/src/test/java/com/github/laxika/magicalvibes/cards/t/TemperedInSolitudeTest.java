@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -32,8 +33,8 @@ class TemperedInSolitudeTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(topCard.getId());
     }
 
     @Test
@@ -91,7 +92,7 @@ class TemperedInSolitudeTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test
@@ -171,7 +172,7 @@ class TemperedInSolitudeTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         assertThatThrownBy(() -> harness.castFromExile(player1, topCard.getId()))
                 .isInstanceOf(IllegalStateException.class);

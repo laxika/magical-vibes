@@ -186,7 +186,7 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
                         new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                         new GainLifeEffect(1));
                 case 5 -> List.of(new com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect(-4, 0,
-                        com.github.laxika.magicalvibes.model.effect.GrantDuration.UNTIL_YOUR_NEXT_TURN));
+                        com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_YOUR_NEXT_TURN));
                 case 6 -> List.of(new DrawCardEffect(1), new CompleteDungeonEffect(progress.dungeon()));
                 default -> throw new IllegalStateException("Room index is outside Lost Mine of Phandelver");
             };
@@ -224,7 +224,7 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
                 case 2 -> List.of(CreateTokenEffect.ofTreasureToken(1));
                 case 3 -> List.of(new com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect(
                         com.github.laxika.magicalvibes.model.effect.TapUntapScope.TARGET, null,
-                        com.github.laxika.magicalvibes.model.effect.GrantDuration.UNTIL_YOUR_NEXT_TURN));
+                        com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_YOUR_NEXT_TURN));
                 case 4 -> List.of(new ScryEffect(2));
                 case 5 -> List.of(com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndMayCastSpellsEffect
                         .controllerMayPlayWithNormalCost(2));

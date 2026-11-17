@@ -1,4 +1,7 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -110,10 +113,8 @@ class TurnProgressionServiceTest {
     }
 
     @Test
-    void skipsAllCombatsOnlyDuringAffectedNextTurn() {
-        gd.skipCombatPhasesNextTurn.add(player2Id);
-        turnProgressionService.advanceTurn(gd);
-        assertThat(gd.skipCombatPhasesNextTurn).isEmpty();
+    void skipsAllCombatsWhileTheEffectIsInForce() {
+        FloatingCombatRules.skipThisTurn(gd, gd.activePlayerId, SkipStepOrPhaseKind.COMBAT_PHASE);
 
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
         turnProgressionService.advanceStep(gd);
@@ -527,6 +528,14 @@ class TurnProgressionServiceTest {
     @DisplayName("advanceTurn")
     class AdvanceTurn {
 
+        /**
+         * Ends the "until end of turn" floating effects, as the duration clock does at the cleanup step (CR 514.2);
+         * this test's services are mocked, so no cleanup step runs between the turns it advances.
+         */
+        private void endTurnEffectsAsTheCleanupStepDoes() {
+            gd.expireFloatingEffects(effect -> Duration.UNTIL_END_OF_TURN.equals(effect.duration()));
+        }
+
         @Test
         void extraTurnRestrictionsStayWithTheirQueuedTurn() {
             gd.queueExtraTurnFirst(player1Id, false, false, true);
@@ -535,19 +544,21 @@ class TurnProgressionServiceTest {
 
             turnProgressionService.advanceTurn(gd);
             assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn).isFalse();
-            assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+            assertThat(gd.damageCantBePreventedThisTurn()).isFalse();
 
             turnProgressionService.advanceTurn(gd);
             assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn).isFalse();
-            assertThat(gd.damageCantBePreventedThisTurn).isTrue();
+            assertThat(gd.damageCantBePreventedThisTurn()).isTrue();
 
+            endTurnEffectsAsTheCleanupStepDoes();
             turnProgressionService.advanceTurn(gd);
             assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn).isTrue();
-            assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+            assertThat(gd.damageCantBePreventedThisTurn()).isFalse();
 
+            endTurnEffectsAsTheCleanupStepDoes();
             turnProgressionService.advanceTurn(gd);
             assertThat(gd.powerUpAbilitiesCantBeActivatedThisTurn).isFalse();
-            assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+            assertThat(gd.damageCantBePreventedThisTurn()).isFalse();
         }
 
         @Test

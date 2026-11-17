@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /**
  * The stack entry's source permanent ({@code sourcePermanentId}) assigns no combat damage this
- * turn — a floating effect that prevents its combat damage until end of turn, and an entry in
- * {@code GameData.creaturesAssigningNoCombatDamageThisTurn}, cleared at turn cleanup. Pair with damage (or similar) inside a {@link MayEffect}/{@link SequenceEffect} for
+ * turn — a floating effect that prevents its combat damage until end of turn, and another that makes it assign none
+ * (this record is its payload, {@code GameData.assignsNoCombatDamage}), both ending at cleanup. Pair with damage (or similar) inside a {@link MayEffect}/{@link SequenceEffect} for
  * "you may [effect]. If you do, it assigns no combat damage this turn" (Gaze of Pain).
  *
  * <p>When {@code useTargetId} is true the creature is the stack entry's {@code targetId} instead, for

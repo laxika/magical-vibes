@@ -49,7 +49,7 @@ class RogueClassTest extends BaseCardTest {
         assertThat(entry.faceDown()).isTrue();
         assertThat(entry.ownerId()).isEqualTo(player2.getId());
         assertThat(entry.sourcePermanentId()).isEqualTo(rogueClass.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
     }
 
     @Test

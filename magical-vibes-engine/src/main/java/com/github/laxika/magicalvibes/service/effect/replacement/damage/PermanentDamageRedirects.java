@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 
+import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.RedirectAllCreatureDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
@@ -171,11 +174,12 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
 
     private List<UUID> allCreatureRedirectControllers(PermanentDamageContext ctx) {
         if (ctx.gameData().resolvingDeclinedAllCreatureDamageRedirect
-                || ctx.gameData().playersRedirectingAllCreatureDamage.isEmpty()) {
+                || !ctx.gameData().hasShields(RedirectAllCreatureDamageToControllerEffect.class)) {
             return List.of();
         }
-        return ctx.gameData().orderedPlayerIds.stream()
-                .filter(ctx.gameData().playersRedirectingAllCreatureDamage::contains).toList();
+        Set<UUID> redirecting = ctx.gameData().playersWithFloatingEffect(
+                RedirectAllCreatureDamageToControllerEffect.class);
+        return ctx.gameData().orderedPlayerIds.stream().filter(redirecting::contains).toList();
     }
 
     /**
@@ -188,7 +192,7 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
     }
 
     private String turnRedirectDestinationName(PermanentDamageContext ctx, String shieldIndex) {
-        UUID destinationId = ctx.gameData().turnDamageRedirectToCreatureShields
+        UUID destinationId = ctx.gameData().shields(TurnDamageRedirectToCreatureShield.class)
                 .get(Integer.parseInt(shieldIndex)).redirectTargetCreatureId();
         Permanent destination = gameQueryService.findPermanentById(ctx.gameData(), destinationId);
         return destination == null ? "a creature" : destination.getCard().getName();

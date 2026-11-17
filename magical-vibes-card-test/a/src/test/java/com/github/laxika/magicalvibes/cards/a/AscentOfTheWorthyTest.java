@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.CreatureControllerDamageRedirectShield;
 import com.github.laxika.magicalvibes.cards.d.DemonBolt;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RighteousValkyrie;
@@ -52,7 +53,7 @@ class AscentOfTheWorthyTest extends BaseCardTest {
 
         assertThat(damagedCreature.getMarkedDamage()).isZero();
         assertThat(chosen.getMarkedDamage()).isEqualTo(2);
-        assertThat(gd.creatureControllerDamageRedirectShields).hasSize(1);
+        assertThat(gd.shields(CreatureControllerDamageRedirectShield.class)).hasSize(1);
     }
 
     @Test
@@ -100,16 +101,16 @@ class AscentOfTheWorthyTest extends BaseCardTest {
         Permanent chosen = findPermanents(player1, "Grizzly Bears").getFirst();
         harness.handlePermanentChosen(player1, chosen.getId());
 
-        assertThat(gd.creatureControllerDamageRedirectShields).hasSize(1);
+        assertThat(gd.shields(CreatureControllerDamageRedirectShield.class)).hasSize(1);
         saga.setCounterCount(CounterType.LORE, 2);
         harness.setHand(player1, List.of());
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(gd.creatureControllerDamageRedirectShields).hasSize(1);
+        assertThat(gd.shields(CreatureControllerDamageRedirectShield.class)).hasSize(1);
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.UPKEEP);
-        assertThat(gd.creatureControllerDamageRedirectShields).isEmpty();
+        assertThat(gd.shields(CreatureControllerDamageRedirectShield.class)).isEmpty();
     }
 
     @ParameterizedTest

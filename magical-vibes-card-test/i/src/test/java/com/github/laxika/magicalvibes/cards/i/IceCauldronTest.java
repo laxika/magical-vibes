@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -52,8 +53,8 @@ class IceCauldronTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         harness.assertNotInHand(player1, "Balduvian Bears");
-        assertThat(gd.exilePlayPermissions.get(bears.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(bears.getId());
+        assertThat(gd.exilePlayPermissionHolder(bears.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(bears.getId());
     }
 
     @Test
@@ -218,7 +219,7 @@ class IceCauldronTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(firstCard.getId(), secondCard.getId());
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(firstCard.getId(), player1.getId())
                 .containsEntry(secondCard.getId(), player1.getId());
     }

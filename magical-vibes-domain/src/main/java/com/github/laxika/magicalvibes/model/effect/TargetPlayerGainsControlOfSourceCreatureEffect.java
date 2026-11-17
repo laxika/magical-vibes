@@ -7,35 +7,35 @@ package com.github.laxika.magicalvibes.model.effect;
  * whose follow-up happens only after control changes successfully.
  */
 public record TargetPlayerGainsControlOfSourceCreatureEffect(boolean targetsPlayer, CardEffect thenEffect,
-                                                              ControlDuration duration)
+                                                              Duration duration)
         implements ControlStealingEffect {
 
     public TargetPlayerGainsControlOfSourceCreatureEffect() {
-        this(true, null, ControlDuration.PERMANENT);
+        this(true, null, Duration.PERMANENT);
     }
 
     public TargetPlayerGainsControlOfSourceCreatureEffect(boolean targetsPlayer) {
-        this(targetsPlayer, null, ControlDuration.PERMANENT);
+        this(targetsPlayer, null, Duration.PERMANENT);
     }
 
     public TargetPlayerGainsControlOfSourceCreatureEffect(boolean targetsPlayer, CardEffect thenEffect) {
-        this(targetsPlayer, thenEffect, ControlDuration.PERMANENT);
+        this(targetsPlayer, thenEffect, Duration.PERMANENT);
     }
 
     public static TargetPlayerGainsControlOfSourceCreatureEffect triggeringPlayer() {
-        return triggeringPlayer(ControlDuration.PERMANENT);
+        return triggeringPlayer(Duration.PERMANENT);
     }
 
     public static TargetPlayerGainsControlOfSourceCreatureEffect triggeringPlayer(CardEffect thenEffect) {
-        return triggeringPlayer(ControlDuration.PERMANENT, thenEffect);
+        return triggeringPlayer(Duration.PERMANENT, thenEffect);
     }
 
-    public static TargetPlayerGainsControlOfSourceCreatureEffect triggeringPlayer(ControlDuration duration) {
+    public static TargetPlayerGainsControlOfSourceCreatureEffect triggeringPlayer(Duration duration) {
         return new TargetPlayerGainsControlOfSourceCreatureEffect(false, null, duration);
     }
 
     public static TargetPlayerGainsControlOfSourceCreatureEffect triggeringPlayer(
-            ControlDuration duration, CardEffect thenEffect) {
+            Duration duration, CardEffect thenEffect) {
         return new TargetPlayerGainsControlOfSourceCreatureEffect(false, thenEffect, duration);
     }
 
@@ -46,7 +46,7 @@ public record TargetPlayerGainsControlOfSourceCreatureEffect(boolean targetsPlay
 
 
     @Override
-    public ControlDuration controlDuration() {
+    public Duration controlDuration() {
         return duration;
     }
 }

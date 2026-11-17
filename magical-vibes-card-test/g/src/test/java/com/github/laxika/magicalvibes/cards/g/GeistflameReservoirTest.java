@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -69,8 +70,8 @@ class GeistflameReservoirTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(top.getId());
         assertThat(reservoir.isTapped()).isTrue();
     }
 
@@ -213,7 +214,7 @@ class GeistflameReservoirTest extends BaseCardTest {
 
         assertThat(reservoir.isTapped()).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
         harness.assertLife(player1, 20);
     }
 
@@ -286,7 +287,7 @@ class GeistflameReservoirTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, top.getId(), player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }

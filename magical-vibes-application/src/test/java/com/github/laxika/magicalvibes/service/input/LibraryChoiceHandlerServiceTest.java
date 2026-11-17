@@ -362,7 +362,7 @@ class LibraryChoiceHandlerServiceTest {
         service.handleLibraryCardChosen(gd, player1, 0);
 
         verify(exileService).exileCardFaceDown(gd, player2Id, chosen, null, player1Id);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1Id);
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1Id);
         assertThat(gd.playerDecks.get(player2Id)).doesNotContain(chosen);
     }
 
@@ -379,7 +379,7 @@ class LibraryChoiceHandlerServiceTest {
         service.handleLibraryCardChosen(gd, player1, 0);
 
         verify(exileService).exileCard(gd, player2Id, chosen);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1Id);
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1Id);
     }
 
     @Test
@@ -592,7 +592,7 @@ class LibraryChoiceHandlerServiceTest {
 
         verify(exileService).exileCardFaceDown(gd, player2Id, chosen, sourcePermanentId, player1Id);
         verify(graveyardService).addCardsFromLibraryToGraveyard(gd, player2Id, List.of(first, third));
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1Id);
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1Id);
         verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
     }
 
@@ -683,8 +683,8 @@ class LibraryChoiceHandlerServiceTest {
         service.handleLibraryCardChosen(gd, player1, 1);
 
         verify(exileService).exileCardFaceDown(gd, player1Id, chosen, sourcePermanentId, player1Id);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(chosen.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).doesNotContain(chosen.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(chosen.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).doesNotContain(chosen.getId());
         verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
     }
 

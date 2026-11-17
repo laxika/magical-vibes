@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.m.MarshBoa;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -160,7 +159,7 @@ class WindscouterTest extends BaseCardTest {
         gd.stolenCreatures.put(windscouter.getId(), player1.getId());
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
                 .applyControlEffect(gd, player2.getId(), windscouter,
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        new GainControlOfTargetEffect(Duration.PERMANENT),
                         Duration.PERMANENT, null, "Test setup"));
 
         harness.passUntil(TurnStep.END_OF_COMBAT);

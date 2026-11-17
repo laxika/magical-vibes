@@ -185,7 +185,7 @@ class EcologicalAppreciationTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(bears);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bears, spell);
-        assertThat(gd.exilePlayPermissions.get(bears.getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(bears.getId())).isEqualTo(player2.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
     }
 

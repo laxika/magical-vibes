@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -45,7 +45,7 @@ public class ArchmagesCharm extends Card {
                                 "Target must be a player")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Gain control of target nonland permanent with mana value 1 or less",
-                        GainControlOfTargetEffect.withTargetPredicate(ControlDuration.PERMANENT,
+                        GainControlOfTargetEffect.withTargetPredicate(Duration.PERMANENT,
                                 lowManaNonland),
                         new PermanentPredicateTargetFilter(lowManaNonland,
                                 "Target must be a nonland permanent with mana value 1 or less"))

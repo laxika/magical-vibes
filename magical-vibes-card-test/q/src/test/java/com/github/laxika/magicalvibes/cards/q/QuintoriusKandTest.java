@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -63,7 +64,7 @@ class QuintoriusKandTest extends BaseCardTest {
         addReadyQuintorius(player1, 5);
         Card exiled = new GrizzlyBears();
         harness.setExile(player1, List.of(exiled));
-        gd.exilePlayPermissions.put(exiled.getId(), player1.getId());
+        gd.grantExilePlayPermission(exiled.getId(), player1.getId(), Duration.PERMANENT);
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -96,10 +97,10 @@ class QuintoriusKandTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(first.getId(), second.getId());
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn)
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN))
                 .contains(first.getId(), second.getId());
     }
 
@@ -184,7 +185,7 @@ class QuintoriusKandTest extends BaseCardTest {
         addReadyQuintorius(player1, 5);
         Card spell = new GrizzlyBears();
         harness.setExile(player2, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player2.getId());
+        gd.grantExilePlayPermission(spell.getId(), player2.getId(), Duration.PERMANENT);
         harness.forceActivePlayer(player2);
         harness.addMana(player2, ManaColor.GREEN, 2);
 
@@ -227,7 +228,7 @@ class QuintoriusKandTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(missing, remaining);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
-        assertThat(gd.exilePlayPermissions).containsEntry(remaining.getId(), player1.getId())
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(remaining.getId(), player1.getId())
                 .doesNotContainKey(missing.getId());
     }
 
@@ -281,7 +282,7 @@ class QuintoriusKandTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId(), player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(spell);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(spell.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(spell.getId());
     }
 
     @Test

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -39,7 +39,7 @@ public class ThancredWaters extends Card {
                 Set.of(Keyword.INDESTRUCTIBLE),
                 GrantScope.TARGET,
                 anotherLegendaryPermanent,
-                GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD,
+                Duration.WHILE_SOURCE_ON_BATTLEFIELD,
                 null
         ));
 

@@ -145,13 +145,13 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
         damageEntry.setExilesCreaturesDamaged(e.exileInsteadOfDie() && !e.preventRegenerationWithoutDamage());
         try {
             if (unpreventable) {
-                boolean previous = gameData.damageCantBePreventedThisTurn;
-                gameData.damageCantBePreventedThisTurn = true;
+                boolean previous = gameData.unpreventableDamageInProgress;
+                gameData.unpreventableDamageInProgress = true;
                 try {
                     damageDealt = damageSupport.resolveAnyTargetDamage(gameData, damageEntry, targetId, rawDamage,
                             e.cantRegenerate() && !e.preventRegenerationWithoutDamage(), e.cantBeRedirectedWhenUnpreventable());
                 } finally {
-                    gameData.damageCantBePreventedThisTurn = previous;
+                    gameData.unpreventableDamageInProgress = previous;
                 }
             } else {
                 damageDealt = damageSupport.resolveAnyTargetDamage(gameData, damageEntry, targetId, rawDamage,

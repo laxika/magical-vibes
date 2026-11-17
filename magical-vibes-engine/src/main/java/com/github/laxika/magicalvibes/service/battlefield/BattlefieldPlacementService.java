@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceDamagePrevention;
 import com.github.laxika.magicalvibes.model.effect.ExileUncastEnteringCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleCreaturesEnteringFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect;
@@ -67,6 +68,9 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsEnterUntappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
+import com.github.laxika.magicalvibes.model.effect.NextControlledEnchantmentCreatureEntryWithAdditionalCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentsEnterTappedThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterMysticReflectionEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesHaveRiotEffect;
@@ -522,29 +526,19 @@ public class BattlefieldPlacementService {
                         gameData, null, permanent, counter.getKey(), previousCount, placed);
             }
         }
-        synchronized (gameData.targetSpellDamagePreventionShields) {
-            gameData.targetSpellDamagePreventionShields.replaceAll(shield ->
-                    shield.sourcePermanentId() == null
-                            && permanent.getCard().getId().equals(shield.spellCardId())
-                            ? new TargetSpellDamagePreventionShield(null, shield.lifeGainPlayerId(),
-                                    permanent.getId(), shield.requiredColors())
-                            : shield);
-        }
+        gameData.updateShields(TargetSpellDamagePreventionShield.class, shield ->
+                shield.sourcePermanentId() == null
+                        && permanent.getCard().getId().equals(shield.spellCardId())
+                        ? new TargetSpellDamagePreventionShield(null, shield.lifeGainPlayerId(),
+                                permanent.getId(), shield.requiredColors())
+                        : shield);
         UUID spellCardId = permanent.getCard().getId();
-        gameData.playerSourceDamagePreventionIds.forEach((playerId, sourceIds) -> {
-            if (sourceIds.contains(spellCardId)) {
-                sourceIds.add(permanent.getId());
-                Map<UUID, Set<CardColor>> requiredBySource =
-                        gameData.playerSourceDamagePreventionRequiredColors.get(playerId);
-                if (requiredBySource != null && requiredBySource.containsKey(spellCardId)) {
-                    requiredBySource.put(permanent.getId(), requiredBySource.get(spellCardId));
-                }
-                Set<UUID> lifeGainIds = gameData.playerSourceDamagePreventionLifeGainIds.get(playerId);
-                if (lifeGainIds != null && lifeGainIds.contains(spellCardId)) {
-                    lifeGainIds.add(permanent.getId());
-                }
+        for (FloatingContinuousEffect fe : gameData.shieldEffects(PlayerSourceDamagePrevention.class)) {
+            PlayerSourceDamagePrevention prevention = (PlayerSourceDamagePrevention) fe.effect();
+            if (prevention.sourceIds().contains(spellCardId)) {
+                gameData.reduceShield(fe, prevention.alsoNaming(permanent.getId()));
             }
-        });
+        }
         if (permanent.getCard().isToken()) {
             gameData.playersWhoCreatedTokensThisTurn.add(puttingPlayerId);
             if (permanent.getCard().getSubtypes().contains(CardSubtype.TREASURE)) {
@@ -882,10 +876,13 @@ public class BattlefieldPlacementService {
                 && !permanent.getCard().hasType(CardType.PLANESWALKER)) {
             return;
         }
-        if (gameData.activeMysticReflectionsForEntryBatch.isEmpty()
-                && !gameData.pendingMysticReflections.isEmpty()) {
-            gameData.activeMysticReflectionsForEntryBatch.addAll(gameData.pendingMysticReflections);
-            gameData.pendingMysticReflections.clear();
+        if (gameData.activeMysticReflectionsForEntryBatch.isEmpty()) {
+            List<FloatingContinuousEffect> pending = pendingMysticReflectionEffects(gameData);
+            pending.forEach(floating -> {
+                gameData.activeMysticReflectionsForEntryBatch.add(
+                        ((RegisterMysticReflectionEffect) floating.effect()).reflection());
+                gameData.endFloatingEffect(floating);
+            });
         }
         List<PendingMysticReflection> reflections = List.copyOf(gameData.activeMysticReflectionsForEntryBatch);
         UUID lastApplied = permanent.getChosenEnterAsCopySourceId();
@@ -915,6 +912,14 @@ public class BattlefieldPlacementService {
         }
     }
 
+    /**
+     * The Mystic Reflection replacement effects (CR 614.1c) no entry has applied yet, oldest first: each is a floating
+     * effect that ends as an entry event applies it (and at cleanup).
+     */
+    private List<FloatingContinuousEffect> pendingMysticReflectionEffects(GameData gameData) {
+        return gameData.floatingEffectsOfTypes(RegisterMysticReflectionEffect.class);
+    }
+
     private Card mysticReflectionCopiedValues(Permanent liveTarget, PendingMysticReflection reflection) {
         if (liveTarget != null) {
             return liveTarget.getCard();
@@ -937,7 +942,9 @@ public class BattlefieldPlacementService {
         }
         List<PendingMysticReflection> reflections =
                 request.simultaneouslyEntered().isEmpty() || gameData.activeMysticReflectionsForEntryBatch.isEmpty()
-                        ? gameData.pendingMysticReflections : gameData.activeMysticReflectionsForEntryBatch;
+                        ? pendingMysticReflectionEffects(gameData).stream()
+                        .map(floating -> ((RegisterMysticReflectionEffect) floating.effect()).reflection()).toList()
+                        : gameData.activeMysticReflectionsForEntryBatch;
         Map<String, UUID> targetIdByCopiedName = new java.util.LinkedHashMap<>();
         for (PendingMysticReflection reflection : reflections) {
             Card copied = mysticReflectionCopiedValues(
@@ -1242,7 +1249,8 @@ public class BattlefieldPlacementService {
     private void carrySpellColorOverride(GameData gameData, UUID controllerId, Permanent permanent) {
         UUID cardId = permanent.getCard().getId();
         Set<CardColor> colors = gameData.spellColorOverrides.remove(cardId);
-        Set<CardColor> temporaryColors = gameData.spellColorOverridesUntilEndOfTurn.remove(cardId);
+        Set<CardColor> temporaryColors = gameData.spellColorUntilEndOfTurn(cardId).orElse(null);
+        gameData.endSpellColorUntilEndOfTurn(cardId);
         if (colors == null && temporaryColors == null) {
             return;
         }
@@ -1645,16 +1653,18 @@ public class BattlefieldPlacementService {
     }
 
     private void applyAllPermanentsEnterTapped(GameData gameData, Permanent enteringPermanent) {
-        if (gameData.allPermanentsEnterTappedThisTurn) {
+        if (gameData.floatingEffectsOfTypes(PermanentsEnterTappedThisTurnEffect.class).stream()
+                .anyMatch(floating -> ((PermanentsEnterTappedThisTurnEffect) floating.effect()).filter() == null)) {
             enteringPermanent.tap();
         }
     }
 
     private void applyTurnScopedFilteredEnterTappedEffects(GameData gameData, UUID enteringControllerId,
                                                             Permanent enteringPermanent) {
-        for (PermanentPredicate filter : gameData.permanentEnterTappedFiltersThisTurn
-                .getOrDefault(enteringControllerId, Set.of())) {
-            if (predicateEvaluationService.matchesPermanentPredicate(gameData, enteringPermanent, filter)) {
+        for (FloatingContinuousEffect floating : gameData.floatingEffectsOnPlayer(enteringControllerId,
+                PermanentsEnterTappedThisTurnEffect.class)) {
+            PermanentPredicate filter = ((PermanentsEnterTappedThisTurnEffect) floating.effect()).filter();
+            if (filter != null && predicateEvaluationService.matchesPermanentPredicate(gameData, enteringPermanent, filter)) {
                 enteringPermanent.tap();
                 return;
             }
@@ -2829,8 +2839,7 @@ public class BattlefieldPlacementService {
 
         if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
 
-        int additionalCounters = gameData.additionalEnterCountersThisTurn.getOrDefault(controllerId, 0)
-                + gameData.floatingEffectsOnPlayer(controllerId,
+        int additionalCounters = gameData.floatingEffectsOnPlayer(controllerId,
                         ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect.class).stream()
                 .mapToInt(fe -> ((ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect) fe.effect()).count())
                 .sum();
@@ -2858,9 +2867,15 @@ public class BattlefieldPlacementService {
         Integer additionalCounters = gameData.activeAdditionalCountersForEnchantmentCreatureEntryBatch
                 .get(controllerId);
         if (additionalCounters == null) {
-            additionalCounters = gameData.pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn
-                    .remove(controllerId);
-            if (additionalCounters == null) return;
+            List<FloatingContinuousEffect> pending = gameData.floatingEffectsOnPlayer(controllerId,
+                    NextControlledEnchantmentCreatureEntryWithAdditionalCountersEffect.class);
+            if (pending.isEmpty()) return;
+            additionalCounters = 0;
+            for (FloatingContinuousEffect floating : pending) {
+                additionalCounters += ((NextControlledEnchantmentCreatureEntryWithAdditionalCountersEffect)
+                        floating.effect()).count();
+                gameData.endFloatingEffect(floating);
+            }
             gameData.activeAdditionalCountersForEnchantmentCreatureEntryBatch.put(controllerId,
                     additionalCounters);
         }

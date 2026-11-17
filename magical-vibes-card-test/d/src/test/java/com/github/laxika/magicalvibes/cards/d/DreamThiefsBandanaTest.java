@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -49,9 +50,9 @@ class DreamThiefsBandanaTest extends BaseCardTest {
         assertThat(entry.ownerId()).isEqualTo(player2.getId());
         assertThat(entry.sourcePermanentId()).isEqualTo(bandana.getId());
         assertThat(entry.exilerId()).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(topCard.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(topCard.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(topCard.getId());
     }
 
     @Test
@@ -69,7 +70,7 @@ class DreamThiefsBandanaTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(bandana);
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -96,7 +97,7 @@ class DreamThiefsBandanaTest extends BaseCardTest {
         assertThat(gd.findExiledCard(stolenCard.getId())).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(stolenCard.getId()));
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(stolenCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(stolenCard.getId());
     }
 
     @Test
@@ -132,7 +133,7 @@ class DreamThiefsBandanaTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
         assertThat(gd.findExiledCard(topCard.getId()).exilerId()).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -147,7 +148,7 @@ class DreamThiefsBandanaTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.exiledCards).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test

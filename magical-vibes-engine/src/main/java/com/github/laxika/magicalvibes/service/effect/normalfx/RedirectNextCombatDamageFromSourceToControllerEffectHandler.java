@@ -26,7 +26,7 @@ public class RedirectNextCombatDamageFromSourceToControllerEffectHandler
             return;
         }
 
-        gameData.sourceNextCombatDamageToControllerShields.add(
+        gameData.addShield(
                 new SourceNextCombatDamageToControllerShield(sourcePermanentId, controllerId));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
+import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesCantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.a.AngelicArbiter;
@@ -520,7 +521,7 @@ class AttackLegalityServiceTest extends BaseCardTest {
         assertThat(als.getMustAttackRequirementCount(gd, okk)).isEqualTo(1);
 
         // A taunt adds a second requirement, but only while the taunter is attackable.
-        gd.tauntedThisTurn.put(player1.getId(), player2.getId());
+        FloatingCombatRules.taunt(gd, player2.getId(), player1.getId(), player2.getId());
         assertThat(als.getMustAttackRequirementCount(gd, okk)).isEqualTo(2);
     }
 

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -50,7 +50,7 @@ public class TargetPlayerGainsControlOfEnchantedPermanentEffectHandler implement
                 entry.getTargetId(),
                 enchantedPermanent,
                 new GainControlOfTargetEffect(controlEffect.duration()),
-                controlEffect.duration().toDuration(),
+                controlEffect.duration(),
                 null,
                 entry.getCard().getName());
     }

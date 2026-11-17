@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -44,7 +43,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         GrantKeywordEffect linkedGrant = (GrantKeywordEffect) effect;
-        if (linkedGrant.duration() == GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
+        if (Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(linkedGrant.duration())
                 && (entry.getSourcePermanentId() == null
                 || !entry.getControllerId().equals(gameQueryService.findPermanentController(
                         gameData, entry.getSourcePermanentId())))) {
@@ -83,7 +82,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
                         entry.getCard().getName(), null, entry.getControllerId(),
                         new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, grant.filter(), grant.duration(), grant.grantCondition()),
-                        permanent.getId(), null, null, floatingDurationFor(grant.duration()), 0));
+                        permanent.getId(), null, null, grant.duration(), 0));
                 count++;
             }
 
@@ -114,7 +113,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                         entry.getCard().getName(), null, entry.getControllerId(),
                         new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, null,
                                 grant.duration(), grant.grantCondition()),
-                        permanent.getId(), null, null, floatingDurationFor(grant.duration()), 0));
+                        permanent.getId(), null, null, grant.duration(), 0));
                 count++;
             }
 
@@ -179,7 +178,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                             entry.getCard().getName(), null, entry.getControllerId(),
                             new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, grant.filter(),
                                     grant.duration(), grant.grantCondition()),
-                            permanent.getId(), null, null, floatingDurationFor(grant.duration()), 0));
+                            permanent.getId(), null, null, grant.duration(), 0));
                     count++;
                 }
             }
@@ -224,7 +223,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                     entry.getCard().getName(), null, entry.getControllerId(),
                     new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, null,
                             grant.duration(), grant.grantCondition()),
-                    target.getId(), null, null, floatingDurationFor(grant.duration()), 0));
+                    target.getId(), null, null, grant.duration(), 0));
 
             String keywordNames = formatKeywords(grant.keywords());
             gameLogService.append(gameData, GameLog.builder().card(target.getCard())
@@ -258,7 +257,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                         entry.getCard().getName(), null, entry.getControllerId(),
                         new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, null,
                                 grant.duration(), grant.grantCondition()),
-                        permanent.getId(), null, null, floatingDurationFor(grant.duration()), 0));
+                        permanent.getId(), null, null, grant.duration(), 0));
                 count[0]++;
             });
 
@@ -292,7 +291,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
                         entry.getCard().getName(), null, entry.getControllerId(),
                         new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, grant.filter(), grant.duration(), grant.grantCondition()),
-                        permanent.getId(), null, null, floatingDurationFor(grant.duration()), 0));
+                        permanent.getId(), null, null, grant.duration(), 0));
                 count[0]++;
             });
 
@@ -367,7 +366,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                     : null;
             gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
                     entry.getCard().getName(), floatingSourceId, entry.getControllerId(), resolvedGrant,
-                    target.getId(), null, null, floatingDurationFor(grant.duration()), 0));
+                    target.getId(), null, null, grant.duration(), 0));
             String keywordNames = formatKeywords(grant.keywords());
             
             gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" gains " + keywordNames + " " + durationLabel(grant.duration()) + ".").build());
@@ -425,7 +424,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                     entry.getCard().getName(), floatingSourceId, entry.getControllerId(),
                     new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, null,
                             grant.duration(), grant.grantCondition()),
-                    permanent.getId(), null, null, floatingDurationFor(grant.duration()), 0));
+                    permanent.getId(), null, null, grant.duration(), 0));
             count++;
         }
 
@@ -448,7 +447,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        addLegacyBucket(permanent, GrantDuration.END_OF_TURN, grantableKeywords);
+        addLegacyBucket(permanent, Duration.UNTIL_END_OF_TURN, grantableKeywords);
         gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
                 sourceName, null, controllerId,
                 new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET),
@@ -487,39 +486,28 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
         return bandmates;
     }
 
-    private Duration floatingDurationFor(GrantDuration duration) {
-        return switch (duration) {
-            case UNTIL_END_OF_COMBAT -> Duration.UNTIL_END_OF_COMBAT;
-            case UNTIL_YOUR_NEXT_TURN -> Duration.UNTIL_YOUR_NEXT_TURN;
-            case UNTIL_YOUR_NEXT_UPKEEP -> Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP;
-            case WHILE_SOURCE_ON_BATTLEFIELD -> Duration.WHILE_SOURCE_ON_BATTLEFIELD;
-            case WHILE_SOURCE_REMAINS -> Duration.WHILE_SOURCE_REMAINS;
-            case INDEFINITE -> Duration.PERMANENT;
-            case END_OF_TURN -> Duration.UNTIL_END_OF_TURN;
-        };
-    }
-
-    private void addLegacyBucket(Permanent permanent, GrantDuration duration, Set<Keyword> keywords) {
+    private void addLegacyBucket(Permanent permanent, Duration duration, Set<Keyword> keywords) {
         if (!sourceLinked(duration)
-                && duration != GrantDuration.UNTIL_YOUR_NEXT_TURN
-                && duration != GrantDuration.UNTIL_YOUR_NEXT_UPKEEP
-                && duration != GrantDuration.UNTIL_END_OF_COMBAT) {
+                && !Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)
+                && !Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(duration)
+                && !Duration.UNTIL_END_OF_COMBAT.equals(duration)) {
             keywords.stream().filter(keyword -> keyword != Keyword.FLANKING)
                     .forEach(bucketFor(permanent, duration)::add);
         }
     }
 
-    private boolean sourceLinked(GrantDuration duration) {
-        return duration == GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
-                || duration == GrantDuration.WHILE_SOURCE_REMAINS;
+    private boolean sourceLinked(Duration duration) {
+        return Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(duration)
+                || Duration.WHILE_SOURCE_REMAINS.equals(duration);
     }
 
-    private Set<Keyword> bucketFor(Permanent permanent, GrantDuration duration) {
-        return switch (duration) {
-            case UNTIL_YOUR_NEXT_TURN -> permanent.getUntilNextTurnKeywords();
-            case INDEFINITE -> permanent.getPersistentGrantedKeywords();
-            default -> permanent.getGrantedKeywords();
-        };
+    private Set<Keyword> bucketFor(Permanent permanent, Duration duration) {
+        if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
+            return permanent.getUntilNextTurnKeywords();
+        } else if (Duration.PERMANENT.equals(duration)) {
+            return permanent.getPersistentGrantedKeywords();
+        }
+        return permanent.getGrantedKeywords();
     }
 
     private Set<Keyword> grantableKeywords(GameData gameData, Permanent permanent, Set<Keyword> keywords) {
@@ -528,16 +516,21 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 .collect(java.util.stream.Collectors.toSet());
     }
 
-    private String durationLabel(GrantDuration duration) {
-        return switch (duration) {
-            case UNTIL_END_OF_COMBAT -> "until end of combat";
-            case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
-            case UNTIL_YOUR_NEXT_UPKEEP -> "until your next upkeep";
-            case WHILE_SOURCE_ON_BATTLEFIELD -> "for as long as you control its source";
-            case WHILE_SOURCE_REMAINS -> "for as long as its source remains on the battlefield";
-            case INDEFINITE -> "indefinitely";
-            case END_OF_TURN -> "until end of turn";
-        };
+    private String durationLabel(Duration duration) {
+        if (Duration.UNTIL_END_OF_COMBAT.equals(duration)) {
+            return "until end of combat";
+        } else if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
+            return "until your next turn";
+        } else if (Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(duration)) {
+            return "until your next upkeep";
+        } else if (Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(duration)) {
+            return "for as long as you control its source";
+        } else if (Duration.WHILE_SOURCE_REMAINS.equals(duration)) {
+            return "for as long as its source remains on the battlefield";
+        } else if (Duration.PERMANENT.equals(duration)) {
+            return "indefinitely";
+        }
+        return "until end of turn";
     }
 
     private String formatKeywords(Set<Keyword> keywords) {
@@ -568,7 +561,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                     entry.getCard().getName(), null, entry.getControllerId(),
                     new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, grant.filter(),
                             grant.duration(), grant.grantCondition()),
-                    target.getId(), null, null, floatingDurationFor(grant.duration()), 0));
+                    target.getId(), null, null, grant.duration(), 0));
             count++;
         }
 

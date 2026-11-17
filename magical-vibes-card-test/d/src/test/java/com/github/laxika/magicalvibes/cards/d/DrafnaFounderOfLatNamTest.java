@@ -123,7 +123,7 @@ class DrafnaFounderOfLatNamTest extends BaseCardTest {
                 .getBean(com.github.laxika.magicalvibes.service.battlefield.CreatureControlService.class)
                 .applyControlEffect(gd, player1.getId(), artifact,
                         new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
-                                com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
+                                com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT),
                         com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, null, "borrowed artifact"));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -187,7 +187,7 @@ class DrafnaFounderOfLatNamTest extends BaseCardTest {
                 .getBean(com.github.laxika.magicalvibes.service.battlefield.CreatureControlService.class)
                 .applyControlEffect(gd, player2.getId(), artifact,
                         new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
-                                com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
+                                com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT),
                         com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, null, "changed control"));
         resolveAllTriggers();
 

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMysticReflection;
@@ -41,8 +43,10 @@ public class RegisterMysticReflectionEffectHandler implements NormalEffectHandle
             return;
         }
 
-        gameData.pendingMysticReflections.add(
-                new PendingMysticReflection(targetId, target.getCard(), target));
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(),
+                new RegisterMysticReflectionEffect(new PendingMysticReflection(targetId, target.getCard(), target)),
+                entry.getControllerId(), Duration.UNTIL_END_OF_TURN));
         gameLogService.append(gameData, GameLog.textCardText(
                 entry.getCard().getName() + " will make the next creatures or planeswalkers enter as copies of ",
                 target.getCard(), "."));

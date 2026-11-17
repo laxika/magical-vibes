@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -142,7 +143,7 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                 gameData.playerHands.get(controllerId).removeIf(card -> card.getId().equals(chosen.getId()));
                 if (seek.faceDown()) {
                     exileService.exileCardFaceDown(gameData, controllerId, chosen, sourcePermanentId);
-                    gameData.exileLookPermissions.put(chosen.getId(), controllerId);
+                    gameData.grantExileLookPermission(chosen.getId(), controllerId);
                 } else {
                     exileService.exileCard(gameData, controllerId, chosen, sourcePermanentId);
                 }
@@ -204,9 +205,9 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
             }
             UUID permittedPlayer = permission.accessScope() == ExileAccessScope.ACTIVE_PLAYER
                     ? gameData.activePlayerId : exilerId;
-            gameData.exilePlayPermissions.put(card.getId(), permittedPlayer);
+            gameData.grantExilePlayPermission(card.getId(), permittedPlayer, Duration.PERMANENT);
             if (permission.anyManaType()) {
-                gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
+                gameData.updateExilePlayPermission(card.getId(), granted -> granted.withAnyManaType(true));
             }
             break;
         }

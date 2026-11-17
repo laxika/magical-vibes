@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -82,9 +83,9 @@ class NitaForumConciliatorTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(target);
         assertThat(gd.findExiledCard(target.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(target.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(target.getId());
-        assertThat(gd.exilePlayAnyManaType).contains(target.getId());
+        assertThat(gd.exilePlayPermissionHolder(target.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(target.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(target.getId());
         assertThat(gd.exileInsteadOfGraveyard).contains(target.getId());
         // The other creature was sacrificed to pay the cost.
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -133,14 +134,14 @@ class NitaForumConciliatorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, 0, target.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
-        assertThat(gd.exilePlayAnyManaType).contains(target.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(target.getId());
 
         // Advance through end step to the cleanup step.
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(target.getId());
-        assertThat(gd.exilePlayAnyManaType).doesNotContain(target.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(target.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).doesNotContain(target.getId());
         assertThat(gd.exileInsteadOfGraveyard).doesNotContain(target.getId());
     }
 
@@ -242,7 +243,7 @@ class NitaForumConciliatorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.findExiledCard(target.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(target.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(target.getId())).isEqualTo(player1.getId());
     }
 
 }

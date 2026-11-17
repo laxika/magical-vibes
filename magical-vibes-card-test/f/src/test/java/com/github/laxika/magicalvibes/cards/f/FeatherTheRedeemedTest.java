@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -47,7 +48,7 @@ class FeatherTheRedeemedTest extends BaseCardTest {
         GiantGrowth growth = new GiantGrowth();
         growth.setOwnerId(player2.getId());
         gd.addToExile(player2.getId(), growth);
-        gd.exilePlayPermissions.put(growth.getId(), player1.getId());
+        gd.grantExilePlayPermission(growth.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castFromExile(player1, growth.getId(), bears.getId());

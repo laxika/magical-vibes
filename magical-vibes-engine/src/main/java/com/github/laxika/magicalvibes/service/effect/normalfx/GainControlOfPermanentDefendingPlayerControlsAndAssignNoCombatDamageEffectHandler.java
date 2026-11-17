@@ -63,12 +63,13 @@ public class GainControlOfPermanentDefendingPlayerControlsAndAssignNoCombatDamag
         }
 
         creatureControlService.applyControlEffect(gameData, controllerId, target,
-                new GainControlOfTargetEffect(e.duration()), e.duration().toDuration(),
+                new GainControlOfTargetEffect(e.duration()), e.duration(),
                 e.duration().isSourceLinked() ? sourcePermanentId : null, entry.getCard().getName());
         if (source != null) {
             PreventionSupport.preventCombatDamageDealtBy(gameData, entry.getCard().getName(), sourcePermanentId,
                     entry.getControllerId(), sourcePermanentId, Duration.UNTIL_END_OF_TURN);
-            gameData.creaturesAssigningNoCombatDamageThisTurn.add(sourcePermanentId);
+            PreventionSupport.assignNoCombatDamage(gameData, entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), sourcePermanentId, Duration.UNTIL_END_OF_TURN);
             gameLogService.append(gameData,
                     GameLog.cardThen(source.getCard(), " assigns no combat damage this turn."));
         }

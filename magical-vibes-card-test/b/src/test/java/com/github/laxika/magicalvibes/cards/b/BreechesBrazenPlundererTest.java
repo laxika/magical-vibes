@@ -43,8 +43,8 @@ class BreechesBrazenPlundererTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        assertThat(gd.exilePlayAnyManaType).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(topCard.getId());
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(nextCard);
     }
 
@@ -78,7 +78,7 @@ class BreechesBrazenPlundererTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayAnyManaType).contains(topCard.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(topCard.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.POSTCOMBAT_MAIN);
@@ -121,7 +121,7 @@ class BreechesBrazenPlundererTest extends BaseCardTest {
 
         harness.assertLife(player2, 19);
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -155,13 +155,13 @@ class BreechesBrazenPlundererTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveCombat();
         resolveAllTriggers();
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
-        assertThat(gd.exilePlayAnyManaType).doesNotContain(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).doesNotContain(topCard.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, topCard.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -195,7 +195,7 @@ class BreechesBrazenPlundererTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test
@@ -239,7 +239,7 @@ class BreechesBrazenPlundererTest extends BaseCardTest {
         harness.assertLife(player2, 19);
         assertThat(gd.findExiledCard(topCard.getId())).isNull();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
     }
 
     @Test
@@ -263,6 +263,6 @@ class BreechesBrazenPlundererTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Breeches, Brazen Plunderer");
         harness.assertLife(player2, 19);
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -63,9 +64,9 @@ public class ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControlle
         Card topCard = deck.removeFirst();
         exileService.exileCardFaceDown(gameData, damagedPlayerId, topCard,
                 entry.getSourcePermanentId(), creatureControllerId);
-        gameData.exilePlayPermissions.put(topCard.getId(), creatureControllerId);
+        gameData.grantExilePlayPermission(topCard.getId(), creatureControllerId, Duration.PERMANENT);
         if (exileEffect.anyManaTypeSpendable()) {
-            gameData.exilePlayAnyManaTypeWhileExiled.add(topCard.getId());
+            gameData.updateExilePlayPermission(topCard.getId(), granted -> granted.withAnyManaType(true));
         }
 
         String creatureControllerName = gameData.playerIdToName.get(creatureControllerId);

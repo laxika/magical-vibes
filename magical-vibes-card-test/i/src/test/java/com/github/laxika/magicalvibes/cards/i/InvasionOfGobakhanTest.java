@@ -52,8 +52,8 @@ class InvasionOfGobakhanTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(nonland);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(plains);
-        assertThat(gd.exilePlayPermissions.get(nonland.getId())).isEqualTo(player2.getId());
-        ExilePlayCostModifier modifier = gd.exilePlayCostModifiers.get(nonland.getId());
+        assertThat(gd.exilePlayPermissionHolder(nonland.getId())).isEqualTo(player2.getId());
+        ExilePlayCostModifier modifier = gd.exilePlayCostModifier(nonland.getId());
         assertThat(modifier.permittedPlayerId()).isEqualTo(player2.getId());
         assertThat(modifier.sourceControllerId()).isEqualTo(player1.getId());
         assertThat(modifier.amount()).isEqualTo(2);
@@ -179,7 +179,7 @@ class InvasionOfGobakhanTest extends BaseCardTest {
         resolveAllTriggers();
         harness.assertOnBattlefield(player2, "Dreg Recycler");
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

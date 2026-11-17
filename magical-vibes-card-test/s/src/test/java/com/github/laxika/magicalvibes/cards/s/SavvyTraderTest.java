@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.l.LesserMasticore;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -52,8 +53,8 @@ class SavvyTraderTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(permanent);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(permanent);
-        assertThat(gd.exilePlayPermissions).containsEntry(permanent.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd).doesNotContainKey(permanent.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(permanent.getId(), player1.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)).doesNotContainKey(permanent.getId());
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castFromExile(player1, permanent.getId());

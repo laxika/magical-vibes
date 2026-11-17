@@ -10,8 +10,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * and is prompted through the may-ability system; accepting flips
  * {@code Permanent.echoDamageRedirectionActive} on the source, which
  * {@code DamageSupport.applySoulEchoCounterRemoval} reads on both the combat and noncombat
- * damage-to-player paths. The previous duration is expired at the top of every resolution, which is
- * what makes the grant last "until your next upkeep".
+ * damage-to-player paths. The accepted replacement is a floating effect on the controller that
+ * ends as their next upkeep begins ("until your next upkeep"), even if Soul Echo has left the battlefield.
  *
  * <p>Targets the opponent player — the card declares "target opponent" through a
  * {@code PlayerRelationPredicate}; {@link #targetSpec()} declares the harmful player category.

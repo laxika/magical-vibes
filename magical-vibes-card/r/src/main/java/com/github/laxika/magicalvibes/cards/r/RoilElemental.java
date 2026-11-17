@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,7 +18,7 @@ public class RoilElemental extends Card {
         // for as long as you control this creature.
         target(TargetFilters.creature()).addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 new MayEffect(
-                        new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD),
+                        new GainControlOfTargetEffect(Duration.WHILE_SOURCE_ON_BATTLEFIELD),
                         "Gain control of target creature?"
                 ));
     }

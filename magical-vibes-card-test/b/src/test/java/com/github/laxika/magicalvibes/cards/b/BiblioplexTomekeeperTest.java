@@ -33,7 +33,7 @@ class BiblioplexTomekeeperTest extends BaseCardTest {
 
             assertThat(firesinger.isPrepared()).isTrue();
             assertThat(firesinger.getPreparedSpellCardId()).isNotNull();
-            assertThat(gd.exilePlayPermissions.get(firesinger.getPreparedSpellCardId()))
+            assertThat(gd.exilePlayPermissionHolder(firesinger.getPreparedSpellCardId()))
                     .isEqualTo(player1.getId());
         }
 
@@ -72,7 +72,7 @@ class BiblioplexTomekeeperTest extends BaseCardTest {
             resolveAllTriggers();
 
             assertThat(firesinger.isPrepared()).isTrue();
-            assertThat(gd.exilePlayPermissions.get(firesinger.getPreparedSpellCardId()))
+            assertThat(gd.exilePlayPermissionHolder(firesinger.getPreparedSpellCardId()))
                     .isEqualTo(player2.getId());
         }
     }
@@ -96,7 +96,7 @@ class BiblioplexTomekeeperTest extends BaseCardTest {
             assertThat(firesinger.isPrepared()).isFalse();
             assertThat(firesinger.getPreparedSpellCardId()).isNull();
             assertThat(gd.findExiledCard(copyId)).isNull();
-            assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
+            assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(copyId);
         }
 
         @Test
@@ -123,7 +123,7 @@ class BiblioplexTomekeeperTest extends BaseCardTest {
             assertThat(firesinger.isPrepared()).isFalse();
             assertThat(firesinger.getPreparedSpellCardId()).isNull();
             assertThat(gd.findExiledCard(copyId)).isNull();
-            assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
+            assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(copyId);
         }
     }
 
@@ -157,7 +157,7 @@ class BiblioplexTomekeeperTest extends BaseCardTest {
 
         assertThat(firesinger.isPrepared()).isFalse();
         assertThat(gd.findExiledCard(copyId)).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(copyId);
     }
 
     private Permanent addPreparedCapableCreature() {

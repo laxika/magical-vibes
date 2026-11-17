@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentsGraveyardsAndMayCastThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -56,9 +57,8 @@ public class ExileOpponentsGraveyardsAndMayCastThisTurnEffectHandler
             for (Card card : exiledCards) {
                 exileService.exileCard(gameData, opponentId, card);
                 if (!card.hasType(CardType.LAND)) {
-                    gameData.exilePlayPermissions.put(card.getId(), controllerId);
-                    gameData.exilePlayPermissionsExpireEndOfTurn.add(card.getId());
-                    gameData.exilePlayAnyManaType.add(card.getId());
+                    gameData.grantExilePlayPermission(card.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
+                    gameData.grantExileAnyManaType(card.getId(), Duration.UNTIL_END_OF_TURN);
                 }
             }
 

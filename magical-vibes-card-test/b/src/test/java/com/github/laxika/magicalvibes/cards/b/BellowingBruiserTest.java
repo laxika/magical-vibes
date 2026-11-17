@@ -87,7 +87,7 @@ class BellowingBruiserTest extends BaseCardTest {
         assertThat(first.isCantBlockThisTurn()).isTrue();
         assertThat(second.isCantBlockThisTurn()).isTrue();
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNotNull();
-        assertThat(harness.getGameData().exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(harness.getGameData().exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test

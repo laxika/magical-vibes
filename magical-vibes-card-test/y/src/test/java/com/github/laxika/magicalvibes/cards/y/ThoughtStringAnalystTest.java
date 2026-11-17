@@ -36,8 +36,8 @@ class ThoughtStringAnalystTest extends BaseCardTest {
         assertThat(entry).isNotNull();
         assertThat(entry.faceDown()).isTrue();
         assertThat(entry.ownerId()).isEqualTo(player2.getId());
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(topCard.getId());
     }
 
     @Test

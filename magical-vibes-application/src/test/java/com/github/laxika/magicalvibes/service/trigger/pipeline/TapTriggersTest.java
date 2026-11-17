@@ -27,11 +27,11 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetCreatureAndCreateTokenIfSharesManaColorEffect;
@@ -573,7 +573,7 @@ class TapTriggersTest {
         void thatPermanentIsTheTappedOne() {
             Permanent nabber = createPermanent("Treasure Nabber");
             Permanent artifact = new Permanent(createCard("Mind Stone", CardType.ARTIFACT));
-            var effect = GainControlOfTargetEffect.ofTriggeringPermanent(ControlDuration.UNTIL_END_OF_YOUR_NEXT_TURN);
+            var effect = GainControlOfTargetEffect.ofTriggeringPermanent(Duration.UNTIL_END_OF_YOUR_NEXT_TURN);
 
             assertThat(sut.collect(gd, source(nabber, player1Id, effect), player2Id, artifact.getId(),
                     Set.of(ManaColor.COLORLESS), artifact.getId(), true)).isTrue();

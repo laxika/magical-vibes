@@ -51,7 +51,7 @@ class ThadaAdelAcquisitorTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.findExiledCard(millstone.getId()).faceDown()).isFalse();
-        assertThat(gd.exilePlayPermissions.get(millstone.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(millstone.getId())).isEqualTo(player1.getId());
 
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

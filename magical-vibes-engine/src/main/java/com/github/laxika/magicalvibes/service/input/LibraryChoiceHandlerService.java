@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.AdventureCast;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.AttachmentTriggers;
 import com.github.laxika.magicalvibes.model.Card;
@@ -54,7 +55,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.DelayedReferents;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
-import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.condition.TriggeringCardInExile;
 import com.github.laxika.magicalvibes.model.effect.PutUnplayedExiledCardsIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -623,10 +623,9 @@ public class LibraryChoiceHandlerService {
                 boolean auraStayedInSourceCards = false;
                 if (destination == LibrarySearchDestination.EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM) {
                     exileService.exileCard(gameData, deckOwnerId, chosenCard);
-                    gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
-                    gameData.exilePlayPermissionsExpireEndOfTurn.add(chosenCard.getId());
+                    gameData.grantExilePlayPermission(chosenCard.getId(), playerId, Duration.UNTIL_END_OF_TURN);
                     if (librarySearch.withoutPayingManaCost()) {
-                        gameData.exilePlayWithoutPayingManaCost.add(chosenCard.getId());
+                        gameData.setExilePlayWithoutPayingManaCost(chosenCard.getId(), true);
                     }
                 } else if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM
                         || destination == LibrarySearchDestination.EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM
@@ -637,25 +636,23 @@ public class LibraryChoiceHandlerService {
                             librarySearch.sourcePermanentId(), playerId);
                     if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD) {
                         // The permission is to cast the card, not to play it, so an exiled land stays unplayable.
-                        gameData.exilePlayPermissionSpellFilters.put(chosenCard.getId(),
-                                new CardNotPredicate(new CardTypePredicate(CardType.LAND)));
+                        gameData.updateExilePlayPermission(chosenCard.getId(), granted -> granted.withSpellFilter(new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
                     }
                     if (destination == LibrarySearchDestination.EXILE_ONE_FACE_DOWN_WITH_HATCHING_COUNTER_REST_TO_BOTTOM) {
                         gameData.exiledCardsWithHatchingCounters.add(chosenCard.getId());
-                        gameData.exileLookPermissions.put(chosenCard.getId(), playerId);
+                        gameData.grantExileLookPermission(chosenCard.getId(), playerId);
                     }
                     if (followUp != null && followUp.imprintSourcePermanentId() != null) {
                         exileService.setImprintedCardOnPermanent(gameData,
                                 followUp.imprintSourcePermanentId(), chosenCard);
                     }
                     if (librarySearch.grantExilePlayPermission()) {
-                        gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
+                        gameData.grantExilePlayPermission(chosenCard.getId(), playerId, Duration.PERMANENT);
                         if (librarySearch.allowAnyManaType()) {
-                            gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCard.getId());
+                            gameData.updateExilePlayPermission(chosenCard.getId(), granted -> granted.withAnyManaType(true));
                         }
                         if (librarySearch.exilePlayPermissionFilter() != null) {
-                            gameData.exilePlayPermissionSpellFilters.put(chosenCard.getId(),
-                                    librarySearch.exilePlayPermissionFilter());
+                            gameData.updateExilePlayPermission(chosenCard.getId(), granted -> granted.withSpellFilter(librarySearch.exilePlayPermissionFilter()));
                         }
                     }
                 } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
@@ -1648,7 +1645,7 @@ public class LibraryChoiceHandlerService {
             if (pileSource != null && pileSource.getCard().getStaticEffects().stream()
                     .anyMatch(cardEffect -> cardEffect instanceof AllowCastFromCardsExiledWithSourceEffect pilePermission
                             && pilePermission.persistsAfterSourceLeaves())) {
-                gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
+                gameData.grantExilePlayPermission(chosenCard.getId(), playerId, Duration.PERMANENT);
             }
 
             // Repeat until the requested count is spent or the library runs out; only the final pick
@@ -1742,8 +1739,8 @@ public class LibraryChoiceHandlerService {
 
         if (destination == LibrarySearchDestination.HEIST) {
             exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, null, playerId);
-            gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
-            gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCard.getId());
+            gameData.grantExilePlayPermission(chosenCard.getId(), playerId, Duration.PERMANENT);
+            gameData.updateExilePlayPermission(chosenCard.getId(), granted -> granted.withAnyManaType(true));
             String targetName = gameData.playerIdToName.get(deckOwnerId);
             gameLogService.append(gameData,
                     GameLog.text(player.getUsername() + " exiles a card face down from "
@@ -1763,17 +1760,16 @@ public class LibraryChoiceHandlerService {
             } else {
                 exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, null, playerId);
             }
-            gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
-            if (destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_END_OF_TURN) {
-                gameData.exilePlayPermissionsExpireEndOfTurn.add(chosenCard.getId());
-            }
+            gameData.grantExilePlayPermission(chosenCard.getId(), playerId,
+                    destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_END_OF_TURN
+                            ? Duration.UNTIL_END_OF_TURN
+                            : destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP
+                            ? Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP : Duration.PERMANENT);
             if (destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
                 // Grinning Totem: permission lasts only until the searcher's next upkeep; an unplayed
                 // card is put into its owner's graveyard then.
                 Card sourceCard = (sourceCards != null && !sourceCards.isEmpty()) ? sourceCards.getFirst()
                         : chosenCard;
-                gameData.queueDelayedAction(new RevokeExilePlayPermissionAtNextUpkeep(
-                        playerId, chosenCard.getId(), sourceCard));
                 gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(playerId,
                         sourceCard, new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                                 TriggerOptions.DEFAULT.withEventCondition(new TriggeringCardInExile()),
@@ -2342,8 +2338,8 @@ public class LibraryChoiceHandlerService {
             graveyardService.notifyCardsLeftGraveyard(gameData, deckOwnerId, chosenCard);
         }
         exileService.exileCard(gameData, deckOwnerId, chosenCard);
-        gameData.exilePlayPermissions.put(chosenCard.getId(), agentControllerId);
-        gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCard.getId());
+        gameData.grantExilePlayPermission(chosenCard.getId(), agentControllerId, Duration.PERMANENT);
+        gameData.updateExilePlayPermission(chosenCard.getId(), granted -> granted.withAnyManaType(true));
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " exiles ", chosenCard, " and may play it for as long as it remains exiled."));
     }

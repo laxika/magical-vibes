@@ -46,7 +46,7 @@ class AmuletOfKroogTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
 
     @Test
@@ -63,7 +63,7 @@ class AmuletOfKroogTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test

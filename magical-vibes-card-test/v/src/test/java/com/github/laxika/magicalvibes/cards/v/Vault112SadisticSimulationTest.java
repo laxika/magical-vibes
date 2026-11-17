@@ -72,7 +72,7 @@ class Vault112SadisticSimulationTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(chosenId));
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(chosenId);
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(chosenId);
     }
 
     @Test
@@ -109,7 +109,7 @@ class Vault112SadisticSimulationTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(choice.allowNoChoice()).isTrue();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
     }
 
@@ -167,7 +167,7 @@ class Vault112SadisticSimulationTest extends BaseCardTest {
 
         assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(creature.getId()));
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(creature);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(creature.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(creature.getId());
 
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Grizzly Bears");

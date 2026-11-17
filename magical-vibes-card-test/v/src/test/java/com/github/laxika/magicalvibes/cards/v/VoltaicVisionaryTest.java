@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.b.BelligerentGuest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.SureStrike;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -32,8 +33,8 @@ class VoltaicVisionaryTest extends BaseCardTest {
         ExiledCardEntry exiled = gd.findExiledCard(topCard.getId());
         assertThat(exiled).isNotNull();
         assertThat(exiled.sourcePermanentId()).isEqualTo(visionary.getId());
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(topCard.getId());
     }
 
     @Test
@@ -140,7 +141,7 @@ class VoltaicVisionaryTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         prepareMainPhase(player1);
         assertThatThrownBy(() -> harness.castFromExile(player1, topCard.getId()))
                 .isInstanceOf(IllegalStateException.class);

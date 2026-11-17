@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -25,7 +25,7 @@ public class ThrullChampion extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD)),
+                List.of(new GainControlOfTargetEffect(Duration.WHILE_SOURCE_ON_BATTLEFIELD)),
                 "{T}: Gain control of target Thrull for as long as you control this creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentHasSubtypePredicate(CardSubtype.THRULL),

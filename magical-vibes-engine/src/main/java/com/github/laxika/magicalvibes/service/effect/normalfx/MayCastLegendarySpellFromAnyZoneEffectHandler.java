@@ -38,8 +38,7 @@ public class MayCastLegendarySpellFromAnyZoneEffectHandler implements NormalEffe
         for (ExiledCardEntry exiled : List.copyOf(gameData.exiledCards)) {
             if (controllerId.equals(exiled.ownerId())
                     && (!exiled.faceDown() || gameData.foretoldCardIds.contains(exiled.card().getId())
-                    || gameData.additionalExileLookPermissions
-                    .getOrDefault(exiled.card().getId(), java.util.Set.of()).contains(controllerId))
+                    || gameData.mayLookAtExiledCard(exiled.card().getId(), controllerId))
                     && matches(exiled.card(), castEffect)) {
                 eligible.add(exiled.card());
             }

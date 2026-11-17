@@ -28,7 +28,7 @@ class BeornReluctantHostTest extends BaseCardTest {
 
         assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(2);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
 
         harness.playLand(player1, 0);
         harness.playLand(player1, 0);

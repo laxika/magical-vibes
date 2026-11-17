@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -90,7 +91,7 @@ class SpiderClimbTest extends BaseCardTest {
         Permanent riverBoa = addCreatureReady(player1, new RiverBoa());
         SpiderClimb spiderClimb = new SpiderClimb();
         gd.addToExile(player1.getId(), spiderClimb);
-        gd.exilePlayPermissions.put(spiderClimb.getId(), player1.getId());
+        gd.grantExilePlayPermission(spiderClimb.getId(), player1.getId(), Duration.PERMANENT);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.GREEN, 1);

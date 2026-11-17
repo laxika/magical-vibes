@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilThenEffect;
@@ -32,7 +32,7 @@ public class ConniveConcoct extends Card {
                 )),
                 "Target must be a creature with power 2 or less");
 
-        CardEffect connive = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
+        CardEffect connive = new GainControlOfTargetEffect(Duration.PERMANENT);
         CardEffect concoct = SurveilThenEffect.direct(
                 3,
                 ReturnCardFromGraveyardEffect.builder()

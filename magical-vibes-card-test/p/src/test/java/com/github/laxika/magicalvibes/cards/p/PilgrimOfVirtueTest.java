@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.cards.a.Afflict;
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.d.DwarvenGrunt;
@@ -66,7 +67,7 @@ class PilgrimOfVirtueTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, blackSource.getId());
 
-        assertThat(gd.sourceNextDamageToAnyTargetShields)
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class))
                 .anyMatch(shield -> shield.sourceId().equals(blackSource.getId()));
     }
 
@@ -86,7 +87,7 @@ class PilgrimOfVirtueTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -100,7 +101,7 @@ class PilgrimOfVirtueTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -159,7 +160,7 @@ class PilgrimOfVirtueTest extends BaseCardTest {
         resolveCombat(player1);
 
         harness.assertLife(player2, 20);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -179,13 +180,13 @@ class PilgrimOfVirtueTest extends BaseCardTest {
         harness.resolveCombatDamage();
 
         harness.assertLife(player1, 18);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).hasSize(1);
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).hasSize(1);
 
         sky.setChosenColor(CardColor.BLACK);
         harness.resolveCombatDamage();
 
         harness.assertLife(player1, 18);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test

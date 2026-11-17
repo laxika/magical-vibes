@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Slf4j
 @Component
@@ -29,9 +30,9 @@ public class AllowPlayFromOtherGraveyardsThisTurnEffectHandler implements Normal
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        gameData.graveyardPlayFilterPermissionsThisTurn.add(
-                new GameData.GraveyardPlayFilterPermission(
-                        controllerId, GraveyardSearchScope.OPPONENT_GRAVEYARD, new CardTruePredicate()));
+        gameData.addPlayerEffect(entry, new GameData.GraveyardPlayFilterPermission(
+                        controllerId, GraveyardSearchScope.OPPONENT_GRAVEYARD, new CardTruePredicate()),
+                controllerId, Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId)
                 + " may play cards from other players' graveyards this turn."));

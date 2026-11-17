@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 @CardUsed({BackdraftHellkite.class, Shock.class, Divination.class, GrizzlyBears.class, FaithlessLooting.class})
 class BackdraftHellkiteTest extends BaseCardTest {
@@ -33,7 +34,7 @@ class BackdraftHellkiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hellkite.isAttackedThisTurn()).isTrue();
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn)
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK))
                 .containsExactlyInAnyOrder(shock.getId(), divination.getId())
                 .doesNotContain(bears.getId());
     }
@@ -68,7 +69,7 @@ class BackdraftHellkiteTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).doesNotContain(shock.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).doesNotContain(shock.getId());
     }
 
     @Test

@@ -59,7 +59,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.WrappedStackStaticEffect;
@@ -987,8 +986,6 @@ public class LayerSystemService {
                 h = mix(h, floating.timestamp());
             }
         }
-        h = mix(h, gameData.temporaryGraveyardCardAnimationsUntilEndOfTurn.hashCode());
-        h = mix(h, gameData.temporaryGraveyardCardAnimationsUntilEndOfTurn.size());
         h = mix(h, gameData.perpetualCardPowerToughnessModifiers.hashCode());
         h = mix(h, gameData.perpetualCardBasePowerToughness.hashCode());
         h = mix(h, gameData.perpetualPowerToughnessModifiers.hashCode());
@@ -1675,7 +1672,7 @@ public class LayerSystemService {
                         continue;
                     }
                     GrantKeywordEffect grant = new GrantKeywordEffect(
-                            keyword, GrantScope.TARGET, GrantDuration.INDEFINITE);
+                            keyword, GrantScope.TARGET, Duration.PERMANENT);
                     FloatingContinuousEffect counterEffect = new FloatingContinuousEffect(
                             UUID.randomUUID(), keyword.name().toLowerCase() + " counter", null,
                             slot.controllerId(), grant, permanent.getId(), null, null,

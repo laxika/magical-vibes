@@ -67,7 +67,7 @@ class PraetorsGraspTest extends BaseCardTest {
         assertThat(gd.findExiledCard(bears.getId()).exilerId()).isEqualTo(player1.getId());
 
         // Play permission should be granted to caster
-        assertThat(gd.exilePlayPermissions.get(bears.getId()))
+        assertThat(gd.exilePlayPermissionHolder(bears.getId()))
                 .isEqualTo(player1.getId());
 
         // Card should not be in opponent's library
@@ -144,7 +144,7 @@ class PraetorsGraspTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         // Play permission should be removed
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(bears.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(bears.getId());
 
         // Card should no longer be in exile
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -179,7 +179,7 @@ class PraetorsGraspTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.playCardFromExile(gd, player1, bears.getId(), null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.findExiledCard(bears.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(bears.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(bears.getId())).isEqualTo(player1.getId());
         harness.addMana(player1, ManaColor.GREEN, 1);
         gs.playCardFromExile(gd, player1, bears.getId(), null, null);
         harness.passBothPriorities();

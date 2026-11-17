@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -48,10 +49,9 @@ public class AminatousAuguryChoiceInteractionHandler
         for (UUID cardId : exiledCardIds) {
             ExiledCardEntry exiled = gameData.findExiledCard(cardId);
             if (exiled == null || exiled.card().hasType(CardType.LAND)) continue;
-            gameData.exilePlayPermissions.put(cardId, playerId);
-            gameData.exilePlayPermissionGroups.put(cardId, groupId);
-            gameData.exilePlayWithoutPayingManaCost.add(cardId);
-            gameData.exilePlayPermissionsExpireEndOfTurn.add(cardId);
+            gameData.grantExilePlayPermission(cardId, playerId, Duration.UNTIL_END_OF_TURN);
+            gameData.updateExilePlayPermission(cardId, permission -> permission
+                    .withWithoutPayingManaCost(true).withGroupId(groupId));
         }
         gameData.exilePlayPermissionGroupUsesRemaining.put(groupId, CardType.values().length);
         List<CardType> cardTypes = List.of();

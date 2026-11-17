@@ -5,8 +5,8 @@ public record TargetPlayerGainsControlOfEnchantedPermanentUntilEndOfTurnEffect()
         implements ControlStealingEffect {
 
     @Override
-    public ControlDuration controlDuration() {
-        return ControlDuration.END_OF_TURN;
+    public Duration controlDuration() {
+        return Duration.UNTIL_END_OF_TURN;
     }
 
     @Override

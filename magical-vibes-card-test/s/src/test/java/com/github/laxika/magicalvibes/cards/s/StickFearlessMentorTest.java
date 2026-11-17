@@ -29,7 +29,7 @@ class StickFearlessMentorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         harness.castFromExile(player1, topCard.getId());
         harness.assertOnBattlefield(player1, "Forest");
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(topCard);
@@ -120,12 +120,12 @@ class StickFearlessMentorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
     }
 }

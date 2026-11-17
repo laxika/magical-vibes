@@ -81,13 +81,13 @@ class DefenderEnVecTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields).containsEntry(player2.getId(), 2);
+        assertThat(gd.playerDamagePreventionShields()).containsEntry(player2.getId(), 2);
 
         harness.activateAbility(player1, 1, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player2.getId());
+        assertThat(gd.playerDamagePreventionShields()).doesNotContainKey(player2.getId());
     }
 
     @Test

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -119,11 +119,11 @@ public class JuxtaposeSupport {
             return;
         }
 
-        GainControlOfTargetEffect control = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
+        GainControlOfTargetEffect control = new GainControlOfTargetEffect(Duration.PERMANENT);
         creatureControlService.applyControlEffect(gameData, targetPlayerId, controllerPerm, control,
-                ControlDuration.PERMANENT.toDuration(), null, sourceCard.getName());
+                Duration.PERMANENT, null, sourceCard.getName());
         creatureControlService.applyControlEffect(gameData, controllerId, targetPerm, control,
-                ControlDuration.PERMANENT.toDuration(), null, sourceCard.getName());
+                Duration.PERMANENT, null, sourceCard.getName());
 
         
         gameLogService.append(gameData, GameLog.builder().card(sourceCard).text(": ").card(controllerPerm.getCard()).text(" and ").card(targetPerm.getCard()).text(" exchange controllers.").build());

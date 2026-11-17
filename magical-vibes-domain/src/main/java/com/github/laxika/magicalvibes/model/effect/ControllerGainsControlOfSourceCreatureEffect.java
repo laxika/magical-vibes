@@ -7,15 +7,15 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param duration how long control of the source creature is retained
  */
-public record ControllerGainsControlOfSourceCreatureEffect(ControlDuration duration)
+public record ControllerGainsControlOfSourceCreatureEffect(Duration duration)
         implements ControlStealingEffect {
 
     public ControllerGainsControlOfSourceCreatureEffect() {
-        this(ControlDuration.PERMANENT);
+        this(Duration.PERMANENT);
     }
 
     @Override
-    public ControlDuration controlDuration() {
+    public Duration controlDuration() {
         return duration;
     }
 }

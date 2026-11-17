@@ -33,9 +33,9 @@ class InsideInformationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(first, second);
-        assertThat(gd.exilePlayPermissions).containsEntry(first.getId(), player1.getId())
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
-        assertThat(gd.exilePlayForLifeEqualToManaValue).contains(first.getId(), second.getId());
+        assertThat(gd.exilePlayForLifeCardIds()).contains(first.getId(), second.getId());
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
@@ -78,8 +78,8 @@ class InsideInformationTest extends BaseCardTest {
 
         GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(shock.getId());
-        assertThat(gd.exilePlayForLifeEqualToManaValue).doesNotContain(shock.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(shock.getId());
+        assertThat(gd.exilePlayForLifeCardIds()).doesNotContain(shock.getId());
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
@@ -317,8 +318,8 @@ class CastingPermissionServiceTest {
         gd.addToExile(player2Id, exiled);
         ControlsPermanent controlsKavu = new ControlsPermanent(
                 new PermanentHasSubtypePredicate(CardSubtype.KAVU));
-        gd.exilePlayPermissions.put(exiled.getId(), player1Id);
-        gd.exilePlayPermissionConditions.put(exiled.getId(), controlsKavu);
+        gd.grantExilePlayPermission(exiled.getId(), new ExilePlayPermissionEffect(player1Id).withCondition(controlsKavu),
+                null, player1Id, Duration.PERMANENT);
 
         when(conditionEvaluationService.isMet(eq(gd), eq(controlsKavu), any())).thenReturn(false);
         assertThat(svc.hasExilePlayPermission(gd, player1Id, exiled.getId())).isFalse();
@@ -521,13 +522,13 @@ class CastingPermissionServiceTest {
         Card second = new Card();
         gd.addToExile(player1Id, first, sourcePermanentId);
         gd.addToExile(player1Id, second, sourcePermanentId);
-        gd.exileCastPermissionsUntilEndOfTurn.add(new GameData.ExileCastPermission(
+        gd.grantExileCastPermission(new GameData.ExileCastPermission(
                 grantId, sourcePermanentId, player1Id, first.getId(), false));
-        gd.exileCastPermissionsUntilEndOfTurn.add(new GameData.ExileCastPermission(
+        gd.grantExileCastPermission(new GameData.ExileCastPermission(
                 grantId, sourcePermanentId, player1Id, second.getId(), false));
 
         assertThat(svc.consumeTemporaryCastFromExiledWithSource(gd, player1Id, first.getId())).isTrue();
-        assertThat(gd.exileCastPermissionsUntilEndOfTurn).isEmpty();
+        assertThat(gd.exileCastPermissions()).isEmpty();
         assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player1Id, second.getId())).isFalse();
     }
 
@@ -1019,12 +1020,17 @@ class CastingPermissionServiceTest {
             return card;
         }
 
+        private void grantGraveyardCastFilter(GameData.GraveyardCastFilterPermission permission) {
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, permission.playerId(), permission,
+                    permission.playerId(), Duration.UNTIL_END_OF_TURN));
+        }
+
         @Test
         @DisplayName("A matching filter grant permits the cast")
         void filterGrantPermitsCast() {
             Card card = zombieCard();
             CardPredicate filter = new CardSubtypePredicate(CardSubtype.ZOMBIE);
-            gd.graveyardCastFilterPermissionsThisTurn.add(
+            grantGraveyardCastFilter(
                     new GameData.GraveyardCastFilterPermission(player1Id, filter));
             when(predicateEvaluationService.matchesCardPredicate(card, filter, null)).thenReturn(true);
 
@@ -1036,7 +1042,7 @@ class CastingPermissionServiceTest {
         void nonMatchingCardIsRejected() {
             Card card = zombieCard();
             CardPredicate filter = new CardSubtypePredicate(CardSubtype.ZOMBIE);
-            gd.graveyardCastFilterPermissionsThisTurn.add(
+            grantGraveyardCastFilter(
                     new GameData.GraveyardCastFilterPermission(player1Id, filter));
             when(predicateEvaluationService.matchesCardPredicate(card, filter, null)).thenReturn(false);
 
@@ -1047,7 +1053,7 @@ class CastingPermissionServiceTest {
         @DisplayName("Another player's grant does not apply")
         void grantIsPerPlayer() {
             Card card = zombieCard();
-            gd.graveyardCastFilterPermissionsThisTurn.add(new GameData.GraveyardCastFilterPermission(
+            grantGraveyardCastFilter(new GameData.GraveyardCastFilterPermission(
                     player2Id, new CardSubtypePredicate(CardSubtype.ZOMBIE)));
 
             assertThat(svc.hasGraveyardPlayPermission(gd, card, player1Id)).isFalse();
@@ -1059,7 +1065,7 @@ class CastingPermissionServiceTest {
             Card land = new Card();
             land.setName("Swamp");
             land.setType(CardType.LAND);
-            gd.graveyardCastFilterPermissionsThisTurn.add(new GameData.GraveyardCastFilterPermission(
+            grantGraveyardCastFilter(new GameData.GraveyardCastFilterPermission(
                     player1Id, new CardSubtypePredicate(CardSubtype.ZOMBIE)));
 
             assertThat(svc.hasGraveyardPlayPermission(gd, land, player1Id)).isFalse();
@@ -1069,7 +1075,8 @@ class CastingPermissionServiceTest {
         @DisplayName("A per-card grant still permits the cast without any filter grant")
         void perCardGrantStillWorks() {
             Card card = zombieCard();
-            gd.graveyardPlayPermissions.put(card.getId(), player1Id);
+            gd.addFloatingEffect(FloatingContinuousEffect.onCard("Test", null, player1Id,
+                    new GameData.GraveyardCardPlayGrant(player1Id, false), card.getId(), Duration.UNTIL_END_OF_TURN));
 
             assertThat(svc.hasGraveyardPlayPermission(gd, card, player1Id)).isTrue();
         }
@@ -1079,7 +1086,7 @@ class CastingPermissionServiceTest {
         void damagedPlayerGrantUsesItsRememberedGraveyard() {
             Card card = zombieCard();
             CardPredicate filter = new CardSubtypePredicate(CardSubtype.ZOMBIE);
-            gd.graveyardCastFilterPermissionsThisTurn.add(
+            grantGraveyardCastFilter(
                     new GameData.GraveyardCastFilterPermission(player1Id, filter, true, player2Id, true));
             when(gameQueryService.findGraveyardOwnerById(gd, card.getId())).thenReturn(player2Id);
             when(gameQueryService.findCardInGraveyardById(gd, card.getId())).thenReturn(card);
@@ -1094,7 +1101,7 @@ class CastingPermissionServiceTest {
         void damagedPlayerGrantRejectsAnotherGraveyard() {
             Card card = zombieCard();
             CardPredicate filter = new CardSubtypePredicate(CardSubtype.ZOMBIE);
-            gd.graveyardCastFilterPermissionsThisTurn.add(
+            grantGraveyardCastFilter(
                     new GameData.GraveyardCastFilterPermission(player1Id, filter, true, player2Id, true));
             when(gameQueryService.findGraveyardOwnerById(gd, card.getId())).thenReturn(player1Id);
 

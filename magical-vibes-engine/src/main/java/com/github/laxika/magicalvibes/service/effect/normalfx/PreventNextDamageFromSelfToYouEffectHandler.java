@@ -36,7 +36,7 @@ public class PreventNextDamageFromSelfToYouEffectHandler implements NormalEffect
             return;
         }
 
-        gameData.playerSourceNextDamageShields.add(new PlayerSourceNextDamageShield(playerId, sourceId));
+        gameData.addShield(new PlayerSourceNextDamageShield(playerId, sourceId));
 
         String playerName = gameData.playerIdToName.get(playerId);
         String sourceName = entry.getCard().getName();

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -38,7 +38,7 @@ public class HydaelynTheMothercrystal extends Card {
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET,
-                                GrantDuration.UNTIL_YOUR_NEXT_TURN),
+                                Duration.UNTIL_YOUR_NEXT_TURN),
                         new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)),
                                 new DrawCardEffect()));

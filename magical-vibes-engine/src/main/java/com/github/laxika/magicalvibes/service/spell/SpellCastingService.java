@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.spell;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardGrantFreePlayUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.Ability;
@@ -259,6 +261,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 /**
  * Casts spells and plays lands from every zone a card can be played from.
@@ -2462,8 +2465,8 @@ public class SpellCastingService {
     private void markCardPlotted(GameData gameData, UUID playerId, Card card) {
         gameData.addToExile(playerId, card);
         gameData.plottedCardIds.add(card.getId());
-        gameData.exilePlayPermissions.put(card.getId(), playerId);
-        gameData.exilePlayWithoutPayingManaCost.add(card.getId());
+        gameData.grantExilePlayPermission(card.getId(), playerId, Duration.PERMANENT);
+        gameData.setExilePlayWithoutPayingManaCost(card.getId(), true);
         ActionEvents.plotted(gameData, playerId, card);
         // Plotting is a special action, not a resolution: the plotted card's "when this card becomes plotted"
         // target choice begins here (Longhorn Sharpshooter).
@@ -2576,12 +2579,10 @@ public class SpellCastingService {
      * first such cast, so the spell is marked here and returns to hand as it resolves.
      */
     private void bindPendingInstantSorceryReturnToHand(GameData gameData, UUID playerId, StackEntry entry) {
-        if (gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.getOrDefault(playerId, 0) <= 0) {
-            return;
-        }
         // Every activation made so far applies to this same spell; none of them carries over.
-        gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.remove(playerId);
-        entry.setReturnToHandAfterResolving(true);
+        if (gameData.bindNextInstantSorceryCastFromHandToHand(playerId)) {
+            entry.setReturnToHandAfterResolving(true);
+        }
     }
 
     private void playOmenCard(GameData gameData, Player player, int cardIndex, Integer xValue,
@@ -3030,7 +3031,6 @@ public class SpellCastingService {
             payGraveyardCastAdditionalCosts(gameData, player, physicalCard, filteredAdventureAdditionalCosts,
                     null, List.of(), sacrificePermanentId, additionalCostSacrificePermanentIds);
         }
-        gameData.graveyardAdventureCastPermissions.remove(physicalCard.getId());
         permanentRemovalService.removeCardFromGraveyardById(gameData, physicalCard.getId());
         if (!stripAdventure) {
             filteredAdventurePermission.flatMap(permission -> Optional.ofNullable(permission.sourcePermanentId()))
@@ -3993,7 +3993,7 @@ public class SpellCastingService {
                 && !usingWebSlingingCost && !usingSharedColorDiscardAlternativeCost
                 && !usingCollectEvidenceAlternativeCost
                 && handEarly.get(cardIndex).getCastingOption(AlternateHandCast.class).isEmpty()
-                && !gameData.cardsGrantedWarpUntilEndOfTurn.contains(handEarly.get(cardIndex).getId())
+                && !gameData.hasGrantedCardAbility(handEarly.get(cardIndex).getId(), GrantedCardAbilityEffect.Ability.WARP)
                 && castingCostService.findAffordableAlternativeCostSelection(gameData, playerId,
                         handEarly.get(cardIndex), gameData.playerManaPools.get(playerId), 0,
                         castSourceZone) != null;
@@ -4011,7 +4011,7 @@ public class SpellCastingService {
                 || usingSharedColorDiscardAlternativeCost
                 || usingWebSlingingCost;
         boolean usingWarpAlternativeCost = forceAlternateCost
-                && gameData.cardsGrantedWarpUntilEndOfTurn.contains(handEarly.get(cardIndex).getId());
+                && gameData.hasGrantedCardAbility(handEarly.get(cardIndex).getId(), GrantedCardAbilityEffect.Ability.WARP);
         String chosenBattlefieldAlternativeManaCost = null;
         Integer webSlingingReturnedCreatureManaValue = null;
         UUID sneakAttackTargetId = null;
@@ -4341,7 +4341,7 @@ public class SpellCastingService {
             }
         }
         gameData.spellColorOverrides.remove(card.getId());
-        gameData.spellColorOverridesUntilEndOfTurn.remove(card.getId());
+        gameData.endSpellColorUntilEndOfTurn(card.getId());
         gameData.spellTextReplacements.remove(card.getId());
         boolean hasGiftChoice = card.getStaticEffects().stream()
                 .anyMatch(GiftEffect.class::isInstance);
@@ -10817,14 +10817,14 @@ public class SpellCastingService {
         }
         // A flashback granted until end of turn (Lost in Memories) uses the card's mana cost, so it
         // stands in for the printed flashback cost when that cost (mana or life) can't be paid.
-        if (flashbackOpt.isPresent() && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId())
+        if (flashbackOpt.isPresent() && gameData.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.FLASHBACK)
                 && castingCostService.grantedFlashbackStandsInForPrinted(
                 gameData, playerId, card, flashbackOpt.get())) {
             flashbackOpt = Optional.empty();
         }
         // Declining to pay the printed flashback's discard cost chooses the granted flashback instead,
         // whose cost is just the card's mana cost (Snapcaster Mage on Conflagrate).
-        if (flashbackOpt.isPresent() && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId())
+        if (flashbackOpt.isPresent() && gameData.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.FLASHBACK)
                 && effectiveXValue > 0 && discardHandCardIndices.isEmpty()
                 && flashbackOpt.get().getCost(DiscardXCardsCastingCost.class).isPresent()) {
             flashbackOpt = Optional.empty();
@@ -10863,12 +10863,12 @@ public class SpellCastingService {
                 : Optional.empty();
         boolean grantedHarmonize = !graveyardAbilitiesSuppressed
                 && harmonizeOpt.isEmpty() && flashbackOpt.isEmpty() && !isDisturb
-                && gameData.cardsGrantedHarmonizeUntilEndOfTurn.contains(card.getId());
+                && gameData.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.HARMONIZE);
         boolean isHarmonize = (harmonizeOpt.isPresent() && flashbackOpt.isEmpty() && !isDisturb) || grantedHarmonize;
         boolean isJumpStart = !graveyardAbilitiesSuppressed
                 && (card.getCastingOption(JumpStartCast.class).isPresent()
                 || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.JUMP_START, Zone.GRAVEYARD)
-                || gameData.cardsGrantedJumpStartUntilEndOfTurn.contains(card.getId()))
+                || gameData.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.JUMP_START))
                 && flashbackOpt.isEmpty() && !isDisturb && !isHarmonize
                 && !castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId)
                 && !castingPermissionService.hasGrantedGraveyardCardCastPermission(gameData, card, playerId);
@@ -10878,11 +10878,11 @@ public class SpellCastingService {
                 || castingPermissionService.hasGrantedRetrace(gameData, playerId, card))
                 && flashbackOpt.isEmpty() && !isDisturb && !isHarmonize && !isJumpStart;
         boolean grantedFlashback = (!graveyardAbilitiesSuppressed
-                || gameData.cardsGrantedFlashbackDespiteLostAbilitiesUntilEndOfTurn.contains(card.getId()))
+                || gameData.hasFlashbackGrantDespiteLostAbilities(card.getId()))
                 && flashbackOpt.isEmpty()
                 && !isDisturb
                 && !isHarmonize
-                && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
+                && gameData.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.FLASHBACK);
         boolean emblemFlashback = !graveyardAbilitiesSuppressed
                 && flashbackOpt.isEmpty() && !isDisturb && !grantedFlashback
                 && !isHarmonize
@@ -10896,11 +10896,10 @@ public class SpellCastingService {
                 && !emblemFlashback
                 && castingPermissionService.hasGrantedGraveyardCardCastPermission(gameData, card, playerId);
         GameData.GraveyardCardCastPermission grantedGraveyardCardCastPermission = grantedGraveyardCardCast
-                ? gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(card.getId())
+                ? gameData.graveyardCardCastPermission(card.getId(), playerId).orElse(null)
                 : null;
         List<GameData.GraveyardCardCastPermission> grantedGraveyardCardCastGrants = grantedGraveyardCardCast
-                ? List.copyOf(gameData.graveyardCardCastPermissionGrantsUntilEndOfTurn
-                        .getOrDefault(card.getId(), List.of()))
+                ? gameData.graveyardCardCastGrants(card.getId())
                 : List.of();
         boolean isGrantedGraveyardPlay = flashbackOpt.isEmpty()
                 && !isDisturb
@@ -10911,7 +10910,7 @@ public class SpellCastingService {
                 && castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId);
         Optional<GameData.GraveyardCastFilterPermission> grantedFilterPermission =
                 isGrantedGraveyardPlay
-                        && !playerId.equals(gameData.graveyardPlayPermissions.get(card.getId()))
+                        && !playerId.equals(gameData.graveyardPlayPermittedPlayer(card.getId()))
                         ? castingPermissionService.findGraveyardCastFilterPermission(gameData, card, playerId)
                         : Optional.empty();
         Optional<CastingPermissionService.FilteredGraveyardPermission> availableFilteredPermission =
@@ -11271,7 +11270,7 @@ public class SpellCastingService {
                 gameData, playerId, card, costReductionTargetIds);
         if (grantedGraveyardCardCast) {
             GameData.GraveyardCardCastPermission permission =
-                    gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(card.getId());
+                    gameData.graveyardCardCastPermission(card.getId(), playerId).orElse(null);
             if (permission != null && !targetsCreatureControlledBy(
                     gameData, playerId, targetId, targetIds)) {
                 additionalCost += permission.additionalGenericCost();
@@ -11338,11 +11337,10 @@ public class SpellCastingService {
             additionalCost += expectedSacrificeCostReduction - paySacrificeCreaturesForCostReduction(
                     gameData, player, card, card, costReductionSacrificeIds);
         }
-        boolean withoutPayingManaCost = gameData.cardsGrantedFlashbackWithoutPayingManaCostUntilEndOfTurn
-                .contains(card.getId())
+        boolean withoutPayingManaCost = gameData.hasFlashbackGrantWithoutPayingManaCost(card.getId())
                 || grantedGraveyardCardCast
-                && gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(card.getId())
-                .withoutPayingManaCost();
+                && gameData.graveyardCardCastPermission(card.getId(), playerId)
+                .map(GameData.GraveyardCardCastPermission::withoutPayingManaCost).orElse(false);
         if (usingSharedColorDiscardAlternativeCost) {
             withoutPayingManaCost = true;
         }
@@ -11438,6 +11436,8 @@ public class SpellCastingService {
                 effectiveXValue = discardedManaValue;
             }
         }
+        // The play grant's rider is read before the card leaves the graveyard, which ends the grant.
+        boolean graveyardPlayEntersTapped = gameData.graveyardPlayEntersTapped(card.getId());
         // Remove card from graveyard
         permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
         // Leaving the graveyard makes the card a new object (rule 400.7), so a later graveyard cast
@@ -11445,8 +11445,6 @@ public class SpellCastingService {
         gameData.cardsDiscardedOrCycledThisTurn.values().forEach(discardedIds -> discardedIds.remove(card.getId()));
         filteredGraveyardPermissionSourceId.ifPresent(sourceId ->
                 castingPermissionService.markFilteredGraveyardPermissionUsed(gameData, playerId, sourceId));
-        gameData.graveyardPlayPermissions.remove(card.getId());
-        gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(card.getId());
 
         // Pay exile-N-cards-from-graveyard cost if present (validated above; the spell has left
         // the graveyard now, so the caller's indices apply directly)
@@ -11574,10 +11572,7 @@ public class SpellCastingService {
                     || (grantedGraveyardCardCastPermission != null
                     && grantedGraveyardCardCastPermission.escape())
                             || (isGrantedCyclingGraveyardCast
-                            && filteredGraveyardPermission.orElseThrow().permission().escape())
-                            || (grantedGraveyardCardCast
-                            && Optional.ofNullable(gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(card.getId()))
-                            .map(GameData.GraveyardCardCastPermission::escape).orElse(false))) {
+                            && filteredGraveyardPermission.orElseThrow().permission().escape())) {
                 stackEntry.setCastWithEscape(true);
             }
             stackEntry.setEscapeExiledCardIds(escapeExiledCardIds);
@@ -11612,7 +11607,7 @@ public class SpellCastingService {
                 }
             }
             stackEntry.setEntersTapped(stackEntry.isEntersTapped()
-                    || gameData.graveyardCardsEnterTapped.remove(card.getId()));
+                    || graveyardPlayEntersTapped);
             if (graveyardBestowCast != null) {
                 stackEntry.setAlternateCost(true);
                 stackEntry.setBestowOriginalCard(physicalGraveyardCard);
@@ -11703,10 +11698,7 @@ public class SpellCastingService {
             stackEntry.setCastWithWarp(castWithWarp);
             if ((isGraveyardCast && graveyardCastOpt.orElseThrow().escape())
                             || (isGrantedCyclingGraveyardCast
-                            && filteredGraveyardPermission.orElseThrow().permission().escape())
-                            || (grantedGraveyardCardCast
-                            && Optional.ofNullable(gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(card.getId()))
-                            .map(GameData.GraveyardCardCastPermission::escape).orElse(false))) {
+                            && filteredGraveyardPermission.orElseThrow().permission().escape())) {
                 stackEntry.setCastWithEscape(true);
             }
             stackEntry.setEscapeExiledCardIds(escapeExiledCardIds);
@@ -12158,7 +12150,7 @@ public class SpellCastingService {
         payLandPlayCost(gameData, playerId, landFace);
         Card permissionFace = graveyardCard.createRuntimeCopyWithFace(landFace);
         permissionFace.setOwnerId(graveyardCard.getOwnerId());
-        boolean entersTapped = gameData.graveyardCardsEnterTapped.remove(graveyardCard.getId());
+        boolean entersTapped = gameData.graveyardPlayEntersTapped(graveyardCard.getId());
         UUID graveyardOwnerId = resolveGraveyardOwner(gameData, graveyard, graveyardCard.getId());
         Optional<CastingPermissionService.GraveyardLandPermission> graveyardLandPermission =
                 castingPermissionService.findGraveyardLandPermission(gameData, playerId, permissionFace);
@@ -12166,8 +12158,6 @@ public class SpellCastingService {
                 castingPermissionService.markGraveyardLandPermissionUsed(
                         gameData, playerId, permission.sourcePermanentId()));
         permanentRemovalService.removeCardFromGraveyardById(gameData, graveyardCard.getId());
-        gameData.graveyardPlayPermissions.remove(graveyardCard.getId());
-        gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(graveyardCard.getId());
         Permanent permanent = new Permanent(graveyardCard);
         permanent.setCard(landFace);
         permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
@@ -12239,7 +12229,7 @@ public class SpellCastingService {
         }
 
         Card card = exiledEntry.card();
-        boolean entersTapped = gameData.exileCardsEnterTapped.remove(exileCardId);
+        boolean entersTapped = gameData.exilePlayPermission(exileCardId).filter(ExilePlayPermissionEffect::entersTapped).isPresent();
         commitExileCast(gameData, player.getId(), exileCardId,
                 false, false, false, false, false, card);
         Card landFace = selectedModalDoubleFacedLandFace(card, 0);
@@ -12512,7 +12502,7 @@ public class SpellCastingService {
         }
         boolean directExilePlayPermission = castingPermissionService.hasExilePlayPermission(
                 gameData, playerId, exileCardId);
-        CardPredicate exileSpellFilter = gameData.exilePlayPermissionSpellFilters.get(exileCardId);
+        CardPredicate exileSpellFilter = gameData.exilePlayPermission(exileCardId).map(ExilePlayPermissionEffect::spellFilter).orElse(null);
         if (directExilePlayPermission && exileSpellFilter != null
                 && !predicateEvaluationService.matchesCardPredicate(card, exileSpellFilter, null, gameData, playerId)) {
             directExilePlayPermission = false;
@@ -12600,7 +12590,7 @@ public class SpellCastingService {
         // Delve only reduces a cost that is being paid, so a free cast from exile never pays it.
         boolean playWithoutPaying = !flashforwardCast && !waterbendCast
                 && !sourceManaValueLifeAlternative
-                && (gameData.exilePlayWithoutPayingManaCost.contains(exileCardId) || sourceFreeCast);
+                && (gameData.exilePlayWithoutPayingManaCost(exileCardId) || sourceFreeCast);
         boolean supportedAdditionalManaCost = additionalCosts.discardCardOrPayManaCost() != null
                 && card.getCastingCosts().stream()
                 .allMatch(effect -> effect instanceof DiscardCardOrPayManaCost || effect instanceof ChooseXValueCost);
@@ -12801,7 +12791,7 @@ public class SpellCastingService {
             if (!castingPermissionService.canPlayLandNow(gameData, playerId, card)) {
                 throw new IllegalStateException("Cannot play a land from exile now");
             }
-            boolean entersTapped = gameData.exileCardsEnterTapped.remove(exileCardId);
+            boolean entersTapped = gameData.exilePlayPermission(exileCardId).filter(ExilePlayPermissionEffect::entersTapped).isPresent();
             commitExileCast(gameData, playerId, exileCardId, sourceFreeCast,
                     collectionCounterPermission, copy, directExilePlayPermission, fromOutsideGame, card);
             Card landFace = selectedModalDoubleFacedLandFace(card, effectiveXValue);
@@ -15271,7 +15261,7 @@ public class SpellCastingService {
             baseMana = replacementManaCost;
             hasExileManaCostOverride = true;
         } else if (sourceZone == Zone.EXILE) {
-            var exilePlayCostModifier = gameData.exilePlayCostModifiers.get(card.getId());
+            var exilePlayCostModifier = gameData.exilePlayCostModifier(card.getId());
             if (exilePlayCostModifier != null
                     && playerId.equals(exilePlayCostModifier.permittedPlayerId())
                     && exilePlayCostModifier.replacementManaCost() != null) {
@@ -16580,12 +16570,8 @@ public class SpellCastingService {
             GameData gameData, UUID playerId, Card castCard,
             GameData.GraveyardCardCastPermission capturedPermission,
             List<GameData.GraveyardCardCastPermission> capturedGrants) {
-        GameData.GraveyardCardCastPermission permission =
-                gameData.graveyardCardCastPermissionsUntilEndOfTurn.remove(castCard.getId());
-        gameData.graveyardCardCastPermissionGrantsUntilEndOfTurn.remove(castCard.getId());
-        if (permission == null) {
-            permission = capturedPermission;
-        }
+        GameData.GraveyardCardCastPermission permission = capturedPermission;
+        gameData.endFloatingEffectsOnCard(castCard.getId());
         List<GameData.GraveyardCardCastPermission> riders = new ArrayList<>();
         for (GameData.GraveyardCardCastPermission grant : capturedGrants) {
             if (grant.copySourceActivatedAbilities() && playerId.equals(grant.castingPlayerId())) {
@@ -17248,7 +17234,7 @@ public class SpellCastingService {
             // is a second harmonize ability whose cost is the card's mana cost; the cheaper payable one is used.
             ManaCost grantedCost = harmonizeOpt.isPresent() && card.getManaCost() != null
                     && !card.getManaCost().equals(harmonizeManaCost)
-                    && gameData.cardsGrantedHarmonizeUntilEndOfTurn.contains(card.getId())
+                    && gameData.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.HARMONIZE)
                     ? castingCostService.applyColoredManaCostReductions(
                             gameData, playerId, card, new ManaCost(card.getManaCost()))
                     : null;
@@ -17352,7 +17338,7 @@ public class SpellCastingService {
                     ? grantedFlashbackOpt.flatMap(flashback -> flashback.getCost(ManaCastingCost.class)
                     .map(ManaCastingCost::manaCost)).orElse(card.getManaCost())
                     : grantedFlashback
-                    ? gameData.cardsGrantedFlashbackCostsUntilEndOfTurn.getOrDefault(card.getId(), card.getManaCost())
+                    ? Optional.ofNullable(gameData.grantedFlashbackCost(card.getId())).orElse(card.getManaCost())
                     : card.getManaCost();
             ManaCost cost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, card,
@@ -17448,10 +17434,10 @@ public class SpellCastingService {
                     ManaCost payableCost = cost;
                     if (!payableCost.canPayFlashbackFromGraveyard(pool, manaXValue + additionalCost - delveReduction)
                             && flashback.costs().size() == 1
-                            && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId())) {
+                            && gameData.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.FLASHBACK)) {
                         // A separate flashback grant remains available when the printed cost cannot be paid.
-                        String grantedCost = gameData.cardsGrantedFlashbackCostsUntilEndOfTurn
-                                .getOrDefault(card.getId(), card.getManaCost());
+                        String grantedCost = Optional.ofNullable(gameData.grantedFlashbackCost(card.getId()))
+                                .orElse(card.getManaCost());
                         payableCost = castingCostService.applyColoredManaCostReductions(
                                 gameData, playerId, card, new ManaCost(grantedCost), true);
                     }

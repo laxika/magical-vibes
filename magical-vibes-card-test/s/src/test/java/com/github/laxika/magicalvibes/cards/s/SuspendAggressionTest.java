@@ -47,11 +47,11 @@ class SuspendAggressionTest extends BaseCardTest {
 
         // Target permanent exiled; opponent (its owner) may play it.
         harness.assertNotOnBattlefield(player2, "Hardened Academic");
-        assertThat(gd.exilePlayPermissions.get(academicCardId)).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(academicCardId)).isEqualTo(player2.getId());
 
         // Top card of caster's library exiled; caster may play it.
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(top.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -69,17 +69,17 @@ class SuspendAggressionTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsKeys(academicCardId, top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKeys(academicCardId, top.getId());
 
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(academicCardId).containsKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(academicCardId).containsKey(top.getId());
 
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKeys(academicCardId, top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKeys(academicCardId, top.getId());
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(Card::getId).contains(academicCardId);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
@@ -97,7 +97,7 @@ class SuspendAggressionTest extends BaseCardTest {
         harness.castInstant(player1, 0, academic.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.exilePlayPermissions.get(academicCardId)).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(academicCardId)).isEqualTo(player1.getId());
     }
 
     @Test
@@ -130,7 +130,7 @@ class SuspendAggressionTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(top);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(top);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
     }
 
     @Test
@@ -145,7 +145,7 @@ class SuspendAggressionTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Hardened Academic");
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(academic.getOriginalCard());
-        assertThat(gd.exilePlayPermissions.get(academic.getOriginalCard().getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(academic.getOriginalCard().getId())).isEqualTo(player2.getId());
     }
 
     @Test
@@ -201,7 +201,7 @@ class SuspendAggressionTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Hardened Academic");
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(card);
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player2.getId());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         assertThatThrownBy(() -> harness.castFromExile(player1, card.getId()))

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetSpellAndPlotEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -57,8 +58,8 @@ public class ExileTargetSpellAndPlotEffectHandler implements NormalEffectHandler
         Card card = target.getCard();
         exileService.exileCard(gameData, target.getOwnerId(), card);
         gameData.plottedCardIds.add(card.getId());
-        gameData.exilePlayPermissions.put(card.getId(), target.getOwnerId());
-        gameData.exilePlayWithoutPayingManaCost.add(card.getId());
+        gameData.grantExilePlayPermission(card.getId(), target.getOwnerId(), Duration.PERMANENT);
+        gameData.setExilePlayWithoutPayingManaCost(card.getId(), true);
         ActionEvents.plotted(gameData, target.getOwnerId(), card);
 
         gameLogService.append(gameData,

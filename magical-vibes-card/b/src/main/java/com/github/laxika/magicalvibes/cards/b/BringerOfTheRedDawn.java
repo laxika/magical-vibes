@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -30,7 +30,7 @@ public class BringerOfTheRedDawn extends Card {
                 SequenceEffect.of(new MayEffect(
                         SequenceEffect.of(
                                 new UntapPermanentsEffect(TapUntapScope.TARGET),
-                                new GainControlOfTargetEffect(ControlDuration.END_OF_TURN)
+                                new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN)
                         ),
                         "Untap target creature and gain control of it until end of turn?"
                 ), new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)));

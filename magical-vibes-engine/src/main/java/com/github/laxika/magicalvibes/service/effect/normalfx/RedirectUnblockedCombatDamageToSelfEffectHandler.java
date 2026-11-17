@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.UUID;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,8 +32,9 @@ public class RedirectUnblockedCombatDamageToSelfEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) return;
-        gameData.combatDamageRedirectTarget = source.getId();
-        gameData.combatDamageRedirectPlayer = entry.getControllerId();
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), source.getCard().getName(),
+                source.getId(), entry.getControllerId(), (RedirectUnblockedCombatDamageToSelfEffect) effect,
+                source.getId(), entry.getControllerId(), null, Duration.UNTIL_END_OF_TURN, 0));
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                 "'s ability resolves — unblocked combat damage will be redirected to it this turn."));
         log.info("Game {} - Combat damage redirect set to {}", gameData.id, source.getCard().getName());

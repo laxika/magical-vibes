@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -129,7 +128,7 @@ class VaporSnareTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player1, borrowedForest);
         gd.stolenCreatures.put(land.getId(), player2.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control effect", null,
-                player1.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT), land.getId(),
+                player1.getId(), new GainControlOfTargetEffect(Duration.PERMANENT), land.getId(),
                 null, null, Duration.PERMANENT, 0));
         castVaporSnare(creature);
 

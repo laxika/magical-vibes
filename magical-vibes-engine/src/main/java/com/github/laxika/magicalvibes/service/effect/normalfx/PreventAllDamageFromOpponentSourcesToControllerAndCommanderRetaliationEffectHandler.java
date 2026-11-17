@@ -25,7 +25,7 @@ public class PreventAllDamageFromOpponentSourcesToControllerAndCommanderRetaliat
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        gameData.judgmentOfAlexanderDamagePreventionShields.add(
+        gameData.addShield(
                 new JudgmentOfAlexanderDamagePreventionShield(entry.getControllerId(), entry.getCard()));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " prevents all damage from sources its controller's opponents control to that player this turn."));

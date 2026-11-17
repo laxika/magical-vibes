@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureOfChosenPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -25,7 +25,7 @@ public class Preacher extends Card {
                 true,
                 null,
                 List.of(new GainControlOfTargetCreatureOfChosenPlayerEffect(
-                        ControlDuration.WHILE_SOURCE_REMAINS_TAPPED, 1)),
+                        Duration.WHILE_SOURCE_REMAINS_TAPPED, 1)),
                 "{T}: For as long as this creature remains tapped, gain control of target creature "
                         + "of an opponent's choice they control.",
                 List.of(

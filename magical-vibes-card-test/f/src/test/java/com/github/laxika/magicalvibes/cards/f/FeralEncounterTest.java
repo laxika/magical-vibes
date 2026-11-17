@@ -38,7 +38,7 @@ class FeralEncounterTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(creatureToExile);
-        assertThat(gd.exilePlayPermissions).containsEntry(creatureToExile.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(creatureToExile.getId(), player1.getId());
 
         harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);

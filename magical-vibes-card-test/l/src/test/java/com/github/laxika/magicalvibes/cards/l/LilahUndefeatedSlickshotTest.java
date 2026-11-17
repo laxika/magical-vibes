@@ -60,8 +60,8 @@ class LilahUndefeatedSlickshotTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(terminate);
         assertThat(gd.plottedCardIds).contains(terminate.getId());
-        assertThat(gd.exilePlayPermissions).containsEntry(terminate.getId(), player1.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(terminate.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(terminate.getId(), player1.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(terminate.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(terminate);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }

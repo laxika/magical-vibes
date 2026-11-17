@@ -16,18 +16,18 @@ import java.util.List;
  * creature controlled by the ability's controller. No other scope is supported.
  */
 public record GrantChosenKeywordEffect(List<Keyword> options, GrantScope scope,
-                                       PermanentPredicate filter, GrantDuration duration) implements CardEffect {
+                                       PermanentPredicate filter, Duration duration) implements CardEffect {
 
     public GrantChosenKeywordEffect(List<Keyword> options, GrantScope scope) {
-        this(options, scope, null, GrantDuration.END_OF_TURN);
+        this(options, scope, null, Duration.UNTIL_END_OF_TURN);
     }
 
-    public GrantChosenKeywordEffect(List<Keyword> options, GrantScope scope, GrantDuration duration) {
+    public GrantChosenKeywordEffect(List<Keyword> options, GrantScope scope, Duration duration) {
         this(options, scope, null, duration);
     }
 
     public GrantChosenKeywordEffect(List<Keyword> options, GrantScope scope, PermanentPredicate filter) {
-        this(options, scope, filter, GrantDuration.END_OF_TURN);
+        this(options, scope, filter, Duration.UNTIL_END_OF_TURN);
     }
 
     public GrantChosenKeywordEffect {

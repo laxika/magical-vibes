@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnGraveyardCardsToBattlefieldUnderControlEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -111,8 +111,8 @@ public class ReturnGraveyardCardsToBattlefieldUnderControlEffectHandler implemen
             if (!controllerId.equals(returning.ownerId())) {
                 gameData.stolenCreatures.put(permanent.getId(), returning.ownerId());
                 creatureControlService.applyControlEffect(gameData, controllerId, permanent,
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                        ControlDuration.PERMANENT.toDuration(), null, sourceName);
+                        new GainControlOfTargetEffect(Duration.PERMANENT),
+                        Duration.PERMANENT, null, sourceName);
             }
 
             String playerName = gameData.playerIdToName.get(controllerId);

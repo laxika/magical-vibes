@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitel
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import java.util.List;
 import java.util.UUID;
@@ -92,7 +91,7 @@ public class BoostAllCreaturesEffectHandler implements NormalEffectHandlerBean {
                 .card(entry.getCard())
                 .text(String.format(" gives %+d/%+d to %d creature(s) %s.",
                         powerBoost, toughnessBoost, count[0],
-                        boost.duration() == GrantDuration.UNTIL_YOUR_NEXT_TURN
+                        Duration.UNTIL_YOUR_NEXT_TURN.equals(boost.duration())
                                 ? "until your next turn" : "until end of turn"))
                 .build());
 
@@ -100,8 +99,8 @@ public class BoostAllCreaturesEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void applyBoost(GameData gameData, StackEntry entry, Permanent target,
-                            int powerBoost, int toughnessBoost, GrantDuration duration) {
-        if (duration == GrantDuration.UNTIL_YOUR_NEXT_TURN) {
+                            int powerBoost, int toughnessBoost, Duration duration) {
+        if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), null, entry.getControllerId(),
                     new BuffTargetCreatureIndefinitelyEffect(powerBoost, toughnessBoost),

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentChoosesCreatureYouGainControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -129,10 +129,10 @@ public class EachOpponentChoosesCreatureYouGainControlEffectHandler implements N
             }
         }
 
-        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
+        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(Duration.PERMANENT);
         for (Permanent permanent : toSeize) {
             creatureControlService.applyControlEffect(gameData, gainingControllerId, permanent,
-                    controlEffect, ControlDuration.PERMANENT.toDuration(), null, sourceName);
+                    controlEffect, Duration.PERMANENT, null, sourceName);
         }
     }
 

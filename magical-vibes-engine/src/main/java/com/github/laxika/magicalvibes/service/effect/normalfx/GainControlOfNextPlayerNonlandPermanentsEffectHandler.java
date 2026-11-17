@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfNextPlayerNonlandPermanentsEffect.Direction;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfNextPlayerNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -59,7 +59,7 @@ public class GainControlOfNextPlayerNonlandPermanentsEffectHandler implements No
         for (ControlChange change : changes) {
             creatureControlService.applyControlEffect(
                     gameData, change.newControllerId(), change.permanent(), controlEffect,
-                    rotation.controlDuration().toDuration(), null, entry.getCard().getName());
+                    rotation.controlDuration(), null, entry.getCard().getName());
         }
     }
 

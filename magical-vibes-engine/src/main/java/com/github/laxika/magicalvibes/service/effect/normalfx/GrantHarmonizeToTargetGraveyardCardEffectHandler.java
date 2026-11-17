@@ -16,6 +16,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Slf4j
 @Component
@@ -48,7 +50,8 @@ public class GrantHarmonizeToTargetGraveyardCardEffectHandler implements NormalE
             return;
         }
 
-        gameData.cardsGrantedHarmonizeUntilEndOfTurn.add(targetCardId);
+        gameData.addCardEffect(entry, GrantedCardAbilityEffect.of(GrantedCardAbilityEffect.Ability.HARMONIZE),
+                targetCardId, Duration.UNTIL_END_OF_TURN);
         gameLogService.append(gameData, GameLog.cardTextCard(
                 entry.getCard(), " grants harmonize to ", targetCard, " until end of turn."));
         log.info("Game {} - {} grants harmonize to {} until end of turn",

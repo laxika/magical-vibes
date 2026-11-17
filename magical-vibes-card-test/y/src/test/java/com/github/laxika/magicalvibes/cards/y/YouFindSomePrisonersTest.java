@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -51,9 +52,9 @@ class YouFindSomePrisonersTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(chosen, second, third);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd).containsKey(chosen.getId());
-        assertThat(gd.exilePlayAnyManaType).contains(chosen.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)).containsKey(chosen.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(chosen.getId());
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castFromExile(player1, chosen.getId());
@@ -174,10 +175,10 @@ class YouFindSomePrisonersTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(chosen.getId());
-        assertThat(gd.exilePlayAnyManaType).doesNotContain(chosen.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(chosen.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).doesNotContain(chosen.getId());
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(chosen);
     }
 

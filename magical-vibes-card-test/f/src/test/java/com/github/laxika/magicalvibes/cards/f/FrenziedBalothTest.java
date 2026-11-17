@@ -65,7 +65,7 @@ class FrenziedBalothTest extends BaseCardTest {
     @DisplayName("Frenzied Baloth prevents combat damage prevention from an opposing creature")
     void combatDamageCannotBePrevented() {
         harness.addToBattlefield(player1, new FrenziedBaloth());
-        gd.playerDamagePreventionShields.put(player1.getId(), 5);
+        gd.addPlayerDamagePreventionShield(player1.getId(), 5);
         addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
@@ -73,21 +73,21 @@ class FrenziedBalothTest extends BaseCardTest {
         harness.resolveCombatDamage();
 
         harness.assertLife(player1, 18);
-        assertThat(gd.playerDamagePreventionShields).containsEntry(player1.getId(), 5);
+        assertThat(gd.playerDamagePreventionShields()).containsEntry(player1.getId(), 5);
     }
 
     @Test
     @DisplayName("Frenzied Baloth does not prevent noncombat damage prevention")
     void noncombatDamageCanBePrevented() {
         harness.addToBattlefield(player1, new FrenziedBaloth());
-        gd.playerDamagePreventionShields.put(player1.getId(), 2);
+        gd.addPlayerDamagePreventionShield(player1.getId(), 2);
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerDamagePreventionShields).isEmpty();
+        assertThat(gd.playerDamagePreventionShields()).isEmpty();
     }
 
     @Test
@@ -158,14 +158,14 @@ class FrenziedBalothTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        gd.playerDamagePreventionShields.put(player2.getId(), 5);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 5);
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
         harness.resolveCombatDamage();
 
         harness.assertLife(player2, 17);
-        assertThat(gd.playerDamagePreventionShields).containsEntry(player2.getId(), 5);
+        assertThat(gd.playerDamagePreventionShields()).containsEntry(player2.getId(), 5);
     }
 
     @Test
@@ -173,7 +173,7 @@ class FrenziedBalothTest extends BaseCardTest {
     void tramplesOverBlocker() {
         addCreatureReady(player1, new FrenziedBaloth());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        gd.playerDamagePreventionShields.put(player2.getId(), 5);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 5);
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -184,6 +184,6 @@ class FrenziedBalothTest extends BaseCardTest {
         harness.assertLife(player2, 19);
         harness.assertInGraveyard(player1, "Frenzied Baloth");
         harness.assertInGraveyard(player2, "Grizzly Bears");
-        assertThat(gd.playerDamagePreventionShields).containsEntry(player2.getId(), 5);
+        assertThat(gd.playerDamagePreventionShields()).containsEntry(player2.getId(), 5);
     }
 }

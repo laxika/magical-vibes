@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -90,19 +89,19 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
     }
 
     private void applyBoost(GameData gameData, StackEntry entry, Permanent target,
-                            int powerBoost, int toughnessBoost, GrantDuration duration) {
+                            int powerBoost, int toughnessBoost, Duration duration) {
         // The end-of-turn pump is the plain modifier, wiped by turn cleanup. An "until your next
         // turn" pump must outlive that cleanup and end at the *ability controller's* next turn, so
         // it is recorded as a floating continuous effect keyed to that controller instead — the
         // layered pass reads the sublayer-7c addition off it (same read path as Riding the Dilu
         // Horse's indefinite buff).
-        if (duration == GrantDuration.UNTIL_YOUR_NEXT_TURN
-                || duration == GrantDuration.UNTIL_END_OF_COMBAT) {
+        if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)
+                || Duration.UNTIL_END_OF_COMBAT.equals(duration)) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), null, entry.getControllerId(),
                     new BuffTargetCreatureIndefinitelyEffect(powerBoost, toughnessBoost),
                     target.getId(), null, null,
-                    duration == GrantDuration.UNTIL_END_OF_COMBAT
+                    Duration.UNTIL_END_OF_COMBAT.equals(duration)
                             ? Duration.UNTIL_END_OF_COMBAT : Duration.UNTIL_YOUR_NEXT_TURN, 0));
         } else {
             target.setPowerModifier(target.getPowerModifier() + powerBoost);
@@ -124,7 +123,7 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())
                 .text(String.format(" gets %+d/%+d %s.", powerBoost, toughnessBoost,
-                        duration == GrantDuration.UNTIL_YOUR_NEXT_TURN
+                        Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)
                                 ? "until your next turn" : "until end of turn"))
                 .build());
 

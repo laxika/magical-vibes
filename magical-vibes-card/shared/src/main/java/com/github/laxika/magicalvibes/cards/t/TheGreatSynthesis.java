@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CastAnyNumberOfSpellsFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerScope;
 import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -27,7 +27,7 @@ public class TheGreatSynthesis extends Card {
     public TheGreatSynthesis() {
         addTrigger(Triggers.chapter(1), SequenceEffect.of(
                 new DrawCardEffect(new CardsInHand(CountScope.CONTROLLER)),
-                new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.WHILE_SOURCE_ON_BATTLEFIELD)));
+                new GrantNoMaximumHandSizeEffect(Duration.WHILE_SOURCE_ON_BATTLEFIELD)));
         addTrigger(Triggers.chapter(2), ReturnToHandEffect.allPermanentsMatching(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

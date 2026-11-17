@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.PutCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurnEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -36,8 +37,8 @@ public class ExileTopCardsRepeatIfLastNonlandCreateTokensEffectHandler implement
         int nonlandCards = 0;
         boolean repeat = true;
 
-        boolean bottomInsteadOfExile = gameData.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn
-                .contains(entry.getControllerId());
+        boolean bottomInsteadOfExile = gameData.hasFloatingEffectOnPlayer(entry.getControllerId(),
+                PutCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurnEffect.class);
 
         while (repeat && !library.isEmpty()) {
             int cardsToExile = Math.min(e.cardsPerIteration(), library.size());

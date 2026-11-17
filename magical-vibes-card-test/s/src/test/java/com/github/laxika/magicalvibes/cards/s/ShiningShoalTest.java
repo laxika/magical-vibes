@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.cards.a.AkkiRaider;
 import com.github.laxika.magicalvibes.cards.f.FirstVolley;
 import com.github.laxika.magicalvibes.cards.f.FrostOgre;
@@ -33,11 +34,11 @@ class ShiningShoalTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.sourceDamageRedirectShields).hasSize(1);
-        assertThat(gd.sourceDamageRedirectShields.getFirst().protectedPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.sourceDamageRedirectShields.getFirst().damageSourceId()).isEqualTo(source.getId());
-        assertThat(gd.sourceDamageRedirectShields.getFirst().remainingAmount()).isEqualTo(3);
-        assertThat(gd.sourceDamageRedirectShields.getFirst().redirectTargetId()).isEqualTo(player2.getId());
+        assertThat(gd.shields(SourceDamageRedirectShield.class)).hasSize(1);
+        assertThat(gd.shields(SourceDamageRedirectShield.class).getFirst().protectedPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.shields(SourceDamageRedirectShield.class).getFirst().damageSourceId()).isEqualTo(source.getId());
+        assertThat(gd.shields(SourceDamageRedirectShield.class).getFirst().remainingAmount()).isEqualTo(3);
+        assertThat(gd.shields(SourceDamageRedirectShield.class).getFirst().redirectTargetId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -93,8 +94,8 @@ class ShiningShoalTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, source.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.sourceDamageRedirectShields).hasSize(1);
-        assertThat(gd.sourceDamageRedirectShields.getFirst().remainingAmount()).isEqualTo(2);
+        assertThat(gd.shields(SourceDamageRedirectShield.class)).hasSize(1);
+        assertThat(gd.shields(SourceDamageRedirectShield.class).getFirst().remainingAmount()).isEqualTo(2);
     }
 
     @Test
@@ -135,7 +136,7 @@ class ShiningShoalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.sourceDamageRedirectShields).isEmpty();
+        assertThat(gd.shields(SourceDamageRedirectShield.class)).isEmpty();
     }
 
     @Test
@@ -194,14 +195,14 @@ class ShiningShoalTest extends BaseCardTest {
         harness.castInstant(player1, 0, 2, player2.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
-        assertThat(gd.sourceDamageRedirectShields).hasSize(1);
+        assertThat(gd.shields(SourceDamageRedirectShield.class)).hasSize(1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.sourceDamageRedirectShields).isEmpty();
+        assertThat(gd.shields(SourceDamageRedirectShield.class)).isEmpty();
     }
 
     @Test
@@ -285,6 +286,6 @@ class ShiningShoalTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.sourceDamageRedirectShields).hasSize(1);
+        assertThat(gd.shields(SourceDamageRedirectShield.class)).hasSize(1);
     }
 }

@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterNextDrawLookAtTopReplacementEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,8 +17,8 @@ import org.springframework.stereotype.Component;
  * Aladdin's Lamp — registers a one-shot delayed replacement of the controller's next draw this turn:
  * "instead look at the top X cards of your library, put all but one on the bottom in a random order,
  * then draw a card." X is the value paid for the {@code {X}, {T}} activation (the stack entry's
- * {@code xValue}). The replacement is stored per-player in {@link GameData#pendingNextDrawLookAtTop}
- * and consumed by {@code DrawService.resolveDrawCard}; it expires at cleanup ("this turn").
+ * {@code xValue}). The replacement is a floating effect on the player carrying X, consumed by
+ * {@code DrawService.resolveDrawCard}; it ends at cleanup ("this turn").
  */
 @Slf4j
 @Component
@@ -41,8 +41,9 @@ public class RegisterNextDrawLookAtTopReplacementEffectHandler implements Normal
             return;
         }
 
-        gameData.pendingNextDrawLookAtTop.computeIfAbsent(controllerId,
-                ignored -> Collections.synchronizedList(new ArrayList<>())).add(x);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), controllerId, new RegisterNextDrawLookAtTopReplacementEffect(x),
+                controllerId, Duration.UNTIL_END_OF_TURN));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         

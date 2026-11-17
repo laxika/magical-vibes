@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnThenDealManaValueDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -42,8 +43,7 @@ public class ExileTopCardMayPlayThisTurnThenDealManaValueDamageEffectHandler
 
         Card topCard = deck.removeFirst();
         exileService.exileCard(gameData, controllerId, topCard);
-        gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
+        gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(gameData.playerIdToName.get(controllerId) + " exiles ").card(topCard)

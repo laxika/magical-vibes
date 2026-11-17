@@ -62,7 +62,7 @@ class SpinneretAndSpiderlingTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -183,11 +183,11 @@ class SpinneretAndSpiderlingTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-        assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(topCard.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
-        assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(topCard.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
     }
 

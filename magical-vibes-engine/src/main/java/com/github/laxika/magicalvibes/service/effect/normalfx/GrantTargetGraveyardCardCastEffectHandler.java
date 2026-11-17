@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Slf4j
 @Component
@@ -67,10 +68,10 @@ public class GrantTargetGraveyardCardCastEffectHandler implements NormalEffectHa
             return;
         }
 
-        gameData.graveyardCardCastPermissionsUntilEndOfTurn.put(targetCard.getId(),
-                new GameData.GraveyardCardCastPermission(entry.getSourcePermanentId(), entry.getControllerId(),
-                        false, e.exileInsteadOfGraveyard(), e.additionalGenericCost(), e.anyManaType(),
-                        e.withoutPayingManaCost(), e.additionalGraveyardExileCount(), e.escape()));
+        gameData.addCardEffect(entry, new GameData.GraveyardCardCastPermission(entry.getSourcePermanentId(),
+                entry.getControllerId(), false, e.exileInsteadOfGraveyard(), e.additionalGenericCost(),
+                e.anyManaType(), e.withoutPayingManaCost(), e.additionalGraveyardExileCount(), e.escape()),
+                targetCard.getId(), Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " allows ", targetCard,
                 " to be cast from a graveyard."));

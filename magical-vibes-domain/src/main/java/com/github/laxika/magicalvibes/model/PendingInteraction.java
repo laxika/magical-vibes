@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.effect.BeholdEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
@@ -1301,42 +1302,42 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * cost instead of being granted a permission to cast later.
      */
     record ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                   ExilePlayDuration duration, boolean anyManaType,
+                                   Duration duration, boolean anyManaType,
                                    boolean withoutPayingManaCost, boolean allowNoChoice,
                                    boolean castChosenImmediately)
             implements PendingInteraction {
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                       ExilePlayDuration duration, boolean anyManaType,
+                                       Duration duration, boolean anyManaType,
                                        boolean withoutPayingManaCost, boolean allowNoChoice) {
             this(playerId, validCardIds, duration, anyManaType, withoutPayingManaCost, allowNoChoice,
-                    withoutPayingManaCost && duration == ExilePlayDuration.END_OF_TURN);
+                    withoutPayingManaCost && Duration.UNTIL_END_OF_TURN.equals(duration));
         }
 
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                       ExilePlayDuration duration) {
+                                       Duration duration) {
             this(playerId, validCardIds, duration, false, false, false);
         }
 
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                       ExilePlayDuration duration, boolean anyManaType) {
+                                       Duration duration, boolean anyManaType) {
             this(playerId, validCardIds, duration, anyManaType, false, false);
         }
 
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                       ExilePlayDuration duration, boolean anyManaType,
+                                       Duration duration, boolean anyManaType,
                                        boolean withoutPayingManaCost) {
             this(playerId, validCardIds, duration, anyManaType, withoutPayingManaCost, false);
         }
 
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds, boolean expiresAtEndOfTurn, boolean anyManaType) {
-            this(playerId, validCardIds, expiresAtEndOfTurn ? ExilePlayDuration.END_OF_TURN : ExilePlayDuration.NEXT_TURN, anyManaType, false, false);
+            this(playerId, validCardIds, expiresAtEndOfTurn ? Duration.UNTIL_END_OF_TURN : Duration.UNTIL_END_OF_YOUR_NEXT_TURN, anyManaType, false, false);
         }
 
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                        boolean expiresAtEndOfTurn, boolean anyManaType,
                                        boolean withoutPayingManaCost) {
             this(playerId, validCardIds,
-                    expiresAtEndOfTurn ? ExilePlayDuration.END_OF_TURN : ExilePlayDuration.NEXT_TURN,
+                    expiresAtEndOfTurn ? Duration.UNTIL_END_OF_TURN : Duration.UNTIL_END_OF_YOUR_NEXT_TURN,
                     anyManaType, withoutPayingManaCost, false);
         }
 
@@ -1344,18 +1345,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                        boolean expiresAtEndOfTurn, boolean anyManaType,
                                        boolean withoutPayingManaCost, boolean allowNoChoice) {
             this(playerId, validCardIds,
-                    expiresAtEndOfTurn ? ExilePlayDuration.END_OF_TURN : ExilePlayDuration.NEXT_TURN,
+                    expiresAtEndOfTurn ? Duration.UNTIL_END_OF_TURN : Duration.UNTIL_END_OF_YOUR_NEXT_TURN,
                     anyManaType, withoutPayingManaCost, allowNoChoice);
         }
 
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds) {
-            this(playerId, validCardIds, ExilePlayDuration.NEXT_TURN, false, false, false);
+            this(playerId, validCardIds, Duration.UNTIL_END_OF_YOUR_NEXT_TURN, false, false, false);
         }
 
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                        boolean expiresAtEndOfTurn) {
             this(playerId, validCardIds,
-                    expiresAtEndOfTurn ? ExilePlayDuration.END_OF_TURN : ExilePlayDuration.NEXT_TURN, false, false, false);
+                    expiresAtEndOfTurn ? Duration.UNTIL_END_OF_TURN : Duration.UNTIL_END_OF_YOUR_NEXT_TURN, false, false, false);
         }
 
         public ExiledCardMayPlayChoice {
@@ -1363,7 +1364,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
 
         public boolean expiresAtEndOfTurn() {
-            return duration == ExilePlayDuration.END_OF_TURN;
+            return Duration.UNTIL_END_OF_TURN.equals(duration);
         }
 
         @Override

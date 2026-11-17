@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.cards.f.FireElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -90,7 +91,7 @@ class PilgrimOfJusticeTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -120,7 +121,7 @@ class PilgrimOfJusticeTest extends BaseCardTest {
 
         assertThat(victim.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -134,7 +135,7 @@ class PilgrimOfJusticeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
         assertThat(gameLogContains("No permanents on the battlefield")).isTrue();
     }
 
@@ -158,7 +159,7 @@ class PilgrimOfJusticeTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 15);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).hasSize(1);
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).hasSize(1);
     }
 
     @Test

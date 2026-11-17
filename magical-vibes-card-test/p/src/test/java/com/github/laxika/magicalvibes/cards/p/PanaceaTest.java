@@ -42,7 +42,7 @@ class PanaceaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 3, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(3);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(3);
     }
 
     @Test
@@ -70,7 +70,7 @@ class PanaceaTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test
@@ -87,14 +87,14 @@ class PanaceaTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 19);
-        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player2.getId());
+        assertThat(gd.playerDamagePreventionShields()).doesNotContainKey(player2.getId());
     }
 
     @Test
@@ -105,11 +105,11 @@ class PanaceaTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 3, player2.getId());
         harness.passBothPriorities();
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(3);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(3);
 
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player2.getId());
+        assertThat(gd.playerDamagePreventionShields()).doesNotContainKey(player2.getId());
     }
 
     @Test
@@ -121,7 +121,7 @@ class PanaceaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Panacea").isTapped()).isTrue();
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test
@@ -167,7 +167,7 @@ class PanaceaTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player2.getId());
+        assertThat(gd.playerDamagePreventionShields()).doesNotContainKey(player2.getId());
     }
 
     @Test

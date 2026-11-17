@@ -64,7 +64,7 @@ class SerrasHymnTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getDamagePreventionShield()).isEqualTo(2);
-        assertThat(harness.getGameData().playerDamagePreventionShields.getOrDefault(player2.getId(), 0))
+        assertThat(harness.getGameData().playerDamagePreventionShields().getOrDefault(player2.getId(), 0))
                 .isEqualTo(1);
     }
 
@@ -96,7 +96,7 @@ class SerrasHymnTest extends BaseCardTest {
         assertThat(harness.getGameData().playerBattlefields.get(player1.getId())).doesNotContain(hymn);
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerDamagePreventionShields).doesNotContainKey(player2.getId());
+        assertThat(harness.getGameData().playerDamagePreventionShields()).doesNotContainKey(player2.getId());
     }
 
     @Test
@@ -124,7 +124,7 @@ class SerrasHymnTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 18);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test
@@ -137,12 +137,12 @@ class SerrasHymnTest extends BaseCardTest {
                 Map.of(creature.getId(), 2, player2.getId(), 1));
         harness.passBothPriorities();
         assertThat(creature.getDamagePreventionShield()).isEqualTo(2);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(creature.getDamagePreventionShield()).isZero();
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test

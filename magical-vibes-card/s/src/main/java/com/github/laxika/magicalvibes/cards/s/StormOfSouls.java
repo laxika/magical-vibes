@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -28,7 +28,7 @@ public class StormOfSouls extends Card {
                 .returnAll(true)
                 .grantSubtype(CardSubtype.SPIRIT)
                 .battlefieldEffectGrants(List.of(
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, GrantDuration.INDEFINITE),
+                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, Duration.PERMANENT),
                         SetBasePowerToughnessEffect.indefinitely(1, 1)))
                 .build());
         addSpellEffect(new ExileSpellEffect());

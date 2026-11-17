@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -32,12 +33,10 @@ class CrimsonOperativeTest extends BaseCardTest {
         castCrimsonOperative();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd.get(top.getId()))
-                .isEqualTo(Integer.MAX_VALUE);
-        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer)
+        assertThat(gd.exilePlayPermissionHolder(top.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN))
                 .containsEntry(top.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(top.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(top.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(below);
     }
 
@@ -49,7 +48,7 @@ class CrimsonOperativeTest extends BaseCardTest {
         castCrimsonOperative();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test
@@ -149,7 +148,7 @@ class CrimsonOperativeTest extends BaseCardTest {
         Card top = prepareExiledSpellWithLibrariesForTurnProgression();
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(top.getId())).isEqualTo(player1.getId());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 1);
@@ -166,7 +165,7 @@ class CrimsonOperativeTest extends BaseCardTest {
         giveExtraTurnsTo(player1);
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(top.getId())).isEqualTo(player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 1);

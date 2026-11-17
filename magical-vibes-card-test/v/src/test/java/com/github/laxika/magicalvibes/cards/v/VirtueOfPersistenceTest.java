@@ -36,7 +36,7 @@ class VirtueOfPersistenceTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(12);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -142,7 +142,7 @@ class VirtueOfPersistenceTest extends BaseCardTest {
         harness.assertLife(player1, 10);
         harness.assertInGraveyard(player1, "Virtue of Persistence");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

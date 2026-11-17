@@ -42,8 +42,8 @@ class SiphonInsightTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(chosenCard);
         assertThat(gd.exiledCards).filteredOn(entry -> entry.card().getId().equals(chosenCard.getId()))
                 .allMatch(ExiledCardEntry::faceDown);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosenCard.getId(), player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(chosenCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosenCard.getId(), player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(chosenCard.getId());
     }
 
     @Test

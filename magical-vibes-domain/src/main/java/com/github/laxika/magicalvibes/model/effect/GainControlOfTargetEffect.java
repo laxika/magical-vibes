@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * Gains control of target permanent for the given {@link ControlDuration}.
+ * Gains control of target permanent for the given {@link Duration}.
  *
  * <p>The card's own target filter handles type restrictions (e.g. creature-only for
  * Threaten, artifact-only for Metallic Mastery, Vampire-only for Olivia Voldaren).
@@ -26,13 +26,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param ofTriggeringPermanent when true, the permanent is no target but "that permanent" the trigger event was about,
  *                           the stack entry's triggering permanent (Treasure Nabber's "gain control of that artifact")
  */
-public record GainControlOfTargetEffect(ControlDuration duration, CardSubtype grantedSubtype,
+public record GainControlOfTargetEffect(Duration duration, CardSubtype grantedSubtype,
                                         boolean tapWhenControlLost,
                                         PermanentPredicate targetPredicate, boolean opponentChoosesTarget,
                                         boolean maintainTargetPredicate, boolean ofTriggeringPermanent)
         implements ControlStealingEffect {
 
-    public GainControlOfTargetEffect(ControlDuration duration, CardSubtype grantedSubtype,
+    public GainControlOfTargetEffect(Duration duration, CardSubtype grantedSubtype,
                                      boolean tapWhenControlLost, PermanentPredicate targetPredicate,
                                      boolean opponentChoosesTarget, boolean maintainTargetPredicate) {
         this(duration, grantedSubtype, tapWhenControlLost, targetPredicate, opponentChoosesTarget,
@@ -40,24 +40,24 @@ public record GainControlOfTargetEffect(ControlDuration duration, CardSubtype gr
     }
 
     /** "Gain control of that permanent" for the given duration: the trigger event's permanent, no target. */
-    public static GainControlOfTargetEffect ofTriggeringPermanent(ControlDuration duration) {
+    public static GainControlOfTargetEffect ofTriggeringPermanent(Duration duration) {
         return new GainControlOfTargetEffect(duration, null, false, null, false, false, true);
     }
 
-    public GainControlOfTargetEffect(ControlDuration duration) {
+    public GainControlOfTargetEffect(Duration duration) {
         this(duration, null, false, null, false, false);
     }
 
-    public GainControlOfTargetEffect(ControlDuration duration, CardSubtype grantedSubtype) {
+    public GainControlOfTargetEffect(Duration duration, CardSubtype grantedSubtype) {
         this(duration, grantedSubtype, false, null, false, false);
     }
 
-    public GainControlOfTargetEffect(ControlDuration duration, boolean tapWhenControlLost) {
+    public GainControlOfTargetEffect(Duration duration, boolean tapWhenControlLost) {
         this(duration, null, tapWhenControlLost, null, false, false);
     }
 
     /** Control for the given duration, with an additional target restriction. */
-    public static GainControlOfTargetEffect withTargetPredicate(ControlDuration duration,
+    public static GainControlOfTargetEffect withTargetPredicate(Duration duration,
                                                                 PermanentPredicate targetPredicate) {
         return new GainControlOfTargetEffect(duration, null, false, targetPredicate, false, false);
     }
@@ -65,17 +65,17 @@ public record GainControlOfTargetEffect(ControlDuration duration, CardSubtype gr
     /** Control while the source remains tapped and the target continues to match the predicate. */
     public static GainControlOfTargetEffect whileSourceRemainsTappedAndTargetMatches(
             PermanentPredicate targetPredicate) {
-        return new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_REMAINS_TAPPED,
+        return new GainControlOfTargetEffect(Duration.WHILE_SOURCE_REMAINS_TAPPED,
                 null, false, targetPredicate, false, true);
     }
 
     /** Control of a creature chosen by an opponent who was chosen by the spell's controller. */
-    public static GainControlOfTargetEffect opponentChosenTarget(ControlDuration duration) {
+    public static GainControlOfTargetEffect opponentChosenTarget(Duration duration) {
         return new GainControlOfTargetEffect(duration, null, false, null, true, false);
     }
 
     @Override
-    public ControlDuration controlDuration() {
+    public Duration controlDuration() {
         return duration;
     }
 

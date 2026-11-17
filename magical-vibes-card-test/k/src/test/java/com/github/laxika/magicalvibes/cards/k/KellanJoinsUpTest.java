@@ -47,8 +47,8 @@ class KellanJoinsUpTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(eligible);
         assertThat(gd.plottedCardIds).containsExactly(eligible.getId());
-        assertThat(gd.exilePlayPermissions).containsEntry(eligible.getId(), player1.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(eligible.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(eligible.getId(), player1.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(eligible.getId());
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(land, tooExpensive);
     }
 

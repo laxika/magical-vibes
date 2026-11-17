@@ -46,7 +46,7 @@ class DawnflukeTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, player1.getId());
         resolveAllTriggers();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(3);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isEqualTo(3);
     }
 
     @Test
@@ -68,7 +68,7 @@ class DawnflukeTest extends BaseCardTest {
         resolveCombat(player1);
 
         harness.assertLife(player2, 19);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test
@@ -113,7 +113,7 @@ class DawnflukeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
         harness.assertInGraveyard(player1, "Dawnfluke");
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(3);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isEqualTo(3);
     }
 
     @Test
@@ -145,10 +145,10 @@ class DawnflukeTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(target.getDamagePreventionShield()).isEqualTo(3);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(3);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isEqualTo(3);
         harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(target.getDamagePreventionShield()).isZero();
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isZero();
     }
 }

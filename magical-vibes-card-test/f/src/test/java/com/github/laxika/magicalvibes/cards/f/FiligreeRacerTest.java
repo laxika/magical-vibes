@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 @CardUsed({FiligreeRacer.class, GrizzlyBears.class, Plains.class, Shock.class, Recollect.class})
 class FiligreeRacerTest extends BaseCardTest {
@@ -58,7 +59,7 @@ class FiligreeRacerTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(spell.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.cardsGrantedJumpStartUntilEndOfTurn).contains(spell.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.JUMP_START)).contains(spell.getId());
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castJumpStart(player1, 0, 0, target.getId());
@@ -84,7 +85,7 @@ class FiligreeRacerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
-        assertThat(gd.cardsGrantedJumpStartUntilEndOfTurn).isEmpty();
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.JUMP_START)).isEmpty();
     }
 
     private Permanent addReadyRacer() {
@@ -100,7 +101,7 @@ class FiligreeRacerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
-        assertThat(gd.cardsGrantedJumpStartUntilEndOfTurn).isEmpty();
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.JUMP_START)).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -122,7 +123,7 @@ class FiligreeRacerTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(sorcery.getId()));
         resolveAllTriggers();
 
-        assertThat(gd.cardsGrantedJumpStartUntilEndOfTurn).containsExactly(sorcery.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.JUMP_START)).containsExactly(sorcery.getId());
         assertThat(gd.playerEnergyCounters.getOrDefault(player1.getId(), 0)).isZero();
     }
 
@@ -136,7 +137,7 @@ class FiligreeRacerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.getOrDefault(player1.getId(), 0)).isZero();
-        assertThat(gd.cardsGrantedJumpStartUntilEndOfTurn).isEmpty();
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.JUMP_START)).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
     }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.NihiloorTapAndStealEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 public class NihiloorTapAndStealEffectHandler implements NormalEffectHandlerBean {
 
     private static final GainControlOfTargetEffect GAIN_CONTROL = GainControlOfTargetEffect.withTargetPredicate(
-            ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD,
+            Duration.WHILE_SOURCE_ON_BATTLEFIELD,
             new PermanentAllOfPredicate(List.of(
                     new PermanentIsCreaturePredicate(),
                     new PermanentControlledByTriggeringPlayerPredicate(),

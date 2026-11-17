@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * you may cast that card this turn". Narset, Enlightened Master sets
  * {@code withoutPayingManaCost} for its noncreature, nonland filter.
  * <p>
- * Grants {@code exilePlayPermissions} + {@code exilePlayPermissionsExpireEndOfTurn} for each
+ * Grants an {@link com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect} until end of turn for each
  * matching card, and {@code exilePlayWithoutPayingManaCost} when the free variant is used.
  * A {@code null} filter means every exiled card matches —
  * {@code PredicateEvaluationService.matchesCardPredicate} treats a null predicate as always

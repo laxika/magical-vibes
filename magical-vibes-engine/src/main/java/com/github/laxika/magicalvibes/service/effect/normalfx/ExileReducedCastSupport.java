@@ -120,7 +120,7 @@ public class ExileReducedCastSupport {
                     ? exileCastTargetSupport.hasLegalTargetSet(gameData, card, playerId)
                     : !candidates.isEmpty();
             if (!legalTargets) {
-                gameData.exilePlayCostModifiers.remove(exileCardId);
+                gameData.setExilePlayCostModifier(exileCardId, null);
                 gameLogService.append(gameData, GameLog.cardThen(card,
                         " has no valid targets and stays exiled."));
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -147,7 +147,7 @@ public class ExileReducedCastSupport {
             spellCastingService.playCardFromExileAsResolutionCast(gameData, player, exileCardId,
                     chosenX == null ? 0 : chosenX, (UUID) null, false, putOnBottomOfOwnersLibraryInsteadOfGraveyard);
         } catch (IllegalStateException ex) {
-            gameData.exilePlayCostModifiers.remove(exileCardId);
+            gameData.setExilePlayCostModifier(exileCardId, null);
             log.info("Game {} - {} could not pay the {} for {}", gameData.id,
                     player.getUsername(), genericCostReduction > 0 ? "reduced cost" : "normal cost",
                     card.getName());
@@ -169,6 +169,6 @@ public class ExileReducedCastSupport {
     }
 
     private void installCostReduction(GameData gameData, UUID cardId, UUID playerId, int amount) {
-        gameData.exilePlayCostModifiers.put(cardId, new ExilePlayCostModifier(playerId, null, -amount));
+        gameData.setExilePlayCostModifier(cardId, new ExilePlayCostModifier(playerId, null, -amount));
     }
 }

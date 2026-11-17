@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.cards.g.GiselaBladeOfGoldnight;
 import com.github.laxika.magicalvibes.cards.m.MoorlandInquisitor;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,7 +31,7 @@ class DivineDeflectionTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(attacker.getMarkedDamage()).isZero();
-        assertThat(gd.damageRedirectShields.getFirst().remainingAmount()).isEqualTo(1);
+        assertThat(gd.shields(DamageRedirectShield.class).getFirst().remainingAmount()).isEqualTo(1);
     }
 
     @Test
@@ -50,7 +51,7 @@ class DivineDeflectionTest extends BaseCardTest {
         assertThat(blocker.getMarkedDamage()).isZero();
         // ...and Divine Deflection deals that much to its target instead.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.damageRedirectShields.getFirst().remainingAmount()).isEqualTo(1);
+        assertThat(gd.shields(DamageRedirectShield.class).getFirst().remainingAmount()).isEqualTo(1);
         assertThat(attacker.getMarkedDamage()).isEqualTo(2);
     }
 
@@ -79,20 +80,20 @@ class DivineDeflectionTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.damageRedirectShields).isEmpty();
+        assertThat(gd.shields(DamageRedirectShield.class)).isEmpty();
     }
 
     @Test
     @DisplayName("The shield wears off at end of turn")
     void shieldClearedAtEndOfTurn() {
         castDeflection(3, player2.getId());
-        assertThat(gd.damageRedirectShields).hasSize(1);
+        assertThat(gd.shields(DamageRedirectShield.class)).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.damageRedirectShields).isEmpty();
+        assertThat(gd.shields(DamageRedirectShield.class)).isEmpty();
     }
 
     @Test
@@ -100,7 +101,7 @@ class DivineDeflectionTest extends BaseCardTest {
     void xZeroCreatesNoShield() {
         castDeflection(0, player2.getId());
 
-        assertThat(gd.damageRedirectShields).isEmpty();
+        assertThat(gd.shields(DamageRedirectShield.class)).isEmpty();
     }
 
     @Test

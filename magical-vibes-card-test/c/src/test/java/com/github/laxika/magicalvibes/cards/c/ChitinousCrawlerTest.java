@@ -87,7 +87,7 @@ class ChitinousCrawlerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.findExiledCard(target.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(target.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(target.getId());
     }
 
     @Test

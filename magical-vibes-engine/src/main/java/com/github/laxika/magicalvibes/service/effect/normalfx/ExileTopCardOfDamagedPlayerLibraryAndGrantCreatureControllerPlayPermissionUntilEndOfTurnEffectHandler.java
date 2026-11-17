@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -62,12 +63,11 @@ public class ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPer
         for (int i = 0; i < toExile; i++) {
             Card topCard = deck.removeFirst();
             exileService.exileCard(gameData, damagedPlayerId, topCard);
-            gameData.exilePlayPermissions.put(topCard.getId(), creatureControllerId);
-            gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
+            gameData.grantExilePlayPermission(topCard.getId(), creatureControllerId, Duration.UNTIL_END_OF_TURN);
             if (permission.withoutPayingManaCost()) {
-                gameData.exilePlayWithoutPayingManaCost.add(topCard.getId());
+                gameData.setExilePlayWithoutPayingManaCost(topCard.getId(), true);
             } else if (!topCard.hasType(CardType.LAND)) {
-                gameData.exilePlayAnyManaType.add(topCard.getId());
+                gameData.grantExileAnyManaType(topCard.getId(), Duration.UNTIL_END_OF_TURN);
             }
 
             gameLogService.append(gameData, GameLog.builder()

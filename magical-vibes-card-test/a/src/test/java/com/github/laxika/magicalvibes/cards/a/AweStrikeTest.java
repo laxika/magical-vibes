@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.cards.s.SpikeshotGoblin;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.cards.t.Triskelion;
@@ -34,7 +35,7 @@ class AweStrikeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(21);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -48,7 +49,7 @@ class AweStrikeTest extends BaseCardTest {
         resolveCombat(player2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(24);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -65,7 +66,7 @@ class AweStrikeTest extends BaseCardTest {
 
         assertThat(recipient.getMarkedDamage()).isZero();
         assertThat(gd.getLife(player1.getId())).isEqualTo(21);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -80,7 +81,7 @@ class AweStrikeTest extends BaseCardTest {
         resolveCombat(player2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
-        assertThat(gd.sourceNextDamageToAnyTargetShields)
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class))
                 .anyMatch(shield -> shield.sourceId().equals(target.getId()));
     }
 

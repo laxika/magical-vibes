@@ -87,7 +87,7 @@ class YavimayaCoastTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         harness.assertLife(player1, 20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -116,7 +116,7 @@ class YavimayaCoastTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         harness.assertLife(player1, 20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -134,13 +134,13 @@ class YavimayaCoastTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         harness.assertLife(player1, 20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isEqualTo(1);
 
         harness.activateAbility(player1, 2, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         harness.assertLife(player1, 20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

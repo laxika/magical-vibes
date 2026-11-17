@@ -23,7 +23,7 @@ import java.util.List;
  * @param thenEffects ordered rider effects applied to each seized permanent
  */
 public record GainControlOfAllPermanentsTargetPlayerControlsEffect(
-        PermanentPredicate filter, ControlDuration duration, List<CardEffect> thenEffects)
+        PermanentPredicate filter, Duration duration, List<CardEffect> thenEffects)
         implements CardEffect {
 
     public GainControlOfAllPermanentsTargetPlayerControlsEffect {
@@ -31,16 +31,16 @@ public record GainControlOfAllPermanentsTargetPlayerControlsEffect(
     }
 
     public GainControlOfAllPermanentsTargetPlayerControlsEffect(PermanentPredicate filter) {
-        this(filter, ControlDuration.PERMANENT, List.of());
+        this(filter, Duration.PERMANENT, List.of());
     }
 
     public GainControlOfAllPermanentsTargetPlayerControlsEffect(PermanentPredicate filter,
-                                                                 ControlDuration duration) {
+                                                                 Duration duration) {
         this(filter, duration, List.of());
     }
 
     public GainControlOfAllPermanentsTargetPlayerControlsEffect(PermanentPredicate filter,
-                                                                 ControlDuration duration,
+                                                                 Duration duration,
                                                                  CardEffect... thenEffects) {
         this(filter, duration, List.of(thenEffects));
     }

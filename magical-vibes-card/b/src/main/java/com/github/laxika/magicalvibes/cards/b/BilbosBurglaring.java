@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -25,6 +25,6 @@ public class BilbosBurglaring extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target must be an artifact an opponent controls"), 0, 99)
-                .addSpellEffect(new GainControlOfTargetEffect(ControlDuration.PERMANENT));
+                .addSpellEffect(new GainControlOfTargetEffect(Duration.PERMANENT));
     }
 }

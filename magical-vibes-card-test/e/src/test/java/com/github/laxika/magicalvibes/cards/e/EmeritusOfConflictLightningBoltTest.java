@@ -190,7 +190,7 @@ class EmeritusOfConflictLightningBoltTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(emeritus);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(emeritus.getCard());
         assertThat(gd.findExiledCard(copyId)).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(copyId);
     }
 
     private Permanent addEmeritus() {

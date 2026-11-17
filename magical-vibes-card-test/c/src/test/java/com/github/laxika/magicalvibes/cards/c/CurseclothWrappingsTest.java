@@ -18,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 class CurseclothWrappingsTest extends BaseCardTest {
 
@@ -49,7 +50,7 @@ class CurseclothWrappingsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, bears.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        assertThat(gd.cardsGrantedEmbalmUntilEndOfTurn).contains(bears.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.EMBALM)).contains(bears.getId());
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.e.EmberHauler;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
@@ -53,7 +54,7 @@ class HonorablePassageTest extends BaseCardTest {
         // 1 combat damage prevented; Honorable Passage deals 1 to player2 (red source)
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 19);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -72,7 +73,7 @@ class HonorablePassageTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -93,7 +94,7 @@ class HonorablePassageTest extends BaseCardTest {
 
         assertThat(victim.getMarkedDamage()).isEqualTo(0);
         harness.assertLife(player2, 19);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -115,7 +116,7 @@ class HonorablePassageTest extends BaseCardTest {
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
         harness.assertLife(player2, 19);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -162,7 +163,7 @@ class HonorablePassageTest extends BaseCardTest {
 
         assertThat(victim.getMarkedDamage()).isEqualTo(0);
         harness.assertLife(player2, 17);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -185,7 +186,7 @@ class HonorablePassageTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 17);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -203,7 +204,7 @@ class HonorablePassageTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 18);
-        assertThat(gd.sourceNextDamageToAnyTargetShields)
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class))
                 .extracting(s -> s.sourceId())
                 .containsExactly(chosen.getId());
     }
@@ -217,14 +218,14 @@ class HonorablePassageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, giant.getId());
 
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isNotEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isNotEmpty();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test

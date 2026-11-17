@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionWithPerpetualCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -55,8 +56,7 @@ public class ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPer
 
         Card topCard = library.removeFirst();
         exileService.exileCard(gameData, damagedPlayerId, topCard);
-        gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
+        gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
 
         if (isNonlandPermanent(topCard)) {
             recordPerpetualCharacteristics(gameData, topCard, pepEffect.characteristics());

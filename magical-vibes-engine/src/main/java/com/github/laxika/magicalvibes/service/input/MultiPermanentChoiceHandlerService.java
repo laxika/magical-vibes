@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreventionSupport;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
@@ -23,7 +24,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadChosenCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -1516,7 +1516,7 @@ public class MultiPermanentChoiceHandlerService {
     private void handleGainControlOfPermanentAndAssignNoCombatDamage(GameData gameData, UUID playerId, List<UUID> permanentIds,
                                                                      MultiPermanentChoiceContext.GainControlOfPermanentAndAssignNoCombatDamage context) {
         UUID sourcePermId = context.sourcePermanentId();
-        ControlDuration duration = context.duration();
+        Duration duration = context.duration();
 
         if (permanentIds.isEmpty()) {
             gameLogService.append(gameData,
@@ -1531,7 +1531,7 @@ public class MultiPermanentChoiceHandlerService {
             boolean sourceOk = !duration.isSourceLinked() || (source != null && playerId.equals(sourceController));
             if (stolen != null && sourceOk) {
                 creatureControlService.applyControlEffect(gameData, playerId, stolen,
-                        new GainControlOfTargetEffect(duration), duration.toDuration(),
+                        new GainControlOfTargetEffect(duration), duration,
                         duration.isSourceLinked() ? sourcePermId : null,
                         source != null ? source.getCard().getName() : stolen.getCard().getName());
                 if (source != null) {
@@ -1656,7 +1656,7 @@ public class MultiPermanentChoiceHandlerService {
             MultiPermanentChoiceContext.RedirectDamageToChosenPermanent context) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
         if (target != null) {
-            gameData.turnDamageRedirectToCreatureShields.add(
+            gameData.addShield(
                     com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield
                             .forCreatureOrPlaneswalker(context.protectedPlayerId(), target.getId()));
         }

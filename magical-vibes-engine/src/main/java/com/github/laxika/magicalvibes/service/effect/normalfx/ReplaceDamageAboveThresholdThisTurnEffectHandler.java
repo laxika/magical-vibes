@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -24,7 +26,8 @@ public class ReplaceDamageAboveThresholdThisTurnEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ReplaceDamageAboveThresholdThisTurnEffect replacement =
                 (ReplaceDamageAboveThresholdThisTurnEffect) effect;
-        gameData.damageReplacementsThisTurn.add(replacement);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), replacement, null, Duration.UNTIL_END_OF_TURN));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 ": damage of at least " + replacement.threshold() + " is replaced with "
                         + replacement.replacementDamage() + " this turn."));

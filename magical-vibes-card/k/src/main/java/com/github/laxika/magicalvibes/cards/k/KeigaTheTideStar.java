@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -17,6 +17,6 @@ public class KeigaTheTideStar extends Card {
     public KeigaTheTideStar() {
         // When Keiga dies, gain control of target creature.
         addTrigger(Triggers.dies(ObjectRelation.THIS), GainControlOfTargetEffect.withTargetPredicate(
-                ControlDuration.PERMANENT, new PermanentIsCreaturePredicate()));
+                Duration.PERMANENT, new PermanentIsCreaturePredicate()));
     }
 }

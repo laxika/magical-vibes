@@ -64,7 +64,7 @@ class TempestHartTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @ParameterizedTest
@@ -115,7 +115,7 @@ class TempestHartTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
 
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castFromExile(player1, card.getId());

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.m.Mirrorweave;
 import com.github.laxika.magicalvibes.cards.s.StormfrontRiders;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -51,7 +50,7 @@ class WizardMentorTest extends BaseCardTest {
         gd.stolenCreatures.put(merfolk.getId(), player2.getId());
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
                 .applyControlEffect(gd, player1.getId(), merfolk,
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT,
+                        new GainControlOfTargetEffect(Duration.PERMANENT), Duration.PERMANENT,
                         null, "Test setup"));
 
         harness.activateAbility(player1, 0, null, merfolk.getId());

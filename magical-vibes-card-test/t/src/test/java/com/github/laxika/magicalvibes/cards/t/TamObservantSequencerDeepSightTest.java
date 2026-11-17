@@ -31,7 +31,7 @@ class TamObservantSequencerDeepSightTest extends BaseCardTest {
         UUID copyId = tam.getPreparedSpellCardId();
         assertThat(copyId).isNotNull();
         assertThat(gd.findExiledCard(copyId).card().getName()).isEqualTo("Deep Sight");
-        assertThat(gd.exilePlayPermissions.get(copyId)).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(copyId)).isEqualTo(player1.getId());
     }
 
     @Test
@@ -121,7 +121,7 @@ class TamObservantSequencerDeepSightTest extends BaseCardTest {
 
         assertThat(tam.isPrepared()).isTrue();
         assertThat(tam.getPreparedSpellCardId()).isEqualTo(copyId);
-        assertThat(gd.exilePlayPermissions).containsOnlyKeys(copyId);
+        assertThat(gd.exilePlayPermissionHolders()).containsOnlyKeys(copyId);
     }
 
     @Test

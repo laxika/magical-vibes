@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileOneFromTopCardsFaceDownWithSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -52,8 +53,8 @@ public class ExileOneFromTopCardsFaceDownWithSourceEffectHandler implements Norm
             Card exiled = topCards.getFirst();
             exileService.exileCardFaceDown(gameData, controllerId, exiled, sourcePermanentId);
             if (exileEffect.castPermissionFilter() != null) {
-                gameData.exilePlayPermissions.put(exiled.getId(), controllerId);
-                gameData.exilePlayPermissionSpellFilters.put(exiled.getId(), exileEffect.castPermissionFilter());
+                gameData.grantExilePlayPermission(exiled.getId(), controllerId, Duration.PERMANENT);
+                gameData.updateExilePlayPermission(exiled.getId(), granted -> granted.withSpellFilter(exileEffect.castPermissionFilter()));
             }
             gameLogService.append(gameData, GameLog.text(
                     result.playerName() + " exiles a card face down with " + entry.getCard().getName() + "."));

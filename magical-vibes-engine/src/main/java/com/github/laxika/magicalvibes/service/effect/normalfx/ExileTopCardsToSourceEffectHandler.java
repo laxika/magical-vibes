@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
@@ -185,14 +187,13 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
     /** Gives a card just exiled with the source the source's active "until end of turn, you may play" permission. */
     private void grantUntilEndOfTurnPlayPermission(GameData gameData, Card card, UUID sourcePermanentId) {
         var grant = sourcePermanentId == null ? null
-                : gameData.exilePlayUntilEndOfTurnGrantsBySource.get(sourcePermanentId);
+                : gameData.exilePlayGrantBySource(sourcePermanentId);
         if (grant == null) {
             return;
         }
-        gameData.exilePlayPermissions.put(card.getId(), grant.permittedPlayerId());
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(card.getId());
+        gameData.grantExilePlayPermission(card.getId(), grant.permittedPlayerId(), Duration.UNTIL_END_OF_TURN);
         if (!card.hasType(CardType.LAND) && grant.amount() < 0) {
-            gameData.exilePlayCostModifiers.put(card.getId(), grant);
+            gameData.updateExilePlayPermission(card.getId(), granted -> granted.withCostModifier(grant));
         }
     }
 
@@ -220,7 +221,7 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
                     || e.mayLookAtFaceDownCards() && sourcePermanentId == null)) {
                 // A spell has no permanent whose face-down exile pile the view could reveal, so the
                 // controller's "you may look at" permission is recorded per card instead.
-                gameData.exileLookPermissions.put(card.getId(), sourceControllerId);
+                gameData.grantExileLookPermission(card.getId(), sourceControllerId);
             }
             grantUntilEndOfTurnPlayPermission(gameData, card, sourcePermanentId);
             if (e.markWithIntelCounters()) {
@@ -232,19 +233,13 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
                         && predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null))) {
                     UUID permittedPlayer = permission.accessScope() == ExileAccessScope.EXILER
                             ? playerId : sourceControllerId;
-                    gameData.exilePlayPermissions.put(card.getId(), permittedPlayer);
-                    if (persistent.condition() != null) {
-                        gameData.exilePlayPermissionConditions.put(card.getId(), persistent.condition());
-                    }
-                    if (permission.thisTurnOnly()) {
-                        gameData.exilePlayPermissionsExpireAtTurnEnd.put(card.getId(), gameData.turnNumber);
-                    }
-                    if (permission.anyManaType()) {
-                        if (permission.thisTurnOnly()) {
-                            gameData.exilePlayAnyManaType.add(card.getId());
-                        } else {
-                            gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
-                        }
+                    boolean thisTurnOnly = permission.thisTurnOnly();
+                    gameData.grantExilePlayPermission(card.getId(), new ExilePlayPermissionEffect(permittedPlayer)
+                                    .withCondition(persistent.condition())
+                                    .withAnyManaType(permission.anyManaType() && !thisTurnOnly),
+                            null, permittedPlayer, thisTurnOnly ? Duration.UNTIL_END_OF_TURN : Duration.PERMANENT);
+                    if (permission.anyManaType() && thisTurnOnly) {
+                        gameData.grantExileAnyManaType(card.getId(), Duration.UNTIL_END_OF_TURN);
                     }
                     break;
                 }

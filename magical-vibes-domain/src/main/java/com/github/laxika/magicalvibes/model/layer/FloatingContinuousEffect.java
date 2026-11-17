@@ -21,9 +21,10 @@ import java.util.UUID;
  * Introduced by the CR 613 layer-system migration (see {@code agent-docs/LAYER_SYSTEM.md});
  * dumb data holder, all interpretation happens in the layered pass.
  *
- * <p>Exactly one of {@link #affectedPermanentId}, {@link #affectedPlayerId}, or {@link #scope}
- * identifies what the effect applies to. {@link #sourcePermanentId} is {@code null} when the
- * source was a spell (it never had a permanent) or has since left the battlefield.
+ * <p>At most one of {@link #affectedPermanentId}, {@link #affectedPlayerId}, {@link #affectedCardId} or
+ * {@link #scope} identifies what the effect applies to; an effect that names none applies to every player.
+ * {@link #sourcePermanentId} is {@code null} when the source was a spell (it never had a permanent) or has
+ * since left the battlefield.
  *
  * @param id                  unique identity of this floating effect
  * @param sourceCardName      name of the card whose spell/ability created the effect
@@ -35,6 +36,11 @@ import java.util.UUID;
  * @param scope               predicate selecting the affected permanents, or {@code null}
  * @param duration            how long the effect lasts (see {@link Duration})
  * @param timestamp           CR 613.7 timestamp, taken when the creating spell/ability resolved
+ * @param expiresWhenScopeNoLongerMatches whether a permanent stops being affected once it stops matching
+ *                            {@link #scope}
+ * @param affectedCardId      the single card affected outside the battlefield (a card in exile, a graveyard or a
+ *                            hand), or {@code null}; the effect ends as that card leaves its zone, since the card
+ *                            then becomes a new object (CR 400.7)
  */
 public record FloatingContinuousEffect(
         UUID id,
@@ -47,7 +53,16 @@ public record FloatingContinuousEffect(
         PermanentPredicate scope,
         Duration duration,
         long timestamp,
-        boolean expiresWhenScopeNoLongerMatches) {
+        boolean expiresWhenScopeNoLongerMatches,
+        UUID affectedCardId) {
+
+    public FloatingContinuousEffect(UUID id, String sourceCardName, UUID sourcePermanentId, UUID controllerId,
+                                    CardEffect effect, UUID affectedPermanentId, UUID affectedPlayerId,
+                                    PermanentPredicate scope, Duration duration, long timestamp,
+                                    boolean expiresWhenScopeNoLongerMatches) {
+        this(id, sourceCardName, sourcePermanentId, controllerId, effect, affectedPermanentId, affectedPlayerId,
+                scope, duration, timestamp, expiresWhenScopeNoLongerMatches, null);
+    }
 
     public FloatingContinuousEffect(UUID id, String sourceCardName, UUID sourcePermanentId, UUID controllerId,
                                     CardEffect effect, UUID affectedPermanentId, UUID affectedPlayerId,
@@ -78,9 +93,20 @@ public record FloatingContinuousEffect(
                 permanentId, null, null, duration, 0);
     }
 
+    /**
+     * An effect on the card {@code cardId} in a zone other than the battlefield (CR 611.2a): "you may play that card
+     * this turn", "it gains flashback until end of turn". It ends as the card leaves that zone (CR 400.7). Its
+     * timestamp is stamped as it is added.
+     */
+    public static FloatingContinuousEffect onCard(String sourceCardName, UUID sourcePermanentId, UUID controllerId,
+                                                  CardEffect effect, UUID cardId, Duration duration) {
+        return new FloatingContinuousEffect(UUID.randomUUID(), sourceCardName, sourcePermanentId, controllerId, effect,
+                null, null, null, duration, 0, false, cardId);
+    }
+
     /** Whether this effect applies to {@code playerId}: it names that player, or it names no object at all. */
     public boolean appliesToPlayer(UUID playerId) {
-        return affectedPlayerId == null ? affectedPermanentId == null && scope == null
+        return affectedPlayerId == null ? affectedPermanentId == null && scope == null && affectedCardId == null
                 : affectedPlayerId.equals(playerId);
     }
 
@@ -99,8 +125,16 @@ public record FloatingContinuousEffect(
 
     /** Returns a copy of this effect carrying the given CR 613.7 timestamp (used by
      *  {@code GameData.addFloatingEffect} to stamp the effect on insertion). */
+    /** This effect with another payload, keeping its identity, place and timestamp. */
+    public FloatingContinuousEffect withEffect(CardEffect effect) {
+        return new FloatingContinuousEffect(id, sourceCardName, sourcePermanentId, controllerId,
+                effect, affectedPermanentId, affectedPlayerId, scope, duration, timestamp, expiresWhenScopeNoLongerMatches,
+                affectedCardId);
+    }
+
     public FloatingContinuousEffect withTimestamp(long timestamp) {
         return new FloatingContinuousEffect(id, sourceCardName, sourcePermanentId, controllerId,
-                effect, affectedPermanentId, affectedPlayerId, scope, duration, timestamp, expiresWhenScopeNoLongerMatches);
+                effect, affectedPermanentId, affectedPlayerId, scope, duration, timestamp, expiresWhenScopeNoLongerMatches,
+                affectedCardId);
     }
 }

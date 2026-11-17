@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextMatchingSpellEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @Slf4j
 @Component
@@ -39,7 +42,8 @@ public class GrantFlashToNextSpellOfChosenSubtypeThisTurnEffectHandler implement
         }
 
         CardSubtype chosenSubtype = source.getChosenSubtype();
-        gameData.addNextSpellFlashGrantForChosenSubtype(entry.getControllerId(), chosenSubtype);
+        gameData.addPlayerEffect(entry, new GrantFlashToNextMatchingSpellEffect(new CardSubtypePredicate(chosenSubtype)),
+                entry.getControllerId(), Duration.UNTIL_MATCHING_SPELL_CAST);
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" lets its controller cast their next " + chosenSubtype.getDisplayName()

@@ -91,7 +91,7 @@ class BlackCatCunningThiefTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(bears.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(bears.getId());
     }
 
     @Test

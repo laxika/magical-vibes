@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.g.GlacialCrevasses;
@@ -48,7 +49,7 @@ class CircleOfProtectionRedTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, redSource.getId());
 
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(redSource.getId()));
     }
 
@@ -68,7 +69,7 @@ class CircleOfProtectionRedTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -89,7 +90,7 @@ class CircleOfProtectionRedTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 17);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -111,7 +112,7 @@ class CircleOfProtectionRedTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 17);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(cannoneers.getId()));
     }
 
@@ -139,7 +140,7 @@ class CircleOfProtectionRedTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 14);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -163,7 +164,7 @@ class CircleOfProtectionRedTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 17);
         assertThat(creature.getMarkedDamage()).isEqualTo(2);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(cannoneers.getId()));
     }
 
@@ -185,7 +186,7 @@ class CircleOfProtectionRedTest extends BaseCardTest {
 
         // The unchosen 3/2 deals its damage; the shield is untouched
         harness.assertLife(player1, 17);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.sourceId().equals(chosen.getId()));
     }
 
@@ -207,7 +208,7 @@ class CircleOfProtectionRedTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 17);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(redSource.getId()));
     }
 
@@ -222,7 +223,7 @@ class CircleOfProtectionRedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
         assertThat(gameLogContains("No permanents on the battlefield")).isTrue();
     }
 
@@ -305,7 +306,7 @@ class CircleOfProtectionRedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -319,12 +320,12 @@ class CircleOfProtectionRedTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, redSource.getId());
 
-        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isNotEmpty();
 
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities();
 
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -351,7 +352,7 @@ class CircleOfProtectionRedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     private Permanent addReadyCircle(Player player) {
@@ -397,7 +398,7 @@ class CircleOfProtectionRedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test

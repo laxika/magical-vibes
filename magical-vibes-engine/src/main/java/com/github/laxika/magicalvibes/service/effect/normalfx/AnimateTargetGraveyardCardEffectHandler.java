@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Component
 @RequiredArgsConstructor
@@ -37,13 +38,12 @@ public class AnimateTargetGraveyardCardEffectHandler implements NormalEffectHand
             return;
         }
 
-        gameData.temporaryGraveyardCardAnimationsUntilEndOfTurn.put(targetCardId,
-                new GraveyardCardAnimation(
+        gameData.addCardEffect(entry, new GraveyardCardAnimation(
                         animation.power(),
                         animation.toughness(),
                         animation.grantedColors(),
                         Set.copyOf(animation.grantedSubtypes()),
-                        animation.grantedCardTypes(),
-                        gameData.graveyardEntryVersion(targetCardId)));
+                        animation.grantedCardTypes()),
+                targetCardId, Duration.UNTIL_END_OF_TURN);
     }
 }

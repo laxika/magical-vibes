@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsProduceChosenColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOpponentsCantCastUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
@@ -61,8 +62,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.NamedSpellsAndLandsCantBePlayedUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -3656,9 +3657,9 @@ public class ChoiceHandlerService {
 
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null && !gameQueryService.cantHaveOrGainKeyword(gameData, target, keyword)) {
-            GrantDuration duration = ctx.duration();
+            Duration duration = ctx.duration();
             addChosenKeywordToLegacyBucket(target, keyword, duration);
-            if (duration == GrantDuration.INDEFINITE) {
+            if (Duration.PERMANENT.equals(duration)) {
                 gameData.perpetualKeywords.merge(target.getOriginalCard().getId(), Set.of(keyword),
                         (existing, added) -> {
                             Set<Keyword> merged = new java.util.HashSet<>(existing);
@@ -3669,7 +3670,7 @@ public class ChoiceHandlerService {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), ctx.sourceCardName(), sourcePermanentIdFor(ctx), player.getId(),
                     new GrantKeywordEffect(Set.of(keyword), GrantScope.TARGET, null, duration, null),
-                    target.getId(), null, null, floatingDurationFor(duration), 0));
+                    target.getId(), null, null, duration, 0));
 
             String keywordName = keyword.name().charAt(0) + keyword.name().substring(1).toLowerCase().replace('_', ' ');
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gains " + keywordName + " "
@@ -3680,43 +3681,37 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void addChosenKeywordToLegacyBucket(Permanent target, Keyword keyword, GrantDuration duration) {
-        switch (duration) {
-            case UNTIL_YOUR_NEXT_TURN -> target.getUntilNextTurnKeywords().add(keyword);
-            case INDEFINITE -> target.getPersistentGrantedKeywords().add(keyword);
-            case END_OF_TURN, UNTIL_END_OF_COMBAT, UNTIL_YOUR_NEXT_UPKEEP,
-                    WHILE_SOURCE_ON_BATTLEFIELD, WHILE_SOURCE_REMAINS -> target.getGrantedKeywords().add(keyword);
+    private void addChosenKeywordToLegacyBucket(Permanent target, Keyword keyword, Duration duration) {
+        if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
+            target.getUntilNextTurnKeywords().add(keyword);
+        } else if (Duration.PERMANENT.equals(duration)) {
+            target.getPersistentGrantedKeywords().add(keyword);
+        } else {
+            target.getGrantedKeywords().add(keyword);
         }
     }
 
     private UUID sourcePermanentIdFor(ChoiceContext.KeywordGrantChoice context) {
-        return context.duration() == GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
-                || context.duration() == GrantDuration.WHILE_SOURCE_REMAINS
+        return Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(context.duration())
+                || Duration.WHILE_SOURCE_REMAINS.equals(context.duration())
                 ? context.sourcePermanentId() : null;
     }
 
-    private Duration floatingDurationFor(GrantDuration duration) {
-        return switch (duration) {
-            case UNTIL_END_OF_COMBAT -> Duration.UNTIL_END_OF_COMBAT;
-            case UNTIL_YOUR_NEXT_TURN -> Duration.UNTIL_YOUR_NEXT_TURN;
-            case UNTIL_YOUR_NEXT_UPKEEP -> Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP;
-            case WHILE_SOURCE_ON_BATTLEFIELD -> Duration.WHILE_SOURCE_ON_BATTLEFIELD;
-            case WHILE_SOURCE_REMAINS -> Duration.WHILE_SOURCE_REMAINS;
-            case INDEFINITE -> Duration.PERMANENT;
-            case END_OF_TURN -> Duration.UNTIL_END_OF_TURN;
-        };
-    }
-
-    private String durationLabel(GrantDuration duration) {
-        return switch (duration) {
-            case UNTIL_END_OF_COMBAT -> "until end of combat";
-            case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
-            case UNTIL_YOUR_NEXT_UPKEEP -> "until your next upkeep";
-            case WHILE_SOURCE_ON_BATTLEFIELD -> "for as long as its source remains on the battlefield";
-            case WHILE_SOURCE_REMAINS -> "for as long as its source remains on the battlefield";
-            case INDEFINITE -> "indefinitely";
-            case END_OF_TURN -> "until end of turn";
-        };
+    private String durationLabel(Duration duration) {
+        if (Duration.UNTIL_END_OF_COMBAT.equals(duration)) {
+            return "until end of combat";
+        } else if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
+            return "until your next turn";
+        } else if (Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(duration)) {
+            return "until your next upkeep";
+        } else if (Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(duration)) {
+            return "for as long as its source remains on the battlefield";
+        } else if (Duration.WHILE_SOURCE_REMAINS.equals(duration)) {
+            return "for as long as its source remains on the battlefield";
+        } else if (Duration.PERMANENT.equals(duration)) {
+            return "indefinitely";
+        }
+        return "until end of turn";
     }
 
     private void handleLegacyWordChoice(GameData gameData, Player player, String chosenWord,
@@ -4839,9 +4834,12 @@ public class ChoiceHandlerService {
                                                                    ChoiceContext.PreventDamageToTargetFromChosenColorChoice ctx) {
         CardColor chosenColor = CardColor.valueOf(chosenValue);
         gameData.interaction.clearAwaitingInput();
-        gameData.colorDamagePreventionUntilEndOfTurn
-                .computeIfAbsent(ctx.targetId(), ignored -> ConcurrentHashMap.newKeySet())
-                .add(chosenColor);
+        var prevention = new PreventAllDamageToTargetFromChosenColorEffect(false, chosenColor);
+        gameData.addFloatingEffect(gameData.playerIds.contains(ctx.targetId())
+                ? FloatingContinuousEffect.onPlayer("", null, null, prevention, ctx.targetId(),
+                        Duration.UNTIL_END_OF_TURN)
+                : FloatingContinuousEffect.onPermanent("", null, null, prevention, ctx.targetId(),
+                        Duration.UNTIL_END_OF_TURN));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -4989,7 +4987,10 @@ public class ChoiceHandlerService {
         } else {
             StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, ctx.targetId());
             if (targetSpell != null) {
-                gameData.spellColorOverridesUntilEndOfTurn.put(ctx.targetId(), Set.of(chosenColor));
+                gameData.addFloatingEffect(com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect.onCard(
+                        ctx.sourceCardName(), null, ctx.controllerId(),
+                        new com.github.laxika.magicalvibes.model.effect.SpellColorUntilEndOfTurnEffect(chosenColor),
+                        ctx.targetId(), com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));
                 gameLogService.append(gameData,
                         GameLog.cardThen(targetSpell.getCard(), " becomes " + colorName + " until end of turn."));
                 log.info("Game {} - spell {} becomes {} until end of turn",
@@ -7554,9 +7555,9 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
 
         UUID controllerId = ctx.controllerId();
-        gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn
-                .computeIfAbsent(controllerId, k -> ConcurrentHashMap.newKeySet())
-                .add(cardName);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer("Named spell and land lock", null, controllerId,
+                new NamedSpellsAndLandsCantBePlayedUntilNextTurnEffect(cardName), null,
+                Duration.UNTIL_YOUR_NEXT_TURN));
 
         gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " chooses \"" + cardName

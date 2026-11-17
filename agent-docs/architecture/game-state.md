@@ -52,12 +52,12 @@ Why: "a permanent you put a +1/+1 counter on this turn" must not match another p
 
 ### Face-down exile: look and play permissions are separate and bound to a player
 Each is granted to the player named by the exiling resolution and does not follow the source's controller; a looked-at card is shown only to that viewer, also when it cannot be cast or its source has left, and leaving exile clears the permission.
-Owner: `GameData.exileLookPermissions` and `exilePlayPermissions`; `GameViewProjectionFactory` (`GameStateMessage.lookedAtExileCards`).
+Owner: floating `ExileLookPermissionEffect` / `ExilePlayPermissionEffect` on the card (`GameData.grantExileLookPermission`, `mayLookAtExiledCard`, `exilePlayPermission`); `GameViewProjectionFactory` (`GameStateMessage.lookedAtExileCards`).
 Why: hidden information must reach exactly the players the card text names.
 
 ### A source that lets its controller look adds viewers as it changes control
 For a source such as Bane Alley Broker, each player who gains control of it becomes a viewer of the cards exiled with it and remains one until the card leaves exile, also after the source is gone.
-Owner: `GameData.additionalExileLookPermissions`, written by `CreatureControlService`.
+Owner: one floating `ExileLookPermissionEffect` per viewer on the card, added by `CreatureControlService`.
 Why: a player who has looked at a face-down card keeps that knowledge.
 
 ### Suspended spells that exiled themselves keep their countdown (CR 702.62a)

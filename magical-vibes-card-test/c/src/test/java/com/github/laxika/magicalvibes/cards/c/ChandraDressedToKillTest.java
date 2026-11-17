@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -69,8 +70,8 @@ class ChandraDressedToKillTest extends BaseCardTest {
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getId().equals(temper.getId()));
-        assertThat(gd.exilePlayPermissions.get(temper.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(temper.getId());
+        assertThat(gd.exilePlayPermissionHolder(temper.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(temper.getId());
     }
 
     @Test
@@ -86,7 +87,7 @@ class ChandraDressedToKillTest extends BaseCardTest {
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getId().equals(thinkTwice.getId()));
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(thinkTwice.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(thinkTwice.getId());
     }
 
     @Test
@@ -109,11 +110,11 @@ class ChandraDressedToKillTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .contains(red1.getId(), blue.getId(), red2.getId(), nonRed.getId(), red3.getId());
-        assertThat(gd.exilePlayPermissions.get(red1.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissions.get(red2.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissions.get(red3.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(blue.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(nonRed.getId());
+        assertThat(gd.exilePlayPermissionHolder(red1.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(red2.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(red3.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(blue.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(nonRed.getId());
 
         assertThat(gd.emblems).hasSize(1);
         assertThat(gd.emblems.getFirst().controllerId()).isEqualTo(player1.getId());

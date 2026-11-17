@@ -204,7 +204,7 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                                 ctx.sourceControllerId(), ctx.combat()))),
                 effect("CombatDamagePreventionTokenShield", PREVENTION,
                         ctx -> ctx.combat() && preventable(ctx)
-                                && ctx.gameData().combatDamagePreventionTokenShields.get(ctx.playerId()) != null,
+                                && ctx.gameData().combatDamagePreventionTokenShield(ctx.playerId()) != null,
                         ctx -> "Prevent the combat damage and create that many tokens",
                         ctx -> ctx.event().withAmount(prevention.applyCombatDamagePreventionTokenShield(
                                 ctx.gameData(), ctx.playerId(), ctx.amount()))).whole(),
@@ -234,7 +234,7 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                         ctx -> ctx.event().withAmount(ctx.amount() - controllerAndCreaturesPrevented(ctx)),
                         PlayerDamageCandidateSource::noLog),
                 effect("GlobalPreventionShield", PREVENTION,
-                        ctx -> preventable(ctx) && ctx.gameData().globalDamagePreventionShield > 0,
+                        ctx -> preventable(ctx) && ctx.gameData().globalDamagePreventionShield() > 0,
                         ctx -> "Prevent damage with the shared shield",
                         ctx -> ctx.event().withAmount(prevention.applyGlobalPreventionShield(
                                 ctx.gameData(), ctx.amount(), ctx.combat()))).whole(),
@@ -246,16 +246,15 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                                 ctx.gameData(), ctx.playerId(), ctx.amount(), ctx.combat()))).whole(),
                 effect("PreventNextCombatDamageShield", PREVENTION,
                         ctx -> ctx.combat() && preventable(ctx)
-                                && ctx.gameData().playerCombatDamagePreventionShields.getOrDefault(ctx.playerId(),
-                                        0) > 0,
-                        ctx -> "Prevent the next " + ctx.gameData().playerCombatDamagePreventionShields.get(ctx.playerId())
+                                && ctx.gameData().playerDamagePreventionShield(ctx.playerId(), true) > 0,
+                        ctx -> "Prevent the next " + ctx.gameData().playerDamagePreventionShield(ctx.playerId(), true)
                                 + " combat damage to you",
                         ctx -> ctx.event().withAmount(prevention.applyPlayerCombatDamagePreventionShield(
                                 ctx.gameData(), ctx.playerId(), ctx.amount()))).whole(),
                 effect("PreventNextDamageShield", PREVENTION,
                         ctx -> preventable(ctx)
-                                && ctx.gameData().playerDamagePreventionShields.getOrDefault(ctx.playerId(), 0) > 0,
-                        ctx -> "Prevent the next " + ctx.gameData().playerDamagePreventionShields.get(ctx.playerId())
+                                && ctx.gameData().playerDamagePreventionShield(ctx.playerId(), false) > 0,
+                        ctx -> "Prevent the next " + ctx.gameData().playerDamagePreventionShield(ctx.playerId(), false)
                                 + " damage to you",
                         ctx -> ctx.event().withAmount(prevention.applyPlayerDamagePreventionShield(
                                 ctx.gameData(), ctx.playerId(), ctx.amount()))).whole(),

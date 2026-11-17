@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.k.KreeCommandos;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -33,10 +34,10 @@ class HexMagicTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnLand, drawnCreature);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactlyInAnyOrder(exiledLand, exiledCreature);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(exiledLand.getId(), player1.getId())
                 .containsEntry(exiledCreature.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer)
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN))
                 .containsEntry(exiledLand.getId(), player1.getId())
                 .containsEntry(exiledCreature.getId(), player1.getId());
     }
@@ -81,14 +82,14 @@ class HexMagicTest extends BaseCardTest {
     void permissionLastsThroughNextTurnAndLeavesUnplayedCardsExiled() {
         Card land = resolveWithExiledLand();
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(land.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(land.getId(), player1.getId());
         assertThatThrownBy(() -> harness.castFromExile(player2, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(land.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(land.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(land.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(land);
         assertThatThrownBy(() -> harness.castFromExile(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -100,9 +101,9 @@ class HexMagicTest extends BaseCardTest {
         gd.queueExtraTurnFirst(player1.getId(), false);
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(land.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(land.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(land.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(land);
     }
 

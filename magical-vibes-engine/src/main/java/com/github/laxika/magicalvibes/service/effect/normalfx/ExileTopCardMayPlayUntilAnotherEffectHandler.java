@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayUntilAnotherEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -42,16 +44,12 @@ public class ExileTopCardMayPlayUntilAnotherEffectHandler implements NormalEffec
         }
 
         Card topCard = deck.removeFirst();
-        UUID previousCardId = gameData.exilePlayPermissionSourceCards.put(sourcePermanentId, topCard.getId());
-        if (previousCardId != null) {
-            gameData.exilePlayPermissions.remove(previousCardId);
-            gameData.exilePlayPermissionConditions.remove(previousCardId);
-            gameData.exilePlayPermissionsExpireEndOfTurn.remove(previousCardId);
-            gameData.exilePlayPermissionsExpireAtTurnEnd.remove(previousCardId);
-        }
+        gameData.endExilePlayPermissionsUntilAnotherCard(sourcePermanentId);
 
         exileService.exileCard(gameData, controllerId, topCard);
-        gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
+        gameData.grantExilePlayPermission(topCard.getId(),
+                new ExilePlayPermissionEffect(controllerId).withUntilAnotherCard(true),
+                sourcePermanentId, controllerId, Duration.PERMANENT);
 
         String controllerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.text(controllerName + " exiles " + topCard.getName()

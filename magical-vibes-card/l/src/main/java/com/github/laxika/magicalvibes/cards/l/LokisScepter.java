@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -29,7 +29,7 @@ public class LokisScepter extends Card {
         // other types and gains haste.
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.VILLAIN, GrantScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));

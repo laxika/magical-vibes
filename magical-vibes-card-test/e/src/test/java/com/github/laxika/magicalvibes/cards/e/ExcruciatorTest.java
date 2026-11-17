@@ -25,13 +25,13 @@ class ExcruciatorTest extends BaseCardTest {
     @DisplayName("Its combat damage to a player can't be prevented")
     void combatDamageToPlayerCantBePrevented() {
         addExcruciatorReady(player1);
-        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 10);
 
         declareAttackers(List.of(0));
         resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(10);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(10);
     }
 
     @Test
@@ -66,7 +66,7 @@ class ExcruciatorTest extends BaseCardTest {
     @DisplayName("Its noncombat damage to a player can't be prevented")
     void noncombatDamageToPlayerCantBePrevented() {
         Permanent excruciator = addExcruciatorReady(player1);
-        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 10);
         harness.setHand(player1, List.of(new SoulsFire()));
         harness.addMana(player1, ManaColor.RED, 3);
 
@@ -74,7 +74,7 @@ class ExcruciatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(10);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(10);
     }
 
     @Test
@@ -101,13 +101,13 @@ class ExcruciatorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castInstant(player1, 0, source.getId());
         harness.passBothPriorities();
-        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 10);
 
         declareAttackers(List.of(0));
         resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(9);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(9);
     }
 
     @Test
@@ -119,13 +119,13 @@ class ExcruciatorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castInstant(player1, 0, source.getId());
         harness.passBothPriorities();
-        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 10);
 
         harness.castInstant(player1, 0, List.of(source.getId(), player2.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(9);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(9);
     }
 
     private Permanent addExcruciatorReady(Player player) {

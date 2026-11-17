@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.ObsianusGolem;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -46,7 +47,7 @@ class RuneOfProtectionArtifactsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, golem.getId());
 
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(golem.getId()));
     }
 
@@ -66,7 +67,7 @@ class RuneOfProtectionArtifactsTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -86,7 +87,7 @@ class RuneOfProtectionArtifactsTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 16);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(chosen.getId()));
     }
 
@@ -107,7 +108,7 @@ class RuneOfProtectionArtifactsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -121,7 +122,7 @@ class RuneOfProtectionArtifactsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
         assertThat(gameLogContains("No permanents on the battlefield")).isTrue();
     }
 
@@ -136,14 +137,14 @@ class RuneOfProtectionArtifactsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, golem.getId());
 
-        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isNotEmpty();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test

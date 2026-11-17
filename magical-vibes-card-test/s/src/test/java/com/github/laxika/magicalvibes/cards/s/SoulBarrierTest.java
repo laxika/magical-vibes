@@ -149,14 +149,14 @@ class SoulBarrierTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
-        gd.playerDamagePreventionShields.put(player2.getId(), 2);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 2);
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test

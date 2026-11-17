@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import java.util.Set;
 import java.util.UUID;
 
@@ -45,7 +46,7 @@ public record PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean
                                            boolean combatOnly,
                                            boolean unblockedOnly,
                                            boolean preventAllButOne,
-                                           com.github.laxika.magicalvibes.model.filter.PermanentPredicate requiredSourceFilter) {
+                                           com.github.laxika.magicalvibes.model.filter.PermanentPredicate requiredSourceFilter) implements CardEffect {
 
     /** The same shield keyed to another source object (a permanent spell's card becoming its permanent). */
     public PlayerSourceNextDamageShield withSourceId(UUID newSourceId) {

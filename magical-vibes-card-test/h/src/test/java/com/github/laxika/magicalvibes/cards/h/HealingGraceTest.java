@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
@@ -75,10 +76,10 @@ class HealingGraceTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player1.getId());
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
-        assertThat(gd.targetSourceDamagePreventionShields).hasSize(1);
-        assertThat(gd.targetSourceDamagePreventionShields.getFirst().targetId()).isEqualTo(player1.getId());
-        assertThat(gd.targetSourceDamagePreventionShields.getFirst().sourceId()).isEqualTo(opponentCreature.getId());
-        assertThat(gd.targetSourceDamagePreventionShields.getFirst().remainingAmount()).isEqualTo(3);
+        assertThat(gd.shields(TargetSourceDamagePreventionShield.class)).hasSize(1);
+        assertThat(gd.shields(TargetSourceDamagePreventionShield.class).getFirst().targetId()).isEqualTo(player1.getId());
+        assertThat(gd.shields(TargetSourceDamagePreventionShield.class).getFirst().sourceId()).isEqualTo(opponentCreature.getId());
+        assertThat(gd.shields(TargetSourceDamagePreventionShield.class).getFirst().remainingAmount()).isEqualTo(3);
     }
 
     @Test
@@ -189,7 +190,7 @@ class HealingGraceTest extends BaseCardTest {
         // Life: 20 +3 (Healing Grace) -3 (combat) = 20
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         // Shield should still be active (not consumed)
-        assertThat(gd.targetSourceDamagePreventionShields).hasSize(1);
+        assertThat(gd.shields(TargetSourceDamagePreventionShield.class)).hasSize(1);
     }
 
     // ===== Shield cleanup =====
@@ -204,13 +205,13 @@ class HealingGraceTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player1.getId());
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
-        assertThat(gd.targetSourceDamagePreventionShields).hasSize(1);
+        assertThat(gd.shields(TargetSourceDamagePreventionShield.class)).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.targetSourceDamagePreventionShields).isEmpty();
+        assertThat(gd.shields(TargetSourceDamagePreventionShield.class)).isEmpty();
     }
 
     // ===== Graveyard =====
@@ -300,7 +301,7 @@ class HealingGraceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.targetSourceDamagePreventionShields).isEmpty();
+        assertThat(gd.shields(TargetSourceDamagePreventionShield.class)).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInGraveyard(player1, "Healing Grace");
     }

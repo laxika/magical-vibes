@@ -35,7 +35,7 @@ public class RedirectYourDamageToTargetCreatureThisTurnEffectHandler implements 
             return;
         }
 
-        gameData.turnDamageRedirectToCreatureShields.add(
+        gameData.addShield(
                 TurnDamageRedirectToCreatureShield.forControlledCreatures(controllerId, targetId));
     }
 }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiantHerdgorger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.effect.normalfx.D20RollService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RollD20EffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -93,7 +94,7 @@ class ChaosChannelerTest extends BaseCardTest {
         attackWithChanneler(List.of());
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test
@@ -125,8 +126,8 @@ class ChaosChannelerTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyElementsOf(library.subList(0, 2));
         for (Card card : library.subList(0, 2)) {
-            assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
-            assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(card.getId());
+            assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
+            assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(card.getId());
         }
     }
 
@@ -141,9 +142,9 @@ class ChaosChannelerTest extends BaseCardTest {
     private void assertExiledWithPermission(List<Card> cards) {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyElementsOf(cards);
         for (Card card : cards) {
-            assertThat(gd.exilePlayPermissions).containsEntry(card.getId(), player1.getId());
-            assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(card.getId());
-            assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(card.getId());
+            assertThat(gd.exilePlayPermissionHolders()).containsEntry(card.getId(), player1.getId());
+            assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(card.getId());
+            assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(card.getId());
         }
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.a.AesthirGlider;
 import com.github.laxika.magicalvibes.cards.g.GuerrillaTactics;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
@@ -61,7 +62,7 @@ class SeasonedTacticianTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -81,7 +82,7 @@ class SeasonedTacticianTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 18);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.sourceId().equals(chosen.getId()));
     }
 
@@ -108,7 +109,7 @@ class SeasonedTacticianTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test

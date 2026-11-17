@@ -57,8 +57,8 @@ class BellBorcaSpectralSergeantTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(top.getId()));
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(top.getId());
         assertThat(gqs.getEffectivePower(gd, bell)).isEqualTo(4);
     }
 
@@ -149,7 +149,7 @@ class BellBorcaSpectralSergeantTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, bell)).isZero();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(top.getId()));
     }

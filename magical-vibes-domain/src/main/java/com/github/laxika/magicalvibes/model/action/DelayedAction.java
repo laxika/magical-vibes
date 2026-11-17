@@ -18,18 +18,7 @@ package com.github.laxika.magicalvibes.model.action;
  * {@code GameData} god-class.
  */
 public sealed interface DelayedAction permits
-        DelayedAdditionalCombatBeginningEffect,
-        TargetCreatureMustAttackNextCombat,
-        DelayedPlusZeroPlusOneCounters,
-        DelayedAttackerDeclarationControl,
-        DelayedBlockerDeclarationControl,
-        DelayedCamouflage,
-        GrantExilePlayPermissionAtNextTurn,
-        RevokeExilePlayPermissionAtNextUpkeep,
-        PhasedOutUntilEndOfNextTurn,
-        DelayedDamageDoubling,
-        DelayedControllerDamageMultiplication,
-        DelayedSourceDamageMultiplication {
+        DelayedAdditionalCombatBeginningEffect {
 
     /**
      * The identity of the resolution that scheduled this action ({@code GameData.resolutionOrdinal}), for the

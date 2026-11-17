@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -56,7 +56,7 @@ public class GainControlOfAllPermanentsTargetPlayerControlsEffectHandler impleme
             toSeize.add(permanent);
         }
 
-        ControlDuration duration = seizeEffect.duration();
+        Duration duration = seizeEffect.duration();
         GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(duration);
         for (Permanent permanent : toSeize) {
             if (duration.isSourceLinked()) {
@@ -69,7 +69,7 @@ public class GainControlOfAllPermanentsTargetPlayerControlsEffectHandler impleme
                 continue;
             }
             creatureControlService.applyControlEffect(gameData, entry.getControllerId(), permanent,
-                    controlEffect, duration.toDuration(), null,
+                    controlEffect, duration, null,
                     entry.getCard().getName());
         }
 

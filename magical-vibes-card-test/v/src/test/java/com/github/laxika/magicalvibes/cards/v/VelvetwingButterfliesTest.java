@@ -164,7 +164,7 @@ class VelvetwingButterfliesTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Velvetwing Butterflies");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

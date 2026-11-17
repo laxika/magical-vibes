@@ -38,7 +38,7 @@ class AangTheLastAirbenderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(bears.getOriginalCard().getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(bears.getOriginalCard().getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(bears.getOriginalCard().getId())).isEqualTo(player2.getId());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -114,7 +114,7 @@ class AangTheLastAirbenderTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.findExiledCard(bears.getOriginalCard().getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(bears.getOriginalCard().getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(bears.getOriginalCard().getId())).isEqualTo(player1.getId());
     }
 
     @Test

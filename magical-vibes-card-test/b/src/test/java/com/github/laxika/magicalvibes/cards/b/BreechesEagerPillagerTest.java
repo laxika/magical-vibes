@@ -58,7 +58,7 @@ class BreechesEagerPillagerTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -111,7 +111,7 @@ class BreechesEagerPillagerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
         assertThat(countPermanents(player1, "Treasure")).isZero();
     }
 

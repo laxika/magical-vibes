@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,7 @@ class PiaNalaarConsulOfRevivalTest extends BaseCardTest {
         addCreatureReady(player1, new PiaNalaarConsulOfRevival());
         Forest forest = new Forest();
         gd.addToExile(player1.getId(), forest);
-        gd.exilePlayPermissions.put(forest.getId(), player1.getId());
+        gd.grantExilePlayPermission(forest.getId(), player1.getId(), Duration.PERMANENT);
 
         prepareMainPhase();
         harness.castFromExile(player1, forest.getId());
@@ -39,7 +40,7 @@ class PiaNalaarConsulOfRevivalTest extends BaseCardTest {
         addCreatureReady(player1, new PiaNalaarConsulOfRevival());
         GrizzlyBears bears = new GrizzlyBears();
         gd.addToExile(player1.getId(), bears);
-        gd.exilePlayPermissions.put(bears.getId(), player1.getId());
+        gd.grantExilePlayPermission(bears.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -82,7 +83,7 @@ class PiaNalaarConsulOfRevivalTest extends BaseCardTest {
         addCreatureReady(player1, new PiaNalaarConsulOfRevival());
         Forest forest = new Forest();
         gd.addToExile(player2.getId(), forest);
-        gd.exilePlayPermissions.put(forest.getId(), player2.getId());
+        gd.grantExilePlayPermission(forest.getId(), player2.getId(), Duration.PERMANENT);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -98,7 +99,7 @@ class PiaNalaarConsulOfRevivalTest extends BaseCardTest {
         Permanent pia = addCreatureReady(player1, new PiaNalaarConsulOfRevival());
         GrizzlyBears bears = new GrizzlyBears();
         gd.addToExile(player1.getId(), bears);
-        gd.exilePlayPermissions.put(bears.getId(), player1.getId());
+        gd.grantExilePlayPermission(bears.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         prepareMainPhase();

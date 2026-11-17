@@ -42,13 +42,13 @@ class DreamHarvestTest extends BaseCardTest {
                 .containsExactly(firstLand.getId(), firstSpell.getId(), secondLand.getId(),
                         secondSpell.getId(), thirdSpell.getId());
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remainingCard);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(firstSpell.getId(), player1.getId())
                 .containsEntry(secondSpell.getId(), player1.getId())
                 .containsEntry(thirdSpell.getId(), player1.getId())
                 .doesNotContainKey(firstLand.getId())
                 .doesNotContainKey(secondLand.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost)
+        assertThat(gd.exilePlayWithoutPayingCardIds())
                 .contains(firstSpell.getId(), secondSpell.getId(), thirdSpell.getId())
                 .doesNotContain(firstLand.getId(), secondLand.getId());
     }
@@ -72,8 +72,8 @@ class DreamHarvestTest extends BaseCardTest {
                 .anyMatch(entry -> entry.getCard().getId().equals(firstSpell.getId())
                         && entry.getEntryType() == StackEntryType.CREATURE_SPELL);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(firstSpell.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(firstSpell.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(firstSpell.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(firstSpell.getId());
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Iron-Shield Elf");
         harness.assertNotOnBattlefield(player2, "Iron-Shield Elf");
@@ -153,8 +153,8 @@ class DreamHarvestTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(spell);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(spell.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(spell.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(spell.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(spell.getId());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLACK, 2);
         assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId()))

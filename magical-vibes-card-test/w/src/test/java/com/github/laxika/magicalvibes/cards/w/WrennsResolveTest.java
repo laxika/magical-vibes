@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -34,13 +35,10 @@ class WrennsResolveTest extends BaseCardTest {
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(first.getId(), second.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd)
-                .containsEntry(first.getId(), Integer.MAX_VALUE)
-                .containsEntry(second.getId(), Integer.MAX_VALUE);
-        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer)
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN))
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
     }
@@ -56,7 +54,7 @@ class WrennsResolveTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(only);
-        assertThat(gd.exilePlayPermissions).containsEntry(only.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(only.getId(), player1.getId());
     }
 
     @Test
@@ -70,13 +68,13 @@ class WrennsResolveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(top.getId());
 
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(top.getId());
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
         assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -193,12 +191,12 @@ class WrennsResolveTest extends BaseCardTest {
         int currentTurn = gd.turnNumber;
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.turnNumber).isEqualTo(currentTurn + 1);
-        assertThat(gd.exilePlayPermissions).containsKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(top.getId());
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(top.getId());
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
     }
 }

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -169,7 +168,7 @@ class PermanentTimestampTest {
             long entryStamp = bears.getTimestamp();
 
             controlService.applyControlEffect(gd, player1Id, bears,
-                    new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                    new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                     Duration.UNTIL_END_OF_TURN, null, "Threaten");
 
             assertThat(gd.playerBattlefields.get(player1Id)).contains(bears);

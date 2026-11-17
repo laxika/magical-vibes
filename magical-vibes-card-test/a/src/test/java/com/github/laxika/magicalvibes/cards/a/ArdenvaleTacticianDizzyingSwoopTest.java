@@ -30,7 +30,7 @@ class ArdenvaleTacticianDizzyingSwoopTest extends BaseCardTest {
         assertThat(first.isTapped()).isTrue();
         assertThat(second.isTapped()).isTrue();
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNotNull();
-        assertThat(harness.getGameData().exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(harness.getGameData().exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
 
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -52,7 +52,7 @@ class ArdenvaleTacticianDizzyingSwoopTest extends BaseCardTest {
 
         assertThat(creature.isTapped()).isFalse();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
         harness.assertNotInGraveyard(player1, "Ardenvale Tactician");
     }
 
@@ -68,7 +68,7 @@ class ArdenvaleTacticianDizzyingSwoopTest extends BaseCardTest {
         assertThat(target.isTapped()).isTrue();
         assertThat(other.isTapped()).isFalse();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -83,7 +83,7 @@ class ArdenvaleTacticianDizzyingSwoopTest extends BaseCardTest {
 
         assertThat(second.isTapped()).isTrue();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -99,7 +99,7 @@ class ArdenvaleTacticianDizzyingSwoopTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Ardenvale Tactician");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityAtResolutionEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesOfChosenParityEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -20,7 +20,7 @@ public class MutinousMassacre extends Card {
         addSpellEffect(new ChooseManaValueParityAtResolutionEffect());
         addSpellEffect(new DestroyAllCreaturesOfChosenParityEffect());
         addSpellEffect(new GainControlOfAllPermanentsMatchingEffect(
-                new PermanentIsCreaturePredicate(), ControlDuration.END_OF_TURN));
+                new PermanentIsCreaturePredicate(), Duration.UNTIL_END_OF_TURN));
         addSpellEffect(new UntapPermanentsEffect(
                 TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()));
         addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));

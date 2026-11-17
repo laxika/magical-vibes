@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -36,9 +37,9 @@ class IreShamanTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(topCard.getId()));
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(topCard.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(topCard.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(topCard.getId());
     }
 
     @Test
@@ -50,13 +51,13 @@ class IreShamanTest extends BaseCardTest {
 
         turnFaceUp(shaman);
         harness.passBothPriorities();
-        assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(topCard.getId());
 
         harness.inMutationScope(
                 () -> GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(topCard.getId());
     }
 
     @Test
@@ -70,7 +71,7 @@ class IreShamanTest extends BaseCardTest {
 
         assertThat(shaman.isFaceDown()).isFalse();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
         assertThat(shaman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -84,7 +85,7 @@ class IreShamanTest extends BaseCardTest {
 
         assertThat(shaman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test

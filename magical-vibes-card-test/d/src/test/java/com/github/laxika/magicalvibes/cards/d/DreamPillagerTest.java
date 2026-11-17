@@ -36,11 +36,11 @@ class DreamPillagerTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactly(firstSpell, firstLand, secondSpell, secondLand);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(firstSpell.getId(), player1.getId())
                 .containsEntry(secondSpell.getId(), player1.getId())
                 .doesNotContainKeys(firstLand.getId(), secondLand.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost)
+        assertThat(gd.exilePlayWithoutPayingCardIds())
                 .doesNotContain(firstSpell.getId(), secondSpell.getId());
     }
 
@@ -74,12 +74,12 @@ class DreamPillagerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(shock, new Forest(), new Forest(), new Forest()));
 
         resolveCombatAndTrigger();
-        assertThat(gd.exilePlayPermissions).containsKey(shock.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(shock.getId());
 
         harness.inMutationScope(() ->
                 GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(shock.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(shock.getId());
     }
 
     @Test
@@ -94,7 +94,7 @@ class DreamPillagerTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(spell, land);
-        assertThat(gd.exilePlayPermissions).containsEntry(spell.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(spell.getId(), player1.getId());
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 

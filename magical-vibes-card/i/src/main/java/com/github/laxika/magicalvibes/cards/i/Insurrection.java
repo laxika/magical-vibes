@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -25,7 +25,7 @@ public class Insurrection extends Card {
 
         // Untap all creatures and gain control of them until end of turn.
         addSpellEffect(new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES, creature));
-        addSpellEffect(new GainControlOfAllPermanentsMatchingEffect(creature, ControlDuration.END_OF_TURN));
+        addSpellEffect(new GainControlOfAllPermanentsMatchingEffect(creature, Duration.UNTIL_END_OF_TURN));
 
         // They gain haste until end of turn.
         addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));

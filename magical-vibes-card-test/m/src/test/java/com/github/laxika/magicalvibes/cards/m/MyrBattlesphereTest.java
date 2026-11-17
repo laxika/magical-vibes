@@ -348,7 +348,7 @@ class MyrBattlesphereTest extends BaseCardTest {
     void damagedPlayerOrdersReplacementsOnAttackAbilityDamage() {
         setupBattlefieldWithMyr(3);
         harness.addToBattlefield(player1, new FurnaceOfRath());
-        gd.playerDamagePreventionShields.put(player2.getId(), 3);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 3);
         harness.setLife(player2, 20);
 
         declareAttackers(List.of(0));
@@ -365,7 +365,7 @@ class MyrBattlesphereTest extends BaseCardTest {
 
         // Doubled to 6 first, then the shield prevents 3 of it.
         harness.assertLife(player2, 17);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
         assertThat(gd.pendingEffectResolutionEntry).isNull();
     }
 

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.v.Vorstclaw;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -38,11 +39,11 @@ class StolenGoodsTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(Card::getName)
                 .containsExactlyInAnyOrder("Forest", "Forest", "Grizzly Bears");
-        assertThat(gd.exilePlayPermissions.get(bears.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(bears.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(bears.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(land1.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(land2.getId());
+        assertThat(gd.exilePlayPermissionHolder(bears.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(bears.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(bears.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(land1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(land2.getId());
     }
 
     @Test
@@ -54,12 +55,12 @@ class StolenGoodsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StolenGoods()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castAndResolveSorcery(player1, 0, player2.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(bears.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(bears.getId());
 
         GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
 
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(bears.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(bears.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(bears.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(bears.getId());
     }
 
     @Test
@@ -104,7 +105,7 @@ class StolenGoodsTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyInAnyOrder(first, second);
-        assertThat(gd.exilePlayPermissions).doesNotContainKeys(first.getId(), second.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKeys(first.getId(), second.getId());
     }
 
     @Test
@@ -115,7 +116,7 @@ class StolenGoodsTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
         harness.assertInGraveyard(player1, "Stolen Goods");
     }
 

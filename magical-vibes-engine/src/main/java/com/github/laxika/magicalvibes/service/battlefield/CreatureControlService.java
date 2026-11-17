@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterConditionedControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -198,7 +197,7 @@ public class CreatureControlService {
                 continue;
             }
             boolean controlApplied = applyControlEffect(gameData, newControllerId, permanent,
-                    new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT,
+                    new GainControlOfTargetEffect(Duration.PERMANENT), Duration.PERMANENT,
                     null, "Debt of Loyalty");
             applied |= controlApplied;
         }
@@ -295,10 +294,8 @@ public class CreatureControlService {
                 && retainsFaceDownExileAccess) {
             for (var exiled : gameData.getExiledWithPermanentEntries(permanent.getId(), permanent.getCard().getId())) {
                 if (!exiled.faceDown()) continue;
-                Set<UUID> viewers = gameData.additionalExileLookPermissions.computeIfAbsent(
-                        exiled.card().getId(), ignored -> new LinkedHashSet<>());
-                viewers.add(current);
-                viewers.add(derived);
+                gameData.grantExileLookPermission(exiled.card().getId(), current);
+                gameData.grantExileLookPermission(exiled.card().getId(), derived);
             }
         }
         if (ascendEffectHandler != null) {
@@ -345,7 +342,6 @@ public class CreatureControlService {
                 recomputeControl(gameData, affected);
             }
         }
-        gameData.expireExilePlayPermissionsForSource(permanent.getId());
     }
 
     private boolean queueControlLossUnattachTriggers(GameData gameData, Permanent permanent,

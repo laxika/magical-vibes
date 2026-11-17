@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.prevention;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetFromColorlessSourcesEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -44,12 +49,12 @@ class DamagePreventionSpecTest extends BaseCardTest {
         @DisplayName("Global shield is consumed before a creature's own shield")
         void globalConsumedBeforeCreatureShield() {
             Permanent bears = addCreature(player2);
-            gd.globalDamagePreventionShield = 1;
+            gd.addGlobalDamagePreventionShield(1);
             bears.setDamagePreventionShield(5);
 
             shockPermanent(bears.getId());
 
-            assertThat(gd.globalDamagePreventionShield).isZero();
+            assertThat(gd.globalDamagePreventionShield()).isZero();
             assertThat(bears.getDamagePreventionShield()).isEqualTo(4);
             assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
         }
@@ -79,13 +84,13 @@ class DamagePreventionSpecTest extends BaseCardTest {
         @DisplayName("Full player prevention does not consume the player's amount shield")
         void fullPlayerPreventionDoesNotConsumeAmountShield() {
             Prevention.addOnPlayer(gd, PreventDamageEffect.allToControllerAndCreatures(), player2.getId());
-            gd.playerDamagePreventionShields.put(player2.getId(), 3);
+            gd.addPlayerDamagePreventionShield(player2.getId(), 3);
             harness.setLife(player2, 20);
 
             shockPlayer2();
 
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-            assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(3);
+            assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(3);
         }
     }
 
@@ -188,9 +193,9 @@ class DamagePreventionSpecTest extends BaseCardTest {
         @DisplayName("A color-prevention charge absorbs one whole damage event and is decremented once")
         void colorChargeConsumedOncePerEvent() {
             harness.setLife(player2, 20);
-            Map<CardColor, Integer> charges = new HashMap<>();
-            charges.put(CardColor.RED, 1);
-            gd.playerColorDamagePreventionCount.put(player2.getId(), charges);
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                    new PreventNextColorDamageToControllerEffect(CardColor.RED), player2.getId(),
+                    Duration.UNTIL_END_OF_TURN));
 
             harness.setHand(player1, List.of(new Shock(), new Shock()));
             harness.addMana(player1, ManaColor.RED, 2);
@@ -199,7 +204,8 @@ class DamagePreventionSpecTest extends BaseCardTest {
             harness.passBothPriorities();
             // First red event fully prevented, charge consumed.
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-            assertThat(gd.playerColorDamagePreventionCount.get(player2.getId()).get(CardColor.RED)).isZero();
+            assertThat(gd.hasFloatingEffectOnPlayer(player2.getId(), PreventNextColorDamageToControllerEffect.class))
+                    .isFalse();
 
             harness.castInstant(player1, 0, player2.getId());
             harness.passBothPriorities();
@@ -211,7 +217,9 @@ class DamagePreventionSpecTest extends BaseCardTest {
         @DisplayName("Target-specific colorless prevention stops colorless damage")
         void targetSpecificColorlessPreventionStopsColorlessDamage() {
             Permanent bears = addCreature(player2);
-            gd.colorlessDamagePreventionUntilEndOfTurn.add(bears.getId());
+            gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("Test", null, null,
+                    new PreventAllDamageToTargetFromColorlessSourcesEffect(), bears.getId(),
+                    Duration.UNTIL_END_OF_TURN));
 
             harness.setHand(player1, List.of(colorlessDamageSpell()));
             harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -230,14 +238,14 @@ class DamagePreventionSpecTest extends BaseCardTest {
         @Test
         @DisplayName("The turn flag bypasses shields without consuming them")
         void bypassesShieldsWithoutConsuming() {
-            gd.damageCantBePreventedThisTurn = true;
-            gd.globalDamagePreventionShield = 3;
+            gd.addShield(new DamageCantBePreventedThisTurnEffect());
+            gd.addGlobalDamagePreventionShield(3);
             harness.setLife(player2, 20);
 
             shockPlayer2();
 
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-            assertThat(gd.globalDamagePreventionShield).isEqualTo(3);
+            assertThat(gd.globalDamagePreventionShield()).isEqualTo(3);
         }
     }
 

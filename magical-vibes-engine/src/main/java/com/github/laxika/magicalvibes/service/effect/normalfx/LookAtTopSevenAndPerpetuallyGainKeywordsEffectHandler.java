@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopSevenAndPerpetuallyGainKeywordsEffect;
@@ -114,7 +113,7 @@ public class LookAtTopSevenAndPerpetuallyGainKeywordsEffectHandler implements No
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), sourceName, null, entry.getControllerId(),
                     new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, null,
-                            GrantDuration.INDEFINITE, null),
+                            Duration.PERMANENT, null),
                     sourceId, null, null, Duration.PERMANENT, 0));
         }
 

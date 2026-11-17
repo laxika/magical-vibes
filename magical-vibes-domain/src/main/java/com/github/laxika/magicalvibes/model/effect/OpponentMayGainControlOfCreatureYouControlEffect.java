@@ -7,11 +7,11 @@ package com.github.laxika.magicalvibes.model.effect;
  * controls (auto-takes when only one) and gain control for {@link #duration}. Used as a
  * {@link ForcedCostOrElseEffect} fallback (Infernal Denizen).
  */
-public record OpponentMayGainControlOfCreatureYouControlEffect(ControlDuration duration)
+public record OpponentMayGainControlOfCreatureYouControlEffect(Duration duration)
         implements ControlStealingEffect {
 
     @Override
-    public ControlDuration controlDuration() {
+    public Duration controlDuration() {
         return duration;
     }
 }

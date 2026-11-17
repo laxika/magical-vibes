@@ -1,6 +1,11 @@
 package com.github.laxika.magicalvibes.service.duration;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextMatchingSpellEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -12,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -211,7 +215,7 @@ class DurationClockTest extends BaseCardTest {
         FloatingContinuousEffect controlled = addFrom(source, Duration.WHILE_SOURCE_CONTROLLED,
                 new BoostTargetCreatureEffect(1, 1));
         FloatingContinuousEffect grant = addFrom(source, Duration.WHILE_SOURCE_ON_BATTLEFIELD,
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD));
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, Duration.WHILE_SOURCE_ON_BATTLEFIELD));
         FloatingContinuousEffect onBattlefield = addFrom(source, Duration.WHILE_SOURCE_ON_BATTLEFIELD,
                 new BoostTargetCreatureEffect(1, 1));
         FloatingContinuousEffect remains = addFrom(source, Duration.WHILE_SOURCE_REMAINS, new BoostTargetCreatureEffect(1, 1));
@@ -256,6 +260,146 @@ class DurationClockTest extends BaseCardTest {
         assertThat(gd.floatingEffects).containsExactly(grant);
         gd.removeFromExile(lesson.getId());
         assertThat(gd.floatingEffects).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An effect \"during your next turn\" begins as its controller's next turn begins and ends at its cleanup")
+    void duringYourNextTurnBeginsAtThatTurn() {
+        FloatingContinuousEffect next = add(player1.getId(), Duration.DURING_YOUR_NEXT_TURN);
+
+        assertThat(gd.floatingEffects).isEmpty();
+        assertThat(gd.scheduledFloatingEffects).containsExactly(next);
+        advance(new TurnEvent.Began(player2.getId()));
+        assertThat(gd.floatingEffects).isEmpty();
+        advance(new TurnEvent.Began(player1.getId()));
+        assertThat(gd.floatingEffects).containsExactly(next);
+        assertThat(gd.scheduledFloatingEffects).isEmpty();
+        advance(new TurnEvent.Cleanup(player1.getId()));
+        assertThat(gd.floatingEffects).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An effect \"during target player's next turn\" begins as that player's next turn begins")
+    void duringAffectedPlayersNextTurnBeginsAtThatPlayersTurn() {
+        FloatingContinuousEffect taunt = gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null,
+                player1.getId(), new BoostTargetCreatureEffect(1, 1), player2.getId(),
+                Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN));
+
+        advance(new TurnEvent.Began(player1.getId()));
+        assertThat(gd.floatingEffects).isEmpty();
+        advance(new TurnEvent.Began(player2.getId()));
+        assertThat(gd.floatingEffects).containsExactly(taunt);
+    }
+
+    @Test
+    @DisplayName("An effect \"during its controller's next turn\" on a permanent begins as that controller's turn begins")
+    void duringAffectedPermanentControllersNextTurnBeginsAtThatPlayersTurn() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        FloatingContinuousEffect requirement = gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("Test", null,
+                player1.getId(), new BoostTargetCreatureEffect(1, 1), bears.getId(),
+                Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN));
+
+        advance(new TurnEvent.Began(player1.getId()));
+        assertThat(gd.floatingEffects).isEmpty();
+        advance(new TurnEvent.Began(player2.getId()));
+        assertThat(gd.floatingEffects).containsExactly(requirement);
+    }
+
+    @Test
+    @DisplayName("An effect \"during its controller's next combat phase\" begins as that player's combat begins and ends with it")
+    void duringAffectedControllersNextCombatBeginsAtTheirBeginningOfCombat() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        FloatingContinuousEffect requirement = gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("Test", null,
+                player1.getId(), new BoostTargetCreatureEffect(1, 1), bears.getId(),
+                Duration.DURING_AFFECTED_CONTROLLERS_NEXT_COMBAT));
+
+        advance(new StepEvent(StepTrigger.Moment.BEGINNING_OF_COMBAT, player1.getId()));
+        assertThat(gd.floatingEffects).isEmpty();
+        advance(new StepEvent(StepTrigger.Moment.BEGINNING_OF_COMBAT, player2.getId()));
+        assertThat(gd.floatingEffects).containsExactly(requirement);
+        assertThat(advance(new TurnEvent.StepEnded(TurnStep.END_OF_COMBAT, player2.getId())))
+                .containsExactly(requirement);
+    }
+
+    @Test
+    @DisplayName("An effect \"after this turn\" begins as the next turn begins, keeping its timestamp")
+    void afterThisTurnBeginsAtTheNextTurn() {
+        FloatingContinuousEffect warp = add(player1.getId(), Duration.AFTER_THIS_TURN);
+        FloatingContinuousEffect later = add(player1.getId(), Duration.PERMANENT);
+
+        advance(new TurnEvent.Began(player2.getId()));
+
+        assertThat(gd.floatingEffects).containsExactlyInAnyOrder(warp, later);
+        assertThat(warp.timestamp()).isLessThan(later.timestamp());
+    }
+
+    @Test
+    @DisplayName("A card leaving its zone ends the effects on it, begun or not")
+    void cardLeavingExileEndsEffectsOnIt() {
+        Card exiled = new GrizzlyBears();
+        gd.addToExile(player1.getId(), exiled);
+        FloatingContinuousEffect now = gd.addFloatingEffect(FloatingContinuousEffect.onCard("Test", null,
+                player1.getId(), new BoostTargetCreatureEffect(1, 1), exiled.getId(), Duration.UNTIL_END_OF_TURN));
+        gd.addFloatingEffect(FloatingContinuousEffect.onCard("Test", null, player1.getId(),
+                new BoostTargetCreatureEffect(1, 1), exiled.getId(), Duration.AFTER_THIS_TURN));
+
+        assertThat(gd.floatingEffectsOnCard(exiled.getId(), BoostTargetCreatureEffect.class)).containsExactly(now);
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), BoostTargetCreatureEffect.class)).isFalse();
+        assertThat(gd.endFloatingEffectsOnCard(exiled.getId())).containsExactly(now);
+        assertThat(gd.floatingEffects).isEmpty();
+        assertThat(gd.scheduledFloatingEffects).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An effect that lasts until the end of the upkeep it was created in ends as any upkeep ends")
+    void upkeepEndingEndsEndOfUpkeepEffects() {
+        FloatingContinuousEffect revealed = add(player2.getId(), Duration.UNTIL_END_OF_UPKEEP);
+        FloatingContinuousEffect endOfTurn = add(player2.getId(), Duration.UNTIL_END_OF_TURN);
+
+        assertThat(advance(new TurnEvent.StepEnded(TurnStep.UPKEEP, player1.getId()))).containsExactly(revealed);
+        assertThat(gd.floatingEffects).containsExactly(endOfTurn);
+    }
+
+    @Test
+    @DisplayName("A flash grant for the next sorcery waits through other spells and ends with the sorcery cast")
+    void nextMatchingSpellGrantEndsWithTheMatchingCast() {
+        FloatingContinuousEffect grant = gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Quicken", null,
+                player1.getId(), new GrantFlashToNextMatchingSpellEffect(new CardTypePredicate(CardType.SORCERY)),
+                player1.getId(), Duration.UNTIL_MATCHING_SPELL_CAST));
+
+        assertThat(advance(new SpellEvent.Cast(new GrizzlyBears(), player1.getId(), Zone.HAND, null, false, false,
+                0, 0, 0, 0))).isEmpty();
+        assertThat(advance(new SpellEvent.Cast(new Shock(), player1.getId(), Zone.HAND, null, false, false,
+                0, 0, 0, 0))).isEmpty();
+        assertThat(gd.floatingEffects).containsExactly(grant);
+        assertThat(advance(new TurnEvent.Cleanup(player1.getId()))).containsExactly(grant);
+    }
+
+    @Test
+    @DisplayName("A flash grant ends with the next matching spell its controller casts, not an opponent's")
+    void nextMatchingSpellGrantEndsWithItsControllersCast() {
+        FloatingContinuousEffect grant = gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Quicken", null,
+                player1.getId(), new GrantFlashToNextMatchingSpellEffect(new CardTypePredicate(CardType.CREATURE)),
+                player1.getId(), Duration.UNTIL_MATCHING_SPELL_CAST));
+
+        assertThat(advance(new SpellEvent.Cast(new GrizzlyBears(), player2.getId(), Zone.HAND, null, false, false,
+                0, 0, 0, 0))).isEmpty();
+        assertThat(advance(new SpellEvent.Cast(new GrizzlyBears(), player1.getId(), Zone.HAND, null, false, false,
+                0, 0, 0, 0))).containsExactly(grant);
+    }
+
+    @Test
+    @DisplayName("A card entering a hand ends the effects on it, as it becomes a new object (CR 400.7)")
+    void cardEnteringAHandEndsEffectsOnIt() {
+        Card card = new GrizzlyBears();
+        gd.addFloatingEffect(FloatingContinuousEffect.onCard("Test", null, player1.getId(),
+                GrantedCardAbilityEffect.of(GrantedCardAbilityEffect.Ability.FLASHBACK), card.getId(),
+                Duration.UNTIL_END_OF_TURN));
+        assertThat(gd.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.FLASHBACK)).isTrue();
+
+        gd.addCardToHand(player1.getId(), card);
+
+        assertThat(gd.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.FLASHBACK)).isFalse();
     }
 
     @Test

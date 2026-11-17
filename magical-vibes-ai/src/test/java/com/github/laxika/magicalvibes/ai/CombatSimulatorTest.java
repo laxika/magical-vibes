@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -75,7 +74,7 @@ class CombatSimulatorTest {
     private void markStolenUntilEndOfTurn(Permanent perm) {
         gd.stolenCreatures.put(perm.getId(), player2.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Act of Treason",
-                null, player1.getId(), new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                null, player1.getId(), new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                 perm.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
     }
 

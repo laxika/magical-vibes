@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -82,8 +83,7 @@ public class ExileDiscardedCardFromGraveyardEffectHandler implements NormalEffec
             gameData.addToExile(ownerId, discarded);
         }
         if (exileEffect.grantPlayPermissionUntilEndOfTurn()) {
-            gameData.exilePlayPermissions.put(discarded.getId(), entry.getControllerId());
-            gameData.exilePlayPermissionsExpireEndOfTurn.add(discarded.getId());
+            gameData.grantExilePlayPermission(discarded.getId(), entry.getControllerId(), Duration.UNTIL_END_OF_TURN);
         }
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " exiles ", discarded,
                 " from " + gameData.playerIdToName.get(ownerId) + "'s graveyard."));

@@ -34,7 +34,7 @@ class BelunasGatekeeperTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Snaremaster Sprite");
         harness.assertInHand(player2, "Snaremaster Sprite");
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -109,7 +109,7 @@ class BelunasGatekeeperTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Beluna's Gatekeeper");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -135,7 +135,7 @@ class BelunasGatekeeperTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -154,7 +154,7 @@ class BelunasGatekeeperTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Snaremaster Sprite");
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

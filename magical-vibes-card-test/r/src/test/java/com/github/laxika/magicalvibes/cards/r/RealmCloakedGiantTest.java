@@ -34,7 +34,7 @@ class RealmCloakedGiantTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Youthful Knight");
         assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).contains(giant);
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNotNull();
-        assertThat(harness.getGameData().exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(harness.getGameData().exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -101,6 +101,6 @@ class RealmCloakedGiantTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Realm-Cloaked Giant");
         harness.assertOnBattlefield(player2, "Youthful Knight");
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNull();
-        assertThat(harness.getGameData().exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(harness.getGameData().exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 }

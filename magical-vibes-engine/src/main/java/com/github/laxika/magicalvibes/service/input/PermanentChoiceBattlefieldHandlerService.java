@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.ReflectDamageToSourceControllerShield;
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
+import com.github.laxika.magicalvibes.model.SourceNextDamageRedirectToPermanentShield;
+import com.github.laxika.magicalvibes.model.EyeForAnEyeShield;
+import com.github.laxika.magicalvibes.model.PlayerSourceDamagePrevention;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -1586,7 +1591,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         } else {
             var controlEffect = new GainControlOfTargetEffect(context.duration());
             creatureControlService.applyControlEffect(gameData, context.choosingOpponentId(), target,
-                    controlEffect, context.duration().toDuration(), context.sourcePermanentId(), context.sourceCardName());
+                    controlEffect, context.duration(), context.sourcePermanentId(), context.sourceCardName());
             log.info("Game {} - {} gains control of {} via {}", gameData.id,
                     gameData.playerIdToName.get(context.choosingOpponentId()),
                     target.getCard().getName(), context.sourceCardName());
@@ -2160,19 +2165,10 @@ public class PermanentChoiceBattlefieldHandlerService {
         String sourceName = chosenSource.getName();
 
         if (preventSource.controllerOnly()) {
-            gameData.playerSourceDamagePreventionIds
-                    .computeIfAbsent(controllerId, k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
-                    .add(permanentId);
-            if (!preventSource.requiredColors().isEmpty()) {
-                gameData.playerSourceDamagePreventionRequiredColors
-                        .computeIfAbsent(controllerId, k -> new java.util.concurrent.ConcurrentHashMap<>())
-                        .put(permanentId, preventSource.requiredColors());
-            }
-            if (preventSource.gainLifeForBlackOrRedSource()) {
-                gameData.playerSourceDamagePreventionLifeGainIds
-                        .computeIfAbsent(controllerId, k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
-                        .add(permanentId);
-            }
+            gameData.addShield("", null, controllerId, controllerId,
+                    new PlayerSourceDamagePrevention(java.util.Set.of(permanentId), preventSource.requiredColors(),
+                            preventSource.gainLifeForBlackOrRedSource()),
+                    Duration.UNTIL_END_OF_TURN);
             gameLogService.append(gameData, GameLog.textCardText("All damage ", chosenSource,
                     " would deal to " + playerName + " is prevented this turn."));
         } else {
@@ -2181,7 +2177,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                             && candidate.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
                     .filter(candidate -> permanentId.equals(candidate.getTargetableId()))
                     .findFirst().orElse(null);
-            gameData.targetSpellDamagePreventionShields.add(new TargetSpellDamagePreventionShield(
+            gameData.addShield(new TargetSpellDamagePreventionShield(
                     chosenSpell != null ? chosenSpell.getCard().getId() : null, null,
                     chosenSpell == null ? permanentId : null, preventSource.requiredColors()));
             gameLogService.append(gameData, GameLog.textCardText("All damage ", chosenSource,
@@ -2206,7 +2202,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         UUID controllerId = redirectSource.controllerId();
-        gameData.sourceDamageRedirectShields.add(new SourceDamageRedirectShield(
+        gameData.addShield(new SourceDamageRedirectShield(
                 controllerId, permanentId, redirectSource.amount(), redirectSource.redirectTargetId()));
 
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -2229,10 +2225,10 @@ public class PermanentChoiceBattlefieldHandlerService {
         int redirectAmount = redirectSource.nextEventOnly()
                 ? CreatureDamageRedirectShield.NEXT_EVENT
                 : CreatureDamageRedirectShield.UNLIMITED;
-        gameData.creatureDamageRedirectShields.add(new CreatureDamageRedirectShield(
+        gameData.addShield(new CreatureDamageRedirectShield(
                 redirectSource.protectedCreatureId(), permanentId,
                 redirectAmount, redirectSource.redirectTargetId()));
-        gameData.waitingRedirectDamageSourceCards.put(permanentId, chosenCard);
+        gameData.addWaitingDamageSource(permanentId, chosenCard);
 
         Permanent protectedPerm = gameQueryService.findPermanentById(gameData, redirectSource.protectedCreatureId());
         String protectedName = protectedPerm != null ? protectedPerm.getCard().getName() : "target creature";
@@ -2260,9 +2256,9 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen damage source no longer exists");
         }
 
-        gameData.playerSourceNextDamageRedirectShields.add(new PlayerSourceNextDamageRedirectShield(
+        gameData.addShield(new PlayerSourceNextDamageRedirectShield(
                 redirectSource.controllerId(), permanentId, redirectSource.redirectTargetId()));
-        gameData.waitingRedirectDamageSourceCards.put(permanentId, chosenSource);
+        gameData.addWaitingDamageSource(permanentId, chosenSource);
 
         Permanent destination = gameQueryService.findPermanentById(gameData, redirectSource.redirectTargetId());
         String destinationName = destination != null ? destination.getCard().getName() : "the target creature";
@@ -2282,7 +2278,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         UUID targetId = ctx.targetId();
-        gameData.targetSourceDamagePreventionShields.add(ctx.allDamage()
+        gameData.addShield(ctx.allDamage()
                 ? TargetSourceDamagePreventionShield.allDamage(targetId, permanentId)
                 : new TargetSourceDamagePreventionShield(targetId, permanentId, ctx.amount()));
 
@@ -2307,7 +2303,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                                                         PermanentChoiceContext.PreventNextDamageFromSourceChoice ctx) {
         Card chosenSource = findDamageSourceCard(gameData, permanentId);
         if (chosenSource == null) {
-            chosenSource = gameData.waitingRedirectDamageSourceCards.get(permanentId);
+            chosenSource = gameData.waitingDamageSourceCard(permanentId);
         }
         if (chosenSource == null) {
             throw new IllegalStateException("Chosen source no longer exists");
@@ -2315,12 +2311,12 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         UUID controllerId = ctx.controllerId();
         boolean gainLife = ctx.gainLife();
-        gameData.playerSourceNextDamageShields.add(new PlayerSourceNextDamageShield(
+        gameData.addShield(new PlayerSourceNextDamageShield(
                 controllerId, permanentId, gainLife, false, false, ctx.exileFromLibrary(),
                 ctx.damageSourceControllerCard(), ctx.preventHalfDamage(), ctx.drawCards(),
                 findDamageSourceController(gameData, permanentId), ctx.requiredDamageColors(),
                 false, false, false, ctx.requiredSourceFilter()));
-        gameData.waitingRedirectDamageSourceCards.put(permanentId, chosenSource);
+        gameData.addWaitingDamageSource(permanentId, chosenSource);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String sourceName = chosenSource.getName();
@@ -2359,7 +2355,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen source no longer exists");
         }
 
-        gameData.playerSourceNextDamageShields.add(
+        gameData.addShield(
                 PlayerSourceNextDamageShield.nextUnblockedCombatDamageAllButOne(
                         ctx.controllerId(), permanentId));
 
@@ -2400,7 +2396,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         UUID controllerId = ctx.controllerId();
-        gameData.playerSourceNextDamageShields.add(
+        gameData.addShield(
                 new PlayerSourceNextDamageShield(controllerId, permanentId, true, true, true, false));
 
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -2430,7 +2426,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         UUID sourceControllerId = chosenPermanent != null
                 ? gameQueryService.findPermanentController(gameData, permanentId)
                 : chosenSpell.getControllerId();
-        gameData.eyeForAnEyeShields.add(new com.github.laxika.magicalvibes.model.EyeForAnEyeShield(
+        gameData.addShield(new com.github.laxika.magicalvibes.model.EyeForAnEyeShield(
                 controllerId, permanentId, ctx.eyeCard(), controllerId, sourceControllerId));
 
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -2458,7 +2454,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen source no longer exists");
         }
 
-        gameData.sourceNextDamageRedirectToPermanentShields.add(
+        gameData.addShield(
                 new com.github.laxika.magicalvibes.model.SourceNextDamageRedirectToPermanentShield(
                         permanentId, ctx.destinationPermanentId()));
 
@@ -2481,7 +2477,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen source no longer exists");
         }
 
-        gameData.reflectDamageToSourceControllerShields.add(permanentId);
+        gameData.addShield(new ReflectDamageToSourceControllerShield(permanentId));
 
         String sourceName = chosenSource.getName();
         gameLogService.append(gameData, GameLog.text("The next time " + sourceName + " would deal damage this turn, "
@@ -2499,7 +2495,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen source no longer exists");
         }
 
-        gameData.sourceNextDamageToAnyTargetShields.add(
+        gameData.addShield(
                 com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield.forRecipient(
                         permanentId, ctx.protectedPermanentId()));
 
@@ -2520,7 +2516,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen source no longer exists");
         }
 
-        gameData.sourceNextDamageToAnyTargetShields.add((ctx.damageRedSourceController()
+        gameData.addShield((ctx.damageRedSourceController()
                 ? new com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield(
                         permanentId, true, ctx.passageCard(), ctx.controllerId())
                 : new com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield(permanentId))
@@ -2584,11 +2580,11 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (referenced != null) {
             return referenced;
         }
-        boolean waitingRedirect = gameData.creatureDamageRedirectShields.stream()
+        boolean waitingRedirect = gameData.shields(CreatureDamageRedirectShield.class).stream()
                 .anyMatch(shield -> sourceId.equals(shield.damageSourceId()))
-                || gameData.playerSourceNextDamageRedirectShields.stream()
+                || gameData.shields(PlayerSourceNextDamageRedirectShield.class).stream()
                 .anyMatch(shield -> sourceId.equals(shield.sourcePermanentId()));
-        return waitingRedirect ? gameData.waitingRedirectDamageSourceCards.get(sourceId) : null;
+        return waitingRedirect ? gameData.waitingDamageSourceCard(sourceId) : null;
     }
 
     /**
@@ -2659,7 +2655,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             ActionEvents.coinFlipLost(gameData, ctx.controllerId());
         }
 
-        gameData.sourceNextDamageToAnyTargetShields.add(wonFlip
+        gameData.addShield(wonFlip
                 ? com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield.doubling(permanentId)
                 : new com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield(permanentId));
 

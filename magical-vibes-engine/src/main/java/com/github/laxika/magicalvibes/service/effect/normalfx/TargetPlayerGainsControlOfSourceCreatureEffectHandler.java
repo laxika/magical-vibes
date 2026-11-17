@@ -49,7 +49,7 @@ public class TargetPlayerGainsControlOfSourceCreatureEffectHandler implements No
 
                 boolean controlApplied = creatureControlService.applyControlEffect(gameData, newControllerId, source,
                         new GainControlOfTargetEffect(e.duration()),
-                        e.duration().toDuration(), null, entry.getCard().getName());
+                        e.duration(), null, entry.getCard().getName());
 
                 if (controlApplied && e.thenEffect() != null) {
                     int effectIndex = entry.getResolvingEffectIndex();

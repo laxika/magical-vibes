@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -34,9 +35,9 @@ class GrotagNightRunnerTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(topCard.getId()));
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(topCard.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(topCard.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(topCard.getId());
     }
 
     @Test
@@ -49,13 +50,13 @@ class GrotagNightRunnerTest extends BaseCardTest {
 
         resolveCombat();
         resolveAllTriggers();
-        assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(topCard.getId());
 
         harness.inMutationScope(
                 () -> GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(topCard.getId());
     }
 
     @Test
@@ -75,7 +76,7 @@ class GrotagNightRunnerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions).containsKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(top.getId());
 
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castFromExile(player1, top.getId());
@@ -119,7 +120,7 @@ class GrotagNightRunnerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player2, top.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(top.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -133,7 +134,7 @@ class GrotagNightRunnerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
         assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
     }
 
@@ -152,7 +153,7 @@ class GrotagNightRunnerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(top.getId())).isEqualTo(player1.getId());
     }
 
     @Test

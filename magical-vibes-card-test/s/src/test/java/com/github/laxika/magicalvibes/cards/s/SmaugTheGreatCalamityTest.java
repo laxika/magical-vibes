@@ -29,7 +29,7 @@ class SmaugTheGreatCalamityTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNotNull();
-        assertThat(harness.getGameData().exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(harness.getGameData().exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -97,7 +97,7 @@ class SmaugTheGreatCalamityTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Smaug, the Great Calamity");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

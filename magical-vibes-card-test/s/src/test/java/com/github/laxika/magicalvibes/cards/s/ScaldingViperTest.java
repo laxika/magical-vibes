@@ -35,7 +35,7 @@ class ScaldingViperTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Fountain of Youth");
         harness.assertInHand(player2, "Fountain of Youth");
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -188,6 +188,6 @@ class ScaldingViperTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Scalding Viper");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 }

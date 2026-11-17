@@ -32,7 +32,7 @@ class ResourcefulCollectorTest extends BaseCardTest {
         Card foodCard = gd.playerGraveyards.get(player1.getId()).getFirst();
         assertThat(foodCard.getAdditionalTypes()).contains(CardType.ARTIFACT);
         assertThat(foodCard.getSubtypes()).contains(CardSubtype.FOOD);
-        assertThat(gd.graveyardPlayPermissions).containsEntry(foodCard.getId(), player1.getId());
+        assertThat(graveyardPlayPermissionsByCard()).containsEntry(foodCard.getId(), player1.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -65,7 +65,7 @@ class ResourcefulCollectorTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(gd.graveyardPlayPermissions).isEmpty();
+        assertThat(graveyardPlayPermissionsByCard()).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()).getFirst().getSubtypes())
                 .doesNotContain(CardSubtype.FOOD);
         assertThat(gd.playerGraveyards.get(player2.getId()).getFirst().getSubtypes())
@@ -80,7 +80,7 @@ class ResourcefulCollectorTest extends BaseCardTest {
 
         advanceToEndStep();
 
-        assertThat(gd.graveyardPlayPermissions).isEmpty();
+        assertThat(graveyardPlayPermissionsByCard()).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()).getFirst().getSubtypes())
                 .doesNotContain(CardSubtype.FOOD);
         assertThat(gd.playerGraveyards.get(player2.getId()).getFirst().getSubtypes())
@@ -99,7 +99,7 @@ class ResourcefulCollectorTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(card -> card.getSubtypes().contains(CardSubtype.FOOD))
                 .hasSize(2);
-        assertThat(gd.graveyardPlayPermissions).hasSize(2);
+        assertThat(graveyardPlayPermissionsByCard()).hasSize(2);
     }
 
     @Test
@@ -115,7 +115,7 @@ class ResourcefulCollectorTest extends BaseCardTest {
         Permanent forest = findPermanent(player1, "Forest");
         assertThat(gqs.isArtifact(gd, forest)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.FOOD)).isTrue();
-        assertThat(gd.graveyardPlayPermissions).isEmpty();
+        assertThat(graveyardPlayPermissionsByCard()).isEmpty();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(forest),
                 0, null, null);
@@ -173,7 +173,7 @@ class ResourcefulCollectorTest extends BaseCardTest {
 
         advanceToEndStep();
 
-        assertThat(gd.graveyardPlayPermissions).isEmpty();
+        assertThat(graveyardPlayPermissionsByCard()).isEmpty();
     }
 
     @Test
@@ -235,7 +235,7 @@ class ResourcefulCollectorTest extends BaseCardTest {
 
         advanceToEndStep();
 
-        assertThat(gd.graveyardPlayPermissions).isEmpty();
+        assertThat(graveyardPlayPermissionsByCard()).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
     }

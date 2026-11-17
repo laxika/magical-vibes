@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -140,7 +139,7 @@ class RunAwayTogetherTest extends BaseCardTest {
         Permanent stolenBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
                 .applyControlEffect(gd, player1.getId(), stolenBear,
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        new GainControlOfTargetEffect(Duration.PERMANENT),
                         Duration.PERMANENT, null, "Control effect"));
         UUID elvesId = harness.addToBattlefieldAndReturn(player2, new LlanowarElves()).getId();
         harness.setHand(player1, List.of(new RunAwayTogether()));

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Slf4j
 @Component
@@ -62,11 +63,8 @@ public class AllowCastTargetCardFromGraveyardThisTurnEffectHandler implements No
 
             // The card stays in the graveyard; the permission and the exile replacement both hold
             // until turn cleanup drops them, so the controller may cast it whenever timing allows.
-            gameData.graveyardPlayPermissions.put(targetCard.getId(), controllerId);
-            gameData.graveyardPlayPermissionsExpireEndOfTurn.add(targetCard.getId());
-            if (permission.entersTapped()) {
-                gameData.graveyardCardsEnterTapped.add(targetCard.getId());
-            }
+            gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, permission.entersTapped()),
+                    targetCard.getId(), Duration.UNTIL_END_OF_TURN);
             if (permission.exileInsteadOfGraveyard()) {
                 gameData.exileInsteadOfGraveyard.add(targetCard.getId());
             }

@@ -54,7 +54,7 @@ class PollenShieldHareTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -122,7 +122,7 @@ class PollenShieldHareTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

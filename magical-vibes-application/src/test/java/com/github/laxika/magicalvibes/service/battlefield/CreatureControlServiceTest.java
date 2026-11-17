@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,14 +10,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetWhileHasCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
@@ -98,7 +97,8 @@ class CreatureControlServiceTest {
                 "triggeredAbilityStackService", triggeredAbilityStackService);
         org.springframework.test.util.ReflectionTestUtils.setField(creatureControlService, "durationClock",
                 new DurationClock(predicateEvaluationService, gameQueryService,
-                        org.mockito.Mockito.mock(AuraCopyService.class)));
+                        org.mockito.Mockito.mock(AuraCopyService.class),
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.turn.PhasingService.class)));
         org.mockito.Mockito.doAnswer(invocation -> {
             com.github.laxika.magicalvibes.testutil.TestStackDoor.enqueue(invocation.getArgument(0), invocation.getArgument(1));
             return null;
@@ -137,10 +137,10 @@ class CreatureControlServiceTest {
 
     private void applySteal(UUID newControllerId, Permanent target, Duration duration,
                             UUID sourcePermanentId) {
-        ControlDuration controlDuration = Duration.UNTIL_END_OF_TURN.equals(duration) ? ControlDuration.END_OF_TURN
-                : Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(duration) ? ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD
-                : Duration.WHILE_SOURCE_TAPPED.equals(duration) ? ControlDuration.WHILE_SOURCE_TAPPED
-                : ControlDuration.PERMANENT;
+        Duration controlDuration = Duration.UNTIL_END_OF_TURN.equals(duration) ? Duration.UNTIL_END_OF_TURN
+                : Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(duration) ? Duration.WHILE_SOURCE_ON_BATTLEFIELD
+                : Duration.WHILE_SOURCE_TAPPED.equals(duration) ? Duration.WHILE_SOURCE_TAPPED
+                : Duration.PERMANENT;
         creatureControlService.applyControlEffect(gd, newControllerId, target,
                 new GainControlOfTargetEffect(controlDuration), duration, sourcePermanentId, "Test Source");
     }
@@ -167,13 +167,12 @@ class CreatureControlServiceTest {
         void endsSourceControlledExilePlayPermissionsOnControlChange() {
             Permanent source = addCreature(player1Id, "Source");
             UUID exiledCardId = UUID.randomUUID();
-            gd.exilePlayPermissions.put(exiledCardId, player1Id);
-            gd.exilePlayPermissionSourcePermanents.put(exiledCardId, source.getId());
+            gd.grantExilePlayPermission(exiledCardId, new ExilePlayPermissionEffect(player1Id), source.getId(),
+                    player1Id, Duration.WHILE_SOURCE_CONTROLLED);
 
             applySteal(player2Id, source, Duration.PERMANENT, null);
 
-            assertThat(gd.exilePlayPermissions).doesNotContainKey(exiledCardId);
-            assertThat(gd.exilePlayPermissionSourcePermanents).doesNotContainKey(exiledCardId);
+            assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiledCardId);
         }
 
         @Test
@@ -441,7 +440,7 @@ class CreatureControlServiceTest {
             gd.stolenCreatures.put(goneId, player2Id);
             gd.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
                     UUID.randomUUID(), "Test", null, player1Id,
-                    new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                    new GainControlOfTargetEffect(Duration.PERMANENT),
                     goneId, null, null, Duration.PERMANENT, 0));
 
             creatureControlService.reconcileControl(gd);
@@ -635,7 +634,7 @@ class CreatureControlServiceTest {
             gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Aegis Angel",
                     source.getId(), player1Id,
                     new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET,
-                            GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD),
+                            Duration.WHILE_SOURCE_ON_BATTLEFIELD),
                     affected.getId(), null, null, Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
     }

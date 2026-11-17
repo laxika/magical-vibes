@@ -36,7 +36,7 @@ public class RedirectAllDamageFromSourceCreatureToTargetCreatureEffectHandler im
             return;
         }
 
-        gameData.creatureDamageRedirectShields.add(new CreatureDamageRedirectShield(
+        gameData.addShield(new CreatureDamageRedirectShield(
                 sourceId, null, CreatureDamageRedirectShield.UNLIMITED, targetId));
     }
 }

@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 @CardUsed({SphinxOfForgottenLore.class, Shock.class, GrizzlyBears.class, LavaAxe.class})
 class SphinxOfForgottenLoreTest extends BaseCardTest {
@@ -37,7 +38,7 @@ class SphinxOfForgottenLoreTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(instant.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).containsExactly(instant.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).containsExactly(instant.getId());
     }
 
     @Test
@@ -110,7 +111,7 @@ class SphinxOfForgottenLoreTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).doesNotContain(instant.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).doesNotContain(instant.getId());
         assertThat(gd.stack).isEmpty();
     }
 

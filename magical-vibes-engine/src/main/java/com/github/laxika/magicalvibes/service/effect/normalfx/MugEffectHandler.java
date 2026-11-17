@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MugEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 /** Resolves the Mug keyword action. */
 @Component
@@ -58,16 +60,14 @@ public class MugEffectHandler implements NormalEffectHandlerBean {
                 .map(Card::getId)
                 .toList();
         if (!graveyardSpellIds.isEmpty()) {
-            gameData.graveyardCastFilterPermissionsThisTurn.add(
-                    new GameData.GraveyardCastFilterPermission(
+            gameData.addPlayerEffect(entry, new GameData.GraveyardCastFilterPermission(
                             controllerId, new CardIdSetPredicate(graveyardSpellIds), true, null, null,
-                            true, false, null, null, 0));
+                            true, false, null, null, 0), controllerId, Duration.UNTIL_END_OF_TURN);
         }
         if (!exiledSpellIds.isEmpty()) {
             gameData.registerExilePlayPermissionGroup(UUID.randomUUID(), 1, exiledSpellIds);
             for (UUID cardId : exiledSpellIds) {
-                gameData.exilePlayPermissions.put(cardId, controllerId);
-                gameData.exilePlayPermissionsExpireEndOfTurn.add(cardId);
+                gameData.grantExilePlayPermission(cardId, controllerId, Duration.UNTIL_END_OF_TURN);
             }
         }
         if (!spells.isEmpty()) {

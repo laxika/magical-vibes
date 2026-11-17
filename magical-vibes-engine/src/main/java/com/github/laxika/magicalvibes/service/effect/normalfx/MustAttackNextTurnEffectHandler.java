@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -13,9 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link MustAttackNextTurnEffect}: records the target player and the object their creatures
- * must attack in {@code GameData.tauntedNextTurn}. The turn engine promotes the entry to
- * {@code tauntedThisTurn} when that player's next turn begins.
+ * Resolves {@link MustAttackNextTurnEffect}: makes a floating effect that requires the creatures the target player
+ * controls to attack the ability's controller, or its source permanent, if able, during that player's next turn
+ * (CR 508.1d). It begins as that turn begins and ends at its cleanup step.
  */
 @Slf4j
 @Component
@@ -46,7 +50,7 @@ public class MustAttackNextTurnEffectHandler implements NormalEffectHandlerBean 
                 return;
             }
 
-            gameData.tauntedNextTurn.put(targetPlayerId, sourcePermanentId);
+            requireAttack(gameData, entry, targetPlayerId, sourcePermanentId);
 
             String sourceName = entry.getCard() != null ? entry.getCard().getName() : "it";
             gameLogService.append(gameData, GameLog.text("Creatures " + targetName + " controls will attack "
@@ -56,12 +60,19 @@ public class MustAttackNextTurnEffectHandler implements NormalEffectHandlerBean 
         }
 
         UUID controllerId = entry.getControllerId();
-        gameData.tauntedNextTurn.put(targetPlayerId, controllerId);
+        requireAttack(gameData, entry, targetPlayerId, controllerId);
 
         String controllerName = gameData.playerIdToName.get(controllerId);
         String logEntry = "Creatures " + targetName + " controls will attack " + controllerName
                 + " if able during their next turn.";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} taunts {} (must attack next turn)", gameData.id, controllerName, targetName);
+    }
+
+    private static void requireAttack(GameData gameData, StackEntry entry, UUID targetPlayerId, UUID attackTargetId) {
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), new MatchingCreaturesMustAttackEffect(
+                        new PermanentControlledByPlayerPredicate(targetPlayerId), attackTargetId),
+                targetPlayerId, Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN));
     }
 }

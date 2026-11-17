@@ -35,7 +35,7 @@ class FlameskullTest extends BaseCardTest {
                 .anyMatch(entry -> entry.card().getId().equals(flameskullCard.getId()));
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(flameskullCard.getId(), player1.getId())
                 .containsEntry(topCard.getId(), player1.getId());
     }

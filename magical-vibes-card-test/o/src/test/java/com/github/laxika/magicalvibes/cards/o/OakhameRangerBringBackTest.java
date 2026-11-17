@@ -38,7 +38,7 @@ class OakhameRangerBringBackTest extends BaseCardTest {
             assertThat(token.getCard().getToughness()).isEqualTo(1);
         });
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test

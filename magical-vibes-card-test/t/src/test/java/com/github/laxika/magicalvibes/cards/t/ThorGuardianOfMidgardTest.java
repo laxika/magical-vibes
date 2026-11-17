@@ -37,8 +37,8 @@ class ThorGuardianOfMidgardTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(first.getId())).isNotNull();
         assertThat(gd.findExiledCard(second.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(first.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissions.get(second.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(first.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(second.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -122,7 +122,7 @@ class ThorGuardianOfMidgardTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, bear.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.findExiledCard(bear.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(bear.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(bear.getId());
     }
 
     @Test

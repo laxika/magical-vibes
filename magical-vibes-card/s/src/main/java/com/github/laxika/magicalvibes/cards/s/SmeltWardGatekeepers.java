@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -31,7 +31,7 @@ public class SmeltWardGatekeepers extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.GATE))),
                 SequenceEffect.of(
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)));
     }

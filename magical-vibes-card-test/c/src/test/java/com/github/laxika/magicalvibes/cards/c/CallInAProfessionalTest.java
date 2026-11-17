@@ -36,7 +36,7 @@ class CallInAProfessionalTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
         assertThat(creature.getCounterCount(CounterType.SHIELD)).isZero();
         assertThat(creature.getMarkedDamage()).isEqualTo(3);
-        assertThat(gd.damageCantBePreventedThisTurn).isTrue();
+        assertThat(gd.damageCantBePreventedThisTurn()).isTrue();
     }
 
     @Test

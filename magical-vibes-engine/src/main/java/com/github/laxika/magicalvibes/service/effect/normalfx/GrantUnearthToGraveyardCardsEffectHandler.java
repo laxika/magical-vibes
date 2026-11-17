@@ -13,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Slf4j
 @Component
@@ -35,9 +37,9 @@ public class GrantUnearthToGraveyardCardsEffectHandler implements NormalEffectHa
         if (graveyard != null) {
             for (Card card : graveyard) {
                 if (predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
-                    gameData.cardsGrantedUnearthUntilEndOfTurn.put(card.getId(), grant.unearthCost());
-                    gameData.cardsGrantedUnearthGraveyardVersions.put(card.getId(),
-                            gameData.graveyardEntryVersion(card.getId()));
+                    gameData.addCardEffect(entry, GrantedCardAbilityEffect.of(
+                            GrantedCardAbilityEffect.Ability.UNEARTH, grant.unearthCost()),
+                            card.getId(), Duration.UNTIL_END_OF_TURN);
                     count++;
                 }
             }

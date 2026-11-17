@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
+import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -353,7 +354,7 @@ public class SplitCardCastSupport {
             return cast.alternativeManaCost();
         }
         if (cast.sourceZone() == Zone.EXILE) {
-            ExilePlayCostModifier modifier = gameData.exilePlayCostModifiers.get(half.getId());
+            ExilePlayCostModifier modifier = gameData.exilePlayCostModifier(half.getId());
             if (modifier != null && cast.controllerId().equals(modifier.permittedPlayerId())
                     && modifier.replacementManaCost() != null) {
                 return modifier.replacementManaCost();
@@ -766,7 +767,7 @@ public class SplitCardCastSupport {
         }
         if (cast.sourceZone() == Zone.EXILE) {
             UUID cardId = cast.physicalCard().getId();
-            gameData.exilePlayCostModifiers.remove(cardId);
+            gameData.setExilePlayCostModifier(cardId, null);
             SplitCardCast.ExileCast exileCast = cast.exileCast();
             if (exileCast != null && exileCast.copy()) {
                 clearExileCastCostChanges(gameData, cardId);
@@ -808,8 +809,8 @@ public class SplitCardCastSupport {
 
     /** Drops the cost changes installed for an exiled card once it leaves exile. */
     private static void clearExileCastCostChanges(GameData gameData, UUID cardId) {
-        gameData.exilePlayCostModifiers.remove(cardId);
-        gameData.exilePlayWithoutPayingManaCost.remove(cardId);
+        gameData.setExilePlayCostModifier(cardId, null);
+        gameData.setExilePlayWithoutPayingManaCost(cardId, false);
     }
 
     private static int modeEncoding(ChooseOneEffect modal, int modeIndex) {

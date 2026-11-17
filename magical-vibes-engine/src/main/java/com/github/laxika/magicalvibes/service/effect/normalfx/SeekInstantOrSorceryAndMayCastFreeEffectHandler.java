@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantFreeCastForNextMatchingSpellEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 /** Resolves Karlach's blue face by seeking one eligible card into hand and allowing a free cast this turn. */
 @Component
@@ -59,6 +62,9 @@ public class SeekInstantOrSorceryAndMayCastFreeEffectHandler implements NormalEf
         gameData.addCardToHand(controllerId, sought);
         // "Until end of turn, you may cast that card without paying its mana cost": a free-cast permission
         // for exactly that card, usable any time this turn it could be cast, not only right now.
-        gameData.addNextSpellFreeCastPermission(controllerId, new CardIdSetPredicate(Set.of(sought.getId())));
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), controllerId,
+                new GrantFreeCastForNextMatchingSpellEffect(new CardIdSetPredicate(Set.of(sought.getId()))),
+                controllerId, Duration.UNTIL_MATCHING_SPELL_CAST));
     }
 }

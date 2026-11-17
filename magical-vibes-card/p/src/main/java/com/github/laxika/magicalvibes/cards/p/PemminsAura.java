@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -31,14 +31,14 @@ public class PemminsAura extends Card {
                 false,
                 "{U}",
                 List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE,
-                        GrantDuration.END_OF_TURN)),
+                        Duration.UNTIL_END_OF_TURN)),
                 "{U}: Enchanted creature gains flying until end of turn."
         ));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}",
                 List.of(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ENCHANTED_CREATURE,
-                        GrantDuration.END_OF_TURN)),
+                        Duration.UNTIL_END_OF_TURN)),
                 "{U}: Enchanted creature gains shroud until end of turn."
         ));
         addActivatedAbility(new ActivatedAbility(

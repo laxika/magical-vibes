@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -141,8 +141,8 @@ public class ExileAndReturnTransformedService {
                 && !originalCard.getOwnerId().equals(returnControllerId)) {
             gameData.stolenCreatures.put(newPerm.getId(), originalCard.getOwnerId());
             creatureControlService.applyControlEffect(gameData, returnControllerId, newPerm,
-                    new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                    ControlDuration.PERMANENT.toDuration(), null, originalCard.getName());
+                    new GainControlOfTargetEffect(Duration.PERMANENT),
+                    Duration.PERMANENT, null, originalCard.getName());
         }
 
         if (gameQueryService.isCreature(gameData, newPerm)) {

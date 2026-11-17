@@ -33,7 +33,7 @@ class RimrockKnightTest extends BaseCardTest {
         assertThat(bear.getPowerModifier()).isEqualTo(2);
         assertThat(bear.getToughnessModifier()).isZero();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -114,7 +114,7 @@ class RimrockKnightTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

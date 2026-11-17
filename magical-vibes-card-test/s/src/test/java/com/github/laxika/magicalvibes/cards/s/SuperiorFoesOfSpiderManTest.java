@@ -39,7 +39,7 @@ class SuperiorFoesOfSpiderManTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -191,7 +191,7 @@ class SuperiorFoesOfSpiderManTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
     }
 
     @Test
@@ -215,7 +215,7 @@ class SuperiorFoesOfSpiderManTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(first, second);
-        assertThat(gd.exilePlayPermissions).containsEntry(first.getId(), player1.getId())
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
     }
 

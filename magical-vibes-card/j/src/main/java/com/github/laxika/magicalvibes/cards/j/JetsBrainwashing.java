@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -24,7 +24,7 @@ public class JetsBrainwashing extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.TARGET))
                 .addSpellEffect(new ConditionalEffect(new Kicked(),
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN)))
+                        new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN)))
                 .addSpellEffect(new ConditionalEffect(new Kicked(),
                         new UntapPermanentsEffect(TapUntapScope.TARGET)))
                 .addSpellEffect(new ConditionalEffect(new Kicked(),

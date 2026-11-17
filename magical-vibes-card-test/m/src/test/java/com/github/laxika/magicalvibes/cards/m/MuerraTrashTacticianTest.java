@@ -69,8 +69,8 @@ class MuerraTrashTacticianTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(forest, bears);
-        assertThat(gd.exilePlayPermissions.get(forest.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissions.get(bears.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(forest.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(bears.getId())).isEqualTo(player1.getId());
         harness.assertLife(player1, 23);
     }
 
@@ -189,16 +189,16 @@ class MuerraTrashTacticianTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsKeys(first.getId(), second.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKeys(first.getId(), second.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.passBothPriorities();
         harness.handleListChoice(player1, "GREEN");
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsKeys(first.getId(), second.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKeys(first.getId(), second.getId());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKeys(first.getId(), second.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKeys(first.getId(), second.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
     }
 

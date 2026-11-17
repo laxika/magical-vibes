@@ -33,8 +33,6 @@ public class PutUnplayedExiledCardsIntoOwnersGraveyardEffectHandler implements N
             if (exiled == null || !gameData.removeFromExile(cardId)) {
                 continue;
             }
-            gameData.exilePlayPermissions.remove(cardId);
-            gameData.exileLookPermissions.remove(cardId);
             graveyardService.addCardToGraveyard(gameData, exiled.ownerId(), exiled.card(), Zone.EXILE);
             gameLogService.append(gameData,
                     GameLog.textCardText(entry.getDescription() + " puts ", exiled.card(),

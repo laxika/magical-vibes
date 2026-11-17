@@ -58,8 +58,8 @@ class DauthiVoidwalkerTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(opponentCard.getId()));
 
-        assertThat(gd.exilePlayPermissions).containsEntry(opponentCard.getId(), player1.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(opponentCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(opponentCard.getId(), player1.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(opponentCard.getId());
 
         harness.castFromExile(player1, opponentCard.getId());
         harness.passBothPriorities();
@@ -67,7 +67,7 @@ class DauthiVoidwalkerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == opponentCard);
         assertThat(gd.findExiledCard(opponentCard.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(opponentCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(opponentCard.getId());
     }
 
     @Test
@@ -146,8 +146,8 @@ class DauthiVoidwalkerTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiled.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(exiled.getId());
         assertThat(gd.findExiledCard(exiled.getId())).isNotNull();
         assertThat(gd.exiledCardsWithVoidCounters).contains(exiled.getId());
     }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastSpellTypesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -16,11 +18,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationControl;
-import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
-import com.github.laxika.magicalvibes.model.action.DelayedDamageDoubling;
-import com.github.laxika.magicalvibes.model.action.DelayedSourceDamageMultiplication;
-import com.github.laxika.magicalvibes.model.action.TargetCreatureMustAttackNextCombat;
 import com.github.laxika.magicalvibes.model.effect.IllusionistsGambitAdditionalCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.IllusionistsGambitAdditionalCombatEffectHandler;
@@ -110,7 +107,6 @@ public class TurnProgressionService {
 
         if (gameData.currentStep == TurnStep.END_OF_COMBAT) {
             combatService.clearCombatState(gameData);
-            gameData.creaturesAssigningNoCombatDamageThisCombat.clear();
             gameData.onlyLandCreaturesCanAttackThisCombat = false;
             gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
             gameData.onlyPermanentCanAttackThisCombatId = null;
@@ -227,8 +223,7 @@ public class TurnProgressionService {
 
         if (next == TurnStep.DRAW
                 && (stepTriggerService.controlsSkipDrawStep(gameData, gameData.activePlayerId)
-                || gameData.skippedStepOrPhasesThisTurn
-                        .getOrDefault(gameData.activePlayerId, Set.of()).contains(SkipStepOrPhaseKind.DRAW_STEP))) {
+                || skips(gameData, SkipStepOrPhaseKind.DRAW_STEP))) {
             if (gameData.additionalBeginningPhaseReturnStep != null) {
                 if (gameData.additionalBeginningPhasesAfterPostcombatMain > 0) {
                     next = TurnStep.UNTAP;
@@ -365,10 +360,6 @@ public class TurnProgressionService {
 
         turnCleanupService.drainManaPools(gameData);
 
-        if (gameData.currentStep == TurnStep.UPKEEP) {
-            gameData.cardsRevealedInHandUntilUpkeepEnd.clear();
-        }
-
         if (next != null) {
             if (next == TurnStep.COMBAT_DAMAGE || next == TurnStep.END_OF_COMBAT) {
                 gameData.firstCombatDamageTimingClosed = true;
@@ -439,7 +430,6 @@ public class TurnProgressionService {
                 });
                 gameData.combatBlockOpponentIdsThisCombat.clear();
                 gameData.combatDamageToPlayersThisCombat.clear();
-                processTargetCreatureMustAttackNextCombat(gameData);
                 if (additionalCombatPhase) {
                     processAdditionalCombatBeginningEffects(gameData);
                 }
@@ -578,7 +568,6 @@ public class TurnProgressionService {
         });
         gameData.combatBlockOpponentIdsThisCombat.clear();
         gameData.combatDamageToPlayersThisCombat.clear();
-        processTargetCreatureMustAttackNextCombat(gameData);
         stepTriggerService.handleBeginningOfCombatTriggers(gameData);
     }
 
@@ -695,39 +684,12 @@ public class TurnProgressionService {
         completeTurnAdvance(gameData);
     }
 
-    private void processTargetCreatureMustAttackNextCombat(GameData gameData) {
-        List<TargetCreatureMustAttackNextCombat> pendingActions =
-                gameData.drainDelayedActions(TargetCreatureMustAttackNextCombat.class);
-        for (TargetCreatureMustAttackNextCombat pending : pendingActions) {
-            Permanent target = findPermanentOnAnyBattlefield(gameData, pending.permanentId());
-            if (target == null) {
-                continue;
-            }
-            UUID controllerId = gameData.findControllerOf(target);
-            if (!gameData.activePlayerId.equals(controllerId)) {
-                gameData.queueDelayedAction(pending);
-                continue;
-            }
-            target.setMustAttackThisCombat(true);
-            gameLogService.append(gameData,
-                    GameLog.cardThen(target.getCard(), " must attack this combat if able."));
-            log.info("Game {} - {} must attack this combat if able", gameData.id, target.getCard().getName());
-        }
-    }
-
     private TurnStep skipChosenPhases(GameData gameData, TurnStep next) {
-        Set<SkipStepOrPhaseKind> skipped = gameData.skippedStepOrPhasesThisTurn
-                .getOrDefault(gameData.activePlayerId, Set.of());
         while (next != null) {
             // Apply the queued skip at the combat boundary, including when a skipped main
             // phase brought us here without ever entering PRECOMBAT_MAIN.
-            if (next == TurnStep.BEGINNING_OF_COMBAT
-                    && gameData.skipNextCombatPhaseCount.getOrDefault(gameData.activePlayerId, 0) > 0) {
+            if (next == TurnStep.BEGINNING_OF_COMBAT && consumeQueuedCombatPhaseSkip(gameData)) {
                 gameData.firstCombatDamageTimingClosed = true;
-                gameData.skipCombatPhaseExpirationsThisTurn.computeIfPresent(gameData.activePlayerId,
-                        (playerId, count) -> count > 1 ? count - 1 : null);
-                gameData.skipNextCombatPhaseCount.computeIfPresent(gameData.activePlayerId,
-                        (playerId, count) -> count > 1 ? count - 1 : null);
                 logSkippedPhase(gameData, "combat phase");
                 if (gameData.additionalCombatPhasesOnly > 0) {
                     // Only the upcoming combat is skipped; the extra combat phase queued after it still happens.
@@ -741,13 +703,13 @@ public class TurnProgressionService {
                 }
                 continue;
             }
-            if (next == TurnStep.PRECOMBAT_MAIN && skipped.contains(SkipStepOrPhaseKind.MAIN_PHASE)) {
+            if (next == TurnStep.PRECOMBAT_MAIN && skips(gameData, SkipStepOrPhaseKind.MAIN_PHASE)) {
                 logSkippedPhase(gameData, "main phase");
                 next = TurnStep.BEGINNING_OF_COMBAT;
                 continue;
             }
             if ((next == TurnStep.BEGINNING_OF_COMBAT || next == TurnStep.END_OF_COMBAT)
-                    && skipped.contains(SkipStepOrPhaseKind.COMBAT_PHASE)) {
+                    && skips(gameData, SkipStepOrPhaseKind.COMBAT_PHASE)) {
                 gameData.firstCombatDamageTimingClosed = true;
                 logSkippedPhase(gameData, "combat phase");
                 if (gameData.additionalCombatPhasesOnly > 0) {
@@ -762,7 +724,7 @@ public class TurnProgressionService {
                 }
                 continue;
             }
-            if (next == TurnStep.POSTCOMBAT_MAIN && skipped.contains(SkipStepOrPhaseKind.MAIN_PHASE)) {
+            if (next == TurnStep.POSTCOMBAT_MAIN && skips(gameData, SkipStepOrPhaseKind.MAIN_PHASE)) {
                 logSkippedPhase(gameData, "main phase");
                 if (gameData.additionalCombatMainPhasePairs > 0) {
                     gameData.additionalCombatMainPhasePairs--;
@@ -775,6 +737,31 @@ public class TurnProgressionService {
             break;
         }
         return next;
+    }
+
+    private static boolean skips(GameData gameData, SkipStepOrPhaseKind kind) {
+        return gameData.skipsStepOrPhase(gameData.activePlayerId, kind);
+    }
+
+    /**
+     * Uses up the active player's queued skip of their next combat phase (CR 614.10a): one that lasts only this turn
+     * first, then one that lasts until it is used.
+     *
+     * @return whether a skip was used
+     */
+    private static boolean consumeQueuedCombatPhaseSkip(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        var thisTurn = gameData.floatingEffectsOnPlayer(activePlayerId, SkipNextEffect.class);
+        if (!thisTurn.isEmpty()) {
+            gameData.endFloatingEffect(thisTurn.getFirst());
+            return true;
+        }
+        if (gameData.skipNextCombatPhaseCount.getOrDefault(activePlayerId, 0) > 0) {
+            gameData.skipNextCombatPhaseCount.computeIfPresent(activePlayerId,
+                    (playerId, count) -> count > 1 ? count - 1 : null);
+            return true;
+        }
+        return false;
     }
 
     private boolean controlsAggressiveCreature(GameData gameData, UUID playerId) {
@@ -894,7 +881,10 @@ public class TurnProgressionService {
         String nextActiveName = gameData.playerIdToName.get(nextActive);
         gameData.currentTurnIsExtraTurn = currentTurnIsExtraTurn;
         gameData.powerUpAbilitiesCantBeActivatedThisTurn = powerUpAbilitiesDisabled;
-        gameData.damageCantBePreventedThisTurn = damageCantBePrevented;
+        if (damageCantBePrevented) {
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer("", null, nextActive,
+                    new DamageCantBePreventedThisTurnEffect(), null, Duration.UNTIL_END_OF_TURN));
+        }
         gameData.currentExtraTurnSequence = extraTurnSequence;
         gameData.extraTurnSkipsAllUntapSteps = skipUntapStep;
 
@@ -917,43 +907,9 @@ public class TurnProgressionService {
         gameData.activePlayerId = nextActive;
         gameData.turnStartTimestamp = gameData.timestampCounter + 1;
         if (gameData.planechase != null) gameData.planechase.controllerId = nextActive;
-        if (gameData.skipCombatPhasesNextTurn.remove(nextActive)) {
-            gameData.skippedStepOrPhasesThisTurn.computeIfAbsent(nextActive, id -> new HashSet<>())
-                    .add(SkipStepOrPhaseKind.COMBAT_PHASE);
-        }
-
-        // Check for pending Taunt on the new active player: promote it to an active this-turn requirement
-        gameData.tauntedThisTurn.clear();
-        UUID taunter = gameData.tauntedNextTurn.remove(nextActive);
-        // The taunter is a player, or a permanent that must be attacked (Gideon Jura's +2).
-        Permanent tauntingPermanent = taunter == null || gameData.playerIds.contains(taunter)
-                ? null : gameQueryService.findPermanentById(gameData, taunter);
-        if (taunter != null && (gameData.playerIds.contains(taunter) || tauntingPermanent != null)) {
-            gameData.tauntedThisTurn.put(nextActive, taunter);
-            String taunterName = tauntingPermanent != null ? tauntingPermanent.getCard().getName()
-                    : gameData.playerIdToName.get(taunter);
-            String tauntLog = "Creatures " + nextActiveName + " controls must attack " + taunterName + " this turn if able.";
-            gameLogService.append(gameData, GameLog.text(tauntLog));
-            log.info("Game {} - {}'s creatures must attack {} this turn (Taunt)", gameData.id, nextActiveName, taunterName);
-        }
-
-        promoteSingleCreatureTaunts(gameData, nextActive);
-
-        // Oracle en-Vec: promote the creatures the new active player chose last turn. They attack if
-        // able and every other creature is barred; the delayed ability that destroys those that didn't
-        // attack was made as they were chosen.
-        gameData.chosenAttackersThisTurn.clear();
         gameData.attackableCreaturesThisTurn.clear();
         gameData.creaturesAbleToAttackAtDeclareAttackersThisTurn.clear();
         gameData.blockableCreaturesThisTurn.clear();
-        Set<UUID> chosenAttackers = gameData.chosenAttackersNextTurn.remove(nextActive);
-        if (chosenAttackers != null) {
-            gameData.chosenAttackersThisTurn.put(nextActive, chosenAttackers);
-            gameLogService.append(gameData, GameLog.text("Only the " + chosenAttackers.size()
-                    + " creature(s) " + nextActiveName + " chose can attack this turn, and they attack if able."));
-            log.info("Game {} - {} is restricted to {} chosen attackers this turn (Oracle en-Vec)",
-                    gameData.id, nextActiveName, chosenAttackers.size());
-        }
 
         // Check for pending Mindslaver control on the new active player
         UUID pendingController = gameData.pendingTurnControl.remove(nextActive);
@@ -981,26 +937,6 @@ public class TurnProgressionService {
         gameData.turnNumber++;
         gameData.mainPhasesBegunThisTurn = 0;
         gameData.postcombatMainPhasesBegunThisTurn = 0;
-        gameData.exilePlayPermissionsAwaitNextTurnOfPlayer.entrySet().removeIf(permission -> {
-            if (permission.getValue().equals(gameData.activePlayerId)) {
-                if (gameData.exilePlayPermissionsExpireAtTurnBeginning.containsKey(permission.getKey())) {
-                    gameData.exilePlayPermissionsExpireAtTurnBeginning.put(permission.getKey(), gameData.turnNumber);
-                } else {
-                    gameData.exilePlayPermissionsExpireAtTurnEnd.put(permission.getKey(), gameData.turnNumber);
-                }
-                return true;
-            }
-            return false;
-        });
-        gameData.exilePlayPermissionsExpireAtTurnBeginning.entrySet().removeIf(permission -> {
-            if (permission.getValue() > gameData.turnNumber) {
-                return false;
-            }
-            gameData.exilePlayPermissions.remove(permission.getKey());
-            gameData.exilePlayPermissionSpellFilters.remove(permission.getKey());
-            gameData.clearExilePlayPermissionGroup(permission.getKey());
-            return true;
-        });
         gameData.temporaryGlobalTriggeredAbilities.removeIf(watcher ->
                 watcher.untilNextTurn()
                         && nextActive.equals(watcher.expirationPlayerId() != null
@@ -1072,13 +1008,6 @@ public class TurnProgressionService {
         gameData.creaturesAttackedWithThisTurn.clear();
         gameData.creaturesAttackedCountBySubtypeThisTurn.clear();
         gameData.permanentsThatAttackedBattlesThisTurn.clear();
-        Set<CardType> nextTurnRestrictedTypes = gameData.playersCantCastSpellTypesNextTurn.remove(nextActive);
-        if (nextTurnRestrictedTypes != null) {
-            // The opponents' next turn has begun: what was barred "during their next turns" now holds this turn.
-            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer("Spell type restriction", null, nextActive,
-                    new TargetPlayerCantCastSpellTypesThisTurnEffect(nextTurnRestrictedTypes), nextActive,
-                    Duration.UNTIL_END_OF_TURN));
-        }
         gameData.activatedAbilityUsesThisTurn.clear();
         gameData.playersWhoUsedMaxSpeedFreeUnearthThisTurn.clear();
         gameData.playersWhoActivatedExhaustAbilityThisTurn.clear();
@@ -1160,8 +1089,6 @@ public class TurnProgressionService {
         gameData.creaturesThatSaddledPermanentThisTurn.clear();
         gameData.creaturesThatCrewedPermanentThisTurn.clear();
         gameData.crewedPermanentSubtypesThisTurn.clear();
-        gameData.clearDelayedActions(DelayedAttackerDeclarationControl.class);
-        gameData.clearDelayedActions(DelayedBlockerDeclarationControl.class);
         gameData.clearDelayedActions(DelayedAdditionalCombatBeginningEffect.class);
         gameData.combatDamageSourceSubtypesThisTurn.clear();
         gameData.combatDamageSourceNamesThisTurn.clear();
@@ -1245,14 +1172,12 @@ public class TurnProgressionService {
         gameData.additionalBeginningPhasesBeforeQueuedCombat = 0;
         gameData.additionalBeginningPhaseReturnStep = null;
         gameData.additionalBeginningPhaseUntapInProgress = false;
-        gameData.cardsGrantedFlashbackWithoutPayingManaCostUntilEndOfTurn.clear();
         gameData.combatPhasesThisTurn = 0;
         gameData.firstCombatDamageTimingClosed = false;
         gameData.endStepsThisTurn = 0;
         gameData.additionalEndStepsPending = 0;
         gameData.cleanupDiscardPending = false;
         gameData.paidSearchTaxPermanentIds.clear();
-        gameData.playerCreaturesCantAttackThisTurn.clear();
         if (gameData.peaceTalksTurnsRemaining > 0) {
             gameData.peaceTalksTurnsRemaining--;
         }
@@ -1285,21 +1210,9 @@ public class TurnProgressionService {
         }
         gameData.forEachPermanent((controllerId, permanent) ->
                 permanent.clearLosesAllAbilitiesUntilNextTurnController(nextActive));
-        // Gideon of the Trials +1: "until your next turn" damage-dealing prevention ends now for the
-        // player whose turn is beginning (its entries are keyed by that controlling player).
-        gameData.creatureControllerDamageRedirectShields.removeIf(
-                shield -> nextActive.equals(shield.protectedPlayerId()));
-        // Comply: "until your next turn, your opponents can't cast spells with the chosen name".
-        gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.remove(nextActive);
-        gameData.cardsRevealedInHandUntilOwnerNextTurn.values().removeIf(nextActive::equals);
-        gameData.cardsCantBePlayedInHandUntilOwnerNextTurn.values().removeIf(nextActive::equals);
         final UUID turnStartPlayerId = nextActive;
         gameData.forEachPermanent((ignored, permanent) ->
                 permanent.clearProtectionFromPlayersUntilTurnOf(turnStartPlayerId));
-        gameData.clearDelayedActions(DelayedDamageDoubling.class,
-                doubling -> doubling.controllerId().equals(nextActive));
-        gameData.clearDelayedActions(DelayedSourceDamageMultiplication.class,
-                multiplication -> multiplication.controllerId().equals(nextActive));
         // The turn begins: the "until your next turn" effects of the player whose turn it is end.
         gameData.rulesEvents.occur(new TurnEvent.Began(nextActive));
 
@@ -1640,40 +1553,6 @@ public class TurnProgressionService {
                 null,
                 timeVault.getId()));
         playerInputService.processNextMayAbility(gameData);
-    }
-
-    /**
-     * Promotes the delayed single-creature taunts recorded for creatures the new active player
-     * controls (Gideon, Battle-Forged's +2) onto the creatures themselves, so declare-attackers sees
-     * the same transient pair Alluring Siren sets. The entry is consumed even when the permanent it
-     * named is gone: a requirement that can no longer be obeyed simply lapses.
-     */
-    private void promoteSingleCreatureTaunts(GameData gameData, UUID nextActive) {
-        if (gameData.creatureMustAttackPermanentNextTurn.isEmpty()) {
-            return;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(nextActive);
-        if (battlefield == null) {
-            return;
-        }
-        for (Permanent creature : battlefield) {
-            UUID attackTargetId = gameData.creatureMustAttackPermanentNextTurn.remove(creature.getId());
-            if (attackTargetId == null) {
-                continue;
-            }
-            Permanent attackTarget = findPermanentOnAnyBattlefield(gameData, attackTargetId);
-            if (attackTarget == null) {
-                continue;
-            }
-            creature.setMustAttackThisTurn(true);
-            creature.setMustAttackTargetId(attackTargetId);
-            gameLogService.append(gameData, GameLog.builder()
-                    .card(creature.getCard())
-                    .text(" must attack " + attackTarget.getCard().getName() + " this turn if able.")
-                    .build());
-            log.info("Game {} - {} must attack {} this turn", gameData.id,
-                    creature.getCard().getName(), attackTarget.getCard().getName());
-        }
     }
 
     private Permanent findPermanentOnAnyBattlefield(GameData gameData, UUID permanentId) {

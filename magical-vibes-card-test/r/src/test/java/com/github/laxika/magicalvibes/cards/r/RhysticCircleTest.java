@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.d.DivingGriffin;
 import com.github.laxika.magicalvibes.cards.s.SearingWind;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -32,7 +33,7 @@ class RhysticCircleTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, griffin.getId());
 
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(shield -> shield.playerId().equals(player1.getId())
                         && shield.sourceId().equals(griffin.getId()));
     }
@@ -50,7 +51,7 @@ class RhysticCircleTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -64,7 +65,7 @@ class RhysticCircleTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -82,7 +83,7 @@ class RhysticCircleTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -106,7 +107,7 @@ class RhysticCircleTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         assertThat(blocker.getMarkedDamage()).isEqualTo(2);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(shield -> shield.sourceId().equals(attacker.getId()));
     }
 
@@ -126,7 +127,7 @@ class RhysticCircleTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 18);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(shield -> shield.sourceId().equals(chosen.getId()));
     }
 
@@ -153,7 +154,7 @@ class RhysticCircleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -166,11 +167,11 @@ class RhysticCircleTest extends BaseCardTest {
         activateAndDeclinePayment(player1, player2);
         harness.handlePermanentChosen(player1, griffin.getId());
 
-        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isNotEmpty();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -191,7 +192,7 @@ class RhysticCircleTest extends BaseCardTest {
         resolveCombat(player1);
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -211,7 +212,7 @@ class RhysticCircleTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).hasSize(1);
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).hasSize(1);
     }
 
     private void activateAndDeclinePayment(Player firstPlayer, Player secondPlayer) {

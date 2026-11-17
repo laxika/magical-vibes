@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantAttackCardOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ElrondOfTheWhiteCouncilEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
@@ -144,7 +143,7 @@ public class ElrondOfTheWhiteCouncilEffectHandler implements NormalEffectHandler
             throw new IllegalStateException("Elrond of the White Council resolution is not resumable");
         }
 
-        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
+        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(Duration.PERMANENT);
         GrantStaticEffectToTargetEffect grantRestriction =
                 new GrantStaticEffectToTargetEffect(new CantAttackCardOwnerEffect(false));
         Set<UUID> uniqueChosenIds = new LinkedHashSet<>(chosenCreatureIds);

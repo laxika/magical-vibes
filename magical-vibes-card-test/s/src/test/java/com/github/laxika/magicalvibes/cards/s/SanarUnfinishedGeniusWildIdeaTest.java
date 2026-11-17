@@ -30,7 +30,7 @@ class SanarUnfinishedGeniusWildIdeaTest extends BaseCardTest {
         UUID copyId = sanar.getPreparedSpellCardId();
         assertThat(copyId).isNotNull();
         assertThat(gd.findExiledCard(copyId)).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(copyId)).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(copyId)).isEqualTo(player1.getId());
     }
 
     @Test

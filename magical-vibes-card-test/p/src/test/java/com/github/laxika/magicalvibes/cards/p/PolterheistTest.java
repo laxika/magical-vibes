@@ -64,8 +64,8 @@ class PolterheistTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(chosenId)).isNotNull();
         assertThat(gd.findExiledCard(chosenId).faceDown()).isTrue();
-        assertThat(gd.exilePlayPermissions.get(chosenId)).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(chosenId);
+        assertThat(gd.exilePlayPermissionHolder(chosenId)).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(chosenId);
         assertThat(gd.playerDecks.get(player2.getId()))
                 .hasSize(3)
                 .contains(land)

@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 @CardUsed({Recoup.class, Concentrate.class, AetherBurst.class, AvenFisher.class})
 class RecoupTest extends BaseCardTest {
@@ -28,7 +29,7 @@ class RecoupTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, concentrate.getId());
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(concentrate.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).contains(concentrate.getId());
     }
 
     @Test
@@ -70,7 +71,7 @@ class RecoupTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).doesNotContain(concentrate.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).doesNotContain(concentrate.getId());
     }
 
     @Test
@@ -118,11 +119,11 @@ class RecoupTest extends BaseCardTest {
         addRecoupMana();
 
         harness.castAndResolveSorcery(player1, 0, concentrate.getId());
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(concentrate.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).contains(concentrate.getId());
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).doesNotContain(concentrate.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).doesNotContain(concentrate.getId());
     }
 
     @Test
@@ -135,7 +136,7 @@ class RecoupTest extends BaseCardTest {
 
         harness.castAndResolveFlashback(player1, 0, concentrate.getId());
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(concentrate.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).contains(concentrate.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Recoup"));
     }
@@ -197,7 +198,7 @@ class RecoupTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(concentrate.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).contains(concentrate.getId());
     }
 
     private void addRecoupMana() {

@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
-import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
-import com.github.laxika.magicalvibes.model.action.GrantExilePlayPermissionAtNextTurn;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -220,33 +218,6 @@ public class StepTriggerService {
         // still protected the permanent through the marking player's own untap step.
         expireCantPhaseOut(gameData);
 
-        if (gameData.hasDelayedAction(GrantExilePlayPermissionAtNextTurn.class)) {
-            List<GrantExilePlayPermissionAtNextTurn> pendingPermissions = gameData.drainDelayedActions(
-                    GrantExilePlayPermissionAtNextTurn.class,
-                    action -> action.exiledTurnNumber() < gameData.turnNumber);
-            for (GrantExilePlayPermissionAtNextTurn action : pendingPermissions) {
-                if (gameData.findExiledCard(action.cardId()) != null) {
-                    gameData.exilePlayPermissions.put(action.cardId(), action.ownerId());
-                }
-            }
-        }
-
-        // Elkin Bottle: "Until the beginning of your next upkeep, you may play that card." At the
-        // scheduling player's next upkeep the permission is revoked; an unplayed card stays in exile.
-        if (gameData.hasDelayedAction(RevokeExilePlayPermissionAtNextUpkeep.class)) {
-            List<RevokeExilePlayPermissionAtNextUpkeep> pending = gameData.drainDelayedActions(
-                    RevokeExilePlayPermissionAtNextUpkeep.class, a -> a.controllerId().equals(gameData.activePlayerId));
-            for (RevokeExilePlayPermissionAtNextUpkeep action : pending) {
-                if (gameData.exilePlayPermissions.remove(action.cardId()) != null
-                        && gameData.findExiledCard(action.cardId()) != null) {
-                    gameData.exilePlayCostModifiers.remove(action.cardId());
-                    String sourceName = action.sourceCard() != null ? action.sourceCard().getName() : "an effect";
-                    gameLogService.append(gameData, GameLog.text(
-                            "The card exiled with " + sourceName + " can no longer be played."));
-                }
-            }
-        }
-
         handleOpeningHandUpkeepTriggers(gameData);
 
         UUID activePlayerId = gameData.activePlayerId;
@@ -260,10 +231,6 @@ public class StepTriggerService {
                     .filter(permanent -> gameQueryService.isLand(gameData, permanent))
                     .count();
         });
-
-        // A Soul Echo replacement lasts "until your next upkeep", whether or not Soul Echo is still around, and
-        // whether or not its upkeep ability triggers now: the duration ends as the upkeep begins.
-        gameData.soulEchoReplacementPlayers.remove(activePlayerId);
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield == null) return;
@@ -509,8 +476,7 @@ public class StepTriggerService {
             return;
         }
 
-        if (gameData.skippedStepOrPhasesThisTurn
-                .getOrDefault(activePlayerId, Set.of()).contains(SkipStepOrPhaseKind.DRAW_STEP)) {
+        if (gameData.skipsStepOrPhase(activePlayerId, SkipStepOrPhaseKind.DRAW_STEP)) {
             String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips their draw step.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} skips draw step (chosen step or phase)", gameData.id,
@@ -1124,18 +1090,6 @@ public class StepTriggerService {
      * @param gameData the current game state to modify
      */
     public void handleEndStepTriggers(GameData gameData) {
-        for (UUID cardId : Set.copyOf(gameData.exilePlayPermissionsExpireAtEndStep)) {
-            Integer expiryTurn = gameData.exilePlayPermissionsExpireAtTurnEnd.get(cardId);
-            if (expiryTurn != null && expiryTurn <= gameData.turnNumber
-                    && !gameData.exilePlayPermissionsAwaitNextTurnOfPlayer.containsKey(cardId)) {
-                gameData.exilePlayPermissions.remove(cardId);
-                gameData.exilePlayPermissionsExpireAtTurnEnd.remove(cardId);
-                gameData.exilePlayPermissionsExpireAtEndStep.remove(cardId);
-                gameData.exilePlayWithoutPayingManaCost.remove(cardId);
-                gameData.exilePlayAnyManaType.remove(cardId);
-                gameData.exilePlayPermissionSpellFilters.remove(cardId);
-            }
-        }
         if (gameData.activePlayerId.equals(gameData.monarchPlayerId)) {
             // "At the beginning of the monarch's end step, that player draws a card" (CR 726.2).
             UUID monarchId = gameData.monarchPlayerId;

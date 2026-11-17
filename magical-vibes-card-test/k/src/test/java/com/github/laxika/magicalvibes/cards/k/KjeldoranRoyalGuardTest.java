@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GreenWard;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -336,7 +337,7 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TurnCleanupService.class)
                 .applyCleanupResets(gd));
 
-        assertThat(gd.combatDamageRedirectTarget).isNull();
+        assertThat(gd.hasShields(RedirectUnblockedCombatDamageToSelfEffect.class)).isFalse();
     }
 
     @Test

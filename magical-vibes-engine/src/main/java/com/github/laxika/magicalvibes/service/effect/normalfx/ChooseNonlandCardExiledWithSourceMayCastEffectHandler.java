@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ExilePlayDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -50,11 +50,11 @@ public class ChooseNonlandCardExiledWithSourceMayCastEffectHandler
         }
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExiledCardMayPlayChoice(
-                controllerId, eligibleCardIds, ExilePlayDuration.WHILE_EXILED, true));
+                controllerId, eligibleCardIds, Duration.PERMANENT, true));
     }
 
     private void grantPermission(GameData gameData, UUID cardId, UUID controllerId) {
         exileSupport.grantPlayWhileExiled(gameData, cardId, controllerId);
-        gameData.exilePlayAnyManaTypeWhileExiled.add(cardId);
+        gameData.updateExilePlayPermission(cardId, granted -> granted.withAnyManaType(true));
     }
 }

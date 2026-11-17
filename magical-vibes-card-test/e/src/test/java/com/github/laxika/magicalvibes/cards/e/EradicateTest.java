@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -87,7 +86,7 @@ class EradicateTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GoliathBeetle());
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
                 .applyControlEffect(gd, player2.getId(), target,
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        new GainControlOfTargetEffect(Duration.PERMANENT),
                         Duration.PERMANENT, null, "Test setup"));
         GoliathBeetle ownerCopy = new GoliathBeetle();
         GoliathBeetle controllerCopy = new GoliathBeetle();

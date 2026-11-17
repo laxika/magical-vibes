@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLibraryGainLifeAndMayCastThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -59,9 +60,8 @@ public class ExileTopCardOfDamagedPlayerLibraryGainLifeAndMayCastThisTurnEffectH
         // Daxos grants a cast permission, not a land-play permission.
         boolean castable = !topCard.hasType(CardType.LAND);
         if (castable) {
-            gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-            gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
-            gameData.exilePlayAnyManaType.add(topCard.getId());
+            gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
+            gameData.grantExileAnyManaType(topCard.getId(), Duration.UNTIL_END_OF_TURN);
         }
 
         gameLogService.append(gameData, GameLog.builder()

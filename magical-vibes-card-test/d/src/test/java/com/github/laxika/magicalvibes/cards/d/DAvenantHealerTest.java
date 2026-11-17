@@ -103,7 +103,7 @@ class DAvenantHealerTest extends BaseCardTest {
 
         activatePrevention(player2.getId());
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
 
     @Test
@@ -119,7 +119,7 @@ class DAvenantHealerTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertLife(player2, 19);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test
@@ -128,13 +128,13 @@ class DAvenantHealerTest extends BaseCardTest {
         addCreatureReady(player1, new DAvenantHealer());
 
         activatePrevention(player2.getId());
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test

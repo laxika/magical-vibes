@@ -9,11 +9,11 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param duration how long control is retained
  */
-public record TriggeringObjectControllerGainsControlOfEnchantedPermanentEffect(ControlDuration duration)
+public record TriggeringObjectControllerGainsControlOfEnchantedPermanentEffect(Duration duration)
         implements ControlStealingEffect {
 
     @Override
-    public ControlDuration controlDuration() {
+    public Duration controlDuration() {
         return duration;
     }
 }

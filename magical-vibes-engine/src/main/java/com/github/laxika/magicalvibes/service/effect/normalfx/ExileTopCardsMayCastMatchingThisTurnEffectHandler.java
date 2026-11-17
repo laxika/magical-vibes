@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -64,11 +65,10 @@ public class ExileTopCardsMayCastMatchingThisTurnEffectHandler implements Normal
             if (predicateEvaluationService.matchesCardPredicate(topCard, e.filter(), null)
                     || (topCard.isModalDoubleFaced() && topCard.getBackFaceCard() != null
                     && predicateEvaluationService.matchesCardPredicate(topCard.getBackFaceCard(), e.filter(), null))) {
-                gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-                gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
-                gameData.exilePlayPermissionSpellFilters.put(topCard.getId(), e.filter());
+                gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
+                gameData.updateExilePlayPermission(topCard.getId(), granted -> granted.withSpellFilter(e.filter()));
                 if (e.withoutPayingManaCost()) {
-                    gameData.exilePlayWithoutPayingManaCost.add(topCard.getId());
+                    gameData.setExilePlayWithoutPayingManaCost(topCard.getId(), true);
                 }
                 castableNames.add(topCard.getName());
             }

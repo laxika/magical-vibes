@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesMustAttackTargetPlayerUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +19,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Records the delayed single-creature taunt. The ability is an "up to one target" one, so an
+ * Makes the single-creature taunt: a floating requirement on the creature to attack the source permanent if able
+ * during its controller's next turn (CR 508.1d). The ability is an "up to one target" one, so an
  * activation with no target resolves as a no-op.
  */
 @Slf4j
@@ -52,7 +56,10 @@ public class TargetCreatureMustAttackSourcePermanentNextTurnEffectHandler implem
             if (target == null) {
                 continue;
             }
-            gameData.creatureMustAttackPermanentNextTurn.put(target.getId(), sourcePermanentId);
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(source.getCard().getName(),
+                    sourcePermanentId, entry.getControllerId(),
+                    new CreaturesMustAttackTargetPlayerUntilNextTurnEffect(sourcePermanentId), target.getId(),
+                    Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN));
             gameLogService.append(gameData, GameLog.builder()
                     .card(target.getCard())
                     .text(" attacks " + source.getCard().getName() + " during its controller's next turn if able.")

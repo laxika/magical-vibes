@@ -104,7 +104,7 @@ class PlayWithFireTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
-        gd.playerDamagePreventionShields.put(player2.getId(), 2);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 2);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
@@ -120,7 +120,7 @@ class PlayWithFireTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(topCard));
         harness.setHand(player1, List.of(new PlayWithFire()));
         harness.addMana(player1, ManaColor.RED, 1);
-        gd.playerDamagePreventionShields.put(player2.getId(), 1);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 1);
         int lifeBefore = gd.getLife(player2.getId());
 
         harness.castAndResolveInstant(player1, 0, player2.getId());

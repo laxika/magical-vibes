@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 /** Resolves a combat-damage trigger that grants access to the damaged player's graveyard. */
 @Slf4j
@@ -34,10 +35,9 @@ public class AllowCastMatchingCardsFromDamagedPlayerGraveyardThisTurnEffectHandl
             return;
         }
 
-        gameData.graveyardCastFilterPermissionsThisTurn.add(
-                new GameData.GraveyardCastFilterPermission(
+        gameData.addPlayerEffect(entry, new GameData.GraveyardCastFilterPermission(
                         entry.getControllerId(), grant.filter(), grant.singleUse(), damagedPlayerId,
-                        grant.anyManaType()));
+                        grant.anyManaType()), entry.getControllerId(), Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(entry.getControllerId())
                 + " may cast a matching spell from "

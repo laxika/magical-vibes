@@ -62,7 +62,7 @@ class SmittenSwordmasterTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test

@@ -48,7 +48,7 @@ class ToshiroUmezawaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNotNull();
-        assertThat(gd.graveyardCardCastPermissionsUntilEndOfTurn).isEmpty();
+        assertThat(graveyardCastPermissionsByCard()).isEmpty();
     }
 
     @Test
@@ -98,7 +98,7 @@ class ToshiroUmezawaTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.graveyardCardCastPermissionsUntilEndOfTurn).isEmpty();
+        assertThat(graveyardCastPermissionsByCard()).isEmpty();
     }
 
     @Test
@@ -149,7 +149,7 @@ class ToshiroUmezawaTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(shock);
-        assertThat(gd.graveyardCardCastPermissionsUntilEndOfTurn).isEmpty();
+        assertThat(graveyardCastPermissionsByCard()).isEmpty();
     }
 
     @Test
@@ -196,7 +196,7 @@ class ToshiroUmezawaTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.graveyardCardCastPermissionsUntilEndOfTurn).isEmpty();
+        assertThat(graveyardCastPermissionsByCard()).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(shock);
     }
 }

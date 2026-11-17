@@ -59,7 +59,7 @@ class LuckyCloverTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).count()).isEqualTo(3);
         assertThat(gd.findExiledCard(beast.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsOnlyKeys(beast.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsOnlyKeys(beast.getId());
         assertThat(gd.stack).isEmpty();
     }
 
@@ -127,6 +127,6 @@ class LuckyCloverTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken()).count()).isEqualTo(1);
         harness.assertInGraveyard(player1, "Lovestruck Beast");
         assertThat(gd.findExiledCard(beast.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 }

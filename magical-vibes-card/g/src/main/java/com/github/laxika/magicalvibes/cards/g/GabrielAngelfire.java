@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -24,11 +23,11 @@ public class GabrielAngelfire extends Card {
     public GabrielAngelfire() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Flying", new GrantKeywordEffect(
-                        Keyword.FLYING, GrantScope.SELF, GrantDuration.UNTIL_YOUR_NEXT_UPKEEP)),
+                        Keyword.FLYING, GrantScope.SELF, Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP)),
                 new ChooseOneEffect.ChooseOneOption("First strike", new GrantKeywordEffect(
-                        Keyword.FIRST_STRIKE, GrantScope.SELF, GrantDuration.UNTIL_YOUR_NEXT_UPKEEP)),
+                        Keyword.FIRST_STRIKE, GrantScope.SELF, Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP)),
                 new ChooseOneEffect.ChooseOneOption("Trample", new GrantKeywordEffect(
-                        Keyword.TRAMPLE, GrantScope.SELF, GrantDuration.UNTIL_YOUR_NEXT_UPKEEP)),
+                        Keyword.TRAMPLE, GrantScope.SELF, Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP)),
                 new ChooseOneEffect.ChooseOneOption("Rampage 3", GrantEffectToTargetEffect.toSource(
                         new TriggeredAbility(Triggers.becomesBlocked(), rampageThree()),
                         Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP))

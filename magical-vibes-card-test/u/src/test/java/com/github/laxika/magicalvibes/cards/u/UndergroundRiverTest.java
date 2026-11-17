@@ -120,7 +120,7 @@ class UndergroundRiverTest extends BaseCardTest {
         harness.assertLife(player1, lifeBefore);
         ManaColor color = abilityIndex == 1 ? ManaColor.BLUE : ManaColor.BLACK;
         assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isZero();
     }
 
     @Test

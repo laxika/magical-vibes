@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -49,8 +50,8 @@ class NahirisWarcraftingTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(shock);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest1, forest2);
-        assertThat(gd.exilePlayPermissions).containsEntry(shock.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(shock.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(shock.getId(), player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(shock.getId());
     }
 
     @Test
@@ -85,8 +86,8 @@ class NahirisWarcraftingTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, shock);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(forest.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(shock.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(forest.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(shock.getId());
     }
 
     @Test
@@ -311,7 +312,7 @@ class NahirisWarcraftingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, shock.getId(), player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(shock);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(shock.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(shock.getId());
     }
 
     private void prepareSpell() {

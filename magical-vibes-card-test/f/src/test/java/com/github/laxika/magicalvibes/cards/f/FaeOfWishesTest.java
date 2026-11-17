@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -49,7 +48,7 @@ class FaeOfWishesTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
         assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(ineligible);
         assertThat(gd.findExiledCard(fae.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(fae.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(fae.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -89,7 +88,7 @@ class FaeOfWishesTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(available);
         assertThat(gd.findExiledCard(fae.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(fae.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(fae.getId())).isEqualTo(player1.getId());
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -121,7 +120,7 @@ class FaeOfWishesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anySatisfy(permanent -> assertThat(permanent.getCard().getId()).isEqualTo(fae.getId()));
         assertThat(gd.findExiledCard(fae.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(fae.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(fae.getId());
     }
 
     @Test
@@ -149,7 +148,7 @@ class FaeOfWishesTest extends BaseCardTest {
         Permanent permanent = harness.addToBattlefieldAndReturn(player1, fae);
         gd.stolenCreatures.put(permanent.getId(), player2.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control effect", null,
-                player1.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT), permanent.getId(),
+                player1.getId(), new GainControlOfTargetEffect(Duration.PERMANENT), permanent.getId(),
                 null, null, Duration.PERMANENT, 0));
         permanent.tap();
         permanent.setSummoningSick(true);

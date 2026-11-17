@@ -84,8 +84,8 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
                 .filter(c -> c instanceof DarkRitual)
                 .findFirst()
                 .orElseThrow();
-        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
-        assertThat(gd.exilePlayAnyManaType).contains(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiled.getId(), player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(exiled.getId());
 
         harness.castFromExile(player1, exiled.getId());
         while (!gd.stack.isEmpty()) {
@@ -329,8 +329,8 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         assertThat(gd.findExiledCard(curve.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(curve.getId());
-        assertThat(gd.exilePlayAnyManaType).doesNotContain(curve.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(curve.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).doesNotContain(curve.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, curve.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }

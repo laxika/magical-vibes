@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -37,13 +38,13 @@ class KnacksawCliqueTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId()))
                 .noneMatch(c -> c.getId().equals(top.getId()));
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(top.getId())).isEqualTo(player1.getId());
 
         // The controller can actually play the exiled land onto their own battlefield.
         harness.castFromExile(player1, top.getId());
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(top.getId()));
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
     }
 
     @Test
@@ -115,16 +116,16 @@ class KnacksawCliqueTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(top.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(top.getId());
     }
 
     @Test
@@ -140,7 +141,7 @@ class KnacksawCliqueTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test
@@ -173,7 +174,7 @@ class KnacksawCliqueTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
 
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castFromExile(player1, top.getId());
@@ -182,7 +183,7 @@ class KnacksawCliqueTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(top.getId()));
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(top);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
     }
 
     @Test

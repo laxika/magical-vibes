@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -52,10 +53,10 @@ class KorvoldAndTheNobleThiefTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions.values())
+        assertThat(gd.exilePlayPermissionHolders().values())
                 .containsOnly(player1.getId());
-        assertThat(gd.exilePlayPermissions).hasSize(3);
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).hasSize(3);
+        assertThat(gd.exilePlayPermissionHolders()).hasSize(3);
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).hasSize(3);
     }
 
     @Test
@@ -95,8 +96,8 @@ class KorvoldAndTheNobleThiefTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsOnlyKeys(card.getId());
-        assertThat(gd.exilePlayPermissions).containsEntry(card.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsOnlyKeys(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(card.getId(), player1.getId());
     }
 
     @Test
@@ -104,7 +105,7 @@ class KorvoldAndTheNobleThiefTest extends BaseCardTest {
         harness.setLibrary(player2, List.of());
         resolveThirdChapter();
 
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
         harness.assertNotOnBattlefield(player1, "Korvold and the Noble Thief");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card instanceof KorvoldAndTheNobleThief);
@@ -145,7 +146,7 @@ class KorvoldAndTheNobleThiefTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, card.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("No permission to play this exiled card");

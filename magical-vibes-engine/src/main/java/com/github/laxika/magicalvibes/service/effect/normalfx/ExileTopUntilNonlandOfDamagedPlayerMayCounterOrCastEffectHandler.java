@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -64,9 +65,8 @@ public class ExileTopUntilNonlandOfDamagedPlayerMayCounterOrCastEffectHandler
                     nonland == null ? null : nonland.getId(), null, entry.getSourcePermanentId()));
         } else if (nonland != null) {
             UUID cardId = nonland.getId();
-            gameData.exilePlayPermissions.put(cardId, entry.getControllerId());
-            gameData.exilePlayPermissionsExpireEndOfTurn.add(cardId);
-            gameData.exilePlayAnyManaType.add(cardId);
+            gameData.grantExilePlayPermission(cardId, entry.getControllerId(), Duration.UNTIL_END_OF_TURN);
+            gameData.grantExileAnyManaType(cardId, Duration.UNTIL_END_OF_TURN);
         }
         gameLogService.append(gameData, GameLog.text(
                 damagedPlayerName + " exiles " + exiledCount + " card(s) from the top of their library."));

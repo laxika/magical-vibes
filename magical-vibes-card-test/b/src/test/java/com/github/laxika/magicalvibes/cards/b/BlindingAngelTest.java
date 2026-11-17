@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -135,7 +136,7 @@ class BlindingAngelTest extends BaseCardTest {
     @DisplayName("A queued combat skip survives a skipped precombat main phase")
     void queuedSkipSurvivesSkippedPrecombatMainPhase() {
         gd.skipNextCombatPhaseCount.put(player2.getId(), 1);
-        gd.skippedStepOrPhasesThisTurn.put(player2.getId(), Set.of(SkipStepOrPhaseKind.MAIN_PHASE));
+        FloatingCombatRules.skipThisTurn(gd, player2.getId(), SkipStepOrPhaseKind.MAIN_PHASE);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DRAW);

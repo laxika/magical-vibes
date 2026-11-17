@@ -38,7 +38,7 @@ public class ControllerGainsControlOfSourceCreatureEffectHandler implements Norm
         }
 
         creatureControlService.applyControlEffect(gameData, entry.getControllerId(), source,
-                new GainControlOfTargetEffect(e.duration()), e.duration().toDuration(),
+                new GainControlOfTargetEffect(e.duration()), e.duration(),
                 null, entry.getCard().getName());
     }
 }

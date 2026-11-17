@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -26,8 +27,8 @@ class ProsperTomeBoundTest extends BaseCardTest {
         goToEndStepAndResolve();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd).containsKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)).containsKey(topCard.getId());
     }
 
     @Test
@@ -35,7 +36,7 @@ class ProsperTomeBoundTest extends BaseCardTest {
         addProsper();
         GrizzlyBears spell = new GrizzlyBears();
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 2);
         prepareMainPhase(player1);
 
@@ -50,7 +51,7 @@ class ProsperTomeBoundTest extends BaseCardTest {
         addProsper();
         Forest land = new Forest();
         gd.addToExile(player1.getId(), land);
-        gd.exilePlayPermissions.put(land.getId(), player1.getId());
+        gd.grantExilePlayPermission(land.getId(), player1.getId(), Duration.PERMANENT);
         prepareMainPhase(player1);
 
         harness.castFromExile(player1, land.getId());
@@ -121,7 +122,7 @@ class ProsperTomeBoundTest extends BaseCardTest {
         addProsper();
         Forest land = new Forest();
         harness.setExile(player2, List.of(land));
-        gd.exilePlayPermissions.put(land.getId(), player2.getId());
+        gd.grantExilePlayPermission(land.getId(), player2.getId(), Duration.PERMANENT);
         prepareMainPhase(player2);
 
         harness.castFromExile(player2, land.getId());
@@ -165,17 +166,17 @@ class ProsperTomeBoundTest extends BaseCardTest {
         goToEndStepAndResolve();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(land.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(land.getId(), player1.getId());
 
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(land.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(land.getId(), player1.getId());
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
-        assertThat(gd.exilePlayPermissions).containsEntry(land.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(land.getId(), player1.getId());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(land.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(land);
     }
 
@@ -184,7 +185,7 @@ class ProsperTomeBoundTest extends BaseCardTest {
         addProsper();
         GrizzlyBears spell = new GrizzlyBears();
         harness.setExile(player2, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player2.getId());
+        gd.grantExilePlayPermission(spell.getId(), player2.getId(), Duration.PERMANENT);
         harness.addMana(player2, ManaColor.GREEN, 2);
         prepareMainPhase(player2);
 
@@ -201,7 +202,7 @@ class ProsperTomeBoundTest extends BaseCardTest {
         Permanent prosper = addProsper();
         Forest land = new Forest();
         harness.setExile(player1, List.of(land));
-        gd.exilePlayPermissions.put(land.getId(), player1.getId());
+        gd.grantExilePlayPermission(land.getId(), player1.getId(), Duration.PERMANENT);
         prepareMainPhase(player1);
 
         harness.castFromExile(player1, land.getId());

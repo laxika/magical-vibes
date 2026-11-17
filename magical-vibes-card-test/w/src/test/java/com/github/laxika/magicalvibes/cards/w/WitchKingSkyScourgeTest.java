@@ -42,7 +42,7 @@ class WitchKingSkyScourgeTest extends BaseCardTest {
                 .containsExactlyElementsOf(library.subList(0, attackingWraithPower));
         assertThat(gd.playerDecks.get(player1.getId()))
                 .containsExactlyElementsOf(library.subList(attackingWraithPower, library.size()));
-        assertThat(gd.exilePlayPermissions).containsEntry(library.getFirst().getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(library.getFirst().getId(), player1.getId());
     }
 
     @Test

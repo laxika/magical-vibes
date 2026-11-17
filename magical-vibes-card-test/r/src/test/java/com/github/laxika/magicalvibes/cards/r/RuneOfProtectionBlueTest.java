@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.e.ElvishLyrist;
 import com.github.laxika.magicalvibes.cards.h.HermeticStudy;
@@ -49,7 +50,7 @@ class RuneOfProtectionBlueTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, wizard.getId());
 
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(wizard.getId()));
     }
 
@@ -69,7 +70,7 @@ class RuneOfProtectionBlueTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -89,7 +90,7 @@ class RuneOfProtectionBlueTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 19);
-        assertThat(gd.playerSourceNextDamageShields).anyMatch(s -> s.sourceId().equals(chosen.getId()));
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).anyMatch(s -> s.sourceId().equals(chosen.getId()));
     }
 
     @Test
@@ -111,7 +112,7 @@ class RuneOfProtectionBlueTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -125,14 +126,14 @@ class RuneOfProtectionBlueTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, crab.getId());
 
-        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isNotEmpty();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -158,7 +159,7 @@ class RuneOfProtectionBlueTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, blueSpell.getId());
 
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(blueSpell.getId()));
     }
 
@@ -173,7 +174,7 @@ class RuneOfProtectionBlueTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
         assertThat(gameLogContains("No permanents on the battlefield")).isTrue();
     }
 

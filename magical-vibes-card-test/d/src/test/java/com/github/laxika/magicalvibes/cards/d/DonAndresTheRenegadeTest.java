@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -143,7 +142,7 @@ class DonAndresTheRenegadeTest extends BaseCardTest {
         gd.stolenCreatures.put(permanent.getId(), owner.getId());
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
                 .applyControlEffect(gd, controller.getId(), permanent,
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT,
+                        new GainControlOfTargetEffect(Duration.PERMANENT), Duration.PERMANENT,
                         null, "Test setup"));
         return permanent;
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,8 +17,7 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link AssignNoCombatDamageAndDefendingPlayerDiscardsEffect} (Cloak of Confusion). The
  * enchanted attacker is the stack entry's {@code sourcePermanentId} and the defending player its
- * {@code targetId}: the attacker is added to {@code creaturesAssigningNoCombatDamageThisTurn} so it
- * deals no combat damage this turn (cleared at turn cleanup), and the defending player discards a
+ * {@code targetId}: the attacker assigns no combat damage this turn (a floating effect that ends at cleanup), and the defending player discards a
  * card at random.
  */
 @Slf4j
@@ -43,7 +43,8 @@ public class AssignNoCombatDamageAndDefendingPlayerDiscardsEffectHandler impleme
             return;
         }
 
-        gameData.creaturesAssigningNoCombatDamageThisTurn.add(attackerId);
+        PreventionSupport.assignNoCombatDamage(gameData, entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), attackerId, Duration.UNTIL_END_OF_TURN);
         Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
         String attackerName = attacker != null ? attacker.getCard().getName() : "the attacking creature";
         gameLogService.append(gameData,

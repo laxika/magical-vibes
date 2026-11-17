@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEqualToCardsInTheirGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -37,7 +37,7 @@ public class AngrathTheFlameChained extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -3,
                 List.of(
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
                         new SacrificeTargetPermanentAtEndStepIfManaValueAtMostEffect(3)

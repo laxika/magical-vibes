@@ -510,7 +510,7 @@ public class GameSimulator {
                 result.addAll(enumerateCastableSpellsFromSource(gd, playerId));
             }
         } finally { gd.commandCastPlayerId = previousPlayer; gd.commandCastCardId = previousCard; }
-        result.addAll(enumerateCastableSpellsFromHandOf(gd, playerId, gd.senControlledPlayerId));
+        result.addAll(enumerateCastableSpellsFromHandOf(gd, playerId, gd.handPlayableBy(playerId)));
         return result;
     }
 

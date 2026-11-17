@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -69,8 +70,8 @@ class KellanPlanarTrailblazerTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(topCard.getId());
     }
 
     @Test
@@ -181,9 +182,9 @@ class KellanPlanarTrailblazerTest extends BaseCardTest {
 
         harness.assertLife(player2, 14);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, second);
-        assertThat(gd.exilePlayPermissions).containsEntry(first.getId(), player1.getId())
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(first.getId(), second.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(first.getId(), second.getId());
     }
 
     @Test
@@ -216,6 +217,6 @@ class KellanPlanarTrailblazerTest extends BaseCardTest {
 
         harness.assertLife(player2, 18);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 }

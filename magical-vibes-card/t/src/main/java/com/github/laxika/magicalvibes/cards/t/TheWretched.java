@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,6 +19,6 @@ public class TheWretched extends Card {
         addTrigger(Triggers.endOfCombat(),
                 new ConditionalEffect(new SourceIsAttacking(),
                         new GainControlOfAllPermanentsMatchingEffect(new PermanentBlockingSourcePredicate(),
-                                ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD)));
+                                Duration.WHILE_SOURCE_ON_BATTLEFIELD)));
     }
 }

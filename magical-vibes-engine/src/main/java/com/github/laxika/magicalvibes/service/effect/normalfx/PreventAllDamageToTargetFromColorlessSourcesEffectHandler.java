@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -33,7 +35,9 @@ public class PreventAllDamageToTargetFromColorlessSourcesEffectHandler implement
             return;
         }
 
-        gameData.colorlessDamagePreventionUntilEndOfTurn.add(targetId);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), (PreventAllDamageToTargetFromColorlessSourcesEffect) effect,
+                targetId, Duration.UNTIL_END_OF_TURN));
         gameLogService.append(gameData, GameLog.textCardText(
                 "All damage that would be dealt to ", target.getCard(),
                 " this turn by colorless sources is prevented."));

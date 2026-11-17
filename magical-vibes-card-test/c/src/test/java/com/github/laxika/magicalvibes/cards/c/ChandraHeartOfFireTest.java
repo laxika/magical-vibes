@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.t.ThrillOfPossibility;
@@ -51,11 +52,11 @@ class ChandraHeartOfFireTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(first.getId(), second.getId(), third.getId());
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId())
                 .containsEntry(third.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn)
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN))
                 .contains(first.getId(), second.getId(), third.getId());
     }
 
@@ -95,7 +96,7 @@ class ChandraHeartOfFireTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(graveyardRed.getId(), libraryRed.getId());
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(graveyardRed.getId(), player1.getId())
                 .containsEntry(libraryRed.getId(), player1.getId())
                 .doesNotContainKey(graveyardBlue.getId())
@@ -207,7 +208,7 @@ class ChandraHeartOfFireTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, shock.getId(), player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(shock);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(shock.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(shock.getId());
     }
 
     @Test

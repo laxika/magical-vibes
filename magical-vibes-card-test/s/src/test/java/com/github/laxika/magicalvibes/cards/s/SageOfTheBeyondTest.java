@@ -27,7 +27,7 @@ class SageOfTheBeyondTest extends BaseCardTest {
 
         GrizzlyBears graveyardCreature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(graveyardCreature));
-        gd.graveyardPlayPermissions.put(graveyardCreature.getId(), player1.getId());
+        grantGraveyardPlay(graveyardCreature.getId(), player1.getId());
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
 

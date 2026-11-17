@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -44,10 +45,10 @@ class BurningCuriosityTest extends BaseCardTest {
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(topCards.get(0).getId(), topCards.get(1).getId());
         assertThat(gd.playerDecks.get(player1.getId())).contains(topCards.get(2));
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsKeys(topCards.get(0).getId(), topCards.get(1).getId())
                 .doesNotContainKey(topCards.get(2).getId());
-        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer)
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN))
                 .containsEntry(topCards.get(0).getId(), player1.getId());
     }
 
@@ -113,7 +114,7 @@ class BurningCuriosityTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(card);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).containsEntry(card.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(card.getId(), player1.getId());
     }
 
     @Test
@@ -144,12 +145,12 @@ class BurningCuriosityTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCards.get(0).getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCards.get(0).getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCards.get(0).getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCards.get(0).getId(), player1.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .doesNotContainKeys(topCards.get(0).getId(), topCards.get(1).getId());
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactly(topCards.get(0), topCards.get(1));

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -43,9 +44,9 @@ class CunningRhetoricTest extends BaseCardTest {
         assertThat(entry).isNotNull();
         assertThat(entry.faceDown()).isFalse();
         assertThat(entry.ownerId()).isEqualTo(player2.getId());
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(topCard.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(topCard.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(topCard.getId());
     }
 
     @Test
@@ -61,7 +62,7 @@ class CunningRhetoricTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -132,7 +133,7 @@ class CunningRhetoricTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.exiledCards).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test
@@ -149,7 +150,7 @@ class CunningRhetoricTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -170,7 +171,7 @@ class CunningRhetoricTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anySatisfy(permanent -> assertThat(permanent.getCard().getId()).isEqualTo(topCard.getId()));
         assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
     }
 
     @Test

@@ -66,7 +66,7 @@ class AerialExtortionistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(target.getOriginalCard().getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(target.getOriginalCard().getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(target.getOriginalCard().getId())).isEqualTo(player2.getId());
     }
 
     @Test

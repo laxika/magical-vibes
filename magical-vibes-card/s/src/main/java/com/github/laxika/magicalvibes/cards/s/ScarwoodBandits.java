@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
@@ -24,7 +24,7 @@ public class ScarwoodBandits extends Card {
                         null,
                         "Pay {2} to keep control of the target artifact?",
                         MayPayPayer.ANY_OPPONENT,
-                        new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_REMAINS),
+                        new GainControlOfTargetEffect(Duration.WHILE_SOURCE_REMAINS),
                         0
                 )),
                 "{2}{G}, {T}: Unless an opponent pays {2}, gain control of target artifact for as long as Scarwood Bandits remains on the battlefield.",

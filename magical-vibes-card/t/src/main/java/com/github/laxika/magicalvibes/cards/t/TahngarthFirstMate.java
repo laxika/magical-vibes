@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AttackingPlayerIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MakeChosenPermanentAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
@@ -23,7 +23,7 @@ public class TahngarthFirstMate extends Card {
                         .withInterveningIf(new SourceIsTapped()),
                 new MayEffect(
                         TargetPlayerGainsControlOfSourceCreatureEffect.triggeringPlayer(
-                                ControlDuration.END_OF_COMBAT,
+                                Duration.UNTIL_END_OF_COMBAT,
                                 MakeChosenPermanentAttackingEffect.attackingTargetOfTriggeringPlayer()),
                         "Have that opponent gain control of Tahngarth until end of combat?"));
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.PlayersCantSearchLibrariesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -926,7 +927,7 @@ public class LibrarySearchSupport {
 
     public boolean checkSearchRestriction(GameData gameData, UUID searchingPlayerId,
                                           UUID libraryOwnerId, UUID causingControllerId) {
-        if (gameData.playersCantSearchLibrariesThisTurn) {
+        if (gameData.hasFloatingEffectOnPlayer(searchingPlayerId, PlayersCantSearchLibrariesThisTurnEffect.class)) {
             String playerName = gameData.playerIdToName.get(searchingPlayerId);
             gameLogService.append(gameData, GameLog.text(
                     playerName + "'s library search is prevented this turn."));

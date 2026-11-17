@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
@@ -40,7 +41,7 @@ class ReverseDamageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, creature.getId());
 
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId())
                         && s.sourceId().equals(creature.getId())
                         && s.gainLife());
@@ -61,7 +62,7 @@ class ReverseDamageTest extends BaseCardTest {
 
         // 2 damage prevented, 2 life gained
         harness.assertLife(player1, 22);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -81,7 +82,7 @@ class ReverseDamageTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId())
                         && s.sourceId().equals(sorcerer.getId()));
     }
@@ -101,7 +102,7 @@ class ReverseDamageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 21);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
 
         sorcerer.untap();
         harness.activateAbility(player2, sorcererIndex, null, player1.getId());
@@ -129,7 +130,7 @@ class ReverseDamageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 22);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -154,7 +155,7 @@ class ReverseDamageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 23);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -182,7 +183,7 @@ class ReverseDamageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 21);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -200,7 +201,7 @@ class ReverseDamageTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 18);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.sourceId().equals(chosen.getId()));
     }
 
@@ -213,11 +214,11 @@ class ReverseDamageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, creature.getId());
 
-        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isNotEmpty();
 
         harness.passUntil(player1, TurnStep.CLEANUP);
 
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     private void castReverseDamage(Player player) {
@@ -338,6 +339,6 @@ class ReverseDamageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 21);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 }

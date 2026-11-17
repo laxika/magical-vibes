@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.WaterbendCostPaid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
@@ -23,7 +23,7 @@ public class SpiritWaterRevival extends Card {
                 SequenceEffect.of(
                         new ShuffleGraveyardIntoLibraryEffect(false),
                         new DrawCardEffect(7),
-                        new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.REST_OF_GAME)
+                        new GrantNoMaximumHandSizeEffect(Duration.PERMANENT)
                 )
         ));
         addSpellEffect(new ExileSpellEffect());

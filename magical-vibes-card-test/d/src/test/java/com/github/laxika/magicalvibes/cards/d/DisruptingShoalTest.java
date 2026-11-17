@@ -58,7 +58,7 @@ class DisruptingShoalTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Mending Hands");
         harness.assertInGraveyard(player2, "Disrupting Shoal");
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(4);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
     }
 

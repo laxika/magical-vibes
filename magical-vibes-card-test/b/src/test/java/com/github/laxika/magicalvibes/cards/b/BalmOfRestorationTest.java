@@ -35,7 +35,7 @@ class BalmOfRestorationTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(2);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(2);
         harness.assertInGraveyard(player1, "Balm of Restoration");
     }
 

@@ -55,7 +55,7 @@ class TreefolkHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(2);
     }
 
     @Test
@@ -91,7 +91,7 @@ class TreefolkHealerTest extends BaseCardTest {
         castZapAt(player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
 
         castZapAt(player2.getId());
 
@@ -153,7 +153,7 @@ class TreefolkHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         castZapAt(player2.getId());
         harness.assertLife(player2, 19);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
 
         harness.passBothPriorities();
         castZapAt(player2.getId());

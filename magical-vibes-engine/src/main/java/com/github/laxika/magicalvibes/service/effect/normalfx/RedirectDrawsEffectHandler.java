@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -34,7 +36,8 @@ public class RedirectDrawsEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        gameData.drawReplacementTargetToController.put(targetPlayerId, controllerId);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), controllerId, effect, targetPlayerId, Duration.UNTIL_END_OF_TURN));
 
         String cardName = entry.getCard().getName();
         String targetName = gameData.playerIdToName.get(targetPlayerId);

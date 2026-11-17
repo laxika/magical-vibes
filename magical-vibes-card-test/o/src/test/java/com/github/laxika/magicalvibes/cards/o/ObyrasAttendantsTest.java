@@ -52,7 +52,7 @@ class ObyrasAttendantsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Obyra's Attendants");
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -69,7 +69,7 @@ class ObyrasAttendantsTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test

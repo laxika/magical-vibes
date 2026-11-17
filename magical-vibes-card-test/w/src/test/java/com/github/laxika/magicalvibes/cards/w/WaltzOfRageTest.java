@@ -44,7 +44,7 @@ class WaltzOfRageTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(firstCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(firstCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(firstCard.getId(), player1.getId());
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castFromExile(player1, firstCard.getId(), player2.getId());
@@ -86,7 +86,7 @@ class WaltzOfRageTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(firstCard, secondCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(thirdCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(firstCard.getId(), player1.getId())
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(firstCard.getId(), player1.getId())
                 .containsEntry(secondCard.getId(), player1.getId());
         harness.assertOnBattlefield(player1, "Hill Giant");
         harness.assertLife(player1, 20);
@@ -110,7 +110,7 @@ class WaltzOfRageTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -231,7 +231,7 @@ class WaltzOfRageTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         UUID laterCreatureId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -240,9 +240,9 @@ class WaltzOfRageTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
         harness.addMana(player1, ManaColor.RED, 1);
         assertThatThrownBy(() -> harness.castFromExile(player1, topCard.getId(), player2.getId()))

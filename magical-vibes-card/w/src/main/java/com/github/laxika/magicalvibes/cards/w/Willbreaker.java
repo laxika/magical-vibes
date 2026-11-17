@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,6 +14,6 @@ public class Willbreaker extends Card {
         // control, gain control of that creature for as long as you control Willbreaker. The
         // targeted creature is set as the non-targeting targetId on the queued trigger.
         addTrigger(Triggers.creatureOpponentControlsBecomesTargetOfYourSpellOrAbility(),
-                new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD));
+                new GainControlOfTargetEffect(Duration.WHILE_SOURCE_ON_BATTLEFIELD));
     }
 }

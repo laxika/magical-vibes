@@ -73,15 +73,15 @@ public class CantAttackThisTurnEffectHandler implements NormalEffectHandlerBean 
 
         String playerName = gameData.playerIdToName.get(targetId);
         int count = 0;
-        if (e.duration() == com.github.laxika.magicalvibes.model.effect.GrantDuration.END_OF_TURN) {
-            gameData.playerCreaturesCantAttackThisTurn.computeIfAbsent(targetId, ignored -> new ArrayList<>())
-                    .add(e.filter() == null ? new PermanentIsCreaturePredicate() : e.filter());
+        if (Duration.UNTIL_END_OF_TURN.equals(e.duration())) {
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), e, targetId, Duration.UNTIL_END_OF_TURN));
         }
         for (Permanent p : battlefield) {
             if (gameQueryService.isCreature(gameData, p)
                     && (e.filter() == null
                     || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))) {
-                if (e.duration() != com.github.laxika.magicalvibes.model.effect.GrantDuration.END_OF_TURN) {
+                if (!Duration.UNTIL_END_OF_TURN.equals(e.duration())) {
                     applyRestriction(gameData, entry, p, e);
                 }
                 count++;
@@ -97,11 +97,11 @@ public class CantAttackThisTurnEffectHandler implements NormalEffectHandlerBean 
     }
 
     private void applyRestriction(GameData gameData, StackEntry entry, Permanent permanent, CantAttackThisTurnEffect effect) {
-        if (effect.duration() == com.github.laxika.magicalvibes.model.effect.GrantDuration.UNTIL_YOUR_NEXT_TURN) {
+        if (com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_YOUR_NEXT_TURN.equals(effect.duration())) {
             gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(entry.getCard().getName(),
                     entry.getSourcePermanentId(), entry.getControllerId(), effect, permanent.getId(),
                     Duration.UNTIL_YOUR_NEXT_TURN));
-        } else if (effect.duration() == com.github.laxika.magicalvibes.model.effect.GrantDuration.END_OF_TURN) {
+        } else if (Duration.UNTIL_END_OF_TURN.equals(effect.duration())) {
             permanent.setCantAttackThisTurn(true);
         } else {
             throw new IllegalArgumentException("Unsupported attack restriction duration");

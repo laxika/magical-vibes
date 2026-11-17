@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.ControlsDistinctPermanentNamesCount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
@@ -81,7 +80,7 @@ public class MonumentToPerfection extends Card {
                                 null
                         ),
                         new GrantKeywordEffect(Set.of(Keyword.INDESTRUCTIBLE, Keyword.TOXIC), GrantScope.SELF,
-                                GrantDuration.INDEFINITE),
+                                Duration.PERMANENT),
                         new GrantStaticEffectToSourceEffect(new ToxicEffect(9), Duration.PERMANENT)
                 ),
                 "{3}: This artifact becomes a 9/9 Phyrexian Construct artifact creature, loses all abilities, and gains indestructible and toxic 9. Activate only if there are nine or more lands with different names among the basic, Sphere, and Locus lands you control."

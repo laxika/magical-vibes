@@ -10,11 +10,15 @@ import java.util.*;
  */
 public class CombatDamageState {
 
-    /** Redirect shields present at the start of this simultaneous damage event. */
-    public List<SourcePermanentAndControllerNextDamageRedirectShield> sharedRedirectShields = List.of();
-    public List<SourceNextDamageToAnyTargetShield> sourceDamageShields = List.of();
-    /** Sources chosen by Reflect Damage shields present at the start of this simultaneous damage event. */
-    public List<UUID> reflectDamageSourceIds = List.of();
+    /**
+     * Redirect shields (floating effects whose payload is a {@link SourcePermanentAndControllerNextDamageRedirectShield})
+     * in force at the start of this simultaneous damage event.
+     */
+    public List<com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect> sharedRedirectShields = List.of();
+    /** The next-damage shields ({@link SourceNextDamageToAnyTargetShield}) in force at the start of the event. */
+    public List<com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect> sourceDamageShields = List.of();
+    /** The Reflect Damage shields ({@link ReflectDamageToSourceControllerShield}) in force at the start of the event. */
+    public List<com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect> reflectDamageShields = List.of();
 
     /**
      * Sources whose next-combat-damage-to-controller shield was consumed during this simultaneous

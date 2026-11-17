@@ -60,8 +60,8 @@ class PsychicIntrusionTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleMultipleCardsChosen(player1, List.of(exiledCard.getId()));
 
-        assertThat(gd.exilePlayPermissions.get(exiledCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(exiledCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(exiledCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(exiledCard.getId());
 
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castFromExile(player1, exiledCard.getId());

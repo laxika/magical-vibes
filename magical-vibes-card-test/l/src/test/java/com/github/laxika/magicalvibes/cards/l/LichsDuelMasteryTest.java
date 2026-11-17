@@ -620,7 +620,7 @@ class LichsDuelMasteryTest extends BaseCardTest {
         assertThat(gd.exiledCards).extracting(entry -> entry.card().getId())
                 .contains(mastery.getCard().getId(), topCard.getId());
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player2.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player2.getId());
         harness.assertLife(player2, 20);
         assertThat(zombieTokens()).isEqualTo(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
@@ -82,7 +81,7 @@ public class BoostAllOwnCreaturesEffectHandler implements NormalEffectHandlerBea
                     : gameQueryService.isCreature(gameData, permanent))
                     && (boost.filter() == null
                         || predicateEvaluationService.matchesPermanentPredicate(permanent, boost.filter(), filterContext))) {
-                if (boost.duration() == GrantDuration.UNTIL_YOUR_NEXT_TURN) {
+                if (Duration.UNTIL_YOUR_NEXT_TURN.equals(boost.duration())) {
                     gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                             entry.getCard().getName(), null, entry.getControllerId(),
                             new BuffTargetCreatureIndefinitelyEffect(powerBoost, toughnessBoost),
@@ -99,7 +98,7 @@ public class BoostAllOwnCreaturesEffectHandler implements NormalEffectHandlerBea
                 .card(entry.getCard())
                 .text(String.format(" gives %+d/%+d to %d creature(s) %s.",
                         powerBoost, toughnessBoost, count,
-                        boost.duration() == GrantDuration.UNTIL_YOUR_NEXT_TURN
+                        Duration.UNTIL_YOUR_NEXT_TURN.equals(boost.duration())
                                 ? "until your next turn" : "until end of turn"))
                 .build());
 

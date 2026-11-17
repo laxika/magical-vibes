@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -34,8 +35,8 @@ class UrabraskHereticPraetorTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topCard);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(topCard.getId());
     }
 
     @Test
@@ -53,8 +54,8 @@ class UrabraskHereticPraetorTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(replacedCard);
-        assertThat(gd.exilePlayPermissions.get(replacedCard.getId())).isEqualTo(player2.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(replacedCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(replacedCard.getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(replacedCard.getId());
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(laterCard);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }

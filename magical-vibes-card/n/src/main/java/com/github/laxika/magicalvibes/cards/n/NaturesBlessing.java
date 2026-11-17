@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -41,6 +41,6 @@ public class NaturesBlessing extends Card {
     }
 
     private static GrantKeywordEffect grant(Keyword keyword) {
-        return new GrantKeywordEffect(keyword, GrantScope.TARGET, GrantDuration.INDEFINITE);
+        return new GrantKeywordEffect(keyword, GrantScope.TARGET, Duration.PERMANENT);
     }
 }

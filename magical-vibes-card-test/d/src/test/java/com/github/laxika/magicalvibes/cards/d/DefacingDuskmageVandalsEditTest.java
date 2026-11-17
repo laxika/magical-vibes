@@ -34,7 +34,7 @@ class DefacingDuskmageVandalsEditTest extends BaseCardTest {
         UUID preparedSpellId = duskmage.getPreparedSpellCardId();
         assertThat(preparedSpellId).isNotNull();
         assertThat(gd.findExiledCard(preparedSpellId)).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsEntry(preparedSpellId, player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(preparedSpellId, player1.getId());
     }
 
     @Test

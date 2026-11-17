@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardToSourceAndMayPlayWhileConditionEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -52,10 +54,10 @@ public class ExileTopCardToSourceAndMayPlayWhileConditionEffectHandler implement
         Card topCard = deck.removeFirst();
         exileService.exileCard(gameData, controllerId, topCard, sourcePermanentId);
         if (sourceOnBattlefield) {
-            gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-            gameData.exilePlayPermissionSourcePermanents.put(topCard.getId(), sourcePermanentId);
+            gameData.grantExilePlayPermission(topCard.getId(), new ExilePlayPermissionEffect(controllerId),
+                    sourcePermanentId, controllerId, Duration.WHILE_SOURCE_CONTROLLED);
             if (exileEffect.permissionCondition() != null) {
-                gameData.exilePlayPermissionConditions.put(topCard.getId(), exileEffect.permissionCondition());
+                gameData.updateExilePlayPermission(topCard.getId(), granted -> granted.withCondition(exileEffect.permissionCondition()));
             }
         }
 

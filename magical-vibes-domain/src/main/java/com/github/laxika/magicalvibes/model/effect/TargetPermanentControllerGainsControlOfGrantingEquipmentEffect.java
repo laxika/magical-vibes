@@ -14,19 +14,19 @@ import java.util.UUID;
  * @param sourceHadExcludedSubtype whether the activating creature had the excluded subtype
  */
 public record TargetPermanentControllerGainsControlOfGrantingEquipmentEffect(
-        ControlDuration duration,
+        Duration duration,
         CardSubtype excludedSourceSubtype,
         UUID equipmentId,
         boolean sourceHadExcludedSubtype
 ) implements ControlStealingEffect {
 
     public TargetPermanentControllerGainsControlOfGrantingEquipmentEffect(
-            ControlDuration duration, CardSubtype excludedSourceSubtype) {
+            Duration duration, CardSubtype excludedSourceSubtype) {
         this(duration, excludedSourceSubtype, null, false);
     }
 
     @Override
-    public ControlDuration controlDuration() {
+    public Duration controlDuration() {
         return duration;
     }
 }

@@ -65,10 +65,10 @@ public class ExileRandomNonlandCardFromDamagedPlayerLibraryEffectHandler
 
         UUID controllerId = entry.getControllerId();
         exileSupport.grantPlayWhileExiled(gameData, chosen.getId(), controllerId);
-        gameData.exilePlayAnyManaTypeWhileExiled.add(chosen.getId());
+        gameData.updateExilePlayPermission(chosen.getId(), granted -> granted.withAnyManaType(true));
         if (effect instanceof ExileRandomNonlandCardFromDamagedPlayerLibraryEffect exileEffect
                 && exileEffect.permissionCondition() != null) {
-            gameData.exilePlayPermissionConditions.put(chosen.getId(), exileEffect.permissionCondition());
+            gameData.updateExilePlayPermission(chosen.getId(), granted -> granted.withCondition(exileEffect.permissionCondition()));
         }
 
         gameLogService.append(gameData, GameLog.builder()

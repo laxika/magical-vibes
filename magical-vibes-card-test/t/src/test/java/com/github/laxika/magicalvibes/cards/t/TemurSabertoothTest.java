@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -112,7 +111,7 @@ class TemurSabertoothTest extends BaseCardTest {
         gd.stolenCreatures.put(creature.getId(), player2.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 "Control change", null, player1.getId(),
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT), creature.getId(),
+                new GainControlOfTargetEffect(Duration.PERMANENT), creature.getId(),
                 null, null, Duration.PERMANENT, 0));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);

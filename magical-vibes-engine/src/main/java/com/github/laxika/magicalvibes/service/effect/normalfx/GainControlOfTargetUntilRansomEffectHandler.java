@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetUntilRansomEffect;
@@ -51,7 +50,7 @@ public class GainControlOfTargetUntilRansomEffectHandler implements NormalEffect
             }
 
             gainControlOfTargetEffectHandler.resolve(gameData, entry,
-                    new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_REMAINS));
+                    new GainControlOfTargetEffect(Duration.WHILE_SOURCE_REMAINS));
 
             ActivatedAbility ransomAbility = new ActivatedAbility(
                     false,

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -180,7 +179,7 @@ class PeelFromRealityTest extends BaseCardTest {
     private void gainControl(Permanent permanent, Player controller) {
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 "Control change", null, controller.getId(),
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT), permanent.getId(),
+                new GainControlOfTargetEffect(Duration.PERMANENT), permanent.getId(),
                 null, null, Duration.PERMANENT, 0));
     }
 }

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -17,6 +17,6 @@ public class MasterThief extends Card {
         // as you control this creature.
         target(TargetFilters.artifact())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD));
+                        new GainControlOfTargetEffect(Duration.WHILE_SOURCE_ON_BATTLEFIELD));
     }
 }

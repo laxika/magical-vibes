@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Slf4j
 @Component
@@ -37,8 +38,8 @@ public class AllowPlayMatchingCardsFromGraveyardThisTurnEffectHandler implements
         if (graveyard != null) {
             for (Card card : List.copyOf(graveyard)) {
                 if (predicateEvaluationService.matchesCardPredicate(card, permissionEffect.filter(), null)) {
-                    gameData.graveyardPlayPermissions.put(card.getId(), controllerId);
-                    gameData.graveyardPlayPermissionsExpireEndOfTurn.add(card.getId());
+                    gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, false),
+                            card.getId(), Duration.UNTIL_END_OF_TURN);
                 }
             }
         }

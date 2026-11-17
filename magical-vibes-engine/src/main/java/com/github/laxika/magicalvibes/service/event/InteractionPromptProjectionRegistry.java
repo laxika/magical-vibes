@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ScrycastCast;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.networking.message.AttackTarget;
@@ -666,12 +667,12 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectExiledCardMayPlayChoice(
             GameData gameData, PendingInteraction.ExiledCardMayPlayChoice interaction) {
-        String duration = switch (interaction.duration()) {
-            case END_OF_TURN -> "until the end of this turn";
-            case NEXT_END_STEP -> "until your next end step";
-            case NEXT_TURN -> "until the end of your next turn";
-            case WHILE_EXILED -> "for as long as it remains exiled";
-        };
+        String duration = Duration.UNTIL_END_OF_TURN.equals(interaction.duration())
+                ? "until the end of this turn"
+                : Duration.UNTIL_YOUR_NEXT_END_STEP.equals(interaction.duration())
+                ? "until your next end step"
+                : Duration.PERMANENT.equals(interaction.duration())
+                ? "for as long as it remains exiled" : "until the end of your next turn";
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
                 exiledCardViews(gameData, interaction.validCardIds()),
@@ -739,9 +740,7 @@ public class InteractionPromptProjectionRegistry {
                     ExiledCardEntry exiled = gameData.findExiledCard(cardId);
                     if (exiled == null) return null;
                     boolean visible = !exiled.faceDown()
-                            || interaction.playerId().equals(gameData.exileLookPermissions.get(cardId))
-                            || gameData.additionalExileLookPermissions.getOrDefault(cardId, java.util.Set.of())
-                                    .contains(interaction.playerId());
+                            || gameData.mayLookAtExiledCard(cardId, interaction.playerId());
                     return visible ? cardViewFactory.create(exiled.card())
                             : CardView.builder().id(cardId).name("Face-down card").build();
                 }).filter(java.util.Objects::nonNull).toList(),
@@ -1384,9 +1383,7 @@ public class InteractionPromptProjectionRegistry {
                 interaction.cards().stream().map(card -> {
                     ExiledCardEntry exiled = gameData.findExiledCard(card.getId());
                     boolean visible = exiled == null || !exiled.faceDown()
-                            || interaction.playerId().equals(gameData.exileLookPermissions.get(card.getId()))
-                            || gameData.additionalExileLookPermissions.getOrDefault(card.getId(), java.util.Set.of())
-                                    .contains(interaction.playerId());
+                            || gameData.mayLookAtExiledCard(card.getId(), interaction.playerId());
                     return visible ? cardViewFactory.create(card)
                             : CardView.builder().id(card.getId()).name("Face-down card").build();
                 }).toList(),

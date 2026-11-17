@@ -48,6 +48,6 @@ public class GainControlOfEnchantedPermanentEffectHandler implements NormalEffec
 
         UUID sourcePermanentId = e.duration().isSourceLinked() ? aura.getId() : null;
         creatureControlService.applyControlEffect(gameData, entry.getControllerId(), enchanted,
-                e, e.duration().toDuration(), sourcePermanentId, entry.getCard().getName());
+                e, e.duration(), sourcePermanentId, entry.getCard().getName());
     }
 }

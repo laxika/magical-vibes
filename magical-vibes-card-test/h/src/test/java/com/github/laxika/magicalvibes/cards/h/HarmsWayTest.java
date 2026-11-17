@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.s.StampedingRhino;
@@ -79,11 +80,11 @@ class HarmsWayTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
-        assertThat(gd.sourceDamageRedirectShields).hasSize(1);
-        assertThat(gd.sourceDamageRedirectShields.getFirst().protectedPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.sourceDamageRedirectShields.getFirst().damageSourceId()).isEqualTo(opponentCreature.getId());
-        assertThat(gd.sourceDamageRedirectShields.getFirst().remainingAmount()).isEqualTo(2);
-        assertThat(gd.sourceDamageRedirectShields.getFirst().redirectTargetId()).isEqualTo(player2.getId());
+        assertThat(gd.shields(SourceDamageRedirectShield.class)).hasSize(1);
+        assertThat(gd.shields(SourceDamageRedirectShield.class).getFirst().protectedPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.shields(SourceDamageRedirectShield.class).getFirst().damageSourceId()).isEqualTo(opponentCreature.getId());
+        assertThat(gd.shields(SourceDamageRedirectShield.class).getFirst().remainingAmount()).isEqualTo(2);
+        assertThat(gd.shields(SourceDamageRedirectShield.class).getFirst().redirectTargetId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -192,7 +193,7 @@ class HarmsWayTest extends BaseCardTest {
         // Player2 takes no redirected damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         // Shield should still be active (not consumed)
-        assertThat(gd.sourceDamageRedirectShields).hasSize(1);
+        assertThat(gd.shields(SourceDamageRedirectShield.class)).hasSize(1);
     }
 
     @Test
@@ -233,13 +234,13 @@ class HarmsWayTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
-        assertThat(gd.sourceDamageRedirectShields).hasSize(1);
+        assertThat(gd.shields(SourceDamageRedirectShield.class)).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.sourceDamageRedirectShields).isEmpty();
+        assertThat(gd.shields(SourceDamageRedirectShield.class)).isEmpty();
     }
 
     @Test

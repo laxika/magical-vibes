@@ -55,7 +55,7 @@ class MasterHealerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Master Healer").isTapped()).isTrue();
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(4);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(4);
     }
 
     @Test
@@ -128,7 +128,7 @@ class MasterHealerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test
@@ -178,11 +178,11 @@ class MasterHealerTest extends BaseCardTest {
 
         castShockAtPlayer2();
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(2);
 
         castShockAtPlayer2();
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
 
         castShockAtPlayer2();
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);

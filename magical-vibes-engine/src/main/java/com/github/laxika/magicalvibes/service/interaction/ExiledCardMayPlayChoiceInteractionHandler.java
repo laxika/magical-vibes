@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
-import com.github.laxika.magicalvibes.model.ExilePlayDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -72,30 +73,23 @@ public class ExiledCardMayPlayChoiceInteractionHandler
         }
 
         gameData.interaction.clearAwaitingInput();
-        gameData.exilePlayPermissions.put(chosenId, interaction.playerId());
+        Duration duration = interaction.duration();
+        gameData.grantExilePlayPermission(chosenId, new ExilePlayPermissionEffect(interaction.playerId())
+                        .withWithoutPayingManaCost(interaction.withoutPayingManaCost())
+                        .withAnyManaType(interaction.anyManaType() && Duration.PERMANENT.equals(duration)),
+                null, interaction.playerId(), duration);
+        if (interaction.anyManaType() && !Duration.PERMANENT.equals(duration)) {
+            gameData.grantExileAnyManaType(chosenId, interaction.playerId(), duration);
+        }
         String durationDescription;
-        if (interaction.duration() == ExilePlayDuration.WHILE_EXILED) {
-            exileSupport.grantPlayWhileExiled(gameData, chosenId, interaction.playerId());
+        if (Duration.PERMANENT.equals(duration)) {
             durationDescription = " may be cast for as long as it remains exiled.";
-        } else if (interaction.duration() == ExilePlayDuration.END_OF_TURN) {
-            gameData.exilePlayPermissionsExpireEndOfTurn.add(chosenId);
+        } else if (Duration.UNTIL_END_OF_TURN.equals(duration)) {
             durationDescription = " may be played until the end of this turn.";
-        } else if (interaction.duration() == ExilePlayDuration.NEXT_END_STEP) {
-            exileSupport.grantPlayUntilOwnersNextEndStep(gameData, chosenId, interaction.playerId());
+        } else if (Duration.UNTIL_YOUR_NEXT_END_STEP.equals(duration)) {
             durationDescription = " may be played until its controller's next end step.";
         } else {
-            exileSupport.grantPlayUntilOwnersNextTurn(gameData, chosenId, interaction.playerId());
             durationDescription = " may be played until the end of its controller's next turn.";
-        }
-        if (interaction.withoutPayingManaCost()) {
-            gameData.exilePlayWithoutPayingManaCost.add(chosenId);
-        }
-        if (interaction.anyManaType()) {
-            if (interaction.duration() == ExilePlayDuration.WHILE_EXILED) {
-                gameData.exilePlayAnyManaTypeWhileExiled.add(chosenId);
-            } else {
-                gameData.exilePlayAnyManaType.add(chosenId);
-            }
         }
         gameLogService.append(gameData, GameLog.cardThen(chosen.card(), durationDescription));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

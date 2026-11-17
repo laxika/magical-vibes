@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.s.SonicScrewdriver;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ class OsgoodOperationDoubleTest extends BaseCardTest {
         harness.addToBattlefield(player1, new OsgoodOperationDouble());
         GrizzlyBears exiledSpell = new GrizzlyBears();
         gd.addToExile(player1.getId(), exiledSpell);
-        gd.exilePlayPermissions.put(exiledSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(exiledSpell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castFromExile(player1, exiledSpell.getId());
@@ -101,7 +102,7 @@ class OsgoodOperationDoubleTest extends BaseCardTest {
         resolveAllTriggers();
         SonicScrewdriver exiledSpell = new SonicScrewdriver();
         gd.addToExile(player1.getId(), exiledSpell);
-        gd.exilePlayPermissions.put(exiledSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(exiledSpell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castFromExile(player1, exiledSpell.getId());
@@ -115,7 +116,7 @@ class OsgoodOperationDoubleTest extends BaseCardTest {
         harness.addToBattlefield(player1, new OsgoodOperationDouble());
         SonicScrewdriver exiledSpell = new SonicScrewdriver();
         gd.addToExile(player2.getId(), exiledSpell);
-        gd.exilePlayPermissions.put(exiledSpell.getId(), player2.getId());
+        gd.grantExilePlayPermission(exiledSpell.getId(), player2.getId(), Duration.PERMANENT);
         harness.forceActivePlayer(player2);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
@@ -139,7 +140,7 @@ class OsgoodOperationDoubleTest extends BaseCardTest {
         addCreatureReady(player1, new OsgoodOperationDouble());
         SonicScrewdriver exiledSpell = new SonicScrewdriver();
         gd.addToExile(player1.getId(), exiledSpell);
-        gd.exilePlayPermissions.put(exiledSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(exiledSpell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castFromExile(player1, exiledSpell.getId());
         resolveAllTriggers();

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachLibraryAndGrantLesserManaValueFreePlayEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -73,9 +74,8 @@ public class ExileTopCardOfEachLibraryAndGrantLesserManaValueFreePlayEffectHandl
                 continue;
             }
 
-            gameData.exilePlayPermissions.put(card.getId(), controllerId);
-            gameData.exilePlayPermissionsExpireEndOfTurn.add(card.getId());
-            gameData.exilePlayWithoutPayingManaCost.add(card.getId());
+            gameData.grantExilePlayPermission(card.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
+            gameData.setExilePlayWithoutPayingManaCost(card.getId(), true);
         }
 
         log.info("Game {} - {} received Triple Triad free-play permissions for {} exiled cards",

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
@@ -51,7 +51,7 @@ public class GideonBattleForged extends Card {
                 +1,
                 List.of(
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET,
-                                GrantDuration.UNTIL_YOUR_NEXT_TURN),
+                                Duration.UNTIL_YOUR_NEXT_TURN),
                         new UntapPermanentsEffect(TapUntapScope.TARGET, new PermanentIsCreaturePredicate())
                 ),
                 "+1: Until your next turn, target creature gains indestructible. Untap that creature.",

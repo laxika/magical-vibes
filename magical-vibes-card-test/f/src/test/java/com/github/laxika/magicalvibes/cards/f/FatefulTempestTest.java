@@ -42,7 +42,7 @@ class FatefulTempestTest extends BaseCardTest {
         vote(ChoiceContext.FatefulTempestChoice.PRESENT, ChoiceContext.FatefulTempestChoice.PRESENT);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
@@ -76,7 +76,7 @@ class FatefulTempestTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(first, second);
         harness.assertLife(player2, 14);
         harness.assertLife(player1, 20);
-        assertThat(gd.exilePlayPermissions).doesNotContainKeys(first.getId(), second.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKeys(first.getId(), second.getId());
     }
 
     @Test
@@ -145,12 +145,12 @@ class FatefulTempestTest extends BaseCardTest {
 
         harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsKeys(first.getId(), second.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKeys(first.getId(), second.getId());
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsKeys(first.getId(), second.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKeys(first.getId(), second.getId());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKeys(first.getId(), second.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKeys(first.getId(), second.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
     }
 

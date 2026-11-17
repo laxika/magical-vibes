@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -46,8 +47,8 @@ class DazzlingFlameweaverTest extends BaseCardTest {
                 "Blade Juggler", "Body Count", "Dead Revels", "Drill Bit", "Hackrobat",
                 "Light Up the Stage", "Rafter Demon", "Rix Maadi Reveler", "Skewer the Critics",
                 "Spawn of Mayhem", "Spikewheel Acrobat"));
-        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd).containsKey(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiled.getId(), player1.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)).containsKey(exiled.getId());
     }
 
     @Test
@@ -128,7 +129,7 @@ class DazzlingFlameweaverTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .allSatisfy(card -> assertThat(gd.exilePlayPermissions)
+                .allSatisfy(card -> assertThat(gd.exilePlayPermissionHolders())
                         .containsEntry(card.getId(), player1.getId()));
     }
 
@@ -161,12 +162,12 @@ class DazzlingFlameweaverTest extends BaseCardTest {
         var exiled = gd.getPlayerExiledCards(player1.getId()).getFirst();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiled.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiled.getId(), player1.getId());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiled.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiled);
     }
 

@@ -28,7 +28,7 @@ class CrossoverCollaborationTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
         assertThat(countPermanents(player1, "Treasure")).isZero();
@@ -137,9 +137,9 @@ class CrossoverCollaborationTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(first.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(first.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(first.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(first.getId(), player1.getId());
 
         addMana();
         harness.castFromExile(player1, first.getId());
@@ -147,7 +147,7 @@ class CrossoverCollaborationTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(second.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(second.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(second);
         addMana();
         assertThatThrownBy(() -> harness.castFromExile(player1, second.getId()))

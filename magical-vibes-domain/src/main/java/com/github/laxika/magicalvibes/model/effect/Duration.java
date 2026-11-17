@@ -8,13 +8,37 @@ import java.util.Objects;
  * long as" something holds ({@link #asLongAs}, CR 611.2b) and ends for good once that stops holding. An effect of a
  * static ability lasts as long as the ability does ({@link #STATIC}).
  *
+ * <p>Most effects begin as the spell or ability resolves; one that applies only "during your next turn" or "after this
+ * turn" begins later ({@link #start}), and until then it does nothing.
+ *
  * <p>The named constants are the durations cards write; every duration is one of them.
  *
+ * @param start    when the effect begins to apply; {@link Start#NOW} for one that applies as it is created
  * @param end      the event that ends the effect; {@link End#NEVER} for one that lasts to the end of the game or for
  *                 as long as {@link #asLongAs} holds
  * @param asLongAs what a "for as long as" duration holds while, or {@code null} for a duration that ends at an event
  */
-public record Duration(End end, AsLongAs asLongAs) {
+public record Duration(Start start, End end, AsLongAs asLongAs) {
+
+    /** When an effect begins to apply. */
+    public enum Start {
+        /** As the spell or ability that creates it resolves. */
+        NOW,
+        /** As the next turn begins: "after the current turn has ended" (warp, CR 702.185a). */
+        AFTER_THIS_TURN,
+        /** As its controller's next turn begins: "during your next turn". */
+        YOUR_NEXT_TURN,
+        /**
+         * As the next turn of the player it affects begins: "during target player's next turn" (Taunt), or of the
+         * controller of the permanent it affects: "during its controller's next turn".
+         */
+        AFFECTED_PLAYERS_NEXT_TURN,
+        /**
+         * As the next combat phase of the controller of the permanent it affects begins: "attacks during its
+         * controller's next combat phase if able".
+         */
+        AFFECTED_CONTROLLERS_NEXT_COMBAT
+    }
 
     /** The event that ends an effect. */
     public enum End {
@@ -24,6 +48,8 @@ public record Duration(End end, AsLongAs asLongAs) {
         END_OF_TURN,
         /** The beginning of the next end step. */
         NEXT_END_STEP,
+        /** The beginning of the next end step of its controller's turn (this turn's, if it has not begun). */
+        YOUR_NEXT_END_STEP,
         /** The end of the combat phase. */
         END_OF_COMBAT,
         /** The beginning of its controller's next turn. */
@@ -36,6 +62,8 @@ public record Duration(End end, AsLongAs asLongAs) {
         YOUR_NEXT_UPKEEP,
         /** The end of its controller's next upkeep. */
         END_OF_YOUR_NEXT_UPKEEP,
+        /** The end of the upkeep step it was created in, whoever's upkeep that is. */
+        END_OF_UPKEEP,
         /** Any player casting a creature spell. */
         CREATURE_SPELL_CAST,
         /** Its controller casting a spell its effect matches. */
@@ -87,6 +115,8 @@ public record Duration(End end, AsLongAs asLongAs) {
     public static final Duration UNTIL_END_OF_TURN = new Duration(End.END_OF_TURN, null);
     /** Until the beginning of the next end step. */
     public static final Duration UNTIL_NEXT_END_STEP = new Duration(End.NEXT_END_STEP, null);
+    /** "Until your next end step": the next end step of its controller's turn, this turn's if it has not begun. */
+    public static final Duration UNTIL_YOUR_NEXT_END_STEP = new Duration(End.YOUR_NEXT_END_STEP, null);
     /** "Until end of combat" (Jade Statue). */
     public static final Duration UNTIL_END_OF_COMBAT = new Duration(End.END_OF_COMBAT, null);
     /** "Until your next turn". */
@@ -101,6 +131,8 @@ public record Duration(End end, AsLongAs asLongAs) {
     /** Through the end of its controller's next upkeep. */
     public static final Duration UNTIL_END_OF_CONTROLLERS_NEXT_UPKEEP =
             new Duration(End.END_OF_YOUR_NEXT_UPKEEP, null);
+    /** Until the end of the current upkeep step (Forecast: a card revealed during it). */
+    public static final Duration UNTIL_END_OF_UPKEEP = new Duration(End.END_OF_UPKEEP, null);
     /** Until any player casts a creature spell. */
     public static final Duration UNTIL_CREATURE_SPELL_CAST = new Duration(End.CREATURE_SPELL_CAST, null);
     /** Until its controller casts a spell its effect matches. */
@@ -131,10 +163,40 @@ public record Duration(End end, AsLongAs asLongAs) {
     /** The effect of a static ability (CR 611.3): Auras, Equipment, Stations. */
     public static final Duration STATIC = new Duration(End.NEVER, AsLongAs.STATIC_ABILITY);
 
+    /** "During your next turn": it applies from its controller's next turn's beginning to that turn's end. */
+    public static final Duration DURING_YOUR_NEXT_TURN = new Duration(Start.YOUR_NEXT_TURN, End.END_OF_TURN, null);
+    /** "During target player's next turn": it applies through the next turn of the player it affects (Taunt). */
+    public static final Duration DURING_AFFECTED_PLAYERS_NEXT_TURN =
+            new Duration(Start.AFFECTED_PLAYERS_NEXT_TURN, End.END_OF_TURN, null);
+    /** "During its controller's next combat phase": it applies from that combat's beginning to its end. */
+    public static final Duration DURING_AFFECTED_CONTROLLERS_NEXT_COMBAT =
+            new Duration(Start.AFFECTED_CONTROLLERS_NEXT_COMBAT, End.END_OF_COMBAT, null);
+    /** "After the current turn has ended": it applies from the next turn on (warp, CR 702.185a). */
+    public static final Duration AFTER_THIS_TURN = new Duration(Start.AFTER_THIS_TURN, End.NEVER, null);
+
+    /** A duration that begins as its effect is created. */
+    public Duration(End end, AsLongAs asLongAs) {
+        this(Start.NOW, end, asLongAs);
+    }
+
     public Duration {
+        Objects.requireNonNull(start, "start");
         Objects.requireNonNull(end, "end");
         if (asLongAs != null && end != End.NEVER) {
             throw new IllegalArgumentException("A \"for as long as\" duration ends at no event: " + end);
         }
+    }
+
+    /**
+     * Whether it is tied to its source permanent: a "for as long as" duration that holds only while the source stays
+     * on the battlefield, so the source must still be there for the effect to begin at all.
+     */
+    public boolean isSourceLinked() {
+        return asLongAs != null && asLongAs.needsSourceOnBattlefield();
+    }
+
+    /** Whether an effect with this duration applies as soon as it is created. */
+    public boolean startsNow() {
+        return start == Start.NOW;
     }
 }

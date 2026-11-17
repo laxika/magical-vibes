@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.cards.k.KytheonHeroOfAkros;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TimberpackWolf;
@@ -34,7 +35,7 @@ class GideonBattleForgedTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(bear.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.creatureMustAttackPermanentNextTurn).containsEntry(bear.getId(), gideon.getId());
+        assertThat(FloatingCombatRules.scheduledRequiredTargets(gd, bear.getId())).containsExactly(gideon.getId());
         assertThat(gideon.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
 
         harness.forceStep(TurnStep.CLEANUP);
@@ -42,7 +43,7 @@ class GideonBattleForgedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.creatureMustAttackPermanentNextTurn).isEmpty();
+        assertThat(gd.scheduledFloatingEffects).isEmpty();
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -69,7 +70,7 @@ class GideonBattleForgedTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.creatureMustAttackPermanentNextTurn).isEmpty();
+        assertThat(gd.scheduledFloatingEffects).isEmpty();
         assertThat(gideon.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
     }
 
@@ -82,7 +83,7 @@ class GideonBattleForgedTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(ownBear.getId())))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.creatureMustAttackPermanentNextTurn).isEmpty();
+        assertThat(gd.scheduledFloatingEffects).isEmpty();
     }
 
     @Test

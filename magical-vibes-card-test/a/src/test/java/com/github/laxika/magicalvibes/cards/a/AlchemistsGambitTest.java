@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -66,12 +67,12 @@ class AlchemistsGambitTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        gd.playerDamagePreventionShields.put(player2.getId(), 1);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 1);
         attacker.setAttacking(true);
         resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.playerDamagePreventionShields).containsEntry(player2.getId(), 1);
+        assertThat(gd.playerDamagePreventionShields()).containsEntry(player2.getId(), 1);
     }
 
     @Test
@@ -99,11 +100,11 @@ class AlchemistsGambitTest extends BaseCardTest {
     void cleavedTurnRemainsUnpreventableButDoesNotCauseLoss() {
         enableAutoStop();
         castCleaved();
-        assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+        assertThat(gd.damageCantBePreventedThisTurn()).isFalse();
 
         advanceTurn();
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.damageCantBePreventedThisTurn).isTrue();
+        assertThat(gd.damageCantBePreventedThisTurn()).isTrue();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
@@ -111,7 +112,7 @@ class AlchemistsGambitTest extends BaseCardTest {
 
         advanceTurn();
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+        assertThat(gd.damageCantBePreventedThisTurn()).isFalse();
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 
@@ -137,6 +138,7 @@ class AlchemistsGambitTest extends BaseCardTest {
 
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         harness.clearPriorityPassed();
         harness.passBothPriorities();
     }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -39,7 +40,7 @@ class SurgeOfBrillianceTest extends BaseCardTest {
 
         SurgeOfBrilliance response = new SurgeOfBrilliance();
         gd.addToExile(player1.getId(), response);
-        gd.exilePlayPermissions.put(response.getId(), player1.getId());
+        gd.grantExilePlayPermission(response.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castFromExile(player1, response.getId());
@@ -57,7 +58,7 @@ class SurgeOfBrillianceTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(opponentDraw));
         SurgeOfBrilliance opponentSpell = new SurgeOfBrilliance();
         gd.addToExile(player2.getId(), opponentSpell);
-        gd.exilePlayPermissions.put(opponentSpell.getId(), player2.getId());
+        gd.grantExilePlayPermission(opponentSpell.getId(), player2.getId(), Duration.PERMANENT);
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castFromExile(player2, opponentSpell.getId());
@@ -96,7 +97,7 @@ class SurgeOfBrillianceTest extends BaseCardTest {
         for (int i = 0; i < 2; i++) {
             SurgeOfBrilliance spell = new SurgeOfBrilliance();
             gd.addToExile(player1.getId(), spell);
-            gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+            gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
             harness.addMana(player1, ManaColor.BLUE, 1);
             harness.addMana(player1, ManaColor.COLORLESS, 1);
             harness.castFromExile(player1, spell.getId());
@@ -118,7 +119,7 @@ class SurgeOfBrillianceTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawnCard));
 
         gd.addToExile(player1.getId(), exiledSpell);
-        gd.exilePlayPermissions.put(exiledSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(exiledSpell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

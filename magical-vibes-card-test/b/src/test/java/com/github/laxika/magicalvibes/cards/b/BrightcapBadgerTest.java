@@ -80,7 +80,7 @@ class BrightcapBadgerTest extends BaseCardTest {
                     assertThat(token.getToughness()).isEqualTo(1);
                 });
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     private int battlefieldIndex(Player player, Permanent permanent) {

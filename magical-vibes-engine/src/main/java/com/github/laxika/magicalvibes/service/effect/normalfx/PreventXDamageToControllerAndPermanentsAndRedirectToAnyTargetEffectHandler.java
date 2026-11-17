@@ -41,7 +41,7 @@ public class PreventXDamageToControllerAndPermanentsAndRedirectToAnyTargetEffect
 
         if (amount <= 0 || targetId == null) return;
 
-        gameData.damageRedirectShields.add(new DamageRedirectShield(
+        gameData.addShield(new DamageRedirectShield(
                 controllerId, amount, entry.getSourcePermanentId(), entry.getCard(), targetId, true));
 
         String controllerName = gameData.playerIdToName.get(controllerId);

@@ -93,8 +93,8 @@ class ArkOfHungerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Shock");
-        assertThat(gd.graveyardPlayPermissions.get(shock.getId())).isEqualTo(player1.getId());
-        assertThat(gd.graveyardPlayPermissionsExpireEndOfTurn).contains(shock.getId());
+        assertThat(graveyardPlayPermissionsByCard().get(shock.getId())).isEqualTo(player1.getId());
+        assertThat(graveyardPlayPermissionsByCard().keySet()).contains(shock.getId());
     }
 
     @Test
@@ -115,7 +115,7 @@ class ArkOfHungerTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
         harness.assertInGraveyard(player1, "Shock");
-        assertThat(gd.graveyardPlayPermissions).doesNotContainKey(shock.getId());
+        assertThat(graveyardPlayPermissionsByCard()).doesNotContainKey(shock.getId());
     }
 
     @Test
@@ -128,15 +128,15 @@ class ArkOfHungerTest extends BaseCardTest {
         harness.activateAbility(player1, arkIndex(player1), null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.graveyardPlayPermissions).containsKey(shock.getId());
+        assertThat(graveyardPlayPermissionsByCard()).containsKey(shock.getId());
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.graveyardPlayPermissions).doesNotContainKey(shock.getId());
-        assertThat(gd.graveyardPlayPermissionsExpireEndOfTurn).isEmpty();
+        assertThat(graveyardPlayPermissionsByCard()).doesNotContainKey(shock.getId());
+        assertThat(graveyardPlayPermissionsByCard().keySet()).isEmpty();
     }
 
     @Test
@@ -171,7 +171,7 @@ class ArkOfHungerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
-        assertThat(gd.graveyardPlayPermissions).isEmpty();
+        assertThat(graveyardPlayPermissionsByCard()).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import java.util.Set;
 import java.util.UUID;
 
@@ -16,7 +17,7 @@ public record TargetSpellDamagePreventionShield(
         UUID lifeGainPlayerId,
         UUID sourcePermanentId,
         Set<CardColor> requiredColors
-) {
+) implements CardEffect {
     public TargetSpellDamagePreventionShield {
         requiredColors = Set.copyOf(requiredColors);
     }

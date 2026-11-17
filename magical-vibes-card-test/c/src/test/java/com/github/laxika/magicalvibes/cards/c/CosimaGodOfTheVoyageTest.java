@@ -230,6 +230,6 @@ class CosimaGodOfTheVoyageTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getCardsExiledByPermanent(omenkeel.getId())).hasSize(3);
-        assertThat(gd.exilePlayPermissions).containsEntry(land.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(land.getId(), player1.getId());
     }
 }

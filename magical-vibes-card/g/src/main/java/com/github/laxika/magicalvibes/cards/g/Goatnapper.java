@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -27,7 +27,7 @@ public class Goatnapper extends Card {
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 }

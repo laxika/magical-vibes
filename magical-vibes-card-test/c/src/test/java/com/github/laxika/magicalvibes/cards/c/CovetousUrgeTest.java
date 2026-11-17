@@ -51,8 +51,8 @@ class CovetousUrgeTest extends BaseCardTest {
         castCovetousUrge();
         harness.handleMultipleCardsChosen(player1, List.of(exiledCard.getId()));
 
-        assertThat(gd.exilePlayPermissions.get(exiledCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(exiledCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(exiledCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(exiledCard.getId());
 
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castFromExile(player1, exiledCard.getId());
@@ -92,8 +92,8 @@ class CovetousUrgeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Roving Keep");
         harness.assertNotOnBattlefield(player2, "Roving Keep");
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(chosen.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).doesNotContain(chosen.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(chosen.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).doesNotContain(chosen.getId());
     }
 
     @Test

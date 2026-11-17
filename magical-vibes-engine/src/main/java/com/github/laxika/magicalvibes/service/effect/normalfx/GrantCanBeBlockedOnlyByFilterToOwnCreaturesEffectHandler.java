@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -34,8 +36,9 @@ public class GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffectHandler implements
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var grant = (GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect) effect;
-        gameData.matchingCreatureBlockRestrictionsThisTurn
-                .computeIfAbsent(entry.getControllerId(), id -> new ArrayList<>()).add(grant);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), grant, entry.getControllerId(),
+                Duration.UNTIL_END_OF_TURN));
         List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
         if (battlefield == null) {
             return;

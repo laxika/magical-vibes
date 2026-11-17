@@ -63,8 +63,7 @@ public class MayCastLegendarySpellFromAnyZoneHandler implements MayEffectHandler
         ExiledCardEntry exiled = gameData.findExiledCard(card.getId());
         if (exiled != null && player.getId().equals(exiled.ownerId())
                 && (!exiled.faceDown() || gameData.foretoldCardIds.contains(card.getId())
-                || gameData.additionalExileLookPermissions
-                .getOrDefault(card.getId(), java.util.Set.of()).contains(player.getId()))) {
+                || gameData.mayLookAtExiledCard(card.getId(), player.getId()))) {
             if (accepted) {
                 removeRemainingOffers(gameData);
                 exileFreeCastSupport.castFromExileWithoutPaying(gameData, player, card.getId());

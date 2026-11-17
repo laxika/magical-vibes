@@ -67,7 +67,7 @@ class MalignusTest extends BaseCardTest {
     @DisplayName("A prevention shield does not stop Malignus's combat damage to a player")
     void combatDamageToPlayerCantBePrevented() {
         addMalignus(player1);
-        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 10);
 
         declareAttackers(List.of(0));
         resolveCombat();
@@ -80,7 +80,7 @@ class MalignusTest extends BaseCardTest {
     void ordinaryCombatDamageIsPrevented() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setSummoningSick(false);
-        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 10);
 
         declareAttackers(List.of(0));
         resolveCombat();

@@ -40,7 +40,7 @@ class AnticausalVestigeTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertThat(gd.findExiledCard(vestige.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(vestige.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(vestige.getId());
 
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -49,10 +49,10 @@ class AnticausalVestigeTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(vestige.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(vestige.getId(), player1.getId());
 
         harness.passUntil(player1, TurnStep.UPKEEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(vestige.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(vestige.getId(), player1.getId());
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 6);

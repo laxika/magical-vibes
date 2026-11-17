@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -66,9 +67,9 @@ class MagmaticChannelerTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
-        assertThat(gd.exilePlayPermissions.get(chosen.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(notChosen.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(chosen.getId());
+        assertThat(gd.exilePlayPermissionHolder(chosen.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(notChosen.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(chosen.getId());
     }
 
     @Test

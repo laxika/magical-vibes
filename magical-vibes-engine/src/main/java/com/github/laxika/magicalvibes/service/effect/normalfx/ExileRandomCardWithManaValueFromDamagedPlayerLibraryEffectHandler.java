@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileRandomCardWithManaValueFromDamagedPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -58,8 +59,7 @@ public class ExileRandomCardWithManaValueFromDamagedPlayerLibraryEffectHandler
         }
 
         exileService.exileCard(gameData, damagedPlayerId, chosen);
-        gameData.exilePlayPermissions.put(chosen.getId(), controllerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(chosen.getId());
+        gameData.grantExilePlayPermission(chosen.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(gameData.playerIdToName.get(damagedPlayerId) + " exiles ")

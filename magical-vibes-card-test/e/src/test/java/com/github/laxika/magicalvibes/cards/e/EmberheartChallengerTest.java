@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -28,8 +29,8 @@ class EmberheartChallengerTest extends BaseCardTest {
         castGrowth(player1, challenger);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(topCard.getId());
     }
 
     @Test
@@ -146,7 +147,7 @@ class EmberheartChallengerTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(firstCard);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(firstCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(firstCard.getId());
 
         harness.setLibrary(player1, List.of(nextCard));
         castGrowth(player1, challenger);
@@ -155,7 +156,7 @@ class EmberheartChallengerTest extends BaseCardTest {
         }
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(firstCard, nextCard);
-        assertThat(gd.exilePlayPermissions.get(nextCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(nextCard.getId())).isEqualTo(player1.getId());
     }
     private Permanent addChallenger() {
         return harness.addToBattlefieldAndReturn(player1, new EmberheartChallenger());

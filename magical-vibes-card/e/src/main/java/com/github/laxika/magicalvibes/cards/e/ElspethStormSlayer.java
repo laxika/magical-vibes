@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
@@ -39,7 +39,7 @@ public class ElspethStormSlayer extends Card {
                         new PutCounterOnEachControlledPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
                         new GrantKeywordEffect(
-                                Keyword.FLYING, GrantScope.ALL_OWN_CREATURES, GrantDuration.UNTIL_YOUR_NEXT_TURN)
+                                Keyword.FLYING, GrantScope.ALL_OWN_CREATURES, Duration.UNTIL_YOUR_NEXT_TURN)
                 ),
                 "0: Put a +1/+1 counter on each creature you control. Those creatures gain flying until your next turn."
         ));

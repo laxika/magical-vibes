@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -62,11 +63,11 @@ class UriangerAugureltTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(land.getId(), player1.getId())
                 .containsEntry(spell.getId(), player1.getId());
-        assertThat(gd.exilePlayCostModifiers).containsKey(spell.getId());
-        assertThat(gd.exilePlayCostModifiers).doesNotContainKey(land.getId());
+        assertThat(gd.exilePlayCostModifier(spell.getId())).isNotNull();
+        assertThat(gd.exilePlayCostModifier(land.getId())).isNull();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -90,8 +91,8 @@ class UriangerAugureltTest extends BaseCardTest {
         GrizzlyBears spell = new GrizzlyBears();
         gd.addToExile(player1.getId(), land);
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(land.getId(), player1.getId());
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(land.getId(), player1.getId(), Duration.PERMANENT);
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -153,7 +154,7 @@ class UriangerAugureltTest extends BaseCardTest {
         addCreatureReady(player1, new UriangerAugurelt());
         GrizzlyBears spell = new GrizzlyBears();
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

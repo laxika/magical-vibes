@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
@@ -59,31 +58,13 @@ import static org.mockito.Mockito.when;
 class TurnCleanupServiceTest {
 
     @Test
-    void cleanupExpiresOnlyCombatSkipsLimitedToThisTurn() {
-        gd.skipNextCombatPhaseCount.put(player1Id, 3);
-        gd.skipCombatPhaseExpirationsThisTurn.put(player1Id, 2);
-        gd.skipNextCombatPhaseCount.put(player2Id, 1);
-        gd.skipCombatPhaseExpirationsThisTurn.put(player2Id, 1);
-
-        sut.applyCleanupResets(gd);
-
-        assertThat(gd.skipNextCombatPhaseCount).containsOnlyKeys(player1Id);
-        assertThat(gd.skipNextCombatPhaseCount.get(player1Id)).isEqualTo(1);
-        assertThat(gd.skipCombatPhaseExpirationsThisTurn).isEmpty();
-    }
-
-    @Test
-    void cleanupExpiresBlockRestrictionsButPreservesUpcomingUntapRestrictions() {
-        var blocking = new com.github.laxika.magicalvibes.model.effect.GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect(
-                null, new com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate(), "creatures");
+    void cleanupPreservesUpcomingUntapRestrictions() {
         var untapping = new com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect(
                 com.github.laxika.magicalvibes.model.effect.TapUntapScope.TARGET_PLAYERS_PERMANENTS, null, 1, true);
-        gd.matchingCreatureBlockRestrictionsThisTurn.put(player1Id, new ArrayList<>(List.of(blocking)));
         gd.matchingPermanentUntapRestrictions.put(player1Id, new ArrayList<>(List.of(untapping)));
 
         sut.resetEndOfTurnModifiers(gd);
 
-        assertThat(gd.matchingCreatureBlockRestrictionsThisTurn).isEmpty();
         assertThat(gd.matchingPermanentUntapRestrictions.get(player1Id)).containsExactly(untapping);
     }
 
@@ -467,18 +448,6 @@ class TurnCleanupServiceTest {
         }
 
         @Test
-        @DisplayName("Clears global damage prevention shield")
-        void clearsGlobalDamagePreventionFlags() {
-            gd.globalDamagePreventionShield = 10;
-            gd.allPermanentsEnterTappedThisTurn = true;
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.globalDamagePreventionShield).isZero();
-            assertThat(gd.allPermanentsEnterTappedThisTurn).isFalse();
-        }
-
-        @Test
         @DisplayName("Clears temporary global triggered abilities")
         void clearsTemporaryGlobalTriggeredAbilities() {
             gd.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
@@ -523,49 +492,6 @@ class TurnCleanupServiceTest {
         }
 
         @Test
-        @DisplayName("Clears player damage prevention shields")
-        void clearsPlayerDamagePreventionShields() {
-            gd.playerDamagePreventionShields.put(player1Id, 5);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.playerDamagePreventionShields).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears damage redirect shields")
-        void clearsDamageRedirectShields() {
-            Card card = createCardWithName("Vengeful Archon");
-            gd.damageRedirectShields.add(new DamageRedirectShield(
-                    player1Id, 3, UUID.randomUUID(), card, player2Id));
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.damageRedirectShields).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears source damage redirect shields")
-        void clearsSourceDamageRedirectShields() {
-            gd.sourceDamageRedirectShields.add(new SourceDamageRedirectShield(
-                    player1Id, UUID.randomUUID(), 2, player2Id));
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.sourceDamageRedirectShields).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears combatDamageRedirectTarget")
-        void clearsCombatDamageRedirectTarget() {
-            gd.combatDamageRedirectTarget = player2Id;
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.combatDamageRedirectTarget).isNull();
-        }
-
-        @Test
         @DisplayName("Clears combatDamageExemptPredicate")
         void clearsCombatDamageExemptPredicate() {
             gd.combatDamageExemptPredicate = new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate();
@@ -573,37 +499,6 @@ class TurnCleanupServiceTest {
             sut.resetEndOfTurnModifiers(gd);
 
             assertThat(gd.combatDamageExemptPredicate).isNull();
-        }
-
-        @Test
-        @DisplayName("Clears playerColorDamagePreventionCount")
-        void clearsPlayerColorDamagePreventionCount() {
-            gd.playerColorDamagePreventionCount.put(player1Id,
-                    new java.util.concurrent.ConcurrentHashMap<>(java.util.Map.of(CardColor.RED, 2)));
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.playerColorDamagePreventionCount).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears playerSourceDamagePreventionIds")
-        void clearsPlayerSourceDamagePreventionIds() {
-            gd.playerSourceDamagePreventionIds.put(player1Id, Set.of(UUID.randomUUID()));
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.playerSourceDamagePreventionIds).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears drawReplacementTargetToController")
-        void clearsDrawReplacementTargetToController() {
-            gd.drawReplacementTargetToController.put(player1Id, player2Id);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.drawReplacementTargetToController).isEmpty();
         }
 
         @Test
@@ -908,7 +803,7 @@ class TurnCleanupServiceTest {
         @DisplayName("Returns true when the player has a rest-of-game no-maximum-hand-size grant")
         void returnsTrueWhenInGlobalSet() {
             gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
-                    new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.REST_OF_GAME), player1Id,
+                    new GrantNoMaximumHandSizeEffect(Duration.PERMANENT), player1Id,
                     Duration.PERMANENT));
 
             assertThat(sut.hasNoMaximumHandSize(gd, player1Id)).isTrue();

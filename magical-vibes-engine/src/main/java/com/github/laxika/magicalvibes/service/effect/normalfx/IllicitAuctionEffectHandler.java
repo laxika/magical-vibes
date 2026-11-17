@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.IllicitAuctionEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -138,8 +138,8 @@ public class IllicitAuctionEffectHandler implements NormalEffectHandlerBean, Ask
                 lifeSupport.applyLifeLoss(gameData, winnerId, amount, cardName);
             }
             creatureControlService.applyControlEffect(gameData, winnerId, target,
-                    new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                    ControlDuration.PERMANENT.toDuration(), null, cardName);
+                    new GainControlOfTargetEffect(Duration.PERMANENT),
+                    Duration.PERMANENT, null, cardName);
             gameLogService.append(gameData, GameLog.textCardText(gameData.playerIdToName.get(winnerId) + " gains control of ", target.getCard(), "."));
         }
         state.reset();

@@ -11,7 +11,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>
  * Creature resolution sets the target's {@code damageToCounterPreventionShield}. As that shield
  * prevents damage in {@code DamagePreventionService}, the prevented amount is accumulated into a
- * {@code DelayedPlusZeroPlusOneCounters} keyed to the creature, which the delayed triggered ability this
+ * {@code PreventedDamageCounterTally} floating effect on the creature, which the delayed triggered ability this
  * effect makes (CR 603.7a) reads as it resolves at the next end step.
  */
 public record PreventNextDamageToTargetAndAddToughnessCountersEffect(int amount, boolean anyTarget)

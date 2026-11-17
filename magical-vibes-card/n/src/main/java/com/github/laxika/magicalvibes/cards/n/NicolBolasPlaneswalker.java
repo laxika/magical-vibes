@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -41,7 +41,7 @@ public class NicolBolasPlaneswalker extends Card {
         // −2: Gain control of target creature.
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new GainControlOfTargetEffect(ControlDuration.PERMANENT)),
+                List.of(new GainControlOfTargetEffect(Duration.PERMANENT)),
                 "−2: Gain control of target creature.",
                 TargetFilters.creature()
         ));

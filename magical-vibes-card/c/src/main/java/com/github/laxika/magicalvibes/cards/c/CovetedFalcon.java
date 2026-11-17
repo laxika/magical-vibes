@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfTargetPermanentsAndDrawPerPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetGroupMarkerEffect;
@@ -33,7 +33,7 @@ public class CovetedFalcon extends Card {
                 )),
                 "Target must be a permanent you own but don't control"
         )).addTrigger(Triggers.attacks(),
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT));
+                new GainControlOfTargetEffect(Duration.PERMANENT));
 
         TargetGroupMarkerEffect opponent = new TargetGroupMarkerEffect();
         TargetPlayerGainsControlOfTargetPermanentsAndDrawPerPermanentEffect gainControl =

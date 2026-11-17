@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepEffect;
@@ -18,9 +17,9 @@ public class MomosHeist extends Card {
 
     public MomosHeist() {
         target(TargetFilters.artifact())
-                .addSpellEffect(new GainControlOfTargetEffect(ControlDuration.PERMANENT))
+                .addSpellEffect(new GainControlOfTargetEffect(Duration.PERMANENT))
                 .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET, GrantDuration.INDEFINITE))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET, Duration.PERMANENT))
                 .addSpellEffect(new SacrificeTargetPermanentAtEndStepEffect(false, true));
     }
 }

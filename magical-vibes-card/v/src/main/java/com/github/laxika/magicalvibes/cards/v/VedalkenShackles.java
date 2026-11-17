@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -25,7 +25,7 @@ public class VedalkenShackles extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_REMAINS_TAPPED)),
+                List.of(new GainControlOfTargetEffect(Duration.WHILE_SOURCE_REMAINS_TAPPED)),
                 "{2}, {T}: Gain control of target creature with power less than or equal to the number of Islands you control for as long as Vedalken Shackles remains tapped.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

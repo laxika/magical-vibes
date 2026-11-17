@@ -33,7 +33,7 @@ class AtsushiTheBlazingSkyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(forest, creature);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(forest.getId(), player1.getId())
                 .containsEntry(creature.getId(), player1.getId());
     }
@@ -107,12 +107,12 @@ class AtsushiTheBlazingSkyTest extends BaseCardTest {
         harness.handleListChoice(player1, PLAY_MODE);
         harness.passBothPriorities();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(forest.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(forest.getId(), player1.getId());
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(forest.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(forest.getId(), player1.getId());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(forest.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(forest.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(forest);
     }
 

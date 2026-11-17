@@ -50,13 +50,13 @@ class RakdosIckspitterTest extends BaseCardTest {
         addCreatureReady(player1, new RakdosIckspitter());
         Permanent target = addCreatureReady(player2, new AssaultZeppelid());
         harness.setLife(player2, 20);
-        gd.playerDamagePreventionShields.put(player2.getId(), 1);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player2, 19);
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(1);
     }
 
     @Test

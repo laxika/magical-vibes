@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -32,7 +32,7 @@ public class FinaleOfRevelation extends Card {
                                 TapUntapScope.ALL_PERMANENTS,
                                 new PermanentIsLandPredicate(),
                                 5),
-                        new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.REST_OF_GAME)
+                        new GrantNoMaximumHandSizeEffect(Duration.PERMANENT)
                 )
         ));
         addSpellEffect(new ExileSpellEffect());

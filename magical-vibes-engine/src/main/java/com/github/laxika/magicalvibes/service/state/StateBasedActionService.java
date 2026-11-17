@@ -312,25 +312,11 @@ public class StateBasedActionService {
             gameData.exiledCardsWithKickCounters.remove(cardId);
             gameData.exiledCardsWithBrainCounters.remove(cardId);
             gameData.exiledCardsWithCageCounters.remove(cardId);
-            gameData.exilePlayPermissions.remove(cardId);
-            gameData.exileLookPermissions.remove(cardId);
-            gameData.additionalExileLookPermissions.remove(cardId);
-            gameData.exilePlayForLifeEqualToManaValue.remove(cardId);
-            gameData.exilePlayPermissionSourcePermanents.remove(cardId);
-            gameData.exilePlayCostModifiers.remove(cardId);
-            gameData.exilePlayPermissionsExpireEndOfTurn.remove(cardId);
-            gameData.exilePlayPermissionsExpireAtTurnEnd.remove(cardId);
-            gameData.exilePlayPermissionsAwaitNextTurnOfPlayer.remove(cardId);
-            gameData.exilePlayAnyManaType.remove(cardId);
-            gameData.exilePlayAnyManaTypeWhileExiled.remove(cardId);
+            gameData.endFloatingEffectsOnCard(cardId);
             gameData.stashCounterCardIds.remove(cardId);
-            gameData.exilePlayWithoutPayingManaCost.remove(cardId);
-            gameData.exileCardsEnterTapped.remove(cardId);
             gameData.exileInsteadOfGraveyard.remove(cardId);
             gameData.foretoldCardIds.remove(cardId);
-            gameData.graveyardPlayPermissions.remove(cardId);
-            gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(cardId);
-            gameData.graveyardCardsEnterTapped.remove(cardId);
+            gameData.endFloatingEffectsOnCard(cardId);
         }
         gameData.dynamicTokenCardIds.removeAll(removedTokenIds);
         gameData.imprintedCards.entrySet().removeIf(entry -> removedTokenIds.contains(entry.getValue().getId()));

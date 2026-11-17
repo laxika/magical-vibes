@@ -66,7 +66,7 @@ class PyrewoodGearhulkTest extends BaseCardTest {
     @Test
     @DisplayName("ETB makes damage unpreventable for the rest of the turn")
     void damageCannotBePreventedThisTurn() {
-        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 10);
         castGearhulk();
 
         harness.setHand(player1, List.of(new Shock()));
@@ -74,7 +74,7 @@ class PyrewoodGearhulkTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(10);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(10);
     }
 
     @Test
@@ -110,7 +110,7 @@ class PyrewoodGearhulkTest extends BaseCardTest {
     @Test
     @DisplayName("Damage remains preventable while the enters trigger is on the stack")
     void preventionStopsOnlyWhenTriggerResolves() {
-        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 10);
         harness.castFromHand(player1, new PyrewoodGearhulk(), "{2}{R}{R}{G}{G}");
         harness.passBothPriorities();
 
@@ -119,7 +119,7 @@ class PyrewoodGearhulkTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(8);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(8);
 
         harness.passBothPriorities();
         harness.setHand(player1, List.of(new Shock()));
@@ -127,20 +127,20 @@ class PyrewoodGearhulkTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 18);
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(8);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(8);
     }
 
     @Test
     @DisplayName("The opponent's damage also cannot be prevented")
     void opponentDamageCannotBePrevented() {
         castGearhulk();
-        gd.playerDamagePreventionShields.put(player1.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player1.getId(), 10);
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
         harness.assertLife(player1, 18);
-        assertThat(gd.playerDamagePreventionShields.get(player1.getId())).isEqualTo(10);
+        assertThat(gd.playerDamagePreventionShields().get(player1.getId())).isEqualTo(10);
     }
 
     @Test
@@ -166,12 +166,12 @@ class PyrewoodGearhulkTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        gd.playerDamagePreventionShields.put(player1.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player1.getId(), 10);
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerDamagePreventionShields.get(player1.getId())).isEqualTo(8);
+        assertThat(gd.playerDamagePreventionShields().get(player1.getId())).isEqualTo(8);
     }
 }

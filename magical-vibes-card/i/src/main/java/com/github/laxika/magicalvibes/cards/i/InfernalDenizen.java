@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayGainControlOfCreatureYouControlEffect;
@@ -30,12 +30,12 @@ public class InfernalDenizen extends Card {
                 List.of(
                         new TapPermanentsEffect(TapUntapScope.SELF),
                         new OpponentMayGainControlOfCreatureYouControlEffect(
-                                ControlDuration.WHILE_SOURCE_REMAINS))));
+                                Duration.WHILE_SOURCE_REMAINS))));
 
         // {T}: Gain control of target creature for as long as this creature remains on the battlefield.
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_REMAINS)),
+                List.of(new GainControlOfTargetEffect(Duration.WHILE_SOURCE_REMAINS)),
                 "{T}: Gain control of target creature for as long as this creature remains on the battlefield.",
                 TargetFilters.creature()));
     }

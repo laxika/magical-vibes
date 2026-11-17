@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -38,7 +38,7 @@ public class ThievingSkydiver extends Card {
         ), 0, 0, 1, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        new GainControlOfTargetEffect(Duration.PERMANENT),
                         new ConditionalEffect(new TargetPermanentMatches(
                                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT)),
                                 new AttachTargetToSourcePermanentEffect()));

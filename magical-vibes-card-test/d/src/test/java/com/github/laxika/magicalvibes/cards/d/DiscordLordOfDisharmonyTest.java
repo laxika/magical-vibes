@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -33,8 +34,8 @@ class DiscordLordOfDisharmonyTest extends BaseCardTest {
 
         Card copy = gd.getPlayerExiledCards(player1.getId()).stream().findFirst().orElseThrow();
         assertThat(copy.hasType(CardType.LAND)).isFalse();
-        assertThat(gd.exilePlayPermissions).containsEntry(copy.getId(), player1.getId());
-        assertThat(gd.exilePlayAnyManaType).contains(copy.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(copy.getId(), player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(copy.getId());
         assertThat(gd.discordCopySourcePermanents).containsEntry(copy.getId(), discord.getId());
     }
 
@@ -44,9 +45,8 @@ class DiscordLordOfDisharmonyTest extends BaseCardTest {
         Permanent discord = harness.addToBattlefieldAndReturn(player1, new DiscordLordOfDisharmony());
         Card copy = new GrizzlyBears();
         gd.addToExile(player1.getId(), copy);
-        gd.exilePlayPermissions.put(copy.getId(), player1.getId());
-        gd.exilePlayPermissionsExpireAtTurnEnd.put(copy.getId(), gd.turnNumber + 1);
-        gd.exilePlayAnyManaType.add(copy.getId());
+        gd.grantExilePlayPermission(copy.getId(), player1.getId(), Duration.UNTIL_END_OF_YOUR_NEXT_TURN);
+        gd.updateExilePlayPermission(copy.getId(), granted -> granted.withAnyManaType(true));
         gd.discordCopySourcePermanents.put(copy.getId(), discord.getId());
 
         harness.forceActivePlayer(player1);
@@ -73,12 +73,12 @@ class DiscordLordOfDisharmonyTest extends BaseCardTest {
         Card copy = gd.getPlayerExiledCards(player1.getId()).getFirst();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsKey(copy.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(copy.getId());
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(copy.getId());
-        assertThat(gd.exilePlayAnyManaType).doesNotContain(copy.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(copy.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).doesNotContain(copy.getId());
     }
 
     @Test
@@ -155,7 +155,7 @@ class DiscordLordOfDisharmonyTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(copy);
-        assertThat(gd.exilePlayPermissions).containsEntry(copy.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(copy.getId(), player1.getId());
     }
 
     @Test
@@ -175,9 +175,8 @@ class DiscordLordOfDisharmonyTest extends BaseCardTest {
     private Card prepareTrackedCopy(Permanent discord) {
         Card copy = new GrizzlyBears();
         gd.addToExile(player1.getId(), copy);
-        gd.exilePlayPermissions.put(copy.getId(), player1.getId());
-        gd.exilePlayPermissionsExpireAtTurnEnd.put(copy.getId(), gd.turnNumber + 2);
-        gd.exilePlayAnyManaType.add(copy.getId());
+        gd.grantExilePlayPermission(copy.getId(), player1.getId(), Duration.UNTIL_END_OF_YOUR_NEXT_TURN);
+        gd.updateExilePlayPermission(copy.getId(), granted -> granted.withAnyManaType(true));
         gd.discordCopySourcePermanents.put(copy.getId(), discord.getId());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

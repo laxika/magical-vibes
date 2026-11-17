@@ -78,7 +78,7 @@ class ElvishHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
 
     @Test
@@ -92,7 +92,7 @@ class ElvishHealerTest extends BaseCardTest {
         castIncinerateAt(player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test
@@ -121,7 +121,7 @@ class ElvishHealerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
 
     @Test
@@ -202,7 +202,7 @@ class ElvishHealerTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
         assertThat(spider.getDamagePreventionShield()).isZero();
         castIncinerateAt(player2.getId());
         harness.assertLife(player2, 17);

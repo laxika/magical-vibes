@@ -272,9 +272,9 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
         }
         // CR 609.7a: a source referred to by a prevention effect that is still waiting to apply stays a
         // legal choice after it has left the battlefield (its card is kept with the shield).
-        for (PlayerSourceNextDamageShield shield : gameData.playerSourceNextDamageShields) {
+        for (PlayerSourceNextDamageShield shield : gameData.shields(PlayerSourceNextDamageShield.class)) {
             UUID referencedId = shield.sourceId();
-            Card referencedCard = gameData.waitingRedirectDamageSourceCards.get(referencedId);
+            Card referencedCard = gameData.waitingDamageSourceCard(referencedId);
             if (referencedCard != null && !validIds.contains(referencedId)
                     && (sourceFilter == null || predicateEvaluationService.matchesPermanentPredicate(
                     gameData, new Permanent(referencedCard), sourceFilter))) {

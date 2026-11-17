@@ -9,11 +9,11 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param duration how long the control change lasts
  */
-public record OpponentGainsControlOfSourceCreatureEffect(ControlDuration duration)
+public record OpponentGainsControlOfSourceCreatureEffect(Duration duration)
         implements ControlStealingEffect {
 
     @Override
-    public ControlDuration controlDuration() {
+    public Duration controlDuration() {
         return duration;
     }
 }

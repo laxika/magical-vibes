@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -44,7 +43,7 @@ public class KellanPlanarTrailblazer extends Card {
                 SequenceEffect.of(
                         new ConditionalEffect(new SourceHasSubtype(CardSubtype.DETECTIVE),
                                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF,
-                                        GrantDuration.INDEFINITE)),
+                                        Duration.PERMANENT)),
                         BecomeCreatureTypeWithBasePowerToughnessEffect.settingCreatureTypes(
                                 3, 2, CardSubtype.DETECTIVE,
                                 CardSubtype.HUMAN, CardSubtype.FAERIE, CardSubtype.ROGUE)

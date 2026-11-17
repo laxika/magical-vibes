@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -35,21 +35,18 @@ class ElkinBottleTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Activation exiles the top card with play permission and schedules upkeep revoke")
+    @DisplayName("Activation exiles the top card with play permission and lasts until the controller's next upkeep")
     void exilesTopCardWithPlayPermission() {
         Card top = activateBottleWithTop(new DarkRitual());
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getId().equals(top.getId()));
-        assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(top.getId())).isEqualTo(player1.getId());
         assertThat(gd.playerDecks.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(top.getId()));
 
-        List<RevokeExilePlayPermissionAtNextUpkeep> scheduled =
-                gd.getDelayedActions(RevokeExilePlayPermissionAtNextUpkeep.class);
-        assertThat(scheduled).hasSize(1);
-        assertThat(scheduled.getFirst().controllerId()).isEqualTo(player1.getId());
-        assertThat(scheduled.getFirst().cardId()).isEqualTo(top.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP))
+                .containsEntry(top.getId(), player1.getId());
     }
 
     @Test
@@ -59,13 +56,12 @@ class ElkinBottleTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
         // Elkin Bottle never moves the card anywhere — it just stays in exile.
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getId().equals(top.getId()));
         assertThat(gd.playerGraveyards.getOrDefault(player1.getId(), List.of()))
                 .noneMatch(c -> c.getId().equals(top.getId()));
-        assertThat(gd.getDelayedActions(RevokeExilePlayPermissionAtNextUpkeep.class)).isEmpty();
         assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -77,8 +73,8 @@ class ElkinBottleTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
 
-        assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
-        assertThat(gd.getDelayedActions(RevokeExilePlayPermissionAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.exilePlayPermissionHolder(top.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP)).containsKey(top.getId());
     }
 
     @Test
@@ -89,7 +85,7 @@ class ElkinBottleTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
 
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castFromExile(player1, top.getId());
@@ -97,7 +93,7 @@ class ElkinBottleTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(top);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
     }
 
     @Test
@@ -114,7 +110,7 @@ class ElkinBottleTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(top.getId()));
         assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
     }
 
     @Test
@@ -127,7 +123,7 @@ class ElkinBottleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.getDelayedActions(RevokeExilePlayPermissionAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test
@@ -180,7 +176,7 @@ class ElkinBottleTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player2, top.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
     }
 
     @Test
@@ -219,7 +215,7 @@ class ElkinBottleTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
         assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
     }
 }

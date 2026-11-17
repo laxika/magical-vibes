@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -51,9 +52,8 @@ public class ExileTopUntilNonlandOfDamagedPlayerMayCounterOrCastHandler implemen
                     : gameData.findExiledCard(ability.targetCardId());
             if (exiled != null) {
                 UUID cardId = exiled.card().getId();
-                gameData.exilePlayPermissions.put(cardId, ability.controllerId());
-                gameData.exilePlayPermissionsExpireEndOfTurn.add(cardId);
-                gameData.exilePlayAnyManaType.add(cardId);
+                gameData.grantExilePlayPermission(cardId, ability.controllerId(), Duration.UNTIL_END_OF_TURN);
+                gameData.grantExileAnyManaType(cardId, Duration.UNTIL_END_OF_TURN);
 
             }
         }

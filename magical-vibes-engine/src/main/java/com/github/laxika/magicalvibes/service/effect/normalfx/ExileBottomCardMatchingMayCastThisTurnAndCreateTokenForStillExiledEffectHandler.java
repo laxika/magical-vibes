@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileBottomCardMatchingMayCastThisTurnAndCreateTokenForStillExiledEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -58,9 +59,7 @@ public class ExileBottomCardMatchingMayCastThisTurnAndCreateTokenForStillExiledE
             return;
         }
 
-        gameData.clearExilePlayPermissionGroup(matchingCard.getId());
-        gameData.exilePlayPermissions.put(matchingCard.getId(), controllerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(matchingCard.getId());
+        gameData.grantExilePlayPermission(matchingCard.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
         gameLogService.append(gameData, GameLog.builder()
                 .text(gameData.playerIdToName.get(controllerId) + " exiles ")
                 .card(matchingCard)

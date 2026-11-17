@@ -30,7 +30,7 @@ class IntrepidTrufflesnoutTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test

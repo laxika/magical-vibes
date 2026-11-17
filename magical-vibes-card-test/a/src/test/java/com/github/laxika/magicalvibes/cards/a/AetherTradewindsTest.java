@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -158,7 +157,7 @@ class AetherTradewindsTest extends BaseCardTest {
         Permanent stolen = harness.addToBattlefieldAndReturn(player2, card);
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
                 .applyControlEffect(gd, player1.getId(), stolen,
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT,
+                        new GainControlOfTargetEffect(Duration.PERMANENT), Duration.PERMANENT,
                         null, "Test setup"));
         Permanent opposing = harness.addToBattlefieldAndReturn(player2, new SageOfShailasClaim());
         harness.setHand(player1, List.of(new AetherTradewinds()));

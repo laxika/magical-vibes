@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -43,10 +44,10 @@ class RiverwheelSweepTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
 
-        assertThat(gd.exilePlayPermissions).containsEntry(second.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer)
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(second.getId(), player1.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN))
                 .containsEntry(second.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(first.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(first.getId());
     }
 
     @Test
@@ -108,8 +109,8 @@ class RiverwheelSweepTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
-        assertThat(gd.exilePlayPermissions).containsEntry(first.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(second.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(first.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(second.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, second);
     }
 

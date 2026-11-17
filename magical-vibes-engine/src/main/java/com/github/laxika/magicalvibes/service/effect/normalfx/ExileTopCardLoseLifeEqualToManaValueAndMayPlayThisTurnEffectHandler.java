@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardLoseLifeEqualToManaValueAndMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
@@ -54,8 +55,7 @@ public class ExileTopCardLoseLifeEqualToManaValueAndMayPlayThisTurnEffectHandler
         library.removeFirst();
         exileService.exileCard(gameData, controllerId, topCard);
         lifeSupport.applyLifeLosses(gameData, losses, entry.getCard().getName());
-        gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
+        gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(gameData.playerIdToName.get(controllerId) + " exiles ")

@@ -51,8 +51,8 @@ class TempestTrapperTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiledCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(exiledCard.getId(), player1.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(exiledCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiledCard.getId(), player1.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(exiledCard.getId());
     }
 
     @Test
@@ -253,7 +253,7 @@ class TempestTrapperTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();
-        assertThat(gd.exilePlayPermissions).containsKey(libraryCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(libraryCard.getId());
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -261,7 +261,7 @@ class TempestTrapperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(libraryCard);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(libraryCard.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(libraryCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(libraryCard.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(libraryCard.getId());
     }
 }

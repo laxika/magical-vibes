@@ -32,7 +32,7 @@ class ZenithFestivalTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactly(first, second, third);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId())
                 .containsEntry(third.getId(), player1.getId());
@@ -56,7 +56,7 @@ class ZenithFestivalTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second, spell);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
     }
@@ -73,7 +73,7 @@ class ZenithFestivalTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
     }
 
@@ -88,7 +88,7 @@ class ZenithFestivalTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(top);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
     }
 
     @Test
@@ -141,12 +141,12 @@ class ZenithFestivalTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 1);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiled.getId(), player1.getId());
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiled.getId(), player1.getId());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiled.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiled);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         assertThatThrownBy(() -> gs.playCardFromExile(gd, player1, exiled.getId(), null, null))
@@ -166,7 +166,7 @@ class ZenithFestivalTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(top, spell);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId())
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId())
                 .doesNotContainKey(spell.getId());
     }
 

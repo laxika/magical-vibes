@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -39,6 +39,6 @@ public class AdmiralBeckettBrass extends Card {
                 "Target must be a nonland permanent controlled by a player dealt combat damage by three or more "
                         + "Pirates this turn"))
                 .addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT));
+                        new GainControlOfTargetEffect(Duration.PERMANENT));
     }
 }

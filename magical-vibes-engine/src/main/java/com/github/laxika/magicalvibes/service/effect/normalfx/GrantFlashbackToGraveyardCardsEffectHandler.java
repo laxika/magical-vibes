@@ -13,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Slf4j
 @Component
@@ -33,17 +35,17 @@ public class GrantFlashbackToGraveyardCardsEffectHandler implements NormalEffect
         int count = 0;
         if (e.allGraveyards()) {
             for (List<Card> graveyard : gameData.playerGraveyards.values()) {
-                count += grantToGraveyard(gameData, graveyard, e);
+                count += grantToGraveyard(gameData, entry, graveyard, e);
             }
         } else {
-            count = grantToGraveyard(gameData, gameData.playerGraveyards.get(entry.getControllerId()), e);
+            count = grantToGraveyard(gameData, entry, gameData.playerGraveyards.get(entry.getControllerId()), e);
         }
 
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" grants flashback to " + count + " card(s) in graveyard until end of turn.").build());
         log.info("Game {} - {} grants flashback to {} graveyard card(s)", gameData.id, entry.getCard().getName(), count);
     }
 
-    private int grantToGraveyard(GameData gameData, List<Card> graveyard,
+    private int grantToGraveyard(GameData gameData, StackEntry entry, List<Card> graveyard,
                                  GrantFlashbackToGraveyardCardsEffect effect) {
         if (graveyard == null) return 0;
         int count = 0;
@@ -51,7 +53,8 @@ public class GrantFlashbackToGraveyardCardsEffectHandler implements NormalEffect
             if (!predicateEvaluationService.matchesCardPredicate(card, effect.filter(), null)) {
                 continue;
             }
-            gameData.cardsGrantedFlashbackUntilEndOfTurn.add(card.getId());
+            gameData.addCardEffect(entry, GrantedCardAbilityEffect.of(GrantedCardAbilityEffect.Ability.FLASHBACK,
+                    effect.flashbackCost()), card.getId(), Duration.UNTIL_END_OF_TURN);
             count++;
         }
         return count;

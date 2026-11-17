@@ -48,7 +48,7 @@ public class GainControlOfTargetAuraEffectHandler implements NormalEffectHandler
 
                 creatureControlService.applyControlEffect(gameData, casterId, aura,
                         new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
-                                com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
+                                com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT),
                         com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT,
                         null, entry.getCard().getName());
                 Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());

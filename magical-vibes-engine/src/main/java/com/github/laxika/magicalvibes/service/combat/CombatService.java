@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -156,9 +155,6 @@ public class CombatService {
         gameData.combatDamageFirstStrikeStepComplete = false;
         gameData.combatDamagePhase1Complete = false;
         gameData.combatDamagePhase1State = null;
-        // Keep Master Warcraft's declaration control through additional combats this turn.
-        gameData.clearDelayedActions(DelayedBlockerDeclarationControl.class,
-                control -> !control.untilEndOfTurn());
     }
 
     /** Idempotent grant of Dread Wight's "{4}: Remove a paralyzation counter from this creature." */

@@ -44,7 +44,7 @@ public class RedirectNextCombatDamageToOpponentEffectHandler implements NormalEf
             return;
         }
 
-        gameData.sourceNextCombatDamageToOpponentRedirectShields.add(
+        gameData.addShield(
                 new SourceNextCombatDamageToOpponentRedirectShield(sourceId, destinationId));
 
         gameLogService.append(gameData, GameLog.builder()

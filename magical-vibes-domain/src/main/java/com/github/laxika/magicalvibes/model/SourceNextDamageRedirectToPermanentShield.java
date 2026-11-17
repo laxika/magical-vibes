@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import java.util.UUID;
 
 /**
@@ -12,5 +13,5 @@ import java.util.UUID;
  * @param sourceId                the permanent chosen as the damage source
  * @param destinationPermanentId  the permanent the damage is dealt to instead
  */
-public record SourceNextDamageRedirectToPermanentShield(UUID sourceId, UUID destinationPermanentId) {
+public record SourceNextDamageRedirectToPermanentShield(UUID sourceId, UUID destinationPermanentId) implements CardEffect {
 }

@@ -28,7 +28,7 @@ class GrabbyGiantThatsMineTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -125,7 +125,7 @@ class GrabbyGiantThatsMineTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(card.getId()));
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
     }
 

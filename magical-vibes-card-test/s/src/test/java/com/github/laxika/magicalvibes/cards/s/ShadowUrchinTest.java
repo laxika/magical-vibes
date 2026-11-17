@@ -67,15 +67,13 @@ class ShadowUrchinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(first.getId()).doesNotContainKey(second.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(first.getId()).doesNotContainKey(second.getId());
     }
 
     @Test
@@ -93,7 +91,7 @@ class ShadowUrchinTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, dying.getId());
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(top);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
     }
 
     @Test
@@ -112,7 +110,7 @@ class ShadowUrchinTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
     }
@@ -130,12 +128,12 @@ class ShadowUrchinTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, dying.getId());
         resolveAllTriggers();
-        assertThat(gd.exilePlayPermissions).containsKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(top.getId());
 
         harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
     }
 
@@ -179,7 +177,7 @@ class ShadowUrchinTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(top);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
     }
 }

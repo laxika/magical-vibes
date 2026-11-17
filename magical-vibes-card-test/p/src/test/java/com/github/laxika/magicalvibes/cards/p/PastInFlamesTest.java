@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 @CardUsed({PastInFlames.class, Shock.class, GrizzlyBears.class, NightbirdsClutches.class})
 class PastInFlamesTest extends BaseCardTest {
@@ -30,7 +31,7 @@ class PastInFlamesTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(shock.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).contains(shock.getId());
     }
 
     @Test
@@ -108,7 +109,7 @@ class PastInFlamesTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).doesNotContain(bears.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).doesNotContain(bears.getId());
     }
 
     @Test
@@ -143,7 +144,7 @@ class PastInFlamesTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).isNotEmpty();
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).isNotEmpty();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
@@ -172,7 +173,7 @@ class PastInFlamesTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Past in Flames"));
 
         // Shock should have gained flashback
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(shock.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).contains(shock.getId());
     }
 
     @Test

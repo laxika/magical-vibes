@@ -73,8 +73,8 @@ public class PreventDividedDamageEffectHandler implements NormalEffectHandlerBea
             }
 
             if (gameData.playerIds.contains(targetId)) {
-                int current = gameData.playerDamagePreventionShields.getOrDefault(targetId, 0);
-                gameData.playerDamagePreventionShields.put(targetId, current + amount);
+                gameData.addPlayerDamagePreventionShield(entry.getCard().getName(), entry.getControllerId(),
+                        targetId, amount, false);
                 gameLogService.append(gameData, GameLog.text("The next " + amount + " damage that would be dealt to "
                                 + gameData.playerIdToName.get(targetId) + " is prevented."));
             }

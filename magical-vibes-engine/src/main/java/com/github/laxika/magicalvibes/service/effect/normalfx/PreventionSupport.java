@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield;
+import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -24,6 +27,16 @@ import java.util.UUID;
 public class PreventionSupport {
 
     private final GameLogService gameLogService;
+
+    /**
+     * {@code permanentId} assigns no combat damage for {@code duration}: not a prevention effect, so "damage can't be
+     * prevented" doesn't override it (what a creature assigns is CR 510.1a).
+     */
+    public static void assignNoCombatDamage(GameData gameData, String sourceCardName, UUID sourcePermanentId,
+                                            UUID controllerId, UUID permanentId, Duration duration) {
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(sourceCardName, sourcePermanentId,
+                controllerId, new AssignNoCombatDamageEffect(), permanentId, duration));
+    }
 
     /**
      * "All combat damage {@code permanentId} would deal is prevented" for {@code duration} (CR 615): the floating effect
@@ -75,11 +88,11 @@ public class PreventionSupport {
                 .forEach(validIds::add);
         // CR 609.7a: an object referred to by a waiting replacement or prevention effect can be chosen as a
         // source even after it has left the battlefield.
-        gameData.creatureDamageRedirectShields.stream()
+        gameData.shields(CreatureDamageRedirectShield.class).stream()
                 .map(shield -> shield.damageSourceId())
                 .filter(id -> !validIds.contains(id))
                 .forEach(validIds::add);
-        gameData.playerSourceNextDamageRedirectShields.stream()
+        gameData.shields(PlayerSourceNextDamageRedirectShield.class).stream()
                 .map(shield -> shield.sourcePermanentId())
                 .filter(id -> !validIds.contains(id))
                 .forEach(validIds::add);

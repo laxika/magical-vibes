@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -44,8 +45,8 @@ class NorinSwiftSurvivalistTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(card -> card.getId().equals(attackerCardId));
-        assertThat(gd.exilePlayPermissions).containsEntry(attackerCardId, player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(attackerCardId);
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(attackerCardId, player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(attackerCardId);
         assertThat(blocker.getMarkedDamage()).isZero();
 
         harness.forceActivePlayer(player1);
@@ -77,7 +78,7 @@ class NorinSwiftSurvivalistTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).noneMatch(card -> card.getId().equals(attackerCardId));
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(attackerCardId);
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(attackerCardId);
     }
 
     @Test

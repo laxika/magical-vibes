@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ public class SeaGateRestoration extends Card {
                 new ChooseOneEffect.ChooseOneOption("Sea Gate Restoration", List.of(
                         new DrawCardEffect(new Sum(
                                 new CardsInHand(CountScope.CONTROLLER), new Fixed(1))),
-                        new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.REST_OF_GAME)
+                        new GrantNoMaximumHandSizeEffect(Duration.PERMANENT)
                 )),
                 new ChooseOneEffect.ChooseOneOption("Sea Gate, Reborn", List.of())
         )));

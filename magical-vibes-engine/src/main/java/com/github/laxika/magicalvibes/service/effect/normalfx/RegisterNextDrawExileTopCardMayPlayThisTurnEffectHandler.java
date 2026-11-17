@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -31,7 +33,9 @@ public class RegisterNextDrawExileTopCardMayPlayThisTurnEffectHandler implements
             return;
         }
 
-        gameData.pendingNextDrawExileTopCard.merge(affectedPlayerId, 1, Integer::sum);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), effect, affectedPlayerId,
+                Duration.UNTIL_END_OF_TURN));
 
         String playerName = gameData.playerIdToName.get(affectedPlayerId);
         gameLogService.append(gameData, GameLog.builder()

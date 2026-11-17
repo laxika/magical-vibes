@@ -48,7 +48,7 @@ class RootingMolochTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(cyclingCard);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(cyclingCard);
-        assertThat(gd.exilePlayPermissions.get(cyclingCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(cyclingCard.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -112,7 +112,7 @@ class RootingMolochTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(cyclingCard);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(cyclingCard);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(cyclingCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(cyclingCard.getId());
     }
 
     @Test
@@ -126,12 +126,12 @@ class RootingMolochTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(cyclingCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(cyclingCard.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(cyclingCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(cyclingCard.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(cyclingCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(cyclingCard.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(cyclingCard);
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.WHITE, 2);

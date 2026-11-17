@@ -237,7 +237,7 @@ class GaeasBalanceTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(plains, forest);
-        assertThat(gd.exilePlayPermissions.get(plains.getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(plains.getId())).isEqualTo(player2.getId());
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 

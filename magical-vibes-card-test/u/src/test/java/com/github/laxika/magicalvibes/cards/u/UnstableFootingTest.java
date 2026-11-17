@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.c.ChandraAblaze;
 import com.github.laxika.magicalvibes.cards.g.GoblinGuide;
 import com.github.laxika.magicalvibes.cards.p.PunishingFire;
@@ -22,20 +23,20 @@ class UnstableFootingTest extends BaseCardTest {
     @Test
     @DisplayName("Without kicker, it can be cast without a target and disables prevention this turn")
     void withoutKickerHasNoTargetAndDisablesPrevention() {
-        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 10);
         harness.setHand(player1, List.of(new UnstableFooting()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(gd.damageCantBePreventedThisTurn).isTrue();
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(10);
+        assertThat(gd.damageCantBePreventedThisTurn()).isTrue();
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(10);
     }
 
     @Test
     @DisplayName("When kicked, it deals 5 damage to a target player despite prevention")
     void kickedDealsFiveDamageDespitePrevention() {
-        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 10);
         harness.setHand(player1, List.of(new UnstableFooting()));
         harness.addMana(player1, ManaColor.RED, 5);
 
@@ -43,7 +44,7 @@ class UnstableFootingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(15);
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(10);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(10);
     }
 
     @Test
@@ -61,12 +62,12 @@ class UnstableFootingTest extends BaseCardTest {
     @Test
     @DisplayName("The damage prevention lock wears off at end of turn")
     void preventionLockClearedAtEndOfTurn() {
-        gd.damageCantBePreventedThisTurn = true;
+        gd.addShield(new DamageCantBePreventedThisTurnEffect());
 
         new com.github.laxika.magicalvibes.service.turn.TurnCleanupService(null, null)
                 .resetEndOfTurnModifiers(gd);
 
-        assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+        assertThat(gd.damageCantBePreventedThisTurn()).isFalse();
     }
 
     @Test
@@ -82,7 +83,7 @@ class UnstableFootingTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Chandra Ablaze");
         harness.assertNotOnBattlefield(player2, "Chandra Ablaze");
         harness.assertLife(player2, 20);
-        assertThat(gd.damageCantBePreventedThisTurn).isTrue();
+        assertThat(gd.damageCantBePreventedThisTurn()).isTrue();
     }
 
     @Test
@@ -109,15 +110,15 @@ class UnstableFootingTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+        assertThat(gd.damageCantBePreventedThisTurn()).isFalse();
         harness.assertInGraveyard(player1, "Unstable Footing");
         harness.assertLife(player2, 20);
     }
 
     @Test
     void unkickedSpellDisablesPreventionForSubsequentDamageFromEitherPlayer() {
-        gd.playerDamagePreventionShields.put(player1.getId(), 10);
-        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player1.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 10);
         harness.setHand(player1, List.of(new UnstableFooting(), new PunishingFire()));
         harness.setHand(player2, List.of(new PunishingFire()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -129,8 +130,8 @@ class UnstableFootingTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 18);
-        assertThat(gd.playerDamagePreventionShields.get(player1.getId())).isEqualTo(10);
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(10);
+        assertThat(gd.playerDamagePreventionShields().get(player1.getId())).isEqualTo(10);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(10);
     }
 
     @Test
@@ -141,12 +142,12 @@ class UnstableFootingTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        gd.playerDamagePreventionShields.put(player1.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player1.getId(), 10);
         harness.addMana(player2, ManaColor.RED, 2);
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+        assertThat(gd.damageCantBePreventedThisTurn()).isFalse();
         harness.assertLife(player1, 20);
-        assertThat(gd.playerDamagePreventionShields.get(player1.getId())).isEqualTo(8);
+        assertThat(gd.playerDamagePreventionShields().get(player1.getId())).isEqualTo(8);
     }
 }

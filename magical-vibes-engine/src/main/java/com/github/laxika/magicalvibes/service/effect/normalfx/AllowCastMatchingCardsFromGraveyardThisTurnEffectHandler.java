@@ -10,6 +10,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Slf4j
 @Component
@@ -31,11 +32,10 @@ public class AllowCastMatchingCardsFromGraveyardThisTurnEffectHandler implements
         // Recorded as a filter, not per card: cards that reach the graveyard later this turn are
         // covered too. Turn cleanup drops the grant. The grant is limited to the controller's own graveyard
         // ("from your graveyard"); an opponent's graveyard is never matched by it.
-        gameData.graveyardCastFilterPermissionsThisTurn.add(
-                new GameData.GraveyardCastFilterPermission(controllerId, e.filter(), e.singleUse(),
-                        e.entryCounterType(), e.grantedSubtype(), false, false,
+        gameData.addPlayerEffect(entry, new GameData.GraveyardCastFilterPermission(controllerId, e.filter(),
+                        e.singleUse(), e.entryCounterType(), e.grantedSubtype(), false, false,
                         e.additionalCost(), e.enterWithCounter(), e.enterWithCounterCount(),
-                        controllerId, false));
+                        controllerId, false), controllerId, Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId)
                 + " may cast matching spells from their graveyard this turn."));

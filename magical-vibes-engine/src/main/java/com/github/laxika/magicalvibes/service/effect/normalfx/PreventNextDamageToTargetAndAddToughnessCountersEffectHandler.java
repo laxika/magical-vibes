@@ -39,8 +39,10 @@ public class PreventNextDamageToTargetAndAddToughnessCountersEffectHandler imple
         if (target != null) {
             target.setDamageToCounterPreventionShield(
                     target.getDamageToCounterPreventionShield() + prevent.amount());
-            UUID shieldId = gameData.registerSacredBoonShield(target.getId(), prevent.amount());
-            if (gameQueryService.isCreature(gameData, target)) {
+            boolean creature = gameQueryService.isCreature(gameData, target);
+            UUID shieldId = gameData.registerSacredBoonShield(entry.getCard().getName(), entry.getControllerId(),
+                    target.getId(), prevent.amount(), creature);
+            if (creature) {
                 gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                         Triggers.endStep(ActivePlayer.ANY), entry.getControllerId(), entry.getCard(),
                         entry.getSourcePermanentId(), target.getId(),
@@ -57,8 +59,8 @@ public class PreventNextDamageToTargetAndAddToughnessCountersEffectHandler imple
         }
 
         if (gameData.playerIds.contains(targetId)) {
-            int currentShield = gameData.playerDamagePreventionShields.getOrDefault(targetId, 0);
-            gameData.playerDamagePreventionShields.put(targetId, currentShield + prevent.amount());
+            gameData.addPlayerDamagePreventionShield(entry.getCard().getName(), entry.getControllerId(), targetId,
+                    prevent.amount(), false);
             String playerName = gameData.playerIdToName.get(targetId);
             gameLogService.append(gameData, GameLog.text(
                     "The next " + prevent.amount() + " damage that would be dealt to "

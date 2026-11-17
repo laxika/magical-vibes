@@ -59,7 +59,7 @@ class ThranduilsDecreeTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player2, "Tidings of War");
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(tidings.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(tidings.getId());
     }
 
     @Test
@@ -80,7 +80,7 @@ class ThranduilsDecreeTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Smaug, the Great Calamity");
         assertThat(gd.findExiledCard(smaug.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(smaug.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(smaug.getId());
         harness.assertOnBattlefield(player1, "Large Bear");
     }
 
@@ -157,8 +157,8 @@ class ThranduilsDecreeTest extends BaseCardTest {
         harness.castFromExile(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(bears.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(bears.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(bears.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(bears.getId());
     }
 
     private void castDecreeAgainstCreature(LargeBear bears) {

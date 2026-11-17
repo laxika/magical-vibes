@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
+import com.github.laxika.magicalvibes.model.effect.SkipChosenStepOrPhaseEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -64,12 +68,16 @@ public class SkipNextEffectHandler implements NormalEffectHandlerBean {
     private void resolveForPlayer(GameData gameData, StackEntry entry, SkipNextEffect e,
                                   UUID affectedPlayerId) {
         if (e.allCombatPhasesOfNextTurn()) {
-            gameData.skipCombatPhasesNextTurn.add(affectedPlayerId);
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(),
+                    new SkipChosenStepOrPhaseEffect(SkipStepOrPhaseKind.COMBAT_PHASE), affectedPlayerId,
+                    Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN));
+        } else if (e.thisTurnOnly()) {
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), e, affectedPlayerId,
+                    Duration.UNTIL_END_OF_TURN));
         } else {
             queueFor(gameData, e.kind()).merge(affectedPlayerId, 1, Integer::sum);
-            if (e.thisTurnOnly()) {
-                gameData.skipCombatPhaseExpirationsThisTurn.merge(affectedPlayerId, 1, Integer::sum);
-            }
         }
 
         String affectedName = gameData.playerIdToName.get(affectedPlayerId);

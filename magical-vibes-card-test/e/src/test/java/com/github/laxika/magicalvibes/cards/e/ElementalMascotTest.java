@@ -68,7 +68,7 @@ class ElementalMascotTest extends BaseCardTest {
 
         assertThat(mascot.getPowerModifier()).isEqualTo(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topCard);
     }
 
@@ -173,7 +173,7 @@ class ElementalMascotTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -190,7 +190,7 @@ class ElementalMascotTest extends BaseCardTest {
         resolveAllTriggers();
         harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.castFromExile(player1, topCard.getId());
 
@@ -214,10 +214,10 @@ class ElementalMascotTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
     }
 

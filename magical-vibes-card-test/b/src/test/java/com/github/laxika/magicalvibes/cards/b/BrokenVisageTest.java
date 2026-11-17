@@ -197,7 +197,7 @@ class BrokenVisageTest extends BaseCardTest {
                 .getBean(com.github.laxika.magicalvibes.service.battlefield.CreatureControlService.class)
                 .applyControlEffect(gd, player1.getId(), spirit,
                         new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
-                                com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
+                                com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT),
                         com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, null, "Test setup"));
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -31,10 +32,9 @@ class HurlThroughHellTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.findExiledCard(bearsId)).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsEntry(bearsId, player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd).containsEntry(bearsId, Integer.MAX_VALUE);
-        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer).containsEntry(bearsId, player1.getId());
-        assertThat(gd.exilePlayAnyManaType).contains(bearsId);
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(bearsId, player1.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)).containsEntry(bearsId, player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(bearsId);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

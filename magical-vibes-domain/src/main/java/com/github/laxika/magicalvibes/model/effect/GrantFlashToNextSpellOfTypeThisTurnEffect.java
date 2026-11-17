@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 
 /**
  * One-shot effect: the next spell of {@code cardType} the resolving controller casts this turn can be
- * cast as though it had flash (Quicken). Tracked in {@code GameData.nextSpellFlashGrantsThisTurn},
- * consumed by the next matching spell cast and cleared at end of turn. The unlimited counterpart is
+ * cast as though it had flash (Quicken). It resolves into a
+ * {@link GrantFlashToNextMatchingSpellEffect} on the player, which the next matching spell cast ends. The unlimited counterpart is
  * {@link GrantFlashToSpellsThisTurnEffect}.
  *
  * <p>A {@code null} {@code cardType} matches any spell (Ride the Avalanche's "the next spell you cast").

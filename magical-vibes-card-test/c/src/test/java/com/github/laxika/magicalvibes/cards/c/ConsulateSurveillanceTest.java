@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
 import com.github.laxika.magicalvibes.cards.t.TerrorOfTheFairgrounds;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -40,7 +41,7 @@ class ConsulateSurveillanceTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.playerSourceDamagePreventionIds.get(player1.getId())).contains(source.getId());
+        assertThat(Prevention.sourceIds(gd, player1.getId())).contains(source.getId());
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 

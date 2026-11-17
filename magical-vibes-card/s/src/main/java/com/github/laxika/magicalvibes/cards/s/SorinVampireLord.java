@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -42,7 +41,7 @@ public class SorinVampireLord extends Card {
                         new ActivatedAbility(
                                 true,
                                 null,
-                                List.of(new GainControlOfTargetEffect(ControlDuration.PERMANENT)),
+                                List.of(new GainControlOfTargetEffect(Duration.PERMANENT)),
                                 "{T}: Gain control of target creature.",
                                 TargetFilters.creature()
                         ),

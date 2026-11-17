@@ -99,7 +99,7 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyHandler implements MayEff
             return;
         }
         if (effect.withoutPayingManaCost()) {
-            gameData.exilePlayWithoutPayingManaCost.add(copy.getId());
+            gameData.setExilePlayWithoutPayingManaCost(copy.getId(), true);
             ChooseOneEffect modal = singleChoiceModal(copy);
             if (modal != null) {
                 Map<String, Integer> modes = new LinkedHashMap<>();

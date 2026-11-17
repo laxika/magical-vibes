@@ -33,7 +33,7 @@ class MollyHayesRunawayTest extends BaseCardTest {
 
         assertThat(molly.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -123,12 +123,12 @@ class MollyHayesRunawayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
         harness.addMana(player1, ManaColor.RED, 1);
         assertThatThrownBy(() -> harness.castFromExile(player1, topCard.getId(), player2.getId()))
@@ -167,6 +167,6 @@ class MollyHayesRunawayTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(molly);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 }

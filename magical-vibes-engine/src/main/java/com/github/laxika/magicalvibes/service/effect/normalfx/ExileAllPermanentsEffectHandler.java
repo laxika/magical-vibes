@@ -98,7 +98,7 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
                             && gameData.findExiledCard(exiledCardId) != null) {
                         exileSupport.grantPlayWhileExiled(gameData, exiledCardId, entry.getControllerId());
                         if (e.controllerMaySpendAnyManaType()) {
-                            gameData.exilePlayAnyManaTypeWhileExiled.add(exiledCardId);
+                            gameData.updateExilePlayPermission(exiledCardId, granted -> granted.withAnyManaType(true));
                         }
                     }
                 }

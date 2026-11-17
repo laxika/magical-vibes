@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetWhileHasCounterEffect;
@@ -210,7 +210,7 @@ class LayerClassifierTest {
         void oneShotContinuousEffectsLandInTheirLayers() {
             assertThat(LayerClassifier.classify(new BecomeCopyOfTargetCreatureEffect(), false).layers())
                     .containsExactly(Layer.L1_COPY);
-            assertThat(LayerClassifier.classify(new GainControlOfTargetEffect(ControlDuration.END_OF_TURN), false)
+            assertThat(LayerClassifier.classify(new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN), false)
                     .layers()).containsExactly(Layer.L2_CONTROL);
             assertThat(LayerClassifier.classify(
                     new GainControlOfTargetWhileHasCounterEffect(com.github.laxika.magicalvibes.model.CounterType.SHIELD), false)

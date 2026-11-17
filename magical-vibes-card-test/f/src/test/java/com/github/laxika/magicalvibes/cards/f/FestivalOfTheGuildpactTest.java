@@ -35,7 +35,7 @@ class FestivalOfTheGuildpactTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isEqualTo(1);
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
     }
 

@@ -195,7 +195,7 @@ class VisionsOfDuplicityTest extends BaseCardTest {
         VisionsOfDuplicity spell = new VisionsOfDuplicity();
         harness.setGraveyard(player1, List.of(spell));
 
-        gd.graveyardPlayPermissions.put(spell.getId(), player1.getId());
+        grantGraveyardPlay(spell.getId(), player1.getId());
         Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         addManaForNormalCast();

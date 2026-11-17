@@ -61,9 +61,9 @@ public class ExileTargetSpellAndGrantCastPermissionEffectHandler implements Norm
         ExileTargetSpellAndGrantCastPermissionEffect permissionEffect =
                 (ExileTargetSpellAndGrantCastPermissionEffect) effect;
         if (permissionEffect.withoutPayingManaCost()) {
-            gameData.exilePlayWithoutPayingManaCost.add(card.getId());
+            gameData.setExilePlayWithoutPayingManaCost(card.getId(), true);
         } else {
-            gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
+            gameData.updateExilePlayPermission(card.getId(), granted -> granted.withAnyManaType(true));
         }
 
         gameLogService.append(gameData, GameLog.cardTextCard(card,

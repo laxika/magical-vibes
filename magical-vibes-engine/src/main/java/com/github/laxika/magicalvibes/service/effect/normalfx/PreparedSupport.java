@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.UUID;
@@ -77,7 +78,7 @@ public class PreparedSupport {
         UUID prepareCopyId = permanent.getPreparedSpellCardId();
         if (prepareCopyId != null) {
             gameData.removeFromExile(prepareCopyId);
-            gameData.exilePlayPermissions.remove(prepareCopyId);
+            gameData.endExilePlayPermission(prepareCopyId);
         }
         permanent.setPreparedSpellCardId(null);
     }
@@ -99,7 +100,7 @@ public class PreparedSupport {
     private Card exilePrepareSpellCopy(GameData gameData, Permanent permanent, UUID controllerId) {
         Card copy = copySupport.createCopyCard(permanent.getCard().getBackFaceCard());
         exileService.exileCard(gameData, controllerId, copy);
-        gameData.exilePlayPermissions.put(copy.getId(), controllerId);
+        gameData.grantExilePlayPermission(copy.getId(), controllerId, Duration.PERMANENT);
         permanent.setPreparedSpellCardId(copy.getId());
         return copy;
     }
@@ -117,7 +118,7 @@ public class PreparedSupport {
         UUID prepareCopyId = permanent.getPreparedSpellCardId();
         if (prepareCopyId != null) {
             gameData.removeFromExile(prepareCopyId);
-            gameData.exilePlayPermissions.remove(prepareCopyId);
+            gameData.endExilePlayPermission(prepareCopyId);
         }
         permanent.setPrepared(false);
         permanent.setPreparedSpellCardId(null);

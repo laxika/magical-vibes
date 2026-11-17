@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.SourceNextDamageRedirectToPermanentShield;
 import com.github.laxika.magicalvibes.cards.f.FirstVolley;
 import com.github.laxika.magicalvibes.cards.f.Frostling;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -105,7 +106,7 @@ class OpalEyeKondasYojimboTest extends BaseCardTest {
 
         harness.assertLife(player2, 20);
         assertThat(opalEye.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.sourceNextDamageRedirectToPermanentShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageRedirectToPermanentShield.class)).isEmpty();
     }
 
     @Test
@@ -161,7 +162,7 @@ class OpalEyeKondasYojimboTest extends BaseCardTest {
 
         harness.assertLife(player2, 19);
         assertThat(opalEye.getMarkedDamage()).isEqualTo(0);
-        assertThat(gd.sourceNextDamageRedirectToPermanentShields).isNotEmpty();
+        assertThat(gd.shields(SourceNextDamageRedirectToPermanentShield.class)).isNotEmpty();
     }
 
     @Test
@@ -196,13 +197,13 @@ class OpalEyeKondasYojimboTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, gd.playerBattlefields.get(player2.getId()).getFirst().getId());
 
-        assertThat(gd.sourceNextDamageRedirectToPermanentShields).isNotEmpty();
+        assertThat(gd.shields(SourceNextDamageRedirectToPermanentShield.class)).isNotEmpty();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.sourceNextDamageRedirectToPermanentShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageRedirectToPermanentShield.class)).isEmpty();
     }
 
     @Test

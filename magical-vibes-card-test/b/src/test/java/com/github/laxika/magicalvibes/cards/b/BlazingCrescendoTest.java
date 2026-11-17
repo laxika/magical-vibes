@@ -44,8 +44,8 @@ class BlazingCrescendoTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .contains(topCard.getId());
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(topCard.getId());
     }
 
     @Test
@@ -63,7 +63,7 @@ class BlazingCrescendoTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(topCard.getId());
     }
 
     @Test
@@ -163,10 +163,10 @@ class BlazingCrescendoTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(topCard.getId());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
     }
 
@@ -185,10 +185,10 @@ class BlazingCrescendoTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         harness.passUntil(player1, TurnStep.UPKEEP);
-        assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(topCard.getId());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
     }
 }

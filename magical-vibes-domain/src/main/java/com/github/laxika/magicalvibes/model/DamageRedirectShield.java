@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import java.util.UUID;
 
 /**
@@ -26,7 +27,7 @@ public record DamageRedirectShield(
         UUID redirectTargetId,
         boolean coversControlledPermanents,
         UUID protectedPermanentId
-) {
+) implements CardEffect {
     /** Player-only shield (Vengeful Archon). */
     public DamageRedirectShield(UUID protectedPlayerId, int remainingAmount, UUID sourcePermanentId,
                                 Card sourceCard, UUID redirectTargetId) {

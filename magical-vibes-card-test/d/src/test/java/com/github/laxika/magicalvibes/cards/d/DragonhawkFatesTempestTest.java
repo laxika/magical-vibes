@@ -37,7 +37,7 @@ class DragonhawkFatesTempestTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactly(first.getId(), second.getId());
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP))

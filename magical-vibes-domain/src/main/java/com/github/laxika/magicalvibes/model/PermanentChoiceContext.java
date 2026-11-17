@@ -945,7 +945,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID victimControllerId,
             UUID sourcePermanentId,
             String sourceCardName,
-            com.github.laxika.magicalvibes.model.effect.ControlDuration duration
+            com.github.laxika.magicalvibes.model.effect.Duration duration
     ) implements PermanentChoiceContext {}
 
     /** The attacking player chooses a defending player's creature to gain control of until end of turn. */

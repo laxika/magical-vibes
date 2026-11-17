@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import java.util.UUID;
 
 /**
@@ -7,5 +8,5 @@ import java.util.UUID;
  * The damage is dealt to the source's controller instead.
  */
 public record TurnSourceDamageRedirectToControllerShield(UUID protectedPlayerId,
-                                                          UUID sourcePermanentId) {
+                                                          UUID sourcePermanentId) implements CardEffect {
 }

@@ -27,7 +27,7 @@ class BeanstalkWurmTest extends BaseCardTest {
 
         assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(2);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -100,7 +100,7 @@ class BeanstalkWurmTest extends BaseCardTest {
         assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(1);
         assertThat(gd.getMaxLandsThisTurn(player2.getId())).isEqualTo(1);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -114,6 +114,6 @@ class BeanstalkWurmTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Beanstalk Wurm");
         assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(1);
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 }

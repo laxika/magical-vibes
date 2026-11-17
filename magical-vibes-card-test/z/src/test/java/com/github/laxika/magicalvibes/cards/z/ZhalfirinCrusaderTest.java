@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.cards.c.CryptRats;
 import com.github.laxika.magicalvibes.cards.d.DarajaGriffin;
 import com.github.laxika.magicalvibes.cards.d.DwarvenVigilantes;
@@ -103,8 +104,8 @@ class ZhalfirinCrusaderTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, crusader), null, destination.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.creatureDamageRedirectShields).hasSize(1);
-        var shield = gd.creatureDamageRedirectShields.getFirst();
+        assertThat(gd.shields(CreatureDamageRedirectShield.class)).hasSize(1);
+        var shield = gd.shields(CreatureDamageRedirectShield.class).getFirst();
         assertThat(shield.protectedPermanentId()).isEqualTo(crusader.getId());
         assertThat(shield.damageSourceId()).isNull();
         assertThat(shield.remainingAmount()).isEqualTo(1);
@@ -179,13 +180,13 @@ class ZhalfirinCrusaderTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, crusader), null, destination.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.creatureDamageRedirectShields).hasSize(1);
+        assertThat(gd.shields(CreatureDamageRedirectShield.class)).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.creatureDamageRedirectShields).isEmpty();
+        assertThat(gd.shields(CreatureDamageRedirectShield.class)).isEmpty();
     }
 
     @Test

@@ -32,7 +32,7 @@ class EncouragingAviatorJumpTest extends BaseCardTest {
         UUID copyId = aviator.getPreparedSpellCardId();
         assertThat(copyId).isNotNull();
         assertThat(gd.findExiledCard(copyId)).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(copyId)).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(copyId)).isEqualTo(player1.getId());
     }
 
     @Test
@@ -140,7 +140,7 @@ class EncouragingAviatorJumpTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aviator);
 
         assertThat(gd.findExiledCard(copyId)).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(copyId);
     }
 
     @Test
@@ -192,6 +192,6 @@ class EncouragingAviatorJumpTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.exiledCards).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 }

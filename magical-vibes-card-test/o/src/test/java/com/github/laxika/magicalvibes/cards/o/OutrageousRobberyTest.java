@@ -32,8 +32,8 @@ class OutrageousRobberyTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(spell);
         assertThat(gd.findExiledCard(spell.getId()).faceDown()).isTrue();
-        assertThat(gd.exilePlayPermissions).containsEntry(spell.getId(), player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(spell.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(spell.getId(), player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(spell.getId());
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(land);
     }
 

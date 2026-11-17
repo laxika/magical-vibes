@@ -35,7 +35,7 @@ class StormkeldVanguardTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Zuran Orb");
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -142,7 +142,7 @@ class StormkeldVanguardTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Stormkeld Vanguard");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

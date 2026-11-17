@@ -18,48 +18,48 @@ public record BoostAllCreaturesEffect(
         DynamicAmount toughnessBoost,
         PermanentPredicate filter,
         EachPermanentScope scope,
-        GrantDuration duration
+        Duration duration
 ) implements CardEffect {
 
     public BoostAllCreaturesEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost, PermanentPredicate filter) {
-        this(powerBoost, toughnessBoost, filter, EachPermanentScope.ALL_PLAYERS, GrantDuration.END_OF_TURN);
+        this(powerBoost, toughnessBoost, filter, EachPermanentScope.ALL_PLAYERS, Duration.UNTIL_END_OF_TURN);
     }
 
     public BoostAllCreaturesEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
-                                   PermanentPredicate filter, GrantDuration duration) {
+                                   PermanentPredicate filter, Duration duration) {
         this(powerBoost, toughnessBoost, filter, EachPermanentScope.ALL_PLAYERS, duration);
     }
 
     public BoostAllCreaturesEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
                                    PermanentPredicate filter, EachPermanentScope scope) {
-        this(powerBoost, toughnessBoost, filter, scope, GrantDuration.END_OF_TURN);
+        this(powerBoost, toughnessBoost, filter, scope, Duration.UNTIL_END_OF_TURN);
     }
 
     public BoostAllCreaturesEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost) {
-        this(powerBoost, toughnessBoost, null, EachPermanentScope.ALL_PLAYERS, GrantDuration.END_OF_TURN);
+        this(powerBoost, toughnessBoost, null, EachPermanentScope.ALL_PLAYERS, Duration.UNTIL_END_OF_TURN);
     }
 
     /** Convenience for plain fixed boosts ("all creatures get +1/+1"). */
     public BoostAllCreaturesEffect(int powerBoost, int toughnessBoost) {
         this(new Fixed(powerBoost), new Fixed(toughnessBoost), null, EachPermanentScope.ALL_PLAYERS,
-                GrantDuration.END_OF_TURN);
+                Duration.UNTIL_END_OF_TURN);
     }
 
     /** Convenience for plain fixed boosts restricted by a filter. */
     public BoostAllCreaturesEffect(int powerBoost, int toughnessBoost, PermanentPredicate filter) {
         this(new Fixed(powerBoost), new Fixed(toughnessBoost), filter, EachPermanentScope.ALL_PLAYERS,
-                GrantDuration.END_OF_TURN);
+                Duration.UNTIL_END_OF_TURN);
     }
 
     /** Convenience for a fixed boost with a non-default duration. */
     public BoostAllCreaturesEffect(int powerBoost, int toughnessBoost, PermanentPredicate filter,
-                                   GrantDuration duration) {
+                                   Duration duration) {
         this(new Fixed(powerBoost), new Fixed(toughnessBoost), filter, EachPermanentScope.ALL_PLAYERS, duration);
     }
 
     /** Convenience for "creatures target player controls get +X/+Y". */
     public BoostAllCreaturesEffect(int powerBoost, int toughnessBoost, EachPermanentScope scope) {
-        this(new Fixed(powerBoost), new Fixed(toughnessBoost), null, scope, GrantDuration.END_OF_TURN);
+        this(new Fixed(powerBoost), new Fixed(toughnessBoost), null, scope, Duration.UNTIL_END_OF_TURN);
     }
 
     @Override

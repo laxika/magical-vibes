@@ -51,7 +51,7 @@ public class ExileTargetPlayerTopCardsForSacrificedManaValueMayPlayUntilNextEndS
             Card topCard = deck.removeFirst();
             exileService.exileCard(gameData, targetPlayerId, topCard);
             exileSupport.grantPlayUntilOwnersNextEndStep(gameData, topCard.getId(), controllerId);
-            gameData.exilePlayAnyManaTypeWhileExiled.add(topCard.getId());
+            gameData.updateExilePlayPermission(topCard.getId(), granted -> granted.withAnyManaType(true));
             exiledNames.add(topCard.getName());
         }
 

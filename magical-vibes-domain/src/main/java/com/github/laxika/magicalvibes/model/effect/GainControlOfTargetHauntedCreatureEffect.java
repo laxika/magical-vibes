@@ -4,8 +4,8 @@ package com.github.laxika.magicalvibes.model.effect;
 public record GainControlOfTargetHauntedCreatureEffect() implements ControlStealingEffect {
 
     @Override
-    public ControlDuration controlDuration() {
-        return ControlDuration.PERMANENT;
+    public Duration controlDuration() {
+        return Duration.PERMANENT;
     }
 
     @Override

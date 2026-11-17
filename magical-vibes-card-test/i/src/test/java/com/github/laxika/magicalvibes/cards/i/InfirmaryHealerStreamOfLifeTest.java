@@ -95,7 +95,7 @@ class InfirmaryHealerStreamOfLifeTest extends BaseCardTest {
         UUID copyId = healer.getPreparedSpellCardId();
         assertThat(copyId).isNotNull();
         assertThat(gd.findExiledCard(copyId)).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(copyId)).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(copyId)).isEqualTo(player1.getId());
     }
 
     @Test
@@ -112,7 +112,7 @@ class InfirmaryHealerStreamOfLifeTest extends BaseCardTest {
         assertThat(healer.isPrepared()).isFalse();
         assertThat(healer.getPreparedSpellCardId()).isNull();
         assertThat(gd.findExiledCard(copyId)).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(copyId);
     }
 
     @Test
@@ -126,7 +126,7 @@ class InfirmaryHealerStreamOfLifeTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(healer);
         assertThat(gd.findExiledCard(copyId)).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(copyId);
     }
 
     private Permanent castInfirmaryHealer() {

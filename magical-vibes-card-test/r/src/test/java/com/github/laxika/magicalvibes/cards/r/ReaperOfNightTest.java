@@ -66,7 +66,7 @@ class ReaperOfNightTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -171,7 +171,7 @@ class ReaperOfNightTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(discarded);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 

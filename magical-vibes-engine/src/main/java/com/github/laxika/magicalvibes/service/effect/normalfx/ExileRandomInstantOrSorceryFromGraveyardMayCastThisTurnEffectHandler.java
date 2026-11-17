@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileRandomInstantOrSorceryFromGraveyardMayCastThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -54,8 +55,7 @@ public class ExileRandomInstantOrSorceryFromGraveyardMayCastThisTurnEffectHandle
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, exiled.getId());
         exileService.exileCard(gameData, controllerId, exiled);
 
-        gameData.exilePlayPermissions.put(exiled.getId(), controllerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(exiled.getId());
+        gameData.grantExilePlayPermission(exiled.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
         gameData.exileInsteadOfGraveyard.add(exiled.getId());
 
         String playerName = gameData.playerIdToName.get(controllerId);

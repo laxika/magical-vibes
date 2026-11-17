@@ -11,7 +11,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public record ScrambleverseEffect() implements CardEffect, ControlStealingEffect {
 
     @Override
-    public ControlDuration controlDuration() {
-        return ControlDuration.PERMANENT;
+    public Duration controlDuration() {
+        return Duration.PERMANENT;
     }
 }

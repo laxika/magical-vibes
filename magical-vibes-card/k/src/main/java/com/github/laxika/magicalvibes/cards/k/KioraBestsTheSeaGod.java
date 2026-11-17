@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -45,7 +45,7 @@ public class KioraBestsTheSeaGod extends Card {
         PermanentPredicate opponentPermanent = new PermanentNotPredicate(
                 new PermanentControlledBySourceControllerPredicate());
         addTrigger(Triggers.chapter(3),
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                new GainControlOfTargetEffect(Duration.PERMANENT),
                 new UntapPermanentsEffect(TapUntapScope.TARGET));
         setSagaChapterTargetFilter(3, Set.of(
                 new PermanentPredicateTargetFilter(

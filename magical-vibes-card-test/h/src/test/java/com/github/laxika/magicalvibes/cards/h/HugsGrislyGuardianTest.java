@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -27,9 +28,9 @@ class HugsGrislyGuardianTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
-        assertThat(gd.exilePlayPermissions).containsEntry(first.getId(), player1.getId())
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer).containsEntry(first.getId(), player1.getId())
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)).containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
     }
 
@@ -128,12 +129,12 @@ class HugsGrislyGuardianTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.ensurePriority(player1);

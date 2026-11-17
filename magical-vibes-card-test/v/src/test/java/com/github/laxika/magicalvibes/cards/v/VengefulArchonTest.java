@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
@@ -71,10 +72,10 @@ class VengefulArchonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.damageRedirectShields).hasSize(1);
-        assertThat(gd.damageRedirectShields.getFirst().protectedPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.damageRedirectShields.getFirst().remainingAmount()).isEqualTo(3);
-        assertThat(gd.damageRedirectShields.getFirst().redirectTargetId()).isEqualTo(player2.getId());
+        assertThat(gd.shields(DamageRedirectShield.class)).hasSize(1);
+        assertThat(gd.shields(DamageRedirectShield.class).getFirst().protectedPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.shields(DamageRedirectShield.class).getFirst().remainingAmount()).isEqualTo(3);
+        assertThat(gd.shields(DamageRedirectShield.class).getFirst().redirectTargetId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -87,7 +88,7 @@ class VengefulArchonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.damageRedirectShields).isEmpty();
+        assertThat(gd.shields(DamageRedirectShield.class)).isEmpty();
     }
 
     @Test
@@ -147,8 +148,8 @@ class VengefulArchonTest extends BaseCardTest {
         // Player2 takes 2 damage (redirected)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         // Shield has 3 remaining
-        assertThat(gd.damageRedirectShields).hasSize(1);
-        assertThat(gd.damageRedirectShields.getFirst().remainingAmount()).isEqualTo(3);
+        assertThat(gd.shields(DamageRedirectShield.class)).hasSize(1);
+        assertThat(gd.shields(DamageRedirectShield.class).getFirst().remainingAmount()).isEqualTo(3);
     }
 
     @Test
@@ -179,7 +180,7 @@ class VengefulArchonTest extends BaseCardTest {
         // Player2 takes 1 damage (redirected portion)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         // Shield fully consumed
-        assertThat(gd.damageRedirectShields).isEmpty();
+        assertThat(gd.shields(DamageRedirectShield.class)).isEmpty();
     }
 
     @Test
@@ -191,13 +192,13 @@ class VengefulArchonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 3, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().damageRedirectShields).hasSize(1);
+        assertThat(harness.getGameData().shields(DamageRedirectShield.class)).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().damageRedirectShields).isEmpty();
+        assertThat(harness.getGameData().shields(DamageRedirectShield.class)).isEmpty();
     }
 
     @Test
@@ -216,7 +217,7 @@ class VengefulArchonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.damageRedirectShields).hasSize(2);
+        assertThat(gd.shields(DamageRedirectShield.class)).hasSize(2);
     }
 
     @Test
@@ -276,7 +277,7 @@ class VengefulArchonTest extends BaseCardTest {
 
         harness.assertLife(player1, 17);
         harness.assertLife(player2, 20);
-        assertThat(gd.damageRedirectShields).isEmpty();
+        assertThat(gd.shields(DamageRedirectShield.class)).isEmpty();
     }
 
     private void boltController() {

@@ -41,7 +41,8 @@ public class AssignNoCombatDamageToEnchantedCreatureEffectHandler implements Nor
 
         PreventionSupport.preventCombatDamageDealtBy(gameData, entry.getCard().getName(),
                 entry.getSourcePermanentId(), entry.getControllerId(), creature.getId(), Duration.UNTIL_END_OF_TURN);
-        gameData.creaturesAssigningNoCombatDamageThisTurn.add(creature.getId());
+        PreventionSupport.assignNoCombatDamage(gameData, entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), creature.getId(), Duration.UNTIL_END_OF_TURN);
         gameLogService.append(gameData,
                 GameLog.text(creature.getCard().getName() + " assigns no combat damage this turn."));
     }

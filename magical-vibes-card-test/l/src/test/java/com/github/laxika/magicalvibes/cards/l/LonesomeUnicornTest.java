@@ -37,7 +37,7 @@ class LonesomeUnicornTest extends BaseCardTest {
         assertThat(knight.getCard().getSubtypes()).containsExactly(CardSubtype.KNIGHT);
         assertThat(knight.hasKeyword(Keyword.VIGILANCE)).isTrue();
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNotNull();
-        assertThat(harness.getGameData().exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(harness.getGameData().exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test

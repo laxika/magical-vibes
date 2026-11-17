@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -72,8 +73,8 @@ class TersaLightshatterTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(6);
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
         Card exiled = gd.getPlayerExiledCards(player1.getId()).getFirst();
-        assertThat(gd.exilePlayPermissions.get(exiled.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolder(exiled.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(exiled.getId());
 
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.RED, 1);
@@ -227,7 +228,7 @@ class TersaLightshatterTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiled);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiled.getId());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         assertThatThrownBy(() -> harness.castFromExile(player1, exiled.getId()))

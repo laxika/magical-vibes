@@ -22,7 +22,7 @@ public class RedirectAllDamageToCreaturesToControllerEffectHandler implements No
         UUID controllerId = entry.getControllerId();
         if (controllerId == null) return;
 
-        gameData.creatureDamageRedirectShields.add(new CreatureDamageRedirectShield(
+        gameData.addShield(new CreatureDamageRedirectShield(
                 null, null, CreatureDamageRedirectShield.UNLIMITED, controllerId));
     }
 }

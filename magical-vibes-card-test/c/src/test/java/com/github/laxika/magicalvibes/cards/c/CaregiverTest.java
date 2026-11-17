@@ -47,7 +47,7 @@ class CaregiverTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Caregiver");
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
 
     @Test
@@ -68,7 +68,7 @@ class CaregiverTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertLife(player2, 18);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test
@@ -83,7 +83,7 @@ class CaregiverTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Caregiver");
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
 
     @Test

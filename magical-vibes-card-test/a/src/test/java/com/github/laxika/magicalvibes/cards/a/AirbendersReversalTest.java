@@ -38,7 +38,7 @@ class AirbendersReversalTest extends BaseCardTest {
         cast(1, creature.getId());
 
         assertThat(gd.findExiledCard(creature.getOriginalCard().getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(creature.getOriginalCard().getId()))
+        assertThat(gd.exilePlayPermissionHolder(creature.getOriginalCard().getId()))
                 .isEqualTo(player1.getId());
     }
 
@@ -76,7 +76,7 @@ class AirbendersReversalTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Forecasting Fortune Teller");
         assertThat(gd.findExiledCard(creature.getOriginalCard().getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(creature.getOriginalCard().getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(creature.getOriginalCard().getId());
         harness.assertOnBattlefield(player1, "Clue");
     }
 
@@ -119,7 +119,7 @@ class AirbendersReversalTest extends BaseCardTest {
         cast(1, creature.getId());
 
         assertThat(gd.findExiledCard(creature.getOriginalCard().getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(creature.getOriginalCard().getId()))
+        assertThat(gd.exilePlayPermissionHolder(creature.getOriginalCard().getId()))
                 .isEqualTo(player2.getId());
     }
 

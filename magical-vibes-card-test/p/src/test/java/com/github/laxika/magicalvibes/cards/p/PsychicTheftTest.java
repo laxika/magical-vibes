@@ -38,7 +38,7 @@ class PsychicTheftTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(spell);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(land, creature);
-        assertThat(gd.exilePlayPermissions.get(spell.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(spell.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -190,6 +190,6 @@ class PsychicTheftTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(spell);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(spell.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(spell.getId());
     }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayWhileControllingSubtypeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -53,9 +54,8 @@ public class ExileTopCardMayPlayWhileControllingSubtypeEffectHandler implements 
             } else {
                 exileService.exileCard(gameData, controllerId, topCard);
             }
-            gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-            gameData.exilePlayPermissionConditions.put(topCard.getId(),
-                    new ControlsPermanent(new PermanentHasSubtypePredicate(exileEffect.subtype())));
+            gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.PERMANENT);
+            gameData.updateExilePlayPermission(topCard.getId(), granted -> granted.withCondition(new ControlsPermanent(new PermanentHasSubtypePredicate(exileEffect.subtype()))));
             exiledCards.add(topCard);
         }
 

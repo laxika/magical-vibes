@@ -51,8 +51,8 @@ class TectonicGiantTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(other.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(other.getId());
     }
 
     @Test
@@ -197,11 +197,11 @@ class TectonicGiantTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(chosen.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(chosen.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(chosen, other);
     }
 

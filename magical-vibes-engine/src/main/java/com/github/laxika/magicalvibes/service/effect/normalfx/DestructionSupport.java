@@ -32,7 +32,6 @@ import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -814,7 +813,7 @@ public class DestructionSupport {
 
     public void gainPermanentControl(GameData gameData, Permanent target, UUID controllerId, String sourceCardName) {
         creatureControlService.applyControlEffect(gameData, controllerId, target,
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT, null,
+                new GainControlOfTargetEffect(Duration.PERMANENT), Duration.PERMANENT, null,
                 sourceCardName);
     }
 

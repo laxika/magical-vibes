@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithNormalCostEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -70,8 +71,8 @@ public class ExileTopUntilNonlandOfDamagedPlayerMayCastForLifeThisTurnEffectHand
             return;
         }
 
-        gameData.exilePlayPermissions.put(nonland.getId(), controllerId);
-        gameData.exilePlayForLifeEqualToManaValue.add(nonland.getId());
+        gameData.grantExilePlayPermission(nonland.getId(), controllerId, Duration.PERMANENT);
+        gameData.updateExilePlayPermission(nonland.getId(), granted -> granted.withForLifeEqualToManaValue(true));
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), controllerId,
                 List.of(new MayCastExiledCardWithNormalCostEffect(UUID.randomUUID(), false)),

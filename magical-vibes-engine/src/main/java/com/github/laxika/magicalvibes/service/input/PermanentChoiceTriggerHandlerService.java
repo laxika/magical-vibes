@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -512,7 +511,7 @@ public class PermanentChoiceTriggerHandlerService {
                 : findPermanentByCardId(gameData, context.sourceCard().getId());
         if (source != null) {
             creatureControlService.applyControlEffect(gameData, playerId, source,
-                    new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                    new GainControlOfTargetEffect(Duration.PERMANENT),
                     Duration.PERMANENT, null, context.sourceCard().getName());
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

@@ -192,7 +192,7 @@ class IvoryCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 2, player2.getId());
             harness.passBothPriorities();
 
-            assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+            assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
         }
 
         @Test
@@ -222,7 +222,7 @@ class IvoryCharmTest extends BaseCardTest {
             harness.castAndResolveInstant(player1, 0, player2.getId());
 
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-            assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+            assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
         }
     }
 }

@@ -49,10 +49,10 @@ public class RedirectNextDamageFromTargetToAnotherTargetEffectHandler implements
         Permanent protectedPermanent = gameQueryService.findPermanentById(gameData, protectedId);
         Permanent destinationPermanent = gameQueryService.findPermanentById(gameData, destinationId);
         if (protectedPermanent == null) {
-            gameData.playerNextDamageRedirectShields.add(
+            gameData.addShield(
                     new PlayerNextDamageRedirectShield(protectedId, amount, destinationId));
         } else {
-            gameData.creatureDamageRedirectShields.add(new CreatureDamageRedirectShield(
+            gameData.addShield(new CreatureDamageRedirectShield(
                     protectedId, null, amount, destinationId));
         }
 

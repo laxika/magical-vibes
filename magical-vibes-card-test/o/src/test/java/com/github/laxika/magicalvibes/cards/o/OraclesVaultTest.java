@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.h.HieroglyphicIllumination;
@@ -50,10 +51,10 @@ class OraclesVaultTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getId().equals(top.getId()));
-        assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(top.getId());
+        assertThat(gd.exilePlayPermissionHolder(top.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(top.getId());
         // First ability is a normal-cost play, not a free one.
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(top.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(top.getId());
         assertThat(vault.getCounterCount(CounterType.BRICK)).isEqualTo(1);
     }
 
@@ -81,9 +82,9 @@ class OraclesVaultTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getId().equals(top.getId()));
-        assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(top.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(top.getId());
+        assertThat(gd.exilePlayPermissionHolder(top.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(top.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(top.getId());
     }
 
     @Test
@@ -103,8 +104,8 @@ class OraclesVaultTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(e -> e.getCard().getId().equals(top.getId())
                 && e.getEntryType() == StackEntryType.INSTANT_SPELL);
         assertThat(gd.getPlayerExiledCards(player1.getId())).noneMatch(c -> c.getId().equals(top.getId()));
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(top.getId());
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -117,14 +118,14 @@ class OraclesVaultTest extends BaseCardTest {
 
         harness.activateAbility(player1, vaultIndex(player1, vault), 1, null, null);
         harness.passBothPriorities();
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(top.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(top.getId());
 
         harness.inMutationScope(() ->
                 GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.turn.TurnCleanupService.class)
                         .applyCleanupResets(gd));
 
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(top.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
     }
 
     @Test

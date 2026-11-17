@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -132,7 +131,7 @@ class FickleEfreetTest extends BaseCardTest {
         gd.stolenCreatures.put(efreet.getId(), player1.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), "Test control change", null, player2.getId(),
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT), efreet.getId(), null, null,
+                new GainControlOfTargetEffect(Duration.PERMANENT), efreet.getId(), null, null,
                 Duration.PERMANENT, 0));
         efreet.setAttacking(false);
 

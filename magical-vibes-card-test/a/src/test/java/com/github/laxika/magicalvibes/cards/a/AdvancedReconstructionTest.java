@@ -33,7 +33,7 @@ class AdvancedReconstructionTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(milled);
-        assertThat(gd.exilePlayPermissions).containsEntry(milled.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(milled.getId(), player1.getId());
     }
 
     @Test
@@ -65,7 +65,7 @@ class AdvancedReconstructionTest extends BaseCardTest {
 
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
-        gd.graveyardPlayPermissions.put(creature.getId(), player1.getId());
+        grantGraveyardPlay(creature.getId(), player1.getId());
         gd.playerManaPools.get(player1.getId()).clear();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castFromGraveyard(player1, 0);
@@ -187,7 +187,7 @@ class AdvancedReconstructionTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(milled);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(milled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(milled.getId());
     }
 
     private void levelUpToTwo(Permanent reconstruction) {

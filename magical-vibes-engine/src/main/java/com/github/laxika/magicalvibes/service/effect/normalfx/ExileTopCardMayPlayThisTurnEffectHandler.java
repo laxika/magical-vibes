@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -77,16 +78,15 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
             exileService.exileCard(gameData, controllerId, topCard);
 
             // Play permission (any card type) expiring at end of turn.
-            gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-            gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
+            gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
             if (exileEffect.duringTurnsLoreCounterPutOnSource() && source != null) {
-                gameData.exilePlayPermissionLoreCounterSagas.put(topCard.getId(), source.getId());
+                gameData.grantExilePlayPermissionRenewalOnLoreCounter(topCard.getId(), source.getId(), controllerId);
             }
             boolean freeCast = withoutPaying || exileEffect.freeCastFilter() != null
                     && predicateEvaluationService.matchesCardPredicate(
                             topCard, exileEffect.freeCastFilter(), null);
             if (freeCast) {
-                gameData.exilePlayWithoutPayingManaCost.add(topCard.getId());
+                gameData.setExilePlayWithoutPayingManaCost(topCard.getId(), true);
             }
 
             gameLogService.append(gameData, GameLog.builder()

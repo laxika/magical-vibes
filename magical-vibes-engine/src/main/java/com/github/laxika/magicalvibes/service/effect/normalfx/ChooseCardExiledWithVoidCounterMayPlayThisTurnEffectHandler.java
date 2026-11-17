@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ExilePlayDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -52,7 +52,7 @@ public class ChooseCardExiledWithVoidCounterMayPlayThisTurnEffectHandler
 
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.ExiledCardMayPlayChoice(
-                        controllerId, eligibleCardIds, ExilePlayDuration.END_OF_TURN, false, true, false, false));
+                        controllerId, eligibleCardIds, Duration.UNTIL_END_OF_TURN, false, true, false, false));
         log.info("Game {} - {} chooses an opponent-owned card with a void counter to play",
                 gameData.id, entry.getCard().getName());
     }

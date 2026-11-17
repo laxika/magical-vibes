@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndGrantControllerCastPermissionUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -65,7 +66,7 @@ public class ExileTargetPermanentAndGrantControllerCastPermissionUntilNextTurnEf
                 exileSupport.grantPlayUntilNextTurnOfPlayer(
                         gameData, exiledCard.getId(), controllerId, controllerId);
                 if (exileEffect.anyManaType()) {
-                    gameData.exilePlayAnyManaType.add(exiledCard.getId());
+                    gameData.grantExileAnyManaType(exiledCard.getId(), controllerId, Duration.UNTIL_END_OF_YOUR_NEXT_TURN);
                 }
                 String controllerName = gameData.playerIdToName.get(controllerId);
                 gameLogService.append(gameData, GameLog.builder()

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AllowCastSourceCardFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -22,9 +23,8 @@ public class AllowCastSourceCardFromExileEffectHandler implements NormalEffectHa
             return;
         }
 
-        gameData.exilePlayPermissions.put(sourceCard.getId(), entry.getControllerId());
-        if (((AllowCastSourceCardFromExileEffect) effect).thisTurnOnly()) {
-            gameData.exilePlayPermissionsExpireEndOfTurn.add(sourceCard.getId());
-        }
+        gameData.grantExilePlayPermission(sourceCard.getId(), entry.getControllerId(),
+                ((AllowCastSourceCardFromExileEffect) effect).thisTurnOnly()
+                        ? Duration.UNTIL_END_OF_TURN : Duration.PERMANENT);
     }
 }

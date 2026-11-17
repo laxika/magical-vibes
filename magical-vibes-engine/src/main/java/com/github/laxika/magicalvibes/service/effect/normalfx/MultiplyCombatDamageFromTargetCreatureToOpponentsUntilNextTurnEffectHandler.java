@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedSourceDamageMultiplication;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyCombatDamageFromTargetCreatureToOpponentsUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -44,8 +45,9 @@ public class MultiplyCombatDamageFromTargetCreatureToOpponentsUntilNextTurnEffec
             return;
         }
 
-        gameData.queueDelayedAction(new DelayedSourceDamageMultiplication(
-                target.getId(), entry.getControllerId(), e.multiplier()));
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), e, target.getId(),
+                Duration.UNTIL_YOUR_NEXT_TURN));
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())
                 .text("'s combat damage to your opponents is multiplied by ")

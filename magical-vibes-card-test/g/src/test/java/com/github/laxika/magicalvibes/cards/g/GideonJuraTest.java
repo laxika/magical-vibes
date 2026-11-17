@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.cards.c.Combust;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -30,7 +31,7 @@ class GideonJuraTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.tauntedNextTurn).containsEntry(player2.getId(), gideon.getId());
+        assertThat(FloatingCombatRules.scheduledTauntTargets(gd, player2.getId())).containsExactly(gideon.getId());
         assertThat(gideon.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
     }
 
@@ -38,7 +39,7 @@ class GideonJuraTest extends BaseCardTest {
     @DisplayName("The taunted player's creatures must attack Gideon, not his controller")
     void tauntedCreaturesMustAttackGideon() {
         Permanent gideon = addReadyGideon(player1);
-        gd.tauntedThisTurn.put(player2.getId(), gideon.getId());
+        FloatingCombatRules.taunt(gd, player1.getId(), player2.getId(), gideon.getId());
 
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
         bear.setSummoningSick(false);
@@ -67,7 +68,7 @@ class GideonJuraTest extends BaseCardTest {
     @DisplayName("The requirement lapses if Gideon has left the battlefield by that turn")
     void requirementLapsesWhenGideonIsGone() {
         Permanent gideon = addReadyGideon(player1);
-        gd.tauntedThisTurn.put(player2.getId(), gideon.getId());
+        FloatingCombatRules.taunt(gd, player1.getId(), player2.getId(), gideon.getId());
         gd.playerBattlefields.get(player1.getId()).remove(gideon);
 
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());

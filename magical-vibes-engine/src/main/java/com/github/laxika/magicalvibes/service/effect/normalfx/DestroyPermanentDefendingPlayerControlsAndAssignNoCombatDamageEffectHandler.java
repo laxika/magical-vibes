@@ -73,7 +73,8 @@ public class DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffec
         if (source != null) {
             PreventionSupport.preventCombatDamageDealtBy(gameData, entry.getCard().getName(), sourcePermanentId,
                     entry.getControllerId(), sourcePermanentId, Duration.UNTIL_END_OF_TURN);
-            gameData.creaturesAssigningNoCombatDamageThisTurn.add(sourcePermanentId);
+            PreventionSupport.assignNoCombatDamage(gameData, entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), sourcePermanentId, Duration.UNTIL_END_OF_TURN);
             gameLogService.append(gameData,
                     GameLog.cardThen(source.getCard(), " assigns no combat damage this turn."));
         }

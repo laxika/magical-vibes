@@ -80,7 +80,7 @@ public class ExileTopCardsMayPlayUntilNextTurnEffectHandler implements NormalEff
             }
             if (exileEffect.freeCastIfCastFromGraveyard()
                     && entry.getSourceZone() == Zone.GRAVEYARD) {
-                gameData.exilePlayWithoutPayingManaCost.add(topCard.getId());
+                gameData.setExilePlayWithoutPayingManaCost(topCard.getId(), true);
             }
             exiledNames.add(topCard.getName());
         }

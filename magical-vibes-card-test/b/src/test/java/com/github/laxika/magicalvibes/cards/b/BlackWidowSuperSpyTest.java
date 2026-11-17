@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -34,7 +35,7 @@ class BlackWidowSuperSpyTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(Card::getId)
                 .containsExactly(land.getId(), nonland.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(nonland.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(nonland.getId());
     }
 
     @Test
@@ -49,9 +50,9 @@ class BlackWidowSuperSpyTest extends BaseCardTest {
         resolveCombatAndTrigger();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.exilePlayPermissions.get(nonland.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(nonland.getId());
-        assertThat(gd.exilePlayAnyManaType).contains(nonland.getId());
+        assertThat(gd.exilePlayPermissionHolder(nonland.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(nonland.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(nonland.getId());
 
         if (gd.interaction.isAwaitingInput()) {
             harness.handleMayAbilityChosen(player1, false);
@@ -107,7 +108,7 @@ class BlackWidowSuperSpyTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.findExiledCard(nonland.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(nonland.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(nonland.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -125,8 +126,8 @@ class BlackWidowSuperSpyTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.findExiledCard(nonland.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(nonland.getId());
-        assertThat(gd.exilePlayAnyManaType).doesNotContain(nonland.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(nonland.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).doesNotContain(nonland.getId());
     }
 
     @Test
@@ -142,7 +143,7 @@ class BlackWidowSuperSpyTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(nonland.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(nonland.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(nonland.getId())).isEqualTo(player1.getId());
     }
 
     private Permanent addAttackingBlackWidow() {

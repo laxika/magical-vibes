@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SeizeTheSpotlightEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -136,14 +136,14 @@ public class SeizeTheSpotlightEffectHandler implements NormalEffectHandlerBean {
 
     private void applyFame(GameData gameData, UUID controllerId, List<UUID> chosenIds,
                            String sourceName) {
-        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.END_OF_TURN);
+        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN);
         for (UUID chosenId : chosenIds) {
             Permanent creature = gameQueryService.findPermanentById(gameData, chosenId);
             if (creature == null) {
                 continue;
             }
             creatureControlService.applyControlEffect(gameData, controllerId, creature,
-                    controlEffect, ControlDuration.END_OF_TURN.toDuration(), null, sourceName);
+                    controlEffect, Duration.UNTIL_END_OF_TURN, null, sourceName);
             tapUntapSupport.untapPermanent(gameData, creature);
             grantKeywordEffectHandler.grantToPermanent(gameData, sourceName, controllerId, creature,
                     Set.of(Keyword.HASTE));

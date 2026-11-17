@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.h.HomaridWarrior;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -191,7 +190,7 @@ class DeepSpawnTest extends BaseCardTest {
 
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
                 .applyControlEffect(gd, player2.getId(), spawn,
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT,
+                        new GainControlOfTargetEffect(Duration.PERMANENT), Duration.PERMANENT,
                         null, "Test setup"));
         harness.performUntapStep(player2);
 
@@ -208,7 +207,7 @@ class DeepSpawnTest extends BaseCardTest {
 
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
                 .applyControlEffect(gd, player2.getId(), spawn,
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT,
+                        new GainControlOfTargetEffect(Duration.PERMANENT), Duration.PERMANENT,
                         null, "Test setup"));
         harness.performUntapStep(player1);
         harness.performUntapStep(player2);

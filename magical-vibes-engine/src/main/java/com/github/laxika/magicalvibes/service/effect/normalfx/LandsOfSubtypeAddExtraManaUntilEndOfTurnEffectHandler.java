@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -10,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collections;
 
 @Slf4j
 @Component
@@ -28,9 +28,8 @@ public class LandsOfSubtypeAddExtraManaUntilEndOfTurnEffectHandler implements No
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (LandsOfSubtypeAddExtraManaUntilEndOfTurnEffect) effect;
-        gameData.extraManaOnLandSubtypeTapThisTurn.computeIfAbsent(e.subtype(), ignored ->
-                Collections.synchronizedList(new ArrayList<>())).add(
-                new com.github.laxika.magicalvibes.model.TemporaryLandTapMana(e.color(), entry.getControllerId()));
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), effect, null, Duration.UNTIL_END_OF_TURN));
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 ": until end of turn, tapping a " + e.subtype().name().toLowerCase()

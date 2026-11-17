@@ -31,8 +31,8 @@ class SpelljackTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(hawk.getId()));
-        assertThat(gd.exilePlayPermissions.get(hawk.getId())).isEqualTo(player2.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(hawk.getId());
+        assertThat(gd.exilePlayPermissionHolder(hawk.getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(hawk.getId());
         harness.assertNotInGraveyard(player1, "Suntail Hawk");
         harness.assertNotOnBattlefield(player1, "Suntail Hawk");
     }
@@ -127,7 +127,7 @@ class SpelljackTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(mentalNote.getId()));
-        assertThat(gd.exilePlayPermissions.get(mentalNote.getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(mentalNote.getId())).isEqualTo(player2.getId());
         harness.assertNotInGraveyard(player1, "Mental Note");
     }
 
@@ -190,8 +190,8 @@ class SpelljackTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
         assertThat(gd.findExiledCard(mentalNote.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(mentalNote.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(mentalNote.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(mentalNote.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(mentalNote.getId());
     }
 
     @Test

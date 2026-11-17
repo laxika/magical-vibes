@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayGetEnergyOrPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EnergyCountersEffectHandler;
@@ -45,8 +46,7 @@ public class ExileTopCardMayGetEnergyOrPlayThisTurnHandler implements MayEffectH
             );
             energyCountersEffectHandler.resolve(gameData, energyEntry, energy);
         } else if (!accepted && exiledEntry != null) {
-            gameData.exilePlayPermissions.put(exiledEntry.card().getId(), ability.controllerId());
-            gameData.exilePlayPermissionsExpireEndOfTurn.add(exiledEntry.card().getId());
+            gameData.grantExilePlayPermission(exiledEntry.card().getId(), ability.controllerId(), Duration.UNTIL_END_OF_TURN);
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

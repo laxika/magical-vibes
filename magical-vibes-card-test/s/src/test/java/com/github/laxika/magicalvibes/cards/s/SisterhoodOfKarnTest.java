@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +32,7 @@ class SisterhoodOfKarnTest extends BaseCardTest {
         Permanent sisterhood = castSisterhood();
         Card spell = new GrizzlyBears();
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castFromExile(player1, spell.getId());
@@ -56,7 +57,7 @@ class SisterhoodOfKarnTest extends BaseCardTest {
         Permanent sisterhood = castSisterhood();
         Card spell = new SisterhoodOfKarn();
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castFromExile(player1, spell.getId());
@@ -83,7 +84,7 @@ class SisterhoodOfKarnTest extends BaseCardTest {
         Permanent sisterhood = castSisterhood();
         Card spell = new SisterhoodOfKarn();
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castFromExile(player1, spell.getId());
         sisterhood.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
@@ -100,7 +101,7 @@ class SisterhoodOfKarnTest extends BaseCardTest {
         Permanent sisterhood = castSisterhood();
         Card spell = new SisterhoodOfKarn();
         gd.addToExile(player2.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player2.getId());
+        gd.grantExilePlayPermission(spell.getId(), player2.getId(), Duration.PERMANENT);
         harness.forceActivePlayer(player2);
         harness.addMana(player2, ManaColor.GREEN, 2);
 

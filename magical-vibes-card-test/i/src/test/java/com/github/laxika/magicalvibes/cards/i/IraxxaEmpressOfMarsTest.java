@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,7 +28,7 @@ class IraxxaEmpressOfMarsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IraxxaEmpressOfMars());
         GrizzlyBears spell = new GrizzlyBears();
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castFromExile(player1, spell.getId());
@@ -71,7 +72,7 @@ class IraxxaEmpressOfMarsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IraxxaEmpressOfMars());
         GrizzlyBears spell = new GrizzlyBears();
         harness.setExile(player1, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castFromExile(player1, spell.getId());
@@ -109,7 +110,7 @@ class IraxxaEmpressOfMarsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IraxxaEmpressOfMars());
         GrizzlyBears spell = new GrizzlyBears();
         harness.setExile(player2, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player2.getId());
+        gd.grantExilePlayPermission(spell.getId(), player2.getId(), Duration.PERMANENT);
         harness.forceActivePlayer(player2);
         harness.addMana(player2, ManaColor.GREEN, 2);
 

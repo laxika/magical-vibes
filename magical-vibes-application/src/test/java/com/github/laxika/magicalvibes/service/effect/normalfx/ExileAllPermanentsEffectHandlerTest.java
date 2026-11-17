@@ -288,7 +288,7 @@ class ExileAllPermanentsEffectHandlerTest {
 
                 exileAllPermanentsHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.exilePlayPermissions).containsEntry(creatureCard.getId(), player1Id);
-                assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(creatureCard.getId());
+                assertThat(gd.exilePlayPermissionHolders()).containsEntry(creatureCard.getId(), player1Id);
+                assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(creatureCard.getId());
             }
 }

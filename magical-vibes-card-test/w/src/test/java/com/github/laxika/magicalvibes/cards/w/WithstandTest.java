@@ -39,7 +39,7 @@ class WithstandTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(3);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(3);
         harness.assertInHand(player1, "Wild Cantor");
     }
 
@@ -57,7 +57,7 @@ class WithstandTest extends BaseCardTest {
         resolveCombat(player1);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerDamagePreventionShields).containsEntry(player2.getId(), 2);
+        assertThat(gd.playerDamagePreventionShields()).containsEntry(player2.getId(), 2);
     }
 
     @Test
@@ -74,7 +74,7 @@ class WithstandTest extends BaseCardTest {
             harness.castAndResolveInstant(player1, 0, player2.getId());
             harness.assertLife(player2, i < 3 ? 20 : 19);
         }
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test

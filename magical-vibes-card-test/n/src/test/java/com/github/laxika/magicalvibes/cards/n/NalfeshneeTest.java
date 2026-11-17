@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -26,7 +27,7 @@ class NalfeshneeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Nalfeshnee());
         GrizzlyBears bears = new GrizzlyBears();
         harness.setExile(player1, List.of(bears));
-        gd.exilePlayPermissions.put(bears.getId(), player1.getId());
+        gd.grantExilePlayPermission(bears.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -56,7 +57,7 @@ class NalfeshneeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Nalfeshnee());
         AngelsMercy angelsMercy = new AngelsMercy();
         harness.setExile(player1, List.of(angelsMercy));
-        gd.exilePlayPermissions.put(angelsMercy.getId(), player1.getId());
+        gd.grantExilePlayPermission(angelsMercy.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.WHITE, 4);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -71,7 +72,7 @@ class NalfeshneeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Nalfeshnee());
         GrizzlyBears bears = new GrizzlyBears();
         harness.setExile(player1, List.of(bears));
-        gd.exilePlayPermissions.put(bears.getId(), player1.getId());
+        gd.grantExilePlayPermission(bears.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castFromExile(player1, bears.getId());
@@ -115,7 +116,7 @@ class NalfeshneeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Nalfeshnee());
         AngelsMercy mercy = new AngelsMercy();
         harness.setExile(player2, List.of(mercy));
-        gd.exilePlayPermissions.put(mercy.getId(), player2.getId());
+        gd.grantExilePlayPermission(mercy.getId(), player2.getId(), Duration.PERMANENT);
         harness.addMana(player2, ManaColor.WHITE, 4);
         harness.forceActivePlayer(player2);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
@@ -132,7 +133,7 @@ class NalfeshneeTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Shock shock = new Shock();
         harness.setExile(player1, List.of(shock));
-        gd.exilePlayPermissions.put(shock.getId(), player1.getId());
+        gd.grantExilePlayPermission(shock.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.RED, 1);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -151,7 +152,7 @@ class NalfeshneeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Nalfeshnee());
         Shock shock = new Shock();
         harness.setExile(player1, List.of(shock));
-        gd.exilePlayPermissions.put(shock.getId(), player1.getId());
+        gd.grantExilePlayPermission(shock.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.RED, 1);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 

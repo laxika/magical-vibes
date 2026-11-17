@@ -44,7 +44,7 @@ public class ExileTopCardOfEachPlayersLibraryAndAllowOneMayPlayForLifeEffectHand
 
             Card card = library.removeFirst();
             exileService.exileCard(gameData, playerId, card, sourcePermanentId);
-            gameData.exileCastPermissionsUntilEndOfTurn.add(new GameData.ExileCastPermission(
+            gameData.grantExileCastPermission(new GameData.ExileCastPermission(
                     grantId, sourcePermanentId, controllerId, card.getId(), false, false, true));
             gameLogService.append(gameData, GameLog.builder()
                     .text(gameData.playerIdToName.get(playerId) + " exiles ")

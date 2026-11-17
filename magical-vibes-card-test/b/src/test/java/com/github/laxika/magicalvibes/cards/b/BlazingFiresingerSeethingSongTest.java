@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.ActOfTreason;
 import com.github.laxika.magicalvibes.cards.s.SeethingSong;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -27,8 +28,8 @@ class BlazingFiresingerSeethingSongTest extends BaseCardTest {
         UUID copyId = firesinger.getPreparedSpellCardId();
         assertThat(copyId).isNotNull();
         assertThat(gd.findExiledCard(copyId)).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(copyId)).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(copyId);
+        assertThat(gd.exilePlayPermissionHolder(copyId)).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(copyId);
     }
 
     @Test
@@ -46,7 +47,7 @@ class BlazingFiresingerSeethingSongTest extends BaseCardTest {
         assertThat(firesinger.getPreparedSpellCardId()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(5);
         assertThat(gd.findExiledCard(copyId)).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(copyId);
     }
 
     @Test
@@ -61,7 +62,7 @@ class BlazingFiresingerSeethingSongTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firesinger);
         assertThat(gd.findExiledCard(copyId)).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(copyId);
     }
 
     @Test

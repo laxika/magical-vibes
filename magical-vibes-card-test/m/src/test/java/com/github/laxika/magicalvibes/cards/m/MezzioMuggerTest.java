@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -37,13 +38,13 @@ class MezzioMuggerTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(ownTopCard);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(opposingTopCard);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(ownTopCard.getId(), player1.getId())
                 .containsEntry(opposingTopCard.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn)
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN))
                 .contains(ownTopCard.getId(), opposingTopCard.getId());
-        assertThat(gd.exilePlayAnyManaType).contains(opposingTopCard.getId());
-        assertThat(gd.exilePlayAnyManaType).doesNotContain(ownTopCard.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(opposingTopCard.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).doesNotContain(ownTopCard.getId());
     }
 
     @Test
@@ -126,7 +127,7 @@ class MezzioMuggerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(land);
-        assertThat(gd.exilePlayPermissions).containsEntry(land.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(land.getId(), player1.getId());
     }
 
     @Test

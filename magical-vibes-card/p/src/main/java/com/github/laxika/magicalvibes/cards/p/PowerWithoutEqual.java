@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CastUpToNSpellsFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -17,7 +17,7 @@ public class PowerWithoutEqual extends Card {
     public PowerWithoutEqual() {
         addSpellEffect(SequenceEffect.of(
                 new DrawCardEffect(3),
-                new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.UNTIL_NEXT_TURN),
+                new GrantNoMaximumHandSizeEffect(Duration.UNTIL_YOUR_NEXT_TURN),
                 new ConditionalEffect(
                         new ControlsPermanentCount(6, new PermanentIsLandPredicate()),
                         new CastUpToNSpellsFromHandWithoutPayingManaCostEffect(3))));

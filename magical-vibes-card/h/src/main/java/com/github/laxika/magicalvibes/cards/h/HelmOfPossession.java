@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -24,7 +24,7 @@ public class HelmOfPossession extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, "{2}",
                 List.of(new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "Sacrifice a creature"),
-                        new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_TAPPED)),
+                        new GainControlOfTargetEffect(Duration.WHILE_SOURCE_TAPPED)),
                 "{2}, {T}, Sacrifice a creature: Gain control of target creature for as long as you control Helm of Possession and Helm of Possession remains tapped.",
                 new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),
                         "Target must be a creature")));

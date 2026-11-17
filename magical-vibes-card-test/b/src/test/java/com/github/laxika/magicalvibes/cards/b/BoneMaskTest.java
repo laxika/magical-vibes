@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.e.EnergyBolt;
 import com.github.laxika.magicalvibes.cards.f.FlameElemental;
 import com.github.laxika.magicalvibes.cards.g.GiantMantis;
@@ -119,7 +120,7 @@ class BoneMaskTest extends BaseCardTest {
         // Giant Mantis is 2/4 — two cards exiled, one left in the library
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.exiledCards).hasSize(2);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -160,7 +161,7 @@ class BoneMaskTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.sourceId().equals(chosen.getId()));
     }
 
@@ -175,14 +176,14 @@ class BoneMaskTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, mantis.getId());
 
-        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isNotEmpty();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -211,6 +212,6 @@ class BoneMaskTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.exiledCards).hasSize(2);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 }

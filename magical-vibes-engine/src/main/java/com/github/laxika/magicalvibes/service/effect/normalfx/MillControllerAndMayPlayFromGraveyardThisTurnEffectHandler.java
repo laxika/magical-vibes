@@ -13,6 +13,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Slf4j
 @Component
@@ -42,8 +43,8 @@ public class MillControllerAndMayPlayFromGraveyardThisTurnEffectHandler implemen
         Card milledCard = deck.getFirst();
         graveyardService.resolveMillPlayer(gameData, controllerId, 1);
 
-        gameData.graveyardPlayPermissions.put(milledCard.getId(), controllerId);
-        gameData.graveyardPlayPermissionsExpireEndOfTurn.add(milledCard.getId());
+        gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, false),
+                milledCard.getId(), Duration.UNTIL_END_OF_TURN);
 
         
         gameLogService.append(gameData, GameLog.builder().text(controllerName + " mills ").card(milledCard).text(" and may play it from their graveyard this turn.").build());

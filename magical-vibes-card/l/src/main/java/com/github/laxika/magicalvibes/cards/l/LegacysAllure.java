@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -34,7 +34,7 @@ public class LegacysAllure extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeSelfCost(), new GainControlOfTargetEffect(ControlDuration.PERMANENT)),
+                List.of(new SacrificeSelfCost(), new GainControlOfTargetEffect(Duration.PERMANENT)),
                 "Sacrifice Legacy's Allure: Gain control of target creature with power less than or "
                         + "equal to the number of treasure counters on Legacy's Allure.",
                 new PermanentPredicateTargetFilter(

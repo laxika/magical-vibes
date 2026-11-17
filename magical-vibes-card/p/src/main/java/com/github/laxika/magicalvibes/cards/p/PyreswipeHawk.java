@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,6 +21,6 @@ public class PyreswipeHawk extends Card {
                 new Fixed(0)));
 
         target(TargetFilters.artifact(), 0, 1).addTrigger(Triggers.youCastSpell().expend(6),
-                new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD));
+                new GainControlOfTargetEffect(Duration.WHILE_SOURCE_ON_BATTLEFIELD));
     }
 }

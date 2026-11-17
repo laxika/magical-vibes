@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -53,10 +54,9 @@ class CurseOfHospitalityTest extends BaseCardTest {
         assertThat(entry.ownerId()).isEqualTo(player2.getId());
         assertThat(entry.sourcePermanentId()).isNull();
         assertThat(entry.exilerId()).isNull();
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(topCard.getId());
-        assertThat(gd.exilePlayAnyManaType).contains(topCard.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).doesNotContain(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(topCard.getId());
+        assertThat(gd.hasExileAnyManaType(topCard.getId())).isTrue();
         assertThat(curse.getAttachedTo()).isEqualTo(player2.getId());
     }
 
@@ -113,8 +113,8 @@ class CurseOfHospitalityTest extends BaseCardTest {
         assertThat(gd.findExiledCard(second.getId())).isNotNull();
         assertThat(gd.findExiledCard(third.getId())).isNull();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(third);
-        assertThat(gd.exilePlayPermissions.get(first.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissions.get(second.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(first.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(second.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -142,7 +142,7 @@ class CurseOfHospitalityTest extends BaseCardTest {
         resolveCombatAndTrigger();
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
@@ -197,8 +197,8 @@ class CurseOfHospitalityTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
-        assertThat(gd.exilePlayAnyManaType).doesNotContain(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).doesNotContain(topCard.getId());
     }
 
     @Test
@@ -215,7 +215,7 @@ class CurseOfHospitalityTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -235,7 +235,7 @@ class CurseOfHospitalityTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player2.getId());
     }
 
     private Permanent placeCurseOnPlayer2() {

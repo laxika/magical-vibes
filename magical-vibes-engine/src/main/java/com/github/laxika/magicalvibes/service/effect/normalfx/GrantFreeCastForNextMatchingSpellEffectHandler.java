@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFreeCastForNextMatchingSpellEffect;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Component
 public class GrantFreeCastForNextMatchingSpellEffectHandler implements NormalEffectHandlerBean {
@@ -17,6 +18,6 @@ public class GrantFreeCastForNextMatchingSpellEffectHandler implements NormalEff
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var grant = (GrantFreeCastForNextMatchingSpellEffect) effect;
-        gameData.addNextSpellFreeCastPermission(entry.getControllerId(), grant.predicate());
+        gameData.addPlayerEffect(entry, grant, entry.getControllerId(), Duration.UNTIL_MATCHING_SPELL_CAST);
     }
 }

@@ -205,7 +205,7 @@ class WearTearTest extends BaseCardTest {
         harness.addToBattlefield(player2, new FountainOfYouth());
         WearTear spell = new WearTear();
         harness.setExile(player1, List.of(spell));
-        gd.exilePlayWithoutPayingManaCost.add(spell.getId());
+        gd.setExilePlayWithoutPayingManaCost(spell.getId(), true);
         UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
 
         harness.inMutationScope(() -> harness.getSpellCastingService()

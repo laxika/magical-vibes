@@ -31,7 +31,7 @@ class VirtueOfCourageTest extends BaseCardTest {
 
         harness.assertLife(player2, 18);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -52,8 +52,8 @@ class VirtueOfCourageTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(first.getId())).isNotNull();
         assertThat(gd.findExiledCard(second.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(first.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissions.get(second.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(first.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(second.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -127,7 +127,7 @@ class VirtueOfCourageTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gd.findExiledCard(land.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(land.getId());
     }
 
     @Test
@@ -248,6 +248,6 @@ class VirtueOfCourageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, exiled.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.findExiledCard(exiled.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(exiled.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(exiled.getId())).isEqualTo(player1.getId());
     }
 }

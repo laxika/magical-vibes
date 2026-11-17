@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -80,7 +79,7 @@ class CactuarTest extends BaseCardTest {
         Permanent cactuar = harness.addToBattlefieldAndReturn(player2, card);
         gd.stolenCreatures.put(cactuar.getId(), player1.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control effect", null,
-                player2.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT), cactuar.getId(),
+                player2.getId(), new GainControlOfTargetEffect(Duration.PERMANENT), cactuar.getId(),
                 null, null, Duration.PERMANENT, 0));
 
         advanceToEndStep(player2);

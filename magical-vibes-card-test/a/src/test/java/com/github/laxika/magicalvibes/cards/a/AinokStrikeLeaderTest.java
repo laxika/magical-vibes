@@ -112,7 +112,7 @@ class AinokStrikeLeaderTest extends BaseCardTest {
                 .getBean(com.github.laxika.magicalvibes.service.battlefield.CreatureControlService.class)
                 .applyControlEffect(gd, player1.getId(), commander,
                         new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
-                                com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
+                                com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT),
                         com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, null, "Test setup"));
         commander.setSummoningSick(false);
 

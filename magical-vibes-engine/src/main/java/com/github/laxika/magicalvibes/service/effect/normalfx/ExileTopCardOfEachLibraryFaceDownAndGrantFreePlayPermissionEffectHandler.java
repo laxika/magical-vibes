@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachLibraryFaceDownAndGrantFreePlayPermissionEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -43,8 +44,8 @@ public class ExileTopCardOfEachLibraryFaceDownAndGrantFreePlayPermissionEffectHa
 
             Card topCard = library.removeFirst();
             exileService.exileCardFaceDown(gameData, playerId, topCard, null, controllerId);
-            gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-            gameData.exilePlayWithoutPayingManaCost.add(topCard.getId());
+            gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.PERMANENT);
+            gameData.setExilePlayWithoutPayingManaCost(topCard.getId(), true);
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(controllerId) + " looks at and exiles a card face down from "
                             + gameData.playerIdToName.get(playerId) + "'s library with " + sourceName + "."));

@@ -138,7 +138,7 @@ class WeftstalkerArdentTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.assertNotOnBattlefield(player1, "Weftstalker Ardent");
             assertThat(gd.findExiledCard(ardent.getId())).isNotNull();
-            assertThat(gd.exilePlayPermissions).doesNotContainKey(ardent.getId());
+            assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(ardent.getId());
         });
 
         harness.setHand(player1, List.of());

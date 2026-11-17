@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -39,7 +39,7 @@ public class TerminalVelocity extends Card {
                         "artifact or creature",
                         null,
                         SequenceEffect.of(
-                                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF, GrantDuration.INDEFINITE),
+                                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF, Duration.PERMANENT),
                                 GrantEffectToTargetEffect.toSourcePermanent(
                                         new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS), leavesDamage)),
                                 GrantEffectToTargetEffect.toSourcePermanent(new TriggeredAbility(

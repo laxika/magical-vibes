@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -30,13 +31,10 @@ class EmbraceTheUnknownTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd)
-                .containsEntry(first.getId(), Integer.MAX_VALUE)
-                .containsEntry(second.getId(), Integer.MAX_VALUE);
-        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer)
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN))
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
     }
@@ -118,7 +116,7 @@ class EmbraceTheUnknownTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         harness.castFromExile(player1, land.getId());
         harness.assertOnBattlefield(player1, "Forest");
-        assertThat(gd.exilePlayPermissions).containsEntry(creature.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(creature.getId(), player1.getId());
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
@@ -128,7 +126,7 @@ class EmbraceTheUnknownTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(creature);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(creature.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(creature.getId());
     }
 
     @Test

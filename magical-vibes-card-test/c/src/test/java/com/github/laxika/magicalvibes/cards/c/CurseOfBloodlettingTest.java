@@ -229,7 +229,7 @@ class CurseOfBloodlettingTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         harness.handleListChoice(player2, "Prevent the next 1 damage to you");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test
@@ -248,7 +248,7 @@ class CurseOfBloodlettingTest extends BaseCardTest {
 
         harness.handleListChoice(player2, "Multiply damage to enchanted player by 2");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     private Permanent placeCurseOnPlayer(Player controller, Player enchantedPlayer) {

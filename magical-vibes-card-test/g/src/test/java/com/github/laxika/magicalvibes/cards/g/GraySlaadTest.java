@@ -31,7 +31,7 @@ class GraySlaadTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -114,6 +114,6 @@ class GraySlaadTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsCard);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 }

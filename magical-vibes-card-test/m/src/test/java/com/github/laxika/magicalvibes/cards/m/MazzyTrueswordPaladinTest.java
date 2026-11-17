@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -66,8 +67,8 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(aura.getCard());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(aura.getCard());
-        assertThat(gd.exilePlayPermissions).containsEntry(aura.getCard().getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd).containsKey(aura.getCard().getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(aura.getCard().getId(), player1.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)).containsKey(aura.getCard().getId());
     }
 
     @Test
@@ -81,7 +82,7 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(equipment.getCard());
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(equipment.getCard());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(equipment.getCard().getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(equipment.getCard().getId());
     }
 
     @Test
@@ -122,7 +123,7 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(aura.getCard());
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(aura.getCard());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(aura.getCard().getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(aura.getCard().getId());
     }
 
     @Test
@@ -142,7 +143,7 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(aura.getCard());
         assertThat(findPermanent(player1, "Holy Strength").getAttachedTo()).isEqualTo(creature.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(aura.getCard().getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(aura.getCard().getId());
     }
 
     @Test
@@ -163,7 +164,7 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(aura.getCard());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(aura.getCard());
-        assertThat(gd.exilePlayPermissions).containsEntry(aura.getCard().getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(aura.getCard().getId(), player1.getId());
     }
 
     @Test
@@ -178,15 +179,15 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(aura.getCard().getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(aura.getCard().getId(), player1.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(aura.getCard().getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(aura.getCard().getId(), player1.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(aura.getCard().getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(aura.getCard().getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(aura.getCard());
     }
 

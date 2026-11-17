@@ -128,7 +128,7 @@ class WanderingMageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(2);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isEqualTo(2);
         assertThat(mage.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
@@ -177,7 +177,7 @@ class WanderingMageTest extends BaseCardTest {
 
         assertThat(mage.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         assertThat(otherMage.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(gd.playerDamagePreventionShields.get(player1.getId())).isEqualTo(2);
+        assertThat(gd.playerDamagePreventionShields().get(player1.getId())).isEqualTo(2);
     }
 
     @Test
@@ -243,7 +243,7 @@ class WanderingMageTest extends BaseCardTest {
         harness.setLife(player2, 20);
         castGuerrillaTactics(player1, player2.getId());
         harness.assertLife(player2, 20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     private void castGuerrillaTactics(Player caster, UUID targetId) {

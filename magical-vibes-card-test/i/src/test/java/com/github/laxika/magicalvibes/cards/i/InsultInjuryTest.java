@@ -35,7 +35,7 @@ class InsultInjuryTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.damageCantBePreventedThisTurn).isTrue();
+        assertThat(gd.damageCantBePreventedThisTurn()).isTrue();
         assertThat(gqs.isDamagePreventable(gd)).isFalse();
         assertThat(gd.floatingEffectsOnPlayer(player1.getId(), DoubleControllerDamageThisTurnEffect.class))
                 .hasSize(1);

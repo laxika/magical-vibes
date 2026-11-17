@@ -7,14 +7,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * player and the targeted player for the specified duration.
  */
 public record ExchangeControlOfAllMatchingPermanentsWithTargetPlayerEffect(
-        PermanentPredicate filter, ControlDuration duration) implements CardEffect, ControlStealingEffect {
+        PermanentPredicate filter, Duration duration) implements CardEffect, ControlStealingEffect {
 
     public ExchangeControlOfAllMatchingPermanentsWithTargetPlayerEffect(PermanentPredicate filter) {
-        this(filter, ControlDuration.PERMANENT);
+        this(filter, Duration.PERMANENT);
     }
 
     @Override
-    public ControlDuration controlDuration() {
+    public Duration controlDuration() {
         return duration;
     }
 

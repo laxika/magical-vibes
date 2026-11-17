@@ -29,8 +29,8 @@ public class RegisterDelayedTargetPlayerSpellCastTriggerEffectHandler implements
         if (entry.getTargetId() == null || !gameData.playerIds.contains(entry.getTargetId())) {
             return;
         }
-        gameData.temporaryGlobalTriggeredAbilities.add(e.duration().delayed(entry.getTargetId(), entry.getCard(),
-                e.delayedAbility(), entry.getSourcePermanentId(), gameData.turnNumber, null));
+        gameData.temporaryGlobalTriggeredAbilities.add(e.delayed(entry.getTargetId(), entry.getCard(),
+                entry.getSourcePermanentId(), gameData.turnNumber));
         log.info("Game {} - {} gives the targeted player a delayed spell-cast ability ({})",
                 gameData.id, entry.getCard().getName(), e.duration());
     }

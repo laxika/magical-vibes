@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -92,8 +93,7 @@ public class VividRevealSupport {
         for (Card card : revealedCards) {
             if (selectedCardIds.contains(card.getId())) {
                 exileService.exileCard(gameData, controllerId, card);
-                gameData.exilePlayPermissions.put(card.getId(), controllerId);
-                gameData.exilePlayPermissionsExpireEndOfTurn.add(card.getId());
+                gameData.grantExilePlayPermission(card.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
             } else {
                 remaining.add(card);
             }

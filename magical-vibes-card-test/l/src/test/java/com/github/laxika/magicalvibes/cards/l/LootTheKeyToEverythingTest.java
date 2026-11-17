@@ -39,7 +39,7 @@ class LootTheKeyToEverythingTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactlyElementsOf(library.subList(0, 3));
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(library.get(3));
-        assertThat(gd.exilePlayPermissions).containsKeys(
+        assertThat(gd.exilePlayPermissionHolders()).containsKeys(
                 library.get(0).getId(), library.get(1).getId(), library.get(2).getId());
     }
 

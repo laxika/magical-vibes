@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachOpponentAndMayCastForLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
@@ -39,9 +40,8 @@ public class ExileTopCardOfEachOpponentAndMayCastForLifeThisTurnEffectHandler
             Card card = library.removeFirst();
             exileService.exileCard(gameData, opponentId, card);
             if (!card.hasType(CardType.LAND)) {
-                gameData.exilePlayPermissions.put(card.getId(), controllerId);
-                gameData.exilePlayPermissionsExpireEndOfTurn.add(card.getId());
-                gameData.exilePlayForLifeEqualToManaValue.add(card.getId());
+                gameData.grantExilePlayPermission(card.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
+                gameData.updateExilePlayPermission(card.getId(), granted -> granted.withForLifeEqualToManaValue(true));
             }
         }
     }

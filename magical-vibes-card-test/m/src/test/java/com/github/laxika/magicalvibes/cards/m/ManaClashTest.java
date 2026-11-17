@@ -102,7 +102,7 @@ class ManaClashTest extends BaseCardTest {
         assertThat(rounds).isNotEmpty();
         harness.assertLife(player1, 1000 - (int) controllerTails);
         harness.assertLife(player2, 1000 - Math.max(0, (int) opponentTails - 3));
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0))
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0))
                 .isEqualTo(Math.max(0, 3 - (int) opponentTails));
     }
 

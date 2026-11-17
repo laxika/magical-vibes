@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -1423,10 +1422,10 @@ public sealed interface ChoiceContext {
                               String firstChosenName) implements ChoiceContext {}
 
     record KeywordGrantChoice(UUID targetId, List<Keyword> options,
-                              GrantDuration duration, String sourceCardName,
+                              Duration duration, String sourceCardName,
                               UUID sourcePermanentId) implements ChoiceContext {
         public KeywordGrantChoice(UUID targetId, List<Keyword> options) {
-            this(targetId, options, GrantDuration.END_OF_TURN, null, null);
+            this(targetId, options, Duration.UNTIL_END_OF_TURN, null, null);
         }
     }
 

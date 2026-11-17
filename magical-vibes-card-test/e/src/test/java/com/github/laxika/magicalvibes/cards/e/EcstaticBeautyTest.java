@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.p.ProfaneTutor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -36,8 +37,8 @@ class EcstaticBeautyTest extends BaseCardTest {
                 .containsEntry(newlyExiledSuspended.getId(), 4)
                 .doesNotContainKeys(nonSuspended.getId(), anotherNonSuspended.getId());
         for (Card card : List.of(newlyExiledSuspended, nonSuspended, anotherNonSuspended)) {
-            assertThat(gd.exilePlayPermissions).containsEntry(card.getId(), player1.getId());
-            assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(card.getId());
+            assertThat(gd.exilePlayPermissionHolders()).containsEntry(card.getId(), player1.getId());
+            assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(card.getId());
         }
     }
 
@@ -123,7 +124,7 @@ class EcstaticBeautyTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
         assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
     }

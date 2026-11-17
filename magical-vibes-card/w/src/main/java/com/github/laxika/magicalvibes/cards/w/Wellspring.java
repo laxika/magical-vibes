@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -20,11 +20,11 @@ public class Wellspring extends Card {
         target(TargetFilters.land())
                 // When this Aura enters, gain control of enchanted land until end of turn.
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GainControlOfEnchantedPermanentEffect(ControlDuration.END_OF_TURN))
+                        new GainControlOfEnchantedPermanentEffect(Duration.UNTIL_END_OF_TURN))
                 // At the beginning of your upkeep, untap enchanted land. You gain control of that
                 // land until end of turn.
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.ENCHANTED),
-                        new GainControlOfEnchantedPermanentEffect(ControlDuration.END_OF_TURN)));
+                        new GainControlOfEnchantedPermanentEffect(Duration.UNTIL_END_OF_TURN)));
     }
 }

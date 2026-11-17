@@ -34,8 +34,8 @@ class StrongboxRaiderTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(other.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(other.getId());
     }
 
     @Test
@@ -77,7 +77,7 @@ class StrongboxRaiderTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test

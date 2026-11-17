@@ -73,7 +73,7 @@ class SpitefulRepossessionTest extends BaseCardTest {
     void createsTreasuresOnlyForDamageRemainingAfterPrevention() {
         addLands(player1, 2);
         addLands(player2, 5);
-        gd.playerDamagePreventionShields.put(player2.getId(), 2);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 2);
 
         castAndResolve();
 
@@ -85,7 +85,7 @@ class SpitefulRepossessionTest extends BaseCardTest {
     void createsNoTreasuresWhenAllDamageIsPrevented() {
         addLands(player1, 2);
         addLands(player2, 5);
-        gd.playerDamagePreventionShields.put(player2.getId(), 3);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 3);
 
         castAndResolve();
 

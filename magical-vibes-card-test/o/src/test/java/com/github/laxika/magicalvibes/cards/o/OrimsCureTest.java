@@ -29,7 +29,7 @@ class OrimsCureTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(4);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(4);
     }
 
     @Test
@@ -61,7 +61,7 @@ class OrimsCureTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test
@@ -76,7 +76,7 @@ class OrimsCureTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.isTapped()).isTrue();
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(4);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(4);
     }
 
     @Test
@@ -161,7 +161,7 @@ class OrimsCureTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(target.getDamagePreventionShield()).isZero();
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test

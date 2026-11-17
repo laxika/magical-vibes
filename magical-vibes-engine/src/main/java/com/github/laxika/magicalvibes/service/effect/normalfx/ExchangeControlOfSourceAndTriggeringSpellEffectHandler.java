@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfSourceAndTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -64,7 +63,7 @@ public class ExchangeControlOfSourceAndTriggeringSpellEffectHandler implements N
                 gameData,
                 spellControllerId,
                 source,
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                new GainControlOfTargetEffect(Duration.PERMANENT),
                 Duration.PERMANENT,
                 null,
                 entry.getCard().getName());

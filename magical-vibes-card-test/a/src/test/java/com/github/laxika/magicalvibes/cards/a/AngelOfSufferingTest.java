@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.c.CabarettiInitiate;
 import com.github.laxika.magicalvibes.cards.c.CallInAProfessional;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -75,7 +76,7 @@ class AngelOfSufferingTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new AngelOfSuffering());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        gd.damageCantBePreventedThisTurn = true;
+        gd.addShield(new DamageCantBePreventedThisTurnEffect());
         castLightningBoltAtPlayer1();
 
         harness.assertLife(player1, 17);

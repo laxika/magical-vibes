@@ -6,12 +6,15 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.action.PhasedOutUntilEndOfNextTurn;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PhasedOutHeldEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsCantPhaseInEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.PermanentChange;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreparedSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +58,7 @@ public class PhasingService {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PreparedSupport preparedSupport;
+    private final DurationClock durationClock;
 
     /**
      * Runs the untap step's phasing turn-based action for {@code activePlayerId}. Both directions
@@ -154,29 +158,50 @@ public class PhasingService {
                 .filter(PhasingService::canPhaseOut)
                 .toList();
         phaseOut(gameData, directPermanents);
-        Set<UUID> directIds = directPermanents.stream().map(Permanent::getId).collect(Collectors.toSet());
-        gameData.phasedOutUntilPlaneswalk.addAll(collectSpecificPhasingIn(gameData, directIds).keySet().stream()
-                .map(Permanent::getId)
-                .toList());
+        directPermanents.stream()
+                .filter(permanent -> findPhasedOutPermanent(gameData, permanent.getId()) != null)
+                .forEach(permanent -> hold(gameData, "Planar phasing", null, controllerOf(gameData, permanent),
+                        permanent, new PhasedOutHeldEffect(true, false), Duration.UNTIL_PLANESWALK));
     }
 
     /** Phases in permanents held by a planar effect when any player planeswalks. */
     public void phaseInUntilPlaneswalk(GameData gameData) {
-        Set<UUID> targetIds = new LinkedHashSet<>(gameData.phasedOutUntilPlaneswalk);
-        if (targetIds.isEmpty()) {
-            return;
+        for (FloatingContinuousEffect held : gameData.floatingEffectsOfTypes(PhasedOutHeldEffect.class)) {
+            if (held.duration().end() == Duration.End.PLANESWALK) {
+                gameData.endFloatingEffect(held);
+                phaseInHeld(gameData, held.affectedPermanentId(), ((PhasedOutHeldEffect) held.effect()).tapsOnPhaseIn());
+            }
         }
+    }
 
+    /**
+     * Keeps {@code permanent}, which phased out directly, from phasing in during its controller's untap step for as
+     * long as {@code duration} says. The hold is a floating effect, so the duration clock ends it.
+     */
+    private void hold(GameData gameData, String sourceName, UUID sourcePermanentId, UUID controllerId,
+                      Permanent permanent, PhasedOutHeldEffect held, Duration duration) {
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(sourceName, sourcePermanentId, controllerId,
+                held, permanent.getId(), duration));
+    }
+
+    /**
+     * Phases in {@code permanentId}, a phased-out permanent a hold on it has just let go, with everything attached to it
+     * (CR 702.26g), unless another hold still keeps it out or phasing in is prevented; it is tapped as it phases in when
+     * {@code tapsOnPhaseIn}.
+     */
+    public void phaseInHeld(GameData gameData, UUID permanentId, boolean tapsOnPhaseIn) {
         Map<Permanent, UUID> phasingIn = permanentsCantPhaseIn(gameData)
-                ? Map.of() : collectSpecificPhasingIn(gameData, targetIds);
-        phasingIn.forEach((permanent, phasedOutUnder) -> phaseIn(gameData, permanent, phasedOutUnder));
-
-        gameData.phasedOutUntilPlaneswalk.removeAll(targetIds);
-        clearSourceLeavePhaseOuts(gameData, phasingIn.keySet());
+                ? Map.of() : collectSpecificPhasingIn(gameData, Set.of(permanentId));
+        phasingIn.forEach((permanent, phasedOutUnder) -> {
+            phaseIn(gameData, permanent, phasedOutUnder);
+            if (tapsOnPhaseIn && permanent.getId().equals(permanentId)) {
+                permanent.tap();
+            }
+        });
         if (!phasingIn.isEmpty()) {
             String names = names(phasingIn.keySet());
             gameLogService.append(gameData, GameLog.text(names + " phases in."));
-            log.info("Game {} - {} phases in after planeswalking", gameData.id, names);
+            log.info("Game {} - {} phases in as its hold ends", gameData.id, names);
         }
     }
 
@@ -197,12 +222,8 @@ public class PhasingService {
 
         phaseOut(gameData, List.of(target));
         if (findPhasedOutPermanent(gameData, target.getId()) != null) {
-            gameData.phasedOutUntilSourceLeaves
-                    .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet())
-                    .add(target.getId());
-            if (tapsOnPhaseIn) {
-                gameData.tappedWhenSourceLeavesPhasesIn.add(target.getId());
-            }
+            hold(gameData, source.getCard().getName(), source.getId(), gameData.findControllerOf(source), target,
+                    new PhasedOutHeldEffect(true, tapsOnPhaseIn), Duration.WHILE_SOURCE_ON_BATTLEFIELD);
         }
     }
 
@@ -216,8 +237,8 @@ public class PhasingService {
         phaseOut(gameData, directPermanents);
         directPermanents.stream()
                 .filter(permanent -> findPhasedOutPermanent(gameData, permanent.getId()) != null)
-                .forEach(permanent -> gameData.queueDelayedAction(new PhasedOutUntilEndOfNextTurn(
-                        permanent.getId(), controllerId, gameData.turnNumber)));
+                .forEach(permanent -> hold(gameData, "Phasing", null, controllerId, permanent,
+                        new PhasedOutHeldEffect(false, false), Duration.UNTIL_END_OF_YOUR_NEXT_TURN));
     }
 
     /** Phases out a permanent and prevents its normal phase-in while the source remains controlled. */
@@ -275,28 +296,13 @@ public class PhasingService {
         }
     }
 
-    /** Phases in every creature held by a source-leave phase-out, tapping those flagged to tap on phase-in. */
+    /**
+     * Phases in every creature held by a source-leave phase-out of {@code sourcePermanentId} as that source leaves the
+     * battlefield: the duration clock ends the holds and phases them in.
+     */
     public void phaseInWhenSourceLeaves(GameData gameData, UUID sourcePermanentId) {
-        Set<UUID> targetIds = gameData.phasedOutUntilSourceLeaves.remove(sourcePermanentId);
         gameData.phasedOutWhileSourceControlled.remove(sourcePermanentId);
-        if (targetIds == null || targetIds.isEmpty()) {
-            return;
-        }
-
-        Map<Permanent, UUID> phasingIn = permanentsCantPhaseIn(gameData)
-                ? Map.of() : collectSpecificPhasingIn(gameData, targetIds);
-        phasingIn.forEach((permanent, phasedOutUnder) -> {
-            phaseIn(gameData, permanent, phasedOutUnder);
-            if (gameData.tappedWhenSourceLeavesPhasesIn.remove(permanent.getId())) {
-                permanent.tap();
-            }
-        });
-
-        if (!phasingIn.isEmpty()) {
-            String names = names(phasingIn.keySet());
-            gameLogService.append(gameData, GameLog.text(names + " phases in."));
-            log.info("Game {} - {} phases in when source leaves", gameData.id, names);
-        }
+        durationClock.sourceLeft(gameData, sourcePermanentId);
     }
 
     /**
@@ -431,11 +437,7 @@ public class PhasingService {
     }
 
     private boolean isHeldUntilSourceLeaves(GameData gameData, Permanent permanent) {
-        if (gameData.phasedOutUntilPlaneswalk.contains(permanent.getId())) {
-            return true;
-        }
-        if (gameData.phasedOutUntilSourceLeaves.values().stream()
-                .anyMatch(targetIds -> targetIds.contains(permanent.getId()))) {
+        if (gameData.hasFloatingEffectOnPermanent(permanent.getId(), PhasedOutHeldEffect.class)) {
             return true;
         }
         if (gameData.phasedOutWhileSourceControlled.entrySet().stream()
@@ -450,12 +452,13 @@ public class PhasingService {
                         && sourceIsTapped(gameData, sourceEntry.getKey()))) {
             return true;
         }
-        return isHeldUntilEndOfNextTurn(gameData, permanent);
+        return false;
     }
 
+    /** Whether a hold keeps {@code permanent} out through the end of its controller's next turn (Teferi's). */
     private boolean isHeldUntilEndOfNextTurn(GameData gameData, Permanent permanent) {
-        return gameData.hasDelayedAction(PhasedOutUntilEndOfNextTurn.class,
-                action -> permanent.getId().equals(action.permanentId()));
+        return gameData.floatingEffectsOnPermanent(permanent.getId(), PhasedOutHeldEffect.class).stream()
+                .anyMatch(held -> held.duration().end() == Duration.End.END_OF_YOUR_NEXT_TURN);
     }
 
     private boolean sourceIsTapped(GameData gameData, UUID sourceId) {
@@ -472,11 +475,10 @@ public class PhasingService {
     private void clearSourceLeavePhaseOuts(GameData gameData, Collection<Permanent> permanents) {
         Set<UUID> phasedInIds = permanents.stream().map(Permanent::getId)
                 .collect(java.util.stream.Collectors.toSet());
-        gameData.tappedWhenSourceLeavesPhasesIn.removeAll(phasedInIds);
-        gameData.phasedOutUntilSourceLeaves.values()
-                .forEach(targetIds -> targetIds.removeAll(phasedInIds));
-        gameData.phasedOutUntilSourceLeaves.entrySet()
-                .removeIf(entry -> entry.getValue().isEmpty());
+        for (UUID phasedInId : phasedInIds) {
+            gameData.floatingEffectsOnPermanent(phasedInId, PhasedOutHeldEffect.class)
+                    .forEach(gameData::endFloatingEffect);
+        }
         gameData.phasedOutWhileSourceControlled.values()
                 .forEach(targetSequences -> targetSequences.keySet().removeAll(phasedInIds));
         gameData.phasedOutWhileSourceControlled.entrySet()
@@ -485,8 +487,6 @@ public class PhasingService {
                 .forEach(targetIds -> targetIds.removeAll(phasedInIds));
         gameData.phasedOutWhileSourceTapped.entrySet()
                 .removeIf(entry -> entry.getValue().isEmpty());
-        gameData.drainDelayedActions(PhasedOutUntilEndOfNextTurn.class,
-                action -> phasedInIds.contains(action.permanentId()));
     }
 
     public Permanent findPhasedOutPermanent(GameData gameData, UUID permanentId) {

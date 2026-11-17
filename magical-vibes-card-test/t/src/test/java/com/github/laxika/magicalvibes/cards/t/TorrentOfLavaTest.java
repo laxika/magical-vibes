@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.cards.b.BayFalcon;
 import com.github.laxika.magicalvibes.cards.g.GoblinEliteInfantry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -152,7 +153,7 @@ class TorrentOfLavaTest extends BaseCardTest {
         harness.activateAbility(player2, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.targetSourceDamagePreventionShields)
+        assertThat(gd.shields(TargetSourceDamagePreventionShield.class))
                 .singleElement()
                 .satisfies(shield -> {
                     assertThat(shield.targetId()).isEqualTo(goblin.getId());

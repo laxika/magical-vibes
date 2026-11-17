@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import java.util.UUID;
 
 /**
@@ -35,7 +36,7 @@ public record CreatureDamageRedirectShield(
         int remainingAmount,
         UUID redirectTargetId,
         boolean combatOnly
-) {
+) implements CardEffect {
     /** Sentinel {@code remainingAmount} meaning the shield has no amount limit. */
     public static final int UNLIMITED = -1;
 

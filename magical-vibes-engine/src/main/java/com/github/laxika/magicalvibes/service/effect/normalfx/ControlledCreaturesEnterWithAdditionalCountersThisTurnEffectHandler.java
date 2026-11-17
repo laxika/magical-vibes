@@ -28,13 +28,9 @@ public class ControlledCreaturesEnterWithAdditionalCountersThisTurnEffectHandler
                 (ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect) effect;
         int count = counters.count();
 
-        if (Duration.UNTIL_YOUR_NEXT_TURN.equals(counters.duration())) {
-            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
-                    entry.getSourcePermanentId(), entry.getControllerId(), effect, entry.getControllerId(),
-                    Duration.UNTIL_YOUR_NEXT_TURN));
-        } else {
-            gameData.additionalEnterCountersThisTurn.merge(entry.getControllerId(), count, Integer::sum);
-        }
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), effect, entry.getControllerId(),
+                counters.duration()));
 
         String durationText = Duration.UNTIL_YOUR_NEXT_TURN.equals(counters.duration())
                 ? "until their next turn" : "this turn";

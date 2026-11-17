@@ -15,11 +15,11 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTu
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerCantCastSpellsThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.LegacyDepartureFallback;
 import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
@@ -275,6 +275,41 @@ public abstract class BaseCardTest {
      * anything that triggers on the way. Starts from {@link TurnStep#UNTAP} because untap and upkeep
      * are reached by a single priority round-trip.
      */
+    /** The cards that were granted {@code ability} for a while and still have it. */
+    protected Set<UUID> grantedCards(GrantedCardAbilityEffect.Ability ability) {
+        Set<UUID> cards = new LinkedHashSet<>();
+        for (FloatingContinuousEffect fe : gd.floatingEffectsOfTypes(GrantedCardAbilityEffect.class)) {
+            if (((GrantedCardAbilityEffect) fe.effect()).ability() == ability && fe.affectedCardId() != null) {
+                cards.add(fe.affectedCardId());
+            }
+        }
+        return cards;
+    }
+
+    /** The player each card in a graveyard may be played by, from the "play this card" grants on the cards. */
+    protected java.util.Map<UUID, UUID> graveyardPlayPermissionsByCard() {
+        java.util.Map<UUID, UUID> permissions = new java.util.LinkedHashMap<>();
+        for (FloatingContinuousEffect fe : gd.floatingEffectsOfTypes(GameData.GraveyardCardPlayGrant.class)) {
+            permissions.put(fe.affectedCardId(), ((GameData.GraveyardCardPlayGrant) fe.effect()).playerId());
+        }
+        return permissions;
+    }
+
+    /** The newest permission to cast each card from a graveyard, from the permission effects on the cards. */
+    protected java.util.Map<UUID, GameData.GraveyardCardCastPermission> graveyardCastPermissionsByCard() {
+        java.util.Map<UUID, GameData.GraveyardCardCastPermission> permissions = new java.util.LinkedHashMap<>();
+        for (FloatingContinuousEffect fe : gd.floatingEffectsOfTypes(GameData.GraveyardCardCastPermission.class)) {
+            permissions.put(fe.affectedCardId(), (GameData.GraveyardCardCastPermission) fe.effect());
+        }
+        return permissions;
+    }
+
+    /** Lets {@code playerId} play the card {@code cardId} from the graveyard until end of turn. */
+    protected void grantGraveyardPlay(UUID cardId, UUID playerId) {
+        gd.addFloatingEffect(FloatingContinuousEffect.onCard("Test", null, playerId,
+                new GameData.GraveyardCardPlayGrant(playerId, false), cardId, Duration.UNTIL_END_OF_TURN));
+    }
+
     /**
      * How many "when you next cast or activate ... this turn" delayed triggered abilities {@code player} controls that
      * haven't triggered yet.
@@ -390,7 +425,7 @@ public abstract class BaseCardTest {
         gd.stolenCreatures.put(permanent.getId(), owner.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), "Control setup", null, controller.getId(),
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                new GainControlOfTargetEffect(Duration.PERMANENT),
                 permanent.getId(), null, null, Duration.PERMANENT, 0));
     }
 

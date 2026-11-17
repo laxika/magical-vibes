@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.e.EmberShot;
 import com.github.laxika.magicalvibes.cards.p.PrismaticStrands;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -25,7 +26,7 @@ class FlaringPainTest extends BaseCardTest {
         harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
         harness.passBothPriorities();
 
-        assertThat(gd.damageCantBePreventedThisTurn).isTrue();
+        assertThat(gd.damageCantBePreventedThisTurn()).isTrue();
         assertThat(gqs.isDamagePreventable(gd)).isFalse();
     }
 
@@ -56,7 +57,7 @@ class FlaringPainTest extends BaseCardTest {
 
         harness.castAndResolveFlashback(player1, 0, null);
 
-        assertThat(gd.damageCantBePreventedThisTurn).isTrue();
+        assertThat(gd.damageCantBePreventedThisTurn()).isTrue();
         assertThat(gqs.isDamagePreventable(gd)).isFalse();
         harness.assertNotInGraveyard(player1, "Flaring Pain");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -66,11 +67,11 @@ class FlaringPainTest extends BaseCardTest {
     @Test
     @DisplayName("Damage prevention becomes available again at end of turn")
     void damagePreventionLockExpiresAtEndOfTurn() {
-        gd.damageCantBePreventedThisTurn = true;
+        gd.addShield(new DamageCantBePreventedThisTurnEffect());
 
         GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
 
-        assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+        assertThat(gd.damageCantBePreventedThisTurn()).isFalse();
         assertThat(gqs.isDamagePreventable(gd)).isTrue();
     }
 

@@ -46,7 +46,7 @@ class SizzlingChangelingTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Sizzling Changeling");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(shock.getId()));
-        assertThat(gd.exilePlayPermissions.get(shock.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(shock.getId())).isEqualTo(player1.getId());
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castFromExile(player1, shock.getId(), player2.getId());
@@ -134,11 +134,11 @@ class SizzlingChangelingTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Mountain(), new Mountain(), new Mountain()));
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions.get(shock.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(shock.getId())).isEqualTo(player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions.get(shock.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(shock.getId())).isEqualTo(player1.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(shock.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(shock.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(shock);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.ensurePriority(player1);

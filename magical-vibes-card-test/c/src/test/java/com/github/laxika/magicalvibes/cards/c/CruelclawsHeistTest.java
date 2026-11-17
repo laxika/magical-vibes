@@ -23,7 +23,7 @@ class CruelclawsHeistTest extends BaseCardTest {
         Card stolenCard = setup.stolenCard();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(stolenCard);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(stolenCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(stolenCard.getId());
         assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId)
                 .containsExactly(setup.remainingLand().getId());
     }
@@ -34,7 +34,7 @@ class CruelclawsHeistTest extends BaseCardTest {
         Card stolenCard = setup.stolenCard();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(stolenCard);
-        assertThat(gd.exilePlayPermissions.get(stolenCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(stolenCard.getId())).isEqualTo(player1.getId());
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
 
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -68,7 +68,7 @@ class CruelclawsHeistTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(drawnCard);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(land);
-        assertThat(gd.exilePlayPermissions.get(drawnCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(drawnCard.getId())).isEqualTo(player1.getId());
     }
 
     @Test

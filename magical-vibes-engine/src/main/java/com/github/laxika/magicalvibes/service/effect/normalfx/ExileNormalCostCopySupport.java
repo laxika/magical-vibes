@@ -87,8 +87,7 @@ public class ExileNormalCostCopySupport {
         }
 
         if (manaCostOverride != null) {
-            gameData.exilePlayCostModifiers.put(copy.getId(),
-                    new ExilePlayCostModifier(player.getId(), null, 0, manaCostOverride));
+            gameData.setExilePlayCostModifier(copy.getId(), new ExilePlayCostModifier(player.getId(), null, 0, manaCostOverride));
         }
 
         if (SplitCardCastSupport.isSplitCard(copy)) {

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -126,7 +125,7 @@ class WaterwhirlTest extends BaseCardTest {
         gd.stolenCreatures.put(stolen.getId(), player2.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 "Control change", null, player1.getId(),
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT), stolen.getId(),
+                new GainControlOfTargetEffect(Duration.PERMANENT), stolen.getId(),
                 null, null, Duration.PERMANENT, 0));
         harness.setHand(player1, List.of(new Waterwhirl()));
         harness.setHand(player2, List.of());

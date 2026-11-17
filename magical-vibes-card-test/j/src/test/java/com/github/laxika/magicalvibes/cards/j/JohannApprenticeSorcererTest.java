@@ -213,7 +213,7 @@ class JohannApprenticeSorcererTest extends BaseCardTest {
         harness.castAndResolveAdventureFromLibraryTop(player1);
 
         assertThat(gd.findExiledCard(druid.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsEntry(druid.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(druid.getId(), player1.getId());
         assertThat(gd.findExiledCard(firstBears.getId())).isNotNull();
         assertThat(gd.findExiledCard(secondBears.getId())).isNotNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(thirdBears);
@@ -262,7 +262,7 @@ class JohannApprenticeSorcererTest extends BaseCardTest {
 
         harness.assertLife(player2, 18);
         assertThat(gd.findExiledCard(giant.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsEntry(giant.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(giant.getId(), player1.getId());
     }
 
     @Test

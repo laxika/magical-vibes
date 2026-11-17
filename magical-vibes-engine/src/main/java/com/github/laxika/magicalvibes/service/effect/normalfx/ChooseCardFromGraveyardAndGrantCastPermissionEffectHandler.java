@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Slf4j
 @Component
@@ -108,13 +109,12 @@ public class ChooseCardFromGraveyardAndGrantCastPermissionEffectHandler implemen
         }
 
         if (effect.withoutPayingManaCost()) {
-            gameData.graveyardCardCastPermissionsUntilEndOfTurn.put(cardId,
-                    new GameData.GraveyardCardCastPermission(
+            gameData.addCardEffect(entry, new GameData.GraveyardCardCastPermission(
                             entry.getSourcePermanentId(), controllerId, false,
-                            effect.exileInsteadOfGraveyard(), true));
+                            effect.exileInsteadOfGraveyard(), true), cardId, Duration.UNTIL_END_OF_TURN);
         } else {
-            gameData.graveyardPlayPermissions.put(cardId, controllerId);
-            gameData.graveyardPlayPermissionsExpireEndOfTurn.add(cardId);
+            gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, false),
+                    cardId, Duration.UNTIL_END_OF_TURN);
             if (effect.exileInsteadOfGraveyard()) {
                 gameData.exileInsteadOfGraveyard.add(cardId);
             }

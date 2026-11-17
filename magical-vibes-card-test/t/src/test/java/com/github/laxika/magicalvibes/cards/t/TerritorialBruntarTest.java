@@ -31,8 +31,8 @@ class TerritorialBruntarTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(card -> card.getId())
                 .containsExactly(exiledLand.getId(), bears.getId());
-        assertThat(gd.exilePlayPermissions).containsEntry(bears.getId(), player1.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(bears.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(bears.getId(), player1.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(bears.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -76,7 +76,7 @@ class TerritorialBruntarTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(card -> card.getId())
                 .containsExactly(first.getId(), second.getId());
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test
@@ -131,7 +131,7 @@ class TerritorialBruntarTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(bears);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(bears.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(bears.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -152,7 +152,7 @@ class TerritorialBruntarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 }

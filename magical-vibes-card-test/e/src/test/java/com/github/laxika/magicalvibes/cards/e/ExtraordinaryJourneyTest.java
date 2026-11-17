@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -41,7 +42,7 @@ class ExtraordinaryJourneyTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Redtooth Vanguard");
         assertThat(gd.findExiledCard(first.getOriginalCard().getId())).isNotNull();
         assertThat(gd.findExiledCard(second.getOriginalCard().getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getOriginalCard().getId(), player2.getId())
                 .containsEntry(second.getOriginalCard().getId(), player2.getId());
     }
@@ -115,7 +116,7 @@ class ExtraordinaryJourneyTest extends BaseCardTest {
 
         Card bear = new RedtoothVanguard();
         harness.setExile(player1, List.of(bear));
-        gd.exilePlayPermissions.put(bear.getId(), player1.getId());
+        gd.grantExilePlayPermission(bear.getId(), player1.getId(), Duration.PERMANENT);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -140,7 +141,7 @@ class ExtraordinaryJourneyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Redtooth Vanguard");
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test
@@ -159,7 +160,7 @@ class ExtraordinaryJourneyTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Redtooth Vanguard");
         harness.assertOnBattlefield(player2, "Redtooth Vanguard");
-        assertThat(gd.exilePlayPermissions).containsEntry(own.getOriginalCard().getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(own.getOriginalCard().getId(), player1.getId());
     }
 
     @Test
@@ -176,7 +177,7 @@ class ExtraordinaryJourneyTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Dryad Arbor");
         assertThat(gd.findExiledCard(arbor.getOriginalCard().getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsEntry(arbor.getOriginalCard().getId(), player2.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(arbor.getOriginalCard().getId(), player2.getId());
     }
 
     @Test

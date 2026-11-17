@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -53,7 +54,7 @@ class SeeTheTruthTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second, third));
         harness.setHand(player1, List.of());
         harness.setExile(player1, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -90,7 +91,7 @@ class SeeTheTruthTest extends BaseCardTest {
         harness.setLibrary(player1, cards);
         harness.setHand(player1, List.of());
         harness.setExile(player1, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -114,7 +115,7 @@ class SeeTheTruthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         if (originalFromExile) {
             harness.setExile(player1, List.of(spell));
-            gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+            gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
             harness.castFromExile(player1, spell.getId());
         } else {
             harness.castSorcery(player1, 0, 0);

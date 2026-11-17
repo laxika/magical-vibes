@@ -76,7 +76,7 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
         } else {
             if (e.replacesGrantedSubtypes()) {
                 gameData.expireFloatingEffects(floating ->
-                        floating.duration() == com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT
+                        com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT.equals(floating.duration())
                                 && floating.effect() instanceof com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect
                                 && source.getId().equals(floating.affectedPermanentId()));
             }

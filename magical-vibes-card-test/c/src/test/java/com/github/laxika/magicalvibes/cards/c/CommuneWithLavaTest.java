@@ -36,7 +36,7 @@ class CommuneWithLavaTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactly(first, second, third);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId())
                 .containsEntry(third.getId(), player1.getId());
@@ -184,7 +184,7 @@ class CommuneWithLavaTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.UPKEEP);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiledLand.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiledLand.getId());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, exiledLand.getId()))

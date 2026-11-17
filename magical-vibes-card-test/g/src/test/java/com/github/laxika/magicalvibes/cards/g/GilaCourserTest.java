@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -47,7 +48,7 @@ class GilaCourserTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test
@@ -66,7 +67,7 @@ class GilaCourserTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -79,7 +80,7 @@ class GilaCourserTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
         // "Until the end of your next turn": the expiry is fixed when player1's next turn begins.
-        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN).get(topCard.getId())).isEqualTo(player1.getId());
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 3);
 
@@ -104,7 +105,7 @@ class GilaCourserTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
     }
 
     @Test

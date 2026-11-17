@@ -50,7 +50,7 @@ class WoodlandAcolyteTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(target, oldTop);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(target);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -123,6 +123,6 @@ class WoodlandAcolyteTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(oldTop);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 }

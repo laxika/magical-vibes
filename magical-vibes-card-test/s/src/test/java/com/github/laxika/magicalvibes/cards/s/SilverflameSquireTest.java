@@ -32,7 +32,7 @@ class SilverflameSquireTest extends BaseCardTest {
         assertThat(bear.getToughnessModifier()).isEqualTo(2);
         assertThat(bear.isTapped()).isFalse();
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNotNull();
-        assertThat(harness.getGameData().exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(harness.getGameData().exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -71,7 +71,7 @@ class SilverflameSquireTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
         assertThat(gd.stack).isEmpty();
     }
 
@@ -93,7 +93,7 @@ class SilverflameSquireTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anySatisfy(permanent -> assertThat(permanent.getCard().getId()).isEqualTo(card.getId()));
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
     }
 

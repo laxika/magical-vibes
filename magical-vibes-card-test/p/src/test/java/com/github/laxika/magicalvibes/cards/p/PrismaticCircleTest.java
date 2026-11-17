@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.g.GiantMantis;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
@@ -56,7 +57,7 @@ class PrismaticCircleTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, viashino.getId());
 
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(viashino.getId()));
     }
 
@@ -76,7 +77,7 @@ class PrismaticCircleTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -96,7 +97,7 @@ class PrismaticCircleTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 18);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(viashino.getId()));
     }
 
@@ -128,7 +129,7 @@ class PrismaticCircleTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertInGraveyard(player2, "Incinerate");
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -142,7 +143,7 @@ class PrismaticCircleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("No permanents on the battlefield"));
     }
@@ -194,7 +195,7 @@ class PrismaticCircleTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 16);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.sourceId().equals(chosen.getId()));
     }
 

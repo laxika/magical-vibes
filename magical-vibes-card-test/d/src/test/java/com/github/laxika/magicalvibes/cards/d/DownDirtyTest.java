@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.p.PossibilityStorm;
 import com.github.laxika.magicalvibes.cards.s.SelesnyaGuildgate;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -162,7 +163,7 @@ class DownDirtyTest extends BaseCardTest {
         KraulWarrior discarded = new KraulWarrior();
         harness.setHand(player2, List.of(discarded));
         harness.setExile(player1, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

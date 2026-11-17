@@ -58,7 +58,7 @@ public class GainControlOfTargetCreatureOfChosenPlayerEffectHandler implements N
                 entry.getControllerId(),
                 target,
                 new GainControlOfTargetEffect(control.duration()),
-                control.duration().toDuration(),
+                control.duration(),
                 sourcePermanentId,
                 entry.getCard().getName());
     }

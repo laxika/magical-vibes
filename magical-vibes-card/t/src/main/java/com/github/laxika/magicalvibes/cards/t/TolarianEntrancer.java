@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,6 +16,6 @@ public class TolarianEntrancer extends Card {
         // permanent and happens even if the Entrancer dies in combat first.
         addTrigger(Triggers.becomesBlocked(),
                 TriggerOptions.EACH_BLOCKER,
-                new GainControlOfCombatOpponentAtEndOfCombatEffect(ControlDuration.PERMANENT));
+                new GainControlOfCombatOpponentAtEndOfCombatEffect(Duration.PERMANENT));
     }
 }

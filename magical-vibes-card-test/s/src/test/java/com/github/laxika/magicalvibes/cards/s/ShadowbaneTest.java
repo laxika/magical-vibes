@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.d.DrainLife;
 import com.github.laxika.magicalvibes.cards.f.FemerefArchers;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
@@ -59,7 +60,7 @@ class ShadowbaneTest extends BaseCardTest {
 
         // 2 damage prevented, 2 life gained because Urborg Panther is black
         harness.assertLife(player1, 22);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -76,7 +77,7 @@ class ShadowbaneTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -117,7 +118,7 @@ class ShadowbaneTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 17);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.sourceId().equals(chosen.getId()));
     }
 
@@ -130,14 +131,14 @@ class ShadowbaneTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, panther.getId());
 
-        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isNotEmpty();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test

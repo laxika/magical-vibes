@@ -105,7 +105,7 @@ class SulfurousSpringsTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         harness.assertLife(player1, 20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

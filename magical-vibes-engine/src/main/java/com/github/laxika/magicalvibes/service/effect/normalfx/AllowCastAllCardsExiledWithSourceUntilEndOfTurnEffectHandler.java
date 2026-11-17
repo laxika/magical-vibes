@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
@@ -43,12 +44,11 @@ public class AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffectHandler
                 .toList();
         for (Card card : matchingCards) {
             if (permission.withoutPayingManaCost()) {
-                gameData.exileCastPermissionsUntilEndOfTurn.add(new GameData.ExileCastPermission(
+                gameData.grantExileCastPermission(new GameData.ExileCastPermission(
                         UUID.randomUUID(), sourcePermanentId, entry.getControllerId(), card.getId(), true));
             } else {
-                gameData.exilePlayPermissions.put(card.getId(), entry.getControllerId());
-                gameData.exilePlayPermissionsExpireEndOfTurn.add(card.getId());
-                gameData.exilePlayAnyManaType.add(card.getId());
+                gameData.grantExilePlayPermission(card.getId(), entry.getControllerId(), Duration.UNTIL_END_OF_TURN);
+                gameData.grantExileAnyManaType(card.getId(), Duration.UNTIL_END_OF_TURN);
             }
         }
     }

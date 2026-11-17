@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsExiledWithSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -25,19 +26,17 @@ public class AllowPlayCardsExiledWithSourceUntilEndOfTurnEffectHandler implement
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null) return;
 
-        var permission = (AllowPlayCardsExiledWithSourceUntilEndOfTurnEffect) effect;
-        gameData.exilePlayUntilEndOfTurnGrantsBySource.put(sourcePermanentId,
-                new ExilePlayCostModifier(entry.getControllerId(), null, -permission.spellCostReduction()));
+        var grant = (AllowPlayCardsExiledWithSourceUntilEndOfTurnEffect) effect;
+        gameData.grantExilePlayUntilEndOfTurnBySource(sourcePermanentId,
+                new ExilePlayCostModifier(entry.getControllerId(), null, -grant.spellCostReduction()));
         List<ExiledCardEntry> matchingEntries = gameData.getExiledWithPermanentEntries(
                 sourcePermanentId, entry.getCard().getId());
         for (ExiledCardEntry matchingEntry : matchingEntries) {
             var card = matchingEntry.card();
-            gameData.exilePlayPermissions.put(card.getId(), entry.getControllerId());
-            gameData.exilePlayPermissionsExpireEndOfTurn.add(card.getId());
-            if (!card.hasType(CardType.LAND) && permission.spellCostReduction() > 0) {
-                gameData.exilePlayCostModifiers.put(card.getId(),
-                        new ExilePlayCostModifier(entry.getControllerId(), null,
-                                -permission.spellCostReduction()));
+            gameData.grantExilePlayPermission(card.getId(), entry.getControllerId(), Duration.UNTIL_END_OF_TURN);
+            if (!card.hasType(CardType.LAND) && grant.spellCostReduction() > 0) {
+                gameData.updateExilePlayPermission(card.getId(), granted -> granted.withCostModifier(
+                        new ExilePlayCostModifier(entry.getControllerId(), null, -grant.spellCostReduction())));
             }
         }
     }

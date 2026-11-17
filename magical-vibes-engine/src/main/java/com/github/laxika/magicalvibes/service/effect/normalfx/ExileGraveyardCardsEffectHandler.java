@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -246,8 +247,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
                 }
             }
             if (controllerGraveyard && e.grantPlayPermissionUntilEndOfTurn()) {
-                gameData.exilePlayPermissions.put(targetCard.getId(), entry.getControllerId());
-                gameData.exilePlayPermissionsExpireEndOfTurn.add(targetCard.getId());
+                gameData.grantExilePlayPermission(targetCard.getId(), entry.getControllerId(), Duration.UNTIL_END_OF_TURN);
             }
             exiledCards.add(targetCard);
         }
@@ -446,12 +446,12 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             }
             UUID permittedPlayer = permission.accessScope() == ExileAccessScope.EXILER
                     ? exilerId : sourceControllerId;
-            gameData.exilePlayPermissions.put(card.getId(), permittedPlayer);
+            gameData.grantExilePlayPermission(card.getId(), permittedPlayer, Duration.PERMANENT);
             if (permission.anyManaType()) {
-                gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
+                gameData.updateExilePlayPermission(card.getId(), granted -> granted.withAnyManaType(true));
             }
             if (permission.withoutPayingManaCost()) {
-                gameData.exilePlayWithoutPayingManaCost.add(card.getId());
+                gameData.setExilePlayWithoutPayingManaCost(card.getId(), true);
             }
             break;
         }

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayUntilNextUpkeepEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -42,9 +42,7 @@ public class ExileTopCardMayPlayUntilNextUpkeepEffectHandler implements NormalEf
 
         Card topCard = deck.removeFirst();
         exileService.exileCard(gameData, controllerId, topCard);
-        gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-        gameData.queueDelayedAction(new RevokeExilePlayPermissionAtNextUpkeep(
-                controllerId, topCard.getId(), entry.getCard()));
+        gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP);
 
         
         gameLogService.append(gameData, GameLog.builder().text(controllerName + " exiles ").card(topCard).text(" from the top of their library (may play it until their next upkeep).").build());

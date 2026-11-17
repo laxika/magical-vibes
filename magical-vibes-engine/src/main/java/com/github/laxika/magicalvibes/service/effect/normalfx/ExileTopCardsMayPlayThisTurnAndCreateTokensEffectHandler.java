@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayThisTurnAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -44,8 +45,7 @@ public class ExileTopCardsMayPlayThisTurnAndCreateTokensEffectHandler implements
         for (int i = 0; i < exiledCount; i++) {
             Card card = library.removeFirst();
             exileService.exileCard(gameData, controllerId, card);
-            gameData.exilePlayPermissions.put(card.getId(), controllerId);
-            gameData.exilePlayPermissionsExpireEndOfTurn.add(card.getId());
+            gameData.grantExilePlayPermission(card.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
             if (card.hasType(CardType.LAND)) {
                 landCount++;
             }

@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
@@ -1985,7 +1986,7 @@ public class CardChoiceHandlerService {
                             .ExileCardFromHandFaceDownWithSourceEffect exile && exile.toGraveyardOnControlLoss());
             if (exilerKeepsLooking) {
                 exileService.exileCardFaceDown(gameData, playerId, card, sourcePermanentId, playerId);
-                gameData.exileLookPermissions.put(card.getId(), playerId);
+                gameData.grantExileLookPermission(card.getId(), playerId);
             } else {
                 exileService.exileCardFaceDown(gameData, playerId, card, sourcePermanentId);
             }
@@ -1993,8 +1994,7 @@ public class CardChoiceHandlerService {
                     .flatMap(ability -> ability.getEffects().stream())
                     .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect
                             .ExileCardFromHandFaceDownWithSourceEffect exile && !exile.toGraveyardOnControlLoss())) {
-                gameData.additionalExileLookPermissions.computeIfAbsent(
-                        card.getId(), ignored -> new java.util.HashSet<>()).add(playerId);
+                gameData.grantExileLookPermission(card.getId(), playerId);
             }
         } else if (sourcePermanentId != null) {
             exileService.exileCard(gameData, playerId, card, sourcePermanentId);
@@ -2012,10 +2012,10 @@ public class CardChoiceHandlerService {
                         exileChoice.playPermissionTaxSourceControllerId(),
                         exileChoice.exilePlayOpponentTax());
             } else {
-                gameData.exilePlayPermissions.put(card.getId(), playPermissionControllerId);
+                gameData.grantExilePlayPermission(card.getId(), playPermissionControllerId, Duration.PERMANENT);
             }
             if (exileChoice.landsEnterTapped() && card.hasType(CardType.LAND)) {
-                gameData.exileCardsEnterTapped.add(card.getId());
+                gameData.updateExilePlayPermission(card.getId(), granted -> granted.withEntersTapped(true));
             }
         }
 
@@ -2381,8 +2381,8 @@ public class CardChoiceHandlerService {
                 }
                 if (revealedHandChoice.plot()) {
                     gameData.plottedCardIds.add(exiled.getId());
-                    gameData.exilePlayPermissions.put(exiled.getId(), targetPlayerId);
-                    gameData.exilePlayWithoutPayingManaCost.add(exiled.getId());
+                    gameData.grantExilePlayPermission(exiled.getId(), targetPlayerId, Duration.PERMANENT);
+                    gameData.setExilePlayWithoutPayingManaCost(exiled.getId(), true);
                     ActionEvents.plotted(gameData, targetPlayerId, exiled);
                 }
                 if (revealedHandChoice.imprintOnSource()) {
@@ -2398,7 +2398,7 @@ public class CardChoiceHandlerService {
                                 gameData, exiled.getId(), targetPlayerId, player.getId(),
                                 revealedHandChoice.exilePlayOpponentTax());
                     } else {
-                        gameData.exilePlayPermissions.put(exiled.getId(), player.getId());
+                        gameData.grantExilePlayPermission(exiled.getId(), player.getId(), Duration.PERMANENT);
                     }
                 }
                 if (revealedHandChoice.returnAtNextEndStep()) {
@@ -2923,7 +2923,7 @@ public class CardChoiceHandlerService {
 
         // "You may cast that card for as long as it remains exiled" (Ice Cauldron) — no expiry.
         if (imprintChoice.grantCastPermission()) {
-            gameData.exilePlayPermissions.put(card.getId(), playerId);
+            gameData.grantExilePlayPermission(card.getId(), playerId, Duration.PERMANENT);
         }
 
         // Imprint on source permanent

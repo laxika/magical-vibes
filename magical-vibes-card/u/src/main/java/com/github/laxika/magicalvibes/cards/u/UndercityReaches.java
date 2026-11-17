@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OHOP", collectorNumber = "39")
@@ -23,6 +23,6 @@ public class UndercityReaches extends Card {
         addTrigger(Triggers.creatureDealsCombatDamageToYou(), draw);
         addTrigger(Triggers.creatureDealsCombatDamageToOpponent(), draw);
         addTrigger(Triggers.chaosEnsues(),
-                new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.REST_OF_GAME));
+                new GrantNoMaximumHandSizeEffect(Duration.PERMANENT));
     }
 }

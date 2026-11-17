@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.cards.g.Glimmerburst;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -29,7 +30,7 @@ class CharredFoyerWarpedSpaceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -38,8 +39,8 @@ class CharredFoyerWarpedSpaceTest extends BaseCardTest {
         Opt firstSpell = new Opt();
         Opt secondSpell = new Opt();
         harness.setExile(player1, List.of(firstSpell, secondSpell));
-        gd.exilePlayPermissions.put(firstSpell.getId(), player1.getId());
-        gd.exilePlayPermissions.put(secondSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(firstSpell.getId(), player1.getId(), Duration.PERMANENT);
+        gd.grantExilePlayPermission(secondSpell.getId(), player1.getId(), Duration.PERMANENT);
 
         harness.castFromExile(player1, firstSpell.getId());
 
@@ -53,7 +54,7 @@ class CharredFoyerWarpedSpaceTest extends BaseCardTest {
         castRoom(0);
         Opt spell = new Opt();
         harness.setExile(player1, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -72,7 +73,7 @@ class CharredFoyerWarpedSpaceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -104,7 +105,7 @@ class CharredFoyerWarpedSpaceTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
     }
 
     @Test
@@ -133,8 +134,8 @@ class CharredFoyerWarpedSpaceTest extends BaseCardTest {
         Glimmerburst firstSpell = new Glimmerburst();
         Glimmerburst secondSpell = new Glimmerburst();
         harness.setExile(player1, List.of(firstSpell, secondSpell));
-        gd.exilePlayPermissions.put(firstSpell.getId(), player1.getId());
-        gd.exilePlayPermissions.put(secondSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(firstSpell.getId(), player1.getId(), Duration.PERMANENT);
+        gd.grantExilePlayPermission(secondSpell.getId(), player1.getId(), Duration.PERMANENT);
         harness.setLibrary(player1, List.of(new Glimmerburst(), new Glimmerburst(), new Glimmerburst()));
         harness.castFromExile(player1, firstSpell.getId());
         harness.passBothPriorities();
@@ -155,7 +156,7 @@ class CharredFoyerWarpedSpaceTest extends BaseCardTest {
         harness.unlockRoomDoor(player1, 0, 1);
         Glimmerburst spell = new Glimmerburst();
         harness.setExile(player1, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
 
         harness.castFromExile(player1, spell.getId());
 
@@ -190,9 +191,9 @@ class CharredFoyerWarpedSpaceTest extends BaseCardTest {
         Glimmerburst secondSpell = new Glimmerburst();
         Glimmerburst thirdSpell = new Glimmerburst();
         harness.setExile(player1, List.of(firstSpell, secondSpell, thirdSpell));
-        gd.exilePlayPermissions.put(firstSpell.getId(), player1.getId());
-        gd.exilePlayPermissions.put(secondSpell.getId(), player1.getId());
-        gd.exilePlayPermissions.put(thirdSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(firstSpell.getId(), player1.getId(), Duration.PERMANENT);
+        gd.grantExilePlayPermission(secondSpell.getId(), player1.getId(), Duration.PERMANENT);
+        gd.grantExilePlayPermission(thirdSpell.getId(), player1.getId(), Duration.PERMANENT);
 
         harness.castFromExile(player1, firstSpell.getId());
         harness.castFromExile(player1, secondSpell.getId());
@@ -213,7 +214,7 @@ class CharredFoyerWarpedSpaceTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     private void castRoom(int doorIndex) {

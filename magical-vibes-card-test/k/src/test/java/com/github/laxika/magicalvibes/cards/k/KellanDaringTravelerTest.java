@@ -35,7 +35,7 @@ class KellanDaringTravelerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Map")).isEqualTo(2);
-        assertThat(gd.exilePlayPermissions).containsEntry(card.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(card.getId(), player1.getId());
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card() == card);
 
         harness.addMana(player1, ManaColor.WHITE, 1);

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayWhileSourceControlledEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -49,8 +51,8 @@ public class ExileTopCardMayPlayWhileSourceControlledEffectHandler implements No
 
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source != null && controllerId.equals(gameData.findControllerOf(source))) {
-            gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-            gameData.exilePlayPermissionSourcePermanents.put(topCard.getId(), sourcePermanentId);
+            gameData.grantExilePlayPermission(topCard.getId(), new ExilePlayPermissionEffect(controllerId),
+                    sourcePermanentId, controllerId, Duration.WHILE_SOURCE_CONTROLLED);
         }
 
         String controllerName = gameData.playerIdToName.get(controllerId);

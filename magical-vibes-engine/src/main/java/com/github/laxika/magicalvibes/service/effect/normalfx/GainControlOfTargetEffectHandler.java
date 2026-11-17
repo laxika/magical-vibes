@@ -19,9 +19,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link GainControlOfTargetEffect} for every {@code ControlDuration}. Each
+ * Resolves {@link GainControlOfTargetEffect} for every {@code Duration}. Each
  * resolution creates a floating layer-2 control effect (CR 613.2/613.7) whose duration maps via
- * {@code ControlDuration.toDuration()}; expiry and fallback to the next most recent
+ * {@code Duration}; expiry and fallback to the next most recent
  * still-active control effect are handled by {@code CreatureControlService}.
  */
 @Component
@@ -40,14 +40,22 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GainControlOfTargetEffect) effect;
-        switch (e.duration()) {
-            case PERMANENT -> resolvePermanent(gameData, entry, e);
-            case END_OF_TURN, END_OF_COMBAT, UNTIL_END_OF_YOUR_NEXT_TURN ->
-                    resolveTemporary(gameData, entry, e);
-            case WHILE_SOURCE_ON_BATTLEFIELD -> resolveWhileSource(gameData, entry, e, true, false);
-            case WHILE_SOURCE_TAPPED -> resolveWhileSource(gameData, entry, e, true, true);
-            case WHILE_SOURCE_REMAINS -> resolveWhileSource(gameData, entry, e, false, false);
-            case WHILE_SOURCE_REMAINS_TAPPED -> resolveWhileSource(gameData, entry, e, false, true);
+        Duration duration = e.duration();
+        if (Duration.PERMANENT.equals(duration)) {
+            resolvePermanent(gameData, entry, e);
+        } else if (Duration.UNTIL_END_OF_TURN.equals(duration) || Duration.UNTIL_END_OF_COMBAT.equals(duration)
+                || Duration.UNTIL_END_OF_YOUR_NEXT_TURN.equals(duration)) {
+            resolveTemporary(gameData, entry, e);
+        } else if (Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(duration)) {
+            resolveWhileSource(gameData, entry, e, true, false);
+        } else if (Duration.WHILE_SOURCE_TAPPED.equals(duration)) {
+            resolveWhileSource(gameData, entry, e, true, true);
+        } else if (Duration.WHILE_SOURCE_REMAINS.equals(duration)) {
+            resolveWhileSource(gameData, entry, e, false, false);
+        } else if (Duration.WHILE_SOURCE_REMAINS_TAPPED.equals(duration)) {
+            resolveWhileSource(gameData, entry, e, false, true);
+        } else {
+            throw new IllegalArgumentException("Unsupported control duration: " + duration);
         }
     }
 
@@ -62,7 +70,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             if (target == null) continue;
 
             boolean controlApplied = creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
-                    e, e.duration().toDuration(), null, entry.getCard().getName());
+                    e, e.duration(), null, entry.getCard().getName());
 
             if (controlApplied && e.grantedSubtype() != null) {
                 if (!target.getGrantedSubtypes().contains(e.grantedSubtype())) {
@@ -89,7 +97,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             if (target == null) continue;
 
             boolean controlApplied = creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
-                    e, e.duration().toDuration(), null, entry.getCard().getName());
+                    e, e.duration(), null, entry.getCard().getName());
 
             // Magus of the Unseen: "When you lose control of the artifact, tap it." The stolen
             // permanent is tapped when this until-end-of-turn control effect expires (cleanup step).
@@ -138,7 +146,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             if (target == null) continue;
 
             creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
-                    e, e.duration().toDuration(), sourcePermanentId, entry.getCard().getName());
+                    e, e.duration(), sourcePermanentId, entry.getCard().getName());
         }
     }
 

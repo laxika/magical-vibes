@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfCreaturesOfChosenTypeIfMoreThanEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -31,7 +31,7 @@ public class GainControlOfCreaturesOfChosenTypeIfMoreThanEachOtherPlayerEffectHa
         implements NormalEffectHandlerBean {
 
     private static final GainControlOfTargetEffect CONTROL_EFFECT =
-            new GainControlOfTargetEffect(ControlDuration.PERMANENT);
+            new GainControlOfTargetEffect(Duration.PERMANENT);
 
     private final PlayerInputService playerInputService;
     private final CreatureControlService creatureControlService;
@@ -83,7 +83,7 @@ public class GainControlOfCreaturesOfChosenTypeIfMoreThanEachOtherPlayerEffectHa
 
         for (Permanent permanent : toSeize) {
             creatureControlService.applyControlEffect(gameData, controllerId, permanent,
-                    CONTROL_EFFECT, ControlDuration.PERMANENT.toDuration(), null,
+                    CONTROL_EFFECT, Duration.PERMANENT, null,
                     entry.getCard().getName());
         }
     }

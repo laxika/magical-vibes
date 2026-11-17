@@ -41,7 +41,7 @@ class MurderousRiderTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -155,7 +155,7 @@ class MurderousRiderTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(card);
     }
 
@@ -179,7 +179,7 @@ class MurderousRiderTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(card);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
@@ -238,7 +238,7 @@ class MurderousRiderTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, rider.getId());
 
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
         assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(card);
         assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(card);
         assertThat(gd.stack).isEmpty();

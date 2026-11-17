@@ -166,7 +166,7 @@ class CribSwapTest extends BaseCardTest {
         gd.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
                 java.util.UUID.randomUUID(), null, null, player1.getId(),
                 new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
-                        com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
+                        com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT),
                 target.getId(), null, null, com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, 0));
         harness.passBothPriorities();
 

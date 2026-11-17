@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.w.WallOfRazors;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -147,7 +146,7 @@ class CannibalizeTest extends BaseCardTest {
         for (Permanent stolen : List.of(wall, giant)) {
             gd.stolenCreatures.put(stolen.getId(), player2.getId());
             gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control effect", null,
-                    player1.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT), stolen.getId(),
+                    player1.getId(), new GainControlOfTargetEffect(Duration.PERMANENT), stolen.getId(),
                     null, null, Duration.PERMANENT, 0));
         }
         harness.inMutationScope(() -> GameTestEngineContext.get()

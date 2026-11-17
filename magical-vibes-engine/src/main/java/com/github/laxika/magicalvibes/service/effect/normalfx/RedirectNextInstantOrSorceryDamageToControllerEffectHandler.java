@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -30,7 +32,9 @@ public class RedirectNextInstantOrSorceryDamageToControllerEffectHandler impleme
             return;
         }
 
-        gameData.playerNextInstantOrSorceryDamageRedirectShields.add(playerId);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), playerId, (RedirectNextInstantOrSorceryDamageToControllerEffect) effect,
+                playerId, Duration.UNTIL_END_OF_TURN));
         gameLogService.append(gameData, GameLog.text(
                 "The next time an instant or sorcery spell would deal damage to "
                         + gameData.playerIdToName.get(playerId)

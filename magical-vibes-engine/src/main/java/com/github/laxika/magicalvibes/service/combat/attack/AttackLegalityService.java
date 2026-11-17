@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.effect.OnlyChosenCreaturesCanAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesCantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayForArtifactsOrCreaturesCantAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackThisTurnEffect;
@@ -654,11 +656,9 @@ public class AttackLegalityService {
      * restriction.
      */
     private boolean isOutsideChosenAttackers(GameData gameData, Permanent creature) {
-        if (gameData.chosenAttackersThisTurn.isEmpty() && gameData.attackableCreaturesThisTurn.isEmpty()) {
-            return false;
-        }
-        for (Set<UUID> chosen : gameData.chosenAttackersThisTurn.values()) {
-            if (!chosen.contains(creature.getId())) {
+        for (FloatingContinuousEffect restriction
+                : gameData.floatingEffectsOfTypes(OnlyChosenCreaturesCanAttackEffect.class)) {
+            if (!((OnlyChosenCreaturesCanAttackEffect) restriction.effect()).chosen().contains(creature.getId())) {
                 return true;
             }
         }
@@ -677,10 +677,13 @@ public class AttackLegalityService {
      */
     private boolean isCantAttackByPlayerCreaturesRestriction(GameData gameData, Permanent creature) {
         UUID creatureController = gameData.findControllerOf(creature);
-        List<PermanentPredicate> filters = creatureController == null
-                ? null : gameData.playerCreaturesCantAttackThisTurn.get(creatureController);
-        return filters != null && filters.stream().anyMatch(filter ->
-                predicateEvaluationService.matchesPermanentPredicate(gameData, creature, filter));
+        if (creatureController == null) {
+            return false;
+        }
+        return gameData.floatingPlayerEffects(creatureController, CantAttackThisTurnEffect.class).stream()
+                .map(CantAttackThisTurnEffect.class::cast)
+                .anyMatch(restriction -> predicateEvaluationService.matchesPermanentPredicate(gameData, creature,
+                        restriction.filter() == null ? new PermanentIsCreaturePredicate() : restriction.filter()));
     }
 
     private boolean isCantAttackDueToGlobalRestriction(GameData gameData, Permanent creature) {
@@ -865,19 +868,6 @@ public class AttackLegalityService {
                 && (creature.getMustAttackTargetId() == null
                         || canAttackRequiredTarget(gameData, creature, creature.getMustAttackTargetId()))) {
             count[0]++;
-        }
-
-        // Taunt: every creature the affected player controls must attack the taunter if able.
-        UUID taunter = gameData.tauntedThisTurn.get(creatureControllerId);
-        if (taunter != null && getValidAttackTargetIds(gameData, creatureControllerId).contains(taunter)) {
-            count[0]++;
-        }
-
-        // Oracle en-Vec: a creature its controller chose last turn attacks this turn if able.
-        for (Set<UUID> chosen : gameData.chosenAttackersThisTurn.values()) {
-            if (chosen.contains(creature.getId())) {
-                count[0]++;
-            }
         }
 
         gameData.forEachPermanent((playerId, permanent) -> {

@@ -14,8 +14,8 @@ public record GainControlOfTargetUntilRansomEffect(int manaCost, int lifeCost)
     }
 
     @Override
-    public ControlDuration controlDuration() {
-        return ControlDuration.WHILE_SOURCE_REMAINS;
+    public Duration controlDuration() {
+        return Duration.WHILE_SOURCE_REMAINS;
     }
 
     @Override

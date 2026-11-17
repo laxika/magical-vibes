@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -111,7 +110,7 @@ class GainControlOfTargetEffectHandlerTest {
             Permanent target = createCreature("Grizzly Bears");
             gd.playerBattlefields.get(player2Id).add(target);
 
-            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.PERMANENT);
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), target.getId());
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
@@ -127,7 +126,7 @@ class GainControlOfTargetEffectHandlerTest {
         void doesNothingWhenSingleTargetNotFound() {
             Card card = createCard("Entrancing Melody");
             UUID missingId = UUID.randomUUID();
-            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.PERMANENT);
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), missingId);
 
             when(gameQueryService.findPermanentById(gd, missingId)).thenReturn(null);
@@ -144,7 +143,7 @@ class GainControlOfTargetEffectHandlerTest {
             Permanent target = createCreature("Grizzly Bears");
             gd.playerBattlefields.get(player2Id).add(target);
 
-            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.PERMANENT, CardSubtype.VAMPIRE);
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.PERMANENT, CardSubtype.VAMPIRE);
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), target.getId());
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
@@ -168,7 +167,7 @@ class GainControlOfTargetEffectHandlerTest {
             target.getGrantedSubtypes().add(CardSubtype.VAMPIRE);
             gd.playerBattlefields.get(player2Id).add(target);
 
-            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.PERMANENT, CardSubtype.VAMPIRE);
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.PERMANENT, CardSubtype.VAMPIRE);
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), target.getId());
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
@@ -192,7 +191,7 @@ class GainControlOfTargetEffectHandlerTest {
             gd.playerBattlefields.get(player2Id).add(target2);
             gd.playerBattlefields.get(player2Id).add(target3);
 
-            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.PERMANENT);
             List<UUID> targetIds = List.of(target1.getId(), target2.getId(), target3.getId());
             StackEntry entry = entryWithMultiTargets(card, player1Id, List.of(effect), targetIds);
 
@@ -220,7 +219,7 @@ class GainControlOfTargetEffectHandlerTest {
             gd.playerBattlefields.get(player2Id).add(target1);
             gd.playerBattlefields.get(player2Id).add(target2);
 
-            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.PERMANENT);
             List<UUID> targetIds = List.of(target1.getId(), removedId, target2.getId());
             StackEntry entry = entryWithMultiTargets(card, player1Id, List.of(effect), targetIds);
 
@@ -241,7 +240,7 @@ class GainControlOfTargetEffectHandlerTest {
         @DisplayName("Does nothing when targetIds list is empty and targetId is null")
         void doesNothingWithNoTargets() {
             Card card = createCard("Jace, Ingenious Mind-Mage");
-            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.PERMANENT);
             StackEntry entry = entryWithMultiTargets(card, player1Id, List.of(effect), List.of());
 
             handler.resolve(gd, entry, effect);
@@ -258,7 +257,7 @@ class GainControlOfTargetEffectHandlerTest {
             gd.playerBattlefields.get(player2Id).add(target1);
             gd.playerBattlefields.get(player2Id).add(target2);
 
-            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.PERMANENT, CardSubtype.VAMPIRE);
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.PERMANENT, CardSubtype.VAMPIRE);
             List<UUID> targetIds = List.of(target1.getId(), target2.getId());
             StackEntry entry = entryWithMultiTargets(card, player1Id, List.of(effect), targetIds);
 
@@ -290,7 +289,7 @@ class GainControlOfTargetEffectHandlerTest {
             Permanent target = createCreature("Grizzly Bears");
             gd.playerBattlefields.get(player2Id).add(target);
 
-            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.END_OF_TURN);
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN);
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), target.getId());
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
@@ -306,7 +305,7 @@ class GainControlOfTargetEffectHandlerTest {
         void doesNothingWhenTargetNotFound() {
             Card card = createCard("Threaten");
             UUID missingId = UUID.randomUUID();
-            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.END_OF_TURN);
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN);
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), missingId);
 
             when(gameQueryService.findPermanentById(gd, missingId)).thenReturn(null);
@@ -333,7 +332,7 @@ class GainControlOfTargetEffectHandlerTest {
             gd.playerBattlefields.get(player1Id).add(source);
             gd.playerBattlefields.get(player2Id).add(target);
 
-            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD);
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.WHILE_SOURCE_ON_BATTLEFIELD);
             StackEntry entry = entryWithTargetAndSource(card, player1Id, List.of(effect), target.getId(), source.getId());
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
@@ -354,7 +353,7 @@ class GainControlOfTargetEffectHandlerTest {
             UUID sourceId = UUID.randomUUID();
             gd.playerBattlefields.get(player2Id).add(target);
 
-            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD);
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.WHILE_SOURCE_ON_BATTLEFIELD);
             StackEntry entry = entryWithTargetAndSource(card, player1Id, List.of(effect), target.getId(), sourceId);
 
             when(gameQueryService.findPermanentById(gd, sourceId)).thenReturn(null);
@@ -373,7 +372,7 @@ class GainControlOfTargetEffectHandlerTest {
             gd.playerBattlefields.get(player2Id).add(source);
             gd.playerBattlefields.get(player2Id).add(target);
 
-            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD);
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(Duration.WHILE_SOURCE_ON_BATTLEFIELD);
             StackEntry entry = entryWithTargetAndSource(card, player1Id, List.of(effect), target.getId(), source.getId());
 
             when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);

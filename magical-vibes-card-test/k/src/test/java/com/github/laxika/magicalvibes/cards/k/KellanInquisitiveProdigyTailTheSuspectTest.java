@@ -75,7 +75,7 @@ class KellanInquisitiveProdigyTailTheSuspectTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
         assertThat(gd.additionalLandsThisTurn.get(player1.getId())).isEqualTo(1);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
         harness.assertNotInGraveyard(player1, "Kellan, Inquisitive Prodigy");
 
         harness.forceActivePlayer(player1);

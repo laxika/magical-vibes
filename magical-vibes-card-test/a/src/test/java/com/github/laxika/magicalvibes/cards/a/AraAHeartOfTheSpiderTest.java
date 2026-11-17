@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -52,8 +53,8 @@ class AraAHeartOfTheSpiderTest extends BaseCardTest {
         resolveCombatTrigger();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(topCard.getId());
     }
 
     @Test
@@ -75,7 +76,7 @@ class AraAHeartOfTheSpiderTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(firstCard, secondCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(firstCard.getId(), secondCard.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(firstCard.getId(), secondCard.getId());
     }
 
     @Test

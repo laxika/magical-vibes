@@ -38,7 +38,7 @@ class MonkGyatsoTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.findExiledCard(target.getOriginalCard().getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(target.getOriginalCard().getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(target.getOriginalCard().getId())).isEqualTo(player1.getId());
     }
 
     @Test

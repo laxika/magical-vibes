@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -27,9 +28,9 @@ class TheRuinousPowersTest extends BaseCardTest {
         Permanent source = resolveUpkeepTrigger(topCard);
 
         assertThat(gd.getCardsExiledByPermanent(source.getId())).containsExactly(topCard);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(topCard.getId());
-        assertThat(gd.exilePlayAnyManaType).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(topCard.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(topCard.getId());
 
         int lifeBefore = gd.getLife(player2.getId());
         harness.forceActivePlayer(player1);
@@ -53,8 +54,8 @@ class TheRuinousPowersTest extends BaseCardTest {
         Permanent source = resolveUpkeepTrigger(topCard);
 
         assertThat(gd.getCardsExiledByPermanent(source.getId())).containsExactly(topCard);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayAnyManaType).doesNotContain(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).doesNotContain(topCard.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -147,8 +148,8 @@ class TheRuinousPowersTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
-        assertThat(gd.exilePlayAnyManaType).doesNotContain(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).doesNotContain(topCard.getId());
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.GREEN, 2);
         assertThatThrownBy(() -> harness.castFromExile(player1, topCard.getId()))

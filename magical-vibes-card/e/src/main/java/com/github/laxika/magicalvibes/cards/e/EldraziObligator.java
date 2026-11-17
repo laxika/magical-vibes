@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -21,7 +21,7 @@ public class EldraziObligator extends Card {
         target(TargetFilters.creature()).addTrigger(Triggers.youCastThisSpell(), new MayPayManaEffect(
                 "{1}{C}",
                 SequenceEffect.of(
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)),
                 "Pay {1}{C} to gain control of target creature until end of turn?"));

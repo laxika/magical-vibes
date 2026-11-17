@@ -38,7 +38,7 @@ class ImpracticalJokeTest extends BaseCardTest {
         // Hill Giant (3/3) takes 3 damage → dead
         harness.assertNotOnBattlefield(player2, "Hill Giant");
         // Damage can't be prevented this turn
-        assertThat(gd.damageCantBePreventedThisTurn).isTrue();
+        assertThat(gd.damageCantBePreventedThisTurn()).isTrue();
         assertThat(gqs.isDamagePreventable(gd)).isFalse();
     }
 
@@ -51,7 +51,7 @@ class ImpracticalJokeTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, List.of());
 
         GameData gd = harness.getGameData();
-        assertThat(gd.damageCantBePreventedThisTurn).isTrue();
+        assertThat(gd.damageCantBePreventedThisTurn()).isTrue();
         harness.assertInGraveyard(player1, "Impractical Joke");
     }
 
@@ -107,7 +107,7 @@ class ImpracticalJokeTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+        assertThat(gd.damageCantBePreventedThisTurn()).isFalse();
         harness.assertInGraveyard(player1, "Impractical Joke");
     }
 
@@ -147,7 +147,7 @@ class ImpracticalJokeTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+        assertThat(gd.damageCantBePreventedThisTurn()).isFalse();
         assertThat(gqs.isDamagePreventable(gd)).isTrue();
     }
 }

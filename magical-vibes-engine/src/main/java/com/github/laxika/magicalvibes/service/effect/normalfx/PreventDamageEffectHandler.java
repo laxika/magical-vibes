@@ -275,9 +275,9 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        gameData.playerNextDamageFromMatchingSourcesPrevented
-                .computeIfAbsent(controllerId, ignored -> new java.util.concurrent.CopyOnWriteArrayList<>())
-                .add(sourcePredicate);
+        addPrevention(gameData, entry, new PreventDamageEffect(effect.scope(), effect.amount(), effect.combatOnly(),
+                effect.sourceColors(), effect.exemptPredicate(), effect.victimPredicate(), effect.gainLife(),
+                sourcePredicate), controllerId, Duration.UNTIL_END_OF_TURN);
         gameLogService.append(gameData, GameLog.text(
                 "The next damage that would be dealt to " + gameData.playerIdToName.get(controllerId)
                         + " by a matching source is prevented."));
@@ -341,11 +341,8 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
         if (controllerId == null) return;
         int amount = evaluate(gameData, entry, e);
 
-        var shields = e.combatOnly()
-                ? gameData.playerCombatDamagePreventionShields
-                : gameData.playerDamagePreventionShields;
-        int currentShield = shields.getOrDefault(controllerId, 0);
-        shields.put(controllerId, currentShield + amount);
+        gameData.addPlayerDamagePreventionShield(entry.getCard().getName(), controllerId, controllerId, amount,
+                e.combatOnly());
 
         String controllerName = gameData.playerIdToName.get(controllerId);
         String logEntry = "The next " + amount + (e.combatOnly() ? " combat damage " : " damage ")
@@ -406,8 +403,8 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
         });
 
         for (UUID playerId : gameData.orderedPlayerIds) {
-            int currentShield = gameData.playerDamagePreventionShields.getOrDefault(playerId, 0);
-            gameData.playerDamagePreventionShields.put(playerId, currentShield + amount);
+            gameData.addPlayerDamagePreventionShield(entry.getCard().getName(), entry.getControllerId(), playerId,
+                    amount, false);
         }
 
         gameLogService.append(gameData, GameLog.text(
@@ -442,7 +439,7 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
         int amount = evaluate(gameData, entry, e);
 
         if (e.gainLife()) {
-            gameData.damagePreventionLifeGainShields.add(new DamagePreventionLifeGainShield(
+            gameData.addShield(new DamagePreventionLifeGainShield(
                     targetId, entry.getControllerId(), amount));
             gameLogService.append(gameData, GameLog.text(
                     "The next " + amount + " damage that would be dealt to the target is prevented; "
@@ -462,8 +459,8 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (gameData.playerIds.contains(targetId)) {
-            int currentShield = gameData.playerDamagePreventionShields.getOrDefault(targetId, 0);
-            gameData.playerDamagePreventionShields.put(targetId, currentShield + amount);
+            gameData.addPlayerDamagePreventionShield(entry.getCard().getName(), entry.getControllerId(), targetId,
+                    amount, false);
 
             String playerName = gameData.playerIdToName.get(targetId);
             String logEntry = "The next " + amount + " damage that would be dealt to " + playerName + " is prevented.";

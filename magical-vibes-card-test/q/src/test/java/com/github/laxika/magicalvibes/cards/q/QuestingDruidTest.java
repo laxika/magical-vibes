@@ -48,7 +48,7 @@ class QuestingDruidTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(first, second);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
     }
@@ -88,11 +88,11 @@ class QuestingDruidTest extends BaseCardTest {
 
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
-        assertThat(gd.exilePlayPermissions).containsKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(top.getId());
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
     }
 
     @ParameterizedTest

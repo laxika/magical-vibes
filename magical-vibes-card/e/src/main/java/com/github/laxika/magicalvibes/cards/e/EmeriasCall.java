@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -34,7 +34,7 @@ public class EmeriasCall extends Card {
                                 Set.of(Keyword.INDESTRUCTIBLE),
                                 GrantScope.OWN_CREATURES,
                                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.ANGEL)),
-                                GrantDuration.UNTIL_YOUR_NEXT_TURN,
+                                Duration.UNTIL_YOUR_NEXT_TURN,
                                 null
                         )
                 )).withManaCost("{4}{W}{W}{W}"),

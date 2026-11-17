@@ -167,27 +167,6 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
         return new EndOfTurnStateShare(capped);
     }
 
-    /**
-     * Returns this share with one occurrence of {@code previous} in the {@link EndOfTurnStateField.Kind#LIST} field
-     * {@code field} replaced by {@code replacement}, or this share itself when the field holds no such element. Used
-     * when a shield's record is replaced by a reduced copy, so the copy stays credited to the same player.
-     */
-    public EndOfTurnStateShare withElementReplaced(EndOfTurnStateField field, Object previous, Object replacement) {
-        if (field.kind() != EndOfTurnStateField.Kind.LIST) {
-            throw new IllegalArgumentException("Not a LIST field: " + field);
-        }
-        List<Object> elements = new ArrayList<>(listValue(values.get(field)));
-        int index = elements.indexOf(previous);
-        if (index < 0) {
-            return this;
-        }
-        elements.set(index, replacement);
-        Map<EndOfTurnStateField, Object> replaced = new EnumMap<>(EndOfTurnStateField.class);
-        replaced.putAll(values);
-        replaced.put(field, elements);
-        return new EndOfTurnStateShare(replaced);
-    }
-
     /** Reads an {@code int} field, {@code 0} when absent. */
     public int intValue(EndOfTurnStateField field) {
         return intValue(values.get(field));

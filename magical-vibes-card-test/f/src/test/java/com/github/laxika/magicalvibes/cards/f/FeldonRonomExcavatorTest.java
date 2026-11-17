@@ -40,7 +40,7 @@ class FeldonRonomExcavatorTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(topCards.get(1).getId()));
 
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(topCards.get(1).getId(), player1.getId())
                 .doesNotContainKey(topCards.get(0).getId());
         assertThat(gd.playerDecks.get(player1.getId())).first().isEqualTo(topCards.get(2));
@@ -77,7 +77,7 @@ class FeldonRonomExcavatorTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
         harness.handleMultipleCardsChosen(player1, List.of(topCard.getId()));
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -137,7 +137,7 @@ class FeldonRonomExcavatorTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
         harness.handleMultipleCardsChosen(player1, List.of(topCard.getId()));
         harness.assertOnBattlefield(player1, "Feldon, Ronom Excavator");
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -151,16 +151,16 @@ class FeldonRonomExcavatorTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
         harness.ensurePriority(player1);
         harness.addMana(player1, ManaColor.RED, 1);
         assertThatThrownBy(() -> harness.castFromExile(player1, chosen.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(chosen.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(chosen.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(chosen, other);
     }
 }

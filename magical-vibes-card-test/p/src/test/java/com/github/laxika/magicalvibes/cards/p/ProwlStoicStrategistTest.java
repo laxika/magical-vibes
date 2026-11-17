@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -57,7 +58,7 @@ class ProwlStoicStrategistTest extends BaseCardTest {
         ExiledCardEntry exiled = gd.findExiledCard(target.getCard().getId());
         assertThat(exiled).isNotNull();
         assertThat(exiled.sourcePermanentId()).isEqualTo(prowl.getId());
-        assertThat(gd.exilePlayPermissions.get(target.getCard().getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(target.getCard().getId())).isEqualTo(player2.getId());
 
         harness.setLibrary(player1, List.of(new Mountain()));
         harness.forceActivePlayer(player2);
@@ -148,7 +149,7 @@ class ProwlStoicStrategistTest extends BaseCardTest {
         ExiledCardEntry exiled = gd.findExiledCard(vehicle.getOriginalCard().getId());
         assertThat(exiled).isNotNull();
         assertThat(exiled.sourcePermanentId()).isEqualTo(attacker.getId());
-        assertThat(gd.exilePlayPermissions.get(vehicle.getOriginalCard().getId()))
+        assertThat(gd.exilePlayPermissionHolder(vehicle.getOriginalCard().getId()))
                 .isEqualTo(player1.getId());
     }
 
@@ -182,8 +183,8 @@ class ProwlStoicStrategistTest extends BaseCardTest {
         BenalishKnight second = new BenalishKnight();
         gd.addToExile(player2.getId(), first, prowl.getId());
         gd.addToExile(player2.getId(), second, prowl.getId());
-        gd.exilePlayPermissions.put(first.getId(), player2.getId());
-        gd.exilePlayPermissions.put(second.getId(), player2.getId());
+        gd.grantExilePlayPermission(first.getId(), player2.getId(), Duration.PERMANENT);
+        gd.grantExilePlayPermission(second.getId(), player2.getId(), Duration.PERMANENT);
         harness.setLibrary(player1, List.of(new Mountain(), new Mountain()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -231,7 +232,7 @@ class ProwlStoicStrategistTest extends BaseCardTest {
         Permanent prowl = castProwlConverted();
         GrizzlyBears bear = new GrizzlyBears();
         gd.addToExile(player2.getId(), bear, prowl.getId());
-        gd.exilePlayPermissions.put(bear.getId(), player2.getId());
+        gd.grantExilePlayPermission(bear.getId(), player2.getId(), Duration.PERMANENT);
         harness.setLibrary(player1, List.of(new Mountain()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

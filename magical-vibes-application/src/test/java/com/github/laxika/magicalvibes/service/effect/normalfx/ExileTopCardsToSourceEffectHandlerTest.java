@@ -291,7 +291,7 @@ class ExileTopCardsToSourceEffectHandlerTest {
         handler.resolve(gd, adventureEntry, effect);
 
         Card exiledCard = gd.getPlayerExiledCards(player2Id).getFirst();
-        assertThat(gd.exilePlayPermissions).containsEntry(exiledCard.getId(), player1Id);
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiledCard.getId(), player1Id);
         assertThat(gd.playerDecks.get(player2Id)).isEmpty();
     }
 

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.z;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -27,7 +27,7 @@ public class ZealousConscripts extends Card {
         // Untap that permanent. It gains haste until end of turn.
         target(TargetFilters.permanent())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }

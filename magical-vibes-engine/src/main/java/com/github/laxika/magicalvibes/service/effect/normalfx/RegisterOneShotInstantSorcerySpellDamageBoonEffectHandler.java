@@ -53,7 +53,7 @@ public class RegisterOneShotInstantSorcerySpellDamageBoonEffectHandler
 
         var boon = RegisterDelayedControllerSpellCastTriggerEffect.boon(INSTANT_OR_SORCERY,
                 List.of(new DealDamageToTargetCreatureOrPlaneswalkerEffect(damage, opponentCreatureOrPlaneswalker)));
-        gameData.temporaryGlobalTriggeredAbilities.add(boon.duration().delayed(entry.getControllerId(),
-                entry.getCard(), boon.delayedAbility(), null, gameData.turnNumber, targetFilter));
+        gameData.temporaryGlobalTriggeredAbilities.add(boon.withTargetFilter(targetFilter).delayed(
+                entry.getControllerId(), entry.getCard(), null, gameData.turnNumber));
     }
 }

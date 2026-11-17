@@ -58,7 +58,7 @@ class GrinningTotemTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getId().equals(swamp.getId()));
         assertThat(gd.findExiledCard(swamp.getId()).faceDown()).isFalse();
-        assertThat(gd.exilePlayPermissions.get(swamp.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(swamp.getId())).isEqualTo(player1.getId());
         assertThat(gd.playerDecks.get(player2.getId()))
                 .noneMatch(c -> c.getId().equals(swamp.getId()));
         assertThat(gameLogContains("Library is shuffled.")).isTrue();
@@ -91,7 +91,7 @@ class GrinningTotemTest extends BaseCardTest {
         // Card leaves exile, loses permission, and enters its owner's (player2's) graveyard.
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getId().equals(swamp.getId()));
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(swamp.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(swamp.getId());
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getId().equals(swamp.getId()));
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
@@ -111,7 +111,7 @@ class GrinningTotemTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getId().equals(swamp.getId()));
-        assertThat(gd.exilePlayPermissions.get(swamp.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(swamp.getId())).isEqualTo(player1.getId());
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
 
@@ -150,7 +150,7 @@ class GrinningTotemTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(grizzlyBears.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(grizzlyBears.getId());
 
         advanceToUpkeep(player1);
 
@@ -229,7 +229,7 @@ class GrinningTotemTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         advanceToUpkeep(player1);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(swamp.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(swamp.getId());
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(swamp);
         harness.assertNotInGraveyard(player2, "Swamp");
         assertThat(gd.stack).hasSize(1);

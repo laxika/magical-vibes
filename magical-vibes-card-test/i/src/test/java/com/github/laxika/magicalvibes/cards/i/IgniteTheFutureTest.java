@@ -55,7 +55,7 @@ class IgniteTheFutureTest extends BaseCardTest {
         harness.castFlashback(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.exilePlayWithoutPayingManaCost)
+        assertThat(gd.exilePlayWithoutPayingCardIds())
                 .contains(first.getId(), second.getId(), third.getId());
         harness.castFromExile(player1, first.getId());
         harness.passBothPriorities();

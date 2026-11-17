@@ -218,7 +218,7 @@ class BeastWithinTest extends BaseCardTest {
                 .getBean(com.github.laxika.magicalvibes.service.battlefield.CreatureControlService.class)
                 .applyControlEffect(gd, player1.getId(), target,
                         new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
-                                com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
+                                com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT),
                         com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, null, "Test setup"));
         harness.passBothPriorities();
 

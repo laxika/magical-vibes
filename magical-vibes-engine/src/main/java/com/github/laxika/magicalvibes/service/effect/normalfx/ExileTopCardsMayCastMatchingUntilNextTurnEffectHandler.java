@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -78,15 +79,12 @@ public class ExileTopCardsMayCastMatchingUntilNextTurnEffectHandler implements N
                     && predicateEvaluationService.matchesCardPredicate(
                             topCard.getBackFaceCard(), exileEffect.filter(), null);
             if (matchingFace) {
-                exileSupport.grantPlayUntilOwnersNextTurn(gameData, topCard.getId(), controllerId);
-                if (exileEffect.expireAtTurnBeginning()) {
-                    int expiryTurn = gameData.exilePlayPermissionsExpireAtTurnEnd.remove(topCard.getId());
-                    gameData.exilePlayPermissionsExpireAtTurnBeginning.put(topCard.getId(), expiryTurn);
-                }
+                gameData.grantExilePlayPermission(topCard.getId(), controllerId, exileEffect.expireAtTurnBeginning()
+                        ? Duration.UNTIL_YOUR_NEXT_TURN : Duration.UNTIL_END_OF_YOUR_NEXT_TURN);
                 castableNames.add(topCard.getName());
                 permittedCardIds.add(topCard.getId());
                 if (exileEffect.filter() != null) {
-                    gameData.exilePlayPermissionSpellFilters.put(topCard.getId(), exileEffect.filter());
+                    gameData.updateExilePlayPermission(topCard.getId(), granted -> granted.withSpellFilter(exileEffect.filter()));
                 }
             }
         }

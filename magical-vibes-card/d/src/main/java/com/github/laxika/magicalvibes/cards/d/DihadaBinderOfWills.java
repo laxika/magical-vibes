@@ -8,9 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
@@ -46,7 +45,7 @@ public class DihadaBinderOfWills extends Card {
                         Set.of(Keyword.VIGILANCE, Keyword.LIFELINK, Keyword.INDESTRUCTIBLE),
                         GrantScope.TARGET,
                         null,
-                        GrantDuration.UNTIL_YOUR_NEXT_TURN,
+                        Duration.UNTIL_YOUR_NEXT_TURN,
                         null)),
                 "+2: Up to one target legendary creature gains vigilance, lifelink, and indestructible until your next turn.",
                 new PermanentPredicateTargetFilter(
@@ -80,7 +79,7 @@ public class DihadaBinderOfWills extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -11,
                 List.of(
-                        new GainControlOfAllPermanentsMatchingEffect(nonlandPermanent, ControlDuration.END_OF_TURN),
+                        new GainControlOfAllPermanentsMatchingEffect(nonlandPermanent, Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(TapUntapScope.CONTROLLED, nonlandPermanent),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_PERMANENTS, nonlandPermanent)),
                 "−11: Gain control of all nonland permanents until end of turn. Untap them. They gain haste until end of turn."));

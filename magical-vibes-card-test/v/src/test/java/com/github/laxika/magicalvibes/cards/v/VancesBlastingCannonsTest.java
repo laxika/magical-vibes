@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LightningStrike;
 import com.github.laxika.magicalvibes.cards.h.HeadstrongBrute;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -45,9 +46,9 @@ class VancesBlastingCannonsTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.exilePlayPermissions.get(topCard.getId()))
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId()))
                 .isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn)
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN))
                 .contains(topCard.getId());
     }
 
@@ -63,7 +64,7 @@ class VancesBlastingCannonsTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getId().equals(land.getId()));
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(land.getId());
     }
 
     @Test
@@ -89,7 +90,7 @@ class VancesBlastingCannonsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         // Verify permission is active
-        assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(topCard.getId());
 
         // Advance to cleanup step to clear permissions
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -97,8 +98,8 @@ class VancesBlastingCannonsTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to end step
         harness.passBothPriorities(); // advance to cleanup
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).isEmpty();
     }
 
     @Test

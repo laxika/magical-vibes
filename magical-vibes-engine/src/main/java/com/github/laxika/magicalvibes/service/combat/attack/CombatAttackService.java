@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
+import com.github.laxika.magicalvibes.model.effect.DeclarationReplacementEffect;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,7 +20,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationControl;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToHandEffect;
@@ -746,12 +746,6 @@ public class CombatAttackService {
                     && !gameData.playerIds.contains(targetId)) {
                 throw new IllegalStateException(attacker.getCard().getName() + " must attack a player");
             }
-            // Taunt: a taunted player's attacking creatures must attack the taunter if able.
-            UUID taunter = gameData.tauntedThisTurn.get(playerId);
-            if (taunter != null && validTargetIds.contains(taunter) && !taunter.equals(targetId)
-                    && attackLegalityService.canAttackDefender(gameData, attacker, taunter)) {
-                throw new IllegalStateException(attacker.getCard().getName() + " must attack the taunting player");
-            }
             if (attackLegalityService.mustAttackOtherPlayerIfAble(gameData, attacker, targetId)) {
                 throw new IllegalStateException(attacker.getCard().getName()
                         + " must attack a player other than you if able");
@@ -1381,9 +1375,8 @@ public class CombatAttackService {
      * "you choose which creatures attack this turn" effect is in force.
      */
     private UUID attackerDeclarationChooser(GameData gameData, UUID activePlayerId) {
-        List<DelayedAttackerDeclarationControl> controls =
-                gameData.getDelayedActions(DelayedAttackerDeclarationControl.class);
-        return controls.isEmpty() ? activePlayerId : controls.getLast().chooserId();
+        var controls = gameData.declarationReplacements(DeclarationReplacementEffect.Kind.CONTROLLER_CHOOSES_ATTACKERS);
+        return controls.isEmpty() ? activePlayerId : controls.getLast().controllerId();
     }
 
     /**

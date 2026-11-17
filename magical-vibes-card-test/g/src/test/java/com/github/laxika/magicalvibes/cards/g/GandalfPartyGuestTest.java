@@ -187,7 +187,7 @@ class GandalfPartyGuestTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(card -> card.getId().equals(spell.getId()));
-        assertThat(gd.exilePlayPermissions).containsEntry(spell.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(spell.getId(), player1.getId());
         harness.assertNotInGraveyard(player1, "Merfolk Secretkeeper");
     }
 

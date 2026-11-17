@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -173,6 +174,7 @@ class LaughingJasperFlintTest extends BaseCardTest {
         addCreatureReady(player1, new LaughingJasperFlint());
         Card spell = new GrizzlyBears();
         exileAtUpkeep(spell);
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         gd.turnNumber++;
         prepareMainPhase();
         harness.addMana(player1, ManaColor.COLORLESS, 2);

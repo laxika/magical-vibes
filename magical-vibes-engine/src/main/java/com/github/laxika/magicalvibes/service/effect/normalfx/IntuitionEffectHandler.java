@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.IntuitionEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -95,8 +96,8 @@ public class IntuitionEffectHandler implements NormalEffectHandlerBean {
     private void exileFoundCardForOppositionAgent(GameData gameData, UUID libraryOwnerId, Card card,
                                                  UUID agentControllerId) {
         exileService.exileCard(gameData, libraryOwnerId, card);
-        gameData.exilePlayPermissions.put(card.getId(), agentControllerId);
-        gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
+        gameData.grantExilePlayPermission(card.getId(), agentControllerId, Duration.PERMANENT);
+        gameData.updateExilePlayPermission(card.getId(), granted -> granted.withAnyManaType(true));
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(libraryOwnerId) + " exiles ", card, " (Opposition Agent)."));
     }

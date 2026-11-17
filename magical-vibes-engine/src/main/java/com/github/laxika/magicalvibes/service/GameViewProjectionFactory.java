@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardGrantFreePlayUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantPlayLandsThisTurnEffect;
@@ -191,9 +192,7 @@ public class GameViewProjectionFactory {
                     gameData.planechase == null ? null : planarViews.create(gameData, playerId),
                     gameData.monarchPlayerId, commanderView(gameData, playerId),
                     gameData.exiledCards.stream()
-                            .filter(entry -> playerId.equals(gameData.exileLookPermissions.get(entry.card().getId()))
-                                    || gameData.additionalExileLookPermissions
-                                    .getOrDefault(entry.card().getId(), java.util.Set.of()).contains(playerId))
+                            .filter(entry -> gameData.mayLookAtExiledCard(entry.card().getId(), playerId))
                             .map(entry -> cardViewFactory.create(entry.card()))
                             .toList(),
                     List.of(),
@@ -210,8 +209,8 @@ public class GameViewProjectionFactory {
      * may play from, and not while the viewer acts for a Mindslaver-controlled player.
      */
     private List<Integer> getPlayableOpponentHandIndices(GameData gameData, UUID playerId) {
-        UUID handOwnerId = gameData.senControlledPlayerId;
-        if (handOwnerId == null || !playerId.equals(gameData.senControllerPlayerId)
+        UUID handOwnerId = gameData.handPlayableBy(playerId);
+        if (handOwnerId == null
                 || playerId.equals(gameData.mindControllerPlayerId)
                 || !handOwnerId.equals(gameData.orderedPlayerIds.stream()
                         .filter(id -> !id.equals(playerId)).findFirst().orElse(null))) {
@@ -324,13 +323,12 @@ public class GameViewProjectionFactory {
                             .noneMatch(effect -> effect.faceDown() && !effect.mayLookAtFaceDownCards());
                     UUID viewerId = grantsImplicitLookPermission
                             ? entry.exilerId() != null ? entry.exilerId() : pid
-                            : data.exileLookPermissions.get(entry.card().getId());
+                            : data.exileLookViewers(entry.card().getId()).stream().findFirst().orElse(null);
                     if (viewerId != null) {
                         cardsByViewer.computeIfAbsent(viewerId, ignored -> new ArrayList<>())
                                 .add(cardViewFactory.create(entry.card()));
                     }
-                    for (UUID additionalViewer : data.additionalExileLookPermissions
-                            .getOrDefault(entry.card().getId(), java.util.Set.of())) {
+                    for (UUID additionalViewer : data.exileLookViewers(entry.card().getId())) {
                         if (!additionalViewer.equals(viewerId)) {
                             cardsByViewer.computeIfAbsent(additionalViewer, ignored -> new ArrayList<>())
                                     .add(cardViewFactory.create(entry.card()));
@@ -430,7 +428,7 @@ public class GameViewProjectionFactory {
                                 ? castingPermissionService.findFilteredGraveyardPermission(data, pid, c)
                                 : Optional.<CastingPermissionService.FilteredGraveyardPermission>empty();
                         var targetedPermission = viewerId != null && viewerId.equals(pid)
-                                ? data.graveyardCardCastPermissionsUntilEndOfTurn.get(c.getId())
+                                ? data.graveyardCardCastPermission(c.getId(), pid).orElse(null)
                                 : null;
                         int graveyardCastExileCount = targetedPermission != null
                                 ? targetedPermission.additionalGraveyardExileCount()
@@ -483,7 +481,7 @@ public class GameViewProjectionFactory {
             }
         }
 
-        if (gameData.senControlledPlayerId != null && !gameData.senControlledPlayerId.equals(playerId)) {
+        if (gameData.handRevealedToSenTripletsController(playerId)) {
             // Sen Triplets: the targeted player plays with their hand revealed this turn.
             opponentRevealsOwnHand = true;
         }
@@ -514,8 +512,7 @@ public class GameViewProjectionFactory {
                         || gameData.playersWithHandRevealed.contains(opponentId);
                 return opponentHand.stream()
                         .filter(card -> revealEntireOpponentHand
-                                || opponentId.equals(gameData.cardsRevealedInHandUntilOwnerNextTurn.get(card.getId()))
-                                || opponentId.equals(gameData.cardsRevealedInHandUntilUpkeepEnd.get(card.getId())))
+                                || gameData.isCardRevealedInHand(card.getId(), opponentId))
                         .map(c -> cardViewFactory.create(c, granted, List.of(),
                                 gameQueryService.computeGrantedHandAbilitiesForOwnedCard(gameData, opponentId, c)))
                         .toList();
@@ -903,7 +900,7 @@ public class GameViewProjectionFactory {
                     playable.add(exileCardView(gameData, playerId, card));
                 } else {
                     boolean playWithoutPaying = !foretellPermission
-                            && gameData.exilePlayWithoutPayingManaCost.contains(card.getId());
+                            && gameData.exilePlayWithoutPayingManaCost(card.getId());
                     ManaCost baseCost = foretellPermission
                             ? foretoldCost
                             : hasFlashforward

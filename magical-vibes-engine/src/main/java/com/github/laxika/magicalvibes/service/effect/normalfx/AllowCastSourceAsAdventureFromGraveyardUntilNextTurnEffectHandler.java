@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Component
 public class AllowCastSourceAsAdventureFromGraveyardUntilNextTurnEffectHandler implements NormalEffectHandlerBean {
@@ -27,9 +28,7 @@ public class AllowCastSourceAsAdventureFromGraveyardUntilNextTurnEffectHandler i
             return;
         }
 
-        int expireTurn = gameData.turnNumber
-                + (controllerId.equals(gameData.activePlayerId) ? 2 : 1);
-        gameData.graveyardAdventureCastPermissions.put(sourceCard.getId(),
-                new GameData.GraveyardAdventureCastPermission(controllerId, expireTurn));
+        gameData.addCardEffect(entry, new GameData.GraveyardAdventureCastPermission(controllerId),
+                sourceCard.getId(), Duration.UNTIL_END_OF_YOUR_NEXT_TURN);
     }
 }

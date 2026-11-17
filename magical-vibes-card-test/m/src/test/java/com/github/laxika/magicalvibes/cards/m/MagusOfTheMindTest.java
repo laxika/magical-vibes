@@ -33,8 +33,8 @@ class MagusOfTheMindTest extends BaseCardTest {
         Card exiled = gd.getPlayerExiledCards(player1.getId()).getFirst();
         assertThat(exiled).isEqualTo(land);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiled.getId(), player1.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(exiled.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -72,6 +72,6 @@ class MagusOfTheMindTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .allMatch(card -> gd.exilePlayWithoutPayingManaCost.contains(card.getId()));
+                .allMatch(card -> gd.exilePlayWithoutPayingCardIds().contains(card.getId()));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -75,7 +74,7 @@ class AncestralStatueTest extends BaseCardTest {
         Permanent stolen = harness.addToBattlefieldAndReturn(player1, bear);
         gd.stolenCreatures.put(stolen.getId(), player2.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control effect", null,
-                player1.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT), stolen.getId(),
+                player1.getId(), new GainControlOfTargetEffect(Duration.PERMANENT), stolen.getId(),
                 null, null, Duration.PERMANENT, 0));
 
         castAncestralStatue();

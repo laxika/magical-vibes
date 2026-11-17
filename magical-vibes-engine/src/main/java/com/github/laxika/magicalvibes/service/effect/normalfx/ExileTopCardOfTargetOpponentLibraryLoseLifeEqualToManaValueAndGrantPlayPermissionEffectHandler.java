@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfTargetOpponentLibraryLoseLifeEqualToManaValueAndGrantPlayPermissionEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
@@ -56,8 +57,8 @@ public class ExileTopCardOfTargetOpponentLibraryLoseLifeEqualToManaValueAndGrant
 
         library.removeFirst();
         exileService.exileCardFaceDown(gameData, targetPlayerId, topCard, null, controllerId);
-        gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-        gameData.exilePlayAnyManaTypeWhileExiled.add(topCard.getId());
+        gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.PERMANENT);
+        gameData.updateExilePlayPermission(topCard.getId(), granted -> granted.withAnyManaType(true));
 
         lifeSupport.applyLifeLosses(gameData, losses, entry.getCard().getName());
 

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
@@ -25,7 +26,8 @@ class RedirectDrawsEffectHandlerTest extends AbstractPlayerInteractionHandlerTes
 
                 resolveEffect(gd, entry, new RedirectDrawsEffect());
 
-                assertThat(gd.drawReplacementTargetToController).containsEntry(player2Id, player1Id);
+                assertThat(gd.floatingEffectsOnPlayer(player2Id, RedirectDrawsEffect.class)).singleElement()
+                        .extracting(FloatingContinuousEffect::controllerId).isEqualTo(player1Id);
             }
 
             @Test
@@ -37,6 +39,6 @@ class RedirectDrawsEffectHandlerTest extends AbstractPlayerInteractionHandlerTes
 
                 resolveEffect(gd, entry, new RedirectDrawsEffect());
 
-                assertThat(gd.drawReplacementTargetToController).isEmpty();
+                assertThat(gd.floatingEffectsOfTypes(RedirectDrawsEffect.class)).isEmpty();
             }
 }

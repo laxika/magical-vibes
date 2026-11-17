@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -54,9 +55,8 @@ public class ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffectHandle
 
         // Grant the controller permission to cast the exiled card this turn, spending mana of any
         // type; and exile it instead of putting it into a graveyard. All expire during cleanup.
-        gameData.exilePlayPermissions.put(targetCard.getId(), controllerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(targetCard.getId());
-        gameData.exilePlayAnyManaType.add(targetCard.getId());
+        gameData.grantExilePlayPermission(targetCard.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
+        gameData.grantExileAnyManaType(targetCard.getId(), Duration.UNTIL_END_OF_TURN);
         gameData.exileInsteadOfGraveyard.add(targetCard.getId());
 
         String playerName = gameData.playerIdToName.get(controllerId);

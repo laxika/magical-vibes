@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.WormsOfTheEarthEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -199,7 +199,7 @@ public sealed interface MultiPermanentChoiceContext {
      * creature, {@code duration} how long control is kept and {@code choiceNoun} the noun used in
      * the game log.
      */
-    record GainControlOfPermanentAndAssignNoCombatDamage(UUID sourcePermanentId, ControlDuration duration,
+    record GainControlOfPermanentAndAssignNoCombatDamage(UUID sourcePermanentId, Duration duration,
                                                          String choiceNoun) implements MultiPermanentChoiceContext {
     }
 
@@ -878,8 +878,8 @@ public sealed interface MultiPermanentChoiceContext {
 
     /**
      * Oracle en-Vec: {@code targetPlayerId} chose any number of creatures they control. The chosen
-     * set is recorded in {@code GameData.chosenAttackersNextTurn} and takes effect when that
-     * player's next turn begins — the chosen creatures attack if able, every other creature can't
+     * set is made a floating {@code OnlyChosenCreaturesCanAttackEffect} that applies during that
+     * player's next turn — the chosen creatures attack if able, every other creature can't
      * attack, and each chosen creature that didn't attack is destroyed at that turn's end step.
      */
     record ChooseCreaturesToAttackNextTurn(UUID targetPlayerId, UUID controllerId, Card sourceCard)

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.ComeuppanceDamagePreventionShield;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.u.UrzasArmor;
@@ -70,13 +71,13 @@ class ComeuppanceTestMarRegression extends BaseCardTest {
     @DisplayName("Shield expires at end of turn")
     void shieldExpiresAtEndOfTurn() {
         castComeuppance();
-        assertThat(gd.comeuppanceDamagePreventionShields).hasSize(1);
+        assertThat(gd.shields(ComeuppanceDamagePreventionShield.class)).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.comeuppanceDamagePreventionShields).isEmpty();
+        assertThat(gd.shields(ComeuppanceDamagePreventionShield.class)).isEmpty();
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);

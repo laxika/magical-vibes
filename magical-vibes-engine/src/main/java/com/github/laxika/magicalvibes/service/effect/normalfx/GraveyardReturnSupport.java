@@ -54,7 +54,6 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubt
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -894,15 +893,7 @@ public class GraveyardReturnSupport {
                             ? Duration.PERMANENT : effect.battlefieldEffectGrantDuration();
                     if (Duration.PERMANENT.equals(grantDuration)
                             && grantedEffect instanceof GrantKeywordEffect keywordGrant) {
-                        grantDuration = switch (keywordGrant.duration()) {
-                            case END_OF_TURN -> Duration.UNTIL_END_OF_TURN;
-                            case UNTIL_END_OF_COMBAT -> Duration.UNTIL_END_OF_COMBAT;
-                            case UNTIL_YOUR_NEXT_TURN -> Duration.UNTIL_YOUR_NEXT_TURN;
-                            case UNTIL_YOUR_NEXT_UPKEEP -> Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP;
-                            case WHILE_SOURCE_ON_BATTLEFIELD -> Duration.WHILE_SOURCE_ON_BATTLEFIELD;
-                            case WHILE_SOURCE_REMAINS -> Duration.WHILE_SOURCE_REMAINS;
-                            case INDEFINITE -> Duration.PERMANENT;
-                        };
+                        grantDuration = keywordGrant.duration();
                     }
                     gameData.addFloatingEffect(new FloatingContinuousEffect(
                             UUID.randomUUID(), sourceCardName, sourcePermanentId, controllerId,
@@ -2911,7 +2902,7 @@ public class GraveyardReturnSupport {
         gameData.stolenCreatures.put(permanentId, originalOwnerId);
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), null, null, controllerId,
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                new GainControlOfTargetEffect(Duration.PERMANENT),
                 permanentId, null, null, Duration.PERMANENT, 0));
     }
 

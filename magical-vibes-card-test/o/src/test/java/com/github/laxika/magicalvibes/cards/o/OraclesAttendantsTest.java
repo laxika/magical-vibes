@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.cards.a.AncientHydra;
 import com.github.laxika.magicalvibes.cards.f.FlintGolem;
 import com.github.laxika.magicalvibes.cards.r.Rupture;
@@ -46,10 +47,10 @@ class OraclesAttendantsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.creatureDamageRedirectShields).hasSize(1);
-        assertThat(gd.creatureDamageRedirectShields.getFirst().protectedPermanentId()).isEqualTo(creature.getId());
-        assertThat(gd.creatureDamageRedirectShields.getFirst().damageSourceId()).isEqualTo(source.getId());
-        assertThat(gd.creatureDamageRedirectShields.getFirst().redirectTargetId()).isEqualTo(attendants.getId());
+        assertThat(gd.shields(CreatureDamageRedirectShield.class)).hasSize(1);
+        assertThat(gd.shields(CreatureDamageRedirectShield.class).getFirst().protectedPermanentId()).isEqualTo(creature.getId());
+        assertThat(gd.shields(CreatureDamageRedirectShield.class).getFirst().damageSourceId()).isEqualTo(source.getId());
+        assertThat(gd.shields(CreatureDamageRedirectShield.class).getFirst().redirectTargetId()).isEqualTo(attendants.getId());
     }
 
     @Test
@@ -186,13 +187,13 @@ class OraclesAttendantsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.creatureDamageRedirectShields).hasSize(1);
+        assertThat(gd.shields(CreatureDamageRedirectShield.class)).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.creatureDamageRedirectShields).isEmpty();
+        assertThat(gd.shields(CreatureDamageRedirectShield.class)).isEmpty();
     }
 
     private Permanent addReadyHydra(Player player) {

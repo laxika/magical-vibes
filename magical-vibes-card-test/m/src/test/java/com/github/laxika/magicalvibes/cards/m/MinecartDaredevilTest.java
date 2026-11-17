@@ -29,7 +29,7 @@ class MinecartDaredevilTest extends BaseCardTest {
         assertThat(bear.getPowerModifier()).isEqualTo(2);
         assertThat(bear.getToughnessModifier()).isEqualTo(1);
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNotNull();
-        assertThat(harness.getGameData().exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(harness.getGameData().exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -74,7 +74,7 @@ class MinecartDaredevilTest extends BaseCardTest {
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(1);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -91,7 +91,7 @@ class MinecartDaredevilTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -102,6 +102,6 @@ class MinecartDaredevilTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Minecart Daredevil").getCard().getId()).isEqualTo(card.getId());
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 }

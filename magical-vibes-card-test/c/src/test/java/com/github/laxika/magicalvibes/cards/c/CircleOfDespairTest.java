@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.cards.a.AbyssalHunter;
 import com.github.laxika.magicalvibes.cards.g.GiantMantis;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
@@ -53,7 +54,7 @@ class CircleOfDespairTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.sourceNextDamageToAnyTargetShields)
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class))
                 .extracting(s -> s.sourceId())
                 .containsExactly(source.getId());
     }
@@ -76,7 +77,7 @@ class CircleOfDespairTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(victim.getMarkedDamage()).isEqualTo(0);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -120,7 +121,7 @@ class CircleOfDespairTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -142,7 +143,7 @@ class CircleOfDespairTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(victim.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.sourceNextDamageToAnyTargetShields)
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class))
                 .extracting(s -> s.sourceId())
                 .containsExactly(decoy.getId());
     }
@@ -159,14 +160,14 @@ class CircleOfDespairTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isNotEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isNotEmpty();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -179,7 +180,7 @@ class CircleOfDespairTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test

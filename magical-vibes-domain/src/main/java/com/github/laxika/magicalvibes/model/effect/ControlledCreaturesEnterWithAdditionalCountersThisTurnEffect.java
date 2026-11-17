@@ -7,8 +7,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * extends the replacement effect through the controller's next turn.
  * <p>
  * Unlike {@link ControlledCreaturesEnterWithAdditionalCountersEffect} this is not tied to a static
- * ability of a permanent on the battlefield — it is recorded on the game state when the ability
- * resolves and is cleared during cleanup, so it keeps working even if the source leaves.
+ * ability of a permanent on the battlefield — it is a floating effect on the controller made as the ability
+ * resolves, so it keeps working even if the source leaves.
  * <p>
  * Used by Zameck Guildmage ("This turn, each creature you control enters with an additional
  * +1/+1 counter on it.").

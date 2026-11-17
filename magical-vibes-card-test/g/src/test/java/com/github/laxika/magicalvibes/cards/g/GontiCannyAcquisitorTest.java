@@ -74,8 +74,8 @@ class GontiCannyAcquisitorTest extends BaseCardTest {
         assertThat(entry.faceDown()).isTrue();
         assertThat(entry.sourcePermanentId()).isEqualTo(gonti.getId());
         assertThat(entry.exilerId()).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(topCard.getId());
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(1);
     }
 
@@ -158,7 +158,7 @@ class GontiCannyAcquisitorTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(stolen.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsEntry(stolen.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(stolen.getId(), player1.getId());
     }
 
     @Test
@@ -171,7 +171,7 @@ class GontiCannyAcquisitorTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 

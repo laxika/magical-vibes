@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState.ExileMatchingCardsFromGraveyardAndLibraryContext;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -104,7 +105,6 @@ public class ExileMatchingCardsFromGraveyardAndLibrarySupport {
     }
 
     public static void grantCastPermission(GameData gameData, UUID controllerId, Card card) {
-        gameData.exilePlayPermissions.put(card.getId(), controllerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(card.getId());
+        gameData.grantExilePlayPermission(card.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
     }
 }

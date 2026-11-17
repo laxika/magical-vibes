@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.spell;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
@@ -1766,7 +1767,7 @@ class SpellCastingServiceTest {
         @DisplayName("Throws when card not found in exile")
         void throwsWhenCardNotInExile() {
             UUID fakeId = UUID.randomUUID();
-            gd.exilePlayPermissions.put(fakeId, player1Id);
+            gd.grantExilePlayPermission(fakeId, player1Id, Duration.PERMANENT);
             // Add a dummy card to exile so the "no exiled cards" check passes
             gd.addToExile(player1Id, createCreature("Dummy Card", "{G}"));
 
@@ -1780,14 +1781,14 @@ class SpellCastingServiceTest {
         void landFromExileBypassesStack() {
             Card land = createLand("Exiled Plains");
             gd.addToExile(player1Id, land);
-            gd.exilePlayPermissions.put(land.getId(), player1Id);
+            gd.grantExilePlayPermission(land.getId(), player1Id, Duration.PERMANENT);
             when(castingPermissionService.hasExilePlayPermission(gd, player1Id, land.getId())).thenReturn(true);
 
             svc.playCardFromExile(gd, player1, land.getId(), 0, null);
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.getPlayerExiledCards(player1Id)).isEmpty();
-            assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
+            assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(land.getId());
             verify(battlefieldEntryService).putLandOntoBattlefield(
                     eq(gd), eq(player1Id), any(Permanent.class), eq(Zone.EXILE));
             verify(battlefieldEntryService).processLandETBEffects(eq(gd), eq(player1Id), eq(land));
@@ -1827,7 +1828,7 @@ class SpellCastingServiceTest {
         void creatureFromExileGoesOnStack() {
             Card creature = createCreature("Exiled Bear", "{1}{G}");
             gd.addToExile(player1Id, creature);
-            gd.exilePlayPermissions.put(creature.getId(), player1Id);
+            gd.grantExilePlayPermission(creature.getId(), player1Id, Duration.PERMANENT);
             when(castingPermissionService.hasExilePlayPermission(gd, player1Id, creature.getId())).thenReturn(true);
             addMana(player1Id, ManaColor.GREEN, 2);
 
@@ -1837,7 +1838,7 @@ class SpellCastingServiceTest {
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
             assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Exiled Bear");
             assertThat(gd.getPlayerExiledCards(player1Id)).isEmpty();
-            assertThat(gd.exilePlayPermissions).doesNotContainKey(creature.getId());
+            assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(creature.getId());
             assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(0);
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(mutationCoordinator).invalidateAllPlayerViews(gd);
@@ -1852,9 +1853,9 @@ class SpellCastingServiceTest {
         void freeCardFromExileGoesOnStackWithoutPayingMana() {
             Card creature = createCreature("Free Bear", "{4}{G}{G}");
             gd.addToExile(player1Id, creature);
-            gd.exilePlayPermissions.put(creature.getId(), player1Id);
+            gd.grantExilePlayPermission(creature.getId(), player1Id, Duration.PERMANENT);
             when(castingPermissionService.hasExilePlayPermission(gd, player1Id, creature.getId())).thenReturn(true);
-            gd.exilePlayWithoutPayingManaCost.add(creature.getId());
+            gd.setExilePlayWithoutPayingManaCost(creature.getId(), true);
             // Player has no mana at all — the play must still succeed.
 
             svc.playCardFromExile(gd, player1, creature.getId(), 0, null);
@@ -1862,8 +1863,8 @@ class SpellCastingServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Free Bear");
             assertThat(gd.getPlayerExiledCards(player1Id)).isEmpty();
-            assertThat(gd.exilePlayPermissions).doesNotContainKey(creature.getId());
-            assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(creature.getId());
+            assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(creature.getId());
+            assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(creature.getId());
             assertThat(gd.playerManaPools.get(player1Id).getTotal()).isEqualTo(0);
         }
 
@@ -1872,7 +1873,7 @@ class SpellCastingServiceTest {
         void exilePlayIncrementsSpellCount() {
             Card creature = createCreature("Exiled Bear", "{G}");
             gd.addToExile(player1Id, creature);
-            gd.exilePlayPermissions.put(creature.getId(), player1Id);
+            gd.grantExilePlayPermission(creature.getId(), player1Id, Duration.PERMANENT);
             when(castingPermissionService.hasExilePlayPermission(gd, player1Id, creature.getId())).thenReturn(true);
             addMana(player1Id, ManaColor.GREEN, 1);
             int before = gd.getSpellsCastThisTurnCount(player1Id);

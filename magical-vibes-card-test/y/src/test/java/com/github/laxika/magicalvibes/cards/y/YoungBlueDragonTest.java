@@ -37,7 +37,7 @@ class YoungBlueDragonTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -62,7 +62,7 @@ class YoungBlueDragonTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(nextCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -33,8 +34,8 @@ class FuriousRiseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)).doesNotContainKey(topCard.getId());
     }
 
     @Test
@@ -47,13 +48,13 @@ class FuriousRiseTest extends BaseCardTest {
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
-        assertThat(gd.exilePlayPermissions).containsEntry(firstCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(firstCard.getId(), player1.getId());
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(firstCard.getId());
-        assertThat(gd.exilePlayPermissions).containsEntry(secondCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(firstCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(secondCard.getId(), player1.getId());
     }
 
     @Test
@@ -80,7 +81,7 @@ class FuriousRiseTest extends BaseCardTest {
         harness.passBothPriorities();
         gd.playerBattlefields.get(player1.getId()).remove(rise);
 
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     private Permanent addRiseWithBigCreature() {
@@ -129,7 +130,7 @@ class FuriousRiseTest extends BaseCardTest {
         advanceToEndStep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
     }
 
@@ -157,8 +158,8 @@ class FuriousRiseTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.exilePlayPermissions).containsEntry(firstCard.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissions).containsEntry(secondCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(firstCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(secondCard.getId(), player1.getId());
     }
 
     @Test

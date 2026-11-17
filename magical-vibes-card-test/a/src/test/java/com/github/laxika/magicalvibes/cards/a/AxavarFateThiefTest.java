@@ -58,8 +58,8 @@ class AxavarFateThiefTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(chosen);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(chosen.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(chosen.getId());
         assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(chosen);
     }
 

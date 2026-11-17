@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.c.Char;
 import com.github.laxika.magicalvibes.cards.f.FieryConclusion;
 import com.github.laxika.magicalvibes.cards.p.Phytohydra;
@@ -86,7 +87,7 @@ class GhostsOfTheInnocentTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Char()));
         harness.addMana(player2, ManaColor.RED, 3);
         harness.setLife(player1, 20);
-        gd.damageCantBePreventedThisTurn = true;
+        gd.addShield(new DamageCantBePreventedThisTurnEffect());
 
         harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();

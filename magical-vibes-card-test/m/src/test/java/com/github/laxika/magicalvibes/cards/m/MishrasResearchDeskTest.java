@@ -42,7 +42,7 @@ class MishrasResearchDeskTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
 
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(second.getId(), player1.getId())
                 .doesNotContainKey(first.getId());
     }
@@ -185,15 +185,15 @@ class MishrasResearchDeskTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
 
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(chosen.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(chosen.getId());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         assertThatThrownBy(() -> harness.castFromExile(player1, chosen.getId()))
                 .isInstanceOf(IllegalStateException.class);

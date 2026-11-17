@@ -62,7 +62,7 @@ public class HeistCardChoiceInteractionHandler
         exileService.exileCardFaceDown(gameData, interaction.libraryOwnerId(), chosen, null,
                 interaction.playerId());
         exileSupport.grantPlayWhileExiled(gameData, chosenId, interaction.playerId());
-        gameData.exilePlayAnyManaTypeWhileExiled.add(chosenId);
+        gameData.updateExilePlayPermission(chosenId, granted -> granted.withAnyManaType(true));
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(interaction.playerId()) + " heists a card from "
                         + gameData.playerIdToName.get(interaction.libraryOwnerId()) + "'s library."));

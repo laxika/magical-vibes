@@ -54,7 +54,7 @@ class BeanstalkGiantTest extends BaseCardTest {
         assertThat(fetchedForest.isTapped()).isFalse();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(filler);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -76,7 +76,7 @@ class BeanstalkGiantTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(1);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -93,7 +93,7 @@ class BeanstalkGiantTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
         harness.assertNotOnBattlefield(player1, "Forest");
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -109,7 +109,7 @@ class BeanstalkGiantTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(cabin);
         harness.assertNotOnBattlefield(player1, "Gingerbread Cabin");
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -123,7 +123,7 @@ class BeanstalkGiantTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -153,7 +153,7 @@ class BeanstalkGiantTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

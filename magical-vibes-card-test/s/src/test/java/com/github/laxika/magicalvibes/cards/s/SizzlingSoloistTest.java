@@ -29,7 +29,7 @@ class SizzlingSoloistTest extends BaseCardTest {
         triggerAlliance(opponentCreature.getId());
 
         assertThat(opponentCreature.isCantBlockThisTurn()).isTrue();
-        assertThat(opponentCreature.isMustAttackThisCombat()).isFalse();
+        assertThat(mustAttack(opponentCreature)).isFalse();
         assertThat(ownCreature.isCantBlockThisTurn()).isFalse();
     }
 
@@ -44,15 +44,15 @@ class SizzlingSoloistTest extends BaseCardTest {
         triggerAlliance(firstTarget.getId());
         triggerAlliance(secondTarget.getId());
 
-        assertThat(secondTarget.isMustAttackThisCombat()).isFalse();
+        assertThat(mustAttack(secondTarget)).isFalse();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
 
-        assertThat(secondTarget.isMustAttackThisCombat()).isTrue();
-        assertThat(firstTarget.isMustAttackThisCombat()).isFalse();
+        assertThat(mustAttack(secondTarget)).isTrue();
+        assertThat(mustAttack(firstTarget)).isFalse();
 
         assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
@@ -77,9 +77,9 @@ class SizzlingSoloistTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
 
-        assertThat(firstTarget.isMustAttackThisCombat()).isFalse();
-        assertThat(secondTarget.isMustAttackThisCombat()).isTrue();
-        assertThat(thirdTarget.isMustAttackThisCombat()).isFalse();
+        assertThat(mustAttack(firstTarget)).isFalse();
+        assertThat(mustAttack(secondTarget)).isTrue();
+        assertThat(mustAttack(thirdTarget)).isFalse();
     }
 
     @Test
@@ -126,8 +126,8 @@ class SizzlingSoloistTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
 
-        assertThat(firstTarget.isMustAttackThisCombat()).isFalse();
-        assertThat(secondTarget.isMustAttackThisCombat()).isTrue();
+        assertThat(mustAttack(firstTarget)).isFalse();
+        assertThat(mustAttack(secondTarget)).isTrue();
     }
 
     @Test
@@ -149,7 +149,7 @@ class SizzlingSoloistTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
 
-        assertThat(target.isMustAttackThisCombat()).isTrue();
+        assertThat(mustAttack(target)).isTrue();
     }
 
     @Test
@@ -163,15 +163,19 @@ class SizzlingSoloistTest extends BaseCardTest {
         triggerAlliance(target.getId());
         triggerAlliance(target.getId());
         harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
-        assertThat(target.isMustAttackThisCombat()).isFalse();
+        assertThat(mustAttack(target)).isFalse();
         assertThat(target.isCantBlockThisTurn()).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.BEGINNING_OF_COMBAT);
 
         assertThat(target.isCantBlockThisTurn()).isFalse();
-        assertThat(target.isMustAttackThisCombat()).isTrue();
+        assertThat(mustAttack(target)).isTrue();
         assertThatThrownBy(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    private boolean mustAttack(Permanent creature) {
+        return harness.getAttackLegalityService().getMustAttackRequirementCount(gd, creature) > 0;
     }
 
     private void prepareAllianceTrigger() {

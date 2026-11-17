@@ -41,7 +41,7 @@ class ContainmentConstructTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(discarded);
-        assertThat(gd.exilePlayPermissions).containsEntry(discarded.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(discarded.getId(), player1.getId());
 
         harness.addMana(player1, ManaColor.RED, 1);
         int lifeBefore = gd.getLife(player2.getId());
@@ -68,7 +68,7 @@ class ContainmentConstructTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(discarded.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(discarded.getId());
     }
 
     @Test
@@ -136,7 +136,7 @@ class ContainmentConstructTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, discarded.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(discarded);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(discarded.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(discarded.getId());
     }
 
     @Test
@@ -176,6 +176,6 @@ class ContainmentConstructTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(discarded);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(discarded.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(discarded.getId());
     }
 }

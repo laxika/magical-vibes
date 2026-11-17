@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.ReflectDamageToSourceControllerShield;
 import com.github.laxika.magicalvibes.cards.e.EnergyBolt;
 import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
 import com.github.laxika.magicalvibes.cards.s.SabertoothCobra;
@@ -42,7 +43,7 @@ class ReflectDamageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.reflectDamageToSourceControllerShields).contains(source.getId());
+        assertThat(gd.shields(ReflectDamageToSourceControllerShield.class)).contains(new ReflectDamageToSourceControllerShield(source.getId()));
     }
 
     @Test
@@ -61,7 +62,7 @@ class ReflectDamageTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 19);
-        assertThat(gd.reflectDamageToSourceControllerShields).isEmpty();
+        assertThat(gd.shields(ReflectDamageToSourceControllerShield.class)).isEmpty();
     }
 
     @Test
@@ -81,7 +82,7 @@ class ReflectDamageTest extends BaseCardTest {
 
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 20);
-        assertThat(gd.reflectDamageToSourceControllerShields).contains(chosen.getId());
+        assertThat(gd.shields(ReflectDamageToSourceControllerShield.class)).contains(new ReflectDamageToSourceControllerShield(chosen.getId()));
     }
 
     @Test
@@ -116,14 +117,14 @@ class ReflectDamageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.reflectDamageToSourceControllerShields).isNotEmpty();
+        assertThat(gd.shields(ReflectDamageToSourceControllerShield.class)).isNotEmpty();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.reflectDamageToSourceControllerShields).isEmpty();
+        assertThat(gd.shields(ReflectDamageToSourceControllerShield.class)).isEmpty();
     }
 
     @Test

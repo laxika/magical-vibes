@@ -92,7 +92,7 @@ class GarenbrigCarverTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Garenbrig Carver");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

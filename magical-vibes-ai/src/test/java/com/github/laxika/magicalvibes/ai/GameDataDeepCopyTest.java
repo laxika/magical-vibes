@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
+import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.CreatureSpellEmpowerment;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureCause;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
@@ -23,6 +22,14 @@ import com.github.laxika.magicalvibes.model.DepartureSnapshot;
 import com.github.laxika.magicalvibes.model.DepartureStage;
 import com.github.laxika.magicalvibes.model.EachPlayerRummageState;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.EmpowerNextCreatureSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextMatchingSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -76,6 +83,38 @@ class GameDataDeepCopyTest {
         player2 = harness.getPlayer2();
         gd = harness.getGameData();
         harness.skipMulligan();
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps the damage shields in force and reduces them independently")
+    void deepCopyKeepsShieldsInForce() {
+        UUID playerId = UUID.randomUUID();
+        gd.addPlayerDamagePreventionShield("Test", playerId, playerId, 3, false);
+        gd.addShield(new com.github.laxika.magicalvibes.model.ChannelHarmShield(playerId, null, UUID.randomUUID()));
+
+        GameData copy = gd.simulationCopy();
+        int prevented = copy.usePlayerDamagePreventionShields(playerId, false, 2);
+        copy.endShields(com.github.laxika.magicalvibes.model.ChannelHarmShield.class, shield -> true);
+
+        assertThat(prevented).isEqualTo(2);
+        assertThat(copy.playerDamagePreventionShield(playerId, false)).isEqualTo(1);
+        assertThat(copy.hasShields(com.github.laxika.magicalvibes.model.ChannelHarmShield.class)).isFalse();
+        assertThat(gd.playerDamagePreventionShield(playerId, false)).isEqualTo(3);
+        assertThat(gd.hasShields(com.github.laxika.magicalvibes.model.ChannelHarmShield.class)).isTrue();
+        assertThat(gd.simulationCopy().playerDamagePreventionShield(playerId, false)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps floating effects that begin later in an independent list")
+    void deepCopyKeepsScheduledFloatingEffects() {
+        FloatingContinuousEffect scheduled = gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null,
+                player1.getId(), new GainLifeEffect(1), player2.getId(), Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN));
+
+        GameData copy = gd.simulationCopy();
+        copy.scheduledFloatingEffects.clear();
+
+        assertThat(gd.scheduledFloatingEffects).containsExactly(scheduled);
+        assertThat(gd.simulationCopy().scheduledFloatingEffects).containsExactly(scheduled);
     }
 
     @Test
@@ -565,16 +604,15 @@ class GameDataDeepCopyTest {
     void deepCopyPreservesDelayedActions() {
         UUID a = UUID.randomUUID();
         UUID b = UUID.randomUUID();
-        UUID shieldId = UUID.randomUUID();
-        gd.queueDelayedAction(new DelayedPlusZeroPlusOneCounters(a, 4, shieldId, 0));
-        gd.queueDelayedAction(new DelayedPlusZeroPlusOneCounters(b, 2, shieldId, 1));
+        gd.queueDelayedAction(new DelayedAdditionalCombatBeginningEffect(a, null, null, null));
+        gd.queueDelayedAction(new DelayedAdditionalCombatBeginningEffect(b, null, null, null));
 
         GameData copy = gd.simulationCopy();
 
         // Same values, same insertion order (records are immutable, shallow copy).
         assertThat(copy.delayedActions).containsExactly(
-                new DelayedPlusZeroPlusOneCounters(a, 4, shieldId, 0),
-                new DelayedPlusZeroPlusOneCounters(b, 2, shieldId, 1));
+                new DelayedAdditionalCombatBeginningEffect(a, null, null, null),
+                new DelayedAdditionalCombatBeginningEffect(b, null, null, null));
 
         // Independent list — mutating the copy leaves the original untouched.
         copy.delayedActions.clear();
@@ -694,49 +732,65 @@ class GameDataDeepCopyTest {
     @DisplayName("Deep copy preserves until-end-of-turn casting permissions independently")
     void deepCopyPreservesUntilEndOfTurnPermissions() {
         UUID cardId = UUID.randomUUID();
-        gd.cardsGrantedFlashbackUntilEndOfTurn.add(cardId);
-        gd.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn.add(player1.getId());
+        gd.addFloatingEffect(FloatingContinuousEffect.onCard("Past in Flames", null, player1.getId(),
+                GrantedCardAbilityEffect.of(GrantedCardAbilityEffect.Ability.FLASHBACK), cardId,
+                Duration.UNTIL_END_OF_TURN));
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Bosium Strip", null, player1.getId(),
+                new MayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurnEffect(), player1.getId(),
+                Duration.UNTIL_END_OF_TURN));
 
         GameData copy = gd.simulationCopy();
 
-        assertThat(copy.cardsGrantedFlashbackUntilEndOfTurn).contains(cardId);
-        assertThat(copy.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn).contains(player1.getId());
+        assertThat(copy.hasGrantedCardAbility(cardId, GrantedCardAbilityEffect.Ability.FLASHBACK)).isTrue();
+        assertThat(copy.hasFloatingEffectOnPlayer(player1.getId(),
+                MayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurnEffect.class)).isTrue();
 
-        copy.cardsGrantedFlashbackUntilEndOfTurn.clear();
-        copy.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn.clear();
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(cardId);
-        assertThat(gd.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn).contains(player1.getId());
+        copy.endFloatingEffectsOnCard(cardId);
+        copy.floatingEffectsOnPlayer(player1.getId(), MayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurnEffect.class)
+                .forEach(copy::endFloatingEffect);
+        assertThat(gd.hasGrantedCardAbility(cardId, GrantedCardAbilityEffect.Ability.FLASHBACK)).isTrue();
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(),
+                MayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurnEffect.class)).isTrue();
     }
 
     @Test
     @DisplayName("Deep copy preserves next-spell flash grants independently")
     void deepCopyPreservesNextSpellFlashGrants() {
-        gd.addNextSpellFlashGrant(player1.getId(), CardType.SORCERY);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Quicken", null, player1.getId(),
+                new GrantFlashToNextMatchingSpellEffect(new CardTypePredicate(CardType.SORCERY)), player1.getId(),
+                Duration.UNTIL_MATCHING_SPELL_CAST));
 
         GameData copy = gd.simulationCopy();
 
-        assertThat(copy.nextSpellFlashGrantsThisTurn.get(player1.getId())).containsExactly(CardType.SORCERY);
+        assertThat(copy.floatingEffectsOnPlayer(player1.getId(), GrantFlashToNextMatchingSpellEffect.class))
+                .hasSize(1);
 
-        copy.nextSpellFlashGrantsThisTurn.get(player1.getId()).clear();
-        assertThat(gd.nextSpellFlashGrantsThisTurn.get(player1.getId())).containsExactly(CardType.SORCERY);
+        copy.floatingEffectsOnPlayer(player1.getId(), GrantFlashToNextMatchingSpellEffect.class)
+                .forEach(copy::endFloatingEffect);
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantFlashToNextMatchingSpellEffect.class))
+                .hasSize(1);
     }
 
     @Test
     @DisplayName("Deep copy preserves next-creature-spell empowerments independently")
     void deepCopyPreservesNextCreatureSpellEmpowerments() {
-        CreatureSpellEmpowerment empowerment = new CreatureSpellEmpowerment(true, 1);
-        gd.addNextCreatureSpellEmpowerment(player1.getId(), empowerment);
+        EmpowerNextCreatureSpellThisTurnEffect empowerment = new EmpowerNextCreatureSpellThisTurnEffect(true, 1);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Savage Summoning", null, player1.getId(),
+                empowerment, player1.getId(), Duration.UNTIL_MATCHING_SPELL_CAST));
         UUID spellId = UUID.randomUUID();
         gd.spellAdditionalEnterCounters.put(spellId, 2);
 
         GameData copy = gd.simulationCopy();
 
-        assertThat(copy.nextCreatureSpellEmpowermentsThisTurn.get(player1.getId())).containsExactly(empowerment);
+        assertThat(copy.floatingPlayerEffects(player1.getId(), EmpowerNextCreatureSpellThisTurnEffect.class))
+                .containsExactly(empowerment);
         assertThat(copy.spellAdditionalEnterCounters).containsEntry(spellId, 2);
 
-        copy.nextCreatureSpellEmpowermentsThisTurn.get(player1.getId()).clear();
+        copy.floatingEffectsOnPlayer(player1.getId(), EmpowerNextCreatureSpellThisTurnEffect.class)
+                .forEach(copy::endFloatingEffect);
         copy.spellAdditionalEnterCounters.clear();
-        assertThat(gd.nextCreatureSpellEmpowermentsThisTurn.get(player1.getId())).containsExactly(empowerment);
+        assertThat(gd.floatingPlayerEffects(player1.getId(), EmpowerNextCreatureSpellThisTurnEffect.class))
+                .containsExactly(empowerment);
         assertThat(gd.spellAdditionalEnterCounters).containsEntry(spellId, 2);
     }
 

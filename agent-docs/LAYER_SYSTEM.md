@@ -471,6 +471,20 @@ the `Duration` the card states. Readers ask `GameData.hasFloatingEffectOnPlayer`
 it (Runed Terror's per-player cleanup included). Several of one kind combine as the rule says: any of a set, the
 newest (maximum life, fixed land colour), the strictest (a spell limit), a sum (damage bonuses).
 
+An effect on a card outside the battlefield ("you may play that card this turn", "it gains flashback until end of
+turn", "it is revealed until your next turn") is on that card through `onCard` (`affectedCardId`); it ends as the card
+leaves its zone, where the engine calls `GameData.endFloatingEffectsOnCard`, because the card becomes a new object
+(CR 400.7). Readers ask `floatingEffectsOnCard` / `hasFloatingEffectOnCard` or the named queries built on them
+(`exilePlayPermission`, `grantedCardAbility`, …). A grant to every matching card locks its set as it begins: one effect
+per card (CR 611.2c). An effect that applies later ("during your next turn", "during target player's next turn",
+"during its controller's next combat", "after this turn", CR 702.185a) has a `Duration.start` other than `NOW`:
+`addFloatingEffect` keeps it in `GameData.scheduledFloatingEffects`, where no query sees it, and the clock begins it
+with its creation timestamp at the turn or combat its start names. A shield with an amount ("prevent the next 3
+damage", CR 615.7) carries the amount left; using part of it replaces it with a reduced copy (`replaceFloatingEffect`,
+same place and timestamp), and a used-up or "next time" shield ends. When several apply to one event the affected
+player chooses (CR 616.1). The "next spell you cast this turn" grants implement `NextMatchingSpellEffect` and end at
+the matching cast (`Duration.UNTIL_MATCHING_SPELL_CAST`) or at cleanup.
+
 **The clock.** Nothing calls an expiry for a duration that ends at an event: `DurationClock` (`service/duration`) ends
 those effects as `RulesEventPipeline` hands it each rules event batch, before the batch's abilities trigger, and undoes
 what the effect kept on its permanent (a copy's card, a tap restriction, mirrored keywords). The events:
@@ -1286,8 +1300,7 @@ and any deviations from this document.
    `CreatureControlService.recomputeControl`, and `reconcileControl` replaces
    `returnStolenCreatures` at `removeOrphanedAuras`/cleanup time). Producers migrated to
    `CreatureControlService.applyControlEffect` (which replaces `stealPermanent`):
-   `GainControlOfTargetEffectHandler` (all three `ControlDuration`s, via the new
-   `ControlDuration.toDuration()`), the four control-Aura attach sites
+   `GainControlOfTargetEffectHandler` (each control `Duration`), the four control-Aura attach sites
    (StackResolutionService, WarpWorldService, AnimationSupport transform-attach,
    PermanentChoiceBattlefieldHandlerService — `WHILE_ATTACHED` keyed to the Aura;
    `reconcileControl` additionally auto-creates missing Aura effects as the reattach safety
@@ -1314,7 +1327,7 @@ and any deviations from this document.
    condition on top of battlefield presence — right for Olivia Voldaren ("for as long as you
    control Olivia"), strictly wrong for Sower of Temptation (oracle: battlefield presence
    only; per the official ruling the steal survives Sower changing controllers) — kept to
-   match the pre-refactor engine, `ControlDuration`'s documented semantics, and the existing
+   match the pre-refactor engine, the control durations' documented semantics, and the existing
    card tests; distinguishing the two wordings needs a fourth duration flavor, deferred. The
    legacy "attached Equipment becomes unattached when control reverts" behavior is preserved
    only for reverts to the DEFAULT controller (no active effect), not for fallbacks to an

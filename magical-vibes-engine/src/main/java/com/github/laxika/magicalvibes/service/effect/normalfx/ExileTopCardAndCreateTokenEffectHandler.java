@@ -36,7 +36,7 @@ public class ExileTopCardAndCreateTokenEffectHandler implements NormalEffectHand
 
         if (exiledCard != null) {
             gameData.addToExile(controllerId, exiledCard, null, true);
-            gameData.exileLookPermissions.put(exiledCard.getId(), controllerId);
+            gameData.grantExileLookPermission(exiledCard.getId(), controllerId);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     "'s ability exiles the top card of its controller's library face down."));
         }

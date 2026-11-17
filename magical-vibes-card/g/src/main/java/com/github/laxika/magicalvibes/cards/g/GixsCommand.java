@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseUpToOnePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToHandEffect;
@@ -35,7 +35,7 @@ public class GixsCommand extends Card {
                                 new ChooseUpToOnePermanentEffect(new PermanentIsCreaturePredicate(),
                                         "Choose up to one creature to get two +1/+1 counters and lifelink."),
                                 new PutCountersOnChosenPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
-                                new GrantKeywordToChosenCreatureEffect(Keyword.LIFELINK, GrantDuration.END_OF_TURN))),
+                                new GrantKeywordToChosenCreatureEffect(Keyword.LIFELINK, Duration.UNTIL_END_OF_TURN))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy each creature with power 2 or less",
                         new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(

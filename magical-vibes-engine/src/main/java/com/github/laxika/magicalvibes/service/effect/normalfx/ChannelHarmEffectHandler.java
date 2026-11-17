@@ -29,6 +29,6 @@ public class ChannelHarmEffectHandler implements NormalEffectHandlerBean {
         if (target == null || !gameQueryService.isCreature(gameData, target)) {
             return;
         }
-        gameData.channelHarmShields.add(new ChannelHarmShield(entry.getControllerId(), entry.getCard(), targetId));
+        gameData.addShield(new ChannelHarmShield(entry.getControllerId(), entry.getCard(), targetId));
     }
 }

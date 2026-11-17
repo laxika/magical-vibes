@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscordRandomCardCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +53,7 @@ public class DiscordRandomCardCopyEffectHandler implements NormalEffectHandlerBe
         UUID controllerId = entry.getControllerId();
         exileService.exileCard(gameData, controllerId, copy);
         exileSupport.grantPlayUntilOwnersNextEndStep(gameData, copy.getId(), controllerId);
-        gameData.exilePlayAnyManaType.add(copy.getId());
+        gameData.grantExileAnyManaType(copy.getId(), controllerId, Duration.UNTIL_YOUR_NEXT_END_STEP);
         if (entry.getSourcePermanentId() != null) {
             gameData.discordCopySourcePermanents.put(copy.getId(), entry.getSourcePermanentId());
         }

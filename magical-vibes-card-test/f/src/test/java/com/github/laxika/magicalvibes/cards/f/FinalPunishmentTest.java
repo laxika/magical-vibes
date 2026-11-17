@@ -76,7 +76,7 @@ class FinalPunishmentTest extends BaseCardTest {
     @Test
     @DisplayName("Does not count damage that was prevented")
     void ignoresPreventedDamage() {
-        gd.playerDamagePreventionShields.put(player2.getId(), 3);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 3);
 
         carbonizePlayer(player2.getId());
         harness.assertLife(player2, 20);
@@ -115,7 +115,7 @@ class FinalPunishmentTest extends BaseCardTest {
     @Test
     @DisplayName("Counts only the unprevented portion of damage")
     void countsPartiallyPreventedDamage() {
-        gd.playerDamagePreventionShields.put(player2.getId(), 2);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 2);
         carbonizePlayer(player2.getId());
         harness.assertLife(player2, 19);
 

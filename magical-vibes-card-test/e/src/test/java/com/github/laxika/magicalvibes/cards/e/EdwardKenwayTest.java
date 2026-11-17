@@ -62,7 +62,7 @@ class EdwardKenwayTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(topCard.getId()).faceDown()).isTrue();
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -167,7 +167,7 @@ class EdwardKenwayTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.exiledCards).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     private Permanent attackingVehicle(Player controller, Player defender) {

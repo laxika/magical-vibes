@@ -38,7 +38,7 @@ class TheLegendOfRokuTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second, third);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId())
                 .containsEntry(third.getId(), player1.getId());
@@ -145,15 +145,15 @@ class TheLegendOfRokuTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiled.getId(), player1.getId());
         assertThatThrownBy(() -> harness.castFromExile(player2, exiled.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiled.getId(), player1.getId());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiled.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiled);
     }
 

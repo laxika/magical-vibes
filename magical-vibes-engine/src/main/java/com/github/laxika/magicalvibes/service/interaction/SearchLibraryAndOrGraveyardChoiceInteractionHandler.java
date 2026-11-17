@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -214,8 +215,8 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
      */
     private void exileFoundUnderOppositionAgent(GameData gameData, UUID searcherId, Card chosen, UUID agentControllerId) {
         exileService.exileCard(gameData, searcherId, chosen);
-        gameData.exilePlayPermissions.put(chosen.getId(), agentControllerId);
-        gameData.exilePlayAnyManaTypeWhileExiled.add(chosen.getId());
+        gameData.grantExilePlayPermission(chosen.getId(), agentControllerId, Duration.PERMANENT);
+        gameData.updateExilePlayPermission(chosen.getId(), granted -> granted.withAnyManaType(true));
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(searcherId) + " exiles ", chosen,
                 " and may play it for as long as it remains exiled."));

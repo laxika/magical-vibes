@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachPlayersLibraryMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -48,7 +49,7 @@ public class ExileTopCardOfEachPlayersLibraryMayPlayUntilNextTurnEffectHandler
             exileSupport.grantPlayUntilNextTurnOfPlayer(
                     gameData, topCard.getId(), controllerId, controllerId);
             if (!topCard.hasType(CardType.LAND)) {
-                gameData.exilePlayAnyManaType.add(topCard.getId());
+                gameData.grantExileAnyManaType(topCard.getId(), controllerId, Duration.UNTIL_END_OF_YOUR_NEXT_TURN);
             }
             gameLogService.append(gameData, GameLog.builder()
                     .text(gameData.playerIdToName.get(playerId) + " exiles ")

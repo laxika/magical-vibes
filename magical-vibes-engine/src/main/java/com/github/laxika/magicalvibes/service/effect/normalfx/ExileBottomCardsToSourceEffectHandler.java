@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileBottomCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -99,13 +100,13 @@ public class ExileBottomCardsToSourceEffectHandler implements NormalEffectHandle
                 UUID permittedPlayer = permission.accessScope() == ExileAccessScope.EXILER
                         ? playerId : sourceControllerId;
                 if (effect.faceDown()) {
-                    gameData.exileLookPermissions.put(card.getId(), permittedPlayer);
+                    gameData.grantExileLookPermission(card.getId(), permittedPlayer);
                 }
                 if (permission.filter() == null || predicateEvaluationService.matchesCardPredicate(
                         card, permission.filter(), null)) {
-                    gameData.exilePlayPermissions.put(card.getId(), permittedPlayer);
+                    gameData.grantExilePlayPermission(card.getId(), permittedPlayer, Duration.PERMANENT);
                     if (permission.anyManaType()) {
-                        gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
+                        gameData.updateExilePlayPermission(card.getId(), granted -> granted.withAnyManaType(true));
                     }
                     break;
                 }

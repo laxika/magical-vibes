@@ -362,7 +362,7 @@ public abstract class AiDecisionEngine {
      */
     protected boolean tryPlayFromOpponentHand(GameData gameData) {
         UUID playerId = aiPlayer.getId();
-        UUID ownerId = gameData.senControlledPlayerId;
+        UUID ownerId = gameData.handPlayableBy(playerId);
         if (!gameData.canPlayFromHandOf(playerId, ownerId) || !hasPriority(gameData)
                 || gameData.interaction.isAwaitingInput()) return false;
         List<Card> ownerHand = gameData.playerHands.getOrDefault(ownerId, List.of());

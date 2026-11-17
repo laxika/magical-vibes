@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -42,9 +43,9 @@ class FireglassMentorTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(chosen.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(other.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(chosen.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(other.getId());
     }
 
     @Test
@@ -174,7 +175,7 @@ class FireglassMentorTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(chosen);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(chosen.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(chosen.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, chosen.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -192,7 +193,7 @@ class FireglassMentorTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(chosen);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
     }
 
     @Test

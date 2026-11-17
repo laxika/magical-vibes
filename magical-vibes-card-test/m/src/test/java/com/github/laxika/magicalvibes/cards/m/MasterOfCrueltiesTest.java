@@ -32,7 +32,7 @@ class MasterOfCrueltiesTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.END_OF_COMBAT, harness::passBothPriorities);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(1);
-        assertThat(gd.creaturesAssigningNoCombatDamageThisCombat).contains(master.getId());
+        assertThat(gd.assignsNoCombatDamage(master.getId())).isTrue();
     }
 
     @Test
@@ -47,7 +47,7 @@ class MasterOfCrueltiesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife);
-        assertThat(gd.creaturesAssigningNoCombatDamageThisCombat).doesNotContain(master.getId());
+        assertThat(gd.assignsNoCombatDamage(master.getId())).isFalse();
     }
 
     @Test

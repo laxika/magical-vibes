@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -38,7 +38,7 @@ public class CrownOfEmpires extends Card {
                         new ConditionalEffect(new NotCondition(hasBothPartners),
                                 new TapPermanentsEffect(TapUntapScope.TARGET)),
                         new ConditionalEffect(hasBothPartners,
-                                new GainControlOfTargetEffect(ControlDuration.PERMANENT))
+                                new GainControlOfTargetEffect(Duration.PERMANENT))
                 ),
                 "{3}, {T}: Tap target creature. Gain control of that creature instead if you control "
                         + "artifacts named Scepter of Empires and Throne of Empires.",

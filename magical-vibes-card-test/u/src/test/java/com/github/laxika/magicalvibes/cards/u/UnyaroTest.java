@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.effect.PhasedOutHeldEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -90,7 +91,7 @@ class UnyaroTest extends BaseCardTest {
         harness.inMutationScope(() -> planar.finishPlaneswalk(gd, List.of()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
-        assertThat(gd.phasedOutUntilPlaneswalk).isEmpty();
+        assertThat(gd.floatingEffectsOfTypes(PhasedOutHeldEffect.class)).isEmpty();
         List<Permanent> phasedOut = gd.phasedOutPermanents.values().stream().flatMap(List::stream).toList();
         assertThat(phasedOut).doesNotContain(creature);
     }

@@ -51,9 +51,9 @@ class GalesRedirectionTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, hawk.getId());
 
-        assertThat(gd.exilePlayPermissions.get(hawk.getId())).isEqualTo(player2.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(hawk.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(hawk.getId());
+        assertThat(gd.exilePlayPermissionHolder(hawk.getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(hawk.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(hawk.getId());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -79,9 +79,9 @@ class GalesRedirectionTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, hawk.getId());
 
-        assertThat(gd.exilePlayPermissions.get(hawk.getId())).isEqualTo(player2.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(hawk.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).doesNotContain(hawk.getId());
+        assertThat(gd.exilePlayPermissionHolder(hawk.getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(hawk.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).doesNotContain(hawk.getId());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -117,8 +117,8 @@ class GalesRedirectionTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, ballista.getId());
 
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(ballista.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).doesNotContain(ballista.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(ballista.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).doesNotContain(ballista.getId());
     }
 
     @Test
@@ -130,7 +130,7 @@ class GalesRedirectionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFromExile(player2, hawk.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.exilePlayPermissions.get(hawk.getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(hawk.getId())).isEqualTo(player2.getId());
     }
 
     @Test
@@ -139,7 +139,7 @@ class GalesRedirectionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFromExile(player2, hawk.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.exilePlayPermissions.get(hawk.getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(hawk.getId())).isEqualTo(player2.getId());
     }
 
     @Test
@@ -151,8 +151,8 @@ class GalesRedirectionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Suntail Hawk");
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(hawk.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(hawk.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(hawk.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(hawk.getId());
     }
 
     private SuntailHawk exileHawk(int result) {

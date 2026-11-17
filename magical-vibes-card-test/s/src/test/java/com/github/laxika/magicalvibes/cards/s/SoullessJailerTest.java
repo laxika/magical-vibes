@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.r.RiseFromTheGrave;
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -70,7 +71,7 @@ class SoullessJailerTest extends BaseCardTest {
         ThinkTwice thinkTwice = new ThinkTwice();
         harness.addToBattlefield(player1, new SoullessJailer());
         harness.setExile(player1, List.of(thinkTwice));
-        gd.exilePlayPermissions.put(thinkTwice.getId(), player1.getId());
+        gd.grantExilePlayPermission(thinkTwice.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -95,7 +96,7 @@ class SoullessJailerTest extends BaseCardTest {
         SoullessJailer exiledCreature = new SoullessJailer();
         harness.addToBattlefield(player1, new SoullessJailer());
         harness.setExile(player1, List.of(exiledCreature));
-        gd.exilePlayPermissions.put(exiledCreature.getId(), player1.getId());
+        gd.grantExilePlayPermission(exiledCreature.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castFromExile(player1, exiledCreature.getId());
@@ -154,7 +155,7 @@ class SoullessJailerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SoullessJailer());
         ThinkTwice spell = new ThinkTwice();
         harness.setExile(player1, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.setHand(player1, List.of(new TurnToFrog()));
         harness.setLibrary(player1, List.of(new SoullessJailer()));
         harness.addMana(player1, ManaColor.BLUE, 4);

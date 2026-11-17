@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 /**
  * "You may gain control of target [filter] defending player controls[ for as long as you control
  * this creature]. If you do, this creature assigns no combat damage this turn." (Orcish Squatters
- * — lands, {@link ControlDuration#WHILE_SOURCE_ON_BATTLEFIELD}; Kukemssa Pirates — artifacts,
- * {@link ControlDuration#PERMANENT}.)
+ * — lands, {@link Duration#WHILE_SOURCE_ON_BATTLEFIELD}; Kukemssa Pirates — artifacts,
+ * {@link Duration#PERMANENT}.)
  *
  * <p>Wrap in a {@link MayEffect} on an {@code Triggers.attacksUnblocked()} ability. The stack entry's
  * {@code targetId} is the defending player and {@code sourcePermanentId} the attacking creature.
@@ -20,11 +20,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param choiceNoun singular noun used in the choice prompt and log (e.g. {@code "land"})
  */
 public record GainControlOfPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect(
-        PermanentPredicate filter, ControlDuration duration, String choiceNoun)
+        PermanentPredicate filter, Duration duration, String choiceNoun)
         implements ControlStealingEffect {
 
     @Override
-    public ControlDuration controlDuration() {
+    public Duration controlDuration() {
         return duration;
     }
 

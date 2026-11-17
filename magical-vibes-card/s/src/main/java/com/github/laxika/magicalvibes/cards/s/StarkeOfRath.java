@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -25,7 +25,7 @@ public class StarkeOfRath extends Card {
                 true, "",
                 List.of(
                         new DestroyTargetPermanentEffect(false),
-                        new TargetPermanentControllerGainsControlOfSourceEffect(ControlDuration.PERMANENT)
+                        new TargetPermanentControllerGainsControlOfSourceEffect(Duration.PERMANENT)
                 ),
                 "{T}: Destroy target artifact or creature. That permanent's controller gains control of Starke of Rath.",
                 new PermanentPredicateTargetFilter(

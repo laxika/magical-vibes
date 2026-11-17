@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -84,7 +85,8 @@ public class ReturnTopCreatureCardFromGraveyardToBattlefieldEffectHandler implem
             return;
         }
 
-        gameData.creaturesAssigningNoCombatDamageThisTurn.add(sourcePermanentId);
+        PreventionSupport.assignNoCombatDamage(gameData, entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), sourcePermanentId, Duration.UNTIL_END_OF_TURN);
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         String sourceName = source != null ? source.getCard().getName() : "the attacking creature";
         gameLogService.append(gameData,

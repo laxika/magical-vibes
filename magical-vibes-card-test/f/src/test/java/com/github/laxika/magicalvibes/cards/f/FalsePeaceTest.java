@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
+import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RelentlessAssault;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -41,7 +43,8 @@ class FalsePeaceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.skipCombatPhasesNextTurn).containsExactly(player2.getId());
+        assertThat(FloatingCombatRules.skipsNextTurn(gd, player2.getId(), SkipStepOrPhaseKind.COMBAT_PHASE)).isTrue();
+        assertThat(FloatingCombatRules.skipsNextTurn(gd, player1.getId(), SkipStepOrPhaseKind.COMBAT_PHASE)).isFalse();
         assertThat(gd.skipNextTurnCount).isEmpty();
         assertThat(gd.skipNextUntapStepCount).isEmpty();
         assertThat(gd.skipNextDrawStepCount).isEmpty();
@@ -96,7 +99,8 @@ class FalsePeaceTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.skipCombatPhasesNextTurn).containsExactly(player1.getId());
+        assertThat(FloatingCombatRules.skipsNextTurn(gd, player1.getId(), SkipStepOrPhaseKind.COMBAT_PHASE)).isTrue();
+        assertThat(FloatingCombatRules.skipsNextTurn(gd, player2.getId(), SkipStepOrPhaseKind.COMBAT_PHASE)).isFalse();
     }
 
     @Test

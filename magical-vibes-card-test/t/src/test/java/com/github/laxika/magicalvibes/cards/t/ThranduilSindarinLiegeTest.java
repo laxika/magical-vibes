@@ -81,7 +81,7 @@ class ThranduilSindarinLiegeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstLand, secondLand);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test

@@ -8,8 +8,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>A single cohesive effect (not three composable ones) because all three clauses must apply to the
  * <em>same</em> chosen opponent — splitting them would prompt for a separate target per clause.
  * Resolution makes a floating effect of this record on the target player, which neither casts spells nor activates
- * abilities until end of turn, and sets the {@code senControllerPlayerId}/{@code senControlledPlayerId} pair on
- * {@code GameData}, which is cleared at end of turn.
+ * abilities until end of turn; the effect's controller may play lands and cast spells from that player's hand
+ * meanwhile ({@code GameData.canPlayFromHandOf}).
  */
 public record SenTripletsUpkeepEffect() implements CardEffect {
 

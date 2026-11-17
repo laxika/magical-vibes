@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -25,7 +25,7 @@ public class BeholdTheUnspeakable extends Card {
                 -2,
                 0,
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
-                GrantDuration.UNTIL_YOUR_NEXT_TURN));
+                Duration.UNTIL_YOUR_NEXT_TURN));
 
         CardsInHandAtMost oneOrFewerCards = new CardsInHandAtMost(1);
         addTrigger(Triggers.chapter(2),

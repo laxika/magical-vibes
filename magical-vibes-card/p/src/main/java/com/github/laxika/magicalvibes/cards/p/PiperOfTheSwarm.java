@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -49,7 +49,7 @@ public class PiperOfTheSwarm extends Card {
                 "{2}{B}{B}",
                 List.of(
                         new SacrificeMultiplePermanentsCost(3, new PermanentHasSubtypePredicate(CardSubtype.RAT)),
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT)),
+                        new GainControlOfTargetEffect(Duration.PERMANENT)),
                 "{2}{B}{B}, {T}, Sacrifice three Rats: Gain control of target creature.",
                 TargetFilters.creature()));
     }

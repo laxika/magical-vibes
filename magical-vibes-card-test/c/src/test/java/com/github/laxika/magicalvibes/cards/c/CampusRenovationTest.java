@@ -40,7 +40,7 @@ class CampusRenovationTest extends BaseCardTest {
                 .noneMatch(card -> card.getId().equals(artifact.getId()));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactlyInAnyOrder(topCard, secondCard);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(topCard.getId(), player1.getId())
                 .containsEntry(secondCard.getId(), player1.getId());
     }
@@ -166,12 +166,12 @@ class CampusRenovationTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(top.getId());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(top.getId());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
         assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
                 .isInstanceOf(IllegalStateException.class);

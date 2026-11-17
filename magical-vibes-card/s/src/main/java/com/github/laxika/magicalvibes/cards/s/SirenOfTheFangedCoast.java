@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
@@ -16,6 +16,6 @@ public class SirenOfTheFangedCoast extends Card {
     public SirenOfTheFangedCoast() {
         addStaticEffect(new TributeEffect(3));
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new TributeNotPaidEffect(new GainControlOfTargetEffect(ControlDuration.PERMANENT)));
+                new TributeNotPaidEffect(new GainControlOfTargetEffect(Duration.PERMANENT)));
     }
 }

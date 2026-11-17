@@ -26,7 +26,7 @@ class HallowedHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(2);
     }
 
     @Test
@@ -68,7 +68,7 @@ class HallowedHealerTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertLife(player2, 18);
-        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player2.getId());
+        assertThat(gd.playerDamagePreventionShields()).doesNotContainKey(player2.getId());
     }
 
     @Test
@@ -152,7 +152,7 @@ class HallowedHealerTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player2.getId());
+        assertThat(gd.playerDamagePreventionShields()).doesNotContainKey(player2.getId());
     }
 
     @Test

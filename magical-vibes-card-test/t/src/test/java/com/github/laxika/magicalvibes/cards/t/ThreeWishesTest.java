@@ -52,9 +52,9 @@ class ThreeWishesTest extends BaseCardTest {
         assertThat(gd.findExiledCard(a.getId()).faceDown()).isTrue();
         assertThat(gd.findExiledCard(b.getId()).faceDown()).isTrue();
         assertThat(gd.findExiledCard(c.getId()).faceDown()).isTrue();
-        assertThat(gd.exilePlayPermissions.get(a.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissions.get(b.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissions.get(c.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(a.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(b.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(c.getId())).isEqualTo(player1.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(leftover);
 
         List<TemporaryGlobalTriggeredAbility> scheduled =
@@ -82,7 +82,7 @@ class ThreeWishesTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(card -> List.of(a.getId(), b.getId(), c.getId()).contains(card.getId()));
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .doesNotContainKeys(a.getId(), b.getId(), c.getId());
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)
@@ -105,7 +105,7 @@ class ThreeWishesTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(a.getId(), b.getId(), c.getId());
-        assertThat(gd.exilePlayPermissions.get(a.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(a.getId())).isEqualTo(player1.getId());
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
 
@@ -150,7 +150,7 @@ class ThreeWishesTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(card -> card.getId().equals(spell.getId()));
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(spell.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(spell.getId());
     }
 
     @Test

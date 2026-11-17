@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.CreatureControllerDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -46,7 +47,7 @@ public class RedirectAllDamageToChosenCreatureUntilNextTurnEffectHandler impleme
             return;
         }
 
-        gameData.creatureControllerDamageRedirectShields.add(
-                new CreatureControllerDamageRedirectShield(controllerId, targetId));
+        gameData.addShield("", null, controllerId, controllerId,
+                new CreatureControllerDamageRedirectShield(controllerId, targetId), Duration.UNTIL_YOUR_NEXT_TURN);
     }
 }

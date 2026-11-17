@@ -128,7 +128,7 @@ class GorionWiseMentorTest extends BaseCardTest {
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 18);
         assertThat(gd.findExiledCard(adventureCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsOnlyKeys(adventureCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsOnlyKeys(adventureCard.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 }

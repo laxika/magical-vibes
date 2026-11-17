@@ -33,7 +33,7 @@ class ShowdownOfTheSkaldsTest extends BaseCardTest {
 
         assertThat(topCards).allSatisfy(card -> {
             assertThat(gd.findExiledCard(card.getId())).isNotNull();
-            assertThat(gd.exilePlayPermissions).containsEntry(card.getId(), player1.getId());
+            assertThat(gd.exilePlayPermissionHolders()).containsEntry(card.getId(), player1.getId());
         });
     }
 
@@ -176,16 +176,16 @@ class ShowdownOfTheSkaldsTest extends BaseCardTest {
 
         harness.setHand(player1, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsKey(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(exiled.getId());
         assertThatThrownBy(() -> harness.castFromExile(player2, exiled.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.setHand(player2, List.of());
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsKey(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(exiled.getId());
         harness.setHand(player1, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiled.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiled);
     }
 

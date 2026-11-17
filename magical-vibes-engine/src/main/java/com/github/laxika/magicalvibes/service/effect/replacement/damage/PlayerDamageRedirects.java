@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 
+import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -203,7 +204,7 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
     }
 
     private String turnRedirectDestinationName(GameData gameData, String shieldIndex) {
-        UUID destinationId = gameData.turnDamageRedirectToCreatureShields
+        UUID destinationId = gameData.shields(TurnDamageRedirectToCreatureShield.class)
                 .get(Integer.parseInt(shieldIndex)).redirectTargetCreatureId();
         Permanent destination = gameQueryService.findPermanentById(gameData, destinationId);
         return destination == null ? "a creature" : destination.getCard().getName();

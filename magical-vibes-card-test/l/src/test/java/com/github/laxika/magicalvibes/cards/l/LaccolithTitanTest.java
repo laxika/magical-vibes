@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudBehemoth;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -56,7 +57,7 @@ class LaccolithTitanTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(blocker.getMarkedDamage()).isEqualTo(6);
-        assertThat(gd.creaturesAssigningNoCombatDamageThisTurn).contains(attacker.getId());
+        assertThat(gd.assignsNoCombatDamage(attacker.getId())).isTrue();
 
         resolveCombat();
 
@@ -76,7 +77,7 @@ class LaccolithTitanTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(blocker.getMarkedDamage()).isZero();
-        assertThat(gd.creaturesAssigningNoCombatDamageThisTurn).doesNotContain(attacker.getId());
+        assertThat(gd.assignsNoCombatDamage(attacker.getId())).isFalse();
     }
 
     @Test
@@ -93,7 +94,7 @@ class LaccolithTitanTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(blocker.getMarkedDamage()).isEqualTo(5);
-        assertThat(gd.creaturesAssigningNoCombatDamageThisTurn).contains(attacker.getId());
+        assertThat(gd.assignsNoCombatDamage(attacker.getId())).isTrue();
     }
 
     @Test
@@ -112,7 +113,7 @@ class LaccolithTitanTest extends BaseCardTest {
 
         assertThat(firstBlocker.getMarkedDamage()).isEqualTo(6);
         assertThat(secondBlocker.getMarkedDamage()).isZero();
-        assertThat(gd.creaturesAssigningNoCombatDamageThisTurn).containsExactly(attacker.getId());
+        assertThat(gd.assignsNoCombatDamage(attacker.getId())).isTrue();
     }
 
     @Test
@@ -138,13 +139,13 @@ class LaccolithTitanTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.creaturesAssigningNoCombatDamageThisTurn).contains(attacker.getId());
+        assertThat(gd.assignsNoCombatDamage(attacker.getId())).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.creaturesAssigningNoCombatDamageThisTurn).isEmpty();
+        assertThat(gd.floatingEffectsOfTypes(AssignNoCombatDamageEffect.class)).isEmpty();
     }
 
     @Test

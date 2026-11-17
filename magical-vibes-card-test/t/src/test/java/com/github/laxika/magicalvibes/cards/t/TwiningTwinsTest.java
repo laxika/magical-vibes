@@ -32,7 +32,7 @@ class TwiningTwinsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Rootrider Faun");
         assertThat(gd.findExiledCard(target.getCard().getId())).isNotNull();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
 
         harness.passUntil(TurnStep.END_STEP);
         harness.assertNotOnBattlefield(player2, "Rootrider Faun");
@@ -153,8 +153,8 @@ class TwiningTwinsTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Twining Twins");
         assertThat(gd.findExiledCard(first.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(first.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(first.getId());
         assertThat(gd.findExiledCard(response.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(response.getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(response.getId())).isEqualTo(player2.getId());
     }
 }

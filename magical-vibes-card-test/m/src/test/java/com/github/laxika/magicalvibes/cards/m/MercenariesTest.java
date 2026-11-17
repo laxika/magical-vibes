@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -30,7 +31,7 @@ class MercenariesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(mercs.getId()));
     }
 
@@ -49,7 +50,7 @@ class MercenariesTest extends BaseCardTest {
         resolveCombat(player1);
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -95,7 +96,7 @@ class MercenariesTest extends BaseCardTest {
 
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 20);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player2.getId()) && s.sourceId().equals(mercs.getId()));
     }
 
@@ -114,7 +115,7 @@ class MercenariesTest extends BaseCardTest {
         resolveCombat(player1);
 
         harness.assertLife(player2, 18);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.sourceId().equals(mercs.getId()));
     }
 
@@ -132,7 +133,7 @@ class MercenariesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -151,7 +152,7 @@ class MercenariesTest extends BaseCardTest {
 
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
         harness.assertLife(player2, 20);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player2.getId()) && s.sourceId().equals(mercs.getId()));
     }
 
@@ -167,7 +168,7 @@ class MercenariesTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
-        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isNotEmpty();
     }
 
     @Test
@@ -178,13 +179,13 @@ class MercenariesTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isNotEmpty();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test

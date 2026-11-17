@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -38,8 +39,8 @@ class UbaMaskTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getId().equals(top.getId()));
-        assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(top.getId());
+        assertThat(gd.exilePlayPermissionHolder(top.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(top.getId());
     }
 
     @Test
@@ -54,7 +55,7 @@ class UbaMaskTest extends BaseCardTest {
         harness.assertNotInHand(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getId().equals(top.getId()));
-        assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(top.getId())).isEqualTo(player2.getId());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

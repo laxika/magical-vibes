@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.b.Brushland;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NaturalAffinity;
@@ -46,7 +47,7 @@ class RuneOfProtectionLandsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, land.getId());
 
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(land.getId()));
     }
 
@@ -66,7 +67,7 @@ class RuneOfProtectionLandsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -80,7 +81,7 @@ class RuneOfProtectionLandsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("No permanents on the battlefield"));
     }
@@ -120,13 +121,13 @@ class RuneOfProtectionLandsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 19);
-        assertThat(gd.playerSourceNextDamageShields).hasSize(1);
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).hasSize(1);
 
         harness.activateAbility(player1, 1, 1, null, null);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 19);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -156,7 +157,7 @@ class RuneOfProtectionLandsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 19);
-        assertThat(gd.playerSourceNextDamageShields).hasSize(1);
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).hasSize(1);
     }
 
     @Test
@@ -170,14 +171,14 @@ class RuneOfProtectionLandsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, land.getId());
 
-        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isNotEmpty();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -217,7 +218,7 @@ class RuneOfProtectionLandsTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 1, null, null);
 
         harness.assertLife(player1, 19);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -235,7 +236,7 @@ class RuneOfProtectionLandsTest extends BaseCardTest {
         harness.activateAbility(player2, 0, 1, null, null);
 
         harness.assertLife(player2, 19);
-        assertThat(gd.playerSourceNextDamageShields).hasSize(1);
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).hasSize(1);
     }
 
     @Test
@@ -267,7 +268,7 @@ class RuneOfProtectionLandsTest extends BaseCardTest {
                 .hasMessageContaining("mana");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -289,6 +290,6 @@ class RuneOfProtectionLandsTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.a.AmuletOfQuoz;
 import com.github.laxika.magicalvibes.cards.c.ChaosDragon;
@@ -459,11 +460,11 @@ class KrarksThumbTest extends BaseCardTest {
 
             assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
                     .isEqualTo(player1.getId());
-            assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+            assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
             harness.handleListChoice(player1, kept);
         }
 
-        assertThat(gd.sourceNextDamageToAnyTargetShields).singleElement()
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).singleElement()
                 .satisfies(shield -> assertThat(shield.damageMultiplier()).isEqualTo(damageMultiplier));
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
                 .filter(log -> log.contains("coin flip for Desperate Gambit"))).hasSize(1);

@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +28,7 @@ public class SkyfireKirin extends Card {
                 .addTrigger(Triggers.youCastSpell().withFilter(new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
                                 new CardSubtypePredicate(CardSubtype.ARCANE)))),
-                        new MayEffect(new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new MayEffect(new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                                 "Gain control of target creature with that spell's mana value until end of turn?"));
     }
 }

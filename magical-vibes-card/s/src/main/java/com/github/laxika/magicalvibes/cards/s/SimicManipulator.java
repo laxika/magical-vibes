@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -23,7 +23,7 @@ public class SimicManipulator extends Card {
                 null,
                 List.of(
                         new RemoveOneOrMoreCountersFromSourceCost(CounterType.PLUS_ONE_PLUS_ONE),
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT)),
+                        new GainControlOfTargetEffect(Duration.PERMANENT)),
                 "{T}, Remove one or more +1/+1 counters from this creature: Gain control of target creature with power less than or equal to the number of +1/+1 counters removed this way.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

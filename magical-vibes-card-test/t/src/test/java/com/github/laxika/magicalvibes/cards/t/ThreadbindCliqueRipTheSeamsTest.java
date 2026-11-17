@@ -29,7 +29,7 @@ class ThreadbindCliqueRipTheSeamsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -80,7 +80,7 @@ class ThreadbindCliqueRipTheSeamsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -98,7 +98,7 @@ class ThreadbindCliqueRipTheSeamsTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

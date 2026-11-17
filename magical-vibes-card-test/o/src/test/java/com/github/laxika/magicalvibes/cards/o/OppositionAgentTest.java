@@ -43,8 +43,8 @@ class OppositionAgentTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(chosen);
         assertThat(gd.playerHands.get(player2.getId())).doesNotContain(chosen);
-        assertThat(gd.exilePlayPermissions.get(chosen.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(chosen.getId());
+        assertThat(gd.exilePlayPermissionHolder(chosen.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(chosen.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 

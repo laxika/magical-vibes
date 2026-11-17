@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import java.util.UUID;
 
 /**
@@ -11,7 +12,7 @@ public record DamagePreventionLifeGainShield(
         UUID targetId,
         UUID lifeGainPlayerId,
         int remainingAmount
-) {
+) implements CardEffect {
 
     /** Returns a copy with the given amount consumed. */
     public DamagePreventionLifeGainShield withReducedAmount(int consumed) {

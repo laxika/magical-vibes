@@ -49,7 +49,7 @@ class OutlawsFuryTest extends BaseCardTest {
         castOutlawsFury();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -168,11 +168,11 @@ class OutlawsFuryTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, topCard.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);

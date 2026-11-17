@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.CreatureSpellEmpowerment;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -10,6 +9,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Slf4j
 @Component
@@ -26,8 +26,7 @@ public class EmpowerNextCreatureSpellThisTurnEffectHandler implements NormalEffe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         EmpowerNextCreatureSpellThisTurnEffect empower = (EmpowerNextCreatureSpellThisTurnEffect) effect;
-        gameData.addNextCreatureSpellEmpowerment(entry.getControllerId(),
-                new CreatureSpellEmpowerment(empower.uncounterable(), empower.additionalPlusOneCounters()));
+        gameData.addPlayerEffect(entry, empower, entry.getControllerId(), Duration.UNTIL_MATCHING_SPELL_CAST);
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" empowers its controller's next creature spell this turn.")

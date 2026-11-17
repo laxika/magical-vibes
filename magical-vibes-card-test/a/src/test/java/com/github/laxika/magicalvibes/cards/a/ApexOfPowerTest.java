@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -38,10 +39,10 @@ class ApexOfPowerTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactlyElementsOf(topCards.stream().map(Card::getId).toList());
-        assertThat(gd.exilePlayPermissions).containsKeys(
+        assertThat(gd.exilePlayPermissionHolders()).containsKeys(
                 topCards.get(0).getId(), topCards.get(2).getId(), topCards.get(3).getId(),
                 topCards.get(4).getId(), topCards.get(5).getId(), topCards.get(6).getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(land.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "BLUE");
@@ -54,7 +55,7 @@ class ApexOfPowerTest extends BaseCardTest {
     void doesNotAddManaWhenCastFromExile() {
         ApexOfPower apex = new ApexOfPower();
         harness.setExile(player1, List.of(apex));
-        gd.exilePlayPermissions.put(apex.getId(), player1.getId());
+        gd.grantExilePlayPermission(apex.getId(), player1.getId(), Duration.PERMANENT);
         harness.setLibrary(player1, List.of(
                 new Divination(), new Divination(), new Divination(),
                 new Divination(), new Divination(), new Divination(),
@@ -150,7 +151,7 @@ class ApexOfPowerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(divination.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(divination.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(divination);
     }
 

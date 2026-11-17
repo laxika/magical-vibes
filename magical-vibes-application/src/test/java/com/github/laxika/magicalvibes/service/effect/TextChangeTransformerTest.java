@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -103,7 +103,7 @@ class TextChangeTransformerTest {
     @DisplayName("A land type replacement rewrites a basic land type predicate inside a filter")
     void landTypeReplacementRewritesFilterPredicate() {
         GrantKeywordEffect grant = new GrantKeywordEffect(Set.of(Keyword.FEAR), GrantScope.ALL_CREATURES,
-                new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), GrantDuration.END_OF_TURN, null);
+                new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), Duration.UNTIL_END_OF_TURN, null);
 
         CardEffect result = TextChangeTransformer.transform(grant, List.of(MOUNTAIN_TO_ISLAND));
 

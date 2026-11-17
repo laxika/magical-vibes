@@ -9,10 +9,10 @@ import java.util.UUID;
  * When {@code chosenCreatureId} is null, the handler reads the entry's chosen permanent ID.
  * Supports the standard end-of-turn and next-turn one-shot durations.
  */
-public record GrantKeywordToChosenCreatureEffect(Keyword keyword, GrantDuration duration,
+public record GrantKeywordToChosenCreatureEffect(Keyword keyword, Duration duration,
                                                  UUID chosenCreatureId) implements CardEffect {
 
-    public GrantKeywordToChosenCreatureEffect(Keyword keyword, GrantDuration duration) {
+    public GrantKeywordToChosenCreatureEffect(Keyword keyword, Duration duration) {
         this(keyword, duration, null);
     }
 }

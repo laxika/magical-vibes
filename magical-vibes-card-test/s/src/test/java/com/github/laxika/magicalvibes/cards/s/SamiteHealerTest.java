@@ -83,9 +83,9 @@ class SamiteHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
-        assertThat(gd.globalDamagePreventionShield).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.globalDamagePreventionShield()).isZero();
     }
 
     @Test
@@ -98,7 +98,7 @@ class SamiteHealerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getDamagePreventionShield()).isEqualTo(1);
-        assertThat(gd.globalDamagePreventionShield).isZero();
+        assertThat(gd.globalDamagePreventionShield()).isZero();
     }
 
     @Test
@@ -149,8 +149,8 @@ class SamiteHealerTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertLife(player2, 19);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
-        assertThat(gd.globalDamagePreventionShield).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.globalDamagePreventionShield()).isZero();
     }
 
     @Test
@@ -169,7 +169,7 @@ class SamiteHealerTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertLife(player2, 18);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test
@@ -210,7 +210,7 @@ class SamiteHealerTest extends BaseCardTest {
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 19);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test
@@ -230,8 +230,8 @@ class SamiteHealerTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 20);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
-        assertThat(gd.globalDamagePreventionShield).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.globalDamagePreventionShield()).isZero();
     }
 
     @Test
@@ -241,13 +241,13 @@ class SamiteHealerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test
@@ -261,7 +261,7 @@ class SamiteHealerTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, player2.getId());
         harness.passBothPriorities();
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
         assertThat(healer.isTapped()).isTrue();
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -269,7 +269,7 @@ class SamiteHealerTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertLife(player2, 19);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     private Permanent addReadyHealer(Player player) {

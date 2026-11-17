@@ -41,7 +41,7 @@ public class PreventNextDamageByTargetCreatureEffectHandler implements NormalEff
         }
 
         boolean gainLife = ((PreventNextDamageByTargetCreatureEffect) effect).gainLife();
-        gameData.sourceNextDamageToAnyTargetShields.add(gainLife
+        gameData.addShield(gainLife
                 ? SourceNextDamageToAnyTargetShield.withLifeGain(targetId, controllerId)
                 : new SourceNextDamageToAnyTargetShield(targetId));
         gameLogService.append(gameData, GameLog.textCardText(

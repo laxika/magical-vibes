@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 @CardUsed({SapphireCollector.class, MindStone.class, GrizzlyBears.class, Shock.class})
 class SapphireCollectorTest extends BaseCardTest {
@@ -72,7 +73,7 @@ class SapphireCollectorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, shock.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(shock.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).contains(shock.getId());
     }
 
     @Test

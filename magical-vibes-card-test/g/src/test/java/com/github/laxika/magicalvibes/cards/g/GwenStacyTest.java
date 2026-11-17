@@ -84,7 +84,7 @@ class GwenStacyTest extends BaseCardTest {
 
         assertThat(ghostSpider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test

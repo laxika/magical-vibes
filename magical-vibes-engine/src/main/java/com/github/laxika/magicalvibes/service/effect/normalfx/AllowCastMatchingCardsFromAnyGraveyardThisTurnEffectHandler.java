@@ -10,6 +10,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Slf4j
 @Component
@@ -27,8 +28,8 @@ public class AllowCastMatchingCardsFromAnyGraveyardThisTurnEffectHandler impleme
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (AllowCastMatchingCardsFromAnyGraveyardThisTurnEffect) effect;
         UUID controllerId = entry.getControllerId();
-        gameData.graveyardCastFilterPermissionsThisTurn.add(
-                new GameData.GraveyardCastFilterPermission(controllerId, e.filter(), true, true));
+        gameData.addPlayerEffect(entry, new GameData.GraveyardCastFilterPermission(
+                controllerId, e.filter(), true, true), controllerId, Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId)
                 + " may cast matching spells from any graveyard this turn. They are exiled instead."));

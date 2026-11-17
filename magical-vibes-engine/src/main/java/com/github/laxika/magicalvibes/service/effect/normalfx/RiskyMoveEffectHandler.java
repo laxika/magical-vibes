@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RiskyMoveEffect;
@@ -152,7 +151,7 @@ public class RiskyMoveEffectHandler implements NormalEffectHandlerBean, ChoosesC
         Permanent creature = creatureId == null ? null : gameQueryService.findPermanentById(gameData, creatureId);
         if (creature != null) {
             creatureControlService.applyControlEffect(gameData, opponentId, creature,
-                    new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                    new GainControlOfTargetEffect(Duration.PERMANENT),
                     Duration.PERMANENT, null, sourceName);
         }
     }

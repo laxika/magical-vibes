@@ -30,7 +30,7 @@ class DevouringSugarmawTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Human");
         harness.assertOnBattlefield(player1, "Food");
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test

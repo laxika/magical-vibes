@@ -11,12 +11,11 @@ import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellCostEffect;
+import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.PhasedOutHeldEffect;
 import com.github.laxika.magicalvibes.model.effect.TapRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TemporaryCopyEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -31,6 +30,7 @@ import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -43,14 +43,16 @@ import java.util.function.Predicate;
  * The clock that ends the durations of the continuous effects resolving spells and abilities made (CR 611.2a). The
  * trigger pipeline hands it each rules event batch before it matches the batch's triggered abilities; the clock ends
  * every floating effect whose {@link Duration.End} is one of the batch's events, without the stack (as CR 514.2), and
- * undoes what the effect kept on the permanent it affected.
+ * undoes what the effect kept on the permanent it affected (a permanent a phasing hold kept out phases in).
  *
  * <p>The events that end durations: a turn beginning ({@link TurnEvent.Began}: "until your next turn"), a step or phase
  * ending ({@link TurnEvent.StepEnded}: "until end of combat", "until the end of your next upkeep", CR 500.5), the
  * cleanup step's damage removal ({@link TurnEvent.Cleanup}: "until end of turn", "until the end of your next turn",
  * CR 514.2), a step beginning ({@link StepEvent}: "until your next upkeep", "until the next end step"), the untap step's
  * untapping ("until its controller's next untap step"), a spell being cast ({@link SpellEvent.Cast}) and a planeswalk
- * ({@link ActionEvent.Planeswalked}).
+ * ({@link ActionEvent.Planeswalked}). A turn beginning also begins the effects scheduled to begin with it ("during your
+ * next turn", "after this turn"), and the beginning of combat the ones scheduled for the next combat of their
+ * affected permanent's controller (see {@link Duration#start()}).
  *
  * <p>A "for as long as" duration (CR 611.2b) ends as soon as its condition stops holding, not at a batch: the
  * engine tells the clock where the state changes, and the clock ends the effects of that source the change ends. Its
@@ -70,12 +72,16 @@ public class DurationClock {
 
     private final AuraCopyService auraCopyService;
 
+    private final PhasingService phasingService;
+
     public DurationClock(@Lazy PredicateEvaluationService predicateEvaluationService,
                          @Lazy GameQueryService gameQueryService,
-                         @Lazy AuraCopyService auraCopyService) {
+                         @Lazy AuraCopyService auraCopyService,
+                         @Lazy PhasingService phasingService) {
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameQueryService = gameQueryService;
         this.auraCopyService = auraCopyService;
+        this.phasingService = phasingService;
     }
 
     /** Ends the durations the events of {@code batch} end, in event order. */
@@ -85,13 +91,40 @@ public class DurationClock {
         }
     }
 
-    /** Ends the floating effects whose duration {@code event} ends, and returns them. */
+    /**
+     * Ends the floating effects whose duration {@code event} ends, and returns them. A turn beginning also begins the
+     * scheduled effects whose duration starts with it, after the effects it ends have ended.
+     */
     public List<FloatingContinuousEffect> advance(GameData gameData, RulesEvent event) {
         Predicate<FloatingContinuousEffect> ends = endsAt(gameData, event);
-        if (ends == null) {
-            return List.of();
+        List<FloatingContinuousEffect> ended = ends == null ? List.of() : end(gameData, ends);
+        if (event instanceof TurnEvent.Began began) {
+            gameData.startScheduledFloatingEffects(effect -> startsAt(gameData, began, effect));
+        } else if (event instanceof StepEvent step && step.moment() == StepTrigger.Moment.BEGINNING_OF_COMBAT) {
+            gameData.startScheduledFloatingEffects(effect -> effect.duration().start()
+                    == Duration.Start.AFFECTED_CONTROLLERS_NEXT_COMBAT && effect.affectedPermanentId() != null
+                    && step.activePlayerId().equals(
+                    gameQueryService.findPermanentController(gameData, effect.affectedPermanentId())));
         }
-        return end(gameData, ends);
+        return ended;
+    }
+
+    /**
+     * Whether the turn {@code began} begins the scheduled {@code effect}: "after this turn" begins at any next turn,
+     * "during your next turn" at its controller's, "during target player's next turn" at the affected player's, or at
+     * its controller's when the effect affects a permanent ("during its controller's next turn").
+     */
+    private boolean startsAt(GameData gameData, TurnEvent.Began began, FloatingContinuousEffect effect) {
+        UUID activePlayerId = began.activePlayerId();
+        return switch (effect.duration().start()) {
+            case NOW, AFTER_THIS_TURN -> true;
+            case AFFECTED_CONTROLLERS_NEXT_COMBAT -> false;
+            case YOUR_NEXT_TURN -> activePlayerId.equals(effect.controllerId());
+            case AFFECTED_PLAYERS_NEXT_TURN -> effect.affectedPermanentId() != null
+                    ? activePlayerId.equals(gameQueryService.findPermanentController(gameData,
+                    effect.affectedPermanentId()))
+                    : activePlayerId.equals(effect.affectedPlayerId());
+        };
     }
 
     /**
@@ -199,16 +232,20 @@ public class DurationClock {
                     && began.activePlayerId().equals(effect.controllerId());
             case TurnEvent.StepEnded ended when ended.step() == TurnStep.END_OF_COMBAT ->
                     effect -> ends(effect, Duration.End.END_OF_COMBAT);
-            case TurnEvent.StepEnded ended when ended.step() == TurnStep.UPKEEP && ended.activePlayerId() != null ->
-                    effect -> ends(effect, Duration.End.END_OF_YOUR_NEXT_UPKEEP)
+            case TurnEvent.StepEnded ended when ended.step() == TurnStep.UPKEEP ->
+                    effect -> ends(effect, Duration.End.END_OF_UPKEEP)
+                            || (ended.activePlayerId() != null
+                            && ends(effect, Duration.End.END_OF_YOUR_NEXT_UPKEEP)
                             && ended.activePlayerId().equals(effect.controllerId())
-                            && startedBefore(effect, gameData.upkeepStartTimestamp);
+                            && startedBefore(effect, gameData.upkeepStartTimestamp));
             case TurnEvent.Cleanup cleanup -> effect -> endsAtCleanup(gameData, cleanup.activePlayerId(), effect);
             case StepEvent step when step.moment() == StepTrigger.Moment.UPKEEP ->
                     effect -> ends(effect, Duration.End.YOUR_NEXT_UPKEEP)
                             && step.activePlayerId().equals(effect.controllerId());
             case StepEvent step when step.moment() == StepTrigger.Moment.END_STEP ->
-                    effect -> ends(effect, Duration.End.NEXT_END_STEP);
+                    effect -> ends(effect, Duration.End.NEXT_END_STEP)
+                            || (ends(effect, Duration.End.YOUR_NEXT_END_STEP)
+                            && step.activePlayerId().equals(effect.controllerId()));
             case TapEvent.UntappedDuringUntapStep untapped ->
                     effect -> ends(effect, Duration.End.AFFECTED_CONTROLLERS_NEXT_UNTAP_STEP)
                             && effect.affectedPermanentId() != null
@@ -233,8 +270,7 @@ public class DurationClock {
         }
         boolean endsThisTurn = ends(effect, Duration.End.END_OF_TURN)
                 || (ends(effect, Duration.End.MATCHING_SPELL_CAST)
-                && !(effect.effect() instanceof ReduceCastCostForNextMatchingSpellEffect reduction
-                && !reduction.expiresAtCleanup()));
+                && !(effect.effect() instanceof NextMatchingSpellEffect next && !next.expiresAtCleanup()));
         if (!endsThisTurn) {
             return false;
         }
@@ -247,7 +283,7 @@ public class DurationClock {
 
     /**
      * Whether casting {@code cast}'s spell ends {@code effect}: a grant that lasts until its card is cast from exile,
-     * a cost change of the next spell its effect matches, and an effect that lasts until a creature spell is cast.
+     * an effect that waits for the next spell it matches (a cost change, a flash, free-cast or life-payment grant, a rider), and an effect that lasts until a creature spell is cast.
      */
     private boolean endsAtCast(GameData gameData, SpellEvent.Cast cast, FloatingContinuousEffect effect) {
         if (ends(effect, Duration.End.SOURCE_CARD_CAST_FROM_EXILE)) {
@@ -257,7 +293,7 @@ public class DurationClock {
         }
         if (ends(effect, Duration.End.MATCHING_SPELL_CAST)
                 || ends(effect, Duration.End.TARGET_PLAYER_MATCHING_SPELL_CAST)) {
-            return effect.effect() instanceof NextMatchingSpellCostEffect next
+            return effect.effect() instanceof NextMatchingSpellEffect next
                     && next.appliesToPlayer(cast.castingPlayerId(), effect.controllerId())
                     && next.appliesToFaceDownCast(cast.castFaceDown())
                     && predicateEvaluationService.matchesCardPredicate(
@@ -289,9 +325,11 @@ public class DurationClock {
             case BecomeCopyOfTargetCreatureWhileTargetTappedEffect ignored -> {
             }
             case TemporaryCopyEffect ignored -> affected.revertEndOfTurnCopy();
+            case PhasedOutHeldEffect held when held.phasesInWhenEnded() ->
+                    phasingService.phaseInHeld(gameData, affected.getId(), held.tapsOnPhaseIn());
             case TapRestrictionEffect restriction when restriction.preventsTappingUnlessAttacking() ->
                     affected.removeTapRestriction(effect.id());
-            case GrantKeywordEffect grant when grant.duration() == GrantDuration.UNTIL_YOUR_NEXT_TURN ->
+            case GrantKeywordEffect grant when Duration.UNTIL_YOUR_NEXT_TURN.equals(grant.duration()) ->
                     // The grant ends at its controller's turn even when the creature changed controllers, so the
                     // keywords mirrored on the permanent can't wait for its own controller's turn.
                     affected.getUntilNextTurnKeywords().removeAll(grant.keywords());

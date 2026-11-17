@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -45,7 +45,7 @@ public class OliviaVoldaren extends Card {
         // {3}{B}{B}: Gain control of target Vampire for as long as you control Olivia Voldaren.
         addActivatedAbility(new ActivatedAbility(
                 false, "{3}{B}{B}",
-                List.of(new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD)),
+                List.of(new GainControlOfTargetEffect(Duration.WHILE_SOURCE_ON_BATTLEFIELD)),
                 "{3}{B}{B}: Gain control of target Vampire for as long as you control Olivia Voldaren.",
                 new PermanentPredicateTargetFilter(
                         new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),

@@ -61,7 +61,7 @@ class SenTripletsTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.senControlledPlayerId).isNull();
+        assertThat(gd.handPlayableBy(player1.getId())).isNull();
         assertThat(silencedPlayers()).isEmpty();
     }
 
@@ -72,8 +72,8 @@ class SenTripletsTest extends BaseCardTest {
 
         assertThat(silencedPlayers()).contains(player2.getId()).doesNotContain(player1.getId());
         assertThat(playersAffectedBy(SenTripletsUpkeepEffect.class)).contains(player2.getId());
-        assertThat(gd.senControllerPlayerId).isEqualTo(player1.getId());
-        assertThat(gd.senControlledPlayerId).isEqualTo(player2.getId());
+        assertThat(gd.handPlayableBy(player1.getId())).isEqualTo(player2.getId());
+        assertThat(gd.canPlayFromHandOf(player1.getId(), player2.getId())).isTrue();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("plays with their hand revealed"));
     }
@@ -121,15 +121,12 @@ class SenTripletsTest extends BaseCardTest {
     void locksClearedAtEndOfTurn() {
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
                 new SenTripletsUpkeepEffect(), player2.getId(), Duration.UNTIL_END_OF_TURN));
-        gd.senControllerPlayerId = player1.getId();
-        gd.senControlledPlayerId = player2.getId();
 
         GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
 
         assertThat(silencedPlayers()).isEmpty();
         assertThat(playersAffectedBy(SenTripletsUpkeepEffect.class)).isEmpty();
-        assertThat(gd.senControllerPlayerId).isNull();
-        assertThat(gd.senControlledPlayerId).isNull();
+        assertThat(gd.handPlayableBy(player1.getId())).isNull();
     }
 
     @Test

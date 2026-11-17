@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import java.util.UUID;
 
 /**
@@ -20,5 +21,5 @@ import java.util.UUID;
  *                          left the battlefield (or was a spell) by the time the damage is dealt
  */
 public record EyeForAnEyeShield(UUID protectedPlayerId, UUID sourceId, Card eyeCard, UUID eyeControllerId,
-                                UUID sourceControllerId) {
+                                UUID sourceControllerId) implements CardEffect {
 }

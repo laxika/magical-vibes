@@ -213,7 +213,7 @@ class BilboLuckwearerTest extends BaseCardTest {
         harness.assertInHand(player2, "Hill Giant");
         harness.assertInGraveyard(player1, "Bilbo, Luckwearer");
         assertThat(gd.findExiledCard(bilbo.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(bilbo.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(bilbo.getId());
     }
 
     private void prepareAdventure() {

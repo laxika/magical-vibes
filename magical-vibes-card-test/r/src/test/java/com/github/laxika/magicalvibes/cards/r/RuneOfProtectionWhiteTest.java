@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.h.HealingSalve;
 import com.github.laxika.magicalvibes.cards.h.HermeticStudy;
@@ -54,7 +55,7 @@ class RuneOfProtectionWhiteTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -74,7 +75,7 @@ class RuneOfProtectionWhiteTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 19);
-        assertThat(gd.playerSourceNextDamageShields).anyMatch(s -> s.sourceId().equals(chosen.getId()));
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).anyMatch(s -> s.sourceId().equals(chosen.getId()));
     }
 
     @Test
@@ -91,7 +92,7 @@ class RuneOfProtectionWhiteTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.validPermanentIds()).containsExactly(rune.getId());
         assertThat(choice.validPermanentIds()).doesNotContain(nonWhiteSource.getId());
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -113,7 +114,7 @@ class RuneOfProtectionWhiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -224,14 +225,14 @@ class RuneOfProtectionWhiteTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, whiteSource.getId());
 
-        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isNotEmpty();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test

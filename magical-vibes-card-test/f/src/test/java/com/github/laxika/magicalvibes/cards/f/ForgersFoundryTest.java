@@ -65,7 +65,7 @@ class ForgersFoundryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        assertThat(gd.exileCastPermissionsUntilEndOfTurn).isEmpty();
+        assertThat(gd.exileCastPermissions()).isEmpty();
     }
 
     @Test

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -34,10 +35,10 @@ class ReleaseToTheWindTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getId().equals(raptorCardId));
-        assertThat(gd.exilePlayPermissions.get(raptorCardId)).isEqualTo(player2.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(raptorCardId);
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(raptorCardId);
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd).doesNotContainKey(raptorCardId);
+        assertThat(gd.exilePlayPermissionHolder(raptorCardId)).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(raptorCardId);
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(raptorCardId);
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)).doesNotContainKey(raptorCardId);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -54,7 +55,7 @@ class ReleaseToTheWindTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Raptor Companion");
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(raptorCardId);
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(raptorCardId);
     }
 
     @Test

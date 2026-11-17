@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat.block;
 
+import com.github.laxika.magicalvibes.model.effect.DeclarationReplacementEffect;
 import java.util.HashMap;
 import java.util.Map;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -22,8 +23,6 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.PayBlockCostsEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
-import com.github.laxika.magicalvibes.model.action.DelayedCamouflage;
 import com.github.laxika.magicalvibes.model.effect.BlockerDeclarationControlEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -207,7 +206,8 @@ public class CombatBlockService {
     public CombatResult handleDeclareBlockersStep(GameData gameData) {
         UUID activeId = gameData.activePlayerId;
         UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
-        if (gameData.hasDelayedAction(DelayedCamouflage.class)) {
+        var camouflage = gameData.declarationReplacements(DeclarationReplacementEffect.Kind.BLOCKERS_IN_PILES);
+        if (!camouflage.isEmpty()) {
             List<Integer> attackerIndices = combatAttackService.getAttackingCreatureIndices(gameData, activeId);
             List<Permanent> defenderBattlefield = gameData.playerBattlefields.getOrDefault(defenderId, List.of());
             List<UUID> creatureIds = defenderBattlefield.stream()
@@ -215,7 +215,7 @@ public class CombatBlockService {
                     .map(Permanent::getId)
                     .toList();
             if (!attackerIndices.isEmpty() && !creatureIds.isEmpty()) {
-                Card sourceCard = gameData.getDelayedActions(DelayedCamouflage.class).getLast().sourceCard();
+                Card sourceCard = ((DeclarationReplacementEffect) camouflage.getLast().effect()).sourceCard();
                 return beginCamouflagePileSelection(gameData, defenderId, attackerIndices, creatureIds,
                         List.of(), sourceCard);
             }
@@ -592,9 +592,11 @@ public class CombatBlockService {
         if (!defenderAcceptedCosts && declaration != null && declaration.choosingForOpponent()
                 && (blockTaxTotal > 0 || blockLifeTaxTotal > 0
                         || combatTapCostService.hasBlockTapCosts(gameData, declaredBlockers))) {
-            Card sourceCard = gameData.getDelayedActions(DelayedBlockerDeclarationControl.class).stream()
-                    .filter(delayed -> delayed.chooserId().equals(declaration.chooserId()))
-                    .map(DelayedBlockerDeclarationControl::sourceCard).reduce((first, last) -> last)
+            Card sourceCard = gameData.declarationReplacements(DeclarationReplacementEffect.Kind.CONTROLLER_CHOOSES_BLOCKERS)
+                    .stream()
+                    .filter(control -> control.controllerId().equals(declaration.chooserId()))
+                    .map(control -> ((DeclarationReplacementEffect) control.effect()).sourceCard())
+                    .reduce((first, last) -> last)
                     .orElse(attackerBattlefield.get(blockerAssignments.getFirst().attackerIndex()).getCard());
             PayBlockCostsEffect payment = new PayBlockCostsEffect(declaration,
                     blockerAssignments.stream().map(BlockerAssignment::blockerIndex).toList(),
@@ -868,9 +870,8 @@ public class CombatBlockService {
         if (hasGlobalBlockerDeclarationControl(gameData)) {
             return gameData.activePlayerId;
         }
-        List<DelayedBlockerDeclarationControl> controls =
-                gameData.getDelayedActions(DelayedBlockerDeclarationControl.class);
-        return controls.isEmpty() ? defenderId : controls.getLast().chooserId();
+        var controls = gameData.declarationReplacements(DeclarationReplacementEffect.Kind.CONTROLLER_CHOOSES_BLOCKERS);
+        return controls.isEmpty() ? defenderId : controls.getLast().controllerId();
     }
 
     private boolean hasGlobalBlockerDeclarationControl(GameData gameData) {

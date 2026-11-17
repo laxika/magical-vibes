@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileOneOfDiscardedCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -87,7 +88,7 @@ public class ExileOneOfDiscardedCardsFromGraveyardEffectHandler implements Norma
     private void exile(GameData gameData, StackEntry entry, Card card, UUID sourcePermanentId) {
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, card.getId());
         gameData.addToExile(entry.getControllerId(), card, sourcePermanentId);
-        gameData.exilePlayPermissions.put(card.getId(), entry.getControllerId());
+        gameData.grantExilePlayPermission(card.getId(), entry.getControllerId(), Duration.PERMANENT);
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " exiles ", card,
                 " from its controller's graveyard."));
     }

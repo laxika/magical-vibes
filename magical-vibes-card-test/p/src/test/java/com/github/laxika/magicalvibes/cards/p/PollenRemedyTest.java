@@ -36,7 +36,7 @@ class PollenRemedyTest extends BaseCardTest {
 
         GameData gameData = harness.getGameData();
         assertThat(spider.getDamagePreventionShield()).isEqualTo(2);
-        assertThat(gameData.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gameData.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
 
     @Test
@@ -52,7 +52,7 @@ class PollenRemedyTest extends BaseCardTest {
 
         GameData gameData = harness.getGameData();
         assertThat(spider.getDamagePreventionShield()).isEqualTo(3);
-        assertThat(gameData.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(3);
+        assertThat(gameData.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(3);
         assertThat(gameData.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(land.getId()));
         harness.assertInGraveyard(player1, "Meteor Crater");
@@ -90,7 +90,7 @@ class PollenRemedyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Pollen Remedy");
-        assertThat(gd.playerDamagePreventionShields).isEmpty();
+        assertThat(gd.playerDamagePreventionShields()).isEmpty();
     }
 
     @Test
@@ -117,7 +117,7 @@ class PollenRemedyTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(spider);
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
         assertThat(spider.getDamagePreventionShield()).isZero();
         harness.assertInGraveyard(player1, "Pollen Remedy");
     }
@@ -136,7 +136,7 @@ class PollenRemedyTest extends BaseCardTest {
 
         assertThat(spider.getMarkedDamage()).isEqualTo(1);
         assertThat(spider.getDamagePreventionShield()).isZero();
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
 
     @Test
@@ -165,7 +165,7 @@ class PollenRemedyTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(spider.getDamagePreventionShield()).isZero();
-        assertThat(gd.playerDamagePreventionShields).isEmpty();
+        assertThat(gd.playerDamagePreventionShields()).isEmpty();
     }
 
     @Test

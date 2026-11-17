@@ -31,7 +31,7 @@ class SkycoachWaypointTest extends BaseCardTest {
 
         assertThat(firesinger.isPrepared()).isTrue();
         assertThat(firesinger.getPreparedSpellCardId()).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(firesinger.getPreparedSpellCardId()))
+        assertThat(gd.exilePlayPermissionHolder(firesinger.getPreparedSpellCardId()))
                 .isEqualTo(player1.getId());
         assertThat(waypoint.isTapped()).isTrue();
     }
@@ -73,7 +73,7 @@ class SkycoachWaypointTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(firesinger.isPrepared()).isTrue();
-        assertThat(gd.exilePlayPermissions.get(firesinger.getPreparedSpellCardId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(firesinger.getPreparedSpellCardId())).isEqualTo(player2.getId());
     }
 
     @Test
@@ -82,7 +82,7 @@ class SkycoachWaypointTest extends BaseCardTest {
         Permanent firesinger = harness.enterBattlefieldAndReturn(player1, new BlazingFiresingerSeethingSong());
         assertThat(firesinger.isPrepared()).isTrue();
         UUID originalCopyId = firesinger.getPreparedSpellCardId();
-        int permissionCount = gd.exilePlayPermissions.size();
+        int permissionCount = gd.exilePlayPermissionHolders().size();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 1, null, firesinger.getId());
@@ -90,7 +90,7 @@ class SkycoachWaypointTest extends BaseCardTest {
 
         assertThat(firesinger.isPrepared()).isTrue();
         assertThat(firesinger.getPreparedSpellCardId()).isEqualTo(originalCopyId);
-        assertThat(gd.exilePlayPermissions).hasSize(permissionCount);
+        assertThat(gd.exilePlayPermissionHolders()).hasSize(permissionCount);
     }
 
     @Test
@@ -120,13 +120,13 @@ class SkycoachWaypointTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SkycoachWaypoint());
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new BonecrusherGiant());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        int permissionCount = gd.exilePlayPermissions.size();
+        int permissionCount = gd.exilePlayPermissionHolders().size();
 
         harness.activateAbility(player1, 0, 1, null, giant.getId());
         harness.passBothPriorities();
 
         assertThat(giant.isPrepared()).isFalse();
         assertThat(giant.getPreparedSpellCardId()).isNull();
-        assertThat(gd.exilePlayPermissions).hasSize(permissionCount);
+        assertThat(gd.exilePlayPermissionHolders()).hasSize(permissionCount);
     }
 }

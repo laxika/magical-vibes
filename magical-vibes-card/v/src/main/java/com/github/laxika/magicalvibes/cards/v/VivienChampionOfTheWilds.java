@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileOneFromTopCardsFaceDownWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -27,7 +27,7 @@ public class VivienChampionOfTheWilds extends Card {
                 false, null,
                 List.of(new GrantKeywordEffect(
                         Set.of(Keyword.REACH, Keyword.VIGILANCE),
-                        GrantScope.TARGET, GrantDuration.UNTIL_YOUR_NEXT_TURN)),
+                        GrantScope.TARGET, Duration.UNTIL_YOUR_NEXT_TURN)),
                 "+1: Until your next turn, up to one target creature gains reach and vigilance.",
                 TargetFilters.creature(), +1, null, null,
                 List.of(), 0, 1));

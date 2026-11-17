@@ -29,7 +29,7 @@ class ShepherdOfTheFlockTest extends BaseCardTest {
         assertThat(harness.getGameData().playerBattlefields.get(player1.getId())).doesNotContain(target);
         assertThat(harness.getGameData().playerHands.get(player1.getId())).contains(target.getCard());
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNotNull();
-        assertThat(harness.getGameData().exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(harness.getGameData().exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -88,7 +88,7 @@ class ShepherdOfTheFlockTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anySatisfy(permanent -> assertThat(permanent.getCard().getId()).isEqualTo(card.getId()));
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -106,6 +106,6 @@ class ShepherdOfTheFlockTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 }

@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -113,7 +112,7 @@ class DisappearingActTest extends BaseCardTest {
         Permanent borrowedLand = harness.addToBattlefieldAndReturn(player2, land);
         gd.stolenCreatures.put(borrowedLand.getId(), player1.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Borrowed land", null,
-                player2.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                player2.getId(), new GainControlOfTargetEffect(Duration.PERMANENT),
                 borrowedLand.getId(), null, null, Duration.PERMANENT, 0));
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.GREEN, 2);

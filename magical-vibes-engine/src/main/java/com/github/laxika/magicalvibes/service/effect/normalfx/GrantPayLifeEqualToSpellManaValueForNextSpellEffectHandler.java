@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantPayLifeEqualToSpellManaValueForNextSpellEffect;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Component
 public class GrantPayLifeEqualToSpellManaValueForNextSpellEffectHandler
@@ -17,6 +18,6 @@ public class GrantPayLifeEqualToSpellManaValueForNextSpellEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        gameData.addNextSpellPayLifeEqualToManaValue(entry.getControllerId());
+        gameData.addPlayerEffect(entry, effect, entry.getControllerId(), Duration.UNTIL_MATCHING_SPELL_CAST);
     }
 }

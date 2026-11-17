@@ -5,19 +5,19 @@ package com.github.laxika.magicalvibes.model.effect;
  * the configured duration. Set {@code targetsPlayer} to false when the recipient is supplied by
  * the triggering event rather than chosen as a target.
  */
-public record TargetPlayerGainsControlOfEnchantedPermanentEffect(ControlDuration duration, boolean targetsPlayer)
+public record TargetPlayerGainsControlOfEnchantedPermanentEffect(Duration duration, boolean targetsPlayer)
         implements ControlStealingEffect {
 
-    public TargetPlayerGainsControlOfEnchantedPermanentEffect(ControlDuration duration) {
+    public TargetPlayerGainsControlOfEnchantedPermanentEffect(Duration duration) {
         this(duration, true);
     }
 
     public TargetPlayerGainsControlOfEnchantedPermanentEffect() {
-        this(ControlDuration.PERMANENT);
+        this(Duration.PERMANENT);
     }
 
     @Override
-    public ControlDuration controlDuration() {
+    public Duration controlDuration() {
         return duration;
     }
 

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.trigger.pipeline;
 import com.github.laxika.magicalvibes.model.effect.CopyNextLoyaltyAbilityThisTurnEffect;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
@@ -68,7 +69,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -1498,7 +1498,7 @@ class SpellTriggersTest {
             var targetFilter = new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(
                     new PermanentIsCreaturePredicate(), new PermanentManaValueEqualsXPredicate())),
                     "Target must be a creature with that spell's mana value");
-            var gainControl = new GainControlOfTargetEffect(ControlDuration.END_OF_TURN);
+            var gainControl = new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN);
             var ability = new CastAbility(SpellFilter.ANY, List.of(new MayEffect(gainControl, "Gain control?")), null,
                     targetFilter);
 

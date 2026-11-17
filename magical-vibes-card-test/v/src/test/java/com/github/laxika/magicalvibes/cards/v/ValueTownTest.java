@@ -56,7 +56,7 @@ class ValueTownTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
         assertThat(gd.findExiledCard(valueTown.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(valueTown.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(valueTown.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -80,7 +80,7 @@ class ValueTownTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Value Town").isTapped()).isTrue();
         assertThat(gd.findExiledCard(town.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(town.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(town.getId());
         assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isOne();
         assertThat(gd.stack).isEmpty();
     }
@@ -93,7 +93,7 @@ class ValueTownTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, town.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.findExiledCard(town.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(town.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(town.getId())).isEqualTo(player1.getId());
     }
 
     @Test

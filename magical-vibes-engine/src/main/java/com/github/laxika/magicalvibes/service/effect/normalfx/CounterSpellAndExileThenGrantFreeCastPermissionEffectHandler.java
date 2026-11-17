@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileThenGrantFreeCastPermissionEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -59,8 +60,8 @@ public class CounterSpellAndExileThenGrantFreeCastPermissionEffectHandler implem
             return;
         }
 
-        gameData.exilePlayPermissions.put(targetCardId, entry.getControllerId());
-        gameData.exilePlayWithoutPayingManaCost.add(targetCardId);
+        gameData.grantExilePlayPermission(targetCardId, entry.getControllerId(), Duration.PERMANENT);
+        gameData.setExilePlayWithoutPayingManaCost(targetCardId, true);
     }
 
     /** The face on the stack: an Adventure spell is its adventure half (an instant or sorcery). */

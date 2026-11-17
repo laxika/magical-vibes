@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffec
 import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
 import com.github.laxika.magicalvibes.model.effect.TappedBlockPermissionEffect;
@@ -404,16 +405,15 @@ public class BlockLegalityService {
                         "creatures with flying or creatures in the chosen pile");
             }
         }
-        if (!gameData.matchingCreatureBlockRestrictionsThisTurn.isEmpty()) {
-            UUID attackerControllerId = gameQueryService.findPermanentController(gameData, attacker.getId());
-            if (attackerControllerId != null) {
-                for (var restriction : gameData.matchingCreatureBlockRestrictionsThisTurn
-                        .getOrDefault(attackerControllerId, List.of())) {
-                    if ((restriction.creatureFilter() == null
-                            || predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, restriction.creatureFilter()))
-                            && !predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
-                        return new BlockDenial(BlockDenial.Reason.ATTACKER_LIMITED_TO_BLOCKERS, restriction.allowedBlockersDescription());
-                    }
+        UUID attackerControllerId = gameQueryService.findPermanentController(gameData, attacker.getId());
+        if (attackerControllerId != null) {
+            for (CardEffect granted : gameData.floatingPlayerEffects(attackerControllerId,
+                    GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect.class)) {
+                var restriction = (GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect) granted;
+                if ((restriction.creatureFilter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, restriction.creatureFilter()))
+                        && !predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
+                    return new BlockDenial(BlockDenial.Reason.ATTACKER_LIMITED_TO_BLOCKERS, restriction.allowedBlockersDescription());
                 }
             }
         }

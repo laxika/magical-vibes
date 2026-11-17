@@ -40,7 +40,6 @@ class BenalishKnightCounselorTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.nextCreatureSpellEmpowerments.getOrDefault(player1.getId(), List.of())).isEmpty();
     }
 
     @Test

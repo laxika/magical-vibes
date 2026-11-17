@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileRandomCardFromLibraryMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -48,10 +49,9 @@ public class ExileRandomCardFromLibraryMayPlayThisTurnEffectHandler implements N
 
         Card exiled = deck.remove(ThreadLocalRandom.current().nextInt(deck.size()));
         exileService.exileCard(gameData, controllerId, exiled);
-        gameData.exilePlayPermissions.put(exiled.getId(), controllerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(exiled.getId());
+        gameData.grantExilePlayPermission(exiled.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
         if (exileEffect.withoutPayingManaCost()) {
-            gameData.exilePlayWithoutPayingManaCost.add(exiled.getId());
+            gameData.setExilePlayWithoutPayingManaCost(exiled.getId(), true);
         }
 
         String playNote = exileEffect.withoutPayingManaCost()

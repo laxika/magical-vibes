@@ -35,7 +35,7 @@ public class PreventAllDamageToSelfFromTargetCreatureEffectHandler implements No
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (source == null || target == null) return;
 
-        gameData.targetSourceDamagePreventionShields.add(
+        gameData.addShield(
                 TargetSourceDamagePreventionShield.allDamage(sourceId, targetId));
         gameLogService.append(gameData, GameLog.text(
                 "All damage that would be dealt to " + source.getCard().getName() + " by "

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllCommandersAndPutThemOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -67,10 +67,10 @@ public class GainControlOfAllCommandersAndPutThemOntoBattlefieldEffectHandler
             }
         });
 
-        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
+        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(Duration.PERMANENT);
         for (Permanent permanent : commandersOnBattlefield) {
             creatureControlService.applyControlEffect(gameData, controllerId, permanent,
-                    controlEffect, ControlDuration.PERMANENT.toDuration(), null,
+                    controlEffect, Duration.PERMANENT, null,
                     entry.getCard().getName());
         }
 

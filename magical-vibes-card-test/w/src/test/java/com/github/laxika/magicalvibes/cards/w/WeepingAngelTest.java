@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.e.EnchantedEvening;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
@@ -85,7 +86,7 @@ class WeepingAngelTest extends BaseCardTest {
         addAttacker(player1);
         Permanent blocker = addBlockerWithPowerAndToughness(player2, 0, 3);
         harness.setLibrary(player2, List.of(new MindStone()));
-        gd.damageCantBePreventedThisTurn = true;
+        gd.addShield(new DamageCantBePreventedThisTurnEffect());
 
         resolveWeepingAngelCombat();
 

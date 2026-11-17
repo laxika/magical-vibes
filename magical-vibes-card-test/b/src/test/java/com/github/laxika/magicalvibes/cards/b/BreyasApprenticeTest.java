@@ -40,7 +40,7 @@ class BreyasApprenticeTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topCard);
         assertThat(gd.exiledCards).extracting(entry -> entry.card()).contains(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(apprentice.getCard());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(apprentice);
     }
@@ -120,15 +120,15 @@ class BreyasApprenticeTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(land.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(land.getId(), player1.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(land.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(land.getId(), player1.getId());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(land.getId());
         assertThat(gd.exiledCards).extracting(entry -> entry.card()).contains(land);
     }
 
@@ -214,10 +214,10 @@ class BreyasApprenticeTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(land.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(land.getId(), player1.getId());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(land.getId());
         assertThat(gd.exiledCards).extracting(entry -> entry.card()).contains(land);
     }
 

@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 @CardUsed({SnapcasterMage.class, Shock.class, GrizzlyBears.class, AncientGrudge.class, BumpInTheNight.class, Conflagrate.class})
 class SnapcasterMageTest extends BaseCardTest {
@@ -67,7 +68,7 @@ class SnapcasterMageTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(shock.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).contains(shock.getId());
     }
 
     @Test
@@ -169,7 +170,7 @@ class SnapcasterMageTest extends BaseCardTest {
         // Resolve ETB trigger → should fizzle
         harness.passBothPriorities();
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).doesNotContain(shock.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).doesNotContain(shock.getId());
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 

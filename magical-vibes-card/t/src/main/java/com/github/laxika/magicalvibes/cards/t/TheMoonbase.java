@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureCardsFromGraveyardToBattlefieldFaceDownAsCybermenEffect;
@@ -28,7 +28,7 @@ public class TheMoonbase extends Card {
                         false,
                         "{2}",
                         List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF,
-                                GrantDuration.END_OF_TURN)),
+                                Duration.UNTIL_END_OF_TURN)),
                         "{2}: This creature gains flying until end of turn. Activate only as a sorcery.",
                         ActivationTimingRestriction.SORCERY_SPEED),
                 GrantScope.ALL_CREATURES));

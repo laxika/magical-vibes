@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,11 +33,11 @@ public class GrantNoMaximumHandSizeEffectHandler implements NormalEffectHandlerB
         UUID controllerId = entry.getControllerId();
 
         String period;
-        if (e.duration() == NoMaximumHandSizeDuration.REST_OF_GAME) {
+        if (Duration.PERMANENT.equals(e.duration())) {
             gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
                     entry.getSourcePermanentId(), controllerId, e, controllerId, Duration.PERMANENT));
             period = "for the rest of the game";
-        } else if (e.duration() == NoMaximumHandSizeDuration.WHILE_SOURCE_ON_BATTLEFIELD) {
+        } else if (Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(e.duration())) {
             if (entry.getSourcePermanentId() == null) {
                 return;
             }

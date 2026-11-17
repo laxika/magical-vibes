@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayMatchingCardsFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoardWipeEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
@@ -38,7 +39,6 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalKind;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ControlStealingEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
@@ -577,7 +577,7 @@ public class SpellEvaluator {
             return removalScore(gameData, card, rem.removalKind(), oppBattlefield, opponentId, aiPlayerId);
         }
         if (effect instanceof ControlStealingEffect steal
-                && steal.controlDuration() == ControlDuration.PERMANENT) {
+                && Duration.PERMANENT.equals(steal.controlDuration())) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.8;
         }
         if (effect instanceof CardDrawingEffect draw) {
@@ -670,12 +670,12 @@ public class SpellEvaluator {
 
         // Steal (opponent loses creature + we gain it)
         if (effect instanceof ControlStealingEffect steal
-                && steal.controlDuration() == ControlDuration.PERMANENT) {
+                && Duration.PERMANENT.equals(steal.controlDuration())) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.8;
         }
         // Temporary steal (attack with opponent's creature this turn)
         if (effect instanceof ControlStealingEffect steal
-                && steal.controlDuration() == ControlDuration.END_OF_TURN) {
+                && Duration.UNTIL_END_OF_TURN.equals(steal.controlDuration())) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.2;
         }
 
@@ -1532,7 +1532,7 @@ public class SpellEvaluator {
         return (effect instanceof RemovalEffect rem && rem.removalKind() != null)
                 || (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures())
                 || (effect instanceof ControlStealingEffect steal
-                        && steal.controlDuration() == ControlDuration.PERMANENT);
+                        && Duration.PERMANENT.equals(steal.controlDuration()));
     }
 
     /**

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.m.MoxAmber;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -41,8 +42,8 @@ class LaraCroftTombRaiderTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(validLand);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(validLand);
         assertThat(gd.exiledCardsWithDiscoveryCounters).contains(validLand.getId());
-        assertThat(gd.exilePlayPermissions).containsEntry(validLand.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(validLand.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(validLand.getId(), player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(validLand.getId());
     }
 
     @Test

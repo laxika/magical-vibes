@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
@@ -31,7 +32,7 @@ class InterventionPactTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 22);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test

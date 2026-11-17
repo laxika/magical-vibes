@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachOpponentLibraryAndAllowOneMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -59,9 +60,8 @@ public class ExileTopCardOfEachOpponentLibraryAndAllowOneMayPlayThisTurnEffectHa
         }
 
         for (UUID cardId : exiledCardIds) {
-            gameData.exilePlayPermissions.put(cardId, controllerId);
-            gameData.exilePlayPermissionsExpireEndOfTurn.add(cardId);
-            gameData.exilePlayWithoutPayingManaCost.add(cardId);
+            gameData.grantExilePlayPermission(cardId, controllerId, Duration.UNTIL_END_OF_TURN);
+            gameData.setExilePlayWithoutPayingManaCost(cardId, true);
         }
         gameData.registerExilePlayPermissionGroup(UUID.randomUUID(), 1, exiledCardIds);
         gameLogService.append(gameData, GameLog.text(

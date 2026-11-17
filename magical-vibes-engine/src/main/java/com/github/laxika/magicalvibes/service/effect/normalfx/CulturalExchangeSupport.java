@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -101,7 +101,7 @@ public class CulturalExchangeSupport {
             return;
         }
 
-        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
+        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(Duration.PERMANENT);
         List<Permanent> firstCreatures = findPermanents(gameData, context.firstChosenIds());
         List<Permanent> secondCreatures = findPermanents(gameData, secondChosenIds);
         if (firstCreatures.stream().anyMatch(permanent -> gameQueryService.cantBeControlledByOtherPlayers(gameData, permanent))
@@ -111,12 +111,12 @@ public class CulturalExchangeSupport {
         }
         for (Permanent permanent : firstCreatures) {
             creatureControlService.applyControlEffect(gameData, context.secondPlayerId(), permanent,
-                    controlEffect, ControlDuration.PERMANENT.toDuration(), null,
+                    controlEffect, Duration.PERMANENT, null,
                     context.sourceCard().getName());
         }
         for (Permanent permanent : secondCreatures) {
             creatureControlService.applyControlEffect(gameData, context.firstPlayerId(), permanent,
-                    controlEffect, ControlDuration.PERMANENT.toDuration(), null,
+                    controlEffect, Duration.PERMANENT, null,
                     context.sourceCard().getName());
         }
 

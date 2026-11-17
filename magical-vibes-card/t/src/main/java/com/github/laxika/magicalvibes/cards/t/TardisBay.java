@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -20,7 +20,7 @@ public class TardisBay extends Card {
                 new CascadeEffect());
         target(TargetFilters.artifact()).addTrigger(Triggers.chaosEnsues(),
                 SequenceEffect.of(
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        new GainControlOfTargetEffect(Duration.PERMANENT),
                         new PlaneswalkEffect()));
     }
 }

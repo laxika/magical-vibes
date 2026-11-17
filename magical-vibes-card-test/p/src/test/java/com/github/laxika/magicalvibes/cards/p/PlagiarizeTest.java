@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
 import com.github.laxika.magicalvibes.cards.d.DeepAnalysis;
 import com.github.laxika.magicalvibes.cards.t.ThoughtReflection;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -59,7 +61,8 @@ class PlagiarizeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(gd.drawReplacementTargetToController).containsEntry(player2.getId(), player1.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player2.getId(), RedirectDrawsEffect.class))
+                .singleElement().extracting(FloatingContinuousEffect::controllerId).isEqualTo(player1.getId());
     }
 
     @Test
@@ -254,13 +257,13 @@ class PlagiarizeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(gd.drawReplacementTargetToController).isNotEmpty();
+        assertThat(gd.floatingEffectsOfTypes(RedirectDrawsEffect.class)).isNotEmpty();
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(gd.drawReplacementTargetToController).isEmpty();
+        assertThat(gd.floatingEffectsOfTypes(RedirectDrawsEffect.class)).isEmpty();
     }
 
     // ===== Can target self =====
@@ -273,7 +276,8 @@ class PlagiarizeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player1.getId());
 
-        assertThat(gd.drawReplacementTargetToController).containsEntry(player1.getId(), player1.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), RedirectDrawsEffect.class))
+                .singleElement().extracting(FloatingContinuousEffect::controllerId).isEqualTo(player1.getId());
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat;
 
+import com.github.laxika.magicalvibes.model.ReflectDamageToSourceControllerShield;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.CombatDamageStepEvent;
 import com.github.laxika.magicalvibes.model.rules.DamageDealtEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
@@ -1193,9 +1195,9 @@ public class CombatDamageService {
                                      List<Permanent> atkBf, List<Permanent> defBf,
                                      UUID activeId, UUID defenderId,
                                      DamagePhase phase) {
-        state.sharedRedirectShields = List.copyOf(gameData.sourcePermanentAndControllerNextDamageRedirectShields);
-        state.sourceDamageShields = List.copyOf(gameData.sourceNextDamageToAnyTargetShields);
-        state.reflectDamageSourceIds = List.copyOf(gameData.reflectDamageToSourceControllerShields);
+        state.sharedRedirectShields = gameData.shieldEffects(SourcePermanentAndControllerNextDamageRedirectShield.class);
+        state.sourceDamageShields = gameData.shieldEffects(SourceNextDamageToAnyTargetShield.class);
+        state.reflectDamageShields = gameData.shieldEffects(ReflectDamageToSourceControllerShield.class);
         captureCombatDamageBaselines(gameData, state, atkBf, defBf);
         // CR 510.4: all combat damage in this step is dealt simultaneously, so every value used
         // to assign and deal it (P/T, combat keywords, protection, prevention) comes from one
@@ -1365,24 +1367,24 @@ public class CombatDamageService {
     // those assignments only; redirected damage still sees a consumed shield, preventing loops.
     private void restoreSharedRedirectForCombatChunk(GameData gameData, CombatDamageState state,
                                                      UUID targetId, boolean playerTarget) {
-        for (SourcePermanentAndControllerNextDamageRedirectShield shield : state.sharedRedirectShields.reversed()) {
+        for (FloatingContinuousEffect fe : state.sharedRedirectShields.reversed()) {
+            var shield = (SourcePermanentAndControllerNextDamageRedirectShield) fe.effect();
             UUID protectedId = playerTarget ? shield.protectedPlayerId() : shield.protectedPermanentId();
-            if (targetId.equals(protectedId)
-                    && !gameData.sourcePermanentAndControllerNextDamageRedirectShields.contains(shield)) {
-                gameData.sourcePermanentAndControllerNextDamageRedirectShields.addFirst(shield);
+            if (targetId.equals(protectedId)) {
+                gameData.reinstateShield(fe);
             }
         }
     }
 
     private void restoreSourceShieldForCombatChunk(GameData gameData, CombatDamageState state,
                                                     UUID sourceId, UUID recipientId, boolean playerTarget) {
-        for (SourceNextDamageToAnyTargetShield shield : state.sourceDamageShields.reversed()) {
+        for (FloatingContinuousEffect fe : state.sourceDamageShields.reversed()) {
+            var shield = (SourceNextDamageToAnyTargetShield) fe.effect();
             if (shield.remainingDamage() == Integer.MAX_VALUE
                     && sourceId.equals(shield.sourceId())
                     && (shield.recipientId() == null || recipientId.equals(shield.recipientId()))
-                    && (!shield.playersOnly() || playerTarget)
-                    && !gameData.sourceNextDamageToAnyTargetShields.contains(shield)) {
-                gameData.sourceNextDamageToAnyTargetShields.addFirst(shield);
+                    && (!shield.playersOnly() || playerTarget)) {
+                gameData.reinstateShield(fe);
             }
         }
     }
@@ -1485,8 +1487,7 @@ public class CombatDamageService {
                 gameQueryService.hasKeyword(gameData, creature, Keyword.DEATHTOUCH),
                 gameQueryService.hasKeyword(gameData, creature, Keyword.TRAMPLE),
                 gameQueryService.hasKeyword(gameData, creature, Keyword.INFECT),
-                gameData.creaturesAssigningNoCombatDamageThisTurn.contains(creature.getId())
-                        || gameData.creaturesAssigningNoCombatDamageThisCombat.contains(creature.getId())
+                gameData.assignsNoCombatDamage(creature.getId())
                         || gameQueryService.isPreventedFromDealingDamage(gameData, creature, true),
                 gameQueryService.getEffectiveColor(gameData, creature));
     }
@@ -2316,12 +2317,12 @@ public class CombatDamageService {
             action.run();
             return;
         }
-        boolean previous = gameData.damageCantBePreventedThisTurn;
-        gameData.damageCantBePreventedThisTurn = true;
+        boolean previous = gameData.unpreventableDamageInProgress;
+        gameData.unpreventableDamageInProgress = true;
         try {
             action.run();
         } finally {
-            gameData.damageCantBePreventedThisTurn = previous;
+            gameData.unpreventableDamageInProgress = previous;
         }
     }
 
@@ -2511,9 +2512,10 @@ public class CombatDamageService {
         restoreSharedRedirectForCombatChunk(gameData, state, recipientId, playerRecipient);
         for (DamagePortion portion : event.portions()) {
             restoreSourceShieldForCombatChunk(gameData, state, portion.sourceId(), recipientId, playerRecipient);
-            if (state.reflectDamageSourceIds.contains(portion.sourceId())
-                    && !gameData.reflectDamageToSourceControllerShields.contains(portion.sourceId())) {
-                gameData.reflectDamageToSourceControllerShields.add(portion.sourceId());
+            for (FloatingContinuousEffect fe : state.reflectDamageShields) {
+                if (portion.sourceId().equals(((ReflectDamageToSourceControllerShield) fe.effect()).sourcePermanentId())) {
+                    gameData.reinstateShield(fe);
+                }
             }
         }
     }
@@ -3001,8 +3003,7 @@ public class CombatDamageService {
                                                 List<Permanent> defBf) {
         // A creature with 0 or negative power deals no combat damage (CR 510.1a),
         // so there is nothing for the player to distribute.
-        if (gameData.creaturesAssigningNoCombatDamageThisTurn.contains(atk.getId())
-                || gameData.creaturesAssigningNoCombatDamageThisCombat.contains(atk.getId())
+        if (gameData.assignsNoCombatDamage(atk.getId())
                 || gameQueryService.getEffectiveCombatDamage(gameData, atk) <= 0) return false;
         // Blocked with no blockers (CR 510.1c): no damage is assigned, so nothing to divide.
         // A creature that may assign its damage as though it weren't blocked still gets the choice.

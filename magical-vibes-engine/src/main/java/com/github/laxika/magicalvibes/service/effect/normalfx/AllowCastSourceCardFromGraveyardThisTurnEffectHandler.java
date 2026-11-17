@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Component
 @RequiredArgsConstructor
@@ -38,7 +39,7 @@ public class AllowCastSourceCardFromGraveyardThisTurnEffectHandler implements No
             return;
         }
 
-        gameData.graveyardPlayPermissions.put(sourceCard.getId(), controllerId);
-        gameData.graveyardPlayPermissionsExpireEndOfTurn.add(sourceCard.getId());
+        gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, false),
+                sourceCard.getId(), Duration.UNTIL_END_OF_TURN);
     }
 }

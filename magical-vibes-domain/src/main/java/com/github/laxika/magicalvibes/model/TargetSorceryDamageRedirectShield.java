@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import java.util.UUID;
 
 /**
@@ -15,5 +16,5 @@ public record TargetSorceryDamageRedirectShield(
         UUID sorceryCardId,
         UUID controllerId,
         long graveyardEntryVersion
-) {
+) implements CardEffect {
 }

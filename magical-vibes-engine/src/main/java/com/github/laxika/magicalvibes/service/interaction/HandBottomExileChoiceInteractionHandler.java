@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -70,8 +71,7 @@ public class HandBottomExileChoiceInteractionHandler
             if (i != handCardIndex && i != bottomCardIndex) {
                 Card card = cards.get(i);
                 exileService.exileCard(gameData, playerId, card);
-                gameData.exilePlayPermissions.put(card.getId(), playerId);
-                gameData.exilePlayPermissionsExpireEndOfTurn.add(card.getId());
+                gameData.grantExilePlayPermission(card.getId(), playerId, Duration.UNTIL_END_OF_TURN);
                 if (exiledCard == null) {
                     exiledCard = card;
                 }

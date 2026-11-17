@@ -61,7 +61,7 @@ class DjeruAndHazoretTest extends BaseCardTest {
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(yargle);
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(yargle.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(yargle.getId());
 
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
         harness.castFromExile(player1, yargle.getId());

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -24,7 +25,7 @@ class FlamingTyrannosaurusTest extends BaseCardTest {
         Permanent tyrannosaurus = harness.addToBattlefieldAndReturn(player1, new FlamingTyrannosaurus());
         GrizzlyBears spell = new GrizzlyBears();
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 2);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -75,7 +76,7 @@ class FlamingTyrannosaurusTest extends BaseCardTest {
         Permanent tyrannosaurus = harness.addToBattlefieldAndReturn(player1, new FlamingTyrannosaurus());
         FlamingTyrannosaurus spell = new FlamingTyrannosaurus();
         harness.setExile(player2, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player2.getId());
+        gd.grantExilePlayPermission(spell.getId(), player2.getId(), Duration.PERMANENT);
         harness.addMana(player2, ManaColor.RED, 7);
         gd.activePlayerId = player2.getId();
 
@@ -94,7 +95,7 @@ class FlamingTyrannosaurusTest extends BaseCardTest {
         Permanent tyrannosaurus = harness.addToBattlefieldAndReturn(player1, new FlamingTyrannosaurus());
         FlamingTyrannosaurus spell = new FlamingTyrannosaurus();
         harness.setExile(player1, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.RED, 7);
 
         harness.castFromExile(player1, spell.getId());
@@ -112,7 +113,7 @@ class FlamingTyrannosaurusTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         FlamingTyrannosaurus spell = new FlamingTyrannosaurus();
         harness.setExile(player1, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.RED, 7);
         harness.setHand(player2, List.of(new Murder()));
         harness.addMana(player2, ManaColor.BLACK, 3);
@@ -131,7 +132,7 @@ class FlamingTyrannosaurusTest extends BaseCardTest {
     void doesNotTriggerForItsOwnCast() {
         FlamingTyrannosaurus spell = new FlamingTyrannosaurus();
         harness.setExile(player1, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.RED, 7);
 
         harness.castFromExile(player1, spell.getId());
@@ -150,7 +151,7 @@ class FlamingTyrannosaurusTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         FlamingTyrannosaurus spell = new FlamingTyrannosaurus();
         harness.setExile(player1, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.RED, 7);
 
         harness.castFromExile(player1, spell.getId());
@@ -168,7 +169,7 @@ class FlamingTyrannosaurusTest extends BaseCardTest {
         Permanent tyrannosaurus = harness.addToBattlefieldAndReturn(player1, new FlamingTyrannosaurus());
         FlamingTyrannosaurus spell = new FlamingTyrannosaurus();
         harness.setExile(player1, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.RED, 7);
         harness.setHand(player2, List.of(new Murder()));
         harness.addMana(player2, ManaColor.BLACK, 3);

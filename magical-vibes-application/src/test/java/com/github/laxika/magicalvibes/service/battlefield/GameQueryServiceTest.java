@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.effect.DoubleDamageToDamagedPlayerUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerCreatureSpellsCantBeCounteredThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LandManaProducesFixedColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
@@ -27,7 +28,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.DelayedDamageDoubling;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivateTapAbilitiesEffect;
@@ -2792,7 +2792,7 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("includes delayed damage doubling for the damaged player")
         void includesDelayedDamageDoublingForDamagedPlayer() {
-            gd.queueDelayedAction(new DelayedDamageDoubling(player2Id, player1Id));
+            addDamageDoubling(player2Id, player1Id);
 
             assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id)).isEqualTo(2);
             assertThat(gqs.getDamageToRecipientMultiplier(gd, player1Id)).isEqualTo(1);
@@ -2801,10 +2801,16 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("stacks multiple delayed damage doublings")
         void stacksMultipleDelayedDamageDoublings() {
-            gd.queueDelayedAction(new DelayedDamageDoubling(player2Id, player1Id));
-            gd.queueDelayedAction(new DelayedDamageDoubling(player2Id, player1Id));
+            addDamageDoubling(player2Id, player1Id);
+            addDamageDoubling(player2Id, player1Id);
 
             assertThat(gqs.getDamageToRecipientMultiplier(gd, player2Id)).isEqualTo(4);
+        }
+
+        private void addDamageDoubling(UUID damagedPlayerId, UUID controllerId) {
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, controllerId,
+                    new DoubleDamageToDamagedPlayerUntilNextTurnEffect(), damagedPlayerId,
+                    Duration.UNTIL_YOUR_NEXT_TURN));
         }
 
         private void addGisela(UUID controllerId) {

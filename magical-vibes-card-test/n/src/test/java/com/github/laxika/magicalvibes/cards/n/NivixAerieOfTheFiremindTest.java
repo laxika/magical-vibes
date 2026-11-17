@@ -39,7 +39,7 @@ class NivixAerieOfTheFiremindTest extends BaseCardTest {
         Card quicken = activateExileAbility(new Quicken());
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(quicken);
-        assertThat(gd.exilePlayPermissions).containsEntry(quicken.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(quicken.getId(), player1.getId());
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castFromExile(player1, quicken.getId());
@@ -70,7 +70,7 @@ class NivixAerieOfTheFiremindTest extends BaseCardTest {
         Card creature = activateExileAbility(new SkarrganPitSkulk());
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(creature.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(creature.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -84,10 +84,10 @@ class NivixAerieOfTheFiremindTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(quicken.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(quicken.getId(), player1.getId());
 
         harness.passUntil(player1, TurnStep.UPKEEP);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(quicken.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(quicken.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, quicken.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -181,7 +181,7 @@ class NivixAerieOfTheFiremindTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(currentTop);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(originalTop);
-        assertThat(gd.exilePlayPermissions).containsEntry(currentTop.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(currentTop.getId(), player1.getId());
     }
 
     @Test

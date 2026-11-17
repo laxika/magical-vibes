@@ -13,10 +13,10 @@ public record GainControlOfTargetWhileHasCounterEffect(CounterType counterType)
     }
 
     @Override
-    public ControlDuration controlDuration() {
+    public Duration controlDuration() {
         // The floating effect is stored permanently; the control service removes it when the
         // counter condition stops holding.
-        return ControlDuration.PERMANENT;
+        return Duration.PERMANENT;
     }
 
     @Override

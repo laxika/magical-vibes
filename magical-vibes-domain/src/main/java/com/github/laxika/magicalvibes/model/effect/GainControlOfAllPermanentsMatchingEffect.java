@@ -25,7 +25,7 @@ import java.util.List;
  * @param duration  how long the control gain lasts
  * @param thenEffects ordered rider effects applied to each seized permanent
  */
-public record GainControlOfAllPermanentsMatchingEffect(PermanentPredicate predicate, ControlDuration duration,
+public record GainControlOfAllPermanentsMatchingEffect(PermanentPredicate predicate, Duration duration,
                                                         List<CardEffect> thenEffects)
         implements CardEffect {
 
@@ -34,14 +34,14 @@ public record GainControlOfAllPermanentsMatchingEffect(PermanentPredicate predic
     }
 
     public GainControlOfAllPermanentsMatchingEffect(PermanentPredicate predicate) {
-        this(predicate, ControlDuration.PERMANENT);
+        this(predicate, Duration.PERMANENT);
     }
 
-    public GainControlOfAllPermanentsMatchingEffect(PermanentPredicate predicate, ControlDuration duration) {
+    public GainControlOfAllPermanentsMatchingEffect(PermanentPredicate predicate, Duration duration) {
         this(predicate, duration, List.of());
     }
 
-    public GainControlOfAllPermanentsMatchingEffect(PermanentPredicate predicate, ControlDuration duration,
+    public GainControlOfAllPermanentsMatchingEffect(PermanentPredicate predicate, Duration duration,
                                                      CardEffect... thenEffects) {
         this(predicate, duration, List.of(thenEffects));
     }

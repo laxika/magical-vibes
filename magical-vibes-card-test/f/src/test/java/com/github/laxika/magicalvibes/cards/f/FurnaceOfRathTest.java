@@ -549,7 +549,7 @@ class FurnaceOfRathTest extends BaseCardTest {
     @DisplayName("The defending player orders Furnace of Rath against a prevention shield in combat")
     void defendingPlayerOrdersCombatDoublingAndPrevention() {
         harness.addToBattlefield(player1, new FurnaceOfRath());
-        gd.playerDamagePreventionShields.put(player2.getId(), 1);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 1);
         addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
 
         resolveCombat(player1);
@@ -561,7 +561,7 @@ class FurnaceOfRathTest extends BaseCardTest {
     @Test
     void combatDoublingBeforePreventionDealsMore() {
         harness.addToBattlefield(player1, new FurnaceOfRath());
-        gd.playerDamagePreventionShields.put(player2.getId(), 1);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 1);
         addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
 
         resolveCombat(player1);

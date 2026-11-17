@@ -71,7 +71,7 @@ class KeeperOfTheCrownTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
         assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.BEAR)).isTrue();
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "BLUE");
@@ -139,7 +139,7 @@ class KeeperOfTheCrownTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
@@ -30,7 +29,7 @@ public class HellcatUndyingVigilante extends Card {
                 .plusOneCounterCount(1)
                 .battlefieldEffectGrants(List.of(
                         new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET, GrantDuration.INDEFINITE)))
+                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET, Duration.PERMANENT)))
                 .build());
     }
 }

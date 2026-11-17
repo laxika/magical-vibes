@@ -13,7 +13,7 @@ public record GainControlOfNextPlayerNonlandPermanentsEffect(Direction direction
     }
 
     @Override
-    public ControlDuration controlDuration() {
-        return ControlDuration.PERMANENT;
+    public Duration controlDuration() {
+        return Duration.PERMANENT;
     }
 }

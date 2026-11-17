@@ -157,7 +157,7 @@ class AlabasterPotionTest extends BaseCardTest {
             harness.castModalInstantForX(player1, 0, 1, 3, player2.getId());
             harness.passBothPriorities();
 
-            assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(3);
+            assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(3);
         }
 
         @Test
@@ -175,7 +175,7 @@ class AlabasterPotionTest extends BaseCardTest {
             resolveCombat();
 
             harness.assertLife(player2, 20);
-            assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+            assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
         }
 
         @Test
@@ -213,7 +213,7 @@ class AlabasterPotionTest extends BaseCardTest {
             harness.passBothPriorities();
 
             harness.assertLife(player2, 19);
-            assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+            assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
         }
     }
 }

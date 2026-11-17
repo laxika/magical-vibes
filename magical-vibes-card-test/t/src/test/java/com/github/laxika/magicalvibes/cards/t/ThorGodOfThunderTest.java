@@ -54,7 +54,7 @@ class ThorGodOfThunderTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(shock);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(shock);
-        assertThat(gd.exilePlayPermissions).containsEntry(shock.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(shock.getId(), player1.getId());
     }
 
     @Test
@@ -157,12 +157,12 @@ class ThorGodOfThunderTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(shock.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(shock.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(shock.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(shock.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(shock.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(shock.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(shock);
     }
 

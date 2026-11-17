@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityToCreatedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsToOwnedCardsEffect;
@@ -54,7 +54,7 @@ public class TendToTheKiln extends Card {
                                 new GrantKeywordEffect(
                                         Keyword.HASTE,
                                         GrantScope.TOKENS_CREATED_THIS_RESOLUTION,
-                                        GrantDuration.INDEFINITE),
+                                        Duration.PERMANENT),
                                 new GrantTriggeredAbilityToCreatedPermanentsEffect(
                                         new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),
                                                 new SacrificeSelfEffect(true)))

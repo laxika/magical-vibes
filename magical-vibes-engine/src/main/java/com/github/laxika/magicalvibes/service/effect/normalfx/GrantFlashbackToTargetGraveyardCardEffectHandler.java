@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Slf4j
 @Component
@@ -63,16 +65,10 @@ public class GrantFlashbackToTargetGraveyardCardEffectHandler implements NormalE
             return;
         }
 
-        gameData.cardsGrantedFlashbackUntilEndOfTurn.add(targetCard.getId());
-        if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) {
-            gameData.cardsGrantedFlashbackDespiteLostAbilitiesUntilEndOfTurn.add(targetCard.getId());
-        }
-        if (e.flashbackCost() != null) {
-            gameData.cardsGrantedFlashbackCostsUntilEndOfTurn.put(targetCard.getId(), e.flashbackCost());
-        }
-        if (e.withoutPayingManaCost()) {
-            gameData.cardsGrantedFlashbackWithoutPayingManaCostUntilEndOfTurn.add(targetCard.getId());
-        }
+        gameData.addCardEffect(entry, new GrantedCardAbilityEffect(GrantedCardAbilityEffect.Ability.FLASHBACK,
+                e.flashbackCost(), e.withoutPayingManaCost(),
+                gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)),
+                targetCard.getId(), Duration.UNTIL_END_OF_TURN);
 
         
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " grants flashback to ", targetCard, " until end of turn."));

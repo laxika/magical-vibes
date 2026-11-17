@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.Ability;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
@@ -35,7 +36,6 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
@@ -939,8 +939,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         return (effect instanceof RemovalEffect removal && removal.removalKind() != null)
                 || (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures())
                 || (effect instanceof ControlStealingEffect steal
-                        && (steal.controlDuration() == ControlDuration.PERMANENT
-                                || steal.controlDuration() == ControlDuration.END_OF_TURN));
+                        && (Duration.PERMANENT.equals(steal.controlDuration())
+                                || Duration.UNTIL_END_OF_TURN.equals(steal.controlDuration())));
     }
 
     /**
@@ -982,8 +982,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             return true; // EXILE / BOUNCE always removes the creature from the battlefield
         }
         if (effect instanceof ControlStealingEffect steal
-                && (steal.controlDuration() == ControlDuration.PERMANENT
-                        || steal.controlDuration() == ControlDuration.END_OF_TURN)) return true;
+                && (Duration.PERMANENT.equals(steal.controlDuration())
+                        || Duration.UNTIL_END_OF_TURN.equals(steal.controlDuration()))) return true;
         if (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures()) {
             int damage = spellEvaluator.estimateDamageAmount(gameData, spell, dmg.damageAmount(), aiPlayer.getId());
             int toughness = gameQueryService.getEffectiveToughness(gameData, creature);
@@ -1534,7 +1534,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * MCTS still runs when only those spells are castable.
      */
     private int castableSpellCountFromOpponentHand(GameData gameData) {
-        UUID ownerId = gameData.senControlledPlayerId;
+        UUID ownerId = gameData.handPlayableBy(aiPlayer.getId());
         if (!gameData.canPlayFromHandOf(aiPlayer.getId(), ownerId)) return 0;
         List<Card> ownerHand = gameData.playerHands.getOrDefault(ownerId, List.of());
         int count = 0;

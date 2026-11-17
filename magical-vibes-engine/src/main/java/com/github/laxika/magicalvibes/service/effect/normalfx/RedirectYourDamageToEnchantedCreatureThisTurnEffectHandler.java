@@ -47,7 +47,7 @@ public class RedirectYourDamageToEnchantedCreatureThisTurnEffectHandler implemen
         UUID controllerId = entry.getControllerId();
         if (controllerId == null) return;
 
-        gameData.turnDamageRedirectToCreatureShields.add(
+        gameData.addShield(
                 new TurnDamageRedirectToCreatureShield(controllerId, creature.getId()));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.cards.b.Bullwhip;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -119,7 +120,7 @@ class SpiritEnKorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.creatureDamageRedirectShields).isEmpty();
+        assertThat(gd.shields(CreatureDamageRedirectShield.class)).isEmpty();
     }
 
     @Test

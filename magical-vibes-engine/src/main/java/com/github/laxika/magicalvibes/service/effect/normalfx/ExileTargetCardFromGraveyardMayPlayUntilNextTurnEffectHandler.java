@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -67,8 +69,8 @@ public class ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffectHandler imple
         }
 
         if (sourceControlled) {
-            exileSupport.grantPlayWhileExiled(gameData, targetCard.getId(), controllerId);
-            gameData.exilePlayPermissionSourcePermanents.put(targetCard.getId(), sourcePermanentId);
+            gameData.grantExilePlayPermission(targetCard.getId(), new ExilePlayPermissionEffect(controllerId),
+                    sourcePermanentId, controllerId, Duration.WHILE_SOURCE_CONTROLLED);
         } else if (!mayPlayEffect.whileSourceControlled()) {
             // Grant the controller permission to play the exiled card until the end of their next turn.
             exileSupport.grantPlayUntilOwnersNextTurn(gameData, targetCard.getId(), controllerId);

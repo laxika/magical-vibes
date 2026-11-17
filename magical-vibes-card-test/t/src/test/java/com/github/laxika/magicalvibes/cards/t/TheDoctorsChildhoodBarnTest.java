@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.PhasedOutHeldEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -54,11 +55,11 @@ class TheDoctorsChildhoodBarnTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(target);
-        assertThat(gd.phasedOutUntilPlaneswalk).contains(target.getId());
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), PhasedOutHeldEffect.class)).isTrue();
 
         harness.inMutationScope(() -> planar.finishPlaneswalk(gd, java.util.List.of()));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
-        assertThat(gd.phasedOutUntilPlaneswalk).doesNotContain(target.getId());
+        assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), PhasedOutHeldEffect.class)).isFalse();
     }
 }

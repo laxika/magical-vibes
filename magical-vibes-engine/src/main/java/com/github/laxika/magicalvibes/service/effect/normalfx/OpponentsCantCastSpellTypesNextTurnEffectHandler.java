@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastSpellTypesThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -33,12 +36,10 @@ public class OpponentsCantCastSpellTypesNextTurnEffectHandler implements NormalE
             if (playerId.equals(controllerId)) {
                 continue;
             }
-            gameData.playersCantCastSpellTypesNextTurn.merge(playerId, EnumSet.copyOf(restrictedTypes),
-                    (existing, added) -> {
-                        Set<CardType> merged = EnumSet.copyOf(existing);
-                        merged.addAll(added);
-                        return merged;
-                    });
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), controllerId,
+                    new TargetPlayerCantCastSpellTypesThisTurnEffect(EnumSet.copyOf(restrictedTypes)), playerId,
+                    Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN));
         }
 
         String typeText = restrictedTypes.stream()

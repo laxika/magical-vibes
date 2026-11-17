@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -64,9 +65,9 @@ class AnnieFlashTheVeteranTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
-        assertThat(gd.exilePlayPermissions).containsEntry(first.getId(), player1.getId())
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn)
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN))
                 .contains(first.getId(), second.getId());
     }
 
@@ -82,7 +83,7 @@ class AnnieFlashTheVeteranTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
     }
 
     @Test
@@ -100,8 +101,8 @@ class AnnieFlashTheVeteranTest extends BaseCardTest {
             assertThat(entry.card()).isSameAs(top);
             assertThat(entry.ownerId()).isEqualTo(player1.getId());
         });
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(top.getId());
     }
 
     @Test

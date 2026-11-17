@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
@@ -42,7 +42,7 @@ public class LilianaTheLastHope extends Card {
     public LilianaTheLastHope() {
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new BoostTargetCreatureEffect(-2, -1, GrantDuration.UNTIL_YOUR_NEXT_TURN)),
+                List.of(new BoostTargetCreatureEffect(-2, -1, Duration.UNTIL_YOUR_NEXT_TURN)),
                 "+1: Up to one target creature gets -2/-1 until your next turn.",
                 null, +1, null, null,
                 List.<TargetFilter>of(TargetFilters.creature()), 0, 1));

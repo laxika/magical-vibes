@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -19,7 +19,7 @@ public class OrcishSquatters extends Card {
         // creature assigns no combat damage this turn.
         addTrigger(Triggers.attacksUnblocked(),
                 new MayEffect(new GainControlOfPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffect(
-                                new PermanentIsLandPredicate(), ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD, "land"),
+                                new PermanentIsLandPredicate(), Duration.WHILE_SOURCE_ON_BATTLEFIELD, "land"),
                         "You may gain control of target land defending player controls for as long as "
                                 + "you control this creature. If you do, this creature assigns no combat damage this turn."));
     }

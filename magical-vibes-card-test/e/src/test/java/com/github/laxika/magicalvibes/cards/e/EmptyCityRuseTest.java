@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
+import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.cards.a.AlertShuInfantry;
 import com.github.laxika.magicalvibes.cards.r.RelentlessAssault;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,7 +29,7 @@ class EmptyCityRuseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.skipCombatPhasesNextTurn).contains(player2.getId());
+        assertThat(FloatingCombatRules.skipsNextTurn(gd, player2.getId(), SkipStepOrPhaseKind.COMBAT_PHASE)).isTrue();
     }
 
     @Test

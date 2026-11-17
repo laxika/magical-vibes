@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReboundCastFromExileEffectHandler;
 import com.github.laxika.magicalvibes.model.Card;
@@ -521,7 +522,7 @@ public class StackResolutionService {
                     UUID.randomUUID(), entry.getCard().getName(), permanent.getId(), controllerId,
                     new com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect(
                             Keyword.HASTE, com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET,
-                            com.github.laxika.magicalvibes.model.effect.GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD),
+                            com.github.laxika.magicalvibes.model.effect.Duration.WHILE_SOURCE_ON_BATTLEFIELD),
                     permanent.getId(), null, null, Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
         // CR 702.152a: a blitzed permanent has haste as a static ability, not as an enters-the-battlefield
@@ -534,7 +535,7 @@ public class StackResolutionService {
                     UUID.randomUUID(), entry.getCard().getName(), permanent.getId(), controllerId,
                     new com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect(
                             Keyword.HASTE, com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET,
-                            com.github.laxika.magicalvibes.model.effect.GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD),
+                            com.github.laxika.magicalvibes.model.effect.Duration.WHILE_SOURCE_ON_BATTLEFIELD),
                     permanent.getId(), null, null, Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
         // CR 702.152a: the blitz end-step sacrifice is a delayed triggered ability created as the spell
@@ -638,7 +639,7 @@ public class StackResolutionService {
         UUID ownerId = entry.getOwnerId();
         Card physicalCard = entry.getPhysicalCard();
         gameData.spellColorOverrides.remove(physicalCard.getId());
-        gameData.spellColorOverridesUntilEndOfTurn.remove(physicalCard.getId());
+        gameData.endSpellColorUntilEndOfTurn(physicalCard.getId());
         gameData.spellTextReplacements.remove(physicalCard.getId());
         gameData.spellEntryCounters.remove(card.getId());
         gameData.spellGrantedSubtypesOnEntry.remove(card.getId());
@@ -760,7 +761,7 @@ public class StackResolutionService {
         // CR 609.7a: a shield chosen for this permanent spell now tracks the permanent it became, so a later
         // bounce and recast of the same card (a new object) is not shielded.
         UUID spellCardId = entry.getCard().getId();
-        gameData.playerSourceNextDamageShields.replaceAll(shield -> spellCardId.equals(shield.sourceId())
+        gameData.updateShields(PlayerSourceNextDamageShield.class, shield -> spellCardId.equals(shield.sourceId())
                 ? shield.withSourceId(perm.getId()) : shield);
         perm.setChosenSubtype(entry.getBeholdChosenSubtype());
         // Carry the zone the spell was cast from so an "if cast from a graveyard, it enters with …
@@ -1700,7 +1701,7 @@ public class StackResolutionService {
         UUID ownerId = entry.getOwnerId();
         Card physicalCard = entry.getPhysicalCard();
         gameData.spellColorOverrides.remove(physicalCard.getId());
-        gameData.spellColorOverridesUntilEndOfTurn.remove(physicalCard.getId());
+        gameData.endSpellColorUntilEndOfTurn(physicalCard.getId());
         gameData.spellTextReplacements.remove(physicalCard.getId());
         boolean plotOnResolution = gameData.spellsWithPlotOnResolution.remove(physicalCard.getId());
         if (entry.isSpellMovedDuringResolution()) {
@@ -1743,7 +1744,7 @@ public class StackResolutionService {
         } else if (entry.isCastWithAdventure()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
-            gameData.exilePlayPermissions.put(physicalCard.getId(), entry.getControllerId());
+            gameData.grantExilePlayPermission(physicalCard.getId(), entry.getControllerId(), Duration.PERMANENT);
             gameLogService.append(gameData, GameLog.cardThen(physicalCard,
                     " is exiled with permission to cast its creature face."));
         } else if (entry.isReturnToHandAfterResolving() && exileSpellEffect == null) {
@@ -1866,8 +1867,8 @@ public class StackResolutionService {
     private void plotResolvedSpell(GameData gameData, UUID ownerId, Card physicalCard) {
         exileService.exileCard(gameData, ownerId, physicalCard);
         gameData.plottedCardIds.add(physicalCard.getId());
-        gameData.exilePlayPermissions.put(physicalCard.getId(), ownerId);
-        gameData.exilePlayWithoutPayingManaCost.add(physicalCard.getId());
+        gameData.grantExilePlayPermission(physicalCard.getId(), ownerId, Duration.PERMANENT);
+        gameData.setExilePlayWithoutPayingManaCost(physicalCard.getId(), true);
         ActionEvents.plotted(gameData, ownerId, physicalCard);
         gameLogService.append(gameData, GameLog.cardThen(physicalCard, " becomes plotted."));
     }

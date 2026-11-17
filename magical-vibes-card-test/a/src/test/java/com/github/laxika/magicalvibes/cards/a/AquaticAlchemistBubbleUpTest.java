@@ -38,7 +38,7 @@ class AquaticAlchemistBubbleUpTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(target);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(target, oldTop);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -177,7 +177,7 @@ class AquaticAlchemistBubbleUpTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(target);
     }
 

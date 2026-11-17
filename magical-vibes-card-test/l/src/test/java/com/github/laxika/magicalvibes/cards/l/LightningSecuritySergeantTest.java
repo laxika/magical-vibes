@@ -40,7 +40,7 @@ class LightningSecuritySergeantTest extends BaseCardTest {
         Card topCard = resolveCombatWithTopCard(new Island());
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -69,15 +69,14 @@ class LightningSecuritySergeantTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castAndResolveSorcery(player2, 0, lightning.getId());
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
-        assertThat(gd.exilePlayPermissionSourcePermanents).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(lightning.getId()));
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
     }
 
     @Test
@@ -97,7 +96,7 @@ class LightningSecuritySergeantTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, lightning.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(lightning.getId()));
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
     }
 
@@ -163,7 +162,7 @@ class LightningSecuritySergeantTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Lightning, Security Sergeant");
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, topCard.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -177,7 +176,7 @@ class LightningSecuritySergeantTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player2, 18);
     }
@@ -191,7 +190,7 @@ class LightningSecuritySergeantTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);

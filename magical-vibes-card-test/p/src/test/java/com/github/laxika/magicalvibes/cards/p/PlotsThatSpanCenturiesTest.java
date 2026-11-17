@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.cards.m.MyLaughterEchoes;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.RegisterNextSchemeSetInMotionReplacementEffect;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -44,6 +46,34 @@ class PlotsThatSpanCenturiesTest extends BaseCardTest {
 
         assertThat(gd.stack).filteredOn(entry -> entry.getCard() instanceof MyLaughterEchoes)
                 .hasSize(1);
+        gd.stack.clear();
+    }
+
+    @Test
+    void replacementLastsUntilUsedAndSurvivesTheCleanupStep() {
+        Permanent plots = harness.addToBattlefieldAndReturn(player1, new PlotsThatSpanCenturies());
+        StackEntry firstEntry = schemeEntry(new PlotsThatSpanCenturies());
+        gd.stack.add(firstEntry);
+        harness.inMutationScope(() -> ActionEvents.schemeSetInMotion(gd, firstEntry));
+        resolveAllTriggers();
+
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(),
+                RegisterNextSchemeSetInMotionReplacementEffect.class)).hasSize(1);
+
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
+
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(),
+                RegisterNextSchemeSetInMotionReplacementEffect.class)).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(plots);
+        harness.addToBattlefield(player1, new MyLaughterEchoes());
+        gd.stack.clear();
+        StackEntry nextEntry = schemeEntry(new ICallForSlaughter());
+        gd.stack.add(nextEntry);
+        harness.inMutationScope(() -> ActionEvents.schemeSetInMotion(gd, nextEntry));
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard() instanceof MyLaughterEchoes).hasSize(3);
+        assertThat(gd.floatingEffectsOfTypes(RegisterNextSchemeSetInMotionReplacementEffect.class)).isEmpty();
         gd.stack.clear();
     }
 

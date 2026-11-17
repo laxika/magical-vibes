@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import java.util.UUID;
 
 /**
@@ -25,7 +26,7 @@ public record TurnDamageRedirectToCreatureShield(UUID protectedPlayerId,
                                                  boolean includeControlledPermanents,
                                                  UUID damageSourceId,
                                                  boolean allowsPlaneswalker,
-                                                 boolean controlledCreaturesOnly) {
+                                                 boolean controlledCreaturesOnly) implements CardEffect {
 
     public TurnDamageRedirectToCreatureShield(UUID protectedPlayerId, UUID redirectTargetCreatureId,
                                               boolean combatOnly, boolean includeControlledPermanents,

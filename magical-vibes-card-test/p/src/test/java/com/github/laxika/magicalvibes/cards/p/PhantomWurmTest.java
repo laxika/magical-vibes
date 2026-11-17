@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.m.MightOfOldKrosa;
 import com.github.laxika.magicalvibes.cards.m.Malignus;
 import com.github.laxika.magicalvibes.cards.s.SuddenShock;
@@ -83,7 +84,7 @@ class PhantomWurmTest extends BaseCardTest {
     @DisplayName("Removes a counter even when damage cannot be prevented")
     void removesCounterWhenDamageCannotBePrevented() {
         Permanent wurm = harness.enterBattlefieldAndReturn(player2, new PhantomWurm());
-        gd.damageCantBePreventedThisTurn = true;
+        gd.addShield(new DamageCantBePreventedThisTurnEffect());
 
         castSuddenShock(wurm);
 

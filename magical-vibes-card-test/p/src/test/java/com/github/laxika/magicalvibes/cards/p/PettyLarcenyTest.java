@@ -33,9 +33,9 @@ class PettyLarcenyTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(first, second);
         assertThat(gd.findExiledCard(first.getId()).faceDown()).isTrue();
         assertThat(gd.findExiledCard(second.getId()).faceDown()).isTrue();
-        assertThat(gd.exilePlayPermissions).containsEntry(first.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissions).containsEntry(second.getId(), player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled)
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(first.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(second.getId(), player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds())
                 .containsExactlyInAnyOrder(first.getId(), second.getId());
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(third);

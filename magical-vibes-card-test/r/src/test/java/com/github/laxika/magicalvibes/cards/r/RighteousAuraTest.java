@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.a.Archangel;
 import com.github.laxika.magicalvibes.cards.f.Fireblast;
 import com.github.laxika.magicalvibes.cards.k.KingCheetah;
@@ -54,7 +55,7 @@ class RighteousAuraTest extends BaseCardTest {
 
         // 2 life paid on activation; combat damage prevented → still 18
         harness.assertLife(player1, 18);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -75,7 +76,7 @@ class RighteousAuraTest extends BaseCardTest {
 
         // 2 life paid + 3 combat damage
         harness.assertLife(player1, 15);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.sourceId().equals(chosen.getId()));
     }
 
@@ -101,7 +102,7 @@ class RighteousAuraTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         assertThat(blocker.getMarkedDamage()).isEqualTo(3);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.sourceId().equals(kingCheetah.getId()));
     }
 
@@ -125,7 +126,7 @@ class RighteousAuraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 18);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -139,14 +140,14 @@ class RighteousAuraTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, kingCheetah.getId());
 
-        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isNotEmpty();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -159,7 +160,7 @@ class RighteousAuraTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         harness.assertLife(player1, 18);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, gd.playerBattlefields.get(player1.getId()).getFirst().getId());
     }

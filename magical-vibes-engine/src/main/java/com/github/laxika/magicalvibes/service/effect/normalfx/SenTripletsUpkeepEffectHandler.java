@@ -15,9 +15,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves Sen Triplets' upkeep ability against the chosen opponent: silences them, forbids ability
- * activation, and opens the {@link GameData#senControllerPlayerId}/{@link GameData#senControlledPlayerId}
- * window so the controller may play lands and cast spells from that opponent's (now revealed) hand.
- * All of this state is cleared at end of turn.
+ * activation, and makes the floating effect on that opponent ({@link GameData#canPlayFromHandOf}) that lets the
+ * controller play lands and cast spells from that opponent's (now revealed) hand. It ends at end of turn.
  */
 @Component
 @RequiredArgsConstructor
@@ -40,8 +39,6 @@ public class SenTripletsUpkeepEffectHandler implements NormalEffectHandlerBean {
         gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
                 entry.getSourcePermanentId(), entry.getControllerId(), effect, targetId,
                 Duration.UNTIL_END_OF_TURN));
-        gameData.senControllerPlayerId = controllerId;
-        gameData.senControlledPlayerId = targetId;
 
         String targetName = gameData.playerIdToName.get(targetId);
         gameLogService.append(gameData, GameLog.text(targetName

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.cards.g.Grollub;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.SonicBurst;
@@ -48,7 +49,7 @@ class PenanceTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(chosenCard);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -68,7 +69,7 @@ class PenanceTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -83,7 +84,7 @@ class PenanceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("No permanents on the battlefield"));
     }
@@ -107,7 +108,7 @@ class PenanceTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(blocker);
         assertThat(blocker.getMarkedDamage()).isZero();
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -134,7 +135,7 @@ class PenanceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test

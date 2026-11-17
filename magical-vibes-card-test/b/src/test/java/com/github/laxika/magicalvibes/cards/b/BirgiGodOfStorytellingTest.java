@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -56,10 +57,10 @@ class BirgiGodOfStorytellingTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topLand, topSpell);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(topLand.getId(), player1.getId())
                 .containsEntry(topSpell.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn)
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN))
                 .contains(topLand.getId(), topSpell.getId());
     }
 
@@ -228,8 +229,8 @@ class BirgiGodOfStorytellingTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(secondLand);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(secondLand.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(secondLand.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(secondLand.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(secondLand.getId());
     }
 
     @Test

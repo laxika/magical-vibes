@@ -39,14 +39,14 @@ class OrnateKanzashiTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId()))
                 .noneMatch(card -> card.getId().equals(top.getId()));
-        assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(top.getId())).isEqualTo(player1.getId());
         assertThat(kanzashi.isTapped()).isTrue();
 
         gs.playCardFromExile(gd, player1, top.getId(), null, null);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(top.getId()));
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
     }
 
     @Test
@@ -65,7 +65,7 @@ class OrnateKanzashiTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
         assertThat(kanzashi.isTapped()).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -73,7 +73,7 @@ class OrnateKanzashiTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
     }
 
     @Test
@@ -120,7 +120,7 @@ class OrnateKanzashiTest extends BaseCardTest {
 
         assertThat(kanzashi.isTapped()).isTrue();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
@@ -151,7 +151,7 @@ class OrnateKanzashiTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("mana");
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(top);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
 
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -209,6 +209,6 @@ class OrnateKanzashiTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(top);
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 }

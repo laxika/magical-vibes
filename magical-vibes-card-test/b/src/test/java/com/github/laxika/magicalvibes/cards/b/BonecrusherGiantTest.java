@@ -49,7 +49,7 @@ class BonecrusherGiantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
-        assertThat(gd.damageCantBePreventedThisTurn).isTrue();
+        assertThat(gd.damageCantBePreventedThisTurn()).isTrue();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
     }
 
@@ -86,7 +86,7 @@ class BonecrusherGiantTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         assertThat(giant.getMarkedDamage()).isZero();
-        assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+        assertThat(gd.damageCantBePreventedThisTurn()).isFalse();
 
         harness.passBothPriorities();
 
@@ -128,7 +128,7 @@ class BonecrusherGiantTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Bonecrusher Giant");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.damageCantBePreventedThisTurn).isFalse();
+        assertThat(gd.damageCantBePreventedThisTurn()).isFalse();
     }
 
     @Test

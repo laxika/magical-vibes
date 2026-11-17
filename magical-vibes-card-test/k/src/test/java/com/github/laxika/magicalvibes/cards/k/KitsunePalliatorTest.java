@@ -32,8 +32,8 @@ class KitsunePalliatorTest extends BaseCardTest {
         assertThat(palliator.getDamagePreventionShield()).isEqualTo(1);
         assertThat(friendly.getDamagePreventionShield()).isEqualTo(1);
         assertThat(enemy.getDamagePreventionShield()).isEqualTo(1);
-        assertThat(gd.playerDamagePreventionShields.get(player1.getId())).isEqualTo(1);
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().get(player1.getId())).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(1);
     }
 
     @Test
@@ -90,7 +90,7 @@ class KitsunePalliatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(palliator.getDamagePreventionShield()).isEqualTo(0);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(0);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isEqualTo(0);
     }
 
     @Test

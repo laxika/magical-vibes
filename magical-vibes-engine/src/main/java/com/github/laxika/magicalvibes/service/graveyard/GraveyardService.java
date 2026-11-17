@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.graveyard;
 
+import com.github.laxika.magicalvibes.model.effect.PutCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnCardsInsteadOfGraveyardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffect;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
@@ -727,8 +728,8 @@ public class GraveyardService {
             // Yawgmoth's Testament â€” the controller's cards go to the bottom of their owner's
             // library instead of their graveyards for the rest of the turn.
             if (!isToken(gameData, card)
-                    && gameData.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn
-                    .contains(ownerId)) {
+                    && gameData.hasFloatingEffectOnPlayer(ownerId,
+                    PutCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurnEffect.class)) {
                 gameData.playerDecks.get(ownerId).add(card);
                 gameLogService.append(gameData, GameLog.cardThen(card,
                         " is put on the bottom of its owner's library instead of being put into a graveyard."));
@@ -2193,12 +2194,8 @@ public class GraveyardService {
     }
 
     private void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, int count, List<Card> cards) {
-        cards.forEach(card -> gameData.graveyardCardCastPermissionsUntilEndOfTurn.remove(card.getId()));
-        cards.forEach(card -> gameData.graveyardCardCastPermissionGrantsUntilEndOfTurn.remove(card.getId()));
-        cards.forEach(card -> gameData.cardsGrantedJumpStartUntilEndOfTurn.remove(card.getId()));
-        cards.forEach(card -> gameData.cardsGrantedFlashbackUntilEndOfTurn.remove(card.getId()));
-        cards.forEach(card -> gameData.cardsGrantedFlashbackDespiteLostAbilitiesUntilEndOfTurn.remove(card.getId()));
-        cards.forEach(card -> gameData.cardsGrantedHarmonizeUntilEndOfTurn.remove(card.getId()));
+        // A card that left the graveyard is a new object (CR 400.7): what a resolution granted it ends.
+        cards.forEach(card -> gameData.endFloatingEffectsOnCard(card.getId()));
         cards.forEach(card -> gameData.markGraveyardExit(card.getId()));
         // A card that left the graveyard is a new object (CR 400.7), so a later return to the graveyard
         // is not a discard or cycling made this turn.
@@ -2241,7 +2238,6 @@ public class GraveyardService {
         if (leavingCards == null || leavingCards.isEmpty()) {
             return;
         }
-        leavingCards.forEach(card -> gameData.graveyardAdventureCastPermissions.remove(card.getId()));
         Set<UUID> libraryTracked = gameData.cardsPutIntoGraveyardFromLibraryThisTurn.get(ownerId);
         if (libraryTracked != null) {
             leavingCards.forEach(card -> libraryTracked.remove(card.getId()));

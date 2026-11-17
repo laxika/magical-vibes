@@ -33,7 +33,7 @@ public class RedirectCombatDamageToTargetAttackingCreatureEffectHandler implemen
             return;
         }
 
-        gameData.turnDamageRedirectToCreatureShields.add(
+        gameData.addShield(
                 new TurnDamageRedirectToCreatureShield(controllerId, targetId, true, false));
     }
 }

@@ -6,12 +6,9 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>Targets a single creature. The single-creature sibling of
  * {@link MustAttackNextTurnEffect} with {@link TauntTarget#SOURCE_PERMANENT}, which taunts every
- * creature a targeted player controls: this one records only the targeted creature in
- * {@code GameData.creatureMustAttackPermanentNextTurn}, keyed by that creature's permanent id and
- * mapped to the ability's source permanent. When the creature's controller's next turn begins the
- * turn engine promotes the entry onto the creature itself ({@code mustAttackThisTurn} plus
- * {@code mustAttackTargetId}), the same transient pair Alluring Siren sets, so declare-attackers
- * enforcement is unchanged. The requirement lapses on its own if the source permanent is no longer
+ * creature a targeted player controls: this one makes only the targeted creature
+ * attack the ability's source permanent, with a floating {@link CreaturesMustAttackTargetPlayerUntilNextTurnEffect}
+ * on the creature that begins when its controller's next turn begins and ends at that turn's cleanup step. The requirement lapses on its own if the source permanent is no longer
  * a legal attack target, and per CR 508.1d the affected player is not required to pay attack costs.
  */
 public record TargetCreatureMustAttackSourcePermanentNextTurnEffect() implements CardEffect {

@@ -31,7 +31,7 @@ class GollumSilentSlinkerTest extends BaseCardTest {
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertLife(player2, 22);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -96,7 +96,7 @@ class GollumSilentSlinkerTest extends BaseCardTest {
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.assertLife(player2, 22);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test

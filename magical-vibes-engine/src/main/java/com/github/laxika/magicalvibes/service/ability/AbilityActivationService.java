@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.model.effect.GrantExtraLoyaltyActivationToPlaneswalkersEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowTwiceLoyaltyActivationsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GuardianAngelPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantActivatePlaneswalkerLoyaltyAbilitiesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
@@ -233,6 +236,9 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import com.github.laxika.magicalvibes.model.effect.CardRevealedInHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 /**
  * Handles activation and cost payment for activated abilities and tap/sacrifice abilities on permanents.
@@ -1085,8 +1091,9 @@ public class AbilityActivationService {
      */
     public void payGuardianAngel(GameData gameData, Player player, UUID targetId) {
         UUID playerId = player.getId();
-        Set<UUID> targetIds = gameData.guardianAngelTargetsUntilEndOfTurn.get(playerId);
-        if (targetIds == null || !targetIds.contains(targetId)) {
+        boolean permitted = gameData.floatingPlayerEffects(playerId, GuardianAngelPermissionEffect.class).stream()
+                .anyMatch(permission -> targetId.equals(((GuardianAngelPermissionEffect) permission).targetId()));
+        if (!permitted) {
             throw new IllegalStateException("You may not pay for Guardian Angel prevention to that target");
         }
 
@@ -1105,7 +1112,7 @@ public class AbilityActivationService {
         if (target != null) {
             target.setDamagePreventionShield(target.getDamagePreventionShield() + 1);
         } else if (gameData.playerIds.contains(targetId)) {
-            gameData.playerDamagePreventionShields.merge(targetId, 1, Integer::sum);
+            gameData.addPlayerDamagePreventionShield("Guardian Angel", playerId, targetId, 1, false);
         }
 
         gameLogService.append(gameData, GameLog.text(
@@ -2671,7 +2678,8 @@ public class AbilityActivationService {
         cardRevealService.revealToAllPlayers(gameData, playerId,
                 com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND, List.of(card));
         if (gameData.currentStep == TurnStep.UPKEEP) {
-            gameData.cardsRevealedInHandUntilUpkeepEnd.put(card.getId(), playerId);
+            gameData.addFloatingEffect(FloatingContinuousEffect.onCard(card.getName(), null, playerId,
+                    new CardRevealedInHandEffect(), card.getId(), Duration.UNTIL_END_OF_UPKEEP));
         }
     }
 
@@ -9067,10 +9075,11 @@ public class AbilityActivationService {
         // this-turn "twice rather than once" grant, e.g. Urza Assembles the Titans), plus any one-shot extra
         // activations granted to this planeswalker this turn (The Chain Veil).
         boolean twiceThisTurn = gameQueryService.hasExtraLoyaltyActivation(gameData, playerId)
-                || gameData.playersAllowedTwiceLoyaltyActivationsThisTurn.contains(playerId);
+                || gameData.hasFloatingEffectOnPlayer(playerId, AllowTwiceLoyaltyActivationsThisTurnEffect.class);
         int maxActivations = (twiceThisTurn ? 2 : 1)
                 + permanent.getExtraLoyaltyActivationsThisTurn()
-                + gameData.playerExtraLoyaltyActivationsThisTurn.getOrDefault(playerId, 0);
+                + gameData.floatingEffectsOnPlayer(playerId,
+                GrantExtraLoyaltyActivationToPlaneswalkersEffect.class).size();
         if (permanent.getLoyaltyActivationsThisTurn() >= maxActivations) {
             throw new IllegalStateException("Only one loyalty ability per planeswalker per turn");
         }

@@ -41,7 +41,7 @@ class SkullcrackTest extends BaseCardTest {
         assertThat(gd.hasFloatingEffectOnPlayer(null, PlayersCantGainLifeThisTurnEffect.class)).isTrue();
         assertThat(gqs.canPlayerGainLife(gd, player1.getId())).isFalse();
         assertThat(gqs.canPlayerGainLife(gd, player2.getId())).isFalse();
-        assertThat(gd.damageCantBePreventedThisTurn).isTrue();
+        assertThat(gd.damageCantBePreventedThisTurn()).isTrue();
         assertThat(gqs.isDamagePreventable(gd)).isFalse();
     }
 

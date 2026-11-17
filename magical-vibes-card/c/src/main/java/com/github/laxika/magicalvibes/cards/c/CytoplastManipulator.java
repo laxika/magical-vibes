@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -41,7 +41,7 @@ public class CytoplastManipulator extends Card {
                 true,
                 "{U}",
                 List.of(GainControlOfTargetEffect.withTargetPredicate(
-                        ControlDuration.WHILE_SOURCE_REMAINS, creatureWithCounter)),
+                        Duration.WHILE_SOURCE_REMAINS, creatureWithCounter)),
                 "{U}, {T}: Gain control of target creature with a +1/+1 counter on it for as long as this creature remains on the battlefield.",
                 new PermanentPredicateTargetFilter(creatureWithCounter,
                         "Target must be a creature with a +1/+1 counter")));

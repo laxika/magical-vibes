@@ -83,12 +83,12 @@ class SunfireBalmTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(4);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 
     @Test
@@ -150,7 +150,7 @@ class SunfireBalmTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
         harness.assertNotInHand(player1, "Glory Seeker");
 
         harness.passBothPriorities();

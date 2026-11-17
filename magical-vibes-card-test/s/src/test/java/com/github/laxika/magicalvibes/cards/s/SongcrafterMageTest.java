@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 @CardUsed({SongcrafterMage.class, Divination.class, GrizzlyBears.class, Shock.class, NaturesRhythm.class})
 class SongcrafterMageTest extends BaseCardTest {
@@ -29,7 +30,7 @@ class SongcrafterMageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.passBothPriorities();
-        assertThat(gd.cardsGrantedHarmonizeUntilEndOfTurn).contains(shock.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.HARMONIZE)).contains(shock.getId());
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveFlashback(player1, 0, player2.getId());
@@ -52,7 +53,7 @@ class SongcrafterMageTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(divination.getId()));
         harness.passBothPriorities();
-        assertThat(gd.cardsGrantedHarmonizeUntilEndOfTurn).contains(divination.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.HARMONIZE)).contains(divination.getId());
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castFlashbackWithTapCost(player1, 0, List.of(creature.getId()));

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -37,10 +38,10 @@ class JessicaJonesPrivateEyeTest extends BaseCardTest {
                 .extracting(Card::getId)
                 .containsExactly(topCard.getId(), secondCard.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(thirdCard);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(topCard.getId(), player1.getId())
                 .containsEntry(secondCard.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn)
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN))
                 .contains(topCard.getId(), secondCard.getId());
     }
 
@@ -87,7 +88,7 @@ class JessicaJonesPrivateEyeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(forest.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(forest.getId());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromExile(player1, forest.getId());
@@ -129,8 +130,8 @@ class JessicaJonesPrivateEyeTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
-        assertThat(gd.exilePlayPermissions).doesNotContainKeys(first.getId(), second.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(first.getId(), second.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKeys(first.getId(), second.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(first.getId(), second.getId());
     }
 
     private Permanent addReadyJessica() {

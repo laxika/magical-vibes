@@ -32,7 +32,7 @@ class GingerbreadHunterTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -105,7 +105,7 @@ class GingerbreadHunterTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Redtooth Vanguard");
         harness.assertInGraveyard(player1, "Redtooth Vanguard");
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
         assertThat(countPermanents(player1, "Food")).isZero();
     }
 
@@ -125,9 +125,9 @@ class GingerbreadHunterTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Redtooth Vanguard");
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first).doesNotContain(second);
         assertThat(gd.findExiledCard(first.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(first.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(first.getId());
         assertThat(gd.findExiledCard(second.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(second.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(second.getId())).isEqualTo(player1.getId());
     }
 
     @Test

@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsUnlessTargetPaysLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
@@ -62,7 +62,7 @@ public class WyllPactBoundDuelist extends Card {
         target(new PermanentPredicateTargetFilter(target,
                 "Target must be an artifact or creature an opponent controls with mana value 4 or less"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GainControlOfTargetEffect(ControlDuration.UNTIL_END_OF_YOUR_NEXT_TURN));
+                        new GainControlOfTargetEffect(Duration.UNTIL_END_OF_YOUR_NEXT_TURN));
 
         addSpecializeAbility(CardColor.WHITE, CardSubtype.PLAINS);
         addSpecializeAbility(CardColor.BLUE, CardSubtype.ISLAND);

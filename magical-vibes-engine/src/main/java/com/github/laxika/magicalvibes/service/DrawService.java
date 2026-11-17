@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -23,7 +25,6 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.MiracleCast;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
-import com.github.laxika.magicalvibes.model.PendingNextDrawDamageReplacement;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -66,7 +67,18 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.effect.RegisterNextDrawCreateBearReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterNextDrawDamageReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterNextDrawDiscardOpponentsReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterNextDrawExileTopCardMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterNextDrawFromExiledPileReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterNextDrawFromOutsideGameReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterNextDrawGainLifeReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterNextDrawLookAtTopReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterNextDrawReturnPermanentsReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsCreaturesToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCreatureToGraveyardElseDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawReplacementEffect;
@@ -441,17 +453,14 @@ public class DrawService {
             return;
         }
 
-        Integer pendingExileTopCard = gameData.pendingNextDrawExileTopCard.get(playerId);
+        boolean exileTopCardPending = hasNextDrawReplacement(gameData, playerId,
+                RegisterNextDrawExileTopCardMayPlayThisTurnEffect.class);
         // CR 616.1: while dredge is on offer the affected player chooses its order against this replacement, so
         // dredge is offered first and declining it (re-entering with skipDredge) applies the exile.
-        boolean dredgeOfferedFirst = !skipDredge && pendingExileTopCard != null && pendingExileTopCard > 0
+        boolean dredgeOfferedFirst = !skipDredge && exileTopCardPending
                 && !dredgeSupport.eligibleGraveyardIndices(gameData, playerId).isEmpty();
-        if (!dredgeOfferedFirst && pendingExileTopCard != null && pendingExileTopCard > 0) {
-            if (pendingExileTopCard == 1) {
-                gameData.pendingNextDrawExileTopCard.remove(playerId);
-            } else {
-                gameData.pendingNextDrawExileTopCard.put(playerId, pendingExileTopCard - 1);
-            }
+        if (!dredgeOfferedFirst && exileTopCardPending) {
+            useNextDrawReplacement(gameData, playerId, RegisterNextDrawExileTopCardMayPlayThisTurnEffect.class);
             resolveNextDrawExileTopCardMayPlayThisTurn(gameData, playerId);
             return;
         }
@@ -501,10 +510,13 @@ public class DrawService {
         // order of the two replacements cannot change the outcome.
         boolean zursWeirdingCompetesWithDoubler = zursWeirdingSource != null && drawDoublerSource != null
                 && zursWeirdingPayable(gameData, playerId);
-        boolean ringPending = gameData.pendingNextDrawFromOutsideGame.containsKey(playerId);
-        Permanent wordsOfWorshipSource = gameData.pendingNextDrawGainLife.containsKey(playerId)
+        boolean ringPending = hasNextDrawReplacement(gameData, playerId,
+                RegisterNextDrawFromOutsideGameReplacementEffect.class);
+        Permanent wordsOfWorshipSource = hasNextDrawReplacement(gameData, playerId,
+                RegisterNextDrawGainLifeReplacementEffect.class)
                 ? findBattlefieldPermanentNamed(gameData, playerId, WORDS_OF_WORSHIP_NAME) : null;
-        Permanent wordsOfWildingSource = gameData.pendingNextDrawCreateBears.containsKey(playerId)
+        Permanent wordsOfWildingSource = hasNextDrawReplacement(gameData, playerId,
+                RegisterNextDrawCreateBearReplacementEffect.class)
                 ? findBattlefieldPermanentNamed(gameData, playerId, WORDS_OF_WILDING_NAME) : null;
         Map<String, UUID> nextDrawWordsOptions = collectNextDrawWordsOptions(
                 gameData, playerId, wordsOfWorshipSource, wordsOfWildingSource);
@@ -578,8 +590,10 @@ public class DrawService {
 
         // Aladdin's Lamp — one-shot, turn-scoped delayed replacement of this player's next draw:
         // instead look at the top X cards, put all but one on the bottom in a random order, then draw.
-        List<Integer> pendingLookAtTop = gameData.pendingNextDrawLookAtTop.get(playerId);
-        if (pendingLookAtTop != null && !pendingLookAtTop.isEmpty()) {
+        List<Integer> pendingLookAtTop = nextDrawReplacements(gameData, playerId,
+                RegisterNextDrawLookAtTopReplacementEffect.class).stream()
+                .map(floating -> ((RegisterNextDrawLookAtTopReplacementEffect) floating.effect()).x()).toList();
+        if (!pendingLookAtTop.isEmpty()) {
             if (pendingLookAtTop.stream().distinct().count() > 1) {
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         playerId, null, null,
@@ -588,18 +602,19 @@ public class DrawService {
                         "Choose which library-look replacement to apply to this draw."));
                 return;
             }
-            int lookAtTopX = pendingLookAtTop.removeFirst();
-            if (pendingLookAtTop.isEmpty()) {
-                gameData.pendingNextDrawLookAtTop.remove(playerId);
-            }
+            int lookAtTopX = useNextDrawReplacement(gameData, playerId,
+                    RegisterNextDrawLookAtTopReplacementEffect.class).x();
             resolveNextDrawLookAtTop(gameData, playerId, lookAtTopX);
             return;
         }
 
         // Mangara's Tome — one-shot, turn-scoped delayed replacement of this player's next draw:
         // instead put the top card of the exiled pile into its owner's hand.
-        List<UUID> pendingPileDraws = gameData.pendingNextDrawFromExiledPile.get(playerId);
-        if (pendingPileDraws != null && !pendingPileDraws.isEmpty()) {
+        List<UUID> pendingPileDraws = nextDrawReplacements(gameData, playerId,
+                RegisterNextDrawFromExiledPileReplacementEffect.class).stream()
+                .map(floating -> ((RegisterNextDrawFromExiledPileReplacementEffect) floating.effect()).pileSourceId())
+                .toList();
+        if (!pendingPileDraws.isEmpty()) {
             List<UUID> distinctPiles = pendingPileDraws.stream().distinct().toList();
             if (distinctPiles.size() > 1) {
                 // Replacements from different Tomes name different piles; the drawing player picks
@@ -624,61 +639,44 @@ public class DrawService {
         }
 
         // Ring of Ma'rûf — one queued activation replaces one draw with a card from outside the game.
-        Integer pendingOutsideGame = gameData.pendingNextDrawFromOutsideGame.remove(playerId);
-        if (pendingOutsideGame != null) {
-            if (pendingOutsideGame > 1) {
-                gameData.pendingNextDrawFromOutsideGame.put(playerId, pendingOutsideGame - 1);
-            }
+        if (useNextDrawReplacement(gameData, playerId,
+                RegisterNextDrawFromOutsideGameReplacementEffect.class) != null) {
             resolveNextDrawFromOutsideGame(gameData, playerId);
             return;
         }
 
         // Words of Worship — one queued activation replaces one draw with gaining 5 life.
-        Integer pendingGainLife = gameData.pendingNextDrawGainLife.remove(playerId);
-        if (pendingGainLife != null) {
-            if (pendingGainLife > 1) {
-                gameData.pendingNextDrawGainLife.put(playerId, pendingGainLife - 1);
-            }
+        if (useNextDrawReplacement(gameData, playerId, RegisterNextDrawGainLifeReplacementEffect.class) != null) {
             lifeSupport.applyGainLife(gameData, playerId, 5, "Words of Worship");
             return;
         }
 
         // Words of Wilding - one queued activation replaces one draw with creating a Bear token.
-        List<String> pendingCreateBears = gameData.pendingNextDrawCreateBears.get(playerId);
-        if (pendingCreateBears != null && !pendingCreateBears.isEmpty()) {
-            String sourceSetCode = pendingCreateBears.removeFirst();
-            if (pendingCreateBears.isEmpty()) {
-                gameData.pendingNextDrawCreateBears.remove(playerId);
-            }
+        RegisterNextDrawCreateBearReplacementEffect pendingCreateBear = useNextDrawReplacement(gameData, playerId,
+                RegisterNextDrawCreateBearReplacementEffect.class);
+        if (pendingCreateBear != null) {
             permanentControlSupport.applyCreateToken(gameData, playerId, WORDS_OF_WILDING_BEAR,
-                    1, sourceSetCode);
+                    1, pendingCreateBear.sourceSetCode());
             return;
         }
 
-        List<PendingNextDrawDamageReplacement> pendingDamage = gameData.pendingNextDrawDamage.get(playerId);
-        if (pendingDamage != null && !pendingDamage.isEmpty()) {
-            PendingNextDrawDamageReplacement replacement = pendingDamage.removeFirst();
-            if (pendingDamage.isEmpty()) {
-                gameData.pendingNextDrawDamage.remove(playerId);
-            }
+        List<FloatingContinuousEffect> pendingDamage = nextDrawReplacements(gameData, playerId,
+                RegisterNextDrawDamageReplacementEffect.class);
+        if (!pendingDamage.isEmpty()) {
+            FloatingContinuousEffect replacement = pendingDamage.getFirst();
+            gameData.endFloatingEffect(replacement);
             resolveNextDrawDamage(gameData, playerId, replacement);
             return;
         }
 
-        Integer pendingReturnPermanents = gameData.pendingNextDrawReturnPermanents.remove(playerId);
-        if (pendingReturnPermanents != null) {
-            if (pendingReturnPermanents > 1) {
-                gameData.pendingNextDrawReturnPermanents.put(playerId, pendingReturnPermanents - 1);
-            }
+        if (useNextDrawReplacement(gameData, playerId,
+                RegisterNextDrawReturnPermanentsReplacementEffect.class) != null) {
             eachPlayerReturnsPermanentToHandEffectHandler.beginReplacement(gameData, "Words of Wind");
             return;
         }
 
-        Integer pendingDiscardOpponents = gameData.pendingNextDrawDiscardOpponents.remove(playerId);
-        if (pendingDiscardOpponents != null) {
-            if (pendingDiscardOpponents > 1) {
-                gameData.pendingNextDrawDiscardOpponents.put(playerId, pendingDiscardOpponents - 1);
-            }
+        if (useNextDrawReplacement(gameData, playerId,
+                RegisterNextDrawDiscardOpponentsReplacementEffect.class) != null) {
             playerInteractionSupport.startNextEachPlayerDiscard(gameData,
                     DiscardFollowUp.eachPlayer(opponentsInApnapOrder(gameData, playerId), playerId, 1));
             return;
@@ -856,7 +854,7 @@ public class DrawService {
             }
         }
 
-        UUID replacementController = gameData.drawReplacementTargetToController.get(playerId);
+        UUID replacementController = drawRedirectController(gameData, playerId);
         if (replacementController != null && !gameData.drawRedirectsAppliedToCurrentDraw.contains(playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             String controllerName = gameData.playerIdToName.get(replacementController);
@@ -947,17 +945,53 @@ public class DrawService {
         return opponents;
     }
 
-    private void resolveNextDrawDamage(GameData gameData, UUID playerId,
-                                       PendingNextDrawDamageReplacement replacement) {
+    private void resolveNextDrawDamage(GameData gameData, UUID playerId, FloatingContinuousEffect replacement) {
+        var damage = (RegisterNextDrawDamageReplacementEffect) replacement.effect();
         StackEntry damageEntry = new StackEntry(
                 StackEntryType.ACTIVATED_ABILITY,
-                replacement.sourceCard(),
+                damage.sourceCard(),
                 playerId,
-                replacement.sourceCard().getName() + "'s draw replacement",
+                damage.sourceCard().getName() + "'s draw replacement",
                 List.of(),
-                replacement.targetId(),
+                damage.targetId(),
                 replacement.sourcePermanentId());
-        damageSupport.resolveAnyTargetDamage(gameData, damageEntry, replacement.targetId(), 2, false);
+        damageSupport.resolveAnyTargetDamage(gameData, damageEntry, damage.targetId(), 2, false);
+    }
+
+    /**
+     * The player who draws instead of {@code playerId} under a Plagiarize-style redirect (the newest one when several
+     * apply), or {@code null} when none does.
+     */
+    private UUID drawRedirectController(GameData gameData, UUID playerId) {
+        List<FloatingContinuousEffect> redirects = gameData.floatingEffectsOnPlayer(playerId, RedirectDrawsEffect.class);
+        return redirects.isEmpty() ? null : redirects.getLast().controllerId();
+    }
+
+    /**
+     * The "the next time you would draw a card this turn" replacement effects of {@code type} that apply to
+     * {@code playerId}'s draws, oldest first. Each is one floating effect on the drawing player that ends at cleanup or
+     * as it replaces a draw (CR 614.1a).
+     */
+    private List<FloatingContinuousEffect> nextDrawReplacements(GameData gameData, UUID playerId,
+                                                                Class<? extends CardEffect> type) {
+        return gameData.floatingEffectsOnPlayer(playerId, type);
+    }
+
+    private boolean hasNextDrawReplacement(GameData gameData, UUID playerId, Class<? extends CardEffect> type) {
+        return gameData.hasFloatingEffectOnPlayer(playerId, type);
+    }
+
+    /**
+     * Applies the oldest "next time you would draw" replacement of {@code type} on {@code playerId}: it has done its
+     * work, so it ends. Returns its payload, or {@code null} when there is none.
+     */
+    private <T extends CardEffect> T useNextDrawReplacement(GameData gameData, UUID playerId, Class<T> type) {
+        List<FloatingContinuousEffect> replacements = nextDrawReplacements(gameData, playerId, type);
+        if (replacements.isEmpty()) {
+            return null;
+        }
+        gameData.endFloatingEffect(replacements.getFirst());
+        return type.cast(replacements.getFirst().effect());
     }
 
     public void resolveDrawCardWithoutStaticReplacementCheck(GameData gameData, UUID playerId) {
@@ -973,7 +1007,7 @@ public class DrawService {
             return;
         }
 
-        UUID replacementController = gameData.drawReplacementTargetToController.get(playerId);
+        UUID replacementController = drawRedirectController(gameData, playerId);
         if (replacementController != null && !gameData.drawRedirectsAppliedToCurrentDraw.contains(playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             String controllerName = gameData.playerIdToName.get(replacementController);
@@ -1387,9 +1421,9 @@ public class DrawService {
 
         Card exiled = deck.removeFirst();
         exileService.exileCard(gameData, playerId, exiled, source.getId());
-        gameData.exilePlayPermissions.put(exiled.getId(), playerId);
-        gameData.exilePlayPermissionStaticSourcePermanents.put(exiled.getId(), source.getId());
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(exiled.getId());
+        gameData.grantExilePlayPermission(exiled.getId(),
+                new ExilePlayPermissionEffect(playerId).withStaticSourcePermanentId(source.getId()),
+                null, playerId, Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(playerName + " exiles ").card(exiled)
@@ -1936,28 +1970,27 @@ public class DrawService {
         if (wordsOfWildingSource != null) {
             options.put(WORDS_OF_WILDING_NAME, wordsOfWildingSource.getId());
         }
-        List<PendingNextDrawDamageReplacement> pendingDamage = gameData.pendingNextDrawDamage.get(playerId);
-        if (pendingDamage != null) {
-            Set<UUID> seenTargets = new java.util.HashSet<>();
-            for (PendingNextDrawDamageReplacement replacement : List.copyOf(pendingDamage)) {
-                if (!seenTargets.add(replacement.targetId())) {
-                    continue;
-                }
-                Permanent targetPermanent = gameQueryService.findPermanentById(gameData, replacement.targetId());
-                String targetName = targetPermanent != null
-                        ? targetPermanent.getCard().getName()
-                        : gameData.playerIdToName.getOrDefault(replacement.targetId(), "target");
-                String label = WORDS_OF_WAR_NAME + " — " + targetName;
-                for (int suffix = 2; options.containsKey(label); suffix++) {
-                    label = WORDS_OF_WAR_NAME + " — " + targetName + " (" + suffix + ")";
-                }
-                options.put(label, replacement.targetId());
+        Set<UUID> seenTargets = new java.util.HashSet<>();
+        for (FloatingContinuousEffect pending : nextDrawReplacements(gameData, playerId,
+                RegisterNextDrawDamageReplacementEffect.class)) {
+            var replacement = (RegisterNextDrawDamageReplacementEffect) pending.effect();
+            if (!seenTargets.add(replacement.targetId())) {
+                continue;
             }
+            Permanent targetPermanent = gameQueryService.findPermanentById(gameData, replacement.targetId());
+            String targetName = targetPermanent != null
+                    ? targetPermanent.getCard().getName()
+                    : gameData.playerIdToName.getOrDefault(replacement.targetId(), "target");
+            String label = WORDS_OF_WAR_NAME + " — " + targetName;
+            for (int suffix = 2; options.containsKey(label); suffix++) {
+                label = WORDS_OF_WAR_NAME + " — " + targetName + " (" + suffix + ")";
+            }
+            options.put(label, replacement.targetId());
         }
-        if (gameData.pendingNextDrawReturnPermanents.containsKey(playerId)) {
+        if (hasNextDrawReplacement(gameData, playerId, RegisterNextDrawReturnPermanentsReplacementEffect.class)) {
             options.put(WORDS_OF_WIND_NAME, WORDS_OF_WIND_CHOICE_ID);
         }
-        if (gameData.pendingNextDrawDiscardOpponents.containsKey(playerId)) {
+        if (hasNextDrawReplacement(gameData, playerId, RegisterNextDrawDiscardOpponentsReplacementEffect.class)) {
             options.put(WORDS_OF_WASTE_NAME, WORDS_OF_WASTE_CHOICE_ID);
         }
         return options;
@@ -1965,34 +1998,25 @@ public class DrawService {
 
     /** Applies the chosen Words of War, Words of Wind or Words of Waste replacement, if the id names one. */
     private boolean applyChosenNextDrawWordsReplacement(GameData gameData, UUID playerId, UUID choiceId) {
-        if (choiceId.equals(WORDS_OF_WIND_CHOICE_ID) && gameData.pendingNextDrawReturnPermanents.containsKey(playerId)) {
-            int pending = gameData.pendingNextDrawReturnPermanents.remove(playerId);
-            if (pending > 1) {
-                gameData.pendingNextDrawReturnPermanents.put(playerId, pending - 1);
-            }
+        if (choiceId.equals(WORDS_OF_WIND_CHOICE_ID)
+                && useNextDrawReplacement(gameData, playerId,
+                RegisterNextDrawReturnPermanentsReplacementEffect.class) != null) {
             eachPlayerReturnsPermanentToHandEffectHandler.beginReplacement(gameData, WORDS_OF_WIND_NAME);
             return true;
         }
-        if (choiceId.equals(WORDS_OF_WASTE_CHOICE_ID) && gameData.pendingNextDrawDiscardOpponents.containsKey(playerId)) {
-            int pending = gameData.pendingNextDrawDiscardOpponents.remove(playerId);
-            if (pending > 1) {
-                gameData.pendingNextDrawDiscardOpponents.put(playerId, pending - 1);
-            }
+        if (choiceId.equals(WORDS_OF_WASTE_CHOICE_ID)
+                && useNextDrawReplacement(gameData, playerId,
+                RegisterNextDrawDiscardOpponentsReplacementEffect.class) != null) {
             playerInteractionSupport.startNextEachPlayerDiscard(gameData,
                     DiscardFollowUp.eachPlayer(opponentsInApnapOrder(gameData, playerId), playerId, 1));
             return true;
         }
-        List<PendingNextDrawDamageReplacement> pendingDamage = gameData.pendingNextDrawDamage.get(playerId);
-        if (pendingDamage != null) {
-            for (PendingNextDrawDamageReplacement replacement : pendingDamage) {
-                if (replacement.targetId().equals(choiceId)) {
-                    pendingDamage.remove(replacement);
-                    if (pendingDamage.isEmpty()) {
-                        gameData.pendingNextDrawDamage.remove(playerId);
-                    }
-                    resolveNextDrawDamage(gameData, playerId, replacement);
-                    return true;
-                }
+        for (FloatingContinuousEffect replacement : nextDrawReplacements(gameData, playerId,
+                RegisterNextDrawDamageReplacementEffect.class)) {
+            if (((RegisterNextDrawDamageReplacementEffect) replacement.effect()).targetId().equals(choiceId)) {
+                gameData.endFloatingEffect(replacement);
+                resolveNextDrawDamage(gameData, playerId, replacement);
+                return true;
             }
         }
         return false;
@@ -2001,24 +2025,19 @@ public class DrawService {
     /** Applies one queued Words of Worship or Words of Wilding replacement chosen by the drawing player. */
     private boolean applyChosenWordsReplacement(GameData gameData, UUID playerId, Permanent source) {
         String sourceName = source.getCard().getName();
-        if (sourceName.equals(WORDS_OF_WORSHIP_NAME) && gameData.pendingNextDrawGainLife.containsKey(playerId)) {
-            int remaining = gameData.pendingNextDrawGainLife.get(playerId);
-            if (remaining > 1) {
-                gameData.pendingNextDrawGainLife.put(playerId, remaining - 1);
-            } else {
-                gameData.pendingNextDrawGainLife.remove(playerId);
-            }
+        if (sourceName.equals(WORDS_OF_WORSHIP_NAME)
+                && useNextDrawReplacement(gameData, playerId, RegisterNextDrawGainLifeReplacementEffect.class) != null) {
             lifeSupport.applyGainLife(gameData, playerId, 5, WORDS_OF_WORSHIP_NAME);
             return true;
         }
-        List<String> pendingBears = gameData.pendingNextDrawCreateBears.get(playerId);
-        if (sourceName.equals(WORDS_OF_WILDING_NAME) && pendingBears != null && !pendingBears.isEmpty()) {
-            String sourceSetCode = pendingBears.removeFirst();
-            if (pendingBears.isEmpty()) {
-                gameData.pendingNextDrawCreateBears.remove(playerId);
+        if (sourceName.equals(WORDS_OF_WILDING_NAME)) {
+            RegisterNextDrawCreateBearReplacementEffect bear = useNextDrawReplacement(gameData, playerId,
+                    RegisterNextDrawCreateBearReplacementEffect.class);
+            if (bear != null) {
+                permanentControlSupport.applyCreateToken(gameData, playerId, WORDS_OF_WILDING_BEAR, 1,
+                        bear.sourceSetCode());
+                return true;
             }
-            permanentControlSupport.applyCreateToken(gameData, playerId, WORDS_OF_WILDING_BEAR, 1, sourceSetCode);
-            return true;
         }
         return false;
     }
@@ -2337,23 +2356,19 @@ public class DrawService {
 
     /** Applies one pending Mangara's Tome replacement for the chosen pile to this draw. */
     public void resolveChosenDrawFromExiledPile(GameData gameData, UUID playerId, UUID pileSourceId) {
-        List<UUID> pendingPileDraws = gameData.pendingNextDrawFromExiledPile.get(playerId);
-        if (pendingPileDraws == null || !pendingPileDraws.remove(pileSourceId)) {
-            throw new IllegalStateException("That draw replacement is no longer available");
-        }
-        if (pendingPileDraws.isEmpty()) {
-            gameData.pendingNextDrawFromExiledPile.remove(playerId);
-        }
+        FloatingContinuousEffect pending = nextDrawReplacements(gameData, playerId,
+                RegisterNextDrawFromExiledPileReplacementEffect.class).stream()
+                .filter(floating -> pileSourceId.equals(
+                        ((RegisterNextDrawFromExiledPileReplacementEffect) floating.effect()).pileSourceId()))
+                .findFirst().orElseThrow(() -> new IllegalStateException("That draw replacement is no longer available"));
+        gameData.endFloatingEffect(pending);
         resolveDrawFromExiledPile(gameData, playerId, pileSourceId);
     }
 
     /** Applies the competing draw replacement selected by the player who would draw (CR 616.1). */
     public void resolveChosenDrawReplacementSource(GameData gameData, UUID playerId, UUID sourcePermanentId) {
-        if (sourcePermanentId.equals(playerId) && gameData.pendingNextDrawFromOutsideGame.containsKey(playerId)) {
-            Integer pendingOutsideGame = gameData.pendingNextDrawFromOutsideGame.remove(playerId);
-            if (pendingOutsideGame > 1) {
-                gameData.pendingNextDrawFromOutsideGame.put(playerId, pendingOutsideGame - 1);
-            }
+        if (sourcePermanentId.equals(playerId) && useNextDrawReplacement(gameData, playerId,
+                RegisterNextDrawFromOutsideGameReplacementEffect.class) != null) {
             resolveNextDrawFromOutsideGame(gameData, playerId);
             return;
         }
@@ -2459,13 +2474,11 @@ public class DrawService {
 
     /** Applies the delayed library-look replacement selected by the player who would draw. */
     public void resolveChosenNextDrawLookAtTop(GameData gameData, UUID playerId, int count) {
-        List<Integer> replacements = gameData.pendingNextDrawLookAtTop.get(playerId);
-        if (replacements == null || !replacements.remove(Integer.valueOf(count))) {
-            throw new IllegalStateException("That draw replacement is no longer available");
-        }
-        if (replacements.isEmpty()) {
-            gameData.pendingNextDrawLookAtTop.remove(playerId);
-        }
+        FloatingContinuousEffect pending = nextDrawReplacements(gameData, playerId,
+                RegisterNextDrawLookAtTopReplacementEffect.class).stream()
+                .filter(floating -> ((RegisterNextDrawLookAtTopReplacementEffect) floating.effect()).x() == count)
+                .findFirst().orElseThrow(() -> new IllegalStateException("That draw replacement is no longer available"));
+        gameData.endFloatingEffect(pending);
         resolveNextDrawLookAtTop(gameData, playerId, count);
     }
 
@@ -2521,8 +2534,7 @@ public class DrawService {
 
         Card exiled = deck.removeFirst();
         exileService.exileCard(gameData, playerId, exiled);
-        gameData.exilePlayPermissions.put(exiled.getId(), playerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(exiled.getId());
+        gameData.grantExilePlayPermission(exiled.getId(), playerId, Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(playerName + " exiles ").card(exiled)
@@ -2816,8 +2828,7 @@ public class DrawService {
         for (int i = 0; i < count; i++) {
             Card exiled = deck.removeFirst();
             exileService.exileCard(gameData, playerId, exiled);
-            gameData.exilePlayPermissions.put(exiled.getId(), playerId);
-            gameData.exilePlayPermissionsExpireEndOfTurn.add(exiled.getId());
+            gameData.grantExilePlayPermission(exiled.getId(), playerId, Duration.UNTIL_END_OF_TURN);
         }
 
         gameLogService.append(gameData, GameLog.textCardText(

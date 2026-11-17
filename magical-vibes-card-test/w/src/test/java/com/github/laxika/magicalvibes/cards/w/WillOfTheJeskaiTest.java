@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 @CardUsed({WillOfTheJeskai.class, EdgarMarkov.class, GrizzlyBears.class, Shock.class, Recollect.class})
 class WillOfTheJeskaiTest extends BaseCardTest {
@@ -53,7 +54,7 @@ class WillOfTheJeskaiTest extends BaseCardTest {
 
         castMode(1);
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(shock.getId()).doesNotContain(bears.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).contains(shock.getId()).doesNotContain(bears.getId());
     }
 
     @Test
@@ -92,7 +93,7 @@ class WillOfTheJeskaiTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(shock.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).contains(shock.getId());
         assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
     }
 
@@ -173,7 +174,7 @@ class WillOfTheJeskaiTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         assertThatThrownBy(() -> harness.castFlashback(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).doesNotContain(spell.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).doesNotContain(spell.getId());
     }
 
     @Test

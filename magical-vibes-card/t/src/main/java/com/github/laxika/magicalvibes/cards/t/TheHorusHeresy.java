@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesCreatureToDestroyEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -36,7 +36,7 @@ public class TheHorusHeresy extends Card {
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         addTrigger(Triggers.chapter(1),
                 GainControlOfTargetEffect.withTargetPredicate(
-                        ControlDuration.WHILE_SOURCE_REMAINS, nonlegendaryCreatureOpponent));
+                        Duration.WHILE_SOURCE_REMAINS, nonlegendaryCreatureOpponent));
         setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(
                         new PermanentPredicateTargetFilter(

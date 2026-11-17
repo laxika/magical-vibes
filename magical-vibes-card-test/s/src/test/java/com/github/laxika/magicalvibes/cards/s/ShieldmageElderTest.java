@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.d.DaruHealer;
 import com.github.laxika.magicalvibes.cards.g.GoblinSharpshooter;
@@ -98,7 +99,7 @@ class ShieldmageElderTest extends BaseCardTest {
         activateAbility(elder, 1, glorySeeker.getId(), elder.getId(), wizard1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.targetSpellDamagePreventionShields)
+        assertThat(gd.shields(TargetSpellDamagePreventionShield.class))
                 .anyMatch(shield -> shield.spellCardId().equals(glorySeeker.getId()));
     }
 

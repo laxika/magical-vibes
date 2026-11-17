@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -105,8 +106,8 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
                         gameData.addToExile(ownerId, leavingCard, sourcePermanentId);
                     }
                     if (e.controllerMayCastWithAnyMana() && gameData.findExiledCard(leavingCard.getId()) != null) {
-                        gameData.exilePlayPermissions.put(leavingCard.getId(), entry.getControllerId());
-                        gameData.exilePlayAnyManaTypeWhileExiled.add(leavingCard.getId());
+                        gameData.grantExilePlayPermission(leavingCard.getId(), entry.getControllerId(), Duration.PERMANENT);
+                        gameData.updateExilePlayPermission(leavingCard.getId(), granted -> granted.withAnyManaType(true));
                     }
                 }
             }

@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 @CardUsed({TheFugitiveDoctor.class, Shock.class, GrizzlyBears.class, Preordain.class})
 class TheFugitiveDoctorTest extends BaseCardTest {
@@ -49,7 +50,7 @@ class TheFugitiveDoctorTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.cardsGrantedFlashbackCostsUntilEndOfTurn).containsEntry(shock.getId(), "{2}{R}{G}");
+        assertThat(gd.grantedFlashbackCost(shock.getId())).isEqualTo("{2}{R}{G}");
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);
@@ -102,7 +103,7 @@ class TheFugitiveDoctorTest extends BaseCardTest {
         }
         resolveAllTriggers();
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).doesNotContain(preordain.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).doesNotContain(preordain.getId());
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
     }
@@ -130,9 +131,10 @@ class TheFugitiveDoctorTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(preordain.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.cardsGrantedFlashbackCostsUntilEndOfTurn)
-                .containsEntry(preordain.getId(), "{2}{R}{G}")
-                .doesNotContainKeys(shock.getId(), bears.getId(), opposingPreordain.getId());
+        assertThat(gd.grantedFlashbackCost(preordain.getId())).isEqualTo("{2}{R}{G}");
+        assertThat(gd.grantedFlashbackCost(shock.getId())).isNull();
+        assertThat(gd.grantedFlashbackCost(bears.getId())).isNull();
+        assertThat(gd.grantedFlashbackCost(opposingPreordain.getId())).isNull();
     }
 
     @Test
@@ -148,12 +150,12 @@ class TheFugitiveDoctorTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, findPermanent(player1, "Clue").getId());
         harness.handleMultipleCardsChosen(player1, List.of(preordain.getId()));
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).doesNotContain(preordain.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).doesNotContain(preordain.getId());
 
         harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).doesNotContain(preordain.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).doesNotContain(preordain.getId());
         assertThat(findPermanents(player1, "Clue")).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
@@ -188,8 +190,8 @@ class TheFugitiveDoctorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFlashback(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInGraveyard(player1, "Shock");
-        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).doesNotContain(shock.getId());
-        assertThat(gd.cardsGrantedFlashbackCostsUntilEndOfTurn).doesNotContainKey(shock.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.FLASHBACK)).doesNotContain(shock.getId());
+        assertThat(gd.grantedFlashbackCost(shock.getId())).isNull();
     }
 
     private void grantFlashback(Shock shock) {

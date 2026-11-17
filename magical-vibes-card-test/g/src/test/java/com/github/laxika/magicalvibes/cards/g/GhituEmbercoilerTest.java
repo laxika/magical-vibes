@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -39,8 +40,8 @@ class GhituEmbercoilerTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(greaterManaValue);
-        assertThat(gd.exilePlayPermissions).containsEntry(greaterManaValue.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd).containsKey(greaterManaValue.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(greaterManaValue.getId(), player1.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)).containsKey(greaterManaValue.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(equalManaValue);
     }
 
@@ -207,17 +208,17 @@ class GhituEmbercoilerTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(sought.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(sought.getId(), player1.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.UPKEEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(sought.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(sought.getId(), player1.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(sought.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(sought.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(sought);
     }
 

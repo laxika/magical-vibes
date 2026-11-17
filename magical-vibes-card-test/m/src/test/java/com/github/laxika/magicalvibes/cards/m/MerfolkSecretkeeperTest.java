@@ -29,7 +29,7 @@ class MerfolkSecretkeeperTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrderElementsOf(milled);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -65,7 +65,7 @@ class MerfolkSecretkeeperTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrderElementsOf(milled);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -82,7 +82,7 @@ class MerfolkSecretkeeperTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrderElementsOf(milled);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -100,7 +100,7 @@ class MerfolkSecretkeeperTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -121,7 +121,7 @@ class MerfolkSecretkeeperTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
         assertThat(gd.stack).isEmpty();
     }
 
@@ -138,6 +138,6 @@ class MerfolkSecretkeeperTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 }

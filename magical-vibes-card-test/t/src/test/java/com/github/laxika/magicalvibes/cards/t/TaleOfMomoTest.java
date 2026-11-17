@@ -197,8 +197,8 @@ class TaleOfMomoTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(ally);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(ally);
-        assertThat(gd.exilePlayPermissions.get(ally.getId())).isEqualTo(player2.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(ally.getId());
+        assertThat(gd.exilePlayPermissionHolder(ally.getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(ally.getId());
     }
 
     @Test

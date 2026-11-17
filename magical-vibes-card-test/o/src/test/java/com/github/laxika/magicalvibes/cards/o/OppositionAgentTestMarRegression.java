@@ -56,8 +56,8 @@ class OppositionAgentTestMarRegression extends BaseCardTest {
             assertThat(entry.faceDown()).isFalse();
             assertThat(entry.ownerId()).isEqualTo(player2.getId());
         });
-        assertThat(gd.exilePlayPermissions).containsEntry(chosenCard.getId(), player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(chosenCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosenCard.getId(), player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(chosenCard.getId());
     }
 
     @Test

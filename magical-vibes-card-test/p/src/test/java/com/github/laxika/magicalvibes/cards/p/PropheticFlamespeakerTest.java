@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -55,9 +56,9 @@ class PropheticFlamespeakerTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(top.getId()));
-        assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(top.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(top.getId());
+        assertThat(gd.exilePlayPermissionHolder(top.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(top.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(top.getId());
     }
 
     @Test
@@ -67,13 +68,13 @@ class PropheticFlamespeakerTest extends BaseCardTest {
         Card top = putSpellOnTop("Exiled Spell");
 
         resolveCombatDamageTrigger();
-        assertThat(gd.exilePlayPermissions).containsKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(top.getId());
 
         harness.inMutationScope(
                 () -> GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(top.getId());
     }
 
     @Test
@@ -90,7 +91,7 @@ class PropheticFlamespeakerTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
-        assertThat(gd.exilePlayPermissions).containsEntry(first.getId(), player1.getId())
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
     }
 

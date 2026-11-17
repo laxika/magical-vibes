@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -17,7 +17,7 @@ public class MetallicMastery extends Card {
 
     public MetallicMastery() {
         target(TargetFilters.artifact())
-                .addSpellEffect(new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
+                .addSpellEffect(new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }

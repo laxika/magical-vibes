@@ -34,7 +34,7 @@ class RemedyTest extends BaseCardTest {
 
         assertThat(first.getDamagePreventionShield()).isEqualTo(1);
         assertThat(second.getDamagePreventionShield()).isEqualTo(2);
-        assertThat(gd.playerDamagePreventionShields).containsEntry(player1.getId(), 1)
+        assertThat(gd.playerDamagePreventionShields()).containsEntry(player1.getId(), 1)
                 .containsEntry(player2.getId(), 1);
         harness.assertInGraveyard(player1, "Remedy");
     }
@@ -69,7 +69,7 @@ class RemedyTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, spider.getId());
         assertThat(spider.getMarkedDamage()).isEqualTo(1);
         assertThat(spider.getDamagePreventionShield()).isZero();
-        assertThat(gd.playerDamagePreventionShields).containsEntry(player2.getId(), 2);
+        assertThat(gd.playerDamagePreventionShields()).containsEntry(player2.getId(), 2);
     }
 
     @Test
@@ -99,7 +99,7 @@ class RemedyTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(spider.getDamagePreventionShield()).isZero();
-        assertThat(gd.playerDamagePreventionShields).isEmpty();
+        assertThat(gd.playerDamagePreventionShields()).isEmpty();
     }
 
     @Test
@@ -111,7 +111,7 @@ class RemedyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Remedy");
-        assertThat(gd.playerDamagePreventionShields).isEmpty();
+        assertThat(gd.playerDamagePreventionShields()).isEmpty();
     }
 
     @Test

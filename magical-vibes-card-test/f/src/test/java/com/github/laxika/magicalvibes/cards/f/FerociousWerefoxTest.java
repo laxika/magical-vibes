@@ -42,7 +42,7 @@ class FerociousWerefoxTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -114,7 +114,7 @@ class FerociousWerefoxTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Monster")).isZero();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

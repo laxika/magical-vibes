@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.CombatDamagePreventionTokenShield;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -31,8 +32,12 @@ public class PreventAllCombatDamageToControllerAndCreateTokensEffectHandler
             return;
         }
         var e = (PreventAllCombatDamageToControllerAndCreateTokensEffect) effect;
-        gameData.combatDamagePreventionTokenShields.putIfAbsent(entry.getControllerId(),
-                new CombatDamagePreventionTokenShield(e.token(), entry.getCard().getSetCode()));
+        if (gameData.combatDamagePreventionTokenShield(entry.getControllerId()) == null) {
+            gameData.addShield(entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                    entry.getControllerId(),
+                    new CombatDamagePreventionTokenShield(e.token(), entry.getCard().getSetCode()),
+                    Duration.UNTIL_END_OF_TURN);
+        }
         gameLogService.append(gameData, GameLog.text(
                 "All combat damage that would be dealt to you this turn is prevented. "
                         + "Create one token for each damage prevented."));

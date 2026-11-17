@@ -37,7 +37,7 @@ class BilboBagginsBurglarTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -93,7 +93,7 @@ class BilboBagginsBurglarTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
         harness.assertNotOnBattlefield(player1, "Bilbo Baggins, Burglar");
         harness.assertNotInGraveyard(player1, "Bilbo Baggins, Burglar");
     }
@@ -119,6 +119,6 @@ class BilboBagginsBurglarTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 }

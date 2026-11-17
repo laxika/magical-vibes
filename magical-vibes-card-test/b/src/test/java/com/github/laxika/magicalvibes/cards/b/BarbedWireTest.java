@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.cards.k.KarnSilverGolem;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -53,7 +54,7 @@ class BarbedWireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
-        assertThat(gd.sourceNextDamageToAnyTargetShields)
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class))
                 .noneMatch(shield -> shield.sourceId().equals(wire.getId()));
     }
 
@@ -74,7 +75,7 @@ class BarbedWireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 19);
-        assertThat(gd.sourceNextDamageToAnyTargetShields)
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class))
                 .noneMatch(shield -> shield.sourceId().equals(activatedWire.getId()));
     }
 

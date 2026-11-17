@@ -41,11 +41,11 @@ class NarsetEnlightenedMasterTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(spell.getId(), creature.getId(), land.getId(), otherSpell.getId());
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(spell.getId(), player1.getId())
                 .containsEntry(otherSpell.getId(), player1.getId())
                 .doesNotContainKeys(creature.getId(), land.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost)
+        assertThat(gd.exilePlayWithoutPayingCardIds())
                 .contains(spell.getId(), otherSpell.getId())
                 .doesNotContain(creature.getId(), land.getId());
     }
@@ -68,7 +68,7 @@ class NarsetEnlightenedMasterTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(spell.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(spell.getId());
     }
 
     @Test
@@ -102,7 +102,7 @@ class NarsetEnlightenedMasterTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery-speed");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
-        assertThat(gd.exilePlayPermissions).containsEntry(spell.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(spell.getId(), player1.getId());
     }
 
     @Test
@@ -138,8 +138,8 @@ class NarsetEnlightenedMasterTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(spell.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(spell.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(spell.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(spell.getId());
         harness.addMana(player1, ManaColor.RED, 1);
         assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId(), player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -182,8 +182,8 @@ class NarsetEnlightenedMasterTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(modalCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(modalCard.getId(), player1.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(modalCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(modalCard.getId(), player1.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(modalCard.getId());
     }
 
     @Test

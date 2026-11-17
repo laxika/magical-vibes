@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
@@ -32,7 +32,7 @@ public class WakeTheDragon extends Card {
                 false, false,
                 List.of(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                                GainControlOfTargetEffect.withTargetPredicate(ControlDuration.PERMANENT,
+                                GainControlOfTargetEffect.withTargetPredicate(Duration.PERMANENT,
                                         new PermanentAllOfPredicate(List.of(
                                                 new PermanentIsArtifactPredicate(),
                                                 new PermanentControlledByTriggeringPlayerPredicate()))))),

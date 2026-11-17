@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -32,6 +31,6 @@ public class RootwiseSurvivor extends Card {
                         new AnimatePermanentsEffect(0, 0, List.of(CardSubtype.ELEMENTAL), Set.of(),
                                 null, Set.of(), GrantScope.TARGET, Duration.PERMANENT),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET,
-                                GrantDuration.UNTIL_YOUR_NEXT_TURN)));
+                                Duration.UNTIL_YOUR_NEXT_TURN)));
     }
 }

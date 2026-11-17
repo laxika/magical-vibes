@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AmyPond;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -39,7 +40,7 @@ class RoryWilliamsTest extends BaseCardTest {
     void castingFromExileDoesNotPutTheLastCenturionTriggerOnTheStack() {
         RoryWilliams rory = new RoryWilliams();
         harness.setExile(player1, List.of(rory));
-        gd.exilePlayPermissions.put(rory.getId(), player1.getId());
+        gd.grantExilePlayPermission(rory.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -70,7 +71,7 @@ class RoryWilliamsTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(amy));
         RoryWilliams rory = new RoryWilliams();
         harness.setExile(player1, List.of(rory));
-        gd.exilePlayPermissions.put(rory.getId(), player1.getId());
+        gd.grantExilePlayPermission(rory.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -106,7 +107,7 @@ class RoryWilliamsTest extends BaseCardTest {
     void castingFromExileDoesNotExileAgainOrInvestigate() {
         RoryWilliams rory = new RoryWilliams();
         harness.setExile(player1, List.of(rory));
-        gd.exilePlayPermissions.put(rory.getId(), player1.getId());
+        gd.grantExilePlayPermission(rory.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castFromExile(player1, rory.getId(), player2.getId());

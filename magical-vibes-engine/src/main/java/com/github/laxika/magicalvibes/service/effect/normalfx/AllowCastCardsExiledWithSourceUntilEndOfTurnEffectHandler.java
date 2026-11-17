@@ -54,14 +54,14 @@ public class AllowCastCardsExiledWithSourceUntilEndOfTurnEffectHandler implement
         }
         UUID grantId = UUID.randomUUID();
         if (!e.targetSpecificCard()) {
-            gameData.exileCastWildcardPermissionsUntilEndOfTurn.add(new GameData.ExileCastWildcardPermission(
+            gameData.grantExileCastWildcardPermission(new GameData.ExileCastWildcardPermission(
                     grantId, sourcePermanentId, entry.getCard().getId(), entry.getControllerId(), e.ownOnly(),
                     e.filter(), e.withoutPayingManaCost(), e.putOnBottomOfOwnersLibrary()));
         } else if (matchingEntries.isEmpty()) {
             return;
         }
         for (ExiledCardEntry matchingEntry : matchingEntries) {
-            gameData.exileCastPermissionsUntilEndOfTurn.add(new GameData.ExileCastPermission(
+            gameData.grantExileCastPermission(new GameData.ExileCastPermission(
                     grantId, sourcePermanentId, entry.getControllerId(), matchingEntry.card().getId(),
                     e.withoutPayingManaCost(), e.putOnBottomOfOwnersLibrary()));
         }

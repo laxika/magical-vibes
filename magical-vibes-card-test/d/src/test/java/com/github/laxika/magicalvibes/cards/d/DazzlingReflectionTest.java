@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.Card;
@@ -42,7 +43,7 @@ class DazzlingReflectionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(21);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -56,7 +57,7 @@ class DazzlingReflectionTest extends BaseCardTest {
         resolveCombat(player2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(24);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -71,7 +72,7 @@ class DazzlingReflectionTest extends BaseCardTest {
         resolveCombat(player2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(22);
-        assertThat(gd.sourceNextDamageToAnyTargetShields)
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class))
                 .anyMatch(shield -> shield.sourceId().equals(target.getId()));
     }
 
@@ -117,7 +118,7 @@ class DazzlingReflectionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test

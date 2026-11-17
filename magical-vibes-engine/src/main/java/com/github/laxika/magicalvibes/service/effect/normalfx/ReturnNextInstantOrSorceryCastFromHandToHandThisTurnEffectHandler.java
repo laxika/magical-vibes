@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnNextInstantOrSorceryCastFromHandToHandThisTurnEffect;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 /** Registers Soulfire Grand Master's one-shot return-to-hand replacement. */
 @Component
@@ -18,7 +19,6 @@ public class ReturnNextInstantOrSorceryCastFromHandToHandThisTurnEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount
-                .merge(entry.getControllerId(), 1, Integer::sum);
+        gameData.addPlayerEffect(entry, effect, entry.getControllerId(), Duration.UNTIL_END_OF_TURN);
     }
 }

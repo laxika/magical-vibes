@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
@@ -49,9 +50,8 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
 
         // Determine the affected player: if target is a player, use directly;
         // if target is a planeswalker, use its controller
-        List<SourceNextDamageToAnyTargetShield> shieldsAtStart =
-                List.copyOf(gameData.sourceNextDamageToAnyTargetShields);
-        List<SourceNextDamageToAnyTargetShield> restoredShields = new ArrayList<>();
+        List<FloatingContinuousEffect> shieldsAtStart = gameData.shieldEffects(SourceNextDamageToAnyTargetShield.class);
+        List<FloatingContinuousEffect> restoredShields = new ArrayList<>();
         UUID affectedPlayerId;
         boolean targetIsPlayer = gameData.playerIds.contains(targetId);
         if (targetIsPlayer) {
@@ -85,7 +85,7 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
                 damageSupport.dealCreatureDamage(gameData, entry, creature, rawDamage);
             }
         }
-        gameData.sourceNextDamageToAnyTargetShields.removeAll(restoredShields);
+        restoredShields.forEach(gameData::endFloatingEffect);
 
         gameOutcomeService.checkWinCondition(gameData);
     
@@ -95,13 +95,14 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
      * All damage this effect deals is one simultaneous event, so a "next time a source would deal
      * damage" shield consumed by an earlier recipient must still apply to the remaining recipients.
      */
-    private void restoreSimultaneousShields(GameData gameData, List<SourceNextDamageToAnyTargetShield> shieldsAtStart,
-                                            List<SourceNextDamageToAnyTargetShield> restoredShields) {
-        for (SourceNextDamageToAnyTargetShield shield : shieldsAtStart) {
-            if (shield.remainingDamage() == Integer.MAX_VALUE
-                    && !gameData.sourceNextDamageToAnyTargetShields.contains(shield)) {
-                gameData.sourceNextDamageToAnyTargetShields.addFirst(shield);
-                restoredShields.add(shield);
+    private void restoreSimultaneousShields(GameData gameData, List<FloatingContinuousEffect> shieldsAtStart,
+                                            List<FloatingContinuousEffect> restoredShields) {
+        List<FloatingContinuousEffect> inForce = gameData.shieldEffects(SourceNextDamageToAnyTargetShield.class);
+        for (FloatingContinuousEffect fe : shieldsAtStart) {
+            if (((SourceNextDamageToAnyTargetShield) fe.effect()).remainingDamage() == Integer.MAX_VALUE
+                    && !inForce.contains(fe)) {
+                gameData.reinstateShield(fe);
+                restoredShields.add(fe);
             }
         }
     }

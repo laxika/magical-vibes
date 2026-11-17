@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookToExileMayCastFreeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
@@ -50,9 +51,8 @@ public class ConjureRandomCardFromSpellbookToExileMayCastFreeUntilEndOfTurnEffec
         conjuredCard.setOwnerId(entry.getControllerId());
         conjuredCard.freeze();
         exileService.exileCard(gameData, entry.getControllerId(), conjuredCard);
-        gameData.exilePlayPermissions.put(conjuredCard.getId(), entry.getControllerId());
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(conjuredCard.getId());
-        gameData.exilePlayWithoutPayingManaCost.add(conjuredCard.getId());
+        gameData.grantExilePlayPermission(conjuredCard.getId(), entry.getControllerId(), Duration.UNTIL_END_OF_TURN);
+        gameData.setExilePlayWithoutPayingManaCost(conjuredCard.getId(), true);
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures a " + conjuredCard.getName()

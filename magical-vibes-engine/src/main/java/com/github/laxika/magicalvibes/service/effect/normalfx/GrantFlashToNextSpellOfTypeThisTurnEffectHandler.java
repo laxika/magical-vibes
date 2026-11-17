@@ -11,6 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Locale;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextMatchingSpellEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @Slf4j
 @Component
@@ -27,7 +31,9 @@ public class GrantFlashToNextSpellOfTypeThisTurnEffectHandler implements NormalE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         GrantFlashToNextSpellOfTypeThisTurnEffect grant = (GrantFlashToNextSpellOfTypeThisTurnEffect) effect;
-        gameData.addNextSpellFlashGrant(entry.getControllerId(), grant.cardType());
+        gameData.addPlayerEffect(entry, new GrantFlashToNextMatchingSpellEffect(grant.cardType() == null
+                ? new CardTruePredicate() : new CardTypePredicate(grant.cardType())),
+                entry.getControllerId(), Duration.UNTIL_MATCHING_SPELL_CAST);
         String typeName = grant.cardType() == null
                 ? "spell" : grant.cardType().name().toLowerCase(Locale.ROOT) + " spell";
         gameLogService.append(gameData, GameLog.builder()

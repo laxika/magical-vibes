@@ -83,7 +83,7 @@ class CoriMountainMonasteryTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(top);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
 
         harness.castFromExile(player1, top.getId(), player2.getId());
         harness.passBothPriorities();
@@ -184,7 +184,7 @@ class CoriMountainMonasteryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.castFromExile(player1, top.getId());
 
@@ -211,10 +211,10 @@ class CoriMountainMonasteryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
 
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
     }
 

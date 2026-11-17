@@ -34,7 +34,7 @@ class GuardianNagaTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -105,7 +105,7 @@ class GuardianNagaTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Guardian Naga");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
         assertThat(gd.findExiledCard(artifact.getCard().getId())).isNotNull();
     }
 
@@ -128,7 +128,7 @@ class GuardianNagaTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Guardian Naga");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
         assertThat(gd.findExiledCard(response.getId())).isNotNull();
     }
 

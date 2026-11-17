@@ -28,7 +28,7 @@ class JamesWanderingDadTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Clue")).hasSize(2);
         assertThat(gd.findExiledCard(card.getId()).card()).isSameAs(card);
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test

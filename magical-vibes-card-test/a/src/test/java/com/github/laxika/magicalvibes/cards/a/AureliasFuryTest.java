@@ -122,7 +122,7 @@ class AureliasFuryTest extends BaseCardTest {
     @Test
     void redirectedPlayerDamageRestrictsThePlayerActuallyDamaged() {
         AureliasFury fury = new AureliasFury();
-        gd.sourceDamageRedirectShields.add(new SourceDamageRedirectShield(
+        gd.addShield(new SourceDamageRedirectShield(
                 player1.getId(), fury.getId(), 2, player2.getId()));
         harness.setHand(player1, List.of(fury));
         harness.addMana(player1, ManaColor.RED, 1);

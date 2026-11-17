@@ -37,7 +37,7 @@ class ChancellorOfTalesTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Human")).isEqualTo(2);
         assertThat(gd.exiledCards).hasSize(1);
         assertThat(gd.findExiledCard(adventureCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(adventureCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(adventureCard.getId())).isEqualTo(player1.getId());
     }
 
     @Test

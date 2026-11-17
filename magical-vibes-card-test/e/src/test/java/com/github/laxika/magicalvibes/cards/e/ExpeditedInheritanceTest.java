@@ -40,7 +40,7 @@ class ExpeditedInheritanceTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(first, second);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(third);
-        assertThat(gd.exilePlayPermissions).containsEntry(first.getId(), player2.getId())
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(first.getId(), player2.getId())
                 .containsEntry(second.getId(), player2.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
@@ -77,7 +77,7 @@ class ExpeditedInheritanceTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(top);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player2.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player2.getId());
     }
 
     @Test
@@ -102,7 +102,7 @@ class ExpeditedInheritanceTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsTop);
-        assertThat(gd.exilePlayPermissions).containsEntry(first.getId(), player1.getId())
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
     }
 
@@ -161,10 +161,10 @@ class ExpeditedInheritanceTest extends BaseCardTest {
 
         harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player2.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player2.getId());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(top);
     }
 
@@ -182,12 +182,12 @@ class ExpeditedInheritanceTest extends BaseCardTest {
 
         harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(top.getId(), player1.getId());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(top.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
     }
 

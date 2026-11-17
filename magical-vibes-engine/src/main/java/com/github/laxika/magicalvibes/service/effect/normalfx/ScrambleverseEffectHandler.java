@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ScrambleverseEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 public class ScrambleverseEffectHandler implements NormalEffectHandlerBean {
 
     private static final GainControlOfTargetEffect CONTROL_EFFECT =
-            new GainControlOfTargetEffect(ControlDuration.PERMANENT);
+            new GainControlOfTargetEffect(Duration.PERMANENT);
 
     private final CreatureControlService creatureControlService;
     private final TapUntapSupport tapUntapSupport;
@@ -57,7 +57,7 @@ public class ScrambleverseEffectHandler implements NormalEffectHandlerBean {
         for (Permanent permanent : nonlands) {
             UUID chosen = players.get(ThreadLocalRandom.current().nextInt(players.size()));
             creatureControlService.applyControlEffect(gameData, chosen, permanent, CONTROL_EFFECT,
-                    ControlDuration.PERMANENT.toDuration(), null, entry.getCard().getName());
+                    Duration.PERMANENT, null, entry.getCard().getName());
         }
 
         // Untap only after every control change, so untap triggers see the final controllers.

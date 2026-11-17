@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -28,7 +28,7 @@ public class JaceThePerfectedMind extends Card {
         // +1: Until your next turn, up to one target creature gets -3/-0.
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new BoostTargetCreatureEffect(-3, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN)),
+                List.of(new BoostTargetCreatureEffect(-3, 0, Duration.UNTIL_YOUR_NEXT_TURN)),
                 "+1: Until your next turn, up to one target creature gets -3/-0.",
                 null, +1, null, null,
                 List.<TargetFilter>of(TargetFilters.creature()),

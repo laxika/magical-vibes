@@ -36,7 +36,7 @@ class LovestruckBeastTest extends BaseCardTest {
         assertThat(human.getEffectivePower()).isEqualTo(1);
         assertThat(human.getEffectiveToughness()).isEqualTo(1);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test

@@ -33,7 +33,7 @@ class MoonstoneHarshMistressTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(discarded);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(discarded);
-        assertThat(gd.exilePlayPermissions).containsEntry(discarded.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(discarded.getId(), player1.getId());
 
         harness.castFromExile(player1, discarded.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(discarded);
@@ -50,7 +50,7 @@ class MoonstoneHarshMistressTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(discarded);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(discarded.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(discarded.getId());
     }
 
     @Test
@@ -68,7 +68,7 @@ class MoonstoneHarshMistressTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(discarded);
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(discarded);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(discarded.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(discarded.getId());
     }
 
     @Test
@@ -99,13 +99,13 @@ class MoonstoneHarshMistressTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(discarded.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(discarded.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(discarded.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(discarded.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(discarded);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(discarded.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(discarded.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, discarded.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -121,7 +121,7 @@ class MoonstoneHarshMistressTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(discarded);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(discarded.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(discarded.getId());
     }
 
     @Test
@@ -139,7 +139,7 @@ class MoonstoneHarshMistressTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(discarded);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(discarded.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(discarded.getId());
     }
 
     private Forest discardCard() {

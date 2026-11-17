@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -46,8 +47,7 @@ public class ExileTopCardMayPlayThisTurnAndBoostTargetCreatureByManaValueEffectH
 
         Card topCard = deck.removeFirst();
         exileService.exileCard(gameData, controllerId, topCard);
-        gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
+        gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
         gameLogService.append(gameData, GameLog.builder()
                 .text(gameData.playerIdToName.get(controllerId) + " exiles ").card(topCard)
                 .text(" from the top of their library (may play it this turn).").build());

@@ -158,6 +158,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.clearAllSourceTracking();
         gameData.stolenCreatures.clear();
         gameData.expireFloatingEffects(floating -> true);
+        gameData.scheduledFloatingEffects.clear();
         gameData.exileReturnOnPermanentLeave.clear();
         gameData.sourceLinkedAnimations.clear();
         gameData.pendingMayAbilities.clear();
@@ -182,18 +183,10 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.openingHandUpkeepTriggers.clear();
         gameData.mainPhasesBegunThisTurn = 0;
         gameData.postcombatMainPhasesBegunThisTurn = 0;
-        gameData.exilePlayPermissionSpellFilters.clear();
-        gameData.exilePlayPermissionsExpireAtEndStep.clear();
         gameData.playersWhoCastFirstSpellInGame.clear();
-        gameData.pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn.clear();
         gameData.activeAdditionalCountersForEnchantmentCreatureEntryBatch.clear();
-        gameData.playerNextDamageFromMatchingSourcesPrevented.clear();
         gameData.playersWithHandRevealed.clear();
         gameData.resetPriorityToActivePlayer();
-        gameData.drawReplacementTargetToController.clear();
-        gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.clear();
-        gameData.cardsRevealedInHandUntilOwnerNextTurn.clear();
-        gameData.cardsCantBePlayedInHandUntilOwnerNextTurn.clear();
         gameData.activatedAbilityUsesThisTurn.clear();
         gameData.crimeCandidatesThisTurn.clear();
         gameData.playersWhoActivatedExhaustAbilityThisTurn.clear();
@@ -265,21 +258,10 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.pendingReturnToHandOnDiscardType = null;
         gameData.pendingTransformOnCreatureDiscard = null;
         gameData.pendingUntapOnDiscardType = null;
-        gameData.combatDamageRedirectTarget = null;
-        gameData.combatDamageRedirectPlayer = null;
-        gameData.globalDamagePreventionShield = 0;
-        gameData.damageRedirectShields.clear();
-        gameData.creaturesProtectedFromTargetingDamage.clear();
-        gameData.targetSorceryDamageRedirectShields.clear();
-        gameData.channelHarmShields.clear();
-        gameData.playersRedirectingAllCreatureDamage.clear();
-        gameData.creatureControllerDamageRedirectShields.clear();
-        gameData.damagePreventionLifeGainShields.clear();
         gameData.combatDamageExemptPredicate = null;
         gameData.pendingAttackingCopyOpponents.clear();
         gameData.pendingAttackingCopyChoices.clear();
         gameData.combatDamageExemptControllerId = null;
-        gameData.allPermanentsEnterTappedThisTurn = false;
         gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.clear();
         gameData.permanentsWithPlusOneCountersPutByPlayerThisTurn.clear();
         gameData.playersWhoCreatedTokensThisTurn.clear();
@@ -313,8 +295,6 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
             gameData.cardsDrawnLastTurn.put(playerId, 0);
             gameData.cardsDiscardedThisTurn.put(playerId, 0);
             gameData.nonlandCardsDiscardedThisTurn.put(playerId, 0);
-            gameData.playerDamagePreventionShields.put(playerId, 0);
-            gameData.playerCombatDamagePreventionShields.put(playerId, 0);
             gameData.permanentsEnteredBattlefieldThisTurn.put(playerId, Collections.synchronizedList(new ArrayList<>()));
             gameData.permanentsEnteredSincePlayerLastTurnEnded.remove(playerId);
             gameData.faceDownCreaturesEnteredBattlefieldThisTurn.put(playerId, Collections.synchronizedList(new ArrayList<>()));
@@ -328,9 +308,6 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
             gameData.creatureSubtypeDeathPowerThisTurn.remove(playerId);
             gameData.creatureCardsDamagedThisTurnBySourcePermanent.put(playerId, ConcurrentHashMap.newKeySet());
             gameData.creatureCardsDamagedThisTurnBySource.put(playerId, ConcurrentHashMap.newKeySet());
-            gameData.playerSourceDamagePreventionIds.put(playerId, ConcurrentHashMap.newKeySet());
-            gameData.playerSourceDamagePreventionLifeGainIds.put(playerId, ConcurrentHashMap.newKeySet());
-            gameData.playerColorDamagePreventionCount.put(playerId, new ConcurrentHashMap<>());
 
             if (gameData.playerBattlefields.get(playerId) == null) {
                 gameData.playerBattlefields.put(playerId, gameData.newBattlefieldList());

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfRandomOpponentLibraryAndGrantPlayPermissionUntilEndOfTurnEffect;
@@ -51,10 +52,9 @@ public class ExileTopCardOfRandomOpponentLibraryAndGrantPlayPermissionUntilEndOf
 
         Card topCard = library.removeFirst();
         exileService.exileCard(gameData, opponentId, topCard, entry.getSourcePermanentId());
-        gameData.exilePlayPermissions.put(topCard.getId(), entry.getControllerId());
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
+        gameData.grantExilePlayPermission(topCard.getId(), entry.getControllerId(), Duration.UNTIL_END_OF_TURN);
         if (!topCard.hasType(CardType.LAND)) {
-            gameData.exilePlayAnyManaType.add(topCard.getId());
+            gameData.grantExileAnyManaType(topCard.getId(), Duration.UNTIL_END_OF_TURN);
         }
         // "When you cast a spell this way" is a delayed triggered ability this resolution creates (CR 603.7a), about the
         // exiled card: it triggers once, this turn, whether or not The Ruinous Powers is still on the battlefield.

@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalCounterToTriggeringCreatureSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToCastSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -38,6 +38,6 @@ public class JadeOrbOfDragonkind extends Card {
                                 new CardSubtypePredicate(CardSubtype.DRAGON))))
                         .paidWithManaFromThis(),
                 new GrantAdditionalCounterToTriggeringCreatureSpellEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
-                new GrantKeywordsToCastSpellEffect(Set.of(Keyword.HEXPROOF), GrantDuration.UNTIL_YOUR_NEXT_TURN));
+                new GrantKeywordsToCastSpellEffect(Set.of(Keyword.HEXPROOF), Duration.UNTIL_YOUR_NEXT_TURN));
     }
 }

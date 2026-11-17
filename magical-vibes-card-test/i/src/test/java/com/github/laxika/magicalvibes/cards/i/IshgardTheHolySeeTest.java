@@ -51,7 +51,7 @@ class IshgardTheHolySeeTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(ishgard.getId()));
-        assertThat(gd.exilePlayPermissions.get(ishgard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(ishgard.getId())).isEqualTo(player1.getId());
 
         harness.castFromExile(player1, ishgard.getId());
 
@@ -128,7 +128,7 @@ class IshgardTheHolySeeTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(artifact);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(ishgard);
-        assertThat(gd.exilePlayPermissions.get(ishgard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(ishgard.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -196,7 +196,7 @@ class IshgardTheHolySeeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(enchantment).doesNotContain(artifact);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(artifact, ishgard);
-        assertThat(gd.exilePlayPermissions.get(ishgard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(ishgard.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -215,7 +215,7 @@ class IshgardTheHolySeeTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(ishgard);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(artifact).doesNotContain(ishgard);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(ishgard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(ishgard.getId());
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(artifact);
     }
 }

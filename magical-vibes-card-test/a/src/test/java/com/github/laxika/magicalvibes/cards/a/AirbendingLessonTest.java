@@ -30,7 +30,7 @@ class AirbendingLessonTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.findExiledCard(target.getOriginalCard().getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(target.getOriginalCard().getId()))
+        assertThat(gd.exilePlayPermissionHolder(target.getOriginalCard().getId()))
                 .isEqualTo(player2.getId());
         harness.assertInHand(player1, "Forest");
     }

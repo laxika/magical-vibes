@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithNormalCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -53,7 +55,7 @@ public class MayCastExiledCardWithNormalCostHandler implements MayEffectHandlerB
                     .anyMatch(candidate -> candidate instanceof MayCastExiledCardWithNormalCostEffect other
                             && other.offerGroupId().equals(effect.offerGroupId())));
             if (effect.anyManaType()) {
-                gameData.exilePlayAnyManaType.add(ability.targetCardId());
+                gameData.grantExileAnyManaType(ability.targetCardId(), Duration.UNTIL_END_OF_TURN);
             }
             Permanent source = ability.sourcePermanentId() == null
                     ? ability.sourcePermanentSnapshot()
@@ -79,10 +81,9 @@ public class MayCastExiledCardWithNormalCostHandler implements MayEffectHandlerB
     }
     private void revokeResolutionLifeCastPermission(GameData gameData, PendingMayAbility ability) {
         if (ability.targetCardId() != null
-                && gameData.exilePlayForLifeEqualToManaValue.remove(ability.targetCardId())) {
-            gameData.exilePlayPermissions.remove(ability.targetCardId());
-            gameData.exilePlayPermissionsExpireEndOfTurn.remove(ability.targetCardId());
-            gameData.exilePlayCostModifiers.remove(ability.targetCardId());
+                && gameData.exilePlayPermission(ability.targetCardId())
+                .filter(ExilePlayPermissionEffect::forLifeEqualToManaValue).isPresent()) {
+            gameData.endExilePlayPermission(ability.targetCardId());
         }
     }
 }

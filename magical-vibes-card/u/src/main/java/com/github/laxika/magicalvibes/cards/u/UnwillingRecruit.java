@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -19,7 +19,7 @@ public class UnwillingRecruit extends Card {
 
     public UnwillingRecruit() {
         target(TargetFilters.creature())
-                .addSpellEffect(new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
+                .addSpellEffect(new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))
                 .addSpellEffect(new BoostTargetCreatureEffect(new XValue(), new Fixed(0)))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));

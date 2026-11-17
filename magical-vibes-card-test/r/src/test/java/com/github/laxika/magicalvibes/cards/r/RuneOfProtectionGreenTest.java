@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
 import com.github.laxika.magicalvibes.cards.l.Lull;
 import com.github.laxika.magicalvibes.cards.s.SerraZealot;
@@ -44,7 +45,7 @@ class RuneOfProtectionGreenTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, swine.getId());
 
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(swine.getId()));
     }
 
@@ -64,7 +65,7 @@ class RuneOfProtectionGreenTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -84,7 +85,7 @@ class RuneOfProtectionGreenTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 17);
-        assertThat(gd.playerSourceNextDamageShields).anyMatch(s -> s.sourceId().equals(chosen.getId()));
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).anyMatch(s -> s.sourceId().equals(chosen.getId()));
     }
 
     @Test
@@ -110,7 +111,7 @@ class RuneOfProtectionGreenTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, greenSpell.getId());
 
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(greenSpell.getId()));
     }
 
@@ -125,7 +126,7 @@ class RuneOfProtectionGreenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
         assertThat(gameLogContains("No permanents on the battlefield")).isTrue();
     }
 
@@ -140,14 +141,14 @@ class RuneOfProtectionGreenTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, swine.getId());
 
-        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isNotEmpty();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -182,7 +183,7 @@ class RuneOfProtectionGreenTest extends BaseCardTest {
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().removePermanentToGraveyard(gd, swine));
         harness.assertInGraveyard(player2, "Argothian Swine");
-        assertThat(gd.playerSourceNextDamageShields).anyMatch(s -> s.sourceId().equals(swine.getId()));
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).anyMatch(s -> s.sourceId().equals(swine.getId()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

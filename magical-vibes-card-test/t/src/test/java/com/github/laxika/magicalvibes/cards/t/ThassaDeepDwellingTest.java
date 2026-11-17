@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -147,7 +146,7 @@ class ThassaDeepDwellingTest extends BaseCardTest {
         gd.stolenCreatures.put(courser.getId(), player2.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 "Control change", null, player1.getId(),
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT), courser.getId(),
+                new GainControlOfTargetEffect(Duration.PERMANENT), courser.getId(),
                 null, null, Duration.PERMANENT, 0));
         courser.tap();
         courser.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);

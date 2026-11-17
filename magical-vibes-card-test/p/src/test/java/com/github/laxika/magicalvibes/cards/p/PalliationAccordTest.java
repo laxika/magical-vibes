@@ -72,7 +72,7 @@ class PalliationAccordTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(accord.getCounterCount(CounterType.PALLIATION)).isZero();
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isEqualTo(1);
 
         harness.setHand(player2, List.of(new CacklingFlames(), new CacklingFlames()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -83,7 +83,7 @@ class PalliationAccordTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isZero();
     }
 
     @Test
@@ -107,7 +107,7 @@ class PalliationAccordTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isEqualTo(1);
     }
 
     @Test
@@ -152,7 +152,7 @@ class PalliationAccordTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
         harness.assertLife(player1, 19);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isZero();
     }
 
     @Test
@@ -182,7 +182,7 @@ class PalliationAccordTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.activateAbility(player1, 0, 0, null, null);
         resolveAllTriggers();
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isEqualTo(1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);

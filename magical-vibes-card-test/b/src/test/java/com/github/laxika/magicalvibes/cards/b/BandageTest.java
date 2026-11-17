@@ -161,7 +161,7 @@ class BandageTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
 
     @Test
@@ -181,7 +181,7 @@ class BandageTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         harness.assertLife(player2, 19);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(0);
     }
 
     @Test
@@ -288,7 +288,7 @@ class BandageTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         Permanent afterCleanup = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(afterCleanup.getDamagePreventionShield()).isEqualTo(0);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(0);
     }
 
     @Test

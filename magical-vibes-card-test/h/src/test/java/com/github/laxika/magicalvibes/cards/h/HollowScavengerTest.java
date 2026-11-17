@@ -27,7 +27,7 @@ class HollowScavengerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Food");
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -130,7 +130,7 @@ class HollowScavengerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, scavenger)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, scavenger)).isEqualTo(2);
         assertThat(gd.findExiledCard(adventure.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(adventure.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(adventure.getId())).isEqualTo(player1.getId());
 
         harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);

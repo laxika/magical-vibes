@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ class ImpendingFluxTest extends BaseCardTest {
 
         GrizzlyBears outsideHandSpell = new GrizzlyBears();
         gd.addToExile(player1.getId(), outsideHandSpell);
-        gd.exilePlayPermissions.put(outsideHandSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(outsideHandSpell.getId(), player1.getId(), Duration.PERMANENT);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -97,7 +98,7 @@ class ImpendingFluxTest extends BaseCardTest {
         for (int i = 0; i < 2; i++) {
             GrizzlyBears spell = new GrizzlyBears();
             gd.addToExile(player1.getId(), spell);
-            gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+            gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
             harness.castFromExile(player1, spell.getId());
             harness.passBothPriorities();
         }

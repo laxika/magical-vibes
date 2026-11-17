@@ -30,7 +30,7 @@ class GiantKillerTest extends BaseCardTest {
 
         assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).doesNotContain(wurm);
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNotNull();
-        assertThat(harness.getGameData().exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(harness.getGameData().exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -86,7 +86,7 @@ class GiantKillerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Giant Killer");
         harness.assertInGraveyard(player2, "Craw Wurm");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -120,7 +120,7 @@ class GiantKillerTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Craw Wurm");
         harness.assertInGraveyard(player1, "Giant Killer");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

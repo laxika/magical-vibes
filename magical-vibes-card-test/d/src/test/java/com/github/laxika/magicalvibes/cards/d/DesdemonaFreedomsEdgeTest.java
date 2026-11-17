@@ -70,7 +70,7 @@ class DesdemonaFreedomsEdgeTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(firstExiledCard.getId(), secondExiledCard.getId());
-        assertThat(gd.graveyardCardCastPermissionsUntilEndOfTurn).doesNotContainKey(creature.getId());
+        assertThat(graveyardCastPermissionsByCard()).doesNotContainKey(creature.getId());
     }
 
     @Test

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -86,8 +87,8 @@ public class EcologicalAppreciationSearchChoiceInteractionHandler
                     .toList();
             for (Card card : foundInLibrary) {
                 exileService.exileCard(gameData, controllerId, card);
-                gameData.exilePlayPermissions.put(card.getId(), interaction.decisionPlayerId());
-                gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
+                gameData.grantExilePlayPermission(card.getId(), interaction.decisionPlayerId(), Duration.PERMANENT);
+                gameData.updateExilePlayPermission(card.getId(), granted -> granted.withAnyManaType(true));
                 gameLogService.append(gameData, GameLog.textCardText(
                         gameData.playerIdToName.get(controllerId) + " exiles ", card,
                         " and " + gameData.playerIdToName.get(interaction.decisionPlayerId())

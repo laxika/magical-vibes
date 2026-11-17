@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -37,8 +38,8 @@ class FlorianVoldarenScionTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiled);
-        assertThat(gd.exilePlayPermissions.get(exiled.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolder(exiled.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(exiled.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, bottom);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -208,8 +209,8 @@ class FlorianVoldarenScionTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiled);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiled.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(exiled.getId());
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 1);
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 1);
         assertThatThrownBy(() -> harness.castFromExile(player1, exiled.getId()))

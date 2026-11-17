@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.o.OrcishArtillery;
@@ -37,7 +38,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -55,7 +56,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -69,7 +70,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("No permanents on the battlefield"));
     }
 
@@ -84,14 +85,14 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, zombie.getId());
 
-        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isNotEmpty();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -110,7 +111,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
         declareAttackers(player2, List.of(1));
 
         harness.assertLife(player1, 17);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(shield -> shield.sourceId().equals(chosen.getId()));
     }
 
@@ -132,7 +133,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 17);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -161,7 +162,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -182,7 +183,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(shield -> shield.sourceId().equals(artillery.getId()));
     }
 
@@ -229,6 +230,6 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 18);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 }

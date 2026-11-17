@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import java.util.UUID;
 
 /**
@@ -22,7 +23,7 @@ public record PlayerNextDamageRedirectShield(
         UUID protectedPlayerId,
         int remainingAmount,
         UUID redirectTargetPermanentId
-) {
+) implements CardEffect {
     /** Returns a new shield with the remaining amount reduced by the given consumed amount. */
     public PlayerNextDamageRedirectShield withReducedAmount(int consumed) {
         return new PlayerNextDamageRedirectShield(protectedPlayerId, remainingAmount - consumed, redirectTargetPermanentId);

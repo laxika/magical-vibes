@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToCreatedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -24,7 +24,7 @@ public class GripOfPhyresis extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                 "Target must be an Equipment"
         )).addSpellEffect(SequenceEffect.of(
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                new GainControlOfTargetEffect(Duration.PERMANENT),
                 new CreateTokenEffect("Phyrexian Germ", 0, 0, CardColor.BLACK,
                         List.of(CardSubtype.PHYREXIAN, CardSubtype.GERM), Set.of(), Set.of()),
                 new AttachTargetEquipmentToCreatedPermanentEffect()));

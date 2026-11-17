@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.f.FireElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -95,7 +96,7 @@ class BurrentonForgeTenderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, redAttacker.getId());
 
         assertThat(gqs.isPreventedFromDealingDamage(gd, redAttacker)).isTrue();
-        assertThat(gd.playerSourceDamagePreventionIds.getOrDefault(player1.getId(), java.util.Set.of()))
+        assertThat(Prevention.sourceIds(gd, player1.getId()))
                 .doesNotContain(redAttacker.getId());
     }
 

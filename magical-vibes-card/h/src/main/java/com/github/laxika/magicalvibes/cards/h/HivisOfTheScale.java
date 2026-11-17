@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -23,7 +23,7 @@ public class HivisOfTheScale extends Card {
         // and Hivis of the Scale remains tapped."
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_TAPPED)),
+                List.of(new GainControlOfTargetEffect(Duration.WHILE_SOURCE_TAPPED)),
                 "{T}: Gain control of target Dragon for as long as you control Hivis of the Scale and Hivis of the Scale remains tapped.",
                 new PermanentPredicateTargetFilter(
                         new PermanentHasSubtypePredicate(CardSubtype.DRAGON),

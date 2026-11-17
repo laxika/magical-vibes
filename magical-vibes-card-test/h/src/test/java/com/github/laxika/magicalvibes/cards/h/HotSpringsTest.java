@@ -32,8 +32,8 @@ class HotSpringsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(forest.isTapped()).isTrue();
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
-        assertThat(gd.globalDamagePreventionShield).isZero();
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.globalDamagePreventionShield()).isZero();
     }
 
     @Test

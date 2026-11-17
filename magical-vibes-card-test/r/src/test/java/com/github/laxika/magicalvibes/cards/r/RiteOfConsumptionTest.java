@@ -101,7 +101,7 @@ class RiteOfConsumptionTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new SafeholdSentry()); // 2/2
-        gd.playerDamagePreventionShields.put(player2.getId(), 2);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 2);
 
         harness.setHand(player1, List.of(new RiteOfConsumption()));
         addMana();
@@ -130,7 +130,7 @@ class RiteOfConsumptionTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new SafeholdSentry());
-        gd.playerDamagePreventionShields.put(player2.getId(), 1);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 1);
         harness.setHand(player1, List.of(new RiteOfConsumption()));
         addMana();
 

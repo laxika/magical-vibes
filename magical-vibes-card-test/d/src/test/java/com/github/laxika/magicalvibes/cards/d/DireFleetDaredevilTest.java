@@ -56,7 +56,7 @@ class DireFleetDaredevilTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(spell.getId()));
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().exilePlayAnyManaType).contains(spell.getId());
+        assertThat(harness.getGameData().exilePlayAnyManaTypeCardIds()).contains(spell.getId());
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castFromExile(player1, spell.getId());
         harness.passBothPriorities();

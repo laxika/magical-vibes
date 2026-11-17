@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.testutil;
 
+import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.PlayerSourceDamagePrevention;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -62,6 +66,30 @@ public final class Prevention {
             }
         });
         return result;
+    }
+
+    /** The ids of the sources {@code playerId}'s "prevent all damage a source of your choice would deal to you" names. */
+    public static Set<UUID> sourceIds(GameData gd, UUID playerId) {
+        Set<UUID> result = new HashSet<>();
+        gd.floatingPlayerEffects(playerId, PlayerSourceDamagePrevention.class)
+                .forEach(prevention -> result.addAll(((PlayerSourceDamagePrevention) prevention).sourceIds()));
+        return result;
+    }
+
+    /** The players that have a chosen-source prevention in force. */
+    public static Set<UUID> playersWithSourcePrevention(GameData gd) {
+        return gd.playersWithFloatingEffect(PlayerSourceDamagePrevention.class);
+    }
+
+    /** The players the floating effects of {@code type} name, once for each effect, oldest first. */
+    public static List<UUID> playersOf(GameData gd, Class<? extends CardEffect> type) {
+        return gd.floatingEffectsOfTypes(type).stream().map(FloatingContinuousEffect::affectedPlayerId).toList();
+    }
+
+    /** The highest "damage can't reduce your life total below" floor of {@code playerId}'s turn-long effects, or 0. */
+    public static int damageLifeFloor(GameData gd, UUID playerId) {
+        return gd.floatingPlayerEffects(playerId, DamageLifeFloorUntilEndOfTurnEffect.class).stream()
+                .mapToInt(effect -> ((DamageLifeFloorUntilEndOfTurnEffect) effect).floor()).max().orElse(0);
     }
 
     /** The colors of every floating "prevent all damage from [colors] sources" effect. */

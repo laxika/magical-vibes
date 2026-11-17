@@ -43,7 +43,7 @@ class MemoryVesselTest extends BaseCardTest {
         assertThat(gd.findExiledCard(player1Spell.getId())).isNotNull();
         assertThat(gd.findExiledCard(player2Land.getId())).isNotNull();
         assertThat(gd.findExiledCard(player2Spell.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(player1Spell.getId(), player1.getId())
                 .containsEntry(player2Spell.getId(), player2.getId());
         assertThat(playersAffectedBy(PlayersCantPlayCardsFromHandUntilNextTurnEffect.class))
@@ -93,7 +93,7 @@ class MemoryVesselTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.passUntil(player1, TurnStep.UPKEEP);
 
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .doesNotContainKey(player1Top.getId())
                 .doesNotContainKey(player2Top.getId());
         assertThat(playersAffectedBy(PlayersCantPlayCardsFromHandUntilNextTurnEffect.class)).isEmpty();

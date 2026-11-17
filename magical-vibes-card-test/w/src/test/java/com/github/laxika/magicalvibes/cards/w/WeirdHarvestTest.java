@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantSearchLibrariesThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.a.AvenMindcensor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -136,7 +139,8 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WeirdHarvest()));
         harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.GREEN, 4);
-        gd.playersCantSearchLibrariesThisTurn = true;
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
+                new PlayersCantSearchLibrariesThisTurnEffect(), null, Duration.UNTIL_END_OF_TURN));
 
         harness.castAndResolveSorcery(player1, 0, 2);
 
@@ -294,7 +298,8 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new WeirdHarvest()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        gd.playersCantSearchLibrariesThisTurn = true;
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
+                new PlayersCantSearchLibrariesThisTurnEffect(), null, Duration.UNTIL_END_OF_TURN));
 
         harness.castAndResolveSorcery(player1, 0, 1);
         resolveAllTriggers();

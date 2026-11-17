@@ -20,8 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>{@code targetGroup} is an activated-ability target-group index, or {@code -1} when the
  * effect uses the card's target binding or the entry's ordinary target list.
  *
- * <p>{@code duration} is {@link GrantDuration#END_OF_TURN} for the overwhelming majority of pumps;
- * {@link GrantDuration#UNTIL_YOUR_NEXT_TURN} routes the modifier into the permanent's
+ * <p>{@code duration} is {@link Duration#END_OF_TURN} for the overwhelming majority of pumps;
+ * {@link Duration#UNTIL_YOUR_NEXT_TURN} routes the modifier into the permanent's
  * until-next-turn bucket instead, so it survives end-of-turn cleanup (Jace, Telepath Unbound's +1).
  *
  * <p>On a block trigger whose card declares no target for it ("whenever this creature blocks …,
@@ -30,7 +30,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  */
 public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
                                         PermanentPredicate filter,
-                                        GrantDuration duration,
+                                        Duration duration,
                                         int targetGroup,
                                         DynamicAmount castTimeXValue)
         implements CreatureBoostEffect, CastTimeXValueEffect {
@@ -38,13 +38,13 @@ public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount 
     private static final int UNBOUND_TARGET_GROUP = -1;
 
     public BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
-                                     PermanentPredicate filter, GrantDuration duration) {
+                                     PermanentPredicate filter, Duration duration) {
         this(powerBoost, toughnessBoost, filter, duration, UNBOUND_TARGET_GROUP, null);
     }
 
     public BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
                                      PermanentPredicate filter) {
-        this(powerBoost, toughnessBoost, filter, GrantDuration.END_OF_TURN);
+        this(powerBoost, toughnessBoost, filter, Duration.UNTIL_END_OF_TURN);
     }
 
     public BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost) {
@@ -52,7 +52,7 @@ public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount 
     }
 
     public BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost, int targetGroup) {
-        this(powerBoost, toughnessBoost, null, GrantDuration.END_OF_TURN, targetGroup, null);
+        this(powerBoost, toughnessBoost, null, Duration.UNTIL_END_OF_TURN, targetGroup, null);
     }
 
     /** Convenience for plain fixed boosts ("gets +2/+2 until end of turn"). */
@@ -66,14 +66,14 @@ public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount 
     }
 
     /** Convenience for fixed boosts with a non-default duration ("gets -2/-0 until your next turn"). */
-    public BoostTargetCreatureEffect(int powerBoost, int toughnessBoost, GrantDuration duration) {
+    public BoostTargetCreatureEffect(int powerBoost, int toughnessBoost, Duration duration) {
         this(new Fixed(powerBoost), new Fixed(toughnessBoost), null, duration);
     }
 
     /** Convenience for an activated ability's positional target group. */
     public static BoostTargetCreatureEffect forTargetGroup(int powerBoost, int toughnessBoost, int targetGroup) {
         return new BoostTargetCreatureEffect(new Fixed(powerBoost), new Fixed(toughnessBoost), null,
-                GrantDuration.END_OF_TURN, targetGroup, null);
+                Duration.UNTIL_END_OF_TURN, targetGroup, null);
     }
 
     /**
@@ -83,7 +83,7 @@ public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount 
     public static BoostTargetCreatureEffect withCastTimeXValue(
             DynamicAmount castTimeXValue, DynamicAmount powerBoost, DynamicAmount toughnessBoost) {
         return new BoostTargetCreatureEffect(powerBoost, toughnessBoost, null,
-                GrantDuration.END_OF_TURN, UNBOUND_TARGET_GROUP, castTimeXValue);
+                Duration.UNTIL_END_OF_TURN, UNBOUND_TARGET_GROUP, castTimeXValue);
     }
 
     @Override

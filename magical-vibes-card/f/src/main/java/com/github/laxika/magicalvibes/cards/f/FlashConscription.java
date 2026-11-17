@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -26,7 +25,7 @@ public class FlashConscription extends Card {
     public FlashConscription() {
         target(TargetFilters.creature())
                 .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addSpellEffect(new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
+                .addSpellEffect(new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
                 .addSpellEffect(new ConditionalEffect(
                         new ColorSpentToCast(ManaColor.WHITE),

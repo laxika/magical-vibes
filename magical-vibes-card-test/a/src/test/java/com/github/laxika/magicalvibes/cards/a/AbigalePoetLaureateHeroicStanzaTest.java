@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -33,9 +34,9 @@ class AbigalePoetLaureateHeroicStanzaTest extends BaseCardTest {
         assertThat(copyId).isNotNull();
         // The prepare-spell copy sits in exile with a play permission for the controller.
         assertThat(gd.findExiledCard(copyId)).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(copyId)).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(copyId)).isEqualTo(player1.getId());
         // Not flagged to expire at end of turn — it persists until cast or Abigale leaves.
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(copyId);
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(copyId);
     }
 
     @Test
@@ -92,7 +93,7 @@ class AbigalePoetLaureateHeroicStanzaTest extends BaseCardTest {
         assertThat(abigale.getPreparedSpellCardId()).isNull();
         // The copy has left exile and its permission is gone.
         assertThat(gd.findExiledCard(copyId)).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(copyId);
     }
 
     @Test
@@ -133,7 +134,7 @@ class AbigalePoetLaureateHeroicStanzaTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(abigale);
         assertThat(gd.findExiledCard(copyId)).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(copyId);
     }
 
     @Test

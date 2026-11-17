@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -10,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.UUID;
 
 /** Registers Words of Wilding's one-shot replacement of the controller's next draw this turn. */
@@ -31,9 +31,9 @@ public class RegisterNextDrawCreateBearReplacementEffectHandler implements Norma
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         String sourceSetCode = entry.getCard() == null ? null : entry.getCard().getSetCode();
-        gameData.pendingNextDrawCreateBears
-                .computeIfAbsent(controllerId, ignored -> Collections.synchronizedList(new ArrayList<>()))
-                .add(sourceSetCode);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), new RegisterNextDrawCreateBearReplacementEffect(sourceSetCode), controllerId,
+                Duration.UNTIL_END_OF_TURN));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.builder()

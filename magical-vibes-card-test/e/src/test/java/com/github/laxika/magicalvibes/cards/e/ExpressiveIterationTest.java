@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -49,8 +50,8 @@ class ExpressiveIterationTest extends BaseCardTest {
         assertThat(deck).contains(second);
         assertThat(deck.get(deck.size() - 1)).isSameAs(second);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(third);
-        assertThat(gd.exilePlayPermissions.get(third.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(third.getId());
+        assertThat(gd.exilePlayPermissionHolder(third.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(third.getId());
         assertThat(deck).hasSize(initialDeckSize - 2);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -75,7 +76,7 @@ class ExpressiveIterationTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(first);
         assertThat(deck).containsExactly(second);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test
@@ -91,11 +92,11 @@ class ExpressiveIterationTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.HandBottomExile(0, 1));
 
-        assertThat(gd.exilePlayPermissions).containsKey(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(exiled.getId());
         harness.inMutationScope(() ->
                 GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiled.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiled);
     }
 

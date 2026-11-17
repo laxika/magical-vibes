@@ -87,7 +87,7 @@ class HeikoYamazakiTheGeneralTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.graveyardPlayPermissions).isEmpty();
+        assertThat(graveyardPlayPermissionsByCard()).isEmpty();
     }
 
     @Test
@@ -172,7 +172,7 @@ class HeikoYamazakiTheGeneralTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.graveyardPlayPermissions).isEmpty();
+        assertThat(graveyardPlayPermissionsByCard()).isEmpty();
     }
 
     @Test
@@ -185,7 +185,7 @@ class HeikoYamazakiTheGeneralTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.graveyardPlayPermissions).isEmpty();
+        assertThat(graveyardPlayPermissionsByCard()).isEmpty();
     }
 
     @Test

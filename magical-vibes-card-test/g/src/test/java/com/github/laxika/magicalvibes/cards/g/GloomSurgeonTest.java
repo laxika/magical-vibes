@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.Malignus;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -82,7 +83,7 @@ class GloomSurgeonTest extends BaseCardTest {
         surgeon.setBlocking(true);
         surgeon.addBlockingTarget(0);
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        gd.damageCantBePreventedThisTurn = true;
+        gd.addShield(new DamageCantBePreventedThisTurnEffect());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);

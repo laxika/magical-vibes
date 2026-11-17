@@ -96,7 +96,7 @@ class AnotherRoundTest extends BaseCardTest {
         gd.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
                 java.util.UUID.randomUUID(), "Control effect", null, player1.getId(),
                 new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
-                        com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
+                        com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT),
                 stolen.getId(), null, null, com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, 0));
         Permanent opposing = harness.addToBattlefieldAndReturn(player2, new ArmoredArmadillo());
         castAnotherRound(1);

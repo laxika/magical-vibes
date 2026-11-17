@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayExiledCostCardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -35,7 +36,6 @@ public class AllowPlayExiledCostCardThisTurnEffectHandler implements NormalEffec
                             UUID.randomUUID(), false)), "Play " + exiled.card().getName() + "?", exiledCardId));
             return;
         }
-        gameData.exilePlayPermissions.put(exiledCardId, entry.getControllerId());
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(exiledCardId);
+        gameData.grantExilePlayPermission(exiledCardId, entry.getControllerId(), Duration.UNTIL_END_OF_TURN);
     }
 }

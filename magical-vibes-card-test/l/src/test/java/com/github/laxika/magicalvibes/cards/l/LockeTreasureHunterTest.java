@@ -56,7 +56,7 @@ class LockeTreasureHunterTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(land);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(spell);
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
-        assertThat(gd.graveyardCastFilterPermissionsThisTurn).hasSize(1);
+        assertThat(gd.graveyardCastFilterPermissions()).hasSize(1);
     }
 
     @Test
@@ -75,7 +75,7 @@ class LockeTreasureHunterTest extends BaseCardTest {
         gs.playFlashbackSpell(gd, player1, shock.getId(), null, player2.getId(), List.of(), null, null);
 
         assertThat(gd.stack).anyMatch(entry -> entry.getCard() == shock);
-        assertThat(gd.graveyardCastFilterPermissionsThisTurn).isEmpty();
+        assertThat(gd.graveyardCastFilterPermissions()).isEmpty();
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

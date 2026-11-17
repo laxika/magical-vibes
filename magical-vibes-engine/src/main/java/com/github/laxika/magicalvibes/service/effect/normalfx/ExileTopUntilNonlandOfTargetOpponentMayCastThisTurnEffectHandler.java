@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandOfTargetOpponentMayCastThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -71,9 +72,8 @@ public class ExileTopUntilNonlandOfTargetOpponentMayCastThisTurnEffectHandler im
             return;
         }
 
-        gameData.exilePlayPermissions.put(nonland.getId(), controllerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(nonland.getId());
-        gameData.exilePlayWithoutPayingManaCost.add(nonland.getId());
+        gameData.grantExilePlayPermission(nonland.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
+        gameData.setExilePlayWithoutPayingManaCost(nonland.getId(), true);
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(opponentName + " exiles cards until ").card(nonland)

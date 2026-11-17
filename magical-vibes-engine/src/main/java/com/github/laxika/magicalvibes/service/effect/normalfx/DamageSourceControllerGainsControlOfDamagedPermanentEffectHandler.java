@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfDamagedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -45,7 +44,7 @@ public class DamageSourceControllerGainsControlOfDamagedPermanentEffectHandler
         if (damagedPermanent == null) return;
 
         creatureControlService.applyControlEffect(gameData, newControllerId, damagedPermanent,
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT,
+                new GainControlOfTargetEffect(Duration.PERMANENT), Duration.PERMANENT,
                 null, entry.getCard().getName());
     }
 }

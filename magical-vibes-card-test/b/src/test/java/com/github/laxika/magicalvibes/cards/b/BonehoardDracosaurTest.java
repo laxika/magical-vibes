@@ -28,7 +28,7 @@ class BonehoardDracosaurTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Dinosaur")).hasSize(1);
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
         assertThat(exiled).hasSize(2);
-        assertThat(exiled).allSatisfy(card -> assertThat(gd.exilePlayPermissions)
+        assertThat(exiled).allSatisfy(card -> assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(card.getId(), player1.getId()));
 
         Permanent dinosaur = findPermanent(player1, "Dinosaur");
@@ -154,7 +154,7 @@ class BonehoardDracosaurTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(land, creature);
-        assertThat(gd.exilePlayPermissions).doesNotContainKeys(land.getId(), creature.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKeys(land.getId(), creature.getId());
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.RED, 1);
         assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))

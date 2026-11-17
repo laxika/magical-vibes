@@ -29,7 +29,7 @@ class WiccanYoungAvengerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
 
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.RED, 1);

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentMayCastWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -56,8 +57,8 @@ public class ExileTargetPermanentMayCastWithoutPayingManaCostEffectHandler imple
 
         UUID ownerId = gameQueryService.findExileOwnerById(gameData, exiledCard.getId());
         if (ownerId != null) {
-            gameData.exilePlayPermissions.put(exiledCard.getId(), ownerId);
-            gameData.exilePlayWithoutPayingManaCost.add(exiledCard.getId());
+            gameData.grantExilePlayPermission(exiledCard.getId(), ownerId, Duration.PERMANENT);
+            gameData.setExilePlayWithoutPayingManaCost(exiledCard.getId(), true);
             String ownerName = gameData.playerIdToName.get(ownerId);
             gameLogService.append(gameData, GameLog.builder()
                     .card(exiledCard)

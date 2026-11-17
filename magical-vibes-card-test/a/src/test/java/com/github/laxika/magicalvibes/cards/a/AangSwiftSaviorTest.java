@@ -42,7 +42,7 @@ class AangSwiftSaviorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(target.getOriginalCard().getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(target.getOriginalCard().getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(target.getOriginalCard().getId())).isEqualTo(player2.getId());
     }
 
     @Test
@@ -70,7 +70,7 @@ class AangSwiftSaviorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(lightningStrike.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(lightningStrike.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(lightningStrike.getId())).isEqualTo(player1.getId());
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(lightningStrike.getId())
                 && entry.getEntryType() == StackEntryType.INSTANT_SPELL);
     }

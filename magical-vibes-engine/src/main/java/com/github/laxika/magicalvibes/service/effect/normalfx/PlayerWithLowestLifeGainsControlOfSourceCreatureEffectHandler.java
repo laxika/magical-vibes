@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithLowestLifeGainsControlOfSourceCreatureEffect;
@@ -57,7 +56,7 @@ public class PlayerWithLowestLifeGainsControlOfSourceCreatureEffectHandler imple
 
     public void giveControl(GameData gameData, StackEntry entry, Permanent source, UUID playerId) {
         creatureControlService.applyControlEffect(gameData, playerId, source,
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                new GainControlOfTargetEffect(Duration.PERMANENT),
                 Duration.PERMANENT, null, entry.getCard().getName());
     }
 

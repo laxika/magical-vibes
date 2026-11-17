@@ -38,8 +38,8 @@ class AuthorOfShadowsTest extends BaseCardTest {
         assertThat(choice.validCardIds()).containsExactlyInAnyOrder(chosen.getId(), notChosen.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(chosen.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(chosen.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, notChosen.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -71,7 +71,7 @@ class AuthorOfShadowsTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownCard);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test
@@ -85,7 +85,7 @@ class AuthorOfShadowsTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.getCardsExiledByPermanent(author.getId())).containsExactly(land);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
         assertThatThrownBy(() -> harness.castFromExile(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -127,7 +127,7 @@ class AuthorOfShadowsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.findExiledCard(chosen.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(chosen.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(chosen.getId());
     }
 
     @Test
@@ -181,7 +181,7 @@ class AuthorOfShadowsTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId())
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId())
                 .doesNotContainKey(notChosen.getId());
     }
 

@@ -17,6 +17,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 /** Resolves Resourceful Collector's perpetual graveyard Food conversion. */
 @Component
@@ -70,7 +71,8 @@ public class PerpetuallyMakeRandomGraveyardPermanentFoodEffectHandler implements
                 break;
             }
         }
-        gameData.graveyardPlayPermissions.put(modifiedCard.getId(), controllerId);
+        gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, false),
+                modifiedCard.getId(), Duration.PERMANENT);
     }
 
     private boolean isEligible(Card card) {

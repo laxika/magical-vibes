@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.y.ThoughtweftsCall;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -35,15 +36,15 @@ class LimitlessRekindlingTest extends BaseCardTest {
         Card exiled = gd.getPlayerExiledCards(player1.getId()).getFirst();
         assertThat(exiled.getName()).isIn("Aquatic Subtlety", "Craterous Stomp", "Limitless Rekindling",
                 "Circadian Struggle", "Elvish Elegy", "Rite of Flame", "Thoughtweft's Call");
-        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(exiled.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiled.getId(), player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(exiled.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(exiled.getId());
 
         harness.inMutationScope(() ->
                 GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiled.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(exiled.getId());
     }
 
     @Test
@@ -58,9 +59,9 @@ class LimitlessRekindlingTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
         assertThat(gd.getTotalSpellsCastThisTurnCount()).isEqualTo(2);
         for (Card exiled : gd.getPlayerExiledCards(player1.getId())) {
-            assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
-            assertThat(gd.exilePlayWithoutPayingManaCost).contains(exiled.getId());
-            assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(exiled.getId());
+            assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiled.getId(), player1.getId());
+            assertThat(gd.exilePlayWithoutPayingCardIds()).contains(exiled.getId());
+            assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(exiled.getId());
         }
     }
 

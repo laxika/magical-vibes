@@ -48,7 +48,7 @@ public class PreventXDamageToTargetCreatureAndRedirectToAnyTargetEffectHandler i
         if (amount <= 0) return;
 
         UUID redirectTargetId = redirectTargets.isEmpty() ? null : redirectTargets.getFirst();
-        gameData.damageRedirectShields.add(new DamageRedirectShield(
+        gameData.addShield(new DamageRedirectShield(
                 entry.getControllerId(), amount, entry.getSourcePermanentId(), entry.getCard(),
                 redirectTargetId, false, protectedTargetId));
 

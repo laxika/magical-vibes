@@ -48,7 +48,7 @@ public class FlipCoinDoubleOrPreventNextCombatDamageFromAttackingCreatureEffectH
             ActionEvents.coinFlipLost(gameData, controllerId);
         }
 
-        gameData.sourceNextDamageToAnyTargetShields.add(wonFlip
+        gameData.addShield(wonFlip
                 ? SourceNextDamageToAnyTargetShield.combatDoubling(attackerId)
                 : SourceNextDamageToAnyTargetShield.combatPrevention(attackerId));
     }

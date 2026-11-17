@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,7 @@ class KlawMasterOfSoundTest extends BaseCardTest {
         Permanent klaw = addCreatureReady(player1, new KlawMasterOfSound());
         GrizzlyBears spell = new GrizzlyBears();
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         prepareMainPhase();
@@ -46,7 +47,7 @@ class KlawMasterOfSoundTest extends BaseCardTest {
         Permanent klaw = addCreatureReady(player1, new KlawMasterOfSound());
         Forest land = new Forest();
         gd.addToExile(player1.getId(), land);
-        gd.exilePlayPermissions.put(land.getId(), player1.getId());
+        gd.grantExilePlayPermission(land.getId(), player1.getId(), Duration.PERMANENT);
 
         prepareMainPhase();
         harness.castFromExile(player1, land.getId());
@@ -68,8 +69,8 @@ class KlawMasterOfSoundTest extends BaseCardTest {
         assertThat(entry).isNotNull();
         assertThat(entry.faceDown()).isTrue();
         assertThat(entry.ownerId()).isEqualTo(player2.getId());
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(topCard.getId());
     }
 
     @Test
@@ -146,7 +147,7 @@ class KlawMasterOfSoundTest extends BaseCardTest {
         Permanent klaw = addCreatureReady(player1, new KlawMasterOfSound());
         GrizzlyBears spell = new GrizzlyBears();
         gd.addToExile(player2.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player2.getId());
+        gd.grantExilePlayPermission(spell.getId(), player2.getId(), Duration.PERMANENT);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

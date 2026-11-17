@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -24,7 +24,7 @@ public class WisdomOfAges extends Card {
                         new CardTypePredicate(CardType.SORCERY))))
                 .returnAll(true)
                 .build());
-        addSpellEffect(new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.REST_OF_GAME));
+        addSpellEffect(new GrantNoMaximumHandSizeEffect(Duration.PERMANENT));
         addSpellEffect(new ExileSpellEffect());
     }
 }

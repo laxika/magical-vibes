@@ -9,13 +9,12 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>Targets a player — pair on a card with a {@code PlayerPredicateTargetFilter} narrowing it to
  * an opponent. At resolution the targeted player picks any number of their creatures through a
  * {@code MultiPermanentChoiceContext.ChooseCreaturesToAttackNextTurn}; the chosen set (possibly
- * empty) is recorded in {@code GameData.chosenAttackersNextTurn}, keyed by that player.
+ * empty) is made an {@link OnlyChosenCreaturesCanAttackEffect} on that player, floating, that applies during that
+ * player's next turn.
  *
  * <p>As the set is recorded, {@code GameData.restrictAttackersNextTurn} makes the delayed triggered ability that
- * destroys each chosen creature that didn't attack at the beginning of that turn's end step (CR 603.7a). When that
- * player's turn begins {@code TurnProgressionService} promotes the set to
- * {@code GameData.chosenAttackersThisTurn}. During that turn
- * {@code AttackLegalityService} bars every creature outside the set from attacking and counts an
+ * destroys each chosen creature that didn't attack at the beginning of that turn's end step (CR 603.7a). During that
+ * turn {@code AttackLegalityService} bars every creature outside the set from attacking and counts an
  * "attacks if able" requirement for every creature inside it — so an empty choice locks combat
  * down entirely.
  */

@@ -55,8 +55,8 @@ class JayaFieryNegotiatorTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
 
-        assertThat(gd.exilePlayPermissions).containsEntry(first.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(second.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(first.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(second.getId());
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castFromExile(player1, first.getId(), player2.getId());
         harness.passBothPriorities();
@@ -127,7 +127,7 @@ class JayaFieryNegotiatorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test
@@ -139,7 +139,7 @@ class JayaFieryNegotiatorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(card);
-        assertThat(gd.exilePlayPermissions).containsEntry(card.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(card.getId(), player1.getId());
     }
 
     @Test

@@ -27,13 +27,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
-import com.github.laxika.magicalvibes.model.NextSpellCostReduction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
 import com.github.laxika.magicalvibes.model.RemoveXCountersFromControlledPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.SacrificeXPermanentsCastingCost;
@@ -113,6 +113,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFreeCastForNextMatchingSpellEffect;
 
 /**
  * Single source of truth for what a spell costs to cast: static cost increases/reductions
@@ -575,7 +577,7 @@ public class CastingCostService {
         delta += PerpetualCardCastCostSupport.increaseFor(gameData, card);
         delta += gameData.perpetualGenericCastCostIncreases.getOrDefault(card.getId(), 0);
         List<CollectedCostModifier> afterOtherModifiers = new ArrayList<>();
-        var exilePlayCostModifier = gameData.exilePlayCostModifiers.get(card.getId());
+        var exilePlayCostModifier = gameData.exilePlayCostModifier(card.getId());
         if (exilePlayCostModifier != null
                 && playerId.equals(exilePlayCostModifier.permittedPlayerId())
                 && !playerId.equals(exilePlayCostModifier.sourceControllerId())) {
@@ -606,15 +608,6 @@ public class CastingCostService {
                 afterOtherModifiers.add(modifier);
             } else {
                 delta += modifier.handler().modifyCost(context, modifier.effect(), modifier.source());
-            }
-        }
-        List<NextSpellCostReduction> reductions = gameData.nextSpellCostReductionsThisTurn.get(playerId);
-        if (reductions != null) {
-            synchronized (reductions) {
-                delta -= reductions.stream()
-                        .filter(reduction -> reduction.cardTypes().stream().anyMatch(card::hasType))
-                        .mapToInt(NextSpellCostReduction::amount)
-                        .sum();
             }
         }
         if (!afterOtherModifiers.isEmpty()) {
@@ -1841,16 +1834,10 @@ public class CastingCostService {
         FreeCastSource source = findFreeCastSource(gameData, playerId, card, sourceZone);
         if (source == null) return false;
         if (source.nextSpellPredicate() != null) {
-            List<CardPredicate> permissions = gameData.nextSpellFreeCastPermissionsThisTurn.get(playerId);
-            if (permissions != null) {
-                synchronized (permissions) {
-                    permissions.removeIf(predicate ->
-                            predicateEvaluationService.matchesCardPredicate(card, predicate, null));
-                    if (permissions.isEmpty()) {
-                        gameData.nextSpellFreeCastPermissionsThisTurn.remove(playerId, permissions);
-                    }
-                }
-            }
+            gameData.floatingEffectsOnPlayer(playerId, GrantFreeCastForNextMatchingSpellEffect.class).stream()
+                    .filter(fe -> predicateEvaluationService.matchesCardPredicate(card,
+                            ((GrantFreeCastForNextMatchingSpellEffect) fe.effect()).predicate(), null))
+                    .forEach(gameData::endFloatingEffect);
         } else if (source.effect() != null && source.effect().oncePerTurn()
                 && source.permanent() != null) {
             gameData.freeCastPermanentUsedThisTurn.add(source.permanent().getId());
@@ -1864,19 +1851,10 @@ public class CastingCostService {
      * uses the permission up.
      */
     public void discardNextSpellFreeCastPermission(GameData gameData, UUID playerId, Card card) {
-        List<CardPredicate> permissions = gameData.nextSpellFreeCastPermissionsThisTurn.get(playerId);
-        if (permissions == null) return;
-        synchronized (permissions) {
-            for (CardPredicate predicate : permissions) {
-                if (predicateEvaluationService.matchesCardPredicate(card, predicate, null)) {
-                    permissions.remove(predicate);
-                    break;
-                }
-            }
-            if (permissions.isEmpty()) {
-                gameData.nextSpellFreeCastPermissionsThisTurn.remove(playerId, permissions);
-            }
-        }
+        gameData.floatingEffectsOnPlayer(playerId, GrantFreeCastForNextMatchingSpellEffect.class).stream()
+                .filter(fe -> predicateEvaluationService.matchesCardPredicate(card,
+                        ((GrantFreeCastForNextMatchingSpellEffect) fe.effect()).predicate(), null))
+                .findFirst().ifPresent(gameData::endFloatingEffect);
     }
 
     private record FreeCastSource(Permanent permanent, AlternativeCostForSpellsEffect effect,
@@ -1903,14 +1881,10 @@ public class CastingCostService {
                 AllowCastSpellsFromHandWithoutPayingManaCostUntilEndOfTurnEffect.class)) {
             return new FreeCastSource(null, null, null);
         }
-        List<CardPredicate> nextSpellPermissions = gameData.nextSpellFreeCastPermissionsThisTurn.get(playerId);
-        if (nextSpellPermissions != null) {
-            synchronized (nextSpellPermissions) {
-                for (CardPredicate predicate : nextSpellPermissions) {
-                    if (predicateEvaluationService.matchesCardPredicate(card, predicate, null)) {
-                        return new FreeCastSource(null, null, predicate);
-                    }
-                }
+        for (var floating : gameData.floatingEffectsOnPlayer(playerId, GrantFreeCastForNextMatchingSpellEffect.class)) {
+            CardPredicate predicate = ((GrantFreeCastForNextMatchingSpellEffect) floating.effect()).predicate();
+            if (predicateEvaluationService.matchesCardPredicate(card, predicate, null)) {
+                return new FreeCastSource(null, null, predicate);
             }
         }
         FreeCastSource emblemSource = findEmblemFreeCastSource(gameData, playerId, card, sourceZone);
@@ -2225,7 +2199,7 @@ public class CastingCostService {
      * Gate) exists and all of its costs (life, sacrifices, taps, mana) are currently payable.
      */
     public boolean canPayAlternateHandCast(GameData gameData, UUID playerId, Card card) {
-        if (gameData.cardsGrantedWarpUntilEndOfTurn.contains(card.getId())) {
+        if (gameData.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.WARP)) {
             return true;
         }
         var grantedEvokeCast = gameQueryService.findGrantedEvokeAlternateCast(gameData, playerId, card);
@@ -2963,7 +2937,7 @@ public class CastingCostService {
      */
     public boolean grantedFlashbackStandsInForPrinted(GameData gameData, UUID playerId, Card card,
                                                       FlashbackCast printed) {
-        if (!gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId())) {
+        if (!gameData.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.FLASHBACK)) {
             return false;
         }
         var printedMana = printed.getCost(ManaCastingCost.class);
@@ -2976,7 +2950,7 @@ public class CastingCostService {
         if (printedMana.isEmpty() || printed.costs().size() != 1) {
             return false;
         }
-        String grantedCostStr = gameData.cardsGrantedFlashbackCostsUntilEndOfTurn.get(card.getId());
+        String grantedCostStr = gameData.grantedFlashbackCost(card.getId());
         if (grantedCostStr == null) {
             grantedCostStr = card.getManaCost();
         }

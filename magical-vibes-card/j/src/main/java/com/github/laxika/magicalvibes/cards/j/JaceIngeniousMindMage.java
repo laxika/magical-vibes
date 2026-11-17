@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -35,7 +35,7 @@ public class JaceIngeniousMindMage extends Card {
         // −9: Gain control of up to three target creatures.
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new GainControlOfTargetEffect(ControlDuration.PERMANENT)),
+                List.of(new GainControlOfTargetEffect(Duration.PERMANENT)),
                 "\u22129: Gain control of up to three target creatures.",
                 TargetFilters.creature(),
                 -9, null, null,

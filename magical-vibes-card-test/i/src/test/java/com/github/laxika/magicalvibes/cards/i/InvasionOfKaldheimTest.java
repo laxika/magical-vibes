@@ -44,7 +44,7 @@ class InvasionOfKaldheimTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(exiledLand.getId(), exiledSpell.getId());
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(exiledLand.getId(), player1.getId())
                 .containsEntry(exiledSpell.getId(), player1.getId());
 
@@ -90,7 +90,7 @@ class InvasionOfKaldheimTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -172,12 +172,12 @@ class InvasionOfKaldheimTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(exiledLand.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiledLand.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(exiledLand.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiledLand.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiledLand.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiledLand.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiledLand);
     }
 
@@ -193,11 +193,11 @@ class InvasionOfKaldheimTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
     }
 }

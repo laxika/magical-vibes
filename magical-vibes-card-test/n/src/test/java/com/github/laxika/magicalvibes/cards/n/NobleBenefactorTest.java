@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantSearchLibrariesThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.a.AetherFlash;
 import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
@@ -106,7 +109,8 @@ class NobleBenefactorTest extends BaseCardTest {
         List<Card> player2Library = setupLibrary(player2);
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
-        gd.playersCantSearchLibrariesThisTurn = true;
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
+                new PlayersCantSearchLibrariesThisTurnEffect(), null, Duration.UNTIL_END_OF_TURN));
 
         killBenefactor();
 

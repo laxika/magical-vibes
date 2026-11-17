@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.s.ScrollOfAvacyn;
 import com.github.laxika.magicalvibes.cards.w.WanderingWolf;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -99,7 +98,7 @@ class EmancipationAngelTest extends BaseCardTest {
         Permanent borrowed = harness.addToBattlefieldAndReturn(player1, new WanderingWolf());
         gd.stolenCreatures.put(borrowed.getId(), player2.getId());
         GameTestEngineContext.get().getBean(CreatureControlService.class).applyControlEffect(gd, player1.getId(),
-                borrowed, new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT,
+                borrowed, new GainControlOfTargetEffect(Duration.PERMANENT), Duration.PERMANENT,
                 null, "Test control effect");
         harness.castFromHand(player1, new EmancipationAngel(), "{1}{W}{W}");
         harness.passBothPriorities();

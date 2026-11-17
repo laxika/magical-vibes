@@ -34,7 +34,7 @@ public class RedirectCombatDamageFromTargetUnblockedCreatureToItsControllerEffec
             return;
         }
 
-        gameData.turnSourceDamageRedirectToControllerShields.add(
+        gameData.addShield(
                 new TurnSourceDamageRedirectToControllerShield(protectedPlayerId, sourcePermanentId));
     }
 }

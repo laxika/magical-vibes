@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.cards.t.ThornwindFaeries;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -54,7 +55,7 @@ class MartyrsCauseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 20);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -65,7 +66,7 @@ class MartyrsCauseTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -82,7 +83,7 @@ class MartyrsCauseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(victim.getMarkedDamage()).isZero();
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -100,7 +101,7 @@ class MartyrsCauseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(victim.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.sourceNextDamageToAnyTargetShields)
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class))
                 .extracting(shield -> shield.sourceId())
                 .containsExactly(chosenSource.getId());
     }

@@ -35,7 +35,7 @@ class FoulmireKnightTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -121,7 +121,7 @@ class FoulmireKnightTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         harness.assertLife(player1, 20);
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

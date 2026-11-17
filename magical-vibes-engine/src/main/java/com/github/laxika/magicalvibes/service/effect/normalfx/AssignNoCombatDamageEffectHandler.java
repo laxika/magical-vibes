@@ -16,9 +16,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link AssignNoCombatDamageEffect}: prevents the combat damage of the stack entry's {@code sourcePermanentId}
- * with a floating effect and adds it to {@code creaturesAssigningNoCombatDamageThisTurn} (which unpreventable
- * damage can't override) so that creature deals no combat damage this
- * turn (cleared at turn cleanup).
+ * with a floating effect and makes it assign no combat damage with another (which unpreventable damage can't
+ * override), until end of turn or end of combat.
  */
 @Slf4j
 @Component
@@ -46,11 +45,13 @@ public class AssignNoCombatDamageEffectHandler implements NormalEffectHandlerBea
         if (thisCombatOnly) {
             PreventionSupport.preventCombatDamageDealtBy(gameData, entry.getCard().getName(),
                     entry.getSourcePermanentId(), entry.getControllerId(), attackerId, Duration.UNTIL_END_OF_COMBAT);
-            gameData.creaturesAssigningNoCombatDamageThisCombat.add(attackerId);
+            PreventionSupport.assignNoCombatDamage(gameData, entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), attackerId, Duration.UNTIL_END_OF_COMBAT);
         } else {
             PreventionSupport.preventCombatDamageDealtBy(gameData, entry.getCard().getName(),
                     entry.getSourcePermanentId(), entry.getControllerId(), attackerId, Duration.UNTIL_END_OF_TURN);
-            gameData.creaturesAssigningNoCombatDamageThisTurn.add(attackerId);
+            PreventionSupport.assignNoCombatDamage(gameData, entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), attackerId, Duration.UNTIL_END_OF_TURN);
         }
         Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
         String attackerName = attacker != null ? attacker.getCard().getName() : "the attacking creature";

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.f.FangrenHunter;
@@ -129,7 +130,7 @@ class MournersShieldTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, redSource.getId());
 
-        assertThat(gd.targetSpellDamagePreventionShields)
+        assertThat(gd.shields(TargetSpellDamagePreventionShield.class))
                 .extracting(shield -> shield.sourcePermanentId()).contains(redSource.getId());
 
         harness.forceActivePlayer(player1);

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -794,13 +796,12 @@ class PermanentRemovalServiceTest {
         void endsSourceControlledExilePlayPermissionsWhenSourceLeaves() {
             Permanent source = addPermanent(player1Id, createCreature("Source"));
             UUID exiledCardId = UUID.randomUUID();
-            gd.exilePlayPermissions.put(exiledCardId, player1Id);
-            gd.exilePlayPermissionSourcePermanents.put(exiledCardId, source.getId());
+            gd.grantExilePlayPermission(exiledCardId, new ExilePlayPermissionEffect(player1Id), source.getId(),
+                    player1Id, Duration.WHILE_SOURCE_CONTROLLED);
 
             prs.removePermanentToExile(gd, source);
 
-            assertThat(gd.exilePlayPermissions).doesNotContainKey(exiledCardId);
-            assertThat(gd.exilePlayPermissionSourcePermanents).doesNotContainKey(exiledCardId);
+            assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiledCardId);
         }
 
         @Test

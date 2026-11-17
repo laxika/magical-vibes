@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -33,11 +34,11 @@ class SeizeOpportunityTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(first, second);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(first.getId(), second.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd).containsKeys(first.getId(), second.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(first.getId(), second.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)).containsKeys(first.getId(), second.getId());
     }
 
     @Test
@@ -143,7 +144,7 @@ class SeizeOpportunityTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(only);
-        assertThat(gd.exilePlayPermissions).containsEntry(only.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(only.getId(), player1.getId());
     }
 
     @Test
@@ -189,13 +190,13 @@ class SeizeOpportunityTest extends BaseCardTest {
         cast(0, List.of());
 
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(gd.exilePlayPermissions).containsKeys(first.getId(), second.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKeys(first.getId(), second.getId());
 
         harness.passUntil(player1, TurnStep.UPKEEP);
-        assertThat(gd.exilePlayPermissions).containsKeys(first.getId(), second.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKeys(first.getId(), second.getId());
 
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(gd.exilePlayPermissions).doesNotContainKeys(first.getId(), second.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKeys(first.getId(), second.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(first, second);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

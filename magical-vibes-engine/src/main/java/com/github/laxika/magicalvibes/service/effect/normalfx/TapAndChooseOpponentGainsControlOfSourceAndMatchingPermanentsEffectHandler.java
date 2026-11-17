@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAndChooseOpponentGainsControlOfSourceAndMatchingPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -105,7 +105,7 @@ public class TapAndChooseOpponentGainsControlOfSourceAndMatchingPermanentsEffect
             return;
         }
 
-        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
+        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(Duration.PERMANENT);
         for (UUID permanentId : context.affectedPermanentIds()) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             if (permanent != null) {
@@ -114,7 +114,7 @@ public class TapAndChooseOpponentGainsControlOfSourceAndMatchingPermanentsEffect
                         chosenOpponentId,
                         permanent,
                         controlEffect,
-                        ControlDuration.PERMANENT.toDuration(),
+                        Duration.PERMANENT,
                         null,
                         context.sourceCardName());
             }

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.i.InnerChamberGuard;
 import com.github.laxika.magicalvibes.cards.o.OboroPalaceInTheClouds;
 import com.github.laxika.magicalvibes.model.Card;
@@ -125,7 +128,9 @@ class RallyTheHordeTest extends BaseCardTest {
     @Test
     void createsNoTokensWhenExilingIsReplacedWithPuttingCardsOnTheBottomOfTheLibrary() {
         // The replacement established by Yawgmoth's Testament applies for the rest of the turn.
-        gd.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn.add(player1.getId());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
+                new PutCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurnEffect(), player1.getId(),
+                Duration.UNTIL_END_OF_TURN));
         List<Card> library = List.of(
                 new InnerChamberGuard(), new InnerChamberGuard(), new OboroPalaceInTheClouds());
         castWithLibrary(library);

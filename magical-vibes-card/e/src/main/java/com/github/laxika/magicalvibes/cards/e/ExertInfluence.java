@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -16,6 +16,6 @@ public class ExertInfluence extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentPowerAtMostXPredicate()),
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT)));
+                        new GainControlOfTargetEffect(Duration.PERMANENT)));
     }
 }

@@ -161,7 +161,7 @@ class LeylineOfPunishmentTest {
         harness.addToBattlefield(player1, new LeylineOfPunishment());
 
         // Give player2 a damage prevention shield
-        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 10);
 
         // Shock player2 for 2 damage
         harness.setHand(player1, List.of(new Shock()));
@@ -172,7 +172,7 @@ class LeylineOfPunishmentTest {
         // Player2 should take full damage despite the shield
         harness.assertLife(player2, 18);
         // Shield should be unchanged (not consumed)
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(10);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(10);
     }
 
     @Test
@@ -202,7 +202,7 @@ class LeylineOfPunishmentTest {
         harness.skipMulligan();
 
         // Give player2 a damage prevention shield (no leyline on battlefield)
-        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 10);
 
         // Shock player2 for 2 damage
         harness.setHand(player1, List.of(new Shock()));
@@ -212,7 +212,7 @@ class LeylineOfPunishmentTest {
 
         // Player2 should not take damage — shield prevented it
         harness.assertLife(player2, 20);
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(8);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(8);
     }
 
     @Test
@@ -249,18 +249,18 @@ class LeylineOfPunishmentTest {
     void damagePreventionResumesAfterLeylineLeaves() {
         harness.skipMulligan();
         harness.addToBattlefield(player1, new LeylineOfPunishment());
-        gd.playerDamagePreventionShields.put(player2.getId(), 10);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 10);
         harness.setHand(player1, List.of(new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.assertLife(player2, 18);
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(10);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(10);
 
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 18);
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(8);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(8);
     }
 }

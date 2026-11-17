@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantConvokeToNextSpellThisTurnEffect;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Component
 public class GrantConvokeToNextSpellThisTurnEffectHandler implements NormalEffectHandlerBean {
@@ -16,6 +17,6 @@ public class GrantConvokeToNextSpellThisTurnEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        gameData.addNextSpellConvokeGrant(entry.getControllerId());
+        gameData.addPlayerEffect(entry, effect, entry.getControllerId(), Duration.UNTIL_MATCHING_SPELL_CAST);
     }
 }

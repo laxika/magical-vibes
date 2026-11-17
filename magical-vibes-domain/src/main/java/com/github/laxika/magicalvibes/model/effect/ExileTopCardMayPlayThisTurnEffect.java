@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * {@code freeCastFilter} is non-null, only matching cards are free; all other exiled cards retain
  * normal play permission (Nahiri, Forged in Fury). The count is evaluated when the effect resolves.
  * <p>
- * Grants {@code exilePlayPermissions} + {@code exilePlayPermissionsExpireEndOfTurn} (and, for the
+ * Grants an {@link com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect} until end of turn (and, for the
  * free variant, {@code exilePlayWithoutPayingManaCost}). The filter is used for mixed normal/free
  * permission effects; use {@link ExileTopCardsMayCastMatchingThisTurnEffect} when non-matching
  * cards should not receive play permission at all.

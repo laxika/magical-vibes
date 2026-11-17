@@ -23,6 +23,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.effect.MayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurnEffect;
 
 @CardUsed({BosiumStrip.class, Abjure.class, BeanstalkGiant.class, FertileFootsteps.class,
         Firestorm.class, FitOfRage.class, SpellCrumple.class, StripedBears.class,
@@ -166,11 +167,11 @@ class BosiumStripTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn).contains(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), MayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurnEffect.class)).isTrue();
 
         GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
 
-        assertThat(gd.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn).doesNotContain(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), MayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurnEffect.class)).isFalse();
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
@@ -377,7 +378,7 @@ class BosiumStripTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.findExiledCard(giant.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(giant.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(giant.getId())).isEqualTo(player1.getId());
     }
 
     @Test

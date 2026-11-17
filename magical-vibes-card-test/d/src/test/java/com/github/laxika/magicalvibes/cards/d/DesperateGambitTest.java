@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.cards.f.FireWhip;
 import com.github.laxika.magicalvibes.cards.h.HeavyBallista;
 import com.github.laxika.magicalvibes.cards.t.Thunderbolt;
@@ -69,11 +70,11 @@ class DesperateGambitTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handlePermanentChosen(player1, thunderbolt.getId());
-        int multiplier = gd.sourceNextDamageToAnyTargetShields.getFirst().damageMultiplier();
+        int multiplier = gd.shields(SourceNextDamageToAnyTargetShield.class).getFirst().damageMultiplier();
         harness.passBothPriorities();
 
         harness.assertLife(player2, 20 - 3 * multiplier);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -103,8 +104,8 @@ class DesperateGambitTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.sourceNextDamageToAnyTargetShields).hasSize(1);
-        var shield = gd.sourceNextDamageToAnyTargetShields.getFirst();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).hasSize(1);
+        var shield = gd.shields(SourceNextDamageToAnyTargetShield.class).getFirst();
         assertThat(shield.sourceId()).isEqualTo(source.getId());
 
         List<String> logs = gd.gameLog.stream().map(GameLogEntry::plainText).toList();
@@ -125,13 +126,13 @@ class DesperateGambitTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
-        int multiplier = gd.sourceNextDamageToAnyTargetShields.getFirst().damageMultiplier();
+        int multiplier = gd.shields(SourceNextDamageToAnyTargetShield.class).getFirst().damageMultiplier();
 
         harness.activateAbility(player1, indexOf(player1, source), null, player2.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player2, 20 - multiplier);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -143,7 +144,7 @@ class DesperateGambitTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
-        int multiplier = gd.sourceNextDamageToAnyTargetShields.getFirst().damageMultiplier();
+        int multiplier = gd.shields(SourceNextDamageToAnyTargetShield.class).getFirst().damageMultiplier();
 
         harness.activateAbility(player1, indexOf(player1, source), null, player2.getId());
         harness.passBothPriorities();
@@ -152,7 +153,7 @@ class DesperateGambitTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 20 - multiplier - 1);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -170,7 +171,7 @@ class DesperateGambitTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 19);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).hasSize(1);
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).hasSize(1);
     }
 
     @Test
@@ -182,13 +183,13 @@ class DesperateGambitTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, attacker.getId());
-        int multiplier = gd.sourceNextDamageToAnyTargetShields.getFirst().damageMultiplier();
+        int multiplier = gd.shields(SourceNextDamageToAnyTargetShield.class).getFirst().damageMultiplier();
 
         attacker.setAttacking(true);
         resolveCombat(player1);
 
         harness.assertLife(player2, 20 - 2 * multiplier);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -199,14 +200,14 @@ class DesperateGambitTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isNotEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isNotEmpty();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -218,7 +219,7 @@ class DesperateGambitTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test

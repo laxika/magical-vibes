@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 /**
  * The single translation from a {@link PlayCardRequest} onto {@link GameService} cast calls,
@@ -282,6 +283,6 @@ public class PlayCardRequestDispatchService {
         List<Card> hand = gameData.castingSourceCards(player.getId());
         return hand != null && request.cardIndex() < hand.size()
                 && (hand.get(request.cardIndex()).getKeywords().contains(Keyword.WARP)
-                || gameData.cardsGrantedWarpUntilEndOfTurn.contains(hand.get(request.cardIndex()).getId()));
+                || gameData.hasGrantedCardAbility(hand.get(request.cardIndex()).getId(), GrantedCardAbilityEffect.Ability.WARP));
     }
 }

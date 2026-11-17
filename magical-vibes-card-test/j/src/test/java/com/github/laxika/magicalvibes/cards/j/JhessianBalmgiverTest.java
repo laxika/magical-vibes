@@ -29,7 +29,7 @@ class JhessianBalmgiverTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields).containsEntry(player2.getId(), 1);
+        assertThat(gd.playerDamagePreventionShields()).containsEntry(player2.getId(), 1);
     }
 
     @Test
@@ -52,7 +52,7 @@ class JhessianBalmgiverTest extends BaseCardTest {
 
         // 2 combat damage - 1 prevented = 1 effective → 20 - 1 = 19
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player2.getId());
+        assertThat(gd.playerDamagePreventionShields()).doesNotContainKey(player2.getId());
     }
 
     @Test
@@ -177,7 +177,7 @@ class JhessianBalmgiverTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields).containsEntry(player2.getId(), 1);
+        assertThat(gd.playerDamagePreventionShields()).containsEntry(player2.getId(), 1);
     }
 
     @Test
@@ -203,13 +203,13 @@ class JhessianBalmgiverTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.activateAbility(player1, 1, 0, null, player2.getId());
         harness.passBothPriorities();
-        assertThat(gd.playerDamagePreventionShields).containsEntry(player2.getId(), 2);
+        assertThat(gd.playerDamagePreventionShields()).containsEntry(player2.getId(), 2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player2.getId());
+        assertThat(gd.playerDamagePreventionShields()).doesNotContainKey(player2.getId());
     }
 
     @Test

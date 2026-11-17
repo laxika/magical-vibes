@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.rules.SagaEvent;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.Card;
@@ -129,12 +130,11 @@ public class SagaChapterService {
      */
     public void renewLoreCounterPlayPermissions(GameData gameData, Permanent sagaPermanent,
                                                   UUID controllerId) {
-        gameData.exilePlayPermissionLoreCounterSagas.forEach((cardId, sagaId) -> {
-            if (sagaId.equals(sagaPermanent.getId()) && gameData.findExiledCard(cardId) != null) {
-                gameData.exilePlayPermissions.put(cardId, controllerId);
-                gameData.exilePlayPermissionsExpireEndOfTurn.add(cardId);
+        for (UUID cardId : gameData.cardsRenewingExilePlayPermissionOnLoreCounter(sagaPermanent.getId())) {
+            if (gameData.findExiledCard(cardId) != null) {
+                gameData.grantExilePlayPermission(cardId, controllerId, Duration.UNTIL_END_OF_TURN);
             }
-        });
+        }
     }
 
     /**

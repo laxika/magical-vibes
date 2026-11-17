@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -23,6 +23,6 @@ public class SouvenirSnatcher extends Card {
                                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),
                         "Target must be a noncreature artifact"))
                 .addTrigger(Triggers.mutates(),
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT));
+                        new GainControlOfTargetEffect(Duration.PERMANENT));
     }
 }

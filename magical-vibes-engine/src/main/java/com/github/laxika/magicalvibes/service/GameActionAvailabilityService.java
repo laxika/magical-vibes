@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 /**
  * Pure rules query for actions a player can legally take from the current authoritative state.
@@ -1597,8 +1598,7 @@ public class GameActionAvailabilityService {
             return playable;
         }
 
-        boolean hasAnyGraveyardLandPermission = gameData.graveyardPlayPermissions.values().stream()
-                .anyMatch(permittedPlayer -> permittedPlayer.equals(playerId));
+        boolean hasAnyGraveyardLandPermission = gameData.hasGraveyardCardPlayGrantFor(playerId);
         boolean graveyardAbilitiesSuppressed = gameQueryService.graveyardCardsHaveLostAllAbilities(gameData);
         boolean hasMayhemLandPermission = graveyard.stream()
                 .anyMatch(card -> card.hasType(CardType.LAND)
@@ -1781,14 +1781,14 @@ public class GameActionAvailabilityService {
                     : Optional.empty();
             boolean grantedHarmonize = harmonize.isEmpty() && flashback.isEmpty() && !isDisturb
                     && !graveyardAbilitiesSuppressed
-                    && gameData.cardsGrantedHarmonizeUntilEndOfTurn.contains(card.getId());
+                    && gameData.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.HARMONIZE);
             boolean isHarmonize = (harmonize.isPresent() && flashback.isEmpty() && !isDisturb) || grantedHarmonize;
             boolean grantedFlashback = flashback.isEmpty()
                     && (!graveyardAbilitiesSuppressed
-                    || gameData.cardsGrantedFlashbackDespiteLostAbilitiesUntilEndOfTurn.contains(card.getId()))
+                    || gameData.hasFlashbackGrantDespiteLostAbilities(card.getId()))
                     && !isDisturb
                     && !isHarmonize
-                    && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
+                    && gameData.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.FLASHBACK);
             boolean emblemFlashback = flashback.isEmpty() && !isDisturb && !isHarmonize && !grantedFlashback
                     && !graveyardAbilitiesSuppressed
                     && grantedFlashbackOption.isPresent();
@@ -1840,7 +1840,7 @@ public class GameActionAvailabilityService {
             boolean isJumpStart = !graveyardAbilitiesSuppressed
                     && (card.getCastingOption(JumpStartCast.class).isPresent()
                     || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.JUMP_START, Zone.GRAVEYARD)
-                    || gameData.cardsGrantedJumpStartUntilEndOfTurn.contains(card.getId()))
+                    || gameData.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.JUMP_START))
                     && flashback.isEmpty()
                     && !isDisturb
                     && !isHarmonize
@@ -1922,7 +1922,7 @@ public class GameActionAvailabilityService {
                 manaCostStr = grantedFlashbackOption.get()
                         .getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
             } else if (grantedFlashback) {
-                manaCostStr = gameData.cardsGrantedFlashbackCostsUntilEndOfTurn.get(card.getId());
+                manaCostStr = gameData.grantedFlashbackCost(card.getId());
                 if (manaCostStr == null) {
                     manaCostStr = castHalf.getManaCost() != null ? castHalf.getManaCost() : card.getManaCost();
                 }
@@ -2029,7 +2029,7 @@ public class GameActionAvailabilityService {
             }
             if (grantedGraveyardCardCast) {
                 GameData.GraveyardCardCastPermission permission =
-                        gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(card.getId());
+                        gameData.graveyardCardCastPermission(card.getId(), playerId).orElse(null);
                 int escapeExileCount = permission == null ? 0 : permission.additionalGraveyardExileCount();
                 long availableCards = graveyard.stream().filter(c -> c != card).count();
                 if (availableCards < escapeExileCount) {

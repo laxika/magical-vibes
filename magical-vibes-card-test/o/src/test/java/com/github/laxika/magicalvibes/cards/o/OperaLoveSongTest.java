@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -32,11 +33,11 @@ class OperaLoveSongTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(first, second);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(first.getId(), second.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd).containsKeys(first.getId(), second.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(first.getId(), second.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_YOUR_NEXT_END_STEP)).containsKeys(first.getId(), second.getId());
     }
 
     @Test
@@ -105,7 +106,7 @@ class OperaLoveSongTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(only);
-        assertThat(gd.exilePlayPermissions).containsEntry(only.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(only.getId(), player1.getId());
     }
 
     @Test
@@ -116,7 +117,7 @@ class OperaLoveSongTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Opera Love Song");
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test
@@ -162,7 +163,7 @@ class OperaLoveSongTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiled);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiled.getId());
     }
 
     @Test
@@ -175,11 +176,11 @@ class OperaLoveSongTest extends BaseCardTest {
         cast(0, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiled.getId(), player1.getId());
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiled.getId());
     }
 
     @Test
@@ -195,7 +196,7 @@ class OperaLoveSongTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiled.getId(), player1.getId());
     }
 
     @Test

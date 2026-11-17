@@ -35,7 +35,7 @@ class HealingSalveTest extends BaseCardTest {
             harness.castAndResolveInstant(player1, 0, player1.getId());
 
             harness.assertLife(player1, 23);
-            assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+            assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isZero();
         }
 
         @Test
@@ -89,7 +89,7 @@ class HealingSalveTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, player2.getId());
             harness.passBothPriorities();
 
-            assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(3);
+            assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(3);
         }
 
         @Test
@@ -133,7 +133,7 @@ class HealingSalveTest extends BaseCardTest {
             resolveCombat(player1);
 
             harness.assertLife(player2, 19);
-            assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+            assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
         }
 
         @Test
@@ -278,7 +278,7 @@ class HealingSalveTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, player2.getId());
             harness.passBothPriorities();
 
-            assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(3);
+            assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(3);
         }
 
         @Test
@@ -322,7 +322,7 @@ class HealingSalveTest extends BaseCardTest {
             resolveCombat(player1);
 
             harness.assertLife(player2, 19);
-            assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+            assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
         }
 
         @Test
@@ -340,7 +340,7 @@ class HealingSalveTest extends BaseCardTest {
             harness.castAndResolveInstant(player1, 0, player2.getId());
 
             harness.assertLife(player2, 20);
-            assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+            assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
         }
 
         @Test
@@ -352,11 +352,11 @@ class HealingSalveTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, player2.getId());
             harness.passBothPriorities();
 
-            assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(3);
+            assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(3);
 
             harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-            assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+            assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
         }
     }
 }

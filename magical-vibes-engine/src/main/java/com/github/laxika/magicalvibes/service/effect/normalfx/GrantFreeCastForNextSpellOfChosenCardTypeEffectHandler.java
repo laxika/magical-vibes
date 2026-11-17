@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantFreeCastForNextMatchingSpellEffect;
 
 @Component
 @RequiredArgsConstructor
@@ -32,7 +34,8 @@ public class GrantFreeCastForNextSpellOfChosenCardTypeEffectHandler implements N
         if (source == null || source.getChosenCardType() == null) {
             return;
         }
-        gameData.addNextSpellFreeCastPermission(entry.getControllerId(),
-                new CardTypePredicate(source.getChosenCardType()));
+        gameData.addPlayerEffect(entry, new GrantFreeCastForNextMatchingSpellEffect(
+                new CardTypePredicate(source.getChosenCardType())),
+                entry.getControllerId(), Duration.UNTIL_MATCHING_SPELL_CAST);
     }
 }

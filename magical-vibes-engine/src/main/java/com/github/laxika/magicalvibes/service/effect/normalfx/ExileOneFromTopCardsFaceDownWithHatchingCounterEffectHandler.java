@@ -50,7 +50,7 @@ public class ExileOneFromTopCardsFaceDownWithHatchingCounterEffectHandler implem
         if (topCards.size() == 1) {
             Card card = topCards.getFirst();
             exileService.exileCardFaceDown(gameData, controllerId, card, null, controllerId);
-            gameData.exileLookPermissions.put(card.getId(), controllerId);
+            gameData.grantExileLookPermission(card.getId(), controllerId);
             gameData.exiledCardsWithHatchingCounters.add(card.getId());
             gameLogService.append(gameData, GameLog.text(
                     result.playerName() + " exiles a card face down with a hatching counter."));

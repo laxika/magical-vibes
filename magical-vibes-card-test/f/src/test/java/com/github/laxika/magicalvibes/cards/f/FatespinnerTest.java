@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.SkipChosenStepOrPhaseEffect;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -45,8 +46,7 @@ class FatespinnerTest extends BaseCardTest {
         assertThat(gameLogContains("Step: Draw")).isFalse();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handSize);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySize);
-        assertThat(gd.skippedStepOrPhasesThisTurn.get(player2.getId()))
-                .containsExactly(SkipStepOrPhaseKind.DRAW_STEP);
+        assertThat(gd.skipsStepOrPhase(player2.getId(), SkipStepOrPhaseKind.DRAW_STEP)).isTrue();
     }
 
     @Test
@@ -75,8 +75,7 @@ class FatespinnerTest extends BaseCardTest {
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
         assertThat(gameLogContains("skips their combat phase.")).isTrue();
-        assertThat(gd.skippedStepOrPhasesThisTurn.get(player2.getId()))
-                .containsExactly(SkipStepOrPhaseKind.COMBAT_PHASE);
+        assertThat(gd.skipsStepOrPhase(player2.getId(), SkipStepOrPhaseKind.COMBAT_PHASE)).isTrue();
     }
 
     @Test
@@ -113,7 +112,7 @@ class FatespinnerTest extends BaseCardTest {
                 () -> harness.handleListChoice(player2, COMBAT_PHASE));
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.skippedStepOrPhasesThisTurn).isEmpty();
+        assertThat(gd.floatingEffectsOfTypes(SkipChosenStepOrPhaseEffect.class)).isEmpty();
         harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
         assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
     }

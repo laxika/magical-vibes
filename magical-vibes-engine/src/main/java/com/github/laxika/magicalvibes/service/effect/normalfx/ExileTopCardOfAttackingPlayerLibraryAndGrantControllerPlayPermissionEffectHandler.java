@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfAttackingPlayerLibraryAndGrantControllerPlayPermissionEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -48,8 +49,8 @@ public class ExileTopCardOfAttackingPlayerLibraryAndGrantControllerPlayPermissio
 
         Card topCard = deck.removeFirst();
         exileService.exileCard(gameData, attackingPlayerId, topCard);
-        gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-        gameData.exilePlayAnyManaTypeWhileExiled.add(topCard.getId());
+        gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.PERMANENT);
+        gameData.updateExilePlayPermission(topCard.getId(), granted -> granted.withAnyManaType(true));
 
         String controllerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.builder()

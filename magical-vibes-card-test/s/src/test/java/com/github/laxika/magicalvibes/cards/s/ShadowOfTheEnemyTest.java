@@ -25,8 +25,8 @@ class ShadowOfTheEnemyTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(creature);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(land);
-        assertThat(gd.exilePlayPermissions).containsEntry(creature.getId(), player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(creature.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(creature.getId(), player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(creature.getId());
     }
 
     @Test

@@ -33,7 +33,7 @@ class JunkyardScrapperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getCardsExiledByPermanent(source.getId())).containsExactly(sought);
-        assertThat(gd.exilePlayPermissions).containsEntry(sought.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(sought.getId(), player1.getId());
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getName)
                 .containsExactly("Darksteel Citadel", "Llanowar Elves");
@@ -138,7 +138,7 @@ class JunkyardScrapperTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source);
 
         harness.passBothPriorities();
-        assertThat(gd.exilePlayPermissions).containsEntry(candidate.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(candidate.getId(), player1.getId());
         harness.castFromExile(player1, candidate.getId());
         harness.passBothPriorities();
 
@@ -158,11 +158,11 @@ class JunkyardScrapperTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsEntry(candidate.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(candidate.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(candidate.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(candidate.getId(), player1.getId());
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(candidate.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(candidate.getId());
     }
 
     @Test

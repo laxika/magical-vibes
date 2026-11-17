@@ -10,6 +10,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Slf4j
 @Component
@@ -27,7 +28,7 @@ public class MayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurnEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        gameData.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn.add(controllerId);
+        gameData.addPlayerEffect(entry, effect, controllerId, Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 ": until end of turn, you may cast instant and sorcery spells from the top of your "

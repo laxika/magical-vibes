@@ -169,7 +169,7 @@ public class DamageSupport {
                                    Permanent damageSource, boolean cantBeRedirected) {
         boolean targetProtected = target.isDamageCantBePreventedOrRedirectedThisTurn();
         boolean unpreventable = targetProtected
-                || gameData.damageCantBePreventedThisTurn || gameData.unpreventableDamageInProgress
+                || gameData.damageCantBePreventedThisTurn() || gameData.unpreventableDamageInProgress
                 || damageSource != null && gameQueryService.damageCantBePreventedFromSource(gameData, damageSource);
         DamageEvent event = DamageEvent.toPermanent(entry,
                 gameQueryService.findPermanentController(gameData, target.getId()), target.getId(), damageSource,
@@ -1132,12 +1132,12 @@ public class DamageSupport {
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (gameQueryService.damageCantBePreventedFromSource(gameData, sourcePermanent)) {
-            boolean previous = gameData.damageCantBePreventedThisTurn;
-            gameData.damageCantBePreventedThisTurn = true;
+            boolean previous = gameData.unpreventableDamageInProgress;
+            gameData.unpreventableDamageInProgress = true;
             try {
                 dealDamageToPlayerFromSource(gameData, entry, playerId, rawDamage);
             } finally {
-                gameData.damageCantBePreventedThisTurn = previous;
+                gameData.unpreventableDamageInProgress = previous;
             }
             return;
         }
@@ -1174,7 +1174,7 @@ public class DamageSupport {
             return;
         }
         DamageEvent event = DamageEvent.toPlayer(entry, playerId, rawDamage,
-                gameData.damageCantBePreventedThisTurn || gameData.unpreventableDamageInProgress);
+                gameData.damageCantBePreventedThisTurn() || gameData.unpreventableDamageInProgress);
         processDamageEvent(gameData, event);
     }
 
@@ -1833,7 +1833,7 @@ public class DamageSupport {
         StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source.getCard(),
                 gameQueryService.findPermanentController(gameData, source.getId()), source.getCard().getName(),
                 List.of(), targetId, source.getId());
-        boolean unpreventable = gameData.damageCantBePreventedThisTurn || gameData.unpreventableDamageInProgress;
+        boolean unpreventable = gameData.damageCantBePreventedThisTurn() || gameData.unpreventableDamageInProgress;
         return permanentId == null
                 ? DamageEvent.toPlayer(entry, targetId, damage, unpreventable)
                 : DamageEvent.toPermanent(entry, controllerId, permanentId, source, damage, unpreventable, false);

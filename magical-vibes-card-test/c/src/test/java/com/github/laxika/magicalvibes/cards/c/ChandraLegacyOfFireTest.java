@@ -77,8 +77,8 @@ class ChandraLegacyOfFireTest extends BaseCardTest {
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
         assertThat(nicol.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(mountain, secondCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(mountain.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissions).containsEntry(secondCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(mountain.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(secondCard.getId(), player1.getId());
     }
 
     @Test
@@ -259,7 +259,7 @@ class ChandraLegacyOfFireTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(mountain);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(mountain.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(mountain.getId());
         harness.forceActivePlayer(player1);
         assertThatThrownBy(() -> harness.castFromExile(player1, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class);

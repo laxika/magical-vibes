@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BenevolentBodyguard;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.cards.p.PrismaticStrands;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -83,7 +84,7 @@ class LaquatussDisdainTest extends BaseCardTest {
     void cannotTargetExileCastSpell() {
         PrismaticStrands spell = new PrismaticStrands();
         harness.setExile(player1, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castFromExile(player1, spell.getId());

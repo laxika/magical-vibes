@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseUpToThreeNonlandPermanentsThenOpponentChoosesOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -104,10 +104,10 @@ public class ChooseUpToThreeNonlandPermanentsThenOpponentChoosesOneEffectHandler
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(permanent -> permanent != null)
                 .toList();
-        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
+        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(Duration.PERMANENT);
         for (Permanent permanent : toSeize) {
             creatureControlService.applyControlEffect(gameData, controllerId, permanent,
-                    controlEffect, ControlDuration.PERMANENT.toDuration(), null, sourceName);
+                    controlEffect, Duration.PERMANENT, null, sourceName);
         }
     }
 }

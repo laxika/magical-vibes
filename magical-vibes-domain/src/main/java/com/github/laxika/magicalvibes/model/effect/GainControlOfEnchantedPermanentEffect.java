@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /**
  * Gains control of the permanent the source Aura is attached to for the given
- * {@link ControlDuration}. Non-targeting: the affected permanent is re-derived at resolution from
+ * {@link Duration}. Non-targeting: the affected permanent is re-derived at resolution from
  * the Aura's {@code attachedTo}, so it works on slots that carry no target of their own
  * ({@code Triggers.upkeep(ActivePlayer.YOU)} on an Aura, Wellspring).
  *
@@ -12,11 +12,11 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param duration how long control is retained
  */
-public record GainControlOfEnchantedPermanentEffect(ControlDuration duration)
+public record GainControlOfEnchantedPermanentEffect(Duration duration)
         implements ControlStealingEffect {
 
     @Override
-    public ControlDuration controlDuration() {
+    public Duration controlDuration() {
         return duration;
     }
 }

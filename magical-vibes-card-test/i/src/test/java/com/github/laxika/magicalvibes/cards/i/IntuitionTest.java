@@ -206,8 +206,8 @@ class IntuitionTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
                 .containsExactlyInAnyOrderElementsOf(found);
         for (UUID cardId : found) {
-            assertThat(gd.exilePlayPermissions.get(cardId)).isEqualTo(player2.getId());
-            assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(cardId);
+            assertThat(gd.exilePlayPermissionHolder(cardId)).isEqualTo(player2.getId());
+            assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(cardId);
         }
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
@@ -228,7 +228,7 @@ class IntuitionTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
                 .containsExactly(only.getId());
-        assertThat(gd.exilePlayPermissions.get(only.getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(only.getId())).isEqualTo(player2.getId());
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();

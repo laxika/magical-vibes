@@ -1,15 +1,15 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -96,11 +96,13 @@ class ZameckGuildmageTest extends BaseCardTest {
         addReadyGuildmage(player1);
         activateCounterAbility();
 
-        assertThat(gd.additionalEnterCountersThisTurn).containsEntry(player1.getId(), 1);
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(),
+                ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect.class)).hasSize(1);
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
-        assertThat(gd.additionalEnterCountersThisTurn).isEmpty();
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(),
+                ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect.class)).isEmpty();
     }
 
     @Test

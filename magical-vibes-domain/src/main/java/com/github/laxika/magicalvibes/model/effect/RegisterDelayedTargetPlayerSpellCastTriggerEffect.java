@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect.Duration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -15,19 +17,31 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  */
 public record RegisterDelayedTargetPlayerSpellCastTriggerEffect(CardPredicate spellFilter,
                                                                 List<CardEffect> resolvedEffects,
-                                                                Duration duration) implements CardEffect {
+                                                                Duration duration,
+                                                                boolean once) implements CardEffect {
 
     /** The target player gets a one-time boon with "When you cast a [spellFilter] spell, [effects]." */
     public static RegisterDelayedTargetPlayerSpellCastTriggerEffect boon(CardPredicate spellFilter,
                                                                         List<CardEffect> resolvedEffects) {
-        return new RegisterDelayedTargetPlayerSpellCastTriggerEffect(spellFilter, resolvedEffects, Duration.BOON);
+        return new RegisterDelayedTargetPlayerSpellCastTriggerEffect(spellFilter, resolvedEffects, Duration.PERMANENT,
+                true);
     }
 
     /** "The next [spellFilter] spell [the target player] casts this turn [effects]." */
     public static RegisterDelayedTargetPlayerSpellCastTriggerEffect nextThisTurn(CardPredicate spellFilter,
                                                                                 List<CardEffect> resolvedEffects) {
         return new RegisterDelayedTargetPlayerSpellCastTriggerEffect(spellFilter, resolvedEffects,
-                Duration.NEXT_THIS_TURN);
+                Duration.UNTIL_END_OF_TURN, true);
+    }
+
+    /**
+     * The delayed triggered ability this makes of the target player {@code playerId}, from a resolution of an object
+     * with the source {@code sourceCard} and {@code sourcePermanentId} (or none) on turn {@code turnNumber}.
+     */
+    public TemporaryGlobalTriggeredAbility delayed(UUID playerId, Card sourceCard, UUID sourcePermanentId,
+                                                   int turnNumber) {
+        return RegisterDelayedControllerSpellCastTriggerEffect.delayed(duration, once, playerId, sourceCard,
+                delayedAbility(), sourcePermanentId, turnNumber, null);
     }
 
     /** The delayed triggered ability the target player gets: "whenever you cast" a matching spell, its effects. */

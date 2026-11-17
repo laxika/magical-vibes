@@ -127,7 +127,7 @@ class AnimatingFaerieTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Golden Egg");
         harness.assertInGraveyard(player1, "Animating Faerie");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test

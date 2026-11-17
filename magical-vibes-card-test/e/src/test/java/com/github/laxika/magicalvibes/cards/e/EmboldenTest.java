@@ -29,7 +29,7 @@ class EmboldenTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(wall.getDamagePreventionShield()).isEqualTo(2);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(2);
     }
 
     @Test
@@ -37,7 +37,7 @@ class EmboldenTest extends BaseCardTest {
         castEmbolden(Map.of(player2.getId(), 4));
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(4);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(4);
     }
 
     @Test
@@ -65,7 +65,7 @@ class EmboldenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(0);
     }
 
     @Test
@@ -125,7 +125,7 @@ class EmboldenTest extends BaseCardTest {
         castEmbolden(Map.of());
 
         harness.assertInGraveyard(player1, "Embolden");
-        assertThat(gd.playerDamagePreventionShields).isEmpty();
+        assertThat(gd.playerDamagePreventionShields()).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -141,7 +141,7 @@ class EmboldenTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Embolden");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Embolden"));
-        assertThat(gd.playerDamagePreventionShields).isEmpty();
+        assertThat(gd.playerDamagePreventionShields()).isEmpty();
     }
 
     @Test

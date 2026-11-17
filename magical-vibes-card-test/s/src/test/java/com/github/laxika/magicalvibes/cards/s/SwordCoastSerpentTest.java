@@ -33,7 +33,7 @@ class SwordCoastSerpentTest extends BaseCardTest {
         assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).doesNotContain(target);
         assertThat(harness.getGameData().playerHands.get(player2.getId())).contains(target.getCard());
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNotNull();
-        assertThat(harness.getGameData().exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(harness.getGameData().exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -134,7 +134,7 @@ class SwordCoastSerpentTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).contains(target.getCard());
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first);
         assertThat(gd.findExiledCard(first.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(first.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(first.getId());
         assertThat(gd.findExiledCard(response.getId())).isNotNull();
         assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
     }

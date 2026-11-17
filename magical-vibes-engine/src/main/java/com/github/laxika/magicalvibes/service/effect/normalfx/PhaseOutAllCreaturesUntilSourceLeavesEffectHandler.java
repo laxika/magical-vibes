@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.PhasedOutHeldEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -64,7 +65,7 @@ public class PhaseOutAllCreaturesUntilSourceLeavesEffectHandler implements Norma
     }
 
     private boolean isHeldBySource(GameData gameData, UUID sourceId, UUID targetId) {
-        return gameData.phasedOutUntilSourceLeaves.getOrDefault(sourceId, java.util.Set.of())
-                .contains(targetId);
+        return gameData.floatingEffectsOnPermanent(targetId, PhasedOutHeldEffect.class).stream()
+                .anyMatch(held -> sourceId.equals(held.sourcePermanentId()));
     }
 }

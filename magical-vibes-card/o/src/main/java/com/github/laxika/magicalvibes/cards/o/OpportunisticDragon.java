@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -40,7 +39,7 @@ public class OpportunisticDragon extends Card {
                 "Target must be a Human or artifact an opponent controls"
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_REMAINS),
+                        new GainControlOfTargetEffect(Duration.WHILE_SOURCE_REMAINS),
                         new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.WHILE_SOURCE_REMAINS),
                         new LockTargetPermanentEffect(true, true, false,
                                 Duration.WHILE_SOURCE_REMAINS, TargetPredicates.permanent()));

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOpponentLibraryControllerMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -50,8 +51,7 @@ public class ExileTopCardOfOpponentLibraryControllerMayPlayThisTurnEffectHandler
         exileService.exileCard(gameData, opponentId, topCard);
 
         // Controller may play the exiled card at normal costs/timing until end of turn.
-        gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
+        gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
 
         String controllerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.builder().text(opponentName + " exiles ").card(topCard).text(" from the top of their library — " + controllerName + " may play it this turn.").build());

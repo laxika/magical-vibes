@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.EyeForAnEyeShield;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.l.LivingArtifact;
@@ -45,7 +46,7 @@ class EyeForAnEyeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, goblin.getId());
 
-        assertThat(gd.eyeForAnEyeShields)
+        assertThat(gd.shields(EyeForAnEyeShield.class))
                 .anyMatch(s -> s.protectedPlayerId().equals(player1.getId())
                         && s.sourceId().equals(goblin.getId()));
     }
@@ -67,7 +68,7 @@ class EyeForAnEyeTest extends BaseCardTest {
         // You still take the 2 damage; 2 is also reflected at the goblin's controller.
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 18);
-        assertThat(gd.eyeForAnEyeShields).isEmpty();
+        assertThat(gd.shields(EyeForAnEyeShield.class)).isEmpty();
     }
 
     @Test
@@ -87,7 +88,7 @@ class EyeForAnEyeTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 20);
-        assertThat(gd.eyeForAnEyeShields)
+        assertThat(gd.shields(EyeForAnEyeShield.class))
                 .anyMatch(s -> s.sourceId().equals(chosen.getId()));
     }
 
@@ -108,7 +109,7 @@ class EyeForAnEyeTest extends BaseCardTest {
 
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 19);
-        assertThat(gd.eyeForAnEyeShields).isEmpty();
+        assertThat(gd.shields(EyeForAnEyeShield.class)).isEmpty();
     }
 
     @Test
@@ -158,14 +159,14 @@ class EyeForAnEyeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, goblin.getId());
 
-        assertThat(gd.eyeForAnEyeShields).isNotEmpty();
+        assertThat(gd.shields(EyeForAnEyeShield.class)).isNotEmpty();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.eyeForAnEyeShields).isEmpty();
+        assertThat(gd.shields(EyeForAnEyeShield.class)).isEmpty();
     }
 
     @Test

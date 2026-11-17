@@ -277,7 +277,7 @@ class KayaTheInexorableTest extends BaseCardTest {
         createEmblem();
         TyvarKell tyvar = new TyvarKell();
         gd.addToExile(player1.getId(), tyvar, null, true, player2.getId());
-        gd.additionalExileLookPermissions.put(tyvar.getId(), Set.of(player1.getId()));
+        gd.grantExileLookPermission(tyvar.getId(), player1.getId());
         advanceToUpkeep(player1);
         resolveAllTriggers();
 

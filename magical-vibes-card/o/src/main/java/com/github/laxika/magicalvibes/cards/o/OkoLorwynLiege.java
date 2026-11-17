@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -39,7 +39,7 @@ public class OkoLorwynLiege extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new BoostTargetCreatureEffect(-2, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN)),
+                List.of(new BoostTargetCreatureEffect(-2, 0, Duration.UNTIL_YOUR_NEXT_TURN)),
                 "+1: Target creature gets -2/-0 until your next turn.",
                 TargetFilters.creature()));
     }

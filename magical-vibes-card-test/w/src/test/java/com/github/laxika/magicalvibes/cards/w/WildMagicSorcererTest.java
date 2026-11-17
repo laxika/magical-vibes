@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,7 @@ class WildMagicSorcererTest extends BaseCardTest {
         setupSorcerer();
         Card exiledSpell = new HillGiant();
         harness.setExile(player1, List.of(exiledSpell));
-        gd.exilePlayPermissions.put(exiledSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(exiledSpell.getId(), player1.getId(), Duration.PERMANENT);
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -44,7 +45,7 @@ class WildMagicSorcererTest extends BaseCardTest {
         setupSorcerer();
         Card exiledSpell = new GrizzlyBears();
         harness.setExile(player1, List.of(exiledSpell));
-        gd.exilePlayPermissions.put(exiledSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(exiledSpell.getId(), player1.getId(), Duration.PERMANENT);
         harness.setLibrary(player1, List.of(new Divination()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -80,7 +81,7 @@ class WildMagicSorcererTest extends BaseCardTest {
 
         Card exiledSpell = new GrizzlyBears();
         harness.setExile(player1, List.of(exiledSpell));
-        gd.exilePlayPermissions.put(exiledSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(exiledSpell.getId(), player1.getId(), Duration.PERMANENT);
         harness.setLibrary(player1, List.of(new LlanowarElves()));
         harness.castFromExile(player1, exiledSpell.getId());
         harness.passBothPriorities();
@@ -95,7 +96,7 @@ class WildMagicSorcererTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VeyranVoiceOfDuality());
         Card exiledSpell = new Cultivate();
         harness.setExile(player1, List.of(exiledSpell));
-        gd.exilePlayPermissions.put(exiledSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(exiledSpell.getId(), player1.getId(), Duration.PERMANENT);
         harness.setLibrary(player1, List.of(new LlanowarElves()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -112,8 +113,8 @@ class WildMagicSorcererTest extends BaseCardTest {
         Card firstSpell = new LlanowarElves();
         Card secondSpell = new WildMagicSorcerer();
         harness.setExile(player1, List.of(firstSpell, secondSpell));
-        gd.exilePlayPermissions.put(firstSpell.getId(), player1.getId());
-        gd.exilePlayPermissions.put(secondSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(firstSpell.getId(), player1.getId(), Duration.PERMANENT);
+        gd.grantExilePlayPermission(secondSpell.getId(), player1.getId(), Duration.PERMANENT);
         harness.setLibrary(player1, List.of(new WildMagicSorcerer()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.RED, 1);
@@ -136,8 +137,8 @@ class WildMagicSorcererTest extends BaseCardTest {
         Card firstSpell = new LlanowarElves();
         Card secondSpell = new WildMagicSorcerer();
         harness.setExile(player1, List.of(firstSpell, secondSpell));
-        gd.exilePlayPermissions.put(firstSpell.getId(), player1.getId());
-        gd.exilePlayPermissions.put(secondSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(firstSpell.getId(), player1.getId(), Duration.PERMANENT);
+        gd.grantExilePlayPermission(secondSpell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -158,7 +159,7 @@ class WildMagicSorcererTest extends BaseCardTest {
         Card exiledSpell = new WildMagicSorcerer();
         Card hit = new LlanowarElves();
         harness.setExile(player1, List.of(exiledSpell));
-        gd.exilePlayPermissions.put(exiledSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(exiledSpell.getId(), player1.getId(), Duration.PERMANENT);
         harness.setLibrary(player1, List.of(hit));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -188,7 +189,7 @@ class WildMagicSorcererTest extends BaseCardTest {
         harness.addToBattlefield(player2, new WildMagicSorcerer());
         Card exiledSpell = new WildMagicSorcerer();
         harness.setExile(player1, List.of(exiledSpell));
-        gd.exilePlayPermissions.put(exiledSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(exiledSpell.getId(), player1.getId(), Duration.PERMANENT);
         harness.setLibrary(player1, List.of(new LlanowarElves()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -205,7 +206,7 @@ class WildMagicSorcererTest extends BaseCardTest {
         Card hit = new LlanowarElves();
         Card remainingCard = new Cultivate();
         harness.setExile(player1, List.of(exiledSpell));
-        gd.exilePlayPermissions.put(exiledSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(exiledSpell.getId(), player1.getId(), Duration.PERMANENT);
         harness.setLibrary(player1, List.of(hit, remainingCard));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -230,7 +231,7 @@ class WildMagicSorcererTest extends BaseCardTest {
         Card firstSpell = new LlanowarElves();
         Card nextTurnSpell = new WildMagicSorcerer();
         harness.setExile(player1, List.of(firstSpell, nextTurnSpell));
-        gd.exilePlayPermissions.put(firstSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(firstSpell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.setLibrary(player1, List.of(new WildMagicSorcerer(), new WildMagicSorcerer()));
         harness.setLibrary(player2, List.of(new WildMagicSorcerer(), new WildMagicSorcerer()));
@@ -241,7 +242,7 @@ class WildMagicSorcererTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
-        gd.exilePlayPermissions.put(nextTurnSpell.getId(), player1.getId());
+        gd.grantExilePlayPermission(nextTurnSpell.getId(), player1.getId(), Duration.PERMANENT);
         Card hit = new LlanowarElves();
         harness.setLibrary(player1, List.of(hit));
         harness.addMana(player1, ManaColor.RED, 1);

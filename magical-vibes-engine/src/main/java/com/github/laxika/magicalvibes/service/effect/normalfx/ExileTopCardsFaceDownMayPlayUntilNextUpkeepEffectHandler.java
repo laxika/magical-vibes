@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.DelayedReferents;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsFaceDownMayPlayUntilNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.PutUnplayedExiledCardsIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -59,11 +60,9 @@ public class ExileTopCardsFaceDownMayPlayUntilNextUpkeepEffectHandler implements
             // Face-down: opponents do not see the card's identity; the controller may look
             // (and play via exilePlayPermissions) for as long as it remains exiled.
             exileService.exileCardFaceDown(gameData, controllerId, topCard, null);
-            exileSupport.grantPlayUntilOwnersNextTurn(gameData, topCard.getId(), controllerId);
             // "Until your next turn": the permission ends as that turn begins.
-            gameData.exilePlayPermissionsExpireAtTurnBeginning.put(topCard.getId(),
-                    gameData.exilePlayPermissionsExpireAtTurnEnd.remove(topCard.getId()));
-            gameData.exileLookPermissions.put(topCard.getId(), controllerId);
+            gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.UNTIL_YOUR_NEXT_TURN);
+            gameData.grantExileLookPermission(topCard.getId(), controllerId);
             exiledCardIds.add(topCard.getId());
             exiled++;
         }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.r.RampantGrowth;
 import com.github.laxika.magicalvibes.cards.r.RetracedImage;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,7 @@ class TheLostAndTheDamnedTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TheLostAndTheDamned());
         Forest land = new Forest();
         harness.setGraveyard(player1, List.of(land));
-        gd.graveyardPlayPermissions.put(land.getId(), player1.getId());
+        grantGraveyardPlay(land.getId(), player1.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -38,7 +39,7 @@ class TheLostAndTheDamnedTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TheLostAndTheDamned());
         GrizzlyBears spell = new GrizzlyBears();
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.forceActivePlayer(player1);
@@ -102,7 +103,7 @@ class TheLostAndTheDamnedTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TheLostAndTheDamned());
         Forest land = new Forest();
         harness.setGraveyard(player2, List.of(land));
-        gd.graveyardPlayPermissions.put(land.getId(), player2.getId());
+        grantGraveyardPlay(land.getId(), player2.getId());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -118,7 +119,7 @@ class TheLostAndTheDamnedTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TheLostAndTheDamned());
         GrizzlyBears spell = new GrizzlyBears();
         harness.setExile(player2, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player2.getId());
+        gd.grantExilePlayPermission(spell.getId(), player2.getId(), Duration.PERMANENT);
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

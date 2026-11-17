@@ -25,8 +25,8 @@ public class RegisterDelayedControllerSpellCastTriggerEffectHandler implements N
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RegisterDelayedControllerSpellCastTriggerEffect) effect;
-        gameData.temporaryGlobalTriggeredAbilities.add(e.duration().delayed(entry.getControllerId(), entry.getCard(),
-                e.delayedAbility(), entry.getSourcePermanentId(), gameData.turnNumber, e.targetFilter()));
+        gameData.temporaryGlobalTriggeredAbilities.add(e.delayed(entry.getControllerId(), entry.getCard(),
+                entry.getSourcePermanentId(), gameData.turnNumber));
         log.info("Game {} - {} creates a delayed spell-cast ability ({})",
                 gameData.id, entry.getCard().getName(), e.duration());
     }

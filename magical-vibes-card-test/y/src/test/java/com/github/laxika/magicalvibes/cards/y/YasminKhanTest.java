@@ -41,11 +41,11 @@ class YasminKhanTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(topCard.getId()));
 
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
     }
 
     @Test
@@ -163,7 +163,7 @@ class YasminKhanTest extends BaseCardTest {
 
         assertThat(yasmin.isTapped()).isTrue();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test

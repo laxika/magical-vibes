@@ -37,7 +37,7 @@ public class RedirectNextCombatDamageFromTargetAttackingCreatureToSelfEffectHand
             return;
         }
 
-        gameData.creatureDamageRedirectShields.add(new CreatureDamageRedirectShield(
+        gameData.addShield(new CreatureDamageRedirectShield(
                 sourceId, targetId, CreatureDamageRedirectShield.NEXT_EVENT, targetId, true));
     }
 }

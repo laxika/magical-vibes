@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterNextSchemeSetInMotionReplacementEffect;
 import com.github.laxika.magicalvibes.model.BendingType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -58,13 +60,10 @@ public final class ActionEvents {
         }
         UUID settingPlayerId = schemeEntry.getControllerId();
         int schemesSet = 1;
-        Integer pendingReplacements = gameData.pendingNextSchemeSetInMotionReplacements.get(settingPlayerId);
-        if (pendingReplacements != null) {
-            if (pendingReplacements <= 1) {
-                gameData.pendingNextSchemeSetInMotionReplacements.remove(settingPlayerId);
-            } else {
-                gameData.pendingNextSchemeSetInMotionReplacements.put(settingPlayerId, pendingReplacements - 1);
-            }
+        List<FloatingContinuousEffect> pendingReplacements = gameData.floatingEffectsOnPlayer(settingPlayerId,
+                RegisterNextSchemeSetInMotionReplacementEffect.class);
+        if (!pendingReplacements.isEmpty()) {
+            gameData.endFloatingEffect(pendingReplacements.getFirst());
             schemesSet = 3;
         }
         for (int schemeIndex = 0; schemeIndex < schemesSet; schemeIndex++) {

@@ -32,7 +32,7 @@ public class PreventXDamageToControllerAndRedirectToTargetPlayerEffectHandler im
 
         if (xValue <= 0 || targetPlayerId == null) return;
 
-        gameData.damageRedirectShields.add(new DamageRedirectShield(
+        gameData.addShield(new DamageRedirectShield(
                 controllerId, xValue, entry.getSourcePermanentId(), entry.getCard(), targetPlayerId));
 
         String controllerName = gameData.playerIdToName.get(controllerId);

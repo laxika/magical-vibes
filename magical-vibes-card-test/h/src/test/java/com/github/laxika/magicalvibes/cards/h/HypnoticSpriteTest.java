@@ -41,7 +41,7 @@ class HypnoticSpriteTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Centaur Courser");
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNotNull();
-        assertThat(harness.getGameData().exilePlayPermissions.get(card.getId())).isEqualTo(player2.getId());
+        assertThat(harness.getGameData().exilePlayPermissionHolder(card.getId())).isEqualTo(player2.getId());
     }
 
     @Test
@@ -145,7 +145,7 @@ class HypnoticSpriteTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(counter);
         assertThat(gd.findExiledCard(counter.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(counter.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(counter.getId());
         assertThat(gd.findExiledCard(response.getId())).isNotNull();
         harness.assertOnBattlefield(player1, "Hypnotic Sprite");
     }
@@ -173,7 +173,7 @@ class HypnoticSpriteTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(counter);
         assertThat(gd.findExiledCard(counter.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(counter.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(counter.getId());
         assertThat(gd.findExiledCard(response.getId())).isNotNull();
     }
 }

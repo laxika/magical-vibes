@@ -128,8 +128,10 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
             if (e.canTargetSpell()) {
                 StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, entry.getTargetId());
                 if (targetSpell != null) {
-                    gameData.spellColorOverridesUntilEndOfTurn.put(entry.getTargetId(),
-                            java.util.Set.of(e.color()));
+                    gameData.addCardEffect(entry,
+                            new com.github.laxika.magicalvibes.model.effect.SpellColorUntilEndOfTurnEffect(e.color()),
+                            entry.getTargetId(),
+                            com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN);
                     String colorName = e.color().name().charAt(0)
                             + e.color().name().substring(1).toLowerCase();
                     gameLogService.append(gameData, GameLog.builder()

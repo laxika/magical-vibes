@@ -32,7 +32,7 @@ class HavengulLichTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, shade.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        assertThat(gd.graveyardCardCastPermissionsUntilEndOfTurn)
+        assertThat(graveyardCastPermissionsByCard())
                 .containsEntry(shade.getId(),
                         new com.github.laxika.magicalvibes.model.GameData.GraveyardCardCastPermission(
                                 lich.getId(), player1.getId(), true, false));
@@ -147,12 +147,12 @@ class HavengulLichTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, 0, null, uncastShade.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
-        assertThat(gd.graveyardCardCastPermissionsUntilEndOfTurn).containsKey(uncastShade.getId());
+        assertThat(graveyardCastPermissionsByCard()).containsKey(uncastShade.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         gs.advanceStep(gd);
 
-        assertThat(gd.graveyardCardCastPermissionsUntilEndOfTurn).isEmpty();
+        assertThat(graveyardCastPermissionsByCard()).isEmpty();
         assertThat(lich.getTemporaryActivatedAbilities()).isEmpty();
     }
 

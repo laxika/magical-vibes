@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -45,7 +47,9 @@ public class SoulEchoDamageRedirectionHandler implements MayEffectHandlerBean {
             source.setEchoDamageRedirectionActive(true);
             UUID echoControllerId = gameQueryService.findPermanentController(gameData, source.getId());
             if (echoControllerId != null) {
-                gameData.soulEchoReplacementPlayers.add(echoControllerId);
+                gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(ability.sourceCard().getName(),
+                        source.getId(), echoControllerId, new SoulEchoUpkeepEffect(), echoControllerId,
+                        Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP));
             }
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " chooses the echo-counter replacement for ", ability.sourceCard(), "."));

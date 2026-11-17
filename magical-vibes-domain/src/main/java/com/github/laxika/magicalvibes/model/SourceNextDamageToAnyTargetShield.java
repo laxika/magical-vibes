@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
@@ -56,7 +57,7 @@ public record SourceNextDamageToAnyTargetShield(
         UUID tokenControllerId,
         String tokenSourceSetCode,
         int remainingDamage,
-        PermanentPredicate requiredSourceFilter) {
+        PermanentPredicate requiredSourceFilter) implements CardEffect {
 
     /** Compatibility constructor for prevention of the whole next damage event. */
     public SourceNextDamageToAnyTargetShield(UUID sourceId,

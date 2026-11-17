@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeAddExtraManaUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -347,12 +348,14 @@ public class TapTriggers {
     }
 
     /**
-     * Applies {@code GameData.extraManaOnLandSubtypeTapThisTurn}: a turn-scoped, symmetric "whenever a player taps a
+     * Applies the {@link LandsOfSubtypeAddExtraManaUntilEndOfTurnEffect} floating effects: a turn-scoped, symmetric "whenever a player taps a
      * land of this subtype for mana, that player adds an additional {X}" granted by a resolved effect (Chaos Moon's odd
      * branch). It is a triggered mana ability, so it pays straight into the tapping player's pool (CR 605.4a).
      */
     private void applyTurnScopedExtraLandTapMana(GameData gameData, UUID tappingPlayerId, UUID tappedLandId) {
-        if (gameData.extraManaOnLandSubtypeTapThisTurn.isEmpty()) {
+        List<FloatingContinuousEffect> extraMana = gameData.floatingEffectsOfTypes(
+                LandsOfSubtypeAddExtraManaUntilEndOfTurnEffect.class);
+        if (extraMana.isEmpty()) {
             return;
         }
         Permanent tappedLand = gameQueryService.findPermanentById(gameData, tappedLandId);
@@ -364,21 +367,20 @@ public class TapTriggers {
         if (pool == null) {
             return;
         }
-        for (var entry : gameData.extraManaOnLandSubtypeTapThisTurn.entrySet()) {
-            if (!types.contains(entry.getKey())) {
+        for (FloatingContinuousEffect floating : extraMana) {
+            var bonus = (LandsOfSubtypeAddExtraManaUntilEndOfTurnEffect) floating.effect();
+            if (!types.contains(bonus.subtype())) {
                 continue;
             }
-            for (var bonus : entry.getValue()) {
-                ManaColor color = bonus.color() != ManaColor.COLORLESS
-                        && gameData.hasFloatingEffectOnPlayer(bonus.controllerId(),
-                        ReplaceColoredManaWithWhiteUntilEndOfTurnEffect.class)
-                        ? ManaColor.WHITE : bonus.color();
-                pool.add(color);
-                gameLogService.append(gameData, GameLog.builder()
-                        .text(gameData.playerIdToName.get(tappingPlayerId) + " adds 1 additional "
-                                + color.getCode() + " mana.")
-                        .build());
-            }
+            ManaColor color = bonus.color() != ManaColor.COLORLESS
+                    && gameData.hasFloatingEffectOnPlayer(floating.controllerId(),
+                    ReplaceColoredManaWithWhiteUntilEndOfTurnEffect.class)
+                    ? ManaColor.WHITE : bonus.color();
+            pool.add(color);
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(gameData.playerIdToName.get(tappingPlayerId) + " adds 1 additional "
+                            + color.getCode() + " mana.")
+                    .build());
         }
     }
 

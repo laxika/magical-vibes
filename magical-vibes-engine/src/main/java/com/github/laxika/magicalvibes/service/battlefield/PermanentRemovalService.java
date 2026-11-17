@@ -40,7 +40,6 @@ import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.action.GrantExilePlayPermissionAtNextTurn;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
@@ -97,6 +96,10 @@ import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.CardRevealedInHandEffect;
+import com.github.laxika.magicalvibes.model.effect.CardCantBePlayedFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 /**
  * Handles removing permanents from the battlefield and moving them to their destination zones
@@ -1074,10 +1077,10 @@ public class PermanentRemovalService {
         UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), dyingCreatureControllerId);
         boolean removed = returnPermanentToHand(gameData, target, false);
         if (removed && found.replacement().revealsReturnedCardUntilOwnerNextTurn()) {
-            markCardsRevealedInHandUntilOwnerNextTurn(gameData, ownerId, leavingCards);
+            markCardsRevealedInHandUntilOwnerNextTurn(gameData, found.source(), ownerId, leavingCards);
         }
         if (removed && found.replacement().preventsPlayingReturnedCardUntilOwnerNextTurn()) {
-            markCardsUnplayableInHandUntilOwnerNextTurn(gameData, ownerId, leavingCards);
+            markCardsUnplayableInHandUntilOwnerNextTurn(gameData, found.source(), ownerId, leavingCards);
         }
         return removed;
     }
@@ -1124,7 +1127,7 @@ public class PermanentRemovalService {
         return null;
     }
 
-    private void markCardsRevealedInHandUntilOwnerNextTurn(GameData gameData, UUID ownerId,
+    private void markCardsRevealedInHandUntilOwnerNextTurn(GameData gameData, Permanent source, UUID ownerId,
                                                             List<Card> cards) {
         List<Card> hand = gameData.playerHands.get(ownerId);
         if (hand == null) {
@@ -1132,12 +1135,13 @@ public class PermanentRemovalService {
         }
         for (Card card : cards) {
             if (hand.stream().anyMatch(handCard -> handCard.getId().equals(card.getId()))) {
-                gameData.cardsRevealedInHandUntilOwnerNextTurn.put(card.getId(), ownerId);
+                gameData.addFloatingEffect(FloatingContinuousEffect.onCard(source.getCard().getName(), source.getId(),
+                        ownerId, new CardRevealedInHandEffect(), card.getId(), Duration.UNTIL_YOUR_NEXT_TURN));
             }
         }
     }
 
-    private void markCardsUnplayableInHandUntilOwnerNextTurn(GameData gameData, UUID ownerId,
+    private void markCardsUnplayableInHandUntilOwnerNextTurn(GameData gameData, Permanent source, UUID ownerId,
                                                               List<Card> cards) {
         List<Card> hand = gameData.playerHands.get(ownerId);
         if (hand == null) {
@@ -1145,7 +1149,8 @@ public class PermanentRemovalService {
         }
         for (Card card : cards) {
             if (hand.stream().anyMatch(handCard -> handCard.getId().equals(card.getId()))) {
-                gameData.cardsCantBePlayedInHandUntilOwnerNextTurn.put(card.getId(), ownerId);
+                gameData.addFloatingEffect(FloatingContinuousEffect.onCard(source.getCard().getName(), source.getId(),
+                        ownerId, new CardCantBePlayedFromHandEffect(), card.getId(), Duration.UNTIL_YOUR_NEXT_TURN));
             }
         }
     }
@@ -1954,8 +1959,10 @@ public class PermanentRemovalService {
                     if (exiled != null) {
                         gameData.warpExileEntryVersions.put(exiled.card().getId(),
                                 gameData.exileEntryVersions.getOrDefault(exiled.card().getId(), 0L));
-                        gameData.queueDelayedAction(new GrantExilePlayPermissionAtNextTurn(
-                                exiled.card().getId(), exiled.ownerId(), exiled.exiledTurnNumber()));
+                        // "You may cast this card from exile after this turn has ended" (CR 702.185a): the
+                        // permission begins as the next turn does and lasts as long as the card remains exiled.
+                        gameData.grantExilePlayPermission(exiled.card().getId(), exiled.ownerId(),
+                                Duration.AFTER_THIS_TURN);
                     }
                 }
             }
@@ -2018,7 +2025,6 @@ public class PermanentRemovalService {
                 if (allTracked != null) {
                     allTracked.remove(cardId);
                 }
-                gameData.graveyardAdventureCastPermissions.remove(cardId);
                 // Leaving the graveyard makes the card a new object (CR 400.7), so a later return to
                 // the graveyard is not a discard made this turn.
                 gameData.cardsDiscardedOrCycledThisTurn.values().forEach(discardedIds -> discardedIds.remove(cardId));
@@ -2048,7 +2054,7 @@ public class PermanentRemovalService {
                 if (allTracked != null) {
                     allTracked.remove(cardId);
                 }
-                gameData.graveyardAdventureCastPermissions.remove(cardId);
+                gameData.endFloatingEffectsOnCard(cardId);
                 graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, leaving);
                 return;
             }
@@ -2550,7 +2556,6 @@ public class PermanentRemovalService {
         // Its "for as long as" effects end as it leaves (CR 611.2b); a departing Aura's copy reverts with them.
         durationClock.sourceLeft(gameData, target.getId());
         gameData.expireControlEffectsForDepartedPermanent(target.getId());
-        gameData.expireExilePlayPermissionsForSource(target.getId());
         creatureControlService.reconcileControl(gameData);
         untapLockReleaseService.releaseUntapLocks(gameData, target);
         handleSourceLinkedAnimationCleanup(gameData, target);
@@ -3359,7 +3364,7 @@ public class PermanentRemovalService {
         UUID prepareCopyId = removedPermanent.getPreparedSpellCardId();
         if (prepareCopyId != null) {
             gameData.removeFromExile(prepareCopyId);
-            gameData.exilePlayPermissions.remove(prepareCopyId);
+            gameData.endExilePlayPermission(prepareCopyId);
         }
         removedPermanent.setPrepared(false);
         removedPermanent.setPreparedSpellCardId(null);

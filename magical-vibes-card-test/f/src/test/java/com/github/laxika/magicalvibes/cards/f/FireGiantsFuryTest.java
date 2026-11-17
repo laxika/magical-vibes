@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -41,9 +42,9 @@ class FireGiantsFuryTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(5);
-        assertThat(gd.exilePlayPermissions).hasSize(5)
+        assertThat(gd.exilePlayPermissionHolders()).hasSize(5)
                 .containsValue(player1.getId());
-        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer).hasSize(5)
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)).hasSize(5)
                 .containsValue(player1.getId());
     }
 

@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public record PlayerWithLowestLifeGainsControlOfSourceCreatureEffect() implements ControlStealingEffect {
 
     @Override
-    public ControlDuration controlDuration() {
-        return ControlDuration.PERMANENT;
+    public Duration controlDuration() {
+        return Duration.PERMANENT;
     }
 }

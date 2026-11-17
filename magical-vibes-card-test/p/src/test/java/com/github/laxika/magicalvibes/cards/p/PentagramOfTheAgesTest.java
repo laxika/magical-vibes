@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OrcishArtillery;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -45,7 +46,7 @@ class PentagramOfTheAgesTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, goblin.getId());
 
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId())
                         && s.sourceId().equals(goblin.getId())
                         && !s.gainLife());
@@ -68,7 +69,7 @@ class PentagramOfTheAgesTest extends BaseCardTest {
 
         // 2 damage prevented, no life gained (would be 22 under Reverse Damage)
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -88,7 +89,7 @@ class PentagramOfTheAgesTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 18);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.sourceId().equals(chosen.getId()));
     }
 
@@ -103,14 +104,14 @@ class PentagramOfTheAgesTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, goblin.getId());
 
-        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isNotEmpty();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -178,7 +179,7 @@ class PentagramOfTheAgesTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 17);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -201,7 +202,7 @@ class PentagramOfTheAgesTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 17);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(s -> s.playerId().equals(player1.getId())
                         && s.sourceId().equals(artillery.getId()));
     }
@@ -229,7 +230,7 @@ class PentagramOfTheAgesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     private Permanent addReadyPentagram(Player player) {
@@ -258,7 +259,7 @@ class PentagramOfTheAgesTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 18);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
 
         artillery.untap();
         harness.activateAbility(player1, 1, null, player2.getId());

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.y;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AttachOneOfControlledEquipmentToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -31,7 +31,7 @@ public class YuffieMateriaHunter extends Card {
                         new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),
                 "Target must be a noncreature artifact"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
-                        new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD),
+                        new GainControlOfTargetEffect(Duration.WHILE_SOURCE_ON_BATTLEFIELD),
                         new MayEffect(new AttachOneOfControlledEquipmentToSourceEffect(),
                                 "Attach an Equipment you control to Yuffie?")));
     }

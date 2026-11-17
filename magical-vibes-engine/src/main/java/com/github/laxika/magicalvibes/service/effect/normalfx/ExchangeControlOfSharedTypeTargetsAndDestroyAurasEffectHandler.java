@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -90,11 +90,11 @@ public class ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffectHandler impl
         });
 
         // Exchange: give the controller's permanent to the opponent, and the opponent's to the controller.
-        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
+        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(Duration.PERMANENT);
         creatureControlService.applyControlEffect(gameData, opponentController, ownTarget,
-                controlEffect, ControlDuration.PERMANENT.toDuration(), null, entry.getCard().getName());
+                controlEffect, Duration.PERMANENT, null, entry.getCard().getName());
         creatureControlService.applyControlEffect(gameData, ownController, opponentTarget,
-                controlEffect, ControlDuration.PERMANENT.toDuration(), null, entry.getCard().getName());
+                controlEffect, Duration.PERMANENT, null, entry.getCard().getName());
 
         
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(": ").card(ownTarget.getCard()).text(" and ").card(opponentTarget.getCard()).text(" exchange controllers.").build());

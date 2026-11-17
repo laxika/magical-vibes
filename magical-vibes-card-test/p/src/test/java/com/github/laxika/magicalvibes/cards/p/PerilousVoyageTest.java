@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BloodlineKeeper;
 import com.github.laxika.magicalvibes.cards.l.LordOfLineage;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -221,7 +220,7 @@ class PerilousVoyageTest extends BaseCardTest {
         gd.stolenCreatures.put(target.getId(), player1.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 "Control change", null, player2.getId(),
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT), target.getId(),
+                new GainControlOfTargetEffect(Duration.PERMANENT), target.getId(),
                 null, null, Duration.PERMANENT, 0));
         harness.setLibrary(player1, List.of(new Island(), new Island()));
         harness.setHand(player1, List.of(new PerilousVoyage()));
@@ -249,7 +248,7 @@ class PerilousVoyageTest extends BaseCardTest {
         gd.stolenCreatures.put(target.getId(), player2.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 "Control change", null, player1.getId(),
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT), target.getId(),
+                new GainControlOfTargetEffect(Duration.PERMANENT), target.getId(),
                 null, null, Duration.PERMANENT, 0));
         harness.passBothPriorities();
 

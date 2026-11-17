@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -44,9 +45,9 @@ class PredatorsHourTest extends BaseCardTest {
         assertThat(exiledCard).isSameAs(topCard);
         assertThat(exiled.faceDown()).isTrue();
 
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(topCard.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).doesNotContain(topCard.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(topCard.getId());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -118,8 +119,8 @@ class PredatorsHourTest extends BaseCardTest {
         assertThat(gd.findExiledCard(firstCard.getId())).isNotNull();
         assertThat(gd.findExiledCard(secondCard.getId())).isNotNull();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remainingCard);
-        assertThat(gd.exilePlayPermissions.get(firstCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissions.get(secondCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(firstCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(secondCard.getId())).isEqualTo(player1.getId());
     }
 
     @Test

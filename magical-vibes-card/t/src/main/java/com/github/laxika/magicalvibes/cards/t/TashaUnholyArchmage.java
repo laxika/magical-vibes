@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -43,7 +43,7 @@ public class TashaUnholyArchmage extends Card {
                         new CardTypePredicate(CardType.CREATURE),
                         List.of(
                                 new GrantKeywordEffect(Keyword.WARD,
-                                        GrantScope.SELF, GrantDuration.INDEFINITE),
+                                        GrantScope.SELF, Duration.PERMANENT),
                                 new GrantTriggeredAbilityEffect(
                                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                                         new CounterUnlessPaysEffect(2)), GrantScope.SELF)))),

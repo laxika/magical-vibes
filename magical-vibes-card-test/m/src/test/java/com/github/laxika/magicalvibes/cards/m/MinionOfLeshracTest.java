@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlack;
 import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
@@ -134,7 +135,7 @@ class MinionOfLeshracTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
         assertThat(minion.isTapped()).isFalse();
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     // ===== {T}: Destroy target creature or land =====

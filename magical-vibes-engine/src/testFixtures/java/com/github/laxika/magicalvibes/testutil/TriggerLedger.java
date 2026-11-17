@@ -127,11 +127,13 @@ public final class TriggerLedger {
                 .append(" | ").append(effect.sourceCardName())
                 .append(" | ").append(effect.effect() == null ? "null" : effect.effect().getClass().getSimpleName())
                 .append(" | duration=").append(duration == null ? "null"
-                        : duration.end() + (duration.asLongAs() == null ? "" : "/" + duration.asLongAs()));
+                        : (duration.startsNow() ? "" : duration.start() + ">") + duration.end()
+                        + (duration.asLongAs() == null ? "" : "/" + duration.asLongAs()));
         appendId(line, "source", effect.sourcePermanentId(), effect, gameData);
         appendId(line, "controller", effect.controllerId(), effect, gameData);
         appendId(line, "affected", effect.affectedPermanentId(), effect, gameData);
         appendId(line, "affectedPlayer", effect.affectedPlayerId(), effect, gameData);
+        appendId(line, "affectedCard", effect.affectedCardId(), effect, gameData);
         if (effect.scope() != null) {
             line.append(" scope=").append(effect.scope().getClass().getSimpleName());
         }

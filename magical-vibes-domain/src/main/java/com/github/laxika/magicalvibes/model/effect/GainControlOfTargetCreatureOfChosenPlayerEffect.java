@@ -8,12 +8,12 @@ package com.github.laxika.magicalvibes.model.effect;
  * contain that player's chosen creature. The handler rechecks both relationships when the effect
  * resolves.</p>
  */
-public record GainControlOfTargetCreatureOfChosenPlayerEffect(ControlDuration duration,
+public record GainControlOfTargetCreatureOfChosenPlayerEffect(Duration duration,
                                                               int targetGroup)
         implements ControlStealingEffect {
 
     @Override
-    public ControlDuration controlDuration() {
+    public Duration controlDuration() {
         return duration;
     }
 

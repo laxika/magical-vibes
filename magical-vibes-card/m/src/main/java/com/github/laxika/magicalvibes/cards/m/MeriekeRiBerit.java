@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedDestroyTargetWhenSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -25,7 +25,7 @@ public class MeriekeRiBerit extends Card {
         // regenerated." Each resolution creates its own delayed trigger for its own creature (CR 603.7a).
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD),
+                List.of(new GainControlOfTargetEffect(Duration.WHILE_SOURCE_ON_BATTLEFIELD),
                         new RegisterDelayedDestroyTargetWhenSourceLeavesEffect(true, false)),
                 "{T}: Gain control of target creature for as long as you control Merieke Ri Berit. When Merieke Ri Berit leaves the battlefield or becomes untapped, destroy that creature. It can't be regenerated.",
                 new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,7 @@ class RoccoStreetChefTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(playerOneCard);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(playerTwoCard);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(playerOneCard.getId(), player1.getId())
                 .containsEntry(playerTwoCard.getId(), player2.getId());
     }
@@ -43,7 +44,7 @@ class RoccoStreetChefTest extends BaseCardTest {
         Permanent rocco = addCreatureReady(player1, new RoccoStreetChef());
         Forest land = new Forest();
         gd.addToExile(player2.getId(), land);
-        gd.exilePlayPermissions.put(land.getId(), player2.getId());
+        gd.grantExilePlayPermission(land.getId(), player2.getId(), Duration.PERMANENT);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -61,7 +62,7 @@ class RoccoStreetChefTest extends BaseCardTest {
         Permanent rocco = addCreatureReady(player1, new RoccoStreetChef());
         GrizzlyBears spell = new GrizzlyBears();
         gd.addToExile(player2.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player2.getId());
+        gd.grantExilePlayPermission(spell.getId(), player2.getId(), Duration.PERMANENT);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.GREEN, 1);
 
@@ -88,7 +89,7 @@ class RoccoStreetChefTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.END_STEP);
         resolveAllTriggers();
 
-        assertThat(gd.exilePlayPermissions).containsEntry(card.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(card.getId(), player1.getId());
         gd.turnNumber += 2;
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
@@ -96,7 +97,7 @@ class RoccoStreetChefTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         resolveAllTriggers();
     }
@@ -107,7 +108,7 @@ class RoccoStreetChefTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         Forest land = new Forest();
         harness.setExile(player1, List.of(land));
-        gd.exilePlayPermissions.put(land.getId(), player1.getId());
+        gd.grantExilePlayPermission(land.getId(), player1.getId(), Duration.PERMANENT);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -134,7 +135,7 @@ class RoccoStreetChefTest extends BaseCardTest {
         Permanent rocco = addCreatureReady(player1, new RoccoStreetChef());
         GrizzlyBears spell = new GrizzlyBears();
         harness.setExile(player1, List.of(spell));
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -157,7 +158,7 @@ class RoccoStreetChefTest extends BaseCardTest {
         Permanent rocco = addCreatureReady(player1, new RoccoStreetChef());
         Forest land = new Forest();
         harness.setExile(player2, List.of(land));
-        gd.exilePlayPermissions.put(land.getId(), player2.getId());
+        gd.grantExilePlayPermission(land.getId(), player2.getId(), Duration.PERMANENT);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

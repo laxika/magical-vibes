@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.d.Demonfire;
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -65,7 +66,7 @@ class HaazdaShieldMateTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -85,7 +86,7 @@ class HaazdaShieldMateTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 18);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(shield -> shield.sourceId().equals(chosenSource.getId()));
     }
 
@@ -203,12 +204,12 @@ class HaazdaShieldMateTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
-        assertThat(gd.playerSourceNextDamageShields).hasSize(1);
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
         source.setAttacking(true);
         resolveCombat(player2);
 

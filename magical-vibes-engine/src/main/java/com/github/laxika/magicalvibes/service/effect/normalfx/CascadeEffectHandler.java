@@ -109,7 +109,7 @@ public class CascadeEffectHandler implements NormalEffectHandlerBean {
                 .text(playerName + " cascades into ").card(hit).text(" (" + sourceName + ").").build());
 
         if (cascade.deferCastUntilEndOfTurn()) {
-            gameData.exileCastPermissionsUntilEndOfTurn.add(new GameData.ExileCastPermission(
+            gameData.grantExileCastPermission(new GameData.ExileCastPermission(
                     UUID.randomUUID(), entry.getSourcePermanentId(), controllerId, hit.getId(), true));
             exiled.remove(hit);
             Collections.shuffle(exiled);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.cards.c.Capsize;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -59,7 +60,7 @@ class OracleEnVecTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
 
-        assertThat(gd.chosenAttackersNextTurn).containsEntry(player2.getId(), Set.of(chosen.getId()));
+        assertThat(FloatingCombatRules.scheduledChosenAttackers(gd, player2.getId())).containsExactly(Set.of(chosen.getId()));
     }
 
     @Test
@@ -72,7 +73,7 @@ class OracleEnVecTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleMultiplePermanentsChosen(player2, List.of());
 
-        assertThat(gd.chosenAttackersNextTurn).containsEntry(player2.getId(), Set.of());
+        assertThat(FloatingCombatRules.scheduledChosenAttackers(gd, player2.getId())).containsExactly(Set.of());
     }
 
     @Test
@@ -83,20 +84,20 @@ class OracleEnVecTest extends BaseCardTest {
         activateOracle();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.chosenAttackersNextTurn).containsEntry(player2.getId(), Set.of());
+        assertThat(FloatingCombatRules.scheduledChosenAttackers(gd, player2.getId())).containsExactly(Set.of());
     }
 
     @Test
     @DisplayName("The restriction activates when the chooser's turn begins and the pending entry is consumed")
     void activatesOnChoosersTurn() {
         Permanent chosen = addCreatureReady(player2, new TrainedArmodon());
-        gd.chosenAttackersNextTurn.put(player2.getId(), Set.of(chosen.getId()));
+        gd.restrictAttackersNextTurn(player2.getId(), Set.of(chosen.getId()), player1.getId(), new OracleEnVec());
 
         advanceTurn();
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.chosenAttackersThisTurn).containsEntry(player2.getId(), Set.of(chosen.getId()));
-        assertThat(gd.chosenAttackersNextTurn).isEmpty();
+        assertThat(FloatingCombatRules.chosenAttackers(gd, player2.getId())).containsExactly(Set.of(chosen.getId()));
+        assertThat(FloatingCombatRules.scheduledChosenAttackers(gd, player2.getId())).isEmpty();
     }
 
     @Test
@@ -104,7 +105,7 @@ class OracleEnVecTest extends BaseCardTest {
     void chosenMustAttackOthersCant() {
         Permanent chosen = addCreatureReady(player2, new TrainedArmodon());
         Permanent unchosen = addCreatureReady(player2, new TrainedArmodon());
-        gd.chosenAttackersThisTurn.put(player2.getId(), Set.of(chosen.getId()));
+        FloatingCombatRules.chosenAttackers(gd, player1.getId(), player2.getId(), Set.of(chosen.getId()));
 
         beginDeclareAttackersFor(player2);
 
@@ -120,7 +121,7 @@ class OracleEnVecTest extends BaseCardTest {
     @DisplayName("Choosing no creatures locks every creature out of attacking that turn")
     void emptySelectionLocksAllAttackers() {
         addCreatureReady(player2, new TrainedArmodon());
-        gd.chosenAttackersThisTurn.put(player2.getId(), Set.of());
+        FloatingCombatRules.chosenAttackers(gd, player1.getId(), player2.getId(), Set.of());
 
         beginDeclareAttackersFor(player2);
 

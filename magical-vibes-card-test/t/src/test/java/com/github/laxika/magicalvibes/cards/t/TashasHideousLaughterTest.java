@@ -43,8 +43,8 @@ class TashasHideousLaughterTest extends BaseCardTest {
                         .map(Card::getId).toList());
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remainingCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(controllerLibraryCard);
-        assertThat(gd.exilePlayPermissions).isEmpty();
-        assertThat(gd.exilePlayWithoutPayingManaCost).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
+        assertThat(gd.exilePlayWithoutPayingCardIds()).isEmpty();
     }
 
     @Test

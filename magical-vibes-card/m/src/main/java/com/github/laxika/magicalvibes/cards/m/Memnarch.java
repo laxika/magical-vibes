@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -29,7 +29,7 @@ public class Memnarch extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{U}",
-                List.of(new GainControlOfTargetEffect(ControlDuration.PERMANENT)),
+                List.of(new GainControlOfTargetEffect(Duration.PERMANENT)),
                 "{3}{U}: Gain control of target artifact.",
                 TargetFilters.artifact()
         ));

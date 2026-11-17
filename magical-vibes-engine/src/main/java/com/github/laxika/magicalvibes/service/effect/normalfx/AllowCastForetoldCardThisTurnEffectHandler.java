@@ -26,7 +26,7 @@ public class AllowCastForetoldCardThisTurnEffectHandler implements NormalEffectH
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        gameData.foretoldCardCastPermissionsThisTurn.add(
+        gameData.grantForetoldCardCastPermission(
                 new GameData.ForetoldCardCastPermission(controllerId, true));
 
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId)

@@ -388,7 +388,7 @@ public class PermanentChoiceSpellHandlerService {
                         gameLogService.append(gameData, GameLog.cardThen(ect.cardToCast(),
                                 " can't be cast and ceases to exist."));
                     } else {
-                        gameData.exilePlayCostModifiers.remove(ect.cardToCast().getId());
+                        gameData.setExilePlayCostModifier(ect.cardToCast().getId(), null);
                         log.info("Game {} - normal-cost exile cast of {} could not be completed",
                                 gameData.id, ect.cardToCast().getName());
                     }
@@ -408,7 +408,7 @@ public class PermanentChoiceSpellHandlerService {
                     }
                 } catch (IllegalStateException ex) {
                     if (ect.genericCostReduction() > 0) {
-                        gameData.exilePlayCostModifiers.remove(ect.cardToCast().getId());
+                        gameData.setExilePlayCostModifier(ect.cardToCast().getId(), null);
                     }
                     if (ect.payManaCost() && ect.copy()) {
                         gameData.removeFromExile(ect.cardToCast().getId());
@@ -496,7 +496,7 @@ public class PermanentChoiceSpellHandlerService {
             gameData.spellsGrantedHasteOnEntry.remove(ect.cardToCast().getId());
             gameData.spellsGrantedSuspendHasteOnEntry.remove(ect.cardToCast().getId());
             if (ect.genericCostReduction() > 0 || ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
-                gameData.exilePlayCostModifiers.remove(ect.cardToCast().getId());
+                gameData.setExilePlayCostModifier(ect.cardToCast().getId(), null);
                 gameLogService.append(gameData, GameLog.cardThen(ect.cardToCast(),
                         "'s target is no longer valid and it stays exiled."));
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -550,7 +550,7 @@ public class PermanentChoiceSpellHandlerService {
                 gameData.spellsGrantedHasteOnEntry.remove(card.getId());
                 gameData.spellsGrantedSuspendHasteOnEntry.remove(card.getId());
                 if (ect.genericCostReduction() > 0 || ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
-                    gameData.exilePlayCostModifiers.remove(card.getId());
+                    gameData.setExilePlayCostModifier(card.getId(), null);
                 } else if (ect.payManaCost() && ect.copy()) {
                     gameData.removeFromExile(card.getId());
                 } else if (!ect.copy()) {
@@ -599,7 +599,7 @@ public class PermanentChoiceSpellHandlerService {
                         new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId())),
                             card.getId(), ect.xValue(), chosen, false, true);
             } catch (IllegalStateException ex) {
-                gameData.exilePlayCostModifiers.remove(card.getId());
+                gameData.setExilePlayCostModifier(card.getId(), null);
                 log.info("Game {} - normal-cost multi-target exile cast of {} could not be completed",
                         gameData.id, card.getName());
             }
@@ -618,7 +618,7 @@ public class PermanentChoiceSpellHandlerService {
                 }
             } catch (IllegalStateException ex) {
                 if (ect.genericCostReduction() > 0) {
-                    gameData.exilePlayCostModifiers.remove(card.getId());
+                    gameData.setExilePlayCostModifier(card.getId(), null);
                 }
                 if (ect.payManaCost() && ect.copy()) {
                     gameData.removeFromExile(card.getId());

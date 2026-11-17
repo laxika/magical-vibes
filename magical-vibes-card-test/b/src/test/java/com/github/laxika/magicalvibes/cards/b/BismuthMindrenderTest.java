@@ -51,7 +51,7 @@ class BismuthMindrenderTest extends BaseCardTest {
         resolveCombatAndTrigger();
 
         assertThat(gd.findExiledCard(land.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(land.getId());
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

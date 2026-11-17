@@ -27,7 +27,7 @@ class PaintersStudioDefacedGalleryTest extends BaseCardTest {
         castRoom(0);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
     }
@@ -95,7 +95,7 @@ class PaintersStudioDefacedGalleryTest extends BaseCardTest {
         castRoom(0);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(creature.getId(), player1.getId())
                 .containsEntry(land.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
@@ -106,7 +106,7 @@ class PaintersStudioDefacedGalleryTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Bashful Beastie");
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(land.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(land);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         assertThatThrownBy(() -> harness.castFromExile(player1, land.getId()))

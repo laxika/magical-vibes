@@ -30,9 +30,9 @@ class XandersPactTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(shock);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(forest);
-        assertThat(gd.exilePlayPermissions).containsEntry(shock.getId(), player1.getId());
-        assertThat(gd.exilePlayForLifeEqualToManaValue).contains(shock.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(forest.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(shock.getId(), player1.getId());
+        assertThat(gd.exilePlayForLifeCardIds()).contains(shock.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(forest.getId());
     }
 
     @Test

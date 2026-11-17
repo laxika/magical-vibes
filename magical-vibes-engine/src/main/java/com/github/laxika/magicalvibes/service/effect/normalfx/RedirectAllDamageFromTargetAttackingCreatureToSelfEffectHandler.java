@@ -36,7 +36,7 @@ public class RedirectAllDamageFromTargetAttackingCreatureToSelfEffectHandler imp
             return;
         }
 
-        gameData.turnDamageRedirectToCreatureShields.add(
+        gameData.addShield(
                 new TurnDamageRedirectToCreatureShield(controllerId, sourceId, false, false, targetId));
     }
 }

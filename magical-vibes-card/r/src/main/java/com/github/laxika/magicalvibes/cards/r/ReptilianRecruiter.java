@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -37,7 +37,7 @@ public class ReptilianRecruiter extends Card {
                                 new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.LIZARD))
                         )),
                         SequenceEffect.of(
-                                new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                                new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                                 new UntapPermanentsEffect(TapUntapScope.TARGET),
                                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)
                         )));

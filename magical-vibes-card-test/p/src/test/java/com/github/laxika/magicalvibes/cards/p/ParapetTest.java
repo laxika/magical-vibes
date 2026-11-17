@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.w.Warthog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -124,7 +125,7 @@ class ParapetTest extends BaseCardTest {
     void castFromExileAtInstantSpeedIsSacrificedAtCleanup() {
         Parapet parapet = new Parapet();
         gd.addToExile(player1.getId(), parapet);
-        gd.exilePlayPermissions.put(parapet.getId(), player1.getId());
+        gd.grantExilePlayPermission(parapet.getId(), player1.getId(), Duration.PERMANENT);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.WHITE, 2);

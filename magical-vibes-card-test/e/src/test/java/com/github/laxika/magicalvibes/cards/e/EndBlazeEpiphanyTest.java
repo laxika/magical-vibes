@@ -48,8 +48,8 @@ class EndBlazeEpiphanyTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
 
-        assertThat(gd.exilePlayPermissions).containsEntry(second.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(first.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(second.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(first.getId());
     }
 
     @Test
@@ -178,9 +178,9 @@ class EndBlazeEpiphanyTest extends BaseCardTest {
         resolveUntilChoiceOrDone();
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
         harness.passUntil(player2, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 1);
 

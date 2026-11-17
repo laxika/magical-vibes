@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -108,8 +109,8 @@ public class IntuitionSearchChoiceInteractionHandler
             // Opposition Agent: the searching player exiles each card found instead of revealing them.
             for (Card card : chosen) {
                 exileService.exileCard(gameData, controllerId, card);
-                gameData.exilePlayPermissions.put(card.getId(), interaction.decisionPlayerId());
-                gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
+                gameData.grantExilePlayPermission(card.getId(), interaction.decisionPlayerId(), Duration.PERMANENT);
+                gameData.updateExilePlayPermission(card.getId(), granted -> granted.withAnyManaType(true));
                 gameLogService.append(gameData, GameLog.textCardText(
                         controllerName + " exiles ", card, " (Opposition Agent)."));
             }

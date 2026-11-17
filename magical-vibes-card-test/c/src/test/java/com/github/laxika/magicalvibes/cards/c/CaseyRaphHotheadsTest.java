@@ -47,8 +47,8 @@ class CaseyRaphHotheadsTest extends BaseCardTest {
                 .isInstanceOf(PendingInteraction.ExiledCardMayPlayChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(exiledCard.getId()));
 
-        assertThat(gd.exilePlayPermissions).containsEntry(exiledCard.getId(), player1.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(exiledCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiledCard.getId(), player1.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(exiledCard.getId());
 
         harness.castFromExile(player1, exiledCard.getId());
         harness.passBothPriorities();
@@ -78,7 +78,7 @@ class CaseyRaphHotheadsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player2, "Treasure")).hasSize(2);
-        assertThat(gd.exilePlayPermissions).isEmpty();
+        assertThat(gd.exilePlayPermissionHolders()).isEmpty();
     }
 
     @Test
@@ -92,11 +92,11 @@ class CaseyRaphHotheadsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(exiledCard.getId()));
 
-        assertThat(gd.exilePlayPermissions).containsEntry(exiledCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(exiledCard.getId(), player1.getId());
         harness.passUntil(player1, TurnStep.END_STEP);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiledCard.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(exiledCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiledCard.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(exiledCard.getId());
     }
 
     private void castCasey() {

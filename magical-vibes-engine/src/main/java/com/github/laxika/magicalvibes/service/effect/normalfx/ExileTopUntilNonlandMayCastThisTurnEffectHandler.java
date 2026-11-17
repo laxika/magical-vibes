@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandMayCastThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -66,8 +67,7 @@ public class ExileTopUntilNonlandMayCastThisTurnEffectHandler implements NormalE
             return;
         }
 
-        gameData.exilePlayPermissions.put(nonland.getId(), controllerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(nonland.getId());
+        gameData.grantExilePlayPermission(nonland.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(controllerName + " exiles cards until ").card(nonland)

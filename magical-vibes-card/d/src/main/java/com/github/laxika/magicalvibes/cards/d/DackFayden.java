@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetOfTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -44,7 +44,7 @@ public class DackFayden extends Card {
         // −2: Gain control of target artifact.
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new GainControlOfTargetEffect(ControlDuration.PERMANENT)),
+                List.of(new GainControlOfTargetEffect(Duration.PERMANENT)),
                 "−2: Gain control of target artifact.",
                 TargetFilters.artifact()
         ));

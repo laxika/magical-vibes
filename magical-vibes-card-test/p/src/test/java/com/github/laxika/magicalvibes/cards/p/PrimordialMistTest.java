@@ -57,7 +57,7 @@ class PrimordialMistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         assertThat(gd.findExiledCard(cavernCard.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions).containsEntry(cavernCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(cavernCard.getId(), player1.getId());
 
         harness.castFromExile(player1, cavernCard.getId());
 

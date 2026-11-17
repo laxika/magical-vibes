@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+
 import java.util.UUID;
 
 /**
@@ -11,7 +13,7 @@ import java.util.UUID;
  * @param replacementManaCost optional mana cost that replaces the card's mana cost for this exile cast
  */
 public record ExilePlayCostModifier(UUID permittedPlayerId, UUID sourceControllerId, int amount,
-                                    String replacementManaCost) {
+                                    String replacementManaCost) implements CardEffect {
 
     public ExilePlayCostModifier(UUID permittedPlayerId, UUID sourceControllerId, int amount) {
         this(permittedPlayerId, sourceControllerId, amount, null);

@@ -37,7 +37,7 @@ class HarnesserOfStormsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         harness.castFromExile(player1, topCard.getId());
         harness.assertOnBattlefield(player1, "Mountain");
     }
@@ -137,7 +137,7 @@ class HarnesserOfStormsTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(firstCard);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(firstCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(firstCard.getId());
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
@@ -146,7 +146,7 @@ class HarnesserOfStormsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(firstCard, secondCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(secondCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(secondCard.getId(), player1.getId());
     }
 
     @Test

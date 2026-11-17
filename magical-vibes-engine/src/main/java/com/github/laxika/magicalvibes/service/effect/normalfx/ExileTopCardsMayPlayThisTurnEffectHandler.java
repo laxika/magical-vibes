@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -54,8 +55,7 @@ public class ExileTopCardsMayPlayThisTurnEffectHandler implements NormalEffectHa
         for (int i = 0; i < count && !deck.isEmpty(); i++) {
             Card topCard = deck.removeFirst();
             exileService.exileCard(gameData, controllerId, topCard);
-            gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-            gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
+            gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
             exiledNames.add(topCard.getName());
         }
 

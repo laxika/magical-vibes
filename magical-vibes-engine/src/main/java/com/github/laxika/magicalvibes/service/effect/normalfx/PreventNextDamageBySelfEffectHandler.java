@@ -31,7 +31,7 @@ public class PreventNextDamageBySelfEffectHandler implements NormalEffectHandler
             return;
         }
 
-        gameData.sourceNextDamageToAnyTargetShields.add(new SourceNextDamageToAnyTargetShield(sourceId)
+        gameData.addShield(new SourceNextDamageToAnyTargetShield(sourceId)
                 .withRemainingDamage(((PreventNextDamageBySelfEffect) effect).amount()));
         gameLogService.append(gameData, GameLog.textCardText(
                 "The next damage dealt by ", entry.getCard(), " this turn is reduced by "

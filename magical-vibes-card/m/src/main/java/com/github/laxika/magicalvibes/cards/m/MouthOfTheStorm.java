@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,6 +18,6 @@ public class MouthOfTheStorm extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new BoostAllCreaturesEffect(-3, 0,
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
-                        GrantDuration.UNTIL_YOUR_NEXT_TURN));
+                        Duration.UNTIL_YOUR_NEXT_TURN));
     }
 }

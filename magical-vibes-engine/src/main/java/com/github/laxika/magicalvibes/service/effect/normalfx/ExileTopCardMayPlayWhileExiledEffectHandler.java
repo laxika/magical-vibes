@@ -51,13 +51,13 @@ public class ExileTopCardMayPlayWhileExiledEffectHandler implements NormalEffect
         }
         exileSupport.grantPlayWhileExiled(gameData, topCard.getId(), controllerId);
         if (exileEffect.permissionCondition() != null) {
-            gameData.exilePlayPermissionConditions.put(topCard.getId(), exileEffect.permissionCondition());
+            gameData.updateExilePlayPermission(topCard.getId(), granted -> granted.withCondition(exileEffect.permissionCondition()));
         }
         if (exileEffect.spellFilter() != null) {
-            gameData.exilePlayPermissionSpellFilters.put(topCard.getId(), exileEffect.spellFilter());
+            gameData.updateExilePlayPermission(topCard.getId(), granted -> granted.withSpellFilter(exileEffect.spellFilter()));
         }
         if (exileEffect.anyManaType()) {
-            gameData.exilePlayAnyManaTypeWhileExiled.add(topCard.getId());
+            gameData.updateExilePlayPermission(topCard.getId(), granted -> granted.withAnyManaType(true));
         }
 
         if (exileEffect.faceDown()) {

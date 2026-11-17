@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 
 @CardUsed({GraviticHerald.class, GrizzlyBears.class, Plains.class,
         HydroponicsArchitect.class, HinterlandHarbor.class, ThoughtPartition.class, Worldweave.class})
@@ -38,7 +39,7 @@ class GraviticHeraldTest extends BaseCardTest {
         harness.assertLife(player1, 18);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(grizzlyBears);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
-        assertThat(gd.cardsGrantedWarpUntilEndOfTurn).containsExactly(grizzlyBears.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.WARP)).containsExactly(grizzlyBears.getId());
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
@@ -61,7 +62,7 @@ class GraviticHeraldTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(eligible);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land, sorcery, tooExpensive);
-        assertThat(gd.cardsGrantedWarpUntilEndOfTurn).containsExactly(eligible.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.WARP)).containsExactly(eligible.getId());
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 20);
     }
@@ -75,7 +76,7 @@ class GraviticHeraldTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(enchantment);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.cardsGrantedWarpUntilEndOfTurn).containsExactly(enchantment.getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.WARP)).containsExactly(enchantment.getId());
         harness.assertLife(player1, 18);
     }
 
@@ -91,7 +92,7 @@ class GraviticHeraldTest extends BaseCardTest {
         harness.assertLife(player1, 18);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land, sorcery, tooExpensive);
-        assertThat(gd.cardsGrantedWarpUntilEndOfTurn).isEmpty();
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.WARP)).isEmpty();
     }
 
     @Test
@@ -102,7 +103,7 @@ class GraviticHeraldTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.cardsGrantedWarpUntilEndOfTurn).isEmpty();
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.WARP)).isEmpty();
     }
 
     @Test
@@ -120,7 +121,7 @@ class GraviticHeraldTest extends BaseCardTest {
         assertThat(hand.getFirst()).isIn(first, second);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1).doesNotContain(hand.getFirst());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opponentsCard);
-        assertThat(gd.cardsGrantedWarpUntilEndOfTurn).containsExactly(hand.getFirst().getId());
+        assertThat(grantedCards(GrantedCardAbilityEffect.Ability.WARP)).containsExactly(hand.getFirst().getId());
         harness.assertLife(player2, 18);
         harness.assertLife(player1, 20);
     }

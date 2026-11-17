@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
@@ -26,7 +26,7 @@ public class RiptideEntrancer extends Card {
                 "Target must be a creature that player controls"));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new MayEffect(new SacrificeSelfThenEffect(
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT)),
+                        new GainControlOfTargetEffect(Duration.PERMANENT)),
                         "You may sacrifice Riptide Entrancer. If you do, gain control of target creature that player controls."));
     }
 }

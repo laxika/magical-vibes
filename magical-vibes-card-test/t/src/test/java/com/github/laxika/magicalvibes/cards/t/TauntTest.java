@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.b.BlazingArchon;
 import com.github.laxika.magicalvibes.cards.g.GideonJura;
@@ -51,25 +52,25 @@ class TauntTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.tauntedNextTurn).containsEntry(player2.getId(), player1.getId());
+        assertThat(FloatingCombatRules.scheduledTauntTargets(gd, player2.getId())).containsExactly(player1.getId());
     }
 
     @Test
     @DisplayName("The requirement activates when the taunted player's turn begins and the pending entry is consumed")
     void activatesOnTargetPlayerTurn() {
-        gd.tauntedNextTurn.put(player2.getId(), player1.getId());
+        FloatingCombatRules.tauntNextTurn(gd, player1.getId(), player2.getId(), player1.getId());
 
         advanceTurn();
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.tauntedThisTurn).containsEntry(player2.getId(), player1.getId());
-        assertThat(gd.tauntedNextTurn).isEmpty();
+        assertThat(FloatingCombatRules.tauntTargets(gd, player2.getId())).containsExactly(player1.getId());
+        assertThat(FloatingCombatRules.scheduledTauntTargets(gd, player2.getId())).isEmpty();
     }
 
     @Test
     @DisplayName("A taunted player's creature that can attack becomes a must-attack requirement")
     void tauntedCreatureMustAttack() {
-        gd.tauntedThisTurn.put(player2.getId(), player1.getId());
+        FloatingCombatRules.taunt(gd, player1.getId(), player2.getId(), player1.getId());
         addCreatureReady(player2, new GrizzlyBears());
 
         harness.forceActivePlayer(player2);
@@ -91,7 +92,7 @@ class TauntTest extends BaseCardTest {
     @DisplayName("The taunted creature attacks the taunter, dealing them combat damage")
     void tauntedCreatureAttacksTaunter() {
         harness.setLife(player1, 20);
-        gd.tauntedThisTurn.put(player2.getId(), player1.getId());
+        FloatingCombatRules.taunt(gd, player1.getId(), player2.getId(), player1.getId());
         addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player2, List.of(0));
@@ -102,7 +103,7 @@ class TauntTest extends BaseCardTest {
     @Test
     @DisplayName("A creature that cannot attack is not required to attack")
     void unableCreatureCanSkipAttack() {
-        gd.tauntedThisTurn.put(player2.getId(), player1.getId());
+        FloatingCombatRules.taunt(gd, player1.getId(), player2.getId(), player1.getId());
         Permanent bear = addCreatureReady(player2, new GrizzlyBears());
         bear.tap();
 
@@ -114,13 +115,14 @@ class TauntTest extends BaseCardTest {
     @Test
     @DisplayName("The requirement wears off when the taunted player's turn ends")
     void requirementWearsOff() {
-        gd.tauntedThisTurn.put(player2.getId(), player1.getId());
+        FloatingCombatRules.taunt(gd, player1.getId(), player2.getId(), player1.getId());
         harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
 
-        advanceTurn();
+        harness.passUntilWithNoAttackers(player2, TurnStep.CLEANUP);
 
-        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.tauntedThisTurn).isEmpty();
+        assertThat(FloatingCombatRules.tauntTargets(gd, player2.getId())).isEmpty();
     }
 
     @Test

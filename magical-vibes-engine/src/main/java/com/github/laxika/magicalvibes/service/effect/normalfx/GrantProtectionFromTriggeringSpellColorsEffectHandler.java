@@ -62,7 +62,7 @@ public class GrantProtectionFromTriggeringSpellColorsEffectHandler implements No
     private Set<CardColor> lastKnownSpellColors(GameData gameData, StackEntry entry) {
         UUID triggeringCardId = entry.getTriggeringCardId();
         if (triggeringCardId != null) {
-            Set<CardColor> temporary = gameData.spellColorOverridesUntilEndOfTurn.get(triggeringCardId);
+            Set<CardColor> temporary = gameData.spellColorUntilEndOfTurn(triggeringCardId).orElse(null);
             if (temporary != null) {
                 return temporary;
             }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfAllCreaturesWithTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -43,16 +43,16 @@ public class ExchangeControlOfAllCreaturesWithTargetPlayerEffectHandler implemen
 
         List<Permanent> controllerCreatures = creaturesControlledBy(gameData, controllerId);
         List<Permanent> targetCreatures = creaturesControlledBy(gameData, targetPlayerId);
-        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.END_OF_TURN);
+        GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN);
 
         for (Permanent creature : targetCreatures) {
             creatureControlService.applyControlEffect(gameData, controllerId, creature,
-                    controlEffect, ControlDuration.END_OF_TURN.toDuration(), null,
+                    controlEffect, Duration.UNTIL_END_OF_TURN, null,
                     entry.getCard().getName());
         }
         for (Permanent creature : controllerCreatures) {
             creatureControlService.applyControlEffect(gameData, targetPlayerId, creature,
-                    controlEffect, ControlDuration.END_OF_TURN.toDuration(), null,
+                    controlEffect, Duration.UNTIL_END_OF_TURN, null,
                     entry.getCard().getName());
         }
     }

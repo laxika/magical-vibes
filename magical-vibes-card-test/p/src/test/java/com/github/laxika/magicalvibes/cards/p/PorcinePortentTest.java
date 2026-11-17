@@ -64,7 +64,7 @@ class PorcinePortentTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         assertThat(gd.getLife(player1.getId())).isEqualTo(22);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -160,7 +160,7 @@ class PorcinePortentTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Porcine Portent");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -198,7 +198,7 @@ class PorcinePortentTest extends BaseCardTest {
         harness.assertLife(player1, 21);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first);
         assertThat(gd.findExiledCard(first.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(first.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(first.getId());
         assertThat(gd.findExiledCard(second.getId())).isNotNull();
     }
 

@@ -78,7 +78,7 @@ class MishrasWarMachineTest extends BaseCardTest {
     void preventedPenaltyDamageDoesNotTapSource() {
         harness.addToBattlefield(player1, new MishrasWarMachine());
         harness.setHand(player1, new ArrayList<>());
-        gd.globalDamagePreventionShield = 3;
+        gd.addGlobalDamagePreventionShield(3);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);
@@ -86,7 +86,7 @@ class MishrasWarMachineTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Mishra's War Machine").isTapped()).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
-        assertThat(gd.globalDamagePreventionShield).isZero();
+        assertThat(gd.globalDamagePreventionShield()).isZero();
     }
 
     @Test
@@ -95,14 +95,14 @@ class MishrasWarMachineTest extends BaseCardTest {
         Permanent machine = harness.addToBattlefieldAndReturn(player1, new MishrasWarMachine());
         harness.setHand(player1, List.of());
         harness.setLife(player1, 20);
-        gd.globalDamagePreventionShield = 2;
+        gd.addGlobalDamagePreventionShield(2);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(machine.isTapped()).isTrue();
         harness.assertLife(player1, 19);
-        assertThat(gd.globalDamagePreventionShield).isZero();
+        assertThat(gd.globalDamagePreventionShield()).isZero();
     }
 
     @Test

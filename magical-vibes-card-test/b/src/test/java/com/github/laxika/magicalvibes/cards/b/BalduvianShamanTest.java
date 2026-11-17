@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlack;
 import com.github.laxika.magicalvibes.cards.e.EnergyStorm;
 import com.github.laxika.magicalvibes.cards.e.EnduringRenewal;
@@ -149,7 +150,7 @@ class BalduvianShamanTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, blueSource.getId());
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(shield -> shield.playerId().equals(player1.getId())
                         && shield.sourceId().equals(blueSource.getId()));
     }

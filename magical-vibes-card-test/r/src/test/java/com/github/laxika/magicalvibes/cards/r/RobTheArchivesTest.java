@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -39,10 +40,10 @@ class RobTheArchivesTest extends BaseCardTest {
                 .extracting(Card::getId)
                 .containsExactly(first.getId(), second.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn)
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN))
                 .contains(first.getId(), second.getId());
     }
 
@@ -135,10 +136,10 @@ class RobTheArchivesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsKey(land.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(land.getId());
         harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(land.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         assertThatThrownBy(() -> harness.castFromExile(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -155,7 +156,7 @@ class RobTheArchivesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(onlyCard);
-        assertThat(gd.exilePlayPermissions).containsEntry(onlyCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(onlyCard.getId(), player1.getId());
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.cards.b.Bullwhip;
 import com.github.laxika.magicalvibes.cards.c.Conviction;
 import com.github.laxika.magicalvibes.cards.h.HonorGuard;
@@ -112,7 +113,7 @@ class NomadsEnKorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.creatureDamageRedirectShields).isEmpty();
+        assertThat(gd.shields(CreatureDamageRedirectShield.class)).isEmpty();
     }
 
     @Test

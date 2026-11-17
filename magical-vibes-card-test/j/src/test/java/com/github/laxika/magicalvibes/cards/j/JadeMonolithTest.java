@@ -79,7 +79,7 @@ class JadeMonolithTest extends BaseCardTest {
 
         assertThat(protectedCreature.getMarkedDamage()).isEqualTo(0);
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 3);
-        assertThat(gd.creatureDamageRedirectShields).isEmpty();
+        assertThat(gd.shields(CreatureDamageRedirectShield.class)).isEmpty();
     }
 
     @Test
@@ -94,8 +94,8 @@ class JadeMonolithTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.creatureDamageRedirectShields).hasSize(1);
-        var shield = gd.creatureDamageRedirectShields.getFirst();
+        assertThat(gd.shields(CreatureDamageRedirectShield.class)).hasSize(1);
+        var shield = gd.shields(CreatureDamageRedirectShield.class).getFirst();
         assertThat(shield.protectedPermanentId()).isEqualTo(creature.getId());
         assertThat(shield.damageSourceId()).isEqualTo(source.getId());
         assertThat(shield.remainingAmount()).isEqualTo(CreatureDamageRedirectShield.NEXT_EVENT);
@@ -125,7 +125,7 @@ class JadeMonolithTest extends BaseCardTest {
         assertThat(protectedCreature.getMarkedDamage()).isEqualTo(0);
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);
         // "The next time" — one event only; the shield is consumed after redirecting.
-        assertThat(gd.creatureDamageRedirectShields).isEmpty();
+        assertThat(gd.shields(CreatureDamageRedirectShield.class)).isEmpty();
     }
 
     @Test
@@ -193,13 +193,13 @@ class JadeMonolithTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.creatureDamageRedirectShields).hasSize(1);
+        assertThat(gd.shields(CreatureDamageRedirectShield.class)).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.creatureDamageRedirectShields).isEmpty();
+        assertThat(gd.shields(CreatureDamageRedirectShield.class)).isEmpty();
     }
 
     @Test

@@ -34,7 +34,7 @@ public class RedirectAllDamageFromTargetSorceryToControllerEffectHandler impleme
             return;
         }
 
-        gameData.targetSorceryDamageRedirectShields.add(new TargetSorceryDamageRedirectShield(
+        gameData.addShield(new TargetSorceryDamageRedirectShield(
                 targetSorcery.getCard().getId(), targetSorcery.getControllerId(),
                 gameData.graveyardEntryVersion(targetSorcery.getCard().getId())));
         gameLogService.append(gameData, GameLog.cardThen(targetSorcery.getCard(),

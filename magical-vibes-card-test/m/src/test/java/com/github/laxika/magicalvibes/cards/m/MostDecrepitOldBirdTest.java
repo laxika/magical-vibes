@@ -41,7 +41,7 @@ class MostDecrepitOldBirdTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -135,7 +135,7 @@ class MostDecrepitOldBirdTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Most Decrepit Old Bird");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 

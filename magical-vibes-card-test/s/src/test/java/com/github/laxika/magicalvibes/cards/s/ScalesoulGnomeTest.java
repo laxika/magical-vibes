@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -48,7 +49,7 @@ class ScalesoulGnomeTest extends BaseCardTest {
         addCreatureReady(player1, new ScalesoulGnome());
         GrizzlyBears spell = new GrizzlyBears();
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         prepareMainPhase(player1);
 
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 2);
@@ -69,7 +70,7 @@ class ScalesoulGnomeTest extends BaseCardTest {
         addCreatureReady(player1, new ScalesoulGnome());
         Forest land = new Forest();
         gd.addToExile(player1.getId(), land);
-        gd.exilePlayPermissions.put(land.getId(), player1.getId());
+        gd.grantExilePlayPermission(land.getId(), player1.getId(), Duration.PERMANENT);
         prepareMainPhase(player1);
 
         harness.castFromExile(player1, land.getId());
@@ -156,8 +157,8 @@ class ScalesoulGnomeTest extends BaseCardTest {
         Forest land = new Forest();
         GrizzlyBears spell = new GrizzlyBears();
         harness.setExile(player2, List.of(land, spell));
-        gd.exilePlayPermissions.put(land.getId(), player2.getId());
-        gd.exilePlayPermissions.put(spell.getId(), player2.getId());
+        gd.grantExilePlayPermission(land.getId(), player2.getId(), Duration.PERMANENT);
+        gd.grantExilePlayPermission(spell.getId(), player2.getId(), Duration.PERMANENT);
         prepareMainPhase(player2);
 
         harness.castFromExile(player2, land.getId());
@@ -186,7 +187,7 @@ class ScalesoulGnomeTest extends BaseCardTest {
         Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
         GrizzlyBears spell = new GrizzlyBears();
         gd.addToExile(player1.getId(), spell);
-        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        gd.grantExilePlayPermission(spell.getId(), player1.getId(), Duration.PERMANENT);
         prepareMainPhase(player1);
 
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 2);

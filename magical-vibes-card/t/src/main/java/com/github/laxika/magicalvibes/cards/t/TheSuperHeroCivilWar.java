@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -22,7 +22,7 @@ public class TheSuperHeroCivilWar extends Card {
     public TheSuperHeroCivilWar() {
         addTrigger(Triggers.chapter(1),
                 GainControlOfTargetEffect.withTargetPredicate(
-                        ControlDuration.WHILE_SOURCE_REMAINS,
+                        Duration.WHILE_SOURCE_REMAINS,
                         new PermanentIsCreaturePredicate()));
         setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 2, 6)));

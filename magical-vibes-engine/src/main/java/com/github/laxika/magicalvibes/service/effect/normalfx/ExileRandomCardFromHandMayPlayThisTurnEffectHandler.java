@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileRandomCardFromHandMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -48,8 +49,7 @@ public class ExileRandomCardFromHandMayPlayThisTurnEffectHandler implements Norm
         Card exiled = hand.remove(randomIndex);
         exileService.exileCard(gameData, playerId, exiled);
 
-        gameData.exilePlayPermissions.put(exiled.getId(), playerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(exiled.getId());
+        gameData.grantExilePlayPermission(exiled.getId(), playerId, Duration.UNTIL_END_OF_TURN);
         gameData.temporaryGlobalTriggeredAbilities.add(PutExiledCardsIntoOwnersGraveyardEffectHandler.atNextEndStep(
                 gameData, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
                 List.of(exiled.getId())));

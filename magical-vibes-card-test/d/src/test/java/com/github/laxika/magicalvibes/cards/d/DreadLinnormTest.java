@@ -38,7 +38,7 @@ class DreadLinnormTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -119,7 +119,7 @@ class DreadLinnormTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Dread Linnorm");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     @Test
@@ -158,7 +158,7 @@ class DreadLinnormTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Dread Linnorm");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 
     private void prepareBlockers(Permanent linnorm) {

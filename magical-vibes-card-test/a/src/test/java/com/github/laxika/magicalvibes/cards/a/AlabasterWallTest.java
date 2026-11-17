@@ -30,7 +30,7 @@ class AlabasterWallTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getDamagePreventionShield()).isEqualTo(1);
-        assertThat(gd.globalDamagePreventionShield).isZero();
+        assertThat(gd.globalDamagePreventionShield()).isZero();
     }
 
     @Test
@@ -41,7 +41,7 @@ class AlabasterWallTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(1);
     }
 
     @Test

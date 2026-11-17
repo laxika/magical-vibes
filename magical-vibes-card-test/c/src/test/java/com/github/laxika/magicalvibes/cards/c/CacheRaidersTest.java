@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.h.HelixPinnacle;
 import com.github.laxika.magicalvibes.cards.w.WickerboughElder;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -119,7 +118,7 @@ class CacheRaidersTest extends BaseCardTest {
         Permanent elder = addCreatureReady(player1, card);
         gd.stolenCreatures.put(elder.getId(), player2.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control effect", null,
-                player1.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT), elder.getId(),
+                player1.getId(), new GainControlOfTargetEffect(Duration.PERMANENT), elder.getId(),
                 null, null, Duration.PERMANENT, 0));
 
         advanceToUpkeep(player1);

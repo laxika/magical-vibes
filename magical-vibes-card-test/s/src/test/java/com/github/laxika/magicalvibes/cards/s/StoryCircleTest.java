@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.cards.c.ConeOfFlame;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -121,7 +122,7 @@ class StoryCircleTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, redSource.getId());
 
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(shield -> shield.playerId().equals(player1.getId())
                         && shield.sourceId().equals(redSource.getId()));
     }
@@ -140,7 +141,7 @@ class StoryCircleTest extends BaseCardTest {
         resolveCombat(player1);
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -158,7 +159,7 @@ class StoryCircleTest extends BaseCardTest {
         resolveCombat(player1);
 
         harness.assertLife(player2, 18);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(shield -> shield.playerId().equals(player2.getId())
                         && shield.sourceId().equals(chosenSource.getId()));
     }
@@ -178,7 +179,7 @@ class StoryCircleTest extends BaseCardTest {
         resolveCombat(player1);
 
         harness.assertLife(player2, 17);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(shield -> shield.playerId().equals(player2.getId())
                         && shield.sourceId().equals(chosenSource.getId()));
     }
@@ -195,14 +196,14 @@ class StoryCircleTest extends BaseCardTest {
         activateAndChooseSource(player2, storyCircle, attacker1);
         activateAndChooseSource(player2, storyCircle, attacker2);
 
-        assertThat(gd.playerSourceNextDamageShields).hasSize(2);
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).hasSize(2);
         attacker1.setAttacking(true);
         attacker2.setAttacking(true);
 
         resolveCombat(player1);
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -214,11 +215,11 @@ class StoryCircleTest extends BaseCardTest {
 
         activateAndChooseSource(player1, storyCircle, source);
 
-        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isNotEmpty();
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -239,7 +240,7 @@ class StoryCircleTest extends BaseCardTest {
         assertThat(choice.validPermanentIds()).contains(source.getId());
         harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(shield -> shield.playerId().equals(player1.getId())
                         && shield.sourceId().equals(source.getId()));
     }
@@ -269,7 +270,7 @@ class StoryCircleTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertInGraveyard(player2, "Shock");
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     @Test
@@ -282,7 +283,7 @@ class StoryCircleTest extends BaseCardTest {
         activateStoryCircle(player1, findPermanent(player1, "Story Circle"));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("No permanents on the battlefield"));
 
@@ -375,7 +376,7 @@ class StoryCircleTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
     }
 
     // ===== Damage prevention in combat =====
@@ -396,7 +397,7 @@ class StoryCircleTest extends BaseCardTest {
         resolveCombat(player1);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(shield -> shield.playerId().equals(player2.getId())
                         && shield.sourceId().equals(chosenSource.getId()));
     }
@@ -414,7 +415,7 @@ class StoryCircleTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(storyCircle);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(shield -> shield.playerId().equals(player1.getId())
                         && shield.sourceId().equals(redSource.getId()));
     }
@@ -436,7 +437,7 @@ class StoryCircleTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Shock");
         assertThat(creature.getMarkedDamage()).isEqualTo(2);
-        assertThat(gd.playerSourceNextDamageShields)
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class))
                 .anyMatch(shield -> shield.sourceId().equals(shock.getId()));
 
         activateStoryCircle(player1, storyCircle);
@@ -446,7 +447,7 @@ class StoryCircleTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).contains(shock.getId());
         harness.handlePermanentChosen(player1, shock.getId());
-        assertThat(gd.playerSourceNextDamageShields).hasSize(2);
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).hasSize(2);
     }
 
     @Test
@@ -463,7 +464,7 @@ class StoryCircleTest extends BaseCardTest {
         harness.resolveCombatDamage();
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        assertThat(gd.shields(PlayerSourceNextDamageShield.class)).isEmpty();
 
         harness.resolveCombatDamage();
 

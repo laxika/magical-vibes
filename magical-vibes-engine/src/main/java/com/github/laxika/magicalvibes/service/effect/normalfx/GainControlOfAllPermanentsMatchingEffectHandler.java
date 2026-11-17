@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -68,7 +68,7 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
             }
         });
 
-        ControlDuration duration = e.duration();
+        Duration duration = e.duration();
         GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(duration);
         List<Permanent> simultaneous = new ArrayList<>();
         for (Permanent permanent : toSeize) {
@@ -84,7 +84,7 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
             simultaneous.add(permanent);
         }
         creatureControlService.applyControlEffectSimultaneously(gameData, controllerId, simultaneous,
-                controlEffect, duration.toDuration(), entry.getCard().getName());
+                controlEffect, duration, entry.getCard().getName());
 
         for (CardEffect thenEffect : riderSteps(gameData, entry, e.thenEffects())) {
             EffectHandler handler = effectHandlerRegistry.getHandler(thenEffect);

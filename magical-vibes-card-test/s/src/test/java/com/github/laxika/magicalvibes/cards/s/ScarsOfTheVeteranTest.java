@@ -53,7 +53,7 @@ class ScarsOfTheVeteranTest extends BaseCardTest {
         harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(7);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isEqualTo(7);
     }
 
     @Test
@@ -72,7 +72,7 @@ class ScarsOfTheVeteranTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(startingLife);
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(5);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isEqualTo(5);
     }
 
     @Test

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.m.MoorlandInquisitor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -155,7 +154,7 @@ class DemonlordOfAshmouthTest extends BaseCardTest {
         var demon = harness.addToBattlefieldAndReturn(player1, new DemonlordOfAshmouth());
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
                 .applyControlEffect(gd, player2.getId(), demon,
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT,
+                        new GainControlOfTargetEffect(Duration.PERMANENT), Duration.PERMANENT,
                         null, "Test setup"));
         harness.addToBattlefield(player1, new MoorlandInquisitor());
         harness.setHand(player2, List.of(new DeathWind()));

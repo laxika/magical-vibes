@@ -46,9 +46,9 @@ class DeadMansChestTest extends BaseCardTest {
                 .extracting(Card::getId)
                 .containsExactly(bear.getId(), island.getId());
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining);
-        assertThat(gd.exilePlayPermissions.get(bear.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(bear.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(island.getId());
+        assertThat(gd.exilePlayPermissionHolder(bear.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(bear.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(island.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -58,8 +58,8 @@ class DeadMansChestTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(bear.getId());
-        assertThat(gd.exilePlayAnyManaTypeWhileExiled).doesNotContain(bear.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(bear.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).doesNotContain(bear.getId());
     }
 
     @Test

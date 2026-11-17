@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -91,8 +92,8 @@ class ArchaicsAgonyTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getId().equals(topCard.getId()));
-        assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer)
+        assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayDurationPlayers(Duration.UNTIL_END_OF_YOUR_NEXT_TURN))
                 .containsEntry(topCard.getId(), player1.getId());
     }
 
@@ -113,7 +114,7 @@ class ArchaicsAgonyTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(librarySizeBefore);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
     }
 
     @Test
@@ -134,11 +135,11 @@ class ArchaicsAgonyTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, target.getId());
         UUID exiledId = topCard.getId();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).containsKey(exiledId);
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(exiledId);
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(gd.exilePlayPermissions).containsKey(exiledId);
+        assertThat(gd.exilePlayPermissionHolders()).containsKey(exiledId);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiledId);
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(exiledId);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
     }
 
@@ -172,7 +173,7 @@ class ArchaicsAgonyTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second, third);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
         for (Card card : List.of(first, second, third)) {
-            assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+            assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
         }
     }
 
@@ -281,7 +282,7 @@ class ArchaicsAgonyTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
     }
 
     @Test

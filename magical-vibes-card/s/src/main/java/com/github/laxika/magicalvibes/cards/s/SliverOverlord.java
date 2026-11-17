@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -34,7 +34,7 @@ public class SliverOverlord extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}",
-                List.of(GainControlOfTargetEffect.withTargetPredicate(ControlDuration.PERMANENT, sliver)),
+                List.of(GainControlOfTargetEffect.withTargetPredicate(Duration.PERMANENT, sliver)),
                 "{3}: Gain control of target Sliver.",
                 new PermanentPredicateTargetFilter(sliver, "Target must be a Sliver")
         ));

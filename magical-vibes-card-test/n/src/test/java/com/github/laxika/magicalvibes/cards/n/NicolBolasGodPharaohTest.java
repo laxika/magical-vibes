@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -49,12 +50,12 @@ class NicolBolasGodPharaohTest extends BaseCardTest {
                 .extracting(Card::getName)
                 .containsExactlyInAnyOrder("Forest", "Forest", "Grizzly Bears");
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
-        assertThat(gd.exilePlayPermissions.get(bears.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(bears.getId());
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(bears.getId());
+        assertThat(gd.exilePlayPermissionHolder(bears.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(bears.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(bears.getId());
         // Lands get no cast permission.
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(land1.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(land2.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(land1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(land2.getId());
     }
 
     @Test
@@ -66,12 +67,12 @@ class NicolBolasGodPharaohTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
-        assertThat(gd.exilePlayWithoutPayingManaCost).contains(bears.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).contains(bears.getId());
 
         GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
 
-        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(bears.getId());
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(bears.getId());
+        assertThat(gd.exilePlayWithoutPayingCardIds()).doesNotContain(bears.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(bears.getId());
     }
 
     @Test
@@ -264,7 +265,7 @@ class NicolBolasGodPharaohTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(first, second);
-        assertThat(gd.exilePlayPermissions).doesNotContainKeys(first.getId(), second.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKeys(first.getId(), second.getId());
     }
 
     @Test

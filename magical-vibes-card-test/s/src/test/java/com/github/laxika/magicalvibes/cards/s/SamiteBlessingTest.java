@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -38,7 +39,7 @@ class SamiteBlessingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(protectedCreature.getMarkedDamage()).isZero();
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -58,14 +59,14 @@ class SamiteBlessingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(otherCreature.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).hasSize(1);
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).hasSize(1);
 
         source.untap();
         harness.activateAbility(player2, indexOf(player2, source), null, protectedCreature.getId());
         harness.passBothPriorities();
 
         assertThat(protectedCreature.getMarkedDamage()).isZero();
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test
@@ -85,7 +86,7 @@ class SamiteBlessingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(protectedCreature.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.sourceNextDamageToAnyTargetShields).hasSize(1);
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).hasSize(1);
     }
 
     @Test
@@ -110,14 +111,14 @@ class SamiteBlessingTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.sourceNextDamageToAnyTargetShields).hasSize(1);
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).hasSize(1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     @Test

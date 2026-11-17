@@ -34,7 +34,7 @@ class KitsuneHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
 
     @Test
@@ -48,7 +48,7 @@ class KitsuneHealerTest extends BaseCardTest {
         castYamabushisFlameAt(player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player2.getId());
+        assertThat(gd.playerDamagePreventionShields()).doesNotContainKey(player2.getId());
     }
 
     @Test

@@ -41,7 +41,7 @@ public class ExileTopCardsWithLukkaPermissionEffectHandler implements NormalEffe
             Card card = deck.removeFirst();
             exileService.exileCard(gameData, controllerId, card, entry.getSourcePermanentId());
             if (card.hasType(CardType.CREATURE)) {
-                gameData.lukkaExileCastPermissions.put(card.getId(), controllerId);
+                gameData.grantLukkaExileCastPermission(card.getId(), controllerId);
             }
         }
 

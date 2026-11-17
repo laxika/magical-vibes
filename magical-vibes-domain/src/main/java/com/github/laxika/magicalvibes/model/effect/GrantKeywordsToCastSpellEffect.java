@@ -10,10 +10,10 @@ import java.util.Set;
  * or consumed by spell-resolution logic when the granted keyword applies to a nonpermanent spell.
  *
  * <p>A {@code null} duration keeps the grant on the entering permanent as an entry grant. A
- * {@link GrantDuration#UNTIL_YOUR_NEXT_TURN} duration is carried separately and lasts until the
+ * {@link Duration#UNTIL_YOUR_NEXT_TURN} duration is carried separately and lasts until the
  * start of the controller's next turn (Jade Orb of Dragonkind's hexproof on a Dragon).</p>
  */
-public record GrantKeywordsToCastSpellEffect(Set<Keyword> keywords, GrantDuration duration) implements CardEffect {
+public record GrantKeywordsToCastSpellEffect(Set<Keyword> keywords, Duration duration) implements CardEffect {
 
     public GrantKeywordsToCastSpellEffect {
         keywords = Set.copyOf(keywords);

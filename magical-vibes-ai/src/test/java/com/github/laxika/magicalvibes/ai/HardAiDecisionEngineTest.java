@@ -233,8 +233,9 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         harness.addMana(player1, ManaColor.GREEN, 2);
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player2, List.of(bears));
-        gd.senControllerPlayerId = player1.getId();
-        gd.senControlledPlayerId = player2.getId();
+        gd.addFloatingEffect(com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect.onPlayer("Sen Triplets",
+                null, player1.getId(), new com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect(),
+                player2.getId(), com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));
         SimulationAction.PlayCard pick = new SimulationAction.PlayCard(0, null, 0, null, player2.getId());
         HardAiDecisionEngine ai = Mockito.spy(createHardAi(player1));
         Mockito.doReturn(false).when(ai).tryPlayFromOpponentHand(any());

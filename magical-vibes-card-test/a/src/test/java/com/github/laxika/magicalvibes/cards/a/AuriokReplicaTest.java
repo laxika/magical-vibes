@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GalvanicBlast;
 import com.github.laxika.magicalvibes.cards.v.VulshokReplica;
@@ -101,7 +102,7 @@ class AuriokReplicaTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
         // Verify the prevention is recorded
-        assertThat(gd.playerSourceDamagePreventionIds.get(player1.getId()))
+        assertThat(Prevention.sourceIds(gd, player1.getId()))
                 .contains(opponentCreature.getId());
 
         opponentCreature.setAttacking(true);
@@ -124,7 +125,7 @@ class AuriokReplicaTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature1.getId());
 
         // Creature1 is prevented, creature2 is NOT
-        assertThat(gd.playerSourceDamagePreventionIds.get(player1.getId()))
+        assertThat(Prevention.sourceIds(gd, player1.getId()))
                 .contains(creature1.getId())
                 .doesNotContain(creature2.getId());
 
@@ -147,19 +148,19 @@ class AuriokReplicaTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
         // Verify prevention is set
-        assertThat(gd.playerSourceDamagePreventionIds.get(player1.getId()))
+        assertThat(Prevention.sourceIds(gd, player1.getId()))
                 .contains(opponentCreature.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
-        assertThat(gd.playerSourceDamagePreventionIds.get(player1.getId()))
+        assertThat(Prevention.sourceIds(gd, player1.getId()))
                 .contains(opponentCreature.getId());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         // Prevention should be cleared
-        assertThat(gd.playerSourceDamagePreventionIds.getOrDefault(player1.getId(), java.util.Set.of()))
+        assertThat(Prevention.sourceIds(gd, player1.getId()))
                 .isEmpty();
     }
 
@@ -204,7 +205,7 @@ class AuriokReplicaTest extends BaseCardTest {
         // Choose own creature
         harness.handlePermanentChosen(player1, ownCreature.getId());
 
-        assertThat(gd.playerSourceDamagePreventionIds.get(player1.getId()))
+        assertThat(Prevention.sourceIds(gd, player1.getId()))
                 .contains(ownCreature.getId());
     }
 

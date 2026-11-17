@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.ChannelHarmShield;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BarkhideTroll;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -33,7 +34,7 @@ class ChannelHarmTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(target.getMarkedDamage()).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.channelHarmShields).hasSize(1);
+        assertThat(gd.shields(ChannelHarmShield.class)).hasSize(1);
     }
 
     @Test
@@ -87,7 +88,7 @@ class ChannelHarmTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.channelHarmShields).isEmpty();
+        assertThat(gd.shields(ChannelHarmShield.class)).isEmpty();
     }
 
     private void castChannelHarm(java.util.UUID targetId) {

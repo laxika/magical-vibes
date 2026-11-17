@@ -39,7 +39,7 @@ public class PreventNextCombatDamageByTargetCreatureAndCreateTokensEffectHandler
 
         PreventNextCombatDamageByTargetCreatureAndCreateTokensEffect prevention =
                 (PreventNextCombatDamageByTargetCreatureAndCreateTokensEffect) effect;
-        gameData.sourceNextDamageToAnyTargetShields.add(
+        gameData.addShield(
                 SourceNextDamageToAnyTargetShield.combatPlayerPreventionWithTokens(
                         targetId, prevention.token(), controllerId, entry.getCard().getSetCode(),
                         gameData.combatPhasesThisTurn));

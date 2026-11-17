@@ -29,7 +29,7 @@ class AuroraEidolonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Aurora Eidolon");
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(3);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(3);
 
         harness.addToBattlefield(player1, new SealOfFire());
         harness.addToBattlefield(player1, new SealOfFire());
@@ -37,13 +37,13 @@ class AuroraEidolonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(1);
 
         harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player2, 19);
-        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player2.getId());
+        assertThat(gd.playerDamagePreventionShields()).doesNotContainKey(player2.getId());
     }
 
     @Test

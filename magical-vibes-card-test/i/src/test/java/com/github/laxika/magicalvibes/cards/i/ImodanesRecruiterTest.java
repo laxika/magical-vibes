@@ -39,7 +39,7 @@ class ImodanesRecruiterTest extends BaseCardTest {
             assertThat(gqs.hasKeyword(gd, knight, Keyword.VIGILANCE)).isTrue();
         });
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test

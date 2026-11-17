@@ -30,7 +30,7 @@ class FrolickingFamiliarTest extends BaseCardTest {
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
-        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
 
     @Test
@@ -166,6 +166,6 @@ class FrolickingFamiliarTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Frolicking Familiar");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(card.getId());
     }
 }

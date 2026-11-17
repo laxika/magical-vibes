@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesOneOfEachTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -25,7 +25,7 @@ public class CatchRelease extends Card {
     public CatchRelease() {
         TargetFilter permanent = TargetFilters.permanent();
         CardEffect catchHalf = SequenceEffect.of(
-                new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                 new UntapPermanentsEffect(TapUntapScope.TARGET),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
         CardEffect releaseHalf = new EachPlayerSacrificesOneOfEachTypeEffect();

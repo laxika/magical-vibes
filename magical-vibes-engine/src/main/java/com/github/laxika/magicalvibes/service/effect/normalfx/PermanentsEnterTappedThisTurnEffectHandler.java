@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -23,13 +25,9 @@ public class PermanentsEnterTappedThisTurnEffectHandler implements NormalEffectH
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PermanentsEnterTappedThisTurnEffect) effect;
-        if (e.filter() == null) {
-            gameData.allPermanentsEnterTappedThisTurn = true;
-        } else {
-            gameData.permanentEnterTappedFiltersThisTurn
-                    .computeIfAbsent(entry.getControllerId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
-                    .add(e.filter());
-        }
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), effect,
+                e.filter() == null ? null : entry.getControllerId(), Duration.UNTIL_END_OF_TURN));
 
         String logEntry = e.filter() == null
                 ? "Permanents enter tapped this turn."

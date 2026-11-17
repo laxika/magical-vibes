@@ -4,8 +4,9 @@
 Prints counts only. With --list FILE it also writes the classified field names to FILE, one per line, for review.
 
 Counted:
-  * GameData fields that hold the duration of an effect a resolution made (CR 611.2a), split from the turn-history
-    fields ("spells cast this turn" is a record, not an effect) by name;
+  * GameData fields that hold the duration of an effect a resolution made (CR 611.2a), split by name from the
+    turn-history fields ("spells cast this turn" is a record, not an effect) and from the fields judged to hold no
+    duration (KEPT, with the reason for each);
   * EndOfTurnStateField constants (the cleanup step's resets) by store;
   * EffectDuration / Duration constants named in main sources, cards and tests;
   * DelayedAction records and the files that name them;
@@ -35,6 +36,39 @@ EFFECT = re.compile(
     r"|Animations|Exiling|Shuffling|Gathering|AssigningNo|LifeFloor")
 HISTORY = re.compile(r"ThisTurn|Count$|Counts$|Used")
 
+# Fields whose names match EFFECT but that hold no effect's duration, each with the reason it stays. Classified "kept".
+KEPT = {
+    **dict.fromkeys(["chainsDrawReplacementsApplied", "declinedDrawReplacementSources", "currentDrawDoublingApplied",
+                     "drawsFromAppliedDoubling", "drawRedirectsAppliedToCurrentDraw", "pendingReplacementCardDraws",
+                     "pendingRedirectDamage", "pendingSourceRedirectDamage", "sourceRedirectShieldsUsedInOpenEvent",
+                     "combatSharedDamagePreventionAllocations", "pendingReplacementEvents"],
+                    "bookkeeping while one event is replaced or dealt"),
+    **dict.fromkeys(["pendingDeathReplacementChoiceReplay", "chosenDeathReplacementsForRerun",
+                     "deferredDeathReplacementChoices", "pendingLossReplacement", "pokeyReplacementAnswer",
+                     "pendingTokenCreationReplacement", "entryAwaitingLifeLossDeparture",
+                     "spellAwaitingEntryLifeLossDepartureId"], "a pending choice or replay"),
+    **dict.fromkeys(["firstNonDrawStepDrawReplacementsUsedThisTurn", "tokenCreationReplacementUsedThisTurn",
+                     "playersAffectedByMeliraPoisonReplacementThisTurn", "playersWhoUsedMaxSpeedFreeUnearthThisTurn",
+                     "oncePerTurnExileCastPermissionsUsedThisTurn", "oncePerTurnGraveyardCastPermissionsUsedThisTurn",
+                     "oncePerTurnGraveyardLandPermissionsUsedThisTurn",
+                     "oncePerTurnGraveyardSpellPermissionsUsedThisTurn",
+                     "oncePerTurnLibraryCastPermissionsUsedThisTurn", "oncePerTurnLibraryPlayPermissionsUsedThisTurn",
+                     "oneShotExileCastPermissionsUsed", "exileSpellTypePermissionHistory",
+                     "exilePlayPermissionGroupUsesRemaining"], "turn history or a use count"),
+    **dict.fromkeys(["perpetualCardBattlefieldEffectGrants", "perpetualCardKeywords", "perpetualCardRemovedKeywords",
+                     "perpetualCardSpellCastingAbilityGrants", "perpetualKeywords", "perpetualNoncombatDamageBonuses",
+                     "perpetualTriggeredAbilityGrants", "cardsGrantedPerpetualUnearth"],
+                    "perpetual: a change to the card, not an effect with a duration"),
+    **dict.fromkeys(["spellsGrantedHasteOnEntry", "spellsGrantedPermanentHasteOnEntry", "spellsGrantedRiotOnEntry",
+                     "spellsGrantedSuspendHasteOnEntry", "spellGrantedSubtypesOnEntry", "spellCastSplicedKeywords",
+                     "spellColorOverrides", "spellTextReplacements", "simultaneousDyingGrantedZoneChangeAbilities",
+                     "cardOwnerOverrides", "bombardmentOriginalCardsUntilEndOfTurn",
+                     "exiledCardsWithNonSuspendTimeCounters", "sourceLinkedAnimations"],
+                    "state of one spell or card carried to the object it becomes"),
+    **dict.fromkeys(["extraTurnDamageCantBePrevented", "extraTurnSkipsUntap"], "an attribute of a queued extra turn"),
+    "skipNextTurnCount": "\"skip your next turn\": a replacement used up once, with no duration (CR 614.10)",
+}
+
 FAMILIES = collections.OrderedDict([
     ("play permissions", r"Permission|Flash|Granted|Playable|CastFrom|PlayFrom"),
     ("casting / activation restrictions", r"Cant(Cast|Play|Activate)|Silenced|MaxSpells|CantBeCountered"),
@@ -57,6 +91,8 @@ def main_sources():
 
 
 def classify(name):
+    if name in KEPT:
+        return "kept"
     if EFFECT.search(name):
         return "effect"
     if HISTORY.search(name):
@@ -83,7 +119,9 @@ def main():
     history_fields = sorted(n for n, c in classified.items() if c == "history")
     print(f"GameData public fields: {len(fields)}")
     print(f"  effect durations: {len(effect_fields)}")
+    kept_fields = sorted(n for n, c in classified.items() if c == "kept")
     print(f"  turn history (stays): {len(history_fields)}")
+    print(f"  kept, no duration (see KEPT): {len(kept_fields)}")
     by_family = collections.Counter(family(n) for n in effect_fields)
     for label, count in by_family.most_common():
         print(f"    {label}: {count}")
@@ -126,7 +164,9 @@ def main():
     print(f"GameData expire methods: {len(expire_methods)}, calls outside GameData: {sum(callers.values())}")
 
     if args.list:
-        lines = [f"effect\t{family(n)}\t{n}" for n in effect_fields] + [f"history\t-\t{n}" for n in history_fields]
+        lines = ([f"effect\t{family(n)}\t{n}" for n in effect_fields]
+                 + [f"kept\t{KEPT[n]}\t{n}" for n in kept_fields]
+                 + [f"history\t-\t{n}" for n in history_fields])
         pathlib.Path(args.list).write_text("\n".join(lines) + "\n")
         print(f"listed in {args.list}")
 

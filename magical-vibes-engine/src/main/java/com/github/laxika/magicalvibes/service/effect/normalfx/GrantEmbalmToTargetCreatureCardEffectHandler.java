@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Slf4j
 @Component
@@ -52,7 +54,8 @@ public class GrantEmbalmToTargetCreatureCardEffectHandler implements NormalEffec
             return;
         }
 
-        gameData.cardsGrantedEmbalmUntilEndOfTurn.add(targetCard.getId());
+        gameData.addCardEffect(entry, GrantedCardAbilityEffect.of(GrantedCardAbilityEffect.Ability.EMBALM),
+                targetCard.getId(), Duration.UNTIL_END_OF_TURN);
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " grants embalm to ", targetCard, " until end of turn."));
         log.info("Game {} - {} grants embalm to {}", gameData.id, entry.getCard().getName(), targetCard.getName());
     }

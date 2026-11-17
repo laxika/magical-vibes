@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,7 +24,7 @@ public class BlueSunsTwilight extends Card {
                         new PermanentManaValueAtMostXPredicate()
                 )),
                 "Target must be a creature with mana value X or less."
-        )).addSpellEffect(new GainControlOfTargetEffect(ControlDuration.PERMANENT))
+        )).addSpellEffect(new GainControlOfTargetEffect(Duration.PERMANENT))
                 .addSpellEffect(new ConditionalEffect(
                         new SpellXAtLeast(5), new CreateTokenCopyOfTargetPermanentEffect()));
     }

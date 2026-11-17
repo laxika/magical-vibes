@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfTargetOpponentLibraryWithArtifactThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -57,8 +58,7 @@ public class ExileTopCardOfTargetOpponentLibraryWithArtifactThresholdEffectHandl
             return;
         }
 
-        gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
+        gameData.grantExilePlayPermission(topCard.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
 
         int artifactCount = countArtifacts(gameData, controllerId);
         // An Adventurer qualifies through either face it could be cast as (CR 715.4 / cascade's

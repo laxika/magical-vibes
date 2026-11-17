@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.PendingNextDrawDamageReplacement;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterNextDrawDamageReplacementEffect;
@@ -11,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.UUID;
 
 /** Registers Words of War's one-shot replacement of the controller's next draw this turn. */
@@ -36,10 +35,9 @@ public class RegisterNextDrawDamageReplacementEffectHandler implements NormalEff
             return;
         }
 
-        gameData.pendingNextDrawDamage
-                .computeIfAbsent(controllerId, ignored -> Collections.synchronizedList(new ArrayList<>()))
-                .add(new PendingNextDrawDamageReplacement(
-                        entry.getCard(), entry.getSourcePermanentId(), targetId));
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), new RegisterNextDrawDamageReplacementEffect(entry.getCard(), targetId), controllerId,
+                Duration.UNTIL_END_OF_TURN));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.builder()

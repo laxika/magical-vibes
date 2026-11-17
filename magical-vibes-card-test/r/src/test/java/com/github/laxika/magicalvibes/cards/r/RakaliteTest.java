@@ -37,7 +37,7 @@ class RakaliteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player2.getId());
+        assertThat(gd.playerDamagePreventionShields()).doesNotContainKey(player2.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(rakalite);
     }
 

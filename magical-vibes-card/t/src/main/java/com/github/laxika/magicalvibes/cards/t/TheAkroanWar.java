@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EachCreatureDealsPowerDamageToItselfEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
@@ -19,7 +19,7 @@ public class TheAkroanWar extends Card {
 
     public TheAkroanWar() {
         addTrigger(Triggers.chapter(1),
-                new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_REMAINS));
+                new GainControlOfTargetEffect(Duration.WHILE_SOURCE_REMAINS));
         setSagaChapterTargetFilter(1,
                 Set.of(TargetFilters.creature()));
 

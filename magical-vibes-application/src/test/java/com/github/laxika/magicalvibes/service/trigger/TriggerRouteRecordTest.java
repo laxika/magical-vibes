@@ -34,7 +34,6 @@ import com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -2321,7 +2320,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
     private void changeControl(Permanent permanent, Player newController) {
         CreatureControlService control = bean(CreatureControlService.class);
         harness.inMutationScope(() -> control.applyControlEffect(gd, newController.getId(), permanent,
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT, null, "Helper"));
+                new GainControlOfTargetEffect(Duration.PERMANENT), Duration.PERMANENT, null, "Helper"));
     }
 
     /** An Aura of player1 becomes attached to {@code enchanted}. */
@@ -2971,7 +2970,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
 
     /** A prevention shield of 1 on player1 prevents the 1 damage the helper's ability deals them. */
     private void damageToYouIsPrevented(List<Card> cards) {
-        gd.playerDamagePreventionShields.merge(player1.getId(), 1, Integer::sum);
+        gd.addPlayerDamagePreventionShield(player1.getId(), 1);
         helperAbilityResolves(cards, new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
     }
 

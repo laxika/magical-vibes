@@ -44,8 +44,8 @@ class MeetingOfTheFiveTest extends BaseCardTest {
         castMeeting();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyElementsOf(topCards);
-        assertThat(gd.exilePlayPermissions).containsEntry(threeColorSpell.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(threeColorSpell.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders())
                 .doesNotContainKeys(twoColorSpell.getId(), land.getId());
 
         ManaPool pool = gd.playerManaPools.get(player1.getId());
@@ -144,7 +144,7 @@ class MeetingOfTheFiveTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(creature);
-        assertThat(gd.exilePlayPermissions).doesNotContainKey(creature.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(creature.getId());
         assertThat(gd.playerManaPools.get(player1.getId())
                 .getExactlyThreeColorSpellOnlyManaTotal()).isZero();
     }

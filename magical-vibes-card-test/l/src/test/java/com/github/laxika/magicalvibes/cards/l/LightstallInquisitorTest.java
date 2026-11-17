@@ -29,7 +29,7 @@ class LightstallInquisitorTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(bears);
-        assertThat(gd.exilePlayPermissions.get(bears.getId())).isEqualTo(player2.getId());
+        assertThat(gd.exilePlayPermissionHolder(bears.getId())).isEqualTo(player2.getId());
     }
 
     @Test

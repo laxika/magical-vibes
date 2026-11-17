@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -45,10 +46,10 @@ class ArdentDustspeakerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(instant, nonMatching);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(cardBelowExiledCards, sorcery);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(topCard, secondCard);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(topCard.getId(), player1.getId())
                 .containsEntry(secondCard.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireEndOfTurn)
+        assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN))
                 .contains(topCard.getId(), secondCard.getId());
     }
 
@@ -103,7 +104,7 @@ class ArdentDustspeakerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(instant);
-        assertThat(gd.exilePlayPermissions).containsEntry(instant.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(instant.getId(), player1.getId());
     }
 
     @Test
@@ -121,7 +122,7 @@ class ArdentDustspeakerTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard, sorcery);
-        assertThat(gd.exilePlayPermissions)
+        assertThat(gd.exilePlayPermissionHolders())
                 .containsEntry(topCard.getId(), player1.getId())
                 .containsEntry(sorcery.getId(), player1.getId());
     }
@@ -191,7 +192,7 @@ class ArdentDustspeakerTest extends BaseCardTest {
                 GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThat(gd.exilePlayPermissions).doesNotContainKeys(instant.getId(), secondCard.getId());
+        assertThat(gd.exilePlayPermissionHolders()).doesNotContainKeys(instant.getId(), secondCard.getId());
         assertThatThrownBy(() -> harness.castFromExile(player1, instant.getId(), player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(instant, secondCard);

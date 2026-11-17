@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -48,13 +47,13 @@ public class GrantKeywordToChosenCreatureEffectHandler implements NormalEffectHa
             return;
         }
 
-        GrantDuration duration = grant.duration();
-        if (duration != GrantDuration.END_OF_TURN && duration != GrantDuration.UNTIL_YOUR_NEXT_TURN) {
+        Duration duration = grant.duration();
+        if (!Duration.UNTIL_END_OF_TURN.equals(duration) && !Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
             throw new IllegalArgumentException("Unsupported chosen-creature keyword duration: " + duration);
         }
 
         Set<Keyword> keywords = Set.of(grant.keyword());
-        if (duration == GrantDuration.UNTIL_YOUR_NEXT_TURN) {
+        if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
             target.getUntilNextTurnKeywords().addAll(keywords);
         } else {
             target.getGrantedKeywords().addAll(keywords);
@@ -62,20 +61,15 @@ public class GrantKeywordToChosenCreatureEffectHandler implements NormalEffectHa
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
                 new GrantKeywordEffect(keywords, GrantScope.TARGET, duration), target.getId(), null,
-                null, floatingDurationFor(duration), 0));
+                null, duration, 0));
 
         gameLogService.append(gameData, GameLog.builder().card(target.getCard())
                 .text(" gains " + formatKeyword(grant.keyword()) + " " + durationLabel(duration) + ".")
                 .build());
     }
 
-    private Duration floatingDurationFor(GrantDuration duration) {
-        return duration == GrantDuration.UNTIL_YOUR_NEXT_TURN
-                ? Duration.UNTIL_YOUR_NEXT_TURN : Duration.UNTIL_END_OF_TURN;
-    }
-
-    private String durationLabel(GrantDuration duration) {
-        return duration == GrantDuration.UNTIL_YOUR_NEXT_TURN
+    private String durationLabel(Duration duration) {
+        return Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)
                 ? "until your next turn" : "until end of turn";
     }
 
