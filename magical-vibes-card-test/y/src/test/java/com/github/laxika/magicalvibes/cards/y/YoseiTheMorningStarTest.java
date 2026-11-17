@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.r.RendSpirit;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.o.OrochiRanger;
 import com.github.laxika.magicalvibes.cards.r.RendFlesh;
@@ -94,11 +95,11 @@ class YoseiTheMorningStarTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.skipNextUntapStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
-        assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
-        assertThat(gd.skipNextTurnCount).isEmpty();
-        assertThat(gd.skipNextDrawStepCount).isEmpty();
-        assertThat(gd.skipNextCombatPhaseCount).isEmpty();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.UNTAP_STEP)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.UNTAP_STEP)).isEqualTo(0);
+        assertThat(gd.skipNextCount(null, SkipKind.TURN)).isZero();
+        assertThat(gd.skipNextCount(null, SkipKind.DRAW_STEP)).isZero();
+        assertThat(gd.skipNextCount(null, SkipKind.COMBAT_PHASE)).isZero();
     }
 
     @Test
@@ -239,7 +240,7 @@ class YoseiTheMorningStarTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0);
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
-        assertThat(gd.skipNextUntapStepCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.UNTAP_STEP)).isZero();
     }
 
     private void killYosei() {

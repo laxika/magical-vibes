@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastSpellTypesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -17,10 +17,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
-import com.github.laxika.magicalvibes.model.effect.IllusionistsGambitAdditionalCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThisCombatEffect;
-import com.github.laxika.magicalvibes.service.effect.normalfx.IllusionistsGambitAdditionalCombatEffectHandler;
+import com.github.laxika.magicalvibes.model.effect.OnlySourceCreatureCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnSkipReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RunedTerrorEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
@@ -50,9 +47,6 @@ public class TurnProgressionService {
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService;
 
-    @org.springframework.beans.factory.annotation.Autowired
-    @org.springframework.context.annotation.Lazy
-    private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService triggeredAbilityStackService;
     private final CombatService combatService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
@@ -107,10 +101,7 @@ public class TurnProgressionService {
 
         if (gameData.currentStep == TurnStep.END_OF_COMBAT) {
             combatService.clearCombatState(gameData);
-            gameData.onlyLandCreaturesCanAttackThisCombat = false;
             gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
-            gameData.onlyPermanentCanAttackThisCombatId = null;
-            gameData.onlyPermanentsCanAttackThisCombatIds = null;
             gameData.playerManaPools.values().forEach(manaPool -> manaPool.clearCombatMana());
         }
 
@@ -335,18 +326,16 @@ public class TurnProgressionService {
 
         next = skipChosenPhases(gameData, next);
 
-        // An additional combat created by a Throat Wolf is controlled by that Wolf's controller,
-        // not necessarily by the player whose combat just ended. Restore the original active
-        // player after the inserted combat has finished.
+        // An additional combat in which only a Throat Wolf can attack is its controller's combat, not
+        // necessarily the player's whose combat just ended. Restore the original active player after the
+        // inserted combat has finished.
         if (next == TurnStep.BEGINNING_OF_COMBAT && additionalCombatPhase) {
-            DelayedAdditionalCombatBeginningEffect pending =
-                    gameData.peekFirstDelayedAction(DelayedAdditionalCombatBeginningEffect.class);
-            if (pending != null && pending.controllerId() != null
-                    && !pending.controllerId().equals(gameData.activePlayerId)) {
+            UUID combatPlayerId = onlySourceCanAttackController(gameData, gameData.combatPhasesThisTurn + 1);
+            if (combatPlayerId != null && !combatPlayerId.equals(gameData.activePlayerId)) {
                 if (gameData.additionalCombatReturnActivePlayerId == null) {
                     gameData.additionalCombatReturnActivePlayerId = gameData.activePlayerId;
                 }
-                gameData.activePlayerId = pending.controllerId();
+                gameData.activePlayerId = combatPlayerId;
             }
         } else if (gameData.currentStep == TurnStep.END_OF_COMBAT
                 && gameData.additionalCombatReturnActivePlayerId != null) {
@@ -430,9 +419,6 @@ public class TurnProgressionService {
                 });
                 gameData.combatBlockOpponentIdsThisCombat.clear();
                 gameData.combatDamageToPlayersThisCombat.clear();
-                if (additionalCombatPhase) {
-                    processAdditionalCombatBeginningEffects(gameData);
-                }
                 stepTriggerService.handleBeginningOfCombatTriggers(gameData);
             } else if (next == TurnStep.DECLARE_ATTACKERS) {
                 stepTriggerService.handleDeclareAttackersTriggers(gameData);
@@ -576,13 +562,7 @@ public class TurnProgressionService {
         UUID activePlayerId = gameData.activePlayerId;
         String activePlayerName = gameData.playerIdToName.get(activePlayerId);
         boolean skipUntapStep = false;
-        int queuedUntapSkips = gameData.skipNextUntapStepCount.getOrDefault(activePlayerId, 0);
-        if (queuedUntapSkips > 0) {
-            if (queuedUntapSkips == 1) {
-                gameData.skipNextUntapStepCount.remove(activePlayerId);
-            } else {
-                gameData.skipNextUntapStepCount.put(activePlayerId, queuedUntapSkips - 1);
-            }
+        if (gameData.applySkipNext(activePlayerId, SkipKind.UNTAP_STEP)) {
             skipUntapStep = true;
             gameLogService.append(gameData, GameLog.text(activePlayerName + " skips their untap step."));
         }
@@ -614,29 +594,18 @@ public class TurnProgressionService {
         completeTurnAdvance(gameData);
     }
 
-    private void processAdditionalCombatBeginningEffects(GameData gameData) {
-        DelayedAdditionalCombatBeginningEffect pending =
-                gameData.drainFirstDelayedAction(DelayedAdditionalCombatBeginningEffect.class);
-        if (pending != null) {
-            if (pending.effect() instanceof OnlyLandCreaturesCanAttackThisCombatEffect) {
-                gameData.onlyLandCreaturesCanAttackThisCombat = true;
-                return;
-            }
-            if (pending.effect() instanceof IllusionistsGambitAdditionalCombatEffect gambit) {
-                IllusionistsGambitAdditionalCombatEffectHandler.apply(gameData, pending.sourceCard().getName(),
-                        pending.sourcePermanentId(), gambit, id -> findPermanentOnAnyBattlefield(gameData, id));
-                return;
-            }
-            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
-                    pending.sourceCard(),
-                    pending.controllerId(),
-                    pending.sourceCard().getName() + "'s additional combat trigger",
-                    new ArrayList<>(List.of(pending.effect())),
-                    null,
-                    pending.sourcePermanentId()
-            ));
-            gameLogService.append(gameData,
-                    GameLog.cardThen(pending.sourceCard(), "'s additional combat trigger triggers."));
+    /**
+     * The controller of an "only this creature can attack during that combat" effect waiting for this turn's
+     * {@code combatPhase}-th combat phase, or {@code null} if there is none.
+     */
+    private static UUID onlySourceCanAttackController(GameData gameData, int combatPhase) {
+        synchronized (gameData.scheduledFloatingEffects) {
+            return gameData.scheduledFloatingEffects.stream()
+                    .filter(effect -> effect.effect() instanceof OnlySourceCreatureCanAttackThisCombatEffect
+                            && effect.duration().start() == Duration.Start.COMBAT_PHASE_OF_THIS_TURN
+                            && effect.duration().combatPhase() == combatPhase)
+                    .map(FloatingContinuousEffect::controllerId)
+                    .findFirst().orElse(null);
         }
     }
 
@@ -646,14 +615,7 @@ public class TurnProgressionService {
         // GameData.extraTurnSkipsAllUntapSteps); a queued Yosei skip is not consumed by it.
         boolean skipUntapStep = untapStepService.playersSkipUntapStepApplies(gameData)
                 || gameData.extraTurnSkipsAllUntapSteps;
-        int queuedUntapSkips = skipUntapStep ? 0
-                : gameData.skipNextUntapStepCount.getOrDefault(activePlayerId, 0);
-        if (queuedUntapSkips > 0) {
-            if (queuedUntapSkips == 1) {
-                gameData.skipNextUntapStepCount.remove(activePlayerId);
-            } else {
-                gameData.skipNextUntapStepCount.put(activePlayerId, queuedUntapSkips - 1);
-            }
+        if (!skipUntapStep && gameData.applySkipNext(activePlayerId, SkipKind.UNTAP_STEP)) {
             skipUntapStep = true;
         }
 
@@ -751,17 +713,7 @@ public class TurnProgressionService {
      */
     private static boolean consumeQueuedCombatPhaseSkip(GameData gameData) {
         UUID activePlayerId = gameData.activePlayerId;
-        var thisTurn = gameData.floatingEffectsOnPlayer(activePlayerId, SkipNextEffect.class);
-        if (!thisTurn.isEmpty()) {
-            gameData.endFloatingEffect(thisTurn.getFirst());
-            return true;
-        }
-        if (gameData.skipNextCombatPhaseCount.getOrDefault(activePlayerId, 0) > 0) {
-            gameData.skipNextCombatPhaseCount.computeIfPresent(activePlayerId,
-                    (playerId, count) -> count > 1 ? count - 1 : null);
-            return true;
-        }
-        return false;
+        return gameData.applySkipNext(activePlayerId, SkipKind.COMBAT_PHASE);
     }
 
     private boolean controlsAggressiveCreature(GameData gameData, UUID playerId) {
@@ -789,7 +741,10 @@ public class TurnProgressionService {
     public void completeTimeVaultChoice(GameData gameData, UUID controllerId,
                                          UUID sourcePermanentId, boolean accepted) {
         if (accepted) {
-            gameData.skipNextTurnCount.merge(controllerId, 1, Integer::sum);
+            Permanent timeVault = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(
+                    timeVault == null ? "Time Vault" : timeVault.getCard().getName(), sourcePermanentId, controllerId,
+                    new SkipNextEffect(SkipKind.TURN), controllerId, Duration.PERMANENT));
             advanceTurn(gameData, false, false);
         } else {
             gameData.timeVaultsDeclinedThisTurnStart.add(sourcePermanentId);
@@ -856,13 +811,7 @@ public class TurnProgressionService {
         }
 
         // Chronatog: skip the turn entirely (CR 500.11 / 614.10). Pending Mindslaver waits (CR 723.1b).
-        int queuedTurnSkips = gameData.skipNextTurnCount.getOrDefault(nextActive, 0);
-        if (queuedTurnSkips > 0) {
-            if (queuedTurnSkips == 1) {
-                gameData.skipNextTurnCount.remove(nextActive);
-            } else {
-                gameData.skipNextTurnCount.put(nextActive, queuedTurnSkips - 1);
-            }
+        if (gameData.applySkipNext(nextActive, SkipKind.TURN)) {
             String skippedName = gameData.playerIdToName.get(nextActive);
             if (currentTurnIsExtraTurn && extraTurnSequence != null) {
                 gameData.endDelayedAbilitiesOfExtraTurn(extraTurnSequence);
@@ -891,13 +840,7 @@ public class TurnProgressionService {
         // Yosei, the Morning Star: a queued "skips their next untap step" is consumed by the first
         // untap step this player would actually get (CR 614.10a). A turn whose untap step is already
         // skipped by an extra-turn skip does not consume the queued skip; it waits for the next one.
-        int queuedUntapSkips = skipUntapStep ? 0 : gameData.skipNextUntapStepCount.getOrDefault(nextActive, 0);
-        if (queuedUntapSkips > 0) {
-            if (queuedUntapSkips == 1) {
-                gameData.skipNextUntapStepCount.remove(nextActive);
-            } else {
-                gameData.skipNextUntapStepCount.put(nextActive, queuedUntapSkips - 1);
-            }
+        if (!skipUntapStep && gameData.applySkipNext(nextActive, SkipKind.UNTAP_STEP)) {
             skipUntapStep = true;
             gameLogService.append(gameData, GameLog.text(nextActiveName + " skips their untap step."));
             log.info("Game {} - {} skips their untap step", gameData.id, nextActiveName);
@@ -1089,7 +1032,6 @@ public class TurnProgressionService {
         gameData.creaturesThatSaddledPermanentThisTurn.clear();
         gameData.creaturesThatCrewedPermanentThisTurn.clear();
         gameData.crewedPermanentSubtypesThisTurn.clear();
-        gameData.clearDelayedActions(DelayedAdditionalCombatBeginningEffect.class);
         gameData.combatDamageSourceSubtypesThisTurn.clear();
         gameData.combatDamageSourceNamesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
@@ -1161,9 +1103,7 @@ public class TurnProgressionService {
         gameData.additionalCombatPhasesOnly = 0;
         gameData.aggressiveCombatPhasesOnly = 0;
         gameData.additionalCombatReturnActivePlayerId = null;
-        gameData.onlyLandCreaturesCanAttackThisCombat = false;
         gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
-        gameData.onlyPermanentsCanAttackThisCombatIds = null;
         gameData.additionalCombatPhasesAfterMain = 0;
         gameData.additionalCombatPhasesAfterMainReturnStep = null;
         gameData.additionalUpkeepStepsAfterCombat = 0;
@@ -1366,13 +1306,7 @@ public class TurnProgressionService {
         // Savor the Moment's extra turn skips this additional untap step too (see
         // GameData.extraTurnSkipsAllUntapSteps); a queued Yosei skip then waits for a later untap step.
         boolean skipUntapStep = gameData.extraTurnSkipsAllUntapSteps;
-        int queuedUntapSkips = skipUntapStep ? 0 : gameData.skipNextUntapStepCount.getOrDefault(activePlayerId, 0);
-        if (queuedUntapSkips > 0) {
-            if (queuedUntapSkips == 1) {
-                gameData.skipNextUntapStepCount.remove(activePlayerId);
-            } else {
-                gameData.skipNextUntapStepCount.put(activePlayerId, queuedUntapSkips - 1);
-            }
+        if (!skipUntapStep && gameData.applySkipNext(activePlayerId, SkipKind.UNTAP_STEP)) {
             skipUntapStep = true;
             gameLogService.append(gameData, GameLog.text(activePlayerName + " skips their untap step."));
         }
@@ -1553,17 +1487,6 @@ public class TurnProgressionService {
                 null,
                 timeVault.getId()));
         playerInputService.processNextMayAbility(gameData);
-    }
-
-    private Permanent findPermanentOnAnyBattlefield(GameData gameData, UUID permanentId) {
-        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-            for (Permanent permanent : battlefield) {
-                if (permanent.getId().equals(permanentId)) {
-                    return permanent;
-                }
-            }
-        }
-        return null;
     }
 
     private void invalidateForAllPlayers(GameData gameData) {

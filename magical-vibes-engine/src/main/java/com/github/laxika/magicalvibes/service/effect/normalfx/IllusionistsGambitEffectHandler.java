@@ -3,16 +3,20 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.IllusionistsGambitAdditionalCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.IllusionistsGambitEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -41,30 +45,21 @@ public class IllusionistsGambitEffectHandler implements NormalEffectHandlerBean 
             tapUntapSupport.untapPermanent(gameData, attacker);
         }
 
-        UUID attackingPlayerId = gameData.activePlayerId;
-        if (attackingPlayerId == null) {
-            attackingPlayerId = entry.getControllerId();
-        }
-        List<UUID> attackerIds = attackers.stream().map(Permanent::getId).toList();
         gameData.additionalCombatPhasesOnly++;
-        var additionalCombat = new DelayedAdditionalCombatBeginningEffect(
-                attackingPlayerId,
-                entry.getCard(),
-                new IllusionistsGambitAdditionalCombatEffect(
-                        Set.copyOf(attackerIds), entry.getControllerId()),
-                entry.getSourcePermanentId());
-        // The most recently created additional combat occurs first, so its payload is consumed first.
-        synchronized (gameData.delayedActions) {
-            int firstCombat = 0;
-            while (firstCombat < gameData.delayedActions.size()
-                    && !(gameData.delayedActions.get(firstCombat) instanceof DelayedAdditionalCombatBeginningEffect)) {
-                firstCombat++;
-            }
-            if (firstCombat == gameData.delayedActions.size()) {
-                gameData.queueDelayedAction(additionalCombat);
-            } else {
-                gameData.delayedActions.add(firstCombat, additionalCombat);
-            }
+        int combatPhase = AdditionalCombatBeginningSupport.register(gameData, entry, List.of(), 1, 0);
+        // "Each of those creatures attacks that combat if able. They can't attack you or planeswalkers you control
+        // that combat": rules changes of this resolution that apply during the added combat phase.
+        UUID protectedPlayerId = entry.getControllerId();
+        for (Permanent attacker : attackers) {
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(),
+                    new MatchingCreaturesMustAttackEffect(new PermanentIsCreaturePredicate()), attacker.getId(),
+                    Duration.duringCombatPhase(combatPhase)));
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), entry.getCard().getName(),
+                    entry.getSourcePermanentId(), protectedPlayerId,
+                    new CreaturesCantAttackControllerUnlessPredicateEffect(
+                            new PermanentNotPredicate(new PermanentTruePredicate()), true),
+                    attacker.getId(), protectedPlayerId, null, Duration.duringCombatPhase(combatPhase), 0L));
         }
     }
 }

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -89,7 +91,7 @@ class RalZarekGuestLecturerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 3, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isBetween(0, 5);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isBetween(0, 5);
         assertThat(ral.getCounterCount(CounterType.LOYALTY)).isZero();
     }
 
@@ -257,7 +259,7 @@ class RalZarekGuestLecturerTest extends BaseCardTest {
     @Test
     void minusSevenAddsExactlyOneSkippedTurnPerHead() {
         addReadyRal(player1, 7);
-        gd.skipNextTurnCount.put(player2.getId(), 2);
+        FloatingCombatRules.skipNext(gd, player2.getId(), SkipKind.TURN, 2);
 
         harness.activateAbility(player1, 0, 3, null, player2.getId());
         harness.passBothPriorities();
@@ -267,8 +269,8 @@ class RalZarekGuestLecturerTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         int heads = Integer.parseInt(flipLog.replaceAll(".*: (\\d+) heads\\.", "$1"));
         assertThat(heads).isBetween(0, 5);
-        assertThat(gd.skipNextTurnCount.get(player2.getId())).isEqualTo(2 + heads);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isEqualTo(2 + heads);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
     }
 
     private Permanent addReadyRal(Player player, int loyalty) {

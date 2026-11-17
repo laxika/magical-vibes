@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
+import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipRecipient;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.RulesObserver;
 import org.junit.jupiter.api.BeforeEach;
@@ -119,5 +122,32 @@ class GameDataFloatingEffectObserverTest {
         assertThat(Duration.WHILE_SOURCE_TAPPED.end()).isEqualTo(Duration.End.NEVER);
         assertThatThrownBy(() -> new Duration(Duration.End.END_OF_TURN, Duration.AsLongAs.SOURCE_TAPPED))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("Each \"skip your next\" effect is used up as it applies, a this-turn one first (CR 614.10a)")
+    void skipNextEffectsAreUsedUpOneByOne() {
+        UUID player = UUID.randomUUID();
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Blinding Angel", null, player,
+                new SkipNextEffect(SkipKind.COMBAT_PHASE), player, Duration.PERMANENT));
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Moment of Silence", null, player,
+                new SkipNextEffect(SkipKind.COMBAT_PHASE, SkipRecipient.TARGET_PLAYER, false, true), player,
+                Duration.UNTIL_END_OF_TURN));
+        reported.clear();
+
+        assertThat(gd.skipNextCount(player, SkipKind.COMBAT_PHASE)).isEqualTo(2);
+        assertThat(gd.applySkipNext(player, SkipKind.DRAW_STEP)).isFalse();
+        assertThat(gd.applySkipNext(player, SkipKind.COMBAT_PHASE)).isTrue();
+        assertThat(gd.applySkipNext(player, SkipKind.COMBAT_PHASE)).isTrue();
+        assertThat(gd.applySkipNext(player, SkipKind.COMBAT_PHASE)).isFalse();
+        assertThat(reported).containsExactly("ended Moment of Silence", "ended Blinding Angel");
+    }
+
+    @Test
+    @DisplayName("Only a duration that begins at a combat phase names one")
+    void onlyACombatPhaseStartNamesACombatPhase() {
+        assertThat(Duration.duringCombatPhase(2).laterCombatPhase(1)).isEqualTo(Duration.duringCombatPhase(3));
+        assertThatThrownBy(() -> new Duration(Duration.Start.COMBAT_PHASE_OF_THIS_TURN, Duration.End.END_OF_COMBAT,
+                null)).isInstanceOf(IllegalArgumentException.class);
     }
 }

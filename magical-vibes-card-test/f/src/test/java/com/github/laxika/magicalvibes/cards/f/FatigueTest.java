@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -23,8 +24,8 @@ class FatigueTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.DRAW_STEP)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isEqualTo(0);
     }
 
     @Test
@@ -45,7 +46,7 @@ class FatigueTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(libraryBefore);
-        assertThat(gd.skipNextDrawStepCount).doesNotContainKey(player2.getId());
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.DRAW_STEP)).isZero();
     }
 
     @Test
@@ -64,7 +65,7 @@ class FatigueTest extends BaseCardTest {
                 harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities));
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.skipNextDrawStepCount).doesNotContainKey(player2.getId());
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.DRAW_STEP)).isZero();
     }
 
     @Test
@@ -86,7 +87,7 @@ class FatigueTest extends BaseCardTest {
 
             assertThat(gd.playerHands.get(player2.getId())).hasSize(turn == 4 ? 1 : 0);
             assertThat(gd.playerDecks.get(player2.getId())).hasSize(turn == 4 ? 1 : 2);
-            assertThat(gd.skipNextDrawStepCount.getOrDefault(player2.getId(), 0))
+            assertThat(gd.skipNextCount(player2.getId(), SkipKind.DRAW_STEP))
                     .isEqualTo(Math.max(3 - turn, 0));
         }
     }
@@ -100,7 +101,7 @@ class FatigueTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player1.getId());
 
-        assertThat(gd.skipNextDrawStepCount).containsEntry(player1.getId(), 1);
-        assertThat(gd.skipNextDrawStepCount).doesNotContainKey(player2.getId());
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.DRAW_STEP)).isZero();
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -34,8 +35,8 @@ class BrineElementalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(brineElemental.isFaceDown()).isFalse();
-        assertThat(gd.skipNextUntapStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
-        assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.UNTAP_STEP)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.UNTAP_STEP)).isZero();
 
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());

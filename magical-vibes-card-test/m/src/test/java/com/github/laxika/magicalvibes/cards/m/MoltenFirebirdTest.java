@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.Disallow;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.cards.e.Extirpate;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -90,13 +91,13 @@ class MoltenFirebirdTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Molten Firebird");
         harness.assertNotOnBattlefield(player1, "Molten Firebird");
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isZero();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Molten Firebird");
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isZero();
     }
 
     @Test
@@ -109,8 +110,8 @@ class MoltenFirebirdTest extends BaseCardTest {
         killFirebird(firebird);
 
         harness.assertNotOnBattlefield(player2, "Molten Firebird");
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.DRAW_STEP)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isZero();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
@@ -148,7 +149,7 @@ class MoltenFirebirdTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player2, List.of(firebird.getCard().getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isEqualTo(1);
         harness.assertNotInGraveyard(player1, "Molten Firebird");
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
@@ -176,7 +177,7 @@ class MoltenFirebirdTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Molten Firebird");
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isEqualTo(1);
     }
 
     @Test
@@ -195,7 +196,7 @@ class MoltenFirebirdTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, firebird.getCard().getId());
         harness.assertInGraveyard(player1, "Molten Firebird");
         harness.assertNotOnBattlefield(player1, "Molten Firebird");
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isEqualTo(1);
     }
 
     @Test
@@ -208,7 +209,7 @@ class MoltenFirebirdTest extends BaseCardTest {
         harness.runStateBasedActions();
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(2);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isEqualTo(2);
 
         harness.forceActivePlayer(player1);
         gd.turnNumber = 2;
@@ -220,7 +221,7 @@ class MoltenFirebirdTest extends BaseCardTest {
             assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
             assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
         }
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isZero();
 
         harness.forceStep(TurnStep.UPKEEP);
         harness.passUntil(TurnStep.PRECOMBAT_MAIN);

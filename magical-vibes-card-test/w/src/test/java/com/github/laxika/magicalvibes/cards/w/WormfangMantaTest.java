@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +18,7 @@ class WormfangMantaTest extends BaseCardTest {
     void enteringTheBattlefieldSkipsNextTurn() {
         castManta();
 
-        assertThat(gd.skipNextTurnCount).containsEntry(player1.getId(), 1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
     }
 
     @Test
@@ -44,10 +45,10 @@ class WormfangMantaTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertThat(gd.extraTurns).containsExactly(player1.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
 
         harness.passBothPriorities();
-        assertThat(gd.skipNextTurnCount).containsEntry(player1.getId(), 1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
     }
 
     private Permanent castManta() {
@@ -66,7 +67,7 @@ class WormfangMantaTest extends BaseCardTest {
 
         advanceTurnForJudReview();
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount).doesNotContainKey(player1.getId());
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
     }
 
     @Test
@@ -80,7 +81,7 @@ class WormfangMantaTest extends BaseCardTest {
         advanceTurnForJudReview();
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
         assertThat(gd.extraTurns).isEmpty();
-        assertThat(gd.skipNextTurnCount).doesNotContainKey(player1.getId());
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
 
         advanceTurnForJudReview();
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
@@ -130,11 +131,11 @@ class WormfangMantaTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player2, new WormfangManta());
         resolveAllTriggers();
 
-        assertThat(gd.skipNextTurnCount).containsEntry(player2.getId(), 1);
-        assertThat(gd.skipNextTurnCount).doesNotContainKey(player1.getId());
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
         advanceTurnForJudReview();
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.skipNextTurnCount).doesNotContainKey(player2.getId());
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isZero();
     }
     private void advanceTurnForJudReview() {
         harness.forceStep(TurnStep.CLEANUP);

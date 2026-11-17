@@ -49,7 +49,6 @@ class BumiUnleashedTest extends BaseCardTest {
         assertThat(forest.isTapped()).isFalse();
         assertThat(gd.additionalCombatPhasesOnly).isZero();
         assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
-        assertThat(gd.onlyLandCreaturesCanAttackThisCombat).isTrue();
 
         harness.beginAttackerDeclarationInput();
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(battlefieldIndex(nonlandCreature))))
@@ -82,7 +81,6 @@ class BumiUnleashedTest extends BaseCardTest {
         harness.clearPriorityPassed();
         gs.advanceStep(gd);
 
-        assertThat(gd.onlyLandCreaturesCanAttackThisCombat).isFalse();
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
         assertThat(als.canAttack(gd, forest, player1.getId())).isTrue();
         assertThat(als.canAttack(gd, attacker, player1.getId())).isTrue();
@@ -128,7 +126,6 @@ class BumiUnleashedTest extends BaseCardTest {
 
         harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
 
-        assertThat(gd.onlyLandCreaturesCanAttackThisCombat).isTrue();
         assertThat(als.canAttack(gd, attacker, player1.getId())).isFalse();
         assertThat(als.canAttack(gd, forest, player1.getId())).isTrue();
     }

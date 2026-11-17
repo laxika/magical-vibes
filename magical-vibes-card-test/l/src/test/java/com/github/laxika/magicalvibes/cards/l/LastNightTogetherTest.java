@@ -63,6 +63,24 @@ class LastNightTogetherTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(unchosen));
     }
 
+    @Test
+    @DisplayName("The restriction is part of the spell's effect: the added combat begins with nothing on the stack")
+    void restrictionIsNotATriggeredAbility() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent giant = addCreatureReady(player1, new HillGiant());
+        Permanent unchosen = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        castLastNightTogether(bears, giant);
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT,
+                () -> harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT));
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.stack).isEmpty();
+        assertThat(als.canAttack(gd, unchosen, player1.getId())).isFalse();
+        assertThat(als.canAttack(gd, bears, player1.getId())).isTrue();
+    }
+
     private void castLastNightTogether(Permanent first, Permanent second) {
         putLastNightTogetherOnStack(first, second);
         harness.passBothPriorities();

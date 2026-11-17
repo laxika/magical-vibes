@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -49,7 +50,7 @@ class MomentOfSilenceTest extends BaseCardTest {
     void flaggedPlayerSkipsCombat() {
         addCreatureReady(player2, new FreshVolunteers());
 
-        gd.skipNextCombatPhaseCount.put(player2.getId(), 1);
+        FloatingCombatRules.skipNext(gd, player2.getId(), SkipKind.COMBAT_PHASE, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

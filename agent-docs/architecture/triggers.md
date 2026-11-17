@@ -810,8 +810,8 @@ card's. Delayed graveyard returns use `CardIdSetPredicate` with entry versions.
   `ControllerHasBoon` with `GameData.boons`).
 - Player-scoped lists are matched by their family, each a made ability (`putDelayed`): `GameData.boons`
   (`SpellTriggers`, `EtbTriggerService`), First Day of Class's watchers and Cosima's voyage (`EtbTriggerService`),
-  sacrifice boons (`ActionTriggers` on `ActionEvent.Sacrificed`). `GameData.delayedActions` holds only scheduled
-  durations, requirements and replacements, not abilities.
+  sacrifice boons (`ActionTriggers` on `ActionEvent.Sacrificed`). A duration, requirement or replacement a resolution
+  schedules is a floating effect with a later `Duration.start`, not an ability.
 - **Step.** `atNextStep`, `atNextStepUnlessPaid`, `atEveryStep` with a `StepTrigger` go on the stack before every other
   step ability. `TriggerMatcher.delayedStepMatch` reads `ANY` as "the next", `YOU` as "your next", `CHOSEN_PLAYER` as the
   named player's (`watchedPlayerId`). `DelayedReferents` names its objects and the turn, extra turn or combat phase it
@@ -822,8 +822,8 @@ card's. Delayed graveyard returns use `CardIdSetPredicate` with entry versions.
   `lastsWhile` (`CardsStillInZone`, `SourceRemainsTapped`) is judged in `RulesEventPipeline.putStepAbility`, false
   removing it untriggered.
 - **Grouping.** A delayed ability belongs to its resolution (CR 603.7a): `resolveTopOfStack` counts resolutions
-  (`GameData.resolutionOrdinal`, copied for simulations and kept across turn restarts) and `GameData.queueDelayedAction`
-  stamps `DelayedAction.scheduledBy`. A resolution's scheduled permanent moves for a step are one ability with a
+  (`GameData.resolutionOrdinal`, copied for simulations and kept across turn restarts) and
+  `DelayedPermanentActions.schedule` stamps `DelayedPermanentAction.scheduledBy`. A resolution's scheduled permanent moves for a step are one ability with a
   `ResolveDelayedPermanentActionEffect` per permanent (`DelayedPermanentActions.schedule`, by source card, controller,
   step and resolution); delayed exile returns are one `ResolvePendingExileReturnEffect` (`PendingExileReturns.schedule`),
   attack and enchant choices made on resolution.

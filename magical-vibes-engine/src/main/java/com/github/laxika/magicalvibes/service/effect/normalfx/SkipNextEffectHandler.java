@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -72,12 +71,11 @@ public class SkipNextEffectHandler implements NormalEffectHandlerBean {
                     entry.getSourcePermanentId(), entry.getControllerId(),
                     new SkipChosenStepOrPhaseEffect(SkipStepOrPhaseKind.COMBAT_PHASE), affectedPlayerId,
                     Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN));
-        } else if (e.thisTurnOnly()) {
+        } else {
+            // Each "skip your next ..." is its own replacement effect, used up as it applies (CR 614.10, 614.10a).
             gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
                     entry.getSourcePermanentId(), entry.getControllerId(), e, affectedPlayerId,
-                    Duration.UNTIL_END_OF_TURN));
-        } else {
-            queueFor(gameData, e.kind()).merge(affectedPlayerId, 1, Integer::sum);
+                    e.thisTurnOnly() ? Duration.UNTIL_END_OF_TURN : Duration.PERMANENT));
         }
 
         String affectedName = gameData.playerIdToName.get(affectedPlayerId);
@@ -85,15 +83,6 @@ public class SkipNextEffectHandler implements NormalEffectHandlerBean {
                 ? "skips all combat phases of their next turn" : phraseFor(e.kind());
         gameLogService.append(gameData, GameLog.text(affectedName + " " + phrase + "."));
         log.info("Game {} - {} {}", gameData.id, affectedName, phrase);
-    }
-
-    private Map<UUID, Integer> queueFor(GameData gameData, SkipKind kind) {
-        return switch (kind) {
-            case TURN -> gameData.skipNextTurnCount;
-            case UNTAP_STEP -> gameData.skipNextUntapStepCount;
-            case DRAW_STEP -> gameData.skipNextDrawStepCount;
-            case COMBAT_PHASE -> gameData.skipNextCombatPhaseCount;
-        };
     }
 
     private String phraseFor(SkipKind kind) {

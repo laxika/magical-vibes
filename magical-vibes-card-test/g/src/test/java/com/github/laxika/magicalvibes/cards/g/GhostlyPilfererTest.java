@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AncientGrudge;
+import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -24,7 +26,7 @@ class GhostlyPilfererTest extends BaseCardTest {
     @DisplayName("Paying {2} after it untaps draws a card")
     void payingAfterUntappingDrawsCard() {
         Permanent pilferer = addTappedPilferer(player1);
-        gd.skipNextDrawStepCount.put(player1.getId(), 1);
+        FloatingCombatRules.skipNext(gd, player1.getId(), SkipKind.DRAW_STEP, 1);
         runUntapStep(player1);
         harness.addMana(player1, ManaColor.BLUE, 2);
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
@@ -42,7 +44,7 @@ class GhostlyPilfererTest extends BaseCardTest {
     @DisplayName("Declining the untap payment draws no card")
     void decliningUntapPaymentDrawsNothing() {
         addTappedPilferer(player1);
-        gd.skipNextDrawStepCount.put(player1.getId(), 1);
+        FloatingCombatRules.skipNext(gd, player1.getId(), SkipKind.DRAW_STEP, 1);
 
         runUntapStep(player1);
         int deckBefore = gd.playerDecks.get(player1.getId()).size();

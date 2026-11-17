@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.CandlegroveWitch;
+import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -183,7 +185,7 @@ class BanebladeScoundrelTest extends BaseCardTest {
     void skippedUntapDoesNotTriggerTransformationAtUpkeep() {
         Permanent scoundrel = addCreatureReady(player1, new BanebladeScoundrel());
         gd.dayNight = DayNight.DAY;
-        gd.skipNextUntapStepCount.put(player2.getId(), 1);
+        FloatingCombatRules.skipNext(gd, player2.getId(), SkipKind.UNTAP_STEP, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.t.Terminate;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,7 +29,7 @@ class WaterspoutElementalTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Waterspout Elemental");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
     }
 
     @Test
@@ -50,7 +51,7 @@ class WaterspoutElementalTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
     }
 
     @Test
@@ -64,8 +65,8 @@ class WaterspoutElementalTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Waterspout Elemental");
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isZero();
     }
 
     @Test
@@ -82,7 +83,7 @@ class WaterspoutElementalTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Waterspout Elemental");
         harness.assertNotOnBattlefield(player2, "Waterspout Elemental");
         harness.assertInHand(player2, "Waterspout Elemental");
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
     }
 
     @Test
@@ -104,8 +105,8 @@ class WaterspoutElementalTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Waterspout Elemental");
         harness.assertNotOnBattlefield(player2, "Waterspout Elemental");
         harness.assertInHand(player2, "Waterspout Elemental");
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isZero();
     }
 
     private void addBaseMana() {

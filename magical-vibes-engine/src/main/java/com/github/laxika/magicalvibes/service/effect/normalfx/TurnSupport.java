@@ -89,10 +89,7 @@ public class TurnSupport {
 
     public void endCombatPhase(GameData gameData) {
         clearCombatState(gameData);
-        gameData.onlyLandCreaturesCanAttackThisCombat = false;
         gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
-        gameData.onlyPermanentCanAttackThisCombatId = null;
-        gameData.onlyPermanentsCanAttackThisCombatIds = null;
         if (gameData.mindControlUntilEndOfCombat) {
             gameData.mindControlledPlayerId = null;
             gameData.mindControllerPlayerId = null;

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RelentlessAssault;
@@ -45,9 +46,9 @@ class FalsePeaceTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(FloatingCombatRules.skipsNextTurn(gd, player2.getId(), SkipStepOrPhaseKind.COMBAT_PHASE)).isTrue();
         assertThat(FloatingCombatRules.skipsNextTurn(gd, player1.getId(), SkipStepOrPhaseKind.COMBAT_PHASE)).isFalse();
-        assertThat(gd.skipNextTurnCount).isEmpty();
-        assertThat(gd.skipNextUntapStepCount).isEmpty();
-        assertThat(gd.skipNextDrawStepCount).isEmpty();
+        assertThat(gd.skipNextCount(null, SkipKind.TURN)).isZero();
+        assertThat(gd.skipNextCount(null, SkipKind.UNTAP_STEP)).isZero();
+        assertThat(gd.skipNextCount(null, SkipKind.DRAW_STEP)).isZero();
     }
 
     @Test
@@ -65,7 +66,7 @@ class FalsePeaceTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(0);
     }
 
     @Test

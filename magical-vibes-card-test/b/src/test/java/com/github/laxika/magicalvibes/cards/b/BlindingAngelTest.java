@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -36,7 +37,7 @@ class BlindingAngelTest extends BaseCardTest {
         // Resolve the triggered ability
         harness.passBothPriorities();
 
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(1);
     }
 
     @Test
@@ -48,10 +49,10 @@ class BlindingAngelTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
-        assertThat(gd.skipNextTurnCount).isEmpty();
-        assertThat(gd.skipNextUntapStepCount).isEmpty();
-        assertThat(gd.skipNextDrawStepCount).isEmpty();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(0);
+        assertThat(gd.skipNextCount(null, SkipKind.TURN)).isZero();
+        assertThat(gd.skipNextCount(null, SkipKind.UNTAP_STEP)).isZero();
+        assertThat(gd.skipNextCount(null, SkipKind.DRAW_STEP)).isZero();
     }
 
     @Test
@@ -67,7 +68,7 @@ class BlindingAngelTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(0);
     }
 
     @Test
@@ -82,7 +83,7 @@ class BlindingAngelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(0);
     }
 
     /** Gives player2 a creature that can attack, so normal combat halts in the combat phase. */
@@ -101,7 +102,7 @@ class BlindingAngelTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(2);
     }
 
     @Test
@@ -109,14 +110,14 @@ class BlindingAngelTest extends BaseCardTest {
     void skipsFlaggedCombatPhase() {
         // Without the skip, player2's ready attacker would halt progression in the combat phase.
         addReadyAttackerForPlayer2();
-        gd.skipNextCombatPhaseCount.put(player2.getId(), 1);
+        FloatingCombatRules.skipNext(gd, player2.getId(), SkipKind.COMBAT_PHASE, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
         // The skip was consumed
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(0);
     }
 
     @Test
@@ -135,7 +136,7 @@ class BlindingAngelTest extends BaseCardTest {
     @Test
     @DisplayName("A queued combat skip survives a skipped precombat main phase")
     void queuedSkipSurvivesSkippedPrecombatMainPhase() {
-        gd.skipNextCombatPhaseCount.put(player2.getId(), 1);
+        FloatingCombatRules.skipNext(gd, player2.getId(), SkipKind.COMBAT_PHASE, 1);
         FloatingCombatRules.skipThisTurn(gd, player2.getId(), SkipStepOrPhaseKind.MAIN_PHASE);
 
         harness.forceActivePlayer(player2);
@@ -143,7 +144,7 @@ class BlindingAngelTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.END_STEP);
 
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isZero();
     }
 
     @Test
@@ -158,7 +159,7 @@ class BlindingAngelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isZero();
     }
 
     @Test
@@ -170,7 +171,7 @@ class BlindingAngelTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         harness.addMana(player1, ManaColor.RED, 2);
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isZero();
         harness.castInstant(player1, 0, angel.getId());
         harness.castInstant(player1, 0, angel.getId());
         harness.passBothPriorities();
@@ -179,7 +180,7 @@ class BlindingAngelTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Blinding Angel");
         harness.passBothPriorities();
 
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(1);
     }
 
     @Test
@@ -193,16 +194,16 @@ class BlindingAngelTest extends BaseCardTest {
 
         resolveCombat();
         harness.passBothPriorities();
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(2);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(1);
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isZero();
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);

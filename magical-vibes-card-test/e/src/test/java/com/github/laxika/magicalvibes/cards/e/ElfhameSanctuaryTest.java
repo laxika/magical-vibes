@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -142,7 +143,7 @@ class ElfhameSanctuaryTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBeforeDraw);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBeforeDraw);
         assertThat(gd.skipDrawStepThisTurn).doesNotContainKey(player1.getId());
-        assertThat(gd.skipNextDrawStepCount).doesNotContainKey(player1.getId());
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isZero();
     }
 
     @Test

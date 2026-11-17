@@ -50,6 +50,9 @@ import com.github.laxika.magicalvibes.model.effect.RestrictAttacksToDirectionUnt
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThisCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.OnlySourceCreatureCanAttackThisCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.OnlyTargetCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
@@ -91,6 +94,28 @@ public class AttackLegalityService {
     private final AmountEvaluationService amountEvaluationService;
 
     /**
+     * Whether a "during that combat" restriction of an added combat phase keeps {@code creature} from attacking: only
+     * land creatures, only the restriction's source, or only the chosen creatures can attack in it.
+     */
+    private boolean isExcludedFromThisCombat(GameData gameData, Permanent creature) {
+        for (FloatingContinuousEffect restriction : gameData.floatingEffectsOnPlayer(null,
+                OnlyLandCreaturesCanAttackThisCombatEffect.class, OnlySourceCreatureCanAttackThisCombatEffect.class,
+                OnlyTargetCreaturesCanAttackThisCombatEffect.class)) {
+            boolean excluded = switch (restriction.effect()) {
+                case OnlyLandCreaturesCanAttackThisCombatEffect ignored -> !gameQueryService.isLand(gameData, creature);
+                case OnlySourceCreatureCanAttackThisCombatEffect ignored ->
+                        !creature.getId().equals(restriction.sourcePermanentId());
+                case OnlyTargetCreaturesCanAttackThisCombatEffect only -> !only.permanentIds().contains(creature.getId());
+                default -> false;
+            };
+            if (excluded) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns {@code true} if the given creature permanent can legally be declared as an attacker,
      * independent of which target it would attack and of what the rest of the attacking group looks
      * like. {@code controllerId} is the player declaring the attack, used to evaluate the creature's
@@ -101,19 +126,11 @@ public class AttackLegalityService {
         if (gameData.hasFloatingEffectOnPlayer(null, MayPayForArtifactsOrCreaturesCantAttackThisCombatEffect.class)) {
             return false;
         }
-        if (gameData.onlyLandCreaturesCanAttackThisCombat && !gameQueryService.isLand(gameData, creature)) {
-            return false;
-        }
         if (gameData.onlyAggressiveCreaturesCanAttackThisCombat
                 && !gameQueryService.hasKeyword(gameData, creature, Keyword.AGGRESSIVE)) {
             return false;
         }
-        if (gameData.onlyPermanentCanAttackThisCombatId != null
-                && !gameData.onlyPermanentCanAttackThisCombatId.equals(creature.getId())) {
-            return false;
-        }
-        if (gameData.onlyPermanentsCanAttackThisCombatIds != null
-                && !gameData.onlyPermanentsCanAttackThisCombatIds.contains(creature.getId())) {
+        if (isExcludedFromThisCombat(gameData, creature)) {
             return false;
         }
         if (creature.isTapped()) return false;

@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @Slf4j
@@ -51,15 +53,14 @@ public class AdditionalCombatMainPhaseEffectHandler implements NormalEffectHandl
             gameData.additionalCombatMainPhasePairsAfterSecondMain += e.count();
         }
         int combatPhasesBefore = deferredToSecondMain ? 1 : 0;
+        List<CardEffect> beginningEffects = new ArrayList<>();
         if (e.additionalCombatBeginningEffect() != null) {
-            AdditionalCombatBeginningSupport.register(gameData, entry, e.additionalCombatBeginningEffect(),
-                    e.count(), combatPhasesBefore);
+            beginningEffects.add(e.additionalCombatBeginningEffect());
         }
         if (e.onlyTargetCreaturesCanAttack()) {
-            AdditionalCombatBeginningSupport.register(gameData, entry,
-                    new OnlyTargetCreaturesCanAttackThisCombatEffect(Set.copyOf(entry.getTargetIds())),
-                    e.count(), combatPhasesBefore);
+            beginningEffects.add(new OnlyTargetCreaturesCanAttackThisCombatEffect(Set.copyOf(entry.getTargetIds())));
         }
+        AdditionalCombatBeginningSupport.register(gameData, entry, beginningEffects, e.count(), combatPhasesBefore);
 
         String logEntry;
         String afterPhase = e.afterSecondMainPhase() ? "After the second main phase this turn, there" : "After this main phase, there";

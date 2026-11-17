@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
+import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -29,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -600,23 +602,21 @@ class GameDataDeepCopyTest {
     }
 
     @Test
-    @DisplayName("Deep copy preserves the unified delayed-action queue independently and in order")
-    void deepCopyPreservesDelayedActions() {
-        UUID a = UUID.randomUUID();
-        UUID b = UUID.randomUUID();
-        gd.queueDelayedAction(new DelayedAdditionalCombatBeginningEffect(a, null, null, null));
-        gd.queueDelayedAction(new DelayedAdditionalCombatBeginningEffect(b, null, null, null));
+    @DisplayName("Deep copy keeps a \"during that combat\" effect waiting for its combat phase independently")
+    void deepCopyKeepsADuringThatCombatEffectIndependently() {
+        FloatingContinuousEffect scheduled = gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Bumi, Unleashed",
+                null, player1.getId(), new OnlyLandCreaturesCanAttackThisCombatEffect(), null,
+                Duration.duringCombatPhase(2)));
 
         GameData copy = gd.simulationCopy();
 
-        // Same values, same insertion order (records are immutable, shallow copy).
-        assertThat(copy.delayedActions).containsExactly(
-                new DelayedAdditionalCombatBeginningEffect(a, null, null, null),
-                new DelayedAdditionalCombatBeginningEffect(b, null, null, null));
-
-        // Independent list — mutating the copy leaves the original untouched.
-        copy.delayedActions.clear();
-        assertThat(gd.delayedActions).hasSize(2);
+        assertThat(copy.scheduledFloatingEffects).containsExactly(scheduled);
+        assertThat(copy.floatingEffects).doesNotContain(scheduled);
+        copy.replaceScheduledFloatingEffects(effect -> true, effect -> effect.withDuration(
+                effect.duration().laterCombatPhase(1)));
+        assertThat(copy.scheduledFloatingEffects).singleElement()
+                .satisfies(effect -> assertThat(effect.duration().combatPhase()).isEqualTo(3));
+        assertThat(gd.scheduledFloatingEffects).containsExactly(scheduled);
     }
 
     @Test
@@ -624,7 +624,7 @@ class GameDataDeepCopyTest {
     void deepCopyPreservesTurnScopedCounters() {
         UUID p1 = player1.getId();
         gd.lifeLostThisTurn.put(p1, 6);
-        gd.skipNextCombatPhaseCount.put(p1, 2);
+        FloatingCombatRules.skipNext(gd, p1, SkipKind.COMBAT_PHASE, 2);
         gd.lastClashWonByController.put(p1, true);
         gd.permanentTypesCastFromGraveyardThisTurn.put(p1, new HashSet<>(Set.of(CardType.CREATURE)));
 
@@ -632,7 +632,7 @@ class GameDataDeepCopyTest {
 
         // These persist until cleanup, so a copy taken mid-turn must carry them.
         assertThat(copy.lifeLostThisTurn).containsEntry(p1, 6);
-        assertThat(copy.skipNextCombatPhaseCount).containsEntry(p1, 2);
+        assertThat(copy.skipNextCount(p1, SkipKind.COMBAT_PHASE)).isEqualTo(2);
         assertThat(copy.lastClashWonByController).containsEntry(p1, true);
         assertThat(copy.permanentTypesCastFromGraveyardThisTurn.get(p1)).containsExactly(CardType.CREATURE);
 

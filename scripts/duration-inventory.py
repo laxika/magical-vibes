@@ -9,7 +9,6 @@ Counted:
     duration (KEPT, with the reason for each);
   * EndOfTurnStateField constants (the cleanup step's resets) by store;
   * EffectDuration / Duration constants named in main sources, cards and tests;
-  * DelayedAction records and the files that name them;
   * the expire... methods of GameData and their callers outside it.
 
 Run from the repository root: python3 -I scripts/duration-inventory.py [--list FILE]
@@ -24,9 +23,8 @@ ROOT = pathlib.Path.cwd()
 MODEL = ROOT / "magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model"
 GAME_DATA = MODEL / "GameData.java"
 END_OF_TURN = MODEL / "EndOfTurnStateField.java"
-DELAYED_ACTION = MODEL / "action/DelayedAction.java"
 
-FIELD = re.compile(r"^    public (?:final |volatile |transient )*[A-Z][\w<>, ?.\[\]]* ([a-z]\w*)\s*(?:=|;)", re.M)
+FIELD = re.compile(r"^    public (?:final |volatile |transient )*(?:boolean|int|long|double|[A-Z])[\w<>, ?.\[\]]*\s+([a-z]\w*)\s*(?:=|;)", re.M)
 
 # A field that holds an effect's duration: named for the duration, or for a rules change an effect makes.
 EFFECT = re.compile(
@@ -65,8 +63,11 @@ KEPT = {
                      "cardOwnerOverrides", "bombardmentOriginalCardsUntilEndOfTurn",
                      "exiledCardsWithNonSuspendTimeCounters", "sourceLinkedAnimations"],
                     "state of one spell or card carried to the object it becomes"),
-    **dict.fromkeys(["extraTurnDamageCantBePrevented", "extraTurnSkipsUntap"], "an attribute of a queued extra turn"),
-    "skipNextTurnCount": "\"skip your next turn\": a replacement used up once, with no duration (CR 614.10)",
+    **dict.fromkeys(["extraTurnDamageCantBePrevented", "extraTurnSkipsUntap", "extraTurnSkipsAllUntapSteps",
+                     "powerUpAbilitiesCantBeActivatedThisTurn"], "an attribute of a queued extra turn"),
+    **dict.fromkeys(["deathReplacementChoiceBatchDepth", "deathReplacementsCanRerunEffect", "drawStepSkippedThisStep",
+                     "turnUntapStepSkipped", "resolvingDeclinedAllCreatureDamageRedirect",
+                     "wordOfCommandAwaitingCardResolution"], "bookkeeping while one event is replaced or dealt"),
 }
 
 FAMILIES = collections.OrderedDict([
@@ -93,7 +94,7 @@ def main_sources():
 def classify(name):
     if name in KEPT:
         return "kept"
-    if EFFECT.search(name):
+    if EFFECT.search(name[0].upper() + name[1:]):
         return "effect"
     if HISTORY.search(name):
         return "history"
@@ -146,12 +147,6 @@ def main():
     print("Duration constants named: " + ", ".join(f"{k} files {v}" for k, v in files_by_kind.items()))
     for name, count in constants.most_common():
         print(f"    {name}: {count}")
-
-    permits = re.findall(r"\b([A-Z]\w+)\b", DELAYED_ACTION.read_text().split("permits", 1)[1].split("{", 1)[0]) \
-        if DELAYED_ACTION.exists() else []
-    naming = sum(1 for p in sources if DELAYED_ACTION.exists()
-                 and re.search(r"\bDelayedAction\b", p.read_text(errors="replace")))
-    print(f"DelayedAction records: {len(permits)}, files naming DelayedAction: {naming}")
 
     expire_methods = sorted(set(re.findall(r"public [\w<>, ]+ (expire\w*)\(", game_data)))
     callers = collections.Counter()

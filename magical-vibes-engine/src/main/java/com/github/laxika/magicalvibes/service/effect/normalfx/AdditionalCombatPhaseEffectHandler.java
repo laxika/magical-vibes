@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -41,10 +43,8 @@ public class AdditionalCombatPhaseEffectHandler implements NormalEffectHandlerBe
             gameData.additionalCombatPhasesOnly += e.count();
         }
         gameData.additionalCombatCreatedAfterUpkeepSteps = gameData.additionalUpkeepStepsAfterCombat > 0;
-        if (e.additionalCombatBeginningEffect() != null) {
-            AdditionalCombatBeginningSupport.register(gameData, entry, e.additionalCombatBeginningEffect(),
-                    e.count(), 0);
-        }
+        AdditionalCombatBeginningSupport.register(gameData, entry, e.additionalCombatBeginningEffect() == null
+                ? List.of() : List.of(e.additionalCombatBeginningEffect()), e.count(), 0);
 
         String logEntry;
         if (e.count() == 1) {

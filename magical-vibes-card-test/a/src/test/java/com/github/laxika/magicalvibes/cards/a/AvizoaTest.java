@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -42,8 +43,8 @@ class AvizoaTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(avizoa), null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
-        assertThat(gd.skipNextUntapStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.UNTAP_STEP)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.UNTAP_STEP)).isEqualTo(0);
     }
 
     @Test
@@ -64,7 +65,7 @@ class AvizoaTest extends BaseCardTest {
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
         assertThat(avizoa.isTapped()).isTrue();
         assertThat(otherAvizoa.isTapped()).isTrue();
-        assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.UNTAP_STEP)).isEqualTo(0);
 
         advanceTurn();
         advanceTurn();
@@ -83,7 +84,7 @@ class AvizoaTest extends BaseCardTest {
         harness.clearPriorityPassed();
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(avizoa), null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.UNTAP_STEP)).isEqualTo(1);
     }
 
     @Test
@@ -104,7 +105,7 @@ class AvizoaTest extends BaseCardTest {
 
         assertThat(avizoa.getEffectivePower()).isEqualTo(4);
         assertThat(avizoa.getEffectiveToughness()).isEqualTo(4);
-        assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.UNTAP_STEP)).isEqualTo(1);
     }
 
     @Test
@@ -121,7 +122,7 @@ class AvizoaTest extends BaseCardTest {
         assertThat(avizoa.isTapped()).isTrue();
         assertThat(avizoa.getEffectivePower()).isEqualTo(4);
         assertThat(avizoa.getEffectiveToughness()).isEqualTo(4);
-        assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.UNTAP_STEP)).isEqualTo(1);
     }
 
     @Test
@@ -134,12 +135,12 @@ class AvizoaTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(avizoa), null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.UNTAP_STEP)).isZero();
 
         harness.passBothPriorities();
 
         assertThat(avizoa.getEffectivePower()).isEqualTo(4);
-        assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.UNTAP_STEP)).isEqualTo(1);
     }
 
     @Test

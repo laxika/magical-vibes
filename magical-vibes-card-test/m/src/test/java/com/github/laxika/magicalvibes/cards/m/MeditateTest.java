@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -44,8 +45,8 @@ class MeditateTest extends BaseCardTest {
     void queuesSkipNextTurn() {
         castMeditate();
 
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isEqualTo(0);
     }
 
     @Test
@@ -53,9 +54,9 @@ class MeditateTest extends BaseCardTest {
     void queuesNothingButTheTurnSkip() {
         castMeditate();
 
-        assertThat(gd.skipNextUntapStepCount).isEmpty();
-        assertThat(gd.skipNextDrawStepCount).isEmpty();
-        assertThat(gd.skipNextCombatPhaseCount).isEmpty();
+        assertThat(gd.skipNextCount(null, SkipKind.UNTAP_STEP)).isZero();
+        assertThat(gd.skipNextCount(null, SkipKind.DRAW_STEP)).isZero();
+        assertThat(gd.skipNextCount(null, SkipKind.COMBAT_PHASE)).isZero();
     }
 
     @Test
@@ -65,11 +66,11 @@ class MeditateTest extends BaseCardTest {
 
         advanceTurn();
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
 
         advanceTurn();
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(0);
     }
 
     @Test
@@ -83,7 +84,7 @@ class MeditateTest extends BaseCardTest {
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
         advanceTurn();
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
 
         harness.forceStep(TurnStep.CLEANUP);
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
@@ -96,15 +97,15 @@ class MeditateTest extends BaseCardTest {
         castMeditate();
         castMeditate();
 
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(2);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(2);
         advanceTurn();
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(2);
-        advanceTurn();
-        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(2);
         advanceTurn();
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
+        advanceTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
 
         harness.forceStep(TurnStep.CLEANUP);
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);

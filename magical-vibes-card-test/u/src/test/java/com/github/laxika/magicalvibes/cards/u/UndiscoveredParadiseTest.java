@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.p.PoliticalTrickery;
+import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -138,7 +140,7 @@ class UndiscoveredParadiseTest extends BaseCardTest {
         harness.addToBattlefield(player1, new UndiscoveredParadise());
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "GREEN");
-        gd.skipNextUntapStepCount.put(player1.getId(), 1);
+        FloatingCombatRules.skipNext(gd, player1.getId(), SkipKind.UNTAP_STEP, 1);
 
         advanceTurn();
         advanceTurn();

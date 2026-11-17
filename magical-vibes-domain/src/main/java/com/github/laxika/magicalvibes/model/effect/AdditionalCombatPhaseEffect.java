@@ -7,8 +7,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * (Relentless Assault). Resolved by incrementing {@code GameData.additionalCombatPhasesOnly}, which
  * the turn engine consumes when leaving END_OF_COMBAT.
  *
- * @param additionalCombatBeginningEffect optional effect put on the stack at the beginning of each
- *                                        added combat phase
+ * @param additionalCombatBeginningEffect optional effect for each added combat phase: a delayed triggered ability at
+ *                                        its beginning, or a restriction on who can attack in it ("only land
+ *                                        creatures can attack during that combat"), which applies during it
  */
 public record AdditionalCombatPhaseEffect(int count, CardEffect additionalCombatBeginningEffect) implements CardEffect {
 

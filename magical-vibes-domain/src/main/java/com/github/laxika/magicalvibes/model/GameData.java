@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
 import com.github.laxika.magicalvibes.model.rules.RulesEventLog;
 import com.github.laxika.magicalvibes.model.rules.RulesObserver;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
-import com.github.laxika.magicalvibes.model.action.DelayedAction;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -991,8 +990,6 @@ public class GameData {
      * a hand; removing the last counter queues the owner's optional free cast (CR 702.62a).
      */
     public final List<SuspendedSpellExile> suspendedSpellExiles = Collections.synchronizedList(new ArrayList<>());
-    /** Player IDs → number of upcoming combat phases they must skip (Blinding Angel). Decremented as each is skipped. */
-    public final Map<UUID, Integer> skipNextCombatPhaseCount = new ConcurrentHashMap<>();
     /**
      * "All creatures with [counter] counters on them block that creature this turn if able": the counter
      * types per attacking creature. The requirement is not a characteristic change, so it applies to every
@@ -1002,18 +999,8 @@ public class GameData {
     /** Restrictions evaluated against the player's permanents during upcoming untap steps. */
     public final Map<UUID, List<SkipNextUntapEffect>>
             matchingPermanentUntapRestrictions = new ConcurrentHashMap<>();
-    /** Player IDs → number of upcoming draw steps they must skip (Ivory Gargoyle). Decremented as each is skipped. */
-    public final Map<UUID, Integer> skipNextDrawStepCount = new ConcurrentHashMap<>();
     /** Player IDs → turn number whose draw step is skipped by a current-turn effect. */
     public final Map<UUID, Integer> skipDrawStepThisTurn = new ConcurrentHashMap<>();
-    /** Player IDs → number of upcoming turns they must skip (Chronatog). Decremented as each is skipped. */
-    public final Map<UUID, Integer> skipNextTurnCount = new ConcurrentHashMap<>();
-    /**
-     * Player IDs → number of upcoming untap steps they must skip (Yosei, the Morning Star).
-     * Decremented as each is skipped. CR 500.11 / 614.10: the whole step is proceeded past, so no
-     * phasing happens either (CR 702.26m) and no untap-restriction choice is offered.
-     */
-    public final Map<UUID, Integer> skipNextUntapStepCount = new ConcurrentHashMap<>();
     /** When true, all damage to all creatures (both players') is prevented this turn (Blinding Fog). */
     /**
      * The "one or more" abilities, by source, already put on the stack for the current simultaneous creature-entry
@@ -1161,8 +1148,8 @@ public class GameData {
     public int pendingEffectResolutionIndex;
     /**
      * How many stack objects have begun to resolve this game: the identity of the resolution in progress, or of the
-     * last one. A {@link DelayedAction} whose delayed triggered abilities are grouped is stamped with it as it is
-     * scheduled ({@link #queueDelayedAction}, {@link DelayedAction#scheduledBy}), so the delayed triggered ability
+     * last one. A {@code DelayedPermanentAction} whose delayed triggered abilities are grouped is stamped with it as
+     * it is scheduled ({@code DelayedPermanentAction#scheduledBy}), so the delayed triggered ability
      * one resolution creates (CR 603.7a) is told from the one another resolution of the same source creates.
      */
     public long resolutionOrdinal;
@@ -1386,16 +1373,6 @@ public class GameData {
     public final DisorientingChoiceState disorientingChoice = new DisorientingChoiceState();
     /** Progress state for Forgotten Lore and Shrouded Lore's repeating graveyard-choice flow. */
     public final ForgottenLoreState forgottenLore = new ForgottenLoreState();
-    /**
-     * Unified queue of scheduled {@link DelayedAction}s ("do X later at timing point Y"). Replaces the
-     * former per-mechanic ad-hoc fields (end-of-combat sacrifice/exile/equipment-destruction, end-step
-     * token-exile/sacrifice/destroy/counter/untap/graveyard-returns, exile-until-step returns,
-     * delayed combat-damage loot). Every producer appends via {@link #queueDelayedAction}; every drain
-     * site takes all entries of its own kind in insertion order via {@link #drainDelayedActions}, so
-     * the cross-family servicing order is fixed by the drain call-site chains, not the field layout.
-     * Accessed under {@code synchronized (gameData)} in the engine, like the fields it replaced.
-     */
-    public final List<DelayedAction> delayedActions = Collections.synchronizedList(new ArrayList<>());
 
     public PendingAbilityActivation pendingAbilityActivation;
     /** A graveyard-activated ability suspended on its "Discard a card" cost choice (Eternalize). */
@@ -1547,14 +1524,8 @@ public class GameData {
     public int aggressiveCombatPhasesOnly;
     /** Original active player while an additional combat is being conducted for another controller. */
     public UUID additionalCombatReturnActivePlayerId;
-    /** Whether only land creatures may attack during the current additional combat phase. */
-    public boolean onlyLandCreaturesCanAttackThisCombat;
     /** Whether only creatures with Aggressive may attack during the current additional combat. */
     public boolean onlyAggressiveCreaturesCanAttackThisCombat;
-    /** If non-null, only this permanent may attack during the current additional combat phase. */
-    public UUID onlyPermanentCanAttackThisCombatId;
-    /** If non-null, only these chosen permanents may attack during the current additional combat phase. */
-    public Set<UUID> onlyPermanentsCanAttackThisCombatIds;
     /** Additional combat phases inserted after the resolving main phase, with no main phase between them. */
     public int additionalCombatPhasesAfterMain;
     /** The normal phase to resume after {@link #additionalCombatPhasesAfterMain} is exhausted. */
@@ -4221,6 +4192,78 @@ public class GameData {
     }
 
     /**
+     * Whether a "skip your next …" effect of {@code kind} waits on {@code playerId} (CR 614.10): a floating
+     * {@link com.github.laxika.magicalvibes.model.effect.SkipNextEffect} on that player.
+     */
+    public boolean hasSkipNext(UUID playerId, com.github.laxika.magicalvibes.model.effect.SkipKind kind) {
+        return nextSkip(playerId, kind) != null;
+    }
+
+    /**
+     * Applies one "skip your next …" effect of {@code kind} waiting on {@code playerId}, as the turn, step or phase it
+     * replaces would begin, and returns whether one applied. Each effect is its own replacement and is used up as it
+     * applies, so two make the player skip the next two (CR 614.10a); one that lasts only this turn applies first.
+     */
+    public boolean applySkipNext(UUID playerId, com.github.laxika.magicalvibes.model.effect.SkipKind kind) {
+        FloatingContinuousEffect skip = nextSkip(playerId, kind);
+        if (skip == null) {
+            return false;
+        }
+        endFloatingEffect(skip);
+        return true;
+    }
+
+    /**
+     * How many "skip your next …" effects of {@code kind} wait on {@code playerId}, or on every player when
+     * {@code playerId} is {@code null}.
+     */
+    public int skipNextCount(UUID playerId, com.github.laxika.magicalvibes.model.effect.SkipKind kind) {
+        int count = 0;
+        synchronized (floatingEffects) {
+            for (FloatingContinuousEffect effect : floatingEffects) {
+                if (effect.effect() instanceof com.github.laxika.magicalvibes.model.effect.SkipNextEffect skip
+                        && skip.kind() == kind && !skip.allCombatPhasesOfNextTurn()
+                        && effect.affectedPlayerId() != null
+                        && (playerId == null || playerId.equals(effect.affectedPlayerId()))) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private FloatingContinuousEffect nextSkip(UUID playerId, com.github.laxika.magicalvibes.model.effect.SkipKind kind) {
+        FloatingContinuousEffect next = null;
+        for (FloatingContinuousEffect effect : floatingEffectsOnPlayer(playerId,
+                com.github.laxika.magicalvibes.model.effect.SkipNextEffect.class)) {
+            var skip = (com.github.laxika.magicalvibes.model.effect.SkipNextEffect) effect.effect();
+            if (skip.kind() != kind || skip.allCombatPhasesOfNextTurn() || effect.affectedPlayerId() == null) {
+                continue;
+            }
+            if (skip.thisTurnOnly()) {
+                return effect;
+            }
+            if (next == null) {
+                next = effect;
+            }
+        }
+        return next;
+    }
+
+    /** Replaces each scheduled floating effect {@code matches} selects with what {@code change} makes of it. */
+    public void replaceScheduledFloatingEffects(Predicate<FloatingContinuousEffect> matches,
+                                                java.util.function.UnaryOperator<FloatingContinuousEffect> change) {
+        synchronized (scheduledFloatingEffects) {
+            scheduledFloatingEffects.replaceAll(effect -> matches.test(effect) ? change.apply(effect) : effect);
+        }
+    }
+
+    /** Drops the scheduled floating effects {@code drops} matches: they will never begin. */
+    public void dropScheduledFloatingEffects(Predicate<FloatingContinuousEffect> drops) {
+        scheduledFloatingEffects.removeIf(drops);
+    }
+
+    /**
      * Ends every floating effect on the card {@code cardId}, begun or not, in whatever zone: a token that ceases to
      * exist. Returns the ended effects that had begun.
      */
@@ -5844,18 +5887,6 @@ public class GameData {
         pendingInteractions.removeIf(type::isInstance);
     }
 
-    // ===== Delayed-action queue helpers (mirror the pendingInteractions helpers above) =====
-
-    /**
-     * Appends a scheduled {@link DelayedAction} to the tail of the unified delayed-action queue.
-     */
-    public void queueDelayedAction(DelayedAction action) {
-        if (action.schedulingResolution() == 0) {
-            action = action.scheduledBy(resolutionOrdinal);
-        }
-        delayedActions.add(action);
-    }
-
     /** Marks a land as already cleaned by the corresponding Cyclopean Tomb delayed trigger. */
     public void markCyclopeanTombLandRemoved(UUID actionId, UUID landId) {
         changeCyclopeanTombCleanups(delayed -> true, effect -> actionId.equals(effect.delayedActionId()),
@@ -5885,27 +5916,6 @@ public class GameData {
     }
 
     /**
-     * Returns {@code true} if the queue holds at least one delayed action of the given kind.
-     */
-    public boolean hasDelayedAction(Class<? extends DelayedAction> type) {
-        for (DelayedAction action : delayedActions) {
-            if (type.isInstance(action)) return true;
-        }
-        return false;
-    }
-
-    /**
-     * Returns {@code true} if the queue holds at least one delayed action of the given kind that
-     * matches {@code filter} (e.g. one timing point's {@link DelayedPermanentAction} kinds).
-     */
-    public <T extends DelayedAction> boolean hasDelayedAction(Class<T> type, Predicate<T> filter) {
-        for (DelayedAction action : delayedActions) {
-            if (type.isInstance(action) && filter.test(type.cast(action))) return true;
-        }
-        return false;
-    }
-
-    /**
      * The delayed triggered abilities waiting for the beginning of the step or phase {@code moment} ("at the beginning
      * of the next end step"), in the order they were made.
      */
@@ -5914,94 +5924,6 @@ public class GameData {
                 .filter(delayed -> delayed.ability().conditions().stream().anyMatch(condition ->
                         condition.trigger() instanceof StepTrigger step && step.moment() == moment))
                 .toList();
-    }
-
-    /**
-     * Returns an unmodifiable snapshot of all queued delayed actions of the given kind in insertion
-     * order, WITHOUT removing them (for read-only consumers such as the per-combat-step loot check).
-     */
-    public <T extends DelayedAction> List<T> getDelayedActions(Class<T> type) {
-        List<T> result = new ArrayList<>();
-        for (DelayedAction action : delayedActions) {
-            if (type.isInstance(action)) result.add(type.cast(action));
-        }
-        return Collections.unmodifiableList(result);
-    }
-
-    /**
-     * Removes and returns all queued delayed actions of the given kind, preserving insertion order.
-     */
-    public <T extends DelayedAction> List<T> drainDelayedActions(Class<T> type) {
-        List<T> drained = new ArrayList<>();
-        var it = delayedActions.iterator();
-        while (it.hasNext()) {
-            DelayedAction action = it.next();
-            if (type.isInstance(action)) {
-                drained.add(type.cast(action));
-                it.remove();
-            }
-        }
-        return drained;
-    }
-
-    /** Removes and returns the first queued delayed action of the given kind, if one exists. */
-    public <T extends DelayedAction> T drainFirstDelayedAction(Class<T> type) {
-        var it = delayedActions.iterator();
-        while (it.hasNext()) {
-            DelayedAction action = it.next();
-            if (type.isInstance(action)) {
-                it.remove();
-                return type.cast(action);
-            }
-        }
-        return null;
-    }
-
-    /** Returns the first queued delayed action of the given kind without removing it. */
-    public <T extends DelayedAction> T peekFirstDelayedAction(Class<T> type) {
-        for (DelayedAction action : delayedActions) {
-            if (type.isInstance(action)) {
-                return type.cast(action);
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Removes and returns the queued delayed actions of the given kind that match {@code filter},
-     * preserving insertion order and leaving non-matching entries in place (used by the per-step
-     * exile-return drain, which fires only entries whose scheduled step is the current one).
-     */
-    public <T extends DelayedAction> List<T> drainDelayedActions(Class<T> type, Predicate<T> filter) {
-        List<T> drained = new ArrayList<>();
-        var it = delayedActions.iterator();
-        while (it.hasNext()) {
-            DelayedAction action = it.next();
-            if (type.isInstance(action)) {
-                T typed = type.cast(action);
-                if (filter.test(typed)) {
-                    drained.add(typed);
-                    it.remove();
-                }
-            }
-        }
-        return drained;
-    }
-
-    /**
-     * Removes every queued delayed action of the given kind (e.g. Karn restart wiping scheduled state,
-     * or turn cleanup clearing the delayed combat-damage loot triggers).
-     */
-    public void clearDelayedActions(Class<? extends DelayedAction> type) {
-        delayedActions.removeIf(type::isInstance);
-    }
-
-    /**
-     * Removes every queued delayed action of the given kind that matches {@code filter} (e.g. only
-     * some {@link DelayedPermanentAction} kinds), leaving non-matching entries in place.
-     */
-    public <T extends DelayedAction> void clearDelayedActions(Class<T> type, Predicate<T> filter) {
-        delayedActions.removeIf(action -> type.isInstance(action) && filter.test(type.cast(action)));
     }
 
     /**
@@ -9298,11 +9220,7 @@ public class GameData {
         copy.additionalCombatPhasesOnly = this.additionalCombatPhasesOnly;
         copy.aggressiveCombatPhasesOnly = this.aggressiveCombatPhasesOnly;
         copy.additionalCombatReturnActivePlayerId = this.additionalCombatReturnActivePlayerId;
-        copy.onlyLandCreaturesCanAttackThisCombat = this.onlyLandCreaturesCanAttackThisCombat;
         copy.onlyAggressiveCreaturesCanAttackThisCombat = this.onlyAggressiveCreaturesCanAttackThisCombat;
-        copy.onlyPermanentCanAttackThisCombatId = this.onlyPermanentCanAttackThisCombatId;
-        copy.onlyPermanentsCanAttackThisCombatIds = this.onlyPermanentsCanAttackThisCombatIds == null
-                ? null : new HashSet<>(this.onlyPermanentsCanAttackThisCombatIds);
         copy.additionalCombatPhasesAfterMain = this.additionalCombatPhasesAfterMain;
         copy.additionalCombatPhasesAfterMainReturnStep = this.additionalCombatPhasesAfterMainReturnStep;
         copy.combatPhasesThisTurn = this.combatPhasesThisTurn;
@@ -10031,7 +9949,6 @@ public class GameData {
 
         // --- Unified delayed-action queue (immutable records, shallow copy — shared Card refs, as the
         //     per-mechanic fields it replaced were copied) ---
-        copy.delayedActions.addAll(this.delayedActions);
 
         // --- Exile-until-source-leaves map (O-ring style) ---
         this.exileReturnOnPermanentLeave.forEach((k, v) ->
@@ -10498,13 +10415,9 @@ public class GameData {
         // only reset at cleanup, so a copy taken mid-turn must carry them.
         copy.lifeLostThisTurn.putAll(this.lifeLostThisTurn);
         copy.lifeLostLastTurn.putAll(this.lifeLostLastTurn);
-        copy.skipNextCombatPhaseCount.putAll(this.skipNextCombatPhaseCount);
         this.matchingPermanentUntapRestrictions.forEach((id, restrictions) ->
                 copy.matchingPermanentUntapRestrictions.put(id, new ArrayList<>(restrictions)));
-        copy.skipNextDrawStepCount.putAll(this.skipNextDrawStepCount);
         copy.skipDrawStepThisTurn.putAll(this.skipDrawStepThisTurn);
-        copy.skipNextTurnCount.putAll(this.skipNextTurnCount);
-        copy.skipNextUntapStepCount.putAll(this.skipNextUntapStepCount);
         copy.lastClashWonByController.putAll(this.lastClashWonByController);
         copy.playersWhoSearchedLibraryThisTurn.addAll(this.playersWhoSearchedLibraryThisTurn);
         copy.playersWhoInvestigatedThisTurn.addAll(this.playersWhoInvestigatedThisTurn);

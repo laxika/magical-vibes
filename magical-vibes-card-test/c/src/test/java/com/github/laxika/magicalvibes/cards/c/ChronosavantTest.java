@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -54,8 +55,8 @@ class ChronosavantTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isEqualTo(0);
     }
 
     @Test
@@ -72,7 +73,7 @@ class ChronosavantTest extends BaseCardTest {
 
         endTurn();
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(0);
     }
 
     @Test
@@ -92,13 +93,13 @@ class ChronosavantTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Chronosavant");
 
         endTurn();
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(2);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(2);
         endTurn();
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
         endTurn();
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
         harness.forceStep(TurnStep.CLEANUP);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
@@ -121,7 +122,7 @@ class ChronosavantTest extends BaseCardTest {
         endTurn();
         endTurn();
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
     }
 
     private void addActivationMana() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.d.Disallow;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -57,11 +58,11 @@ class IvoryGargoyleTest extends BaseCardTest {
     void queuesNothingButTheControllersDrawStepSkip() {
         killGargoyle(player1);
 
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(0);
-        assertThat(gd.skipNextTurnCount).isEmpty();
-        assertThat(gd.skipNextUntapStepCount).isEmpty();
-        assertThat(gd.skipNextCombatPhaseCount).isEmpty();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.DRAW_STEP)).isEqualTo(0);
+        assertThat(gd.skipNextCount(null, SkipKind.TURN)).isZero();
+        assertThat(gd.skipNextCount(null, SkipKind.UNTAP_STEP)).isZero();
+        assertThat(gd.skipNextCount(null, SkipKind.COMBAT_PHASE)).isZero();
     }
 
     @Test
@@ -124,7 +125,7 @@ class IvoryGargoyleTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Ivory Gargoyle");
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isZero();
     }
 
     @Test
@@ -139,15 +140,15 @@ class IvoryGargoyleTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Ivory Gargoyle");
         int handBefore = gd.playerHands.get(player2.getId()).size();
         int deckBefore = gd.playerDecks.get(player2.getId()).size();
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.DRAW_STEP)).isEqualTo(1);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         harness.assertOnBattlefield(player1, "Ivory Gargoyle");
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.DRAW_STEP)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isZero();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore);
     }
@@ -175,7 +176,7 @@ class IvoryGargoyleTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Ivory Gargoyle");
         harness.assertNotOnBattlefield(player1, "Ivory Gargoyle");
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isEqualTo(1);
     }
 
     @Test
@@ -216,7 +217,7 @@ class IvoryGargoyleTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Ivory Gargoyle");
-        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isEqualTo(1);
     }
 
     private void killGargoyle(Permanent gargoyle) {

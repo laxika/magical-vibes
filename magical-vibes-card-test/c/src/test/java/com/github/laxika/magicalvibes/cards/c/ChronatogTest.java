@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -43,8 +44,8 @@ class ChronatogTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(chronatog), null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isEqualTo(0);
     }
 
     @Test
@@ -60,12 +61,12 @@ class ChronatogTest extends BaseCardTest {
         // End player1's turn → player2's turn begins normally.
         advanceTurn(player2);
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
 
         // End player2's turn → player1 would act but is skipped, so player2 acts again.
         advanceTurn(player2);
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(0);
     }
 
     @Test
@@ -79,7 +80,7 @@ class ChronatogTest extends BaseCardTest {
         harness.clearPriorityPassed();
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(chronatog), null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
     }
 
     @Test
@@ -103,7 +104,7 @@ class ChronatogTest extends BaseCardTest {
 
         assertThat(chronatog.getEffectivePower()).isEqualTo(4);
         assertThat(chronatog.getEffectiveToughness()).isEqualTo(5);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
     }
 
     @Test
@@ -116,12 +117,12 @@ class ChronatogTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(chronatog), null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
 
         harness.passBothPriorities();
 
         assertThat(chronatog.getEffectivePower()).isEqualTo(4);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
     }
 
     @Test
@@ -140,15 +141,15 @@ class ChronatogTest extends BaseCardTest {
 
         assertThat(chronatog.getEffectivePower()).isEqualTo(4);
         assertThat(chronatog.getEffectiveToughness()).isEqualTo(5);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(2);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(2);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isZero();
 
         advanceTurn(player2);
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
         advanceTurn(player2);
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
         advanceTurn(player1);
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
     }
@@ -172,7 +173,7 @@ class ChronatogTest extends BaseCardTest {
         assertThat(first.getEffectiveToughness()).isEqualTo(5);
         assertThat(second.getEffectivePower()).isEqualTo(4);
         assertThat(second.getEffectiveToughness()).isEqualTo(5);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(2);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(2);
     }
 
     private int battlefieldIndex(Permanent permanent) {

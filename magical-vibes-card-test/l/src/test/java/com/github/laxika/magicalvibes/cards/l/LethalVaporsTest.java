@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -61,13 +62,13 @@ class LethalVaporsTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Lethal Vapors");
         assertThat(vapors).isNotIn(gd.playerBattlefields.get(player1.getId()));
-        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
 
         advanceTurn(player2);
         advanceTurn(player2);
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isZero();
     }
 
     @Test
@@ -101,12 +102,12 @@ class LethalVaporsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Lethal Vapors");
         harness.passBothPriorities();
 
-        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isEqualTo(2);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isEqualTo(2);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
         advanceTurn(player1);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isEqualTo(1);
         advanceTurn(player1);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isZero();
         advanceTurn(player2);
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
     }
@@ -129,8 +130,8 @@ class LethalVaporsTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Goblin Brigand");
         harness.assertNotOnBattlefield(player1, "Goblin Brigand");
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isZero();
     }
 
     private void advanceTurn(Player expectedActivePlayer) {

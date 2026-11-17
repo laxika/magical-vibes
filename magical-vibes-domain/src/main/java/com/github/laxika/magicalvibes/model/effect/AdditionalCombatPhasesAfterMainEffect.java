@@ -8,8 +8,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param count                         how many additional combat phases are inserted
  * @param onlyTargetCreaturesCanAttack  whether only the resolving spell's chosen creatures can attack
  *                                      during each inserted combat (Last Night Together)
- * @param additionalCombatBeginningEffect optional effect put on the stack at the beginning of each inserted
- *                                      combat (Moraug, Fury of Akoum's "untap all creatures you control")
+ * @param additionalCombatBeginningEffect optional effect for each inserted combat: a delayed triggered ability at its
+ *                                      beginning (Moraug, Fury of Akoum's "untap all creatures you control"), or a
+ *                                      restriction on who can attack in it, which applies during it
  */
 public record AdditionalCombatPhasesAfterMainEffect(int count, boolean onlyTargetCreaturesCanAttack,
                                                     CardEffect additionalCombatBeginningEffect)

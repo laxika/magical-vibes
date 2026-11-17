@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -27,7 +28,7 @@ class UnstableHulkTest extends BaseCardTest {
         assertThat(hulk.getEffectivePower()).isEqualTo(8);
         assertThat(hulk.getEffectiveToughness()).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, hulk, Keyword.TRAMPLE)).isTrue();
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
     }
 
     @Test
@@ -55,11 +56,11 @@ class UnstableHulkTest extends BaseCardTest {
 
         advanceTurn(player2);
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
 
         advanceTurn(player2);
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
     }
 
     @Test
@@ -75,7 +76,7 @@ class UnstableHulkTest extends BaseCardTest {
         assertThat(hulk.getEffectivePower()).isEqualTo(2);
         assertThat(hulk.getEffectiveToughness()).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, hulk, Keyword.TRAMPLE)).isFalse();
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -93,13 +94,13 @@ class UnstableHulkTest extends BaseCardTest {
         assertThat(hulk.getEffectivePower()).isEqualTo(8);
         assertThat(hulk.getEffectiveToughness()).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, hulk, Keyword.TRAMPLE)).isTrue();
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isZero();
 
         advanceTurn(player2);
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
         assertThat(hulk.getEffectivePower()).isEqualTo(2);
         assertThat(hulk.getEffectiveToughness()).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, hulk, Keyword.TRAMPLE)).isFalse();

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.OnlyChosenCreaturesCanAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipChosenStepOrPhaseEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
@@ -109,7 +110,14 @@ public final class FloatingCombatRules {
 
     /** The queued skips of the next combat phase of {@code playerId}: the counted ones and the ones for this turn. */
     public static int queuedCombatPhaseSkips(GameData gd, UUID playerId) {
-        return gd.skipNextCombatPhaseCount.getOrDefault(playerId, 0)
-                + gd.floatingEffectsOnPlayer(playerId, SkipNextEffect.class).size();
+        return gd.skipNextCount(playerId, SkipKind.COMBAT_PHASE);
+    }
+
+    /** {@code count} "skip your next …" effects of {@code kind} wait on {@code playerId}, one per resolution. */
+    public static void skipNext(GameData gd, UUID playerId, SkipKind kind, int count) {
+        for (int i = 0; i < count; i++) {
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, playerId,
+                    new SkipNextEffect(kind), playerId, Duration.PERMANENT));
+        }
     }
 }

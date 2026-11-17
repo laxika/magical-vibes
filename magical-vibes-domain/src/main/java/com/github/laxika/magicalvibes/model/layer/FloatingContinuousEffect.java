@@ -128,8 +128,6 @@ public record FloatingContinuousEffect(
                 || effect instanceof MonarchBoundControlEffect;
     }
 
-    /** Returns a copy of this effect carrying the given CR 613.7 timestamp (used by
-     *  {@code GameData.addFloatingEffect} to stamp the effect on insertion). */
     /** This effect with another payload, keeping its identity, place and timestamp. */
     public FloatingContinuousEffect withEffect(CardEffect effect) {
         return new FloatingContinuousEffect(id, sourceCardName, sourcePermanentId, controllerId,
@@ -137,6 +135,14 @@ public record FloatingContinuousEffect(
                 affectedCardId, affectedCardZone);
     }
 
+    /** This effect with another duration, keeping its identity and timestamp. */
+    public FloatingContinuousEffect withDuration(Duration duration) {
+        return new FloatingContinuousEffect(id, sourceCardName, sourcePermanentId, controllerId,
+                effect, affectedPermanentId, affectedPlayerId, scope, duration, timestamp, expiresWhenScopeNoLongerMatches,
+                affectedCardId, affectedCardZone);
+    }
+
+    /** This effect carrying the given CR 613.7 timestamp ({@code GameData.addFloatingEffect} stamps it on insertion). */
     public FloatingContinuousEffect withTimestamp(long timestamp) {
         return new FloatingContinuousEffect(id, sourceCardName, sourcePermanentId, controllerId,
                 effect, affectedPermanentId, affectedPlayerId, scope, duration, timestamp, expiresWhenScopeNoLongerMatches,

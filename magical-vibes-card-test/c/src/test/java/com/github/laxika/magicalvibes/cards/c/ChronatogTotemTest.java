@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -61,7 +62,7 @@ class ChronatogTotemTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, totem)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, totem)).isEqualTo(5);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
 
         harness.clearPriorityPassed();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
@@ -135,7 +136,7 @@ class ChronatogTotemTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
     }
 
     @Test
@@ -153,7 +154,7 @@ class ChronatogTotemTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, totem)).isEqualTo(4);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
     }
 
     @Test
@@ -170,8 +171,8 @@ class ChronatogTotemTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(totem.getCard());
         harness.passBothPriorities();
 
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isZero();
     }
 
     private Permanent addReadyTotem() {

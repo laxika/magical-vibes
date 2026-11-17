@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Queues one skipped turn, step or phase on a player. A single record covers the whole one-shot
- * "skips their next …" family: {@link SkipKind} picks which of the four per-player queues on
- * {@code GameData} is incremented and {@link SkipRecipient} picks whose. Skipping is a replacement
+ * One skipped turn, step or phase for a player. A single record covers the whole one-shot "skips their
+ * next …" family: {@link SkipKind} picks what is skipped and {@link SkipRecipient} picks whose; each
+ * resolution makes one floating effect on that player, used up as it applies. Skipping is a replacement
  * effect — proceeding past the turn/step/phase as though it didn't exist (CR 500.11 / 614.10) — and
  * anything scheduled for the skipped occurrence waits for the first one that isn't skipped, so two
  * skips queued on the same player make them skip the next two (CR 614.10a).
  *
- * @param kind      what is skipped, and therefore which queue the skip lands on
+ * @param kind      what is skipped
  * @param recipient whose occurrence is skipped
  * @param allCombatPhasesOfNextTurn whether to skip every combat of the affected player's next turn
  */
@@ -33,7 +33,7 @@ public record SkipNextEffect(SkipKind kind, SkipRecipient recipient, boolean all
         }
     }
 
-    /** "You skip your next …" — queued on the resolving controller, targeting nothing. */
+    /** "You skip your next …" — on the resolving controller, targeting nothing. */
     public SkipNextEffect(SkipKind kind) {
         this(kind, SkipRecipient.CONTROLLER);
     }

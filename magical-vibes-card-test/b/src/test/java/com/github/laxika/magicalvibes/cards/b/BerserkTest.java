@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MinimusContainment;
@@ -156,7 +158,7 @@ class BerserkTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
-        gd.skipNextCombatPhaseCount.put(player1.getId(), 1);
+        FloatingCombatRules.skipNext(gd, player1.getId(), SkipKind.COMBAT_PHASE, 1);
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
         harness.passBothPriorities();

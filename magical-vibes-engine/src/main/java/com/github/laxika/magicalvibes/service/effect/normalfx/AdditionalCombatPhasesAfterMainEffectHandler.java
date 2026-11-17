@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @Slf4j
@@ -43,16 +45,14 @@ public class AdditionalCombatPhasesAfterMainEffectHandler implements NormalEffec
                             : TurnStep.END_STEP;
         }
 
+        List<CardEffect> beginningEffects = new ArrayList<>();
         if (additionalCombats.additionalCombatBeginningEffect() != null) {
-            AdditionalCombatBeginningSupport.register(gameData, entry,
-                    additionalCombats.additionalCombatBeginningEffect(), additionalCombats.count(), 0);
+            beginningEffects.add(additionalCombats.additionalCombatBeginningEffect());
         }
-
         if (additionalCombats.onlyTargetCreaturesCanAttack()) {
-            AdditionalCombatBeginningSupport.register(gameData, entry,
-                    new OnlyTargetCreaturesCanAttackThisCombatEffect(Set.copyOf(entry.getTargetIds())),
-                    additionalCombats.count(), 0);
+            beginningEffects.add(new OnlyTargetCreaturesCanAttackThisCombatEffect(Set.copyOf(entry.getTargetIds())));
         }
+        AdditionalCombatBeginningSupport.register(gameData, entry, beginningEffects, additionalCombats.count(), 0);
 
         String logEntry = additionalCombats.count() == 1
                 ? "After this main phase, there is an additional combat phase."

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -666,7 +667,7 @@ class TurnProgressionServiceTest {
         @DisplayName("Skips a queued next turn and advances to the following player")
         void skipsQueuedNextTurn() {
             gd.activePlayerId = player1Id;
-            gd.skipNextTurnCount.put(player2Id, 1);
+            FloatingCombatRules.skipNext(gd, player2Id, SkipKind.TURN, 1);
             gd.turnsTakenByPlayer.put(player1Id, 1);
             gd.turnsTakenByPlayer.put(player2Id, 1);
             int turnBefore = gd.turnNumber;
@@ -674,7 +675,7 @@ class TurnProgressionServiceTest {
             turnProgressionService.advanceTurn(gd);
 
             assertThat(gd.activePlayerId).isEqualTo(player1Id);
-            assertThat(gd.skipNextTurnCount.getOrDefault(player2Id, 0)).isEqualTo(0);
+            assertThat(gd.skipNextCount(player2Id, SkipKind.TURN)).isEqualTo(0);
             assertThat(gd.turnsTakenByPlayer.get(player2Id)).isEqualTo(1);
             assertThat(gd.turnsTakenByPlayer.get(player1Id)).isEqualTo(2);
             assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
@@ -684,7 +685,7 @@ class TurnProgressionServiceTest {
         @DisplayName("Pending Mindslaver waits past a skipped turn")
         void pendingMindslaverWaitsPastSkippedTurn() {
             gd.activePlayerId = player1Id;
-            gd.skipNextTurnCount.put(player2Id, 1);
+            FloatingCombatRules.skipNext(gd, player2Id, SkipKind.TURN, 1);
             gd.pendingTurnControl.put(player2Id, player1Id);
 
             turnProgressionService.advanceTurn(gd);
@@ -841,12 +842,12 @@ class TurnProgressionServiceTest {
         @DisplayName("A queued skipped untap step is consumed and skips the whole step")
         void skipsQueuedUntapStep() {
             gd.activePlayerId = player1Id;
-            gd.skipNextUntapStepCount.put(player2Id, 1);
+            FloatingCombatRules.skipNext(gd, player2Id, SkipKind.UNTAP_STEP, 1);
 
             turnProgressionService.advanceTurn(gd);
 
             assertThat(gd.activePlayerId).isEqualTo(player2Id);
-            assertThat(gd.skipNextUntapStepCount).doesNotContainKey(player2Id);
+            assertThat(gd.skipNextCount(player2Id, SkipKind.UNTAP_STEP)).isZero();
             verify(untapStepService).untapPermanents(gd, player2Id, null, true);
         }
 
@@ -854,11 +855,11 @@ class TurnProgressionServiceTest {
         @DisplayName("Only one queued untap-step skip is consumed per turn")
         void consumesOneQueuedUntapStepSkipAtATime() {
             gd.activePlayerId = player1Id;
-            gd.skipNextUntapStepCount.put(player2Id, 2);
+            FloatingCombatRules.skipNext(gd, player2Id, SkipKind.UNTAP_STEP, 2);
 
             turnProgressionService.advanceTurn(gd);
 
-            assertThat(gd.skipNextUntapStepCount).containsEntry(player2Id, 1);
+            assertThat(gd.skipNextCount(player2Id, SkipKind.UNTAP_STEP)).isEqualTo(1);
         }
 
         @Test

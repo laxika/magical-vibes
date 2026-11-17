@@ -479,7 +479,13 @@ leaves its zone, where the engine calls `GameData.endFloatingEffectsOnCard`, bec
 per card (CR 611.2c). An effect that applies later ("during your next turn", "during target player's next turn",
 "during its controller's next combat", "after this turn", CR 702.185a) has a `Duration.start` other than `NOW`:
 `addFloatingEffect` keeps it in `GameData.scheduledFloatingEffects`, where no query sees it, and the clock begins it
-with its creation timestamp at the turn or combat its start names. A shield with an amount ("prevent the next 3
+with its creation timestamp at the turn or combat its start names. "During that combat" of an added combat phase is
+`Duration.duringCombatPhase(n)`: the turn's `n`-th combat phase, begun as that combat begins and ended at its end;
+adding combat phases before it renumbers it (`GameData.replaceScheduledFloatingEffects`, CR 500.8), and one whose
+combat never began is dropped as the next turn begins. "Only land creatures can attack during that combat" (Bumi,
+Unleashed) and Illusionist's Gambit's must-attack and can't-attack-you are such effects, not triggered abilities. A
+"skip your next …" effect (`SkipNextEffect`, CR 614.10) is a `PERMANENT` effect on the player, one per resolution,
+used up as it applies (`GameData.applySkipNext`; two skip the next two, CR 614.10a). A shield with an amount ("prevent the next 3
 damage", CR 615.7) carries the amount left; using part of it replaces it with a reduced copy (`replaceFloatingEffect`,
 same place and timestamp), and a used-up or "next time" shield ends. When several apply to one event the affected
 player chooses (CR 616.1). The "next spell you cast this turn" grants implement `NextMatchingSpellEffect` and end at

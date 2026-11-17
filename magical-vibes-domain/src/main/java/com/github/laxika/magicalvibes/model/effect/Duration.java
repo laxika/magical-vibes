@@ -17,8 +17,10 @@ import java.util.Objects;
  * @param end      the event that ends the effect; {@link End#NEVER} for one that lasts to the end of the game or for
  *                 as long as {@link #asLongAs} holds
  * @param asLongAs what a "for as long as" duration holds while, or {@code null} for a duration that ends at an event
+ * @param combatPhase for {@link Start#COMBAT_PHASE_OF_THIS_TURN}, which of this turn's combat phases it applies
+ *                    during, counted from 1; 0 for every other start
  */
-public record Duration(Start start, End end, AsLongAs asLongAs) {
+public record Duration(Start start, End end, AsLongAs asLongAs, int combatPhase) {
 
     /** When an effect begins to apply. */
     public enum Start {
@@ -37,7 +39,12 @@ public record Duration(Start start, End end, AsLongAs asLongAs) {
          * As the next combat phase of the controller of the permanent it affects begins: "attacks during its
          * controller's next combat phase if able".
          */
-        AFFECTED_CONTROLLERS_NEXT_COMBAT
+        AFFECTED_CONTROLLERS_NEXT_COMBAT,
+        /**
+         * As the {@link #combatPhase}-th combat phase of this turn begins: "during that combat" of an added combat
+         * phase (CR 500.8). If the turn ends before that combat begins, the effect never applies.
+         */
+        COMBAT_PHASE_OF_THIS_TURN
     }
 
     /** The event that ends an effect. */
@@ -179,12 +186,34 @@ public record Duration(Start start, End end, AsLongAs asLongAs) {
         this(Start.NOW, end, asLongAs);
     }
 
+    /** A duration that begins at {@code start}, which is not {@link Start#COMBAT_PHASE_OF_THIS_TURN}. */
+    public Duration(Start start, End end, AsLongAs asLongAs) {
+        this(start, end, asLongAs, 0);
+    }
+
     public Duration {
         Objects.requireNonNull(start, "start");
         Objects.requireNonNull(end, "end");
         if (asLongAs != null && end != End.NEVER) {
             throw new IllegalArgumentException("A \"for as long as\" duration ends at no event: " + end);
         }
+        if ((start == Start.COMBAT_PHASE_OF_THIS_TURN) != (combatPhase > 0)) {
+            throw new IllegalArgumentException("Only a duration that begins at a combat phase names one: " + start
+                    + " " + combatPhase);
+        }
+    }
+
+    /**
+     * "During that combat": it applies from the beginning of this turn's {@code combatPhase}-th combat phase to that
+     * combat's end (an added combat phase, CR 500.8).
+     */
+    public static Duration duringCombatPhase(int combatPhase) {
+        return new Duration(Start.COMBAT_PHASE_OF_THIS_TURN, End.END_OF_COMBAT, null, combatPhase);
+    }
+
+    /** This duration for the combat phase {@code shift} combat phases later: combat phases were added before it. */
+    public Duration laterCombatPhase(int shift) {
+        return duringCombatPhase(combatPhase + shift);
     }
 
     /**

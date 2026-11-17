@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -45,7 +46,7 @@ class MagosiTheWaterveilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(magosi.getCounterCount(CounterType.EON)).isEqualTo(1);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
     }
 
     @Test
@@ -81,7 +82,7 @@ class MagosiTheWaterveilTest extends BaseCardTest {
 
         assertThat(magosi.isTapped()).isFalse();
         assertThat(magosi.getCounterCount(CounterType.EON)).isZero();
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
     }
 
     @Test
@@ -129,12 +130,12 @@ class MagosiTheWaterveilTest extends BaseCardTest {
         assertThat(magosi.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
         assertThat(magosi.getCounterCount(CounterType.EON)).isZero();
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
 
         harness.passBothPriorities();
 
         assertThat(magosi.getCounterCount(CounterType.EON)).isEqualTo(1);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
     }
 
     @Test
@@ -151,7 +152,7 @@ class MagosiTheWaterveilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(magosi);
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
         assertThat(gd.extraTurns).containsExactly(player1.getId());
     }
 
@@ -173,7 +174,7 @@ class MagosiTheWaterveilTest extends BaseCardTest {
         harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
         assertThat(gd.extraTurns).isEmpty();
         assertThat(gd.currentTurnIsExtraTurn).isFalse();
     }

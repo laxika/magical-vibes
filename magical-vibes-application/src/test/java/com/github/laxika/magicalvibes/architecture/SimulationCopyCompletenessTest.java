@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * the AI plans against a board that differs from the real one.
  *
  * <p>That had already happened — 24 live fields were uncopied when this test was written,
- * including {@code lifeLostThisTurn}, {@code skipNextCombatPhaseCount} and the four
+ * including {@code lifeLostThisTurn}, the counted combat-phase skips and the four
  * {@code spellCast*} payment-tracking maps, all of which persist across a turn and are read by
  * {@code ConditionEvaluationService} / {@code AmountEvaluationService} / {@code TurnProgressionService}.
  *

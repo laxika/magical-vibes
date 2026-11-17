@@ -51,8 +51,9 @@ import java.util.function.Predicate;
  * CR 514.2), a step beginning ({@link StepEvent}: "until your next upkeep", "until the next end step"), the untap step's
  * untapping ("until its controller's next untap step"), a spell being cast ({@link SpellEvent.Cast}) and a planeswalk
  * ({@link ActionEvent.Planeswalked}). A turn beginning also begins the effects scheduled to begin with it ("during your
- * next turn", "after this turn"), and the beginning of combat the ones scheduled for the next combat of their
- * affected permanent's controller (see {@link Duration#start()}).
+ * next turn", "after this turn"), and drops the ones that were to begin at a combat phase of the turn that ended; the
+ * beginning of combat begins the ones scheduled for the next combat of their affected permanent's controller, and the
+ * ones scheduled for that combat phase of the turn ("during that combat", see {@link Duration#start()}).
  *
  * <p>A "for as long as" duration (CR 611.2b) ends as soon as its condition stops holding, not at a batch: the
  * engine tells the clock where the state changes, and the clock ends the effects of that source the change ends. Its
@@ -99,14 +100,28 @@ public class DurationClock {
         Predicate<FloatingContinuousEffect> ends = endsAt(gameData, event);
         List<FloatingContinuousEffect> ended = ends == null ? List.of() : end(gameData, ends);
         if (event instanceof TurnEvent.Began began) {
+            gameData.dropScheduledFloatingEffects(effect -> effect.duration().start()
+                    == Duration.Start.COMBAT_PHASE_OF_THIS_TURN);
             gameData.startScheduledFloatingEffects(effect -> startsAt(gameData, began, effect));
         } else if (event instanceof StepEvent step && step.moment() == StepTrigger.Moment.BEGINNING_OF_COMBAT) {
-            gameData.startScheduledFloatingEffects(effect -> effect.duration().start()
-                    == Duration.Start.AFFECTED_CONTROLLERS_NEXT_COMBAT && effect.affectedPermanentId() != null
-                    && step.activePlayerId().equals(
-                    gameQueryService.findPermanentController(gameData, effect.affectedPermanentId())));
+            gameData.startScheduledFloatingEffects(effect -> startsAtCombat(gameData, step, effect));
         }
         return ended;
+    }
+
+    /**
+     * Whether the beginning of combat {@code step} begins the scheduled {@code effect}: "during its controller's next
+     * combat phase" at a combat of its affected permanent's controller, "during that combat" at the combat phase of
+     * this turn it names.
+     */
+    private boolean startsAtCombat(GameData gameData, StepEvent step, FloatingContinuousEffect effect) {
+        return switch (effect.duration().start()) {
+            case AFFECTED_CONTROLLERS_NEXT_COMBAT -> effect.affectedPermanentId() != null
+                    && step.activePlayerId().equals(
+                    gameQueryService.findPermanentController(gameData, effect.affectedPermanentId()));
+            case COMBAT_PHASE_OF_THIS_TURN -> effect.duration().combatPhase() == gameData.combatPhasesThisTurn;
+            default -> false;
+        };
     }
 
     /**
@@ -118,7 +133,7 @@ public class DurationClock {
         UUID activePlayerId = began.activePlayerId();
         return switch (effect.duration().start()) {
             case NOW, AFTER_THIS_TURN -> true;
-            case AFFECTED_CONTROLLERS_NEXT_COMBAT -> false;
+            case AFFECTED_CONTROLLERS_NEXT_COMBAT, COMBAT_PHASE_OF_THIS_TURN -> false;
             case YOUR_NEXT_TURN -> activePlayerId.equals(effect.controllerId());
             case AFFECTED_PLAYERS_NEXT_TURN -> effect.affectedPermanentId() != null
                     ? activePlayerId.equals(gameQueryService.findPermanentController(gameData,

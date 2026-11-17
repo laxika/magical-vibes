@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -487,13 +488,7 @@ public class StepTriggerService {
         Integer currentTurnSkip = gameData.skipDrawStepThisTurn.remove(activePlayerId);
 
         // A one-shot skip queued earlier (e.g. Ivory Gargoyle's death trigger) consumes one draw step.
-        int queuedSkips = gameData.skipNextDrawStepCount.getOrDefault(activePlayerId, 0);
-        if (queuedSkips > 0) {
-            if (queuedSkips - 1 > 0) {
-                gameData.skipNextDrawStepCount.put(activePlayerId, queuedSkips - 1);
-            } else {
-                gameData.skipNextDrawStepCount.remove(activePlayerId);
-            }
+        if (gameData.applySkipNext(activePlayerId, SkipKind.DRAW_STEP)) {
             String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips their draw step.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} skips draw step (queued skip)", gameData.id, gameData.playerIdToName.get(activePlayerId));

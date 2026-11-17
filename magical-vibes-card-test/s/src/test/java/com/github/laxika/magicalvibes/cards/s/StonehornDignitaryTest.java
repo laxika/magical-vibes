@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.FinestHour;
+import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
+import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,8 +32,8 @@ class StonehornDignitaryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(0);
     }
 
     @Test
@@ -48,11 +50,11 @@ class StonehornDignitaryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
 
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(0);
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(1);
     }
 
     @Test
@@ -60,7 +62,7 @@ class StonehornDignitaryTest extends BaseCardTest {
     void flaggedOpponentSkipsCombat() {
         addCreatureReady(player2, new RuneclawBear());
 
-        gd.skipNextCombatPhaseCount.put(player2.getId(), 1);
+        FloatingCombatRules.skipNext(gd, player2.getId(), SkipKind.COMBAT_PHASE, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -68,7 +70,7 @@ class StonehornDignitaryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(0);
     }
 
     @Test
@@ -77,7 +79,7 @@ class StonehornDignitaryTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new StonehornDignitary());
         harness.handlePermanentChosen(player1, player2.getId());
 
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isZero();
 
         harness.passBothPriorities();
         harness.forceActivePlayer(player2);
@@ -85,7 +87,7 @@ class StonehornDignitaryTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, harness::passBothPriorities);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isZero();
     }
 
     @Test
@@ -97,14 +99,14 @@ class StonehornDignitaryTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(2);
         harness.forceActivePlayer(player2);
 
         for (int remaining = 1; remaining >= 0; remaining--) {
             harness.forceStep(TurnStep.PRECOMBAT_MAIN);
             harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, harness::passBothPriorities);
             assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
-            assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(remaining);
+            assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(remaining);
         }
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -123,7 +125,7 @@ class StonehornDignitaryTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, harness::passBothPriorities);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(1);
     }
 
     @Test
@@ -138,13 +140,13 @@ class StonehornDignitaryTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
         assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.POSTCOMBAT_MAIN);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, harness::passBothPriorities);
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isZero();
     }
 
     @Test
@@ -158,7 +160,7 @@ class StonehornDignitaryTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, dignitary.getId());
         harness.assertNotOnBattlefield(player1, "Stonehorn Dignitary");
         harness.assertInHand(player1, "Stonehorn Dignitary");
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isZero();
 
         harness.passBothPriorities();
         harness.forceActivePlayer(player2);
@@ -182,13 +184,13 @@ class StonehornDignitaryTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new StonehornDignitary());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, harness::passBothPriorities);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
         assertThat(gd.additionalCombatPhasesOnly).isZero();
-        assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextCount(player2.getId(), SkipKind.COMBAT_PHASE)).isZero();
     }
 }

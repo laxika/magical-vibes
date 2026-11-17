@@ -322,6 +322,34 @@ class DurationClockTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A \"during that combat\" effect begins as its combat phase of the turn begins and ends with it")
+    void duringThatCombatBeginsAtItsCombatPhase() {
+        FloatingContinuousEffect restriction = add(player1.getId(), Duration.duringCombatPhase(2));
+
+        gd.combatPhasesThisTurn = 1;
+        advance(new StepEvent(StepTrigger.Moment.BEGINNING_OF_COMBAT, player1.getId()));
+        assertThat(gd.floatingEffects).isEmpty();
+        gd.combatPhasesThisTurn = 2;
+        advance(new StepEvent(StepTrigger.Moment.BEGINNING_OF_COMBAT, player1.getId()));
+        assertThat(gd.floatingEffects).containsExactly(restriction);
+        assertThat(advance(new TurnEvent.StepEnded(TurnStep.END_OF_COMBAT, player1.getId())))
+                .containsExactly(restriction);
+    }
+
+    @Test
+    @DisplayName("A \"during that combat\" effect whose combat phase never began is dropped as the next turn begins")
+    void duringThatCombatIsDroppedWithItsTurn() {
+        add(player1.getId(), Duration.duringCombatPhase(2));
+
+        advance(new TurnEvent.Began(player2.getId()));
+        gd.combatPhasesThisTurn = 2;
+        advance(new StepEvent(StepTrigger.Moment.BEGINNING_OF_COMBAT, player2.getId()));
+
+        assertThat(gd.scheduledFloatingEffects).isEmpty();
+        assertThat(gd.floatingEffects).isEmpty();
+    }
+
+    @Test
     @DisplayName("An effect \"after this turn\" begins as the next turn begins, keeping its timestamp")
     void afterThisTurnBeginsAtTheNextTurn() {
         FloatingContinuousEffect warp = add(player1.getId(), Duration.AFTER_THIS_TURN);
