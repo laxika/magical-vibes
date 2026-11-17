@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.OtherControlledCreaturesBecomeCopiesOfTopCreatureCardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -73,7 +73,7 @@ public class OtherControlledCreaturesBecomeCopiesOfTopCreatureCardUntilEndOfTurn
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), creature.getId(),
                     entry.getControllerId(), new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
-                    creature.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                    creature.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
         }
 
         gameLogService.append(gameData, GameLog.builder()

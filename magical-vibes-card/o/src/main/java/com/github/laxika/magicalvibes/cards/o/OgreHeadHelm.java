@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -30,7 +30,7 @@ public class OgreHeadHelm extends Card {
     public OgreHeadHelm() {
         addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE,
-                GrantScope.SELF, EffectDuration.WHILE_ATTACHED));
+                GrantScope.SELF, Duration.WHILE_ATTACHED));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayEffect(
                 SacrificeSelfThenEffect.ofTriggeringPermanent(new DiscardOwnHandThenDrawEffect(new Fixed(3))),
                 "You may sacrifice it. If you do, discard your hand, then draw three cards."));

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GlobalAttackTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackControllerUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -45,7 +45,7 @@ public class RequirePaymentToAttackControllerUntilNextTurnEffectHandler implemen
                 null,
                 entry.getControllerId(),
                 null,
-                EffectDuration.UNTIL_YOUR_NEXT_TURN,
+                Duration.UNTIL_YOUR_NEXT_TURN,
                 0));
     }
 }

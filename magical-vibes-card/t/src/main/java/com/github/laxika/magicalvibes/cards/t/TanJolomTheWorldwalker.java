@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -46,7 +46,7 @@ public class TanJolomTheWorldwalker extends Card {
                         null,
                         Set.of(CardType.CREATURE),
                         GrantScope.TARGET,
-                        EffectDuration.UNTIL_END_OF_TURN
+                        Duration.UNTIL_END_OF_TURN
                 ));
     }
 }

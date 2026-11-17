@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedIntoHandEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
@@ -41,7 +41,7 @@ public class TheGrandGoatnapper extends Card {
                 true,
                 null,
                 List.of(
-                        new GrantSubtypeToTargetCreatureEffect(CardSubtype.GOAT, EffectDuration.PERMANENT, false, true),
+                        new GrantSubtypeToTargetCreatureEffect(CardSubtype.GOAT, Duration.PERMANENT, false, true),
                         new ConjureCardNamedIntoHandEffect("ECL", "142", false)
                 ),
                 "{T}: Another target non-Goat creature perpetually becomes a Goat in addition to its other types. "

@@ -39,7 +39,7 @@ public class SourceBecomesSubtypeUntilEndOfTurnEffectHandler implements NormalEf
                     entry.getControllerId(), new com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect(
                             e.subtypes().get(i), com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET,
                             e.overriding() && i == 0),
-                    self.getId(), null, null, com.github.laxika.magicalvibes.model.effect.EffectDuration.UNTIL_END_OF_TURN, 0));
+                    self.getId(), null, null, com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN, 0));
         }
         String typeNames = e.subtypes().stream()
                 .map(subtype -> subtype.getDisplayName())

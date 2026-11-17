@@ -88,6 +88,6 @@ public class ChooseOpponentGainsControlOfSourceEffectHandler implements NormalEf
 
         creatureControlService.applyControlEffect(gameData, newControllerId, source,
                 new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                ControlDuration.PERMANENT.toEffectDuration(), null, sourceCardName);
+                ControlDuration.PERMANENT.toDuration(), null, sourceCardName);
     }
 }

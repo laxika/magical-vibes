@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerGainsControlOfSourceCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -38,7 +38,7 @@ public class ControllerGainsControlOfSourceCreatureEffectHandler implements Norm
         }
 
         creatureControlService.applyControlEffect(gameData, entry.getControllerId(), source,
-                new GainControlOfTargetEffect(e.duration()), e.duration().toEffectDuration(),
+                new GainControlOfTargetEffect(e.duration()), e.duration().toDuration(),
                 null, entry.getCard().getName());
     }
 }

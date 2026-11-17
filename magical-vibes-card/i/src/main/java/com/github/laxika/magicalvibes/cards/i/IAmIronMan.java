@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -29,7 +29,7 @@ public class IAmIronMan extends Card {
         )).addSpellEffect(new AnimatePermanentsEffect(
                 4, 4, List.of(), Set.of(Keyword.FLYING), null,
                 Set.of(CardType.ARTIFACT, CardType.CREATURE), GrantScope.TARGET,
-                EffectDuration.UNTIL_END_OF_TURN));
+                Duration.UNTIL_END_OF_TURN));
         addSpellEffect(new DrawCardEffect());
     }
 }

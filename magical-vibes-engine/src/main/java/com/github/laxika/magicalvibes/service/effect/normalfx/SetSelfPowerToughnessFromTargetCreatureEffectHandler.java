@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfPowerToughnessFromTargetCreatureEffect;
@@ -56,7 +56,7 @@ public class SetSelfPowerToughnessFromTargetCreatureEffectHandler implements Nor
         source.setBaseToughnessOverride(toughness);
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                setter, source.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                setter, source.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
 
         String description = " has base power and toughness " + power + "/" + toughness + " until end of turn.";
         gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(description).build());

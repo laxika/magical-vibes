@@ -48,7 +48,7 @@ public class ChooseRandomCreatureGainControlUntilEndOfTurnThenDestroyOtherCreatu
         Permanent chosen = creatures.get(ThreadLocalRandom.current().nextInt(creatures.size()));
         creatureControlService.applyControlEffect(gameData, entry.getControllerId(), chosen,
                 new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
-                ControlDuration.END_OF_TURN.toEffectDuration(), null, entry.getCard().getName());
+                ControlDuration.END_OF_TURN.toDuration(), null, entry.getCard().getName());
         tapUntapSupport.untapPermanent(gameData, chosen);
         grantKeywordEffectHandler.grantToPermanent(gameData, entry, chosen, Set.of(Keyword.HASTE));
 

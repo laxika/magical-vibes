@@ -76,7 +76,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 && (!(animateIfNotCreature.power() instanceof Fixed)
                 || !(animateIfNotCreature.toughness() instanceof Fixed)
                 || animateIfNotCreature.scope() != GrantScope.TARGET
-                || animateIfNotCreature.duration() != EffectDuration.PERMANENT)) {
+                || !Duration.PERMANENT.equals(animateIfNotCreature.duration()))) {
             throw new IllegalArgumentException(
                     "Post-entry animation must be a permanent TARGET animation with fixed power and toughness");
         }

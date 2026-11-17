@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,7 +18,7 @@ public class TundraKavu extends Card {
                 true,
                 null,
                 List.of(new GrantBasicLandTypeToTargetEffect(
-                        EffectDuration.UNTIL_END_OF_TURN,
+                        Duration.UNTIL_END_OF_TURN,
                         null,
                         true,
                         List.of(CardSubtype.PLAINS, CardSubtype.ISLAND))),

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link GainControlOfTargetEffect} for every {@code ControlDuration}. Each
  * resolution creates a floating layer-2 control effect (CR 613.2/613.7) whose duration maps via
- * {@code ControlDuration.toEffectDuration()}; expiry and fallback to the next most recent
+ * {@code ControlDuration.toDuration()}; expiry and fallback to the next most recent
  * still-active control effect are handled by {@code CreatureControlService}.
  */
 @Component
@@ -62,7 +62,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             if (target == null) continue;
 
             boolean controlApplied = creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
-                    e, e.duration().toEffectDuration(), null, entry.getCard().getName());
+                    e, e.duration().toDuration(), null, entry.getCard().getName());
 
             if (controlApplied && e.grantedSubtype() != null) {
                 if (!target.getGrantedSubtypes().contains(e.grantedSubtype())) {
@@ -71,7 +71,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                         entry.getControllerId(), new GrantSubtypeEffect(e.grantedSubtype(), GrantScope.TARGET),
-                        targetId, null, null, EffectDuration.PERMANENT, 0));
+                        targetId, null, null, Duration.PERMANENT, 0));
 
                 gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" becomes a " + e.grantedSubtype().getDisplayName() + " in addition to its other types.").build());
             }
@@ -89,7 +89,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             if (target == null) continue;
 
             boolean controlApplied = creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
-                    e, e.duration().toEffectDuration(), null, entry.getCard().getName());
+                    e, e.duration().toDuration(), null, entry.getCard().getName());
 
             // Magus of the Unseen: "When you lose control of the artifact, tap it." The stolen
             // permanent is tapped when this until-end-of-turn control effect expires (cleanup step).
@@ -138,7 +138,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             if (target == null) continue;
 
             creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
-                    e, e.duration().toEffectDuration(), sourcePermanentId, entry.getCard().getName());
+                    e, e.duration().toDuration(), sourcePermanentId, entry.getCard().getName());
         }
     }
 

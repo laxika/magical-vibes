@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
@@ -59,7 +59,7 @@ public class TurnBurn extends Card {
                 "Target must be any target");
 
         CardEffect turn = SequenceEffect.of(
-                new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN),
+                new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.UNTIL_END_OF_TURN),
                 new GrantColorUntilEndOfTurnEffect(CardColor.RED),
                 new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.WEIRD),
                 new SetBasePowerToughnessEffect(0, 1));

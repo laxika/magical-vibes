@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -78,7 +78,7 @@ public class EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffectHandler
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), ability.sourceCard().getName(), ability.sourcePermanentId(),
                     effect.sourceControllerId(), effect.acceptedFollowUp(), target.getId(), null, null,
-                    EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                    Duration.UNTIL_YOUR_NEXT_TURN, 0));
         } else if (placed > 0) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), ability.sourceCard().getName(), ability.sourcePermanentId(),
@@ -87,7 +87,7 @@ public class EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffectHandler
                             new PermanentNotPredicate(new PermanentTruePredicate()), true,
                             ability.controllerId()),
                     null, effect.sourceControllerId(), null,
-                    EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                    Duration.UNTIL_YOUR_NEXT_TURN, 0));
         }
     }
 

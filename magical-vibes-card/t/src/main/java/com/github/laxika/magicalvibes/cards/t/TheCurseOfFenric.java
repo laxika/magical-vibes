@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForEachDestroyedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -64,8 +64,8 @@ public class TheCurseOfFenric extends Card {
                 new SetCardTypesEffect(Set.of(CardType.CREATURE), GrantScope.TARGET),
                 new GrantSubtypeEffect(CardSubtype.HORROR, GrantScope.TARGET, true),
                 new SetTargetPermanentSupertypeEffect(CardSupertype.LEGENDARY, true),
-                new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT),
-                new SetBasePowerToughnessEffect(6, 6, GrantScope.TARGET, EffectDuration.PERMANENT));
+                new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT),
+                new SetBasePowerToughnessEffect(6, 6, GrantScope.TARGET, Duration.PERMANENT));
         setSagaChapterTargetGroups(2,
                 List.of(new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(
                         NONTOKEN_CREATURE, "Target must be a nontoken creature"), 1, 1)));

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -31,7 +31,7 @@ public class XenicPoltergeist extends Card {
                 List.of(new AnimatePermanentsEffect(
                         new TargetManaValue(), new TargetManaValue(),
                         List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP, null
+                        GrantScope.TARGET, Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP, null
                 )),
                 "{T}: Until your next upkeep, target noncreature artifact becomes an artifact creature with power and toughness each equal to its mana value.",
                 new PermanentPredicateTargetFilter(

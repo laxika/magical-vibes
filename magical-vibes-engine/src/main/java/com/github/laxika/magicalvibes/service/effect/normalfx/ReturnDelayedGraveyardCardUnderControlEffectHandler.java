@@ -117,7 +117,7 @@ public class ReturnDelayedGraveyardCardUnderControlEffectHandler implements Norm
             gameData.stolenCreatures.put(permanent.getId(), ownerId);
             creatureControlService.applyControlEffect(gameData, returnControllerId, permanent,
                     new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                    ControlDuration.PERMANENT.toEffectDuration(), null, sourceName);
+                    ControlDuration.PERMANENT.toDuration(), null, sourceName);
         }
 
         String playerName = gameData.playerIdToName.get(returnControllerId);

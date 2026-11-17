@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithToughnessGreaterThanPowerCantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import org.springframework.stereotype.Component;
 
@@ -30,7 +30,7 @@ public class CreaturesWithToughnessGreaterThanPowerCantBlockThisTurnEffectHandle
                 null,
                 null,
                 null,
-                EffectDuration.UNTIL_END_OF_TURN,
+                Duration.UNTIL_END_OF_TURN,
                 0));
     }
 }

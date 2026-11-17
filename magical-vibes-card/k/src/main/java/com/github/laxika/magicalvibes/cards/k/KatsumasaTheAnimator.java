@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -49,12 +49,12 @@ public class KatsumasaTheAnimator extends Card {
                 List.of(
                         new AnimatePermanentsEffect(
                                 null, null, List.of(), Set.of(Keyword.FLYING), null, Set.of(),
-                                GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN, noncreatureArtifact),
+                                GrantScope.TARGET, Duration.UNTIL_END_OF_TURN, noncreatureArtifact),
                         new ConditionalEffect(
                                 new NotCondition(new TargetPermanentMatches(
                                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))),
                                 new SetBasePowerToughnessEffect(1, 1,
-                                        EffectDuration.UNTIL_END_OF_TURN, new PermanentIsArtifactPredicate()))
+                                        Duration.UNTIL_END_OF_TURN, new PermanentIsArtifactPredicate()))
                 ),
                 "{2}{U}: Until end of turn, target noncreature artifact you control becomes an artifact creature and gains flying. If it's not a Vehicle, it has base power and toughness 1/1 until end of turn.",
                 new ControlledPermanentPredicateTargetFilter(noncreatureArtifact,

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
@@ -157,7 +157,7 @@ public class EachPlayerChoosesCreaturePutsVowCounterThenSacrificesRestEffectHand
                 entry.getControllerId(),
                 new CreaturesCantAttackControllerUnlessPredicateEffect(
                         new PermanentNotPredicate(new PermanentTruePredicate()), true),
-                null, null, scope, EffectDuration.PERMANENT, 0, true));
+                null, null, scope, Duration.PERMANENT, 0, true));
     }
 
     private List<UUID> apnapPlayers(GameData gameData) {

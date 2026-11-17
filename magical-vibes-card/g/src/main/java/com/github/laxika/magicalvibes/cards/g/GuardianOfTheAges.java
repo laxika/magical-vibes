@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -24,7 +24,7 @@ public class GuardianOfTheAges extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new SourceMatchesPermanentPredicate(new PermanentHasKeywordPredicate(Keyword.DEFENDER))),
                 SequenceEffect.of(
-                        new RemoveKeywordEffect(Keyword.DEFENDER, GrantScope.SELF, EffectDuration.PERMANENT),
+                        new RemoveKeywordEffect(Keyword.DEFENDER, GrantScope.SELF, Duration.PERMANENT),
                         new SetSelfKeywordIndefinitelyEffect(Keyword.TRAMPLE, true)));
     }
 }

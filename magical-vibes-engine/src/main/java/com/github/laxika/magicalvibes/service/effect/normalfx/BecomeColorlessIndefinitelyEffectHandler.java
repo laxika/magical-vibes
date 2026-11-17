@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -19,7 +19,7 @@ import java.util.UUID;
 
 /**
  * Resolves {@link BecomeColorlessIndefinitelyEffect} by floating the layer-5 color setter with a
- * {@link EffectDuration#PERMANENT} duration, so the permanent stays colorless for as long as it
+ * {@link Duration#PERMANENT} duration, so the permanent stays colorless for as long as it
  * exists rather than reverting at cleanup.
  */
 @Slf4j
@@ -51,7 +51,7 @@ public class BecomeColorlessIndefinitelyEffectHandler implements NormalEffectHan
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), null, entry.getControllerId(),
                 new BecomeColorlessUntilEndOfTurnEffect(false),
-                affected.getId(), null, null, EffectDuration.PERMANENT, 0));
+                affected.getId(), null, null, Duration.PERMANENT, 0));
 
         gameLogService.append(gameData, GameLog.cardThen(affected.getCard(), " becomes colorless."));
         log.info("Game {} - {} becomes colorless indefinitely", gameData.id, affected.getCard().getName());

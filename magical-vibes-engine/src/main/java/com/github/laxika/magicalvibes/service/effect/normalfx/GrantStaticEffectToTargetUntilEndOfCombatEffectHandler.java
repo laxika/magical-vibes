@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetUntilEndOfCombatEffect;
@@ -37,6 +37,6 @@ public class GrantStaticEffectToTargetUntilEndOfCombatEffectHandler implements N
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(), new GrantEffectEffect(grant.staticEffect(), GrantScope.TARGET),
-                targetId, null, null, EffectDuration.UNTIL_END_OF_COMBAT, 0));
+                targetId, null, null, Duration.UNTIL_END_OF_COMBAT, 0));
     }
 }

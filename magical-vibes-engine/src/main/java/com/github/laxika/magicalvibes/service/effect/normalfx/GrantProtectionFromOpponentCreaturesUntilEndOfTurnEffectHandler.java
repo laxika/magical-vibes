@@ -34,7 +34,7 @@ public class GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffectHandler imp
         gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
                 java.util.UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(), effect,
                 target.getId(), null, null,
-                com.github.laxika.magicalvibes.model.effect.EffectDuration.UNTIL_END_OF_TURN, 0));
+                com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN, 0));
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())
                 .text(" gains protection from creatures your opponents control until end of turn.")

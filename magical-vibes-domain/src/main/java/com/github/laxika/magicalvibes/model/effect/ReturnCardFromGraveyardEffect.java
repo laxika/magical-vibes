@@ -288,7 +288,7 @@ import lombok.Builder;
  * @param eventCardIdsOnly       when {@code true}, restricts a resolution-time graveyard choice to cards whose
  *                               ids were recorded by a preceding event on the current stack entry
  * @param battlefieldEffectGrantDuration duration of the floating effects in
- *                                      {@link #battlefieldEffectGrants}; defaults to {@link EffectDuration#PERMANENT}
+ *                                      {@link #battlefieldEffectGrants}; defaults to {@link Duration#PERMANENT}
  * @param targetGroup          positional graveyard-card target group resolved by this effect, or
  *                             {@code -1} when the effect uses the ordinary target path
  * @param requiresPowerAtMostSacrificedPower when {@code true}, only returns a creature card whose
@@ -378,7 +378,7 @@ public record ReturnCardFromGraveyardEffect(
         List<CardEffect> perpetualBattlefieldEffectGrants,
         boolean perpetuallySetBasePowerToSourcePower,
         boolean eventCardIdsOnly,
-        EffectDuration battlefieldEffectGrantDuration,
+        Duration battlefieldEffectGrantDuration,
         int targetGroup,
         CardEffect grantOnDeathEffect,
         DynamicAmount randomCountAmount,
@@ -458,7 +458,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean exileAtNextUpkeep,
         List<CardEffect> battlefieldEffectGrants,
         boolean eventCardIdsOnly,
-        EffectDuration battlefieldEffectGrantDuration,
+        Duration battlefieldEffectGrantDuration,
         int targetGroup
 ) {
             this(destination, filter, sourceChosenSubtype, source, targetGraveyard, mandatory, upTo, returnAll, thisTurnOnly, fromBattlefieldThisTurn, fromAnywhereThisTurn, discardedOrCycledThisTurn, discardedByOpponentThisTurn, targetPutIntoGraveyardFromBattlefieldThisTurn, false, false, false, false, targetNotPutIntoGraveyardThisCombat, attachmentTarget, chooseAuraAttachment, gainLifeEqualToManaValue, gainLifeEqualToReturnedToughness, loseLifeEqualToManaValue, attachToSource, grantHaste, grantHasteUntilNextTurn, grantKeywords, exileAtEndStep, exileAtYourNextEndStep, sacrificeAtEndStep, returnToHandAtEndStep, requiresManaValueEqualsX, manaValueXOffset, requiresManaValueAtMostX, grantColor, grantSubtype, grantSubtypes, grantIndestructible, enterTapped, underOwnersControl, returnAtRandom, randomCount, choosePermanentType, exileSourceFromGraveyard, enterAttacking, maxManaValueEqualsLifeGainedThisTurn, false, enterWithMannequinCounter, grantSourceHasteIfSubtype, greatestPower, topmost, exileIfLeavesBattlefield, exileIfDying, grantCumulativeUpkeepCost, plusOneCountersIfSubtype, plusOneCountersIfExiledCostCardHasSubtype, counterIfExiledCostCardHasSubtype, counterCountIfExiledCostCardHasSubtype, plusOneCountersIfCardType, plusOneCountersIfCondition, plusOneCounterCount, createTokensIfSubtype, createTokensEffect, enterWithCounter, enterWithCounterCount, enterWithCounters, linkToSource, battlefieldIfCreatureElseHand, battlefieldIfCreatureElseExile, shuffleGraveyardBeforeRandomSelection, dynamicMaxManaValue, unearth, exileAtNextUpkeep, battlefieldEffectGrants, List.of(), false, eventCardIdsOnly, battlefieldEffectGrantDuration, targetGroup, null, null, false, false, false, false);
@@ -477,7 +477,7 @@ public record ReturnCardFromGraveyardEffect(
         private Set<CounterType> enterWithCounters = Set.of();
         private List<CardEffect> battlefieldEffectGrants = List.of();
         private List<CardEffect> perpetualBattlefieldEffectGrants = List.of();
-        private EffectDuration battlefieldEffectGrantDuration = EffectDuration.PERMANENT;
+        private Duration battlefieldEffectGrantDuration = Duration.PERMANENT;
         private int targetGroup = -1;
     }
 

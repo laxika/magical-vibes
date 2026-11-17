@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -47,7 +47,7 @@ public class WelcomeToJurassicPark extends Card {
                         new Fixed(0), new Fixed(4),
                         List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), null,
                         Set.of(CardType.CREATURE), GrantScope.TARGET,
-                        EffectDuration.WHILE_SOURCE_CONTROLLED, chapterOneFilter));
+                        Duration.WHILE_SOURCE_CONTROLLED, chapterOneFilter));
         setSagaChapterTargetFilter(1, Set.of(chapterOneTarget));
         setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(chapterOneTarget, 0, 99)));

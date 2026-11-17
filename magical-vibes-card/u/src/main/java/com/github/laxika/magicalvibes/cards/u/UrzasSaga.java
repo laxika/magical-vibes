@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -35,7 +35,7 @@ public class UrzasSaga extends Card {
     public UrzasSaga() {
         addTrigger(Triggers.chapter(1), new GrantActivatedAbilityEffect(
                 ManaAbilities.tapFor(ManaColor.COLORLESS),
-                GrantScope.SELF, null, EffectDuration.WHILE_SOURCE_REMAINS
+                GrantScope.SELF, null, Duration.WHILE_SOURCE_REMAINS
         ));
 
         PermanentCount artifactsYouControl = new PermanentCount(
@@ -58,7 +58,7 @@ public class UrzasSaga extends Card {
                         "{2}, {T}: Create a 0/0 colorless Construct artifact creature token with "
                                 + "\"This token gets +1/+1 for each artifact you control.\""
                 ),
-                GrantScope.SELF, null, EffectDuration.WHILE_SOURCE_REMAINS
+                GrantScope.SELF, null, Duration.WHILE_SOURCE_REMAINS
         ));
 
         addTrigger(Triggers.chapter(3), new SearchLibraryEffect(

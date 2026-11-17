@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTur
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
@@ -38,7 +38,7 @@ public class EmergentHaunting extends Card {
                                 null,
                                 Set.of(CardType.CREATURE),
                                 GrantScope.SELF,
-                                EffectDuration.PERMANENT
+                                Duration.PERMANENT
                         ));
 
         addActivatedAbility(new ActivatedAbility(

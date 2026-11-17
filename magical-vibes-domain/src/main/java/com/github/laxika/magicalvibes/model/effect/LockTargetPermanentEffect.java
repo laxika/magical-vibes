@@ -4,7 +4,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * Resolved effect that locks a single target permanent for a duration, forbidding some combination
  * of attacking, blocking, and activating its abilities. On resolution the handler stamps a
  * {@code FloatingContinuousEffect} carrying this record onto the target with the given
- * {@link EffectDuration}; the combat and ability-activation services then read the lock facts via
+ * {@link Duration}; the combat and ability-activation services then read the lock facts via
  * {@link PermanentLockEffect} and the duration machinery expires it.
  *
  * <p>Covers both Edifice of Authority abilities and Detain:
@@ -28,7 +28,7 @@ public record LockTargetPermanentEffect(
         boolean locksAttacking,
         boolean locksBlocking,
         boolean locksActivatedAbilities,
-        EffectDuration duration,
+        Duration duration,
         TargetPredicate declaredTarget) implements CardEffect, PermanentLockEffect {
 
     /** Creature-targeting lock (Edifice of Authority, classic Detain). */
@@ -36,13 +36,13 @@ public record LockTargetPermanentEffect(
             boolean locksAttacking,
             boolean locksBlocking,
             boolean locksActivatedAbilities,
-            EffectDuration duration) {
+            Duration duration) {
         this(locksAttacking, locksBlocking, locksActivatedAbilities, duration, TargetPredicates.creature());
     }
 
     @Override
     public boolean endsWhenSourceControllerChanges() {
-        return duration == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
+        return Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(duration);
     }
 
     @Override

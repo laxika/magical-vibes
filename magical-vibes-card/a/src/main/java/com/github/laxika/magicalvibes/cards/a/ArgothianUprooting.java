@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -33,12 +33,12 @@ public class ArgothianUprooting extends Card {
                         List.of(CardSubtype.ELEMENTAL),
                         Set.of(Keyword.REACH, Keyword.HASTE),
                         null, Set.of(),
-                        GrantScope.TARGET, EffectDuration.PERMANENT))
+                        GrantScope.TARGET, Duration.PERMANENT))
                 .addSpellEffect(new GrantEffectToTargetEffect(
                         new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
                         new ConjureCardNamedOntoBattlefieldEffect(
                                 "BRO", "276", Set.of(CardType.LAND))),
-                        EffectDuration.PERMANENT,
+                        Duration.PERMANENT,
                         false));
     }
 }

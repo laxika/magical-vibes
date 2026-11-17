@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.RecordedCoinFlip;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -104,10 +104,10 @@ public class FlipCoinOnEnterEffectHandler implements EntryReplacementHandlerBean
         int toughness = heads ? flipEffect.headsToughness() : flipEffect.tailsToughness();
         Set<Keyword> keywords = heads ? flipEffect.headsKeywords() : flipEffect.tailsKeywords();
         SetBasePowerToughnessEffect setter = new SetBasePowerToughnessEffect(
-                power, toughness, GrantScope.SELF, EffectDuration.PERMANENT);
+                power, toughness, GrantScope.SELF, Duration.PERMANENT);
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), sourceName, enteringPermanent.getId(), controllerId, setter,
-                enteringPermanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+                enteringPermanent.getId(), null, null, Duration.PERMANENT, 0));
         enteringPermanent.getPersistentGrantedKeywords().addAll(keywords);
 
         log.info("Game {} - {} enters with base power and toughness {}/{}", gameData.id,

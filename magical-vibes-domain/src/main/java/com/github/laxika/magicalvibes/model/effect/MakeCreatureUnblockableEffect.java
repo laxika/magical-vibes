@@ -9,30 +9,30 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * your opponents control").
  */
 public record MakeCreatureUnblockableEffect(boolean selfTargeting, boolean attachedPermanent,
-                                            EffectDuration duration, PermanentPredicate filter,
+                                            Duration duration, PermanentPredicate filter,
                                             boolean triggeringPermanent, boolean targetAnyPermanent,
                                             boolean notBlockableByOpponentsOfController)
         implements CardEffect {
 
     public MakeCreatureUnblockableEffect(boolean selfTargeting, boolean attachedPermanent,
-                                         EffectDuration duration, PermanentPredicate filter,
+                                         Duration duration, PermanentPredicate filter,
                                          boolean triggeringPermanent, boolean targetAnyPermanent) {
         this(selfTargeting, attachedPermanent, duration, filter, triggeringPermanent, targetAnyPermanent, false);
     }
 
     public MakeCreatureUnblockableEffect(boolean selfTargeting, boolean attachedPermanent,
-                                         EffectDuration duration, PermanentPredicate filter,
+                                         Duration duration, PermanentPredicate filter,
                                          boolean triggeringPermanent) {
         this(selfTargeting, attachedPermanent, duration, filter, triggeringPermanent, false);
     }
 
     public MakeCreatureUnblockableEffect(boolean selfTargeting, boolean attachedPermanent,
-                                         EffectDuration duration, PermanentPredicate filter) {
+                                         Duration duration, PermanentPredicate filter) {
         this(selfTargeting, attachedPermanent, duration, filter, false);
     }
 
     public MakeCreatureUnblockableEffect(boolean selfTargeting, boolean attachedPermanent) {
-        this(selfTargeting, attachedPermanent, EffectDuration.UNTIL_END_OF_TURN, null);
+        this(selfTargeting, attachedPermanent, Duration.UNTIL_END_OF_TURN, null);
     }
 
     public MakeCreatureUnblockableEffect() {
@@ -44,13 +44,13 @@ public record MakeCreatureUnblockableEffect(boolean selfTargeting, boolean attac
     }
 
     public MakeCreatureUnblockableEffect(boolean selfTargeting, boolean attachedPermanent,
-                                         EffectDuration duration) {
+                                         Duration duration) {
         this(selfTargeting, attachedPermanent, duration, null);
     }
 
     /** Makes a targeted creature unblockable, optionally narrowed by a permanent predicate. */
     public MakeCreatureUnblockableEffect(PermanentPredicate filter) {
-        this(false, false, EffectDuration.UNTIL_END_OF_TURN, filter);
+        this(false, false, Duration.UNTIL_END_OF_TURN, filter);
     }
 
     /** Makes the permanent attached to the source Equipment or Aura unblockable this turn. */
@@ -60,7 +60,7 @@ public record MakeCreatureUnblockableEffect(boolean selfTargeting, boolean attac
 
     /** Applies to the permanent whose action caused the trigger without choosing a target. */
     public static MakeCreatureUnblockableEffect forTriggeringPermanent() {
-        return new MakeCreatureUnblockableEffect(false, false, EffectDuration.UNTIL_END_OF_TURN, null, true);
+        return new MakeCreatureUnblockableEffect(false, false, Duration.UNTIL_END_OF_TURN, null, true);
     }
 
     /**
@@ -68,13 +68,13 @@ public record MakeCreatureUnblockableEffect(boolean selfTargeting, boolean attac
      * blocked by creatures the ability's controller's opponents control this turn.
      */
     public static MakeCreatureUnblockableEffect forTriggeringPermanentNotBlockableByOpponents() {
-        return new MakeCreatureUnblockableEffect(false, false, EffectDuration.UNTIL_END_OF_TURN, null,
+        return new MakeCreatureUnblockableEffect(false, false, Duration.UNTIL_END_OF_TURN, null,
                 true, false, true);
     }
 
     /** Allows subtype-based wording to target noncreature permanents as well. */
     public static MakeCreatureUnblockableEffect forTargetPermanent(PermanentPredicate filter) {
-        return new MakeCreatureUnblockableEffect(false, false, EffectDuration.UNTIL_END_OF_TURN,
+        return new MakeCreatureUnblockableEffect(false, false, Duration.UNTIL_END_OF_TURN,
                 filter, false, true);
     }
 

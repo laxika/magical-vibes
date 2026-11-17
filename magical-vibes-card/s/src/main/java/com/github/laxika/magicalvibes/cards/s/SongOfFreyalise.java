@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -30,13 +30,13 @@ public class SongOfFreyalise extends Card {
         // Chapter I: Until your next turn, creatures you control gain "{T}: Add one mana of any color."
         addTrigger(Triggers.chapter(1), new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(),
-                GrantScope.ALL_OWN_CREATURES, null, EffectDuration.UNTIL_YOUR_NEXT_TURN
+                GrantScope.ALL_OWN_CREATURES, null, Duration.UNTIL_YOUR_NEXT_TURN
         ));
 
         // Chapter II: Same as chapter I
         addTrigger(Triggers.chapter(2), new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(),
-                GrantScope.ALL_OWN_CREATURES, null, EffectDuration.UNTIL_YOUR_NEXT_TURN
+                GrantScope.ALL_OWN_CREATURES, null, Duration.UNTIL_YOUR_NEXT_TURN
         ));
 
         // Chapter III: Put a +1/+1 counter on each creature you control.

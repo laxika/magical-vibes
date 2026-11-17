@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import java.util.List;
@@ -105,7 +105,7 @@ public class BoostAllCreaturesEffectHandler implements NormalEffectHandlerBean {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), null, entry.getControllerId(),
                     new BuffTargetCreatureIndefinitelyEffect(powerBoost, toughnessBoost),
-                    target.getId(), null, null, EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                    target.getId(), null, null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
         } else {
             target.setPowerModifier(target.getPowerModifier() + powerBoost);
             target.setToughnessModifier(target.getToughnessModifier() + toughnessBoost);

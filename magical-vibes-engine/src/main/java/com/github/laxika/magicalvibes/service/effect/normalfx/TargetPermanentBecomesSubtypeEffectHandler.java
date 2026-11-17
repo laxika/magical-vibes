@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPermanentBecomesSubtypeEffect;
@@ -44,7 +44,7 @@ public class TargetPermanentBecomesSubtypeEffectHandler implements NormalEffectH
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(),
                 new GrantSubtypeEffect(becomes.subtype(), GrantScope.TARGET, true),
-                target.getId(), null, null, EffectDuration.PERMANENT, 0));
+                target.getId(), null, null, Duration.PERMANENT, 0));
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " becomes an " + becomes.subtype().getDisplayName() + "."));
     }

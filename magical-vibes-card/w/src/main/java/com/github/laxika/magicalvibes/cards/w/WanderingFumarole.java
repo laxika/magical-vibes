@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -49,7 +49,7 @@ public class WanderingFumarole extends Card {
                                 ),
                                 GrantScope.SELF,
                                 null,
-                                EffectDuration.UNTIL_END_OF_TURN)
+                                Duration.UNTIL_END_OF_TURN)
                 ),
                 "{2}{U}{R}: Until end of turn, this land becomes a 1/4 blue and red Elemental creature "
                         + "with \"{0}: Switch this creature's power and toughness until end of turn.\" It's still a land."

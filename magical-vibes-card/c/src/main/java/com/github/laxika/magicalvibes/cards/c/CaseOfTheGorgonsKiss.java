@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -53,6 +53,6 @@ public class CaseOfTheGorgonsKiss extends Card {
                                 null,
                                 Set.of(CardType.CREATURE),
                                 GrantScope.SELF,
-                                EffectDuration.PERMANENT)));
+                                Duration.PERMANENT)));
     }
 }

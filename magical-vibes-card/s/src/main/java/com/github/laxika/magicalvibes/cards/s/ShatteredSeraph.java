@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -53,7 +53,7 @@ public class ShatteredSeraph extends Card {
                         landManaAbility,
                         GrantScope.TARGET,
                         null,
-                        EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE
+                        Duration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE
                 )),
                 "{2}, Exile this card from your hand: Target land gains \"{T}: Add {W}, {U}, or {B}\" until this card is cast from exile.",
                 TargetFilters.land()

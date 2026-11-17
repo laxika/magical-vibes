@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -64,7 +64,7 @@ public class TeachSupport {
                     ability,
                     GrantScope.TARGET,
                     null,
-                    EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE,
+                    Duration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE,
                     entry.getCard().getId());
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(),
@@ -75,7 +75,7 @@ public class TeachSupport {
                     creature.getId(),
                     null,
                     null,
-                    EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE,
+                    Duration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE,
                     0));
             gameLogService.append(gameData, GameLog.builder()
                     .card(entry.getCard())

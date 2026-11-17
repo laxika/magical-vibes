@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
@@ -21,7 +21,7 @@ public class JumpScare extends Card {
                 .addSpellEffect(new BoostTargetCreatureEffect(2, 2))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET))
                 .addSpellEffect(new GrantSubtypeToTargetCreatureEffect(
-                        CardSubtype.HORROR, EffectDuration.UNTIL_END_OF_TURN))
+                        CardSubtype.HORROR, Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(new AddCardTypeToTargetPermanentEffect(CardType.ENCHANTMENT));
     }
 }

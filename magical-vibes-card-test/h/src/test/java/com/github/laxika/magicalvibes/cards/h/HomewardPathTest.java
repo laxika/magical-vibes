@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -76,7 +76,7 @@ class HomewardPathTest extends BaseCardTest {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
                 .applyControlEffect(gd, player2.getId(), ring,
                         new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                        EffectDuration.PERMANENT, null, "Test control effect"));
+                        Duration.PERMANENT, null, "Test control effect"));
 
         harness.activateAbility(player1, battlefieldIndex(path), 1, null, null);
         harness.passBothPriorities();

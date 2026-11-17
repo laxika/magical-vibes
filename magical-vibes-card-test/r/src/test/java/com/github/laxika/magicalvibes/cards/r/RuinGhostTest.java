@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -146,6 +146,6 @@ class RuinGhostTest extends BaseCardTest {
         gd.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), "Test control", null, controller.getId(),
                 new GainControlOfTargetEffect(ControlDuration.PERMANENT), permanentId, null, null,
-                EffectDuration.PERMANENT, 0));
+                Duration.PERMANENT, 0));
     }
 }

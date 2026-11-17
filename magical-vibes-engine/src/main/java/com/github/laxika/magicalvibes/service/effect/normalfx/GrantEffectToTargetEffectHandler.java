@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -92,19 +92,16 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        if (e.duration() == EffectDuration.UNTIL_END_OF_TURN) {
+        if (Duration.UNTIL_END_OF_TURN.equals(e.duration())) {
             target.addTemporaryAbility(e.grantedAbility());
-        } else if (e.duration() == EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP) {
+        } else if (Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(e.duration())) {
             target.addUntilNextUpkeepAbility(entry.getControllerId(), e.grantedAbility());
         } else {
             target.addPersistentAbility(e.grantedAbility());
         }
 
-        String durationText = switch (e.duration()) {
-            case UNTIL_END_OF_TURN -> " until end of turn";
-            case UNTIL_CONTROLLERS_NEXT_UPKEEP -> " until your next upkeep";
-            default -> "";
-        };
+        String durationText = Duration.UNTIL_END_OF_TURN.equals(e.duration()) ? " until end of turn"
+                : Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(e.duration()) ? " until your next upkeep" : "";
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" grants a " + AbilityEffects.label(e.grantedAbility()) + " ability to ")

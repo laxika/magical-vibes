@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.AttachedCreatureIsCopyOfExiledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedCreatureBecomesCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureIsCopyOfChosenCreatureEffect;
@@ -140,7 +140,7 @@ public class AuraCopyService {
                 UUID.randomUUID(), source.getCard().getName(), source.getId(),
                 gameQueryService.findPermanentController(gameData, source.getId()),
                 floatingEffect, affected.getId(), null, null,
-                EffectDuration.WHILE_ATTACHED, 0));
+                Duration.WHILE_ATTACHED, 0));
 
         gameLogService.append(gameData, GameLog.text(
                 originalName + " becomes a copy of " + chosen.getCard().getName() + "."));
@@ -160,7 +160,7 @@ public class AuraCopyService {
                 UUID.randomUUID(), equipment.getCard().getName(), equipment.getId(),
                 gameQueryService.findPermanentController(gameData, equipment.getId()),
                 new AttachedCreatureIsCopyOfExiledCreatureEffect(attached.getCard()), attached.getId(), null, null,
-                EffectDuration.WHILE_ATTACHED, 0));
+                Duration.WHILE_ATTACHED, 0));
         gameLogService.append(gameData, GameLog.text(
                 originalName + " becomes a copy of " + exiledCreature.getName() + "."));
         log.info("Game {} - {} becomes a copy of {} ({})", gameData.id, originalName,

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,7 +25,7 @@ public class KamahlFistOfKrosa extends Card {
                 "{G}",
                 List.of(new AnimatePermanentsEffect(
                         1, 1, List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN)),
+                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN)),
                 "{G}: Target land becomes a 1/1 creature until end of turn. It's still a land.",
                 TargetFilters.land()
         ));

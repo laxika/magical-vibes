@@ -29,7 +29,7 @@ public enum GrantDuration {
 
     /**
      * "for as long as you control [source]" (Aegis Angel). Neither temporary bucket applies: the
-     * grant is stamped as an {@code EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD} floating layer-6
+     * grant is stamped as an {@code Duration.WHILE_SOURCE_ON_BATTLEFIELD} floating layer-6
      * effect keyed to the source permanent, so it survives cleanup and ends only when the source
      * leaves the battlefield ({@code GameData.expireFloatingEffectsForDepartedSource}) or its
      * creator loses control of it ({@code CreatureControlService}).
@@ -42,7 +42,7 @@ public enum GrantDuration {
     /**
      * No stated duration, so the grant lasts until the end of the game (CR 611.2a) — Nature's Blessing's
      * "that creature gains banding, first strike, or trample". Stamped as an
-     * {@code EffectDuration.PERMANENT} floating layer-6 effect and mirrored into
+     * {@code Duration.PERMANENT} floating layer-6 effect and mirrored into
      * {@code Permanent.persistentGrantedKeywords}, neither of which turn cleanup clears.
      */
     INDEFINITE

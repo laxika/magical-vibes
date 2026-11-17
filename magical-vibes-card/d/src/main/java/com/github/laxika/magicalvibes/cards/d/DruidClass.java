@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
@@ -52,7 +52,7 @@ public class DruidClass extends Card {
                 false, "{4}{G}", List.of(new ClassLevelUpEffect(3, List.of(
                         new AnimatePermanentsEffect(
                                 null, null, List.of(), Set.of(Keyword.HASTE), null,
-                                Set.of(), GrantScope.TARGET, EffectDuration.PERMANENT,
+                                Set.of(), GrantScope.TARGET, Duration.PERMANENT,
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsLandPredicate(),
                                         new PermanentControlledBySourceControllerPredicate()))),

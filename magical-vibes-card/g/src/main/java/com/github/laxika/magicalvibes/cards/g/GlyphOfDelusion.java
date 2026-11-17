@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
@@ -33,6 +33,6 @@ public class GlyphOfDelusion extends Card {
                 .addSpellEffect(new GrantEffectToTargetEffect(StaticAbility.of(new DoesntUntapWithCounterEffect(CounterType.GLYPH))))
                 .addSpellEffect(new GrantEffectToTargetEffect(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                                 new RemoveCounterFromSourceEffect(CounterType.GLYPH, 1)),
-                                EffectDuration.PERMANENT, false));
+                                Duration.PERMANENT, false));
     }
 }

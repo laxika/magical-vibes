@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -33,7 +33,7 @@ public class EvolutionVat extends Card {
                                         "{2}{G}{U}: Double the number of +1/+1 counters on this creature."),
                                 GrantScope.TARGET,
                                 null,
-                                EffectDuration.UNTIL_END_OF_TURN)
+                                Duration.UNTIL_END_OF_TURN)
                 ),
                 "{3}, {T}: Tap target creature and put a +1/+1 counter on it. Until end of turn, that creature "
                         + "gains \"{2}{G}{U}: Double the number of +1/+1 counters on this creature.\"",

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerBattlefieldEffect;
@@ -87,7 +87,7 @@ public class ReturnDyingCreatureToOwnerBattlefieldEffectHandler implements Norma
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), cardToReturn.getName(), null, entry.getControllerId(),
                     new GrantSubtypeEffect(subtype, GrantScope.TARGET, overriding),
-                    permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+                    permanent.getId(), null, null, Duration.PERMANENT, 0));
             overriding = false;
         }
 

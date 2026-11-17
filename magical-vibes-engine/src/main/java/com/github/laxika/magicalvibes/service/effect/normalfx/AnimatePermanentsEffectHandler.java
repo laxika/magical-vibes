@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -28,25 +29,23 @@ public class AnimatePermanentsEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (AnimatePermanentsEffect) effect;
-        switch (e.duration()) {
-            case PERMANENT -> {
-                if (e.scope() == GrantScope.OWN_PERMANENTS && e.filter() != null) {
-                    animationSupport.animateControlledPermanentsPermanently(gameData, entry, e);
-                } else {
-                    animationSupport.animatePermanentTarget(gameData, entry, e);
-                }
+        if (Duration.PERMANENT.equals(e.duration())) {
+            if (e.scope() == GrantScope.OWN_PERMANENTS && e.filter() != null) {
+                animationSupport.animateControlledPermanentsPermanently(gameData, entry, e);
+            } else {
+                animationSupport.animatePermanentTarget(gameData, entry, e);
             }
-            case WHILE_SOURCE_ON_BATTLEFIELD -> animationSupport.animateWhileSource(gameData, entry, e);
-            case WHILE_SOURCE_REMAINS_TAPPED ->
-                    animationSupport.animateWhileSourceRemainsTapped(gameData, entry, e);
-            default -> {
-                switch (e.scope()) {
-                    case OWN_LANDS -> animationSupport.animateOwnLands(gameData, entry, e);
-                    case ALL_LANDS -> animationSupport.animateAllLands(gameData, entry, e);
-                    case TARGET_PLAYERS_LANDS -> animationSupport.animateTargetPlayersLands(gameData, entry, e);
-                    case OWN_PERMANENTS -> animationSupport.animateControlledPermanents(gameData, entry, e);
-                    default -> animationSupport.animateSingle(gameData, entry, e);
-                }
+        } else if (Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(e.duration())) {
+            animationSupport.animateWhileSource(gameData, entry, e);
+        } else if (Duration.WHILE_SOURCE_REMAINS_TAPPED.equals(e.duration())) {
+            animationSupport.animateWhileSourceRemainsTapped(gameData, entry, e);
+        } else {
+            switch (e.scope()) {
+                case OWN_LANDS -> animationSupport.animateOwnLands(gameData, entry, e);
+                case ALL_LANDS -> animationSupport.animateAllLands(gameData, entry, e);
+                case TARGET_PLAYERS_LANDS -> animationSupport.animateTargetPlayersLands(gameData, entry, e);
+                case OWN_PERMANENTS -> animationSupport.animateControlledPermanents(gameData, entry, e);
+                default -> animationSupport.animateSingle(gameData, entry, e);
             }
         }
     }

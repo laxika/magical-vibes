@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -77,7 +77,7 @@ public class EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHan
                     UUID.randomUUID(), entry.getCard().getName(), creature.getId(),
                     entry.getControllerId(), new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
                     creature.getId(), null, null,
-                    EffectDuration.UNTIL_END_OF_TURN, 0));
+                    Duration.UNTIL_END_OF_TURN, 0));
             count++;
         }
 

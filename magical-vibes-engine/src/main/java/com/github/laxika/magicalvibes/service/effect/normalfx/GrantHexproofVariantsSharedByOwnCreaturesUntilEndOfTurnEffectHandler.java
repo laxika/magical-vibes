@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantHexproofVariantsSharedByOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -62,7 +62,7 @@ public class GrantHexproofVariantsSharedByOwnCreaturesUntilEndOfTurnEffectHandle
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
                         new GrantEffectEffect(variant, GrantScope.TARGET), recipient.getId(), null, null,
-                        EffectDuration.UNTIL_END_OF_TURN, 0));
+                        Duration.UNTIL_END_OF_TURN, 0));
             }
         }
     }

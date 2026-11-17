@@ -44,7 +44,7 @@ public class AscendantSpirit extends Card {
                 new ConditionalEffect(new SourceHasSubtype(CardSubtype.ANGEL), SequenceEffect.of(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         new GrantEffectToTargetEffect(new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                                new DrawCardEffect()), com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT,
+                                new DrawCardEffect()), com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT,
                                 false, GrantScope.SELF)
                 ))),
                 "{S}{S}{S}{S}: If this creature is an Angel, put two +1/+1 counters on it and it gains \"Whenever this creature deals combat damage to a player, draw a card.\""));

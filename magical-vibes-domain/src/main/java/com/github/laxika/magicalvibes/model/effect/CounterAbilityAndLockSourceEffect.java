@@ -16,7 +16,7 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param lockDuration how long the source permanent's ability lock lasts
  */
-public record CounterAbilityAndLockSourceEffect(EffectDuration lockDuration)
+public record CounterAbilityAndLockSourceEffect(Duration lockDuration)
         implements CounterSpellingEffect {
 
     @Override

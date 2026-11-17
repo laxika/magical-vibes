@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExchangePowerWithTargetUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -42,7 +42,7 @@ public class ExchangePowerWithTargetUntilEndOfCombatEffectHandler implements Nor
 
         int sourcePower = gameQueryService.getEffectivePower(gameData, source);
         int targetPower = gameQueryService.getEffectivePower(gameData, target);
-        EffectDuration duration = EffectDuration.UNTIL_END_OF_COMBAT;
+        Duration duration = Duration.UNTIL_END_OF_COMBAT;
 
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),

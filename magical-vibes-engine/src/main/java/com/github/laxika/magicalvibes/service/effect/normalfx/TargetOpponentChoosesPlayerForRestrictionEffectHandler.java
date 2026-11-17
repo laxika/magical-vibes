@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsAndAttackWithCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentChoosesPlayerForRestrictionEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -59,7 +59,7 @@ public class TargetOpponentChoosesPlayerForRestrictionEffectHandler implements N
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), context.sourceCardName(), null, context.controllerId(),
                     new PlayerCantCastSpellsAndAttackWithCreaturesEffect(), null, playerId, null,
-                    EffectDuration.UNTIL_YOUR_NEXT_TURN, 0L));
+                    Duration.UNTIL_YOUR_NEXT_TURN, 0L));
         }
 
         gameLogService.append(gameData, GameLog.text(

@@ -167,7 +167,7 @@ class CribSwapTest extends BaseCardTest {
                 java.util.UUID.randomUUID(), null, null, player1.getId(),
                 new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
                         com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
-                target.getId(), null, null, com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT, 0));
+                target.getId(), null, null, com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, 0));
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(creature);

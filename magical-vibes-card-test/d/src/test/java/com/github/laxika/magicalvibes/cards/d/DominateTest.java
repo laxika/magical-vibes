@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.n.NestingWurm;
 import com.github.laxika.magicalvibes.cards.n.NetterEnDal;
 import com.github.laxika.magicalvibes.cards.s.SealOfRemoval;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +31,7 @@ class DominateTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getId().equals(netterEnDalId));
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(netterEnDalId));
-        assertThat(gd.newestControlEffectFor(netterEnDalId).duration()).isEqualTo(EffectDuration.PERMANENT);
+        assertThat(gd.newestControlEffectFor(netterEnDalId).duration()).isEqualTo(Duration.PERMANENT);
     }
 
     @Test

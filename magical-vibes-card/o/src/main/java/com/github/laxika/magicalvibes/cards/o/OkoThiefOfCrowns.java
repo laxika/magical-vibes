@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -56,8 +56,8 @@ public class OkoThiefOfCrowns extends Card {
                         new SetCardTypesEffect(Set.of(CardType.CREATURE), GrantScope.TARGET),
                         new SetTargetColorEffect(CardColor.GREEN),
                         new TargetPermanentBecomesSubtypeEffect(CardSubtype.ELK),
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT),
-                        new SetBasePowerToughnessEffect(3, 3, GrantScope.TARGET, EffectDuration.PERMANENT)
+                        new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT),
+                        new SetBasePowerToughnessEffect(3, 3, GrantScope.TARGET, Duration.PERMANENT)
                 ),
                 "+1: Target artifact or creature loses all abilities and becomes a green Elk creature with base power and toughness 3/3.",
                 artifactOrCreature

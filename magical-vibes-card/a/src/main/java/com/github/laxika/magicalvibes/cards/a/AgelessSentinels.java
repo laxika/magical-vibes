@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureTypeWithBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -21,6 +21,6 @@ public class AgelessSentinels extends Card {
                         CardSubtype.BIRD, null, CardSubtype.WALL),
                 new BecomeCreatureTypeWithBasePowerToughnessEffect(
                         null, null, CardSubtype.GIANT, null, false, false, null),
-                new RemoveKeywordEffect(Keyword.DEFENDER, GrantScope.SELF, EffectDuration.PERMANENT)));
+                new RemoveKeywordEffect(Keyword.DEFENDER, GrantScope.SELF, Duration.PERMANENT)));
     }
 }

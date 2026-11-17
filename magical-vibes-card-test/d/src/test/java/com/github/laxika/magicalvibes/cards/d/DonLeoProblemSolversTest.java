@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -115,7 +115,7 @@ class DonLeoProblemSolversTest extends BaseCardTest {
         gd.stolenCreatures.put(warden.getId(), player2.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control effect", null,
                 player1.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT), warden.getId(),
-                null, null, EffectDuration.PERMANENT, 0));
+                null, null, Duration.PERMANENT, 0));
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 

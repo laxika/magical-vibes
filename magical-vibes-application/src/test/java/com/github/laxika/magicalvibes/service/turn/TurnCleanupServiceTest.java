@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
@@ -748,7 +748,7 @@ class TurnCleanupServiceTest {
             gd.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), "Tilonalli's Skinshifter", perm.getId(), player1Id,
                     new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(), perm.getId(), null, null,
-                    EffectDuration.UNTIL_END_OF_TURN, 0));
+                    Duration.UNTIL_END_OF_TURN, 0));
 
             sut.resetEndOfTurnModifiers(gd);
 
@@ -764,7 +764,7 @@ class TurnCleanupServiceTest {
             gd.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), "Tilonalli's Skinshifter", UUID.randomUUID(), player1Id,
                     new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(), UUID.randomUUID(), null, null,
-                    EffectDuration.UNTIL_END_OF_TURN, 0));
+                    Duration.UNTIL_END_OF_TURN, 0));
 
             sut.resetEndOfTurnModifiers(gd);
 
@@ -855,7 +855,7 @@ class TurnCleanupServiceTest {
             gd.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), "The Last Agni Kai", null, player1Id,
                     new PreventManaDrainEffect(ManaColor.RED), null, player1Id, null,
-                    EffectDuration.UNTIL_END_OF_TURN, 0));
+                    Duration.UNTIL_END_OF_TURN, 0));
 
             sut.drainManaPools(gd);
 
@@ -888,7 +888,7 @@ class TurnCleanupServiceTest {
             gd.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), "Inspired Idea", null, player1Id,
                     new ReduceControllerMaxHandSizeEffect(3), null, player1Id, null,
-                    EffectDuration.PERMANENT, 0));
+                    Duration.PERMANENT, 0));
 
             assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(4);
         }

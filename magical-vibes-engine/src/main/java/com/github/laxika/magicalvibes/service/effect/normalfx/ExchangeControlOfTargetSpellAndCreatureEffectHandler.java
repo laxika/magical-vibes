@@ -99,7 +99,7 @@ public class ExchangeControlOfTargetSpellAndCreatureEffectHandler implements Nor
                 spellControllerId,
                 creature,
                 new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                ControlDuration.PERMANENT.toEffectDuration(),
+                ControlDuration.PERMANENT.toDuration(),
                 null,
                 entry.getCard().getName());
         if (!creatureControlApplied) {

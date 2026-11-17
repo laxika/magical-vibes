@@ -40,6 +40,6 @@ public class TriggeringObjectControllerGainsControlOfEnchantedPermanentEffectHan
 
         creatureControlService.applyControlEffect(gameData, newControllerId, enchantedPermanent,
                 new GainControlOfTargetEffect(e.duration()),
-                e.duration().toEffectDuration(), null, entry.getCard().getName());
+                e.duration().toDuration(), null, entry.getCard().getName());
     }
 }

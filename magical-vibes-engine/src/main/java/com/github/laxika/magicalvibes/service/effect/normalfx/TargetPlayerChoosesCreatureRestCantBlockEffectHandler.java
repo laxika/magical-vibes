@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
@@ -75,6 +75,6 @@ public class TargetPlayerChoosesCreatureRestCantBlockEffectHandler implements No
                 "Other creatures can't block", null, playerId,
                 new MatchingCreaturesCantBlockMatchingCreaturesEffect(predicate,
                         new PermanentTruePredicate(), "can't block this turn"),
-                null, null, predicate, EffectDuration.UNTIL_END_OF_TURN, 0));
+                null, null, predicate, Duration.UNTIL_END_OF_TURN, 0));
     }
 }

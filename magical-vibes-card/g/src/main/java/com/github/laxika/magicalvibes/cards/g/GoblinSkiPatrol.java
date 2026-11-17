@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -28,7 +28,7 @@ public class GoblinSkiPatrol extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false, "{1}{R}",
                 List.of(
-                        new BoostSelfEffect(2, 0, EffectDuration.PERMANENT),
+                        new BoostSelfEffect(2, 0, Duration.PERMANENT),
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF, GrantDuration.INDEFINITE),
                         SacrificeSelfAtEndStepEffect.byCurrentController()
                 ),

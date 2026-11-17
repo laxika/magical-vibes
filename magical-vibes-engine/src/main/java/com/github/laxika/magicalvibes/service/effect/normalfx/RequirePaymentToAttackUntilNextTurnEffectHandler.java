@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GlobalAttackTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -40,6 +40,6 @@ public class RequirePaymentToAttackUntilNextTurnEffectHandler implements NormalE
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(), new GlobalAttackTaxEffect(amount), null,
-                entry.getControllerId(), null, EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                entry.getControllerId(), null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 
@@ -23,7 +23,7 @@ public class MythosOfVadrok extends Card {
                         new ColorSpentToCast(ManaColor.WHITE),
                         new ColorSpentToCast(ManaColor.BLUE))),
                 new LockTargetPermanentEffect(true, true, true,
-                        EffectDuration.UNTIL_YOUR_NEXT_TURN,
+                        Duration.UNTIL_YOUR_NEXT_TURN,
                         TargetPredicates.creatureOrPlaneswalker())));
     }
 }

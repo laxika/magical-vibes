@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForCardToHandEffect;
@@ -50,7 +50,7 @@ public class GrandMasterOfFlowers extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new LockTargetPermanentEffect(true, true, false, EffectDuration.UNTIL_YOUR_NEXT_TURN)),
+                List.of(new LockTargetPermanentEffect(true, true, false, Duration.UNTIL_YOUR_NEXT_TURN)),
                 "+1: Target creature without first strike, double strike, or vigilance can't attack or block until your next turn.",
                 CREATURE_WITHOUT_COMBAT_KEYWORDS));
         addActivatedAbility(new ActivatedAbility(

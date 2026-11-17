@@ -78,6 +78,6 @@ public class ChooseAnotherPlayerGainsControlOfTargetPermanentEffectHandler imple
 
         creatureControlService.applyControlEffect(gameData, newControllerId, target,
                 new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                ControlDuration.PERMANENT.toEffectDuration(), null, sourceCardName);
+                ControlDuration.PERMANENT.toDuration(), null, sourceCardName);
     }
 }

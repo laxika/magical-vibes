@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -38,8 +38,8 @@ public class Dragonshift extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{U}{U}{R}{R}"))));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
-                new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN),
-                new LosesAllAbilitiesEffect(GrantScope.OWN_CREATURES, EffectDuration.UNTIL_END_OF_TURN)));
+                new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.UNTIL_END_OF_TURN),
+                new LosesAllAbilitiesEffect(GrantScope.OWN_CREATURES, Duration.UNTIL_END_OF_TURN)));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new GrantColorUntilEndOfTurnEffect(CardColor.BLUE),

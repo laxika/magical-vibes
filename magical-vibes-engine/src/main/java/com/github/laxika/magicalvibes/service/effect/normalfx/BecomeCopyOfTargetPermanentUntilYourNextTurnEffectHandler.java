@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetPermanentUntilYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -112,7 +112,7 @@ public class BecomeCopyOfTargetPermanentUntilYourNextTurnEffectHandler implement
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), sourceId,
                 entry.getControllerId(), new MakeTargetCopyOfTargetCreatureUntilNextTurnEffect(),
-                sourceId, null, null, EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                sourceId, null, null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
 
         gameLogService.append(gameData,
                 GameLog.text(originalName + " becomes a copy of " + targetName

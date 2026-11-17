@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.ControllerEnergyCounters;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -33,7 +33,7 @@ public class RazorfieldRipper extends Card {
 
     public RazorfieldRipper() {
         addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
-                EffectDuration.WHILE_ATTACHED));
+                Duration.WHILE_ATTACHED));
         addTrigger(Triggers.attacks(), new EnergyCountersEffect(1),
                 new BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect(
                 new ControllerEnergyCounters(), new ControllerEnergyCounters()));

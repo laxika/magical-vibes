@@ -143,7 +143,7 @@ public class SeizeTheSpotlightEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
             creatureControlService.applyControlEffect(gameData, controllerId, creature,
-                    controlEffect, ControlDuration.END_OF_TURN.toEffectDuration(), null, sourceName);
+                    controlEffect, ControlDuration.END_OF_TURN.toDuration(), null, sourceName);
             tapUntapSupport.untapPermanent(gameData, creature);
             grantKeywordEffectHandler.grantToPermanent(gameData, sourceName, controllerId, creature,
                     Set.of(Keyword.HASTE));

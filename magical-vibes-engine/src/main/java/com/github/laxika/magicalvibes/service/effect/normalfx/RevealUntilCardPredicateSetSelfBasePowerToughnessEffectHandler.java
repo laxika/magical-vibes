@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateSetSelfBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
@@ -94,7 +94,7 @@ public class RevealUntilCardPredicateSetSelfBasePowerToughnessEffectHandler
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), source.getId(), controllerId,
                 new SetBasePowerToughnessEffect(power, toughness), source.getId(), null, null,
-                EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                Duration.UNTIL_YOUR_NEXT_TURN, 0));
 
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                 " has base power and toughness " + power + "/" + toughness

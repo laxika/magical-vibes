@@ -219,7 +219,7 @@ class BeastWithinTest extends BaseCardTest {
                 .applyControlEffect(gd, player1.getId(), target,
                         new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
                                 com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
-                        com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT, null, "Test setup"));
+                        com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, null, "Test setup"));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Porcelain Legionnaire");

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -45,7 +45,7 @@ public class HauntedScreen extends Card {
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 7),
                         new AnimatePermanentsEffect(
                                 0, 0, List.of(CardSubtype.SPIRIT), Set.of(), null,
-                                Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.PERMANENT)
+                                Set.of(CardType.CREATURE), GrantScope.SELF, Duration.PERMANENT)
                 ),
                 "{7}: Put seven +1/+1 counters on this artifact. It becomes a 0/0 Spirit creature "
                         + "in addition to its other types. Activate only once."

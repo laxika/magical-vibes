@@ -69,7 +69,7 @@ public class GainControlOfAllPermanentsTargetPlayerControlsEffectHandler impleme
                 continue;
             }
             creatureControlService.applyControlEffect(gameData, entry.getControllerId(), permanent,
-                    controlEffect, duration.toEffectDuration(), null,
+                    controlEffect, duration.toDuration(), null,
                     entry.getCard().getName());
         }
 

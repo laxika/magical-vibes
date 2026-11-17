@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAndLockTargetPermanentWhileTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -47,10 +47,10 @@ public class TapAndLockTargetPermanentWhileTappedEffectHandler implements Normal
 
         tapUntapSupport.tapPermanent(gameData, target);
         LockTargetPermanentEffect lock = new LockTargetPermanentEffect(
-                false, false, true, EffectDuration.WHILE_SOURCE_TAPPED, TargetPredicates.permanent());
+                false, false, true, Duration.WHILE_SOURCE_TAPPED, TargetPredicates.permanent());
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), target.getId(), entry.getControllerId(),
-                lock, target.getId(), null, null, EffectDuration.WHILE_SOURCE_TAPPED, 0));
+                lock, target.getId(), null, null, Duration.WHILE_SOURCE_TAPPED, 0));
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 "'s activated abilities can't be activated for as long as it remains tapped."));

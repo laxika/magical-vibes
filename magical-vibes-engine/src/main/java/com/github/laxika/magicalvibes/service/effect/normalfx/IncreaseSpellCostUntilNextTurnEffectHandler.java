@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -33,7 +33,7 @@ public class IncreaseSpellCostUntilNextTurnEffectHandler implements NormalEffect
                 null,
                 null,
                 null,
-                EffectDuration.UNTIL_YOUR_NEXT_TURN,
+                Duration.UNTIL_YOUR_NEXT_TURN,
                 0
         ));
     }

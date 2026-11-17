@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenColorsIndefinitelyEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -40,6 +40,6 @@ public class EnchantedPermanentBecomesChosenColorsIndefinitelyEffectHandler
         }
 
         playerInputService.beginBecomeChosenColorsChoice(gameData, entry.getControllerId(),
-                enchanted.getId(), entry.getCard().getName(), List.of(), EffectDuration.PERMANENT);
+                enchanted.getId(), entry.getCard().getName(), List.of(), Duration.PERMANENT);
     }
 }

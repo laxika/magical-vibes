@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -94,7 +94,7 @@ public class BecomeCopyOfCardUntilEndOfTurnEffectHandler implements NormalEffect
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), abilitySource.getName(), source.getId(),
                 controllerId, new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(), source.getId(),
-                null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                null, null, Duration.UNTIL_END_OF_TURN, 0));
 
         gameLogService.append(gameData,
                 GameLog.text(originalName + " becomes a copy of " + card.getName() + " until end of turn."));

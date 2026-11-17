@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -33,7 +33,7 @@ public class NoyanDarRoilShaper extends Card {
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
                                 new AnimatePermanentsEffect(
                                         0, 0, List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE), null,
-                                        Set.of(CardType.CREATURE), GrantScope.TARGET, EffectDuration.PERMANENT)),
+                                        Set.of(CardType.CREATURE), GrantScope.TARGET, Duration.PERMANENT)),
                         "Put three +1/+1 counters on target land you control?"));
     }
 }

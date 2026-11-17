@@ -129,7 +129,7 @@ public class TurnCleanupService {
             gameData.expireFloatingEffects(effect -> expiration.controlEffectId().equals(effect.id()));
         }
         gameData.expireFloatingEffects(effect ->
-                effect.duration() == com.github.laxika.magicalvibes.model.effect.EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN
+                effect.duration() == com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_YOUR_NEXT_TURN
                         && !effect.isControlEffect()
                         && activePlayerId.equals(effect.controllerId())
                         && gameData.turnStartTimestamp > 0

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllProtectionUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -91,7 +91,7 @@ public class RemoveAllProtectionUntilEndOfTurnEffectHandler implements NormalEff
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(), remove, target.getId(), null, null,
-                EffectDuration.UNTIL_END_OF_TURN, 0));
+                Duration.UNTIL_END_OF_TURN, 0));
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())
                 .text(" loses protection until end of turn.")

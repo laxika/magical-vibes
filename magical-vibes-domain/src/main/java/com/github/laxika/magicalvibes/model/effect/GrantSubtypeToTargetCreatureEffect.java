@@ -15,20 +15,20 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * @param perpetual when true (with a PERMANENT duration) the subtype is also recorded on the target's
  *                  card, so it follows that card between zones ("perpetually becomes a Goat")
  */
-public record GrantSubtypeToTargetCreatureEffect(CardSubtype subtype, EffectDuration duration, boolean overriding,
+public record GrantSubtypeToTargetCreatureEffect(CardSubtype subtype, Duration duration, boolean overriding,
                                                  boolean perpetual)
         implements CardEffect {
 
-    public GrantSubtypeToTargetCreatureEffect(CardSubtype subtype, EffectDuration duration, boolean overriding) {
+    public GrantSubtypeToTargetCreatureEffect(CardSubtype subtype, Duration duration, boolean overriding) {
         this(subtype, duration, overriding, false);
     }
 
-    public GrantSubtypeToTargetCreatureEffect(CardSubtype subtype, EffectDuration duration) {
+    public GrantSubtypeToTargetCreatureEffect(CardSubtype subtype, Duration duration) {
         this(subtype, duration, false, false);
     }
 
     public GrantSubtypeToTargetCreatureEffect(CardSubtype subtype) {
-        this(subtype, EffectDuration.PERMANENT, false, false);
+        this(subtype, Duration.PERMANENT, false, false);
     }
 
     @Override

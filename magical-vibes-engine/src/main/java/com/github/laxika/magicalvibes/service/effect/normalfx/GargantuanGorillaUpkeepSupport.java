@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -81,7 +81,7 @@ public class GargantuanGorillaUpkeepSupport {
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 source.getCard().getName(), null, controllerId,
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF),
-                source.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                source.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " gains trample until end of turn."));
         log.info("Game {} - {} gains trample from a sacrificed snow Forest", gameData.id, source.getCard().getName());
     }

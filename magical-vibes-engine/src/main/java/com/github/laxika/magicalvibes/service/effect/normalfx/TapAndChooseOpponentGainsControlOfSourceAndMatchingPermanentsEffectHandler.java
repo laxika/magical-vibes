@@ -114,7 +114,7 @@ public class TapAndChooseOpponentGainsControlOfSourceAndMatchingPermanentsEffect
                         chosenOpponentId,
                         permanent,
                         controlEffect,
-                        ControlDuration.PERMANENT.toEffectDuration(),
+                        ControlDuration.PERMANENT.toDuration(),
                         null,
                         context.sourceCardName());
             }

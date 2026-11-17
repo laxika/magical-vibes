@@ -25,7 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadChosenCreatureDamagedPlayerControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -1530,7 +1530,7 @@ public class MultiPermanentChoiceHandlerService {
             boolean sourceOk = !duration.isSourceLinked() || (source != null && playerId.equals(sourceController));
             if (stolen != null && sourceOk) {
                 creatureControlService.applyControlEffect(gameData, playerId, stolen,
-                        new GainControlOfTargetEffect(duration), duration.toEffectDuration(),
+                        new GainControlOfTargetEffect(duration), duration.toDuration(),
                         duration.isSourceLinked() ? sourcePermId : null,
                         source != null ? source.getCard().getName() : stolen.getCard().getName());
                 if (source != null) {
@@ -1668,7 +1668,7 @@ public class MultiPermanentChoiceHandlerService {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), context.sourceName(), null,
                         context.controllerId(), new GoadChosenCreatureDamagedPlayerControlsEffect(),
-                        target.getId(), null, null, EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                        target.getId(), null, null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
                 gameLogService.append(gameData,
                         GameLog.builder().text(context.sourceName() + " goads ").card(target.getCard()).text(".").build());
                 log.info("Game {} - {} goads {}", gameData.id, context.sourceName(), target.getCard().getName());

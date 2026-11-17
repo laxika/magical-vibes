@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
@@ -46,11 +46,11 @@ public class KitesailLarcenist extends Card {
                 "Target must be another artifact or creature"), 0, 99)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.TARGET,
-                                EffectDuration.WHILE_SOURCE_REMAINS),
+                                Duration.WHILE_SOURCE_REMAINS),
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.TREASURE,
-                                EffectDuration.WHILE_SOURCE_REMAINS, true),
+                                Duration.WHILE_SOURCE_REMAINS, true),
                         new LosesAllAbilitiesEffect(GrantScope.TARGET,
-                                EffectDuration.WHILE_SOURCE_REMAINS),
+                                Duration.WHILE_SOURCE_REMAINS),
                         new GrantActivatedAbilityEffect(
                                 new ActivatedAbility(
                                         true,
@@ -60,6 +60,6 @@ public class KitesailLarcenist extends Card {
                                 ),
                                 GrantScope.TARGET,
                                 null,
-                                EffectDuration.WHILE_SOURCE_REMAINS));
+                                Duration.WHILE_SOURCE_REMAINS));
     }
 }

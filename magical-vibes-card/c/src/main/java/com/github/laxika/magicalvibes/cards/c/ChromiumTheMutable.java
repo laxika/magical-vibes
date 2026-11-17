@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
@@ -30,7 +30,7 @@ public class ChromiumTheMutable extends Card {
                         new DiscardCardTypeCost(null, null),
                         new SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.HUMAN),
                         new SetBasePowerToughnessEffect(1, 1, GrantScope.SELF),
-                        new LosesAllAbilitiesEffect(GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN),
+                        new LosesAllAbilitiesEffect(GrantScope.SELF, Duration.UNTIL_END_OF_TURN),
                         new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF),
                         new MakeCreatureUnblockableEffect(true)
                 ),

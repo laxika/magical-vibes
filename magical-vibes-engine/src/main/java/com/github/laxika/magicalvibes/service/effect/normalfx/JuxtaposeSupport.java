@@ -121,9 +121,9 @@ public class JuxtaposeSupport {
 
         GainControlOfTargetEffect control = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
         creatureControlService.applyControlEffect(gameData, targetPlayerId, controllerPerm, control,
-                ControlDuration.PERMANENT.toEffectDuration(), null, sourceCard.getName());
+                ControlDuration.PERMANENT.toDuration(), null, sourceCard.getName());
         creatureControlService.applyControlEffect(gameData, controllerId, targetPerm, control,
-                ControlDuration.PERMANENT.toEffectDuration(), null, sourceCard.getName());
+                ControlDuration.PERMANENT.toDuration(), null, sourceCard.getName());
 
         
         gameLogService.append(gameData, GameLog.builder().card(sourceCard).text(": ").card(controllerPerm.getCard()).text(" and ").card(targetPerm.getCard()).text(" exchange controllers.").build());

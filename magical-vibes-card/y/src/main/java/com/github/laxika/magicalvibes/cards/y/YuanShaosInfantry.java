@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,6 +16,6 @@ public class YuanShaosInfantry extends Card {
         // Whenever this creature attacks alone, this creature can't be blocked this combat.
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
-                new MakeCreatureUnblockableEffect(true, false, EffectDuration.UNTIL_END_OF_COMBAT));
+                new MakeCreatureUnblockableEffect(true, false, Duration.UNTIL_END_OF_COMBAT));
     }
 }

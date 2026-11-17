@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
@@ -23,7 +23,7 @@ public class BribersPurse extends Card {
                 "{1}",
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.GEM),
-                        new LockTargetPermanentEffect(true, true, false, EffectDuration.UNTIL_END_OF_TURN)
+                        new LockTargetPermanentEffect(true, true, false, Duration.UNTIL_END_OF_TURN)
                 ),
                 "{1}, {T}, Remove a gem counter from Briber's Purse: Target creature can't attack or block this turn."
         ));

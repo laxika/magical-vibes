@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ElrondOfTheWhiteCouncilEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -154,7 +154,7 @@ public class ElrondOfTheWhiteCouncilEffectHandler implements NormalEffectHandler
                 continue;
             }
             creatureControlService.applyControlEffect(gameData, effectControllerId, permanent,
-                    controlEffect, EffectDuration.PERMANENT, null, sourceName);
+                    controlEffect, Duration.PERMANENT, null, sourceName);
 
             StackEntry grantEntry = StackEntry.derivedFrom(entry, entry.getCard(), effectControllerId,
                     entry.getDescription(), List.of(grantRestriction), permanent.getId(),

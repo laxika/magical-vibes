@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -44,7 +44,7 @@ public class VvvizaOrbitalOverseer extends Card {
 
     private static final AnimatePermanentsEffect ANIMATE_LANDER = new AnimatePermanentsEffect(
             new Fixed(2), new Fixed(1), List.of(), Set.of(Keyword.FLYING), null, Set.of(CardType.CREATURE),
-            GrantScope.TOKENS_CREATED_THIS_RESOLUTION, EffectDuration.PERMANENT, null);
+            GrantScope.TOKENS_CREATED_THIS_RESOLUTION, Duration.PERMANENT, null);
 
     public VvvizaOrbitalOverseer() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), DraftFromSpellbookEffect.conjureOntoBattlefield(List.of(

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAsNamedLandEffect;
@@ -69,16 +69,16 @@ public class ReturnDyingCreatureToBattlefieldAsNamedLandEffectHandler
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, controllerId,
                 new SetNameEffect(returnEffect.landName(), GrantScope.TARGET),
-                permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+                permanent.getId(), null, null, Duration.PERMANENT, 0));
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, controllerId,
                 new SetCardTypesEffect(Set.of(CardType.LAND), GrantScope.TARGET),
-                permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+                permanent.getId(), null, null, Duration.PERMANENT, 0));
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, controllerId,
                 new GrantActivatedAbilityEffect(
                         ManaAbilities.tapFor(ManaColor.COLORLESS), GrantScope.TARGET),
-                permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+                permanent.getId(), null, null, Duration.PERMANENT, 0));
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
 

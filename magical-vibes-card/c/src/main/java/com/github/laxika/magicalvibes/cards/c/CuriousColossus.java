@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
@@ -25,10 +25,10 @@ public class CuriousColossus extends Card {
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new LosesAllAbilitiesEffect(GrantScope.TARGET_PLAYERS_CREATURES,
-                                EffectDuration.PERMANENT),
+                                Duration.PERMANENT),
                         new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.COWARD,
-                                GrantScope.TARGET_PLAYERS_CREATURES, null, EffectDuration.PERMANENT),
+                                GrantScope.TARGET_PLAYERS_CREATURES, null, Duration.PERMANENT),
                         new SetBasePowerToughnessEffect(1, 1, GrantScope.TARGET_PLAYERS_CREATURES,
-                                EffectDuration.PERMANENT));
+                                Duration.PERMANENT));
     }
 }

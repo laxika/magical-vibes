@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -62,7 +62,7 @@ public class WrennAndOne extends Card {
                         ManaAbilities.tapFor(ManaColor.GREEN),
                         GrantScope.SELF,
                         null,
-                        EffectDuration.UNTIL_YOUR_NEXT_TURN)),
+                        Duration.UNTIL_YOUR_NEXT_TURN)),
                 "+1: Wrenn and One gains \"{T}: Add {G}\" until your next turn."
         ));
 

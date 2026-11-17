@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCreatureCantBeBlockedByMostLifePlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
@@ -89,7 +89,7 @@ public class MakeTargetCreatureCantBeBlockedByMostLifePlayerEffectHandler implem
                         new PermanentControlledByPlayerPredicate(chosenPlayerId),
                         new PermanentIsSpecificPermanentPredicate(targetCreatureId),
                         "can't block this creature"),
-                null, null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                null, null, null, Duration.UNTIL_END_OF_TURN, 0));
 
         String playerName = gameData.playerIdToName.getOrDefault(chosenPlayerId, "that player");
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),

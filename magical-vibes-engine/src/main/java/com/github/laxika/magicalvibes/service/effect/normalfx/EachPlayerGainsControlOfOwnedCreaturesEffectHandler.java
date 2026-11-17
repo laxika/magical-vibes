@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerGainsControlOfOwnedCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -50,7 +50,7 @@ public class EachPlayerGainsControlOfOwnedCreaturesEffectHandler implements Norm
         GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
         for (OwnedCreature ownedCreature : creaturesToReturn) {
             creatureControlService.applyControlEffect(gameData, ownedCreature.ownerId(), ownedCreature.permanent(),
-                    controlEffect, EffectDuration.PERMANENT, null, entry.getCard().getName());
+                    controlEffect, Duration.PERMANENT, null, entry.getCard().getName());
         }
     }
 
@@ -66,7 +66,7 @@ public class EachPlayerGainsControlOfOwnedCreaturesEffectHandler implements Norm
             return true;
         }
         FloatingContinuousEffect newest = gameData.newestControlEffectFor(permanent.getId());
-        return newest != null && !(newest.duration() == EffectDuration.PERMANENT
+        return newest != null && !(Duration.PERMANENT.equals(newest.duration())
                 && ownerId.equals(gameData.resolveControlEffectController(newest)));
     }
 

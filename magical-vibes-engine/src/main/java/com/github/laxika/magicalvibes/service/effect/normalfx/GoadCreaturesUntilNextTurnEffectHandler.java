@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import java.util.UUID;
@@ -30,7 +30,7 @@ public class GoadCreaturesUntilNextTurnEffectHandler implements NormalEffectHand
                 null,
                 null,
                 goad.affectedPredicate(),
-                EffectDuration.UNTIL_YOUR_NEXT_TURN,
+                Duration.UNTIL_YOUR_NEXT_TURN,
                 0));
     }
 }

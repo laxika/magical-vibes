@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetBasePowerToughnessUntilNextUpkeepThenAddCounterEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -28,7 +28,7 @@ import java.util.UUID;
  * <p>The base-P/T set is registered as a layer-7b {@link FloatingContinuousEffect} carrying a
  * {@link SetBasePowerToughnessEffect} payload — the same shape the one-shot setter uses, so it
  * orders against other 7b setters by timestamp — but with
- * {@link EffectDuration#UNTIL_CONTROLLERS_NEXT_UPKEEP} so it survives end-of-turn cleanup. The
+ * {@link Duration#UNTIL_CONTROLLERS_NEXT_UPKEEP} so it survives end-of-turn cleanup. The
  * legacy {@code basePowerToughnessOverriddenUntilEndOfTurn} fields are deliberately NOT written:
  * they are cleared during turn cleanup, which would end the effect a turn early.
  */
@@ -57,7 +57,7 @@ public class SetTargetBasePowerToughnessUntilNextUpkeepThenAddCounterEffectHandl
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 new SetBasePowerToughnessEffect(e.power(), e.toughness()), target.getId(), null, null,
-                EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP, 0));
+                Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP, 0));
 
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                 Triggers.upkeep(ActivePlayer.YOU), entry.getControllerId(), entry.getCard(),

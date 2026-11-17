@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -21,7 +21,7 @@ public class SuddenSpoiling extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         )).addSpellEffect(new LosesAllAbilitiesEffect(GrantScope.TARGET_PLAYERS_CREATURES,
-                                EffectDuration.UNTIL_END_OF_TURN))
+                                Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(new SetBasePowerToughnessEffect(0, 2, GrantScope.TARGET_PLAYERS_CREATURES));
     }
 }

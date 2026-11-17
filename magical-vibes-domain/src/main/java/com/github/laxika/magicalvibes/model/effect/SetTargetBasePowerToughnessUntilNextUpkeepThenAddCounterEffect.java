@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentCastBySourceControll
  * next upkeep. At the beginning of your next upkeep, put a +1/+1 counter on that creature."
  *
  * <p>Resolution registers a layer-7b base-P/T floating effect with
- * {@link EffectDuration#UNTIL_CONTROLLERS_NEXT_UPKEEP} — a longer duration than the usual
+ * {@link Duration#UNTIL_CONTROLLERS_NEXT_UPKEEP} — a longer duration than the usual
  * {@link SetBasePowerToughnessEffect}, so the 0/1 survives end-of-turn cleanup — and adds a
  * delayed triggered ability that puts the counter on the same permanent. Both end at
  * the controller's next upkeep, in that order (the base P/T wears off, then the delayed trigger

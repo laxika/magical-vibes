@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesMustAttackTargetPlayerUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayersCreaturesMustAttackEachOtherUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -66,7 +66,7 @@ public class TargetPlayersCreaturesMustAttackEachOtherUntilNextTurnEffectHandler
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                     entry.getControllerId(),
                     new CreaturesMustAttackTargetPlayerUntilNextTurnEffect(requiredAttackTargetId),
-                    permanent.getId(), null, null, EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                    permanent.getId(), null, null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
         }
     }
 }

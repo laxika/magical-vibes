@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -103,7 +103,7 @@ public class TezzeretCruelCaptain extends Card {
                                                 null,
                                                 Set.of(CardType.CREATURE),
                                                 GrantScope.TARGET,
-                                                EffectDuration.PERMANENT))),
+                                                Duration.PERMANENT))),
                         EMBLEM_TEXT)),
                 "-7: You get an emblem with \"" + EMBLEM_TEXT + "\"."
         ));

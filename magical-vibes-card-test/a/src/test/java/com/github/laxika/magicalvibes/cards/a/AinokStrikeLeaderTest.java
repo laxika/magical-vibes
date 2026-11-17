@@ -113,7 +113,7 @@ class AinokStrikeLeaderTest extends BaseCardTest {
                 .applyControlEffect(gd, player1.getId(), commander,
                         new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
                                 com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
-                        com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT, null, "Test setup"));
+                        com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, null, "Test setup"));
         commander.setSummoningSick(false);
 
         declareAttackers(List.of(1));

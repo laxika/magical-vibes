@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreaturesWithDifferentPowersBoostAndGrantVigilanceEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
@@ -93,13 +93,13 @@ public class ChooseCreaturesWithDifferentPowersBoostAndGrantVigilanceEffectHandl
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                     entry.getControllerId(), boost, permanent.getId(), null, null,
-                    EffectDuration.UNTIL_END_OF_TURN, 0));
+                    Duration.UNTIL_END_OF_TURN, 0));
             if (!gameQueryService.cantHaveOrGainKeyword(gameData, permanent, VIGILANCE)) {
                 permanent.getGrantedKeywords().add(VIGILANCE);
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                         entry.getControllerId(), vigilance, permanent.getId(), null, null,
-                        EffectDuration.UNTIL_END_OF_TURN, 0));
+                        Duration.UNTIL_END_OF_TURN, 0));
             }
         }
     }

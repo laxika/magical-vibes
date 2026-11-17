@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
@@ -82,10 +82,10 @@ public class VronosMaskedInquisitor extends Card {
                                 null,
                                 Set.of(CardType.CREATURE),
                                 GrantScope.TARGET,
-                                EffectDuration.PERMANENT
+                                Duration.PERMANENT
                         ),
                         new GrantEffectToTargetEffect(StaticAbility.of(new CantBeBlockedEffect()),
-                                EffectDuration.PERMANENT,
+                                Duration.PERMANENT,
                                 false
                         ),
                         new TargetPermanentBecomesSubtypeEffect(CardSubtype.CONSTRUCT)

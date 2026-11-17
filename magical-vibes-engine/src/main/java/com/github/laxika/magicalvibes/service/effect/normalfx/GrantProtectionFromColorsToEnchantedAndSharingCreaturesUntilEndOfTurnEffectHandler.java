@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorsToEnchantedAndSharingCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -60,7 +60,7 @@ public class GrantProtectionFromColorsToEnchantedAndSharingCreaturesUntilEndOfTu
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
                     new ProtectionFromColorsEffect(grant.colors(), GrantScope.TARGET),
-                    permanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                    permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             count[0]++;
         });
 

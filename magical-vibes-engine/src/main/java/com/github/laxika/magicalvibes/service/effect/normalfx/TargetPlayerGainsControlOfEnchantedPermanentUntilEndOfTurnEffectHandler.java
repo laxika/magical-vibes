@@ -46,7 +46,7 @@ public class TargetPlayerGainsControlOfEnchantedPermanentUntilEndOfTurnEffectHan
                 entry.getTargetId(),
                 equippedPermanent,
                 new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
-                ControlDuration.END_OF_TURN.toEffectDuration(),
+                ControlDuration.END_OF_TURN.toDuration(),
                 null,
                 entry.getCard().getName());
     }

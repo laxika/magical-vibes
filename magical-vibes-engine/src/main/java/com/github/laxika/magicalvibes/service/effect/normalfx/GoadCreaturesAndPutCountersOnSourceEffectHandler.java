@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesAndPutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -61,7 +61,7 @@ public class GoadCreaturesAndPutCountersOnSourceEffectHandler implements NormalE
                     UUID.randomUUID(), entry.getCard() == null ? "Goad" : entry.getCard().getName(),
                     entry.getSourcePermanentId(), entry.getControllerId(),
                     new GoadTargetCreatureUntilNextTurnEffect(), candidate.getId(),
-                    null, null, EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                    null, null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
         }
 
         if (goadedCount > 0 && source != null) {

@@ -29,7 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardFromGraveyard
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInExileOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MimeoplasmCopyOnEnterEffect;
@@ -803,7 +803,7 @@ public class CloneService {
                     gameData.addFloatingEffect(new FloatingContinuousEffect(
                             UUID.randomUUID(), card.getName(), perm.getId(), controllerId,
                             new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
-                            perm.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                            perm.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
                 }
         }
 

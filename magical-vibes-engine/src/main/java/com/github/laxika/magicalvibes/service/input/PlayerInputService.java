@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
@@ -1032,7 +1032,7 @@ public class PlayerInputService {
      */
     public void beginBecomeChosenColorsChoice(GameData gameData, UUID playerId, UUID targetId,
                                               String sourceCardName, List<CardColor> chosen,
-                                              EffectDuration duration) {
+                                              Duration duration) {
         ChoiceContext.BecomeChosenColorsChoice ctx =
                 new ChoiceContext.BecomeChosenColorsChoice(targetId, sourceCardName, new ArrayList<>(chosen),
                         duration);
@@ -2266,11 +2266,11 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a basic land type (second={})", gameData.id, playerName, isSecondChoice);
     }
 
-    public void beginAddBasicLandTypeChoice(GameData gameData, UUID playerId, UUID targetLandId, EffectDuration duration) {
+    public void beginAddBasicLandTypeChoice(GameData gameData, UUID playerId, UUID targetLandId, Duration duration) {
         beginAddBasicLandTypeChoice(gameData, playerId, targetLandId, duration, false);
     }
 
-    public void beginAddBasicLandTypeChoice(GameData gameData, UUID playerId, UUID targetLandId, EffectDuration duration, boolean replacing) {
+    public void beginAddBasicLandTypeChoice(GameData gameData, UUID playerId, UUID targetLandId, Duration duration, boolean replacing) {
         beginAddBasicLandTypeChoice(gameData, playerId, targetLandId, duration, replacing, List.of());
     }
 
@@ -2278,7 +2278,7 @@ public class PlayerInputService {
      * Begins a target-land basic type choice, optionally restricting the offered types.
      */
     public void beginAddBasicLandTypeChoice(GameData gameData, UUID playerId, UUID targetLandId,
-                                            EffectDuration duration, boolean replacing,
+                                            Duration duration, boolean replacing,
                                             List<CardSubtype> allowedTypes) {
         ChoiceContext.AddBasicLandTypeChoice choiceContext =
                 new ChoiceContext.AddBasicLandTypeChoice(targetLandId, duration, replacing, allowedTypes);

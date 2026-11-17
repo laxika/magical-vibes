@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +39,6 @@ public class BecomeChosenColorsIndefinitelyEffectHandler implements NormalEffect
 
         // Controller picks one or more colors; ChoiceHandlerService floats the L5 setter indefinitely.
         playerInputService.beginBecomeChosenColorsChoice(gameData, entry.getControllerId(),
-                affected.getId(), entry.getCard().getName(), List.of(), EffectDuration.PERMANENT);
+                affected.getId(), entry.getCard().getName(), List.of(), Duration.PERMANENT);
     }
 }

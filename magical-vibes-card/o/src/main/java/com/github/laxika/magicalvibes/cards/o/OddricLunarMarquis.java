@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfDefendingPlayerLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -92,7 +92,7 @@ public class OddricLunarMarquis extends Card {
                                         colorlessManaAbility,
                                         GrantScope.ALL_OWN_CREATURES,
                                         null,
-                                        EffectDuration.UNTIL_END_OF_TURN,
+                                        Duration.UNTIL_END_OF_TURN,
                                         null))
                 )
         ).toList();

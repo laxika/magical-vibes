@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -116,7 +116,7 @@ class AegisAutomatonTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, card);
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
                 .applyControlEffect(gd, player1.getId(), target,
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT,
                         null, "Test setup"));
         addAbilityMana();
 
@@ -138,7 +138,7 @@ class AegisAutomatonTest extends BaseCardTest {
 
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
                 .applyControlEffect(gd, player2.getId(), target,
-                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT,
                         null, "Test setup"));
         harness.passBothPriorities();
 

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -35,7 +35,7 @@ public class MechHangar extends Card {
                 "{3}",
                 List.of(new AnimatePermanentsEffect(
                         null, null, List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN, null)),
+                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN, null)),
                 "{3}, {T}: Target Vehicle becomes an artifact creature until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE),

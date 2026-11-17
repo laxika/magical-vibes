@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 import java.util.List;
@@ -42,7 +42,7 @@ public final class PerpetualCardBattlefieldEffectSupport {
         for (CardEffect effect : effects) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), permanent.getCard().getName(), null, controllerId,
-                    effect, permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+                    effect, permanent.getId(), null, null, Duration.PERMANENT, 0));
         }
     }
 }

@@ -31,7 +31,7 @@ class TreasureNabberTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Sol Ring");
         assertThat(solRing.isTapped()).isTrue();
         assertThat(gd.newestControlEffectFor(solRing.getId()).duration())
-                .isEqualTo(com.github.laxika.magicalvibes.model.effect.EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN);
+                .isEqualTo(com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_YOUR_NEXT_TURN);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);

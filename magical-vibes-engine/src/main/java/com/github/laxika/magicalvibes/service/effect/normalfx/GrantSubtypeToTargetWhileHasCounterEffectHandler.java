@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetWhileHasCounterEffect;
@@ -46,7 +46,7 @@ public class GrantSubtypeToTargetWhileHasCounterEffectHandler implements NormalE
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
                     new GrantSubtypeEffect(grant.subtype(), GrantScope.ALL_PERMANENTS, grant.overriding(), scope),
-                    null, null, scope, EffectDuration.PERMANENT, 0, true));
+                    null, null, scope, Duration.PERMANENT, 0, true));
         }
     }
 

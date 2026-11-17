@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesOfChosenManaValueParityCantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -55,7 +55,7 @@ public class CreaturesOfChosenManaValueParityCantBlockThisTurnEffectHandler impl
                 null,
                 null,
                 creatureParity,
-                EffectDuration.UNTIL_END_OF_TURN,
+                Duration.UNTIL_END_OF_TURN,
                 0));
         gameLogService.append(gameData, GameLog.text(
                 "Creatures with " + chosen.name().toLowerCase() + " mana values can't block this turn."));

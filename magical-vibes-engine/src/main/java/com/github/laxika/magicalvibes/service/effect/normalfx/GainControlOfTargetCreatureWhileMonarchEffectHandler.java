@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureWhileMonarchEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -45,7 +45,7 @@ public class GainControlOfTargetCreatureWhileMonarchEffectHandler implements Nor
                 continue;
             }
             creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target, effect,
-                    EffectDuration.CONTINUOUS, null, entry.getCard().getName(), monarchPlayerId);
+                    Duration.STATIC, null, entry.getCard().getName(), monarchPlayerId);
         }
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -131,7 +131,7 @@ class GoNinjaGoTest extends BaseCardTest {
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 "Control change", null, player1.getId(),
                 new GainControlOfTargetEffect(ControlDuration.PERMANENT), borrowedCreature.getId(),
-                null, null, EffectDuration.PERMANENT, 0));
+                null, null, Duration.PERMANENT, 0));
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         castGoNinjaGo(new int[]{0, 1}, List.of(borrowedCreature.getId(), target.getId()));
 

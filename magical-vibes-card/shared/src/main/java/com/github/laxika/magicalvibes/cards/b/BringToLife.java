@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -29,7 +29,7 @@ public class BringToLife extends Card {
         target(noncreatureArtifactYouControl)
                 .addSpellEffect(new AnimatePermanentsEffect(
                         0, 0, List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, EffectDuration.PERMANENT))
+                        GrantScope.TARGET, Duration.PERMANENT))
                 .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 4));
     }
 }

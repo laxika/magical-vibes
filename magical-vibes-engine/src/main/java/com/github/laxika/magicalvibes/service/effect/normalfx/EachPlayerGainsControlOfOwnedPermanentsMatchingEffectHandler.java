@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerGainsControlOfOwnedPermanentsMatchingEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -47,7 +47,7 @@ public class EachPlayerGainsControlOfOwnedPermanentsMatchingEffectHandler implem
         GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
         for (OwnedPermanent ownedPermanent : toReturn) {
             creatureControlService.applyControlEffect(gameData, ownedPermanent.ownerId(), ownedPermanent.permanent(),
-                    controlEffect, EffectDuration.PERMANENT, null, entry.getCard().getName());
+                    controlEffect, Duration.PERMANENT, null, entry.getCard().getName());
         }
     }
 

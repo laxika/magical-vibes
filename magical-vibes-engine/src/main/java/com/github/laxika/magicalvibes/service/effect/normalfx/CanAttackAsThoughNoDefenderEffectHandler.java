@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -57,7 +57,7 @@ public class CanAttackAsThoughNoDefenderEffectHandler implements NormalEffectHan
 
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), sourceId, entry.getControllerId(), effect,
-                sourceId, null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                sourceId, null, null, Duration.UNTIL_END_OF_TURN, 0));
 
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " can attack this turn as though it didn't have defender."));
         log.info("Game {} - {} can attack despite defender until end of turn", gameData.id, source.getCard().getName());

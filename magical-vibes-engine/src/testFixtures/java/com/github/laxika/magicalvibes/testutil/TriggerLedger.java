@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -31,6 +33,9 @@ import java.util.regex.Pattern;
  * <p>A line is {@code <test id> #<n> | <source> | [<effect classes>] | <field>=<value> ...}: the test (its class and
  * method), the ability's position among the test's abilities, its source card's name, the classes of its effects in
  * order, and the fields of the entry that record its trigger event and its choices (targets, X, the event's objects).
+ * A floating effect that begins or ends (CR 611.2) writes {@code <test id> #<n> | floating began|ended | <source> |
+ * <effect class> | duration=<end>[/<as long as>] ... at=T<turn> <step>}: its duration, the objects it affects and
+ * the moment it began or ended, so a change of when an effect ends shows in the diff.
  * An id is written by role, not raw: {@code SOURCE} (the ability's source), {@code SELFCARD} (its card), {@code p1} or
  * {@code p2} (a player, in seat order), or the name of the object it names now ({@code perm:}, {@code card:},
  * {@code stack:}), so the same game played twice writes the same lines. A further object of an ability that triggered
@@ -106,6 +111,43 @@ public final class TriggerLedger {
                 line.append(' ').append(field.getName()).append('=').append(written);
             }
         }
+        append(line);
+    }
+
+    /** Appends the line of {@code effect}, a floating effect that began or ended. */
+    static void recordFloating(GameData gameData, FloatingContinuousEffect effect, boolean began) {
+        if (FILE == null) {
+            return;
+        }
+        String testId = TEST_ID.get();
+        Duration duration = effect.duration();
+        StringBuilder line = new StringBuilder(testId == null ? "?" : testId)
+                .append(" #").append(++SEQUENCE.get()[0])
+                .append(" | floating ").append(began ? "began" : "ended")
+                .append(" | ").append(effect.sourceCardName())
+                .append(" | ").append(effect.effect() == null ? "null" : effect.effect().getClass().getSimpleName())
+                .append(" | duration=").append(duration == null ? "null"
+                        : duration.end() + (duration.asLongAs() == null ? "" : "/" + duration.asLongAs()));
+        appendId(line, "source", effect.sourcePermanentId(), effect, gameData);
+        appendId(line, "controller", effect.controllerId(), effect, gameData);
+        appendId(line, "affected", effect.affectedPermanentId(), effect, gameData);
+        appendId(line, "affectedPlayer", effect.affectedPlayerId(), effect, gameData);
+        if (effect.scope() != null) {
+            line.append(" scope=").append(effect.scope().getClass().getSimpleName());
+        }
+        line.append(" at=T").append(gameData.turnNumber).append(' ').append(gameData.currentStep);
+        append(line);
+    }
+
+    private static void appendId(StringBuilder line, String name, UUID id, FloatingContinuousEffect effect,
+                                 GameData gameData) {
+        if (id != null) {
+            line.append(' ').append(name).append('=')
+                    .append(id(id, effect.sourcePermanentId(), null, gameData));
+        }
+    }
+
+    private static void append(StringBuilder line) {
         try {
             Files.writeString(Path.of(FILE), line.append('\n').toString(),
                     StandardOpenOption.CREATE, StandardOpenOption.APPEND);
@@ -139,7 +181,8 @@ public final class TriggerLedger {
                     ? "C(SELF)" : "C(" + card.getName() + ")";
         }
         if (value instanceof UUID uuid) {
-            return id(uuid, entry, gameData);
+            return id(uuid, entry.getSourcePermanentId(), entry.getCard() == null ? null : entry.getCard().getId(),
+                    gameData);
         }
         if (value instanceof Map<?, ?> map) {
             StringJoiner joined = new StringJoiner(",", "{", "}");
@@ -160,11 +203,12 @@ public final class TriggerLedger {
         return value.getClass().getSimpleName();
     }
 
-    private static String id(UUID uuid, StackEntry entry, GameData gameData) {
-        if (uuid.equals(entry.getSourcePermanentId())) {
+    /** {@code uuid} by its role: the source permanent, the source's card, a player by seat, or the object's name. */
+    private static String id(UUID uuid, UUID sourcePermanentId, UUID sourceCardId, GameData gameData) {
+        if (uuid.equals(sourcePermanentId)) {
             return "SOURCE";
         }
-        if (entry.getCard() != null && uuid.equals(entry.getCard().getId())) {
+        if (uuid.equals(sourceCardId)) {
             return "SELFCARD";
         }
         int seat = gameData.orderedPlayerIds.indexOf(uuid);

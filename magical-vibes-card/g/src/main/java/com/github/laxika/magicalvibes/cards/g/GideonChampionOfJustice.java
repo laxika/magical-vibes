@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
@@ -55,7 +55,7 @@ public class GideonChampionOfJustice extends Card {
                                 null,
                                 Set.of(),
                                 GrantScope.SELF,
-                                EffectDuration.UNTIL_END_OF_TURN,
+                                Duration.UNTIL_END_OF_TURN,
                                 null
                         ),
                         PreventDamageEffect.allToSelf()

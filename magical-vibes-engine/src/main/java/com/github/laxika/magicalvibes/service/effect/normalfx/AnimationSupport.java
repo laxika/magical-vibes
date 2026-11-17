@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -99,7 +99,7 @@ public class AnimationSupport {
      * in the layered pass ({@code agent-docs/LAYER_SYSTEM.md}).
      */
     private void addAnimationBasePtFloatingEffect(GameData gameData, StackEntry entry, Permanent target,
-                                                  int power, int toughness, EffectDuration duration) {
+                                                  int power, int toughness, Duration duration) {
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 new SetBasePowerToughnessEffect(power, toughness), target.getId(), null, null,
@@ -117,7 +117,7 @@ public class AnimationSupport {
 
     private void addAnimationColorFloatingEffect(GameData gameData, StackEntry entry, Permanent target,
                                                  CardColor color,
-                                                 EffectDuration duration) {
+                                                 Duration duration) {
         if (color == null) return;
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
@@ -130,7 +130,7 @@ public class AnimationSupport {
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 new SetCardTypesEffect(cardTypes, GrantScope.TARGET), target.getId(), null, null,
-                EffectDuration.UNTIL_END_OF_TURN, 0));
+                Duration.UNTIL_END_OF_TURN, 0));
     }
 
     /**
@@ -175,12 +175,17 @@ public class AnimationSupport {
             return;
         }
         for (UUID targetId : targetIds) {
-            switch (effect.duration()) {
-                case UNTIL_YOUR_NEXT_TURN -> animateOneUntilNextTurn(gameData, entry, effect, targetId);
-                case WHILE_SOURCE_TAPPED, WHILE_SOURCE_REMAINS_TAPPED, WHILE_SOURCE_CONTROLLED,
-                        UNTIL_CONTROLLERS_NEXT_UPKEEP, UNTIL_PLANESWALK ->
-                        animateOneWithFloatingDuration(gameData, entry, effect, targetId);
-                default -> animateOneUntilEndOfTurn(gameData, entry, effect, targetId);
+            Duration duration = effect.duration();
+            if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
+                animateOneUntilNextTurn(gameData, entry, effect, targetId);
+            } else if (Duration.WHILE_SOURCE_TAPPED.equals(duration)
+                    || Duration.WHILE_SOURCE_REMAINS_TAPPED.equals(duration)
+                    || Duration.WHILE_SOURCE_CONTROLLED.equals(duration)
+                    || Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(duration)
+                    || Duration.UNTIL_PLANESWALK.equals(duration)) {
+                animateOneWithFloatingDuration(gameData, entry, effect, targetId);
+            } else {
+                animateOneUntilEndOfTurn(gameData, entry, effect, targetId);
             }
         }
     }
@@ -217,9 +222,9 @@ public class AnimationSupport {
         target.setUntilNextTurnAnimationGrantorId(entry.getControllerId());
         target.getUntilNextTurnSubtypes().addAll(effect.grantedSubtypes());
         target.getUntilNextTurnKeywords().addAll(effect.grantedKeywords());
-        addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness, EffectDuration.UNTIL_YOUR_NEXT_TURN);
+        addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness, Duration.UNTIL_YOUR_NEXT_TURN);
         addAnimationColorFloatingEffect(gameData, entry, target, effect.animatedColor(),
-                EffectDuration.UNTIL_YOUR_NEXT_TURN);
+                Duration.UNTIL_YOUR_NEXT_TURN);
 
         if (target.isFaceDown()) {
             gameLogService.append(gameData, GameLog.text(
@@ -247,7 +252,7 @@ public class AnimationSupport {
                 ? (self.getCard().getToughness() != null ? self.getCard().getToughness() : 0)
                 : amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 
-        boolean untilEndOfCombat = effect.duration() == EffectDuration.UNTIL_END_OF_COMBAT;
+        boolean untilEndOfCombat = Duration.UNTIL_END_OF_COMBAT.equals(effect.duration());
         if (untilEndOfCombat) {
             self.setAnimatedUntilEndOfCombat(true);
         } else {
@@ -257,14 +262,14 @@ public class AnimationSupport {
             addDynamicAnimationBasePtFloatingEffect(gameData, entry, self, effect);
         } else if (effect.power() != null || effect.toughness() != null) {
             addAnimationBasePtFloatingEffect(gameData, entry, self, power, toughness,
-                    untilEndOfCombat ? EffectDuration.UNTIL_END_OF_COMBAT : EffectDuration.UNTIL_END_OF_TURN);
+                    untilEndOfCombat ? Duration.UNTIL_END_OF_COMBAT : Duration.UNTIL_END_OF_TURN);
         }
         self.setAnimatedPower(power);
         self.setAnimatedToughness(toughness);
         self.setAnimatedPtFromCard(effect.power() == null && effect.toughness() == null);
         self.setAnimatedColor(effect.animatedColor());
         addAnimationColorFloatingEffect(gameData, entry, self, effect.animatedColor(),
-                untilEndOfCombat ? EffectDuration.UNTIL_END_OF_COMBAT : EffectDuration.UNTIL_END_OF_TURN);
+                untilEndOfCombat ? Duration.UNTIL_END_OF_COMBAT : Duration.UNTIL_END_OF_TURN);
         applyAnimatedColors(self, effect);
         // Only a crew activation makes the Vehicle "crewed" (CR 702.122a); an identical triggered
         // animation (Kolodin, Triumph Caster) does not.
@@ -311,7 +316,7 @@ public class AnimationSupport {
             // an earlier type-setting effect (Swift Reconfiguration) does not strip it.
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), self.getId(), entry.getControllerId(), effect,
-                    self.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                    self.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             gameData.rulesEvents.occur(new CrewEvent.BecameCrewed(self, entry.getControllerId()));
         }
 
@@ -322,11 +327,11 @@ public class AnimationSupport {
                                              AnimatePermanentsEffect effect, UUID targetId) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null || (entry.getSourcePermanentId() == null
-                && effect.duration() != EffectDuration.UNTIL_PLANESWALK)) {
+                && !Duration.UNTIL_PLANESWALK.equals(effect.duration()))) {
             return;
         }
 
-        if (effect.duration() == EffectDuration.WHILE_SOURCE_CONTROLLED) {
+        if (Duration.WHILE_SOURCE_CONTROLLED.equals(effect.duration())) {
             // The duration is already over if the source left or is no longer controlled by the ability's
             // controller as the ability resolves (CR 611.2b), so nothing happens.
             Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
@@ -338,7 +343,7 @@ public class AnimationSupport {
         AmountContext ctx = animationAmountContext(gameData, entry);
         int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
         int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
-        EffectDuration duration = effect.duration();
+        Duration duration = effect.duration();
 
         addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness, duration);
         addAnimationColorFloatingEffect(gameData, entry, target, effect.animatedColor(), duration);
@@ -367,11 +372,9 @@ public class AnimationSupport {
                     target.getId(), null, null, duration, 0));
         }
 
-        String durationText = switch (duration) {
-            case UNTIL_CONTROLLERS_NEXT_UPKEEP -> "until your next upkeep";
-            case UNTIL_PLANESWALK -> "until planeswalk";
-            default -> "for as long as " + entry.getCard().getName() + " remains tapped";
-        };
+        String durationText = Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(duration) ? "until your next upkeep"
+                : Duration.UNTIL_PLANESWALK.equals(duration) ? "until planeswalk"
+                : "for as long as " + entry.getCard().getName() + " remains tapped";
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " becomes a " + power + "/" + toughness + " creature " + durationText + "."));
         log.info("Game {} - {} becomes a {}/{} creature ({})",
@@ -380,7 +383,7 @@ public class AnimationSupport {
 
     private void addAnimationCardTypeFloatingEffect(GameData gameData, StackEntry entry,
                                                     Permanent target, CardType cardType,
-                                                    EffectDuration duration) {
+                                                    Duration duration) {
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 new GrantCardTypeEffect(cardType, GrantScope.TARGET), target.getId(), null, null,
@@ -411,7 +414,7 @@ public class AnimationSupport {
         int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
         int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 
-        boolean untilNextTurn = effect.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN;
+        boolean untilNextTurn = Duration.UNTIL_YOUR_NEXT_TURN.equals(effect.duration());
 
         for (Permanent perm : battlefield) {
             if (!gameQueryService.isLand(gameData, perm)) {
@@ -430,9 +433,9 @@ public class AnimationSupport {
                 perm.getUntilNextTurnSubtypes().clear();
                 perm.getUntilNextTurnSubtypes().addAll(effect.grantedSubtypes());
                 perm.getUntilNextTurnKeywords().addAll(effect.grantedKeywords());
-                addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness, EffectDuration.UNTIL_YOUR_NEXT_TURN);
+                addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness, Duration.UNTIL_YOUR_NEXT_TURN);
                 addAnimationColorFloatingEffect(gameData, entry, perm, effect.animatedColor(),
-                        EffectDuration.UNTIL_YOUR_NEXT_TURN);
+                        Duration.UNTIL_YOUR_NEXT_TURN);
             } else {
                 perm.setAnimatedUntilEndOfTurn(true);
                 perm.setAnimatedPower(power);
@@ -442,7 +445,7 @@ public class AnimationSupport {
                 perm.getTransientSubtypes().addAll(effect.grantedSubtypes());
                 perm.getGrantedKeywords().addAll(effect.grantedKeywords());
                 perm.getGrantedCardTypes().addAll(effect.grantedCardTypes());
-                addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness, EffectDuration.UNTIL_END_OF_TURN);
+                addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness, Duration.UNTIL_END_OF_TURN);
             }
 
             log.info("Game {} - {} animated{}", gameData.id, perm.getCard().getName(),
@@ -503,14 +506,14 @@ public class AnimationSupport {
             perm.getGrantedKeywords().addAll(effect.grantedKeywords());
             perm.getGrantedCardTypes().addAll(effect.grantedCardTypes());
             addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness,
-                    EffectDuration.UNTIL_END_OF_TURN);
+                    Duration.UNTIL_END_OF_TURN);
             // Layer 4 creature type as a timestamped floating effect, so it still applies to a land whose
             // card types were overridden by an earlier effect (e.g. Song of the Dryads, CR 613.1d/613.7).
             addAnimationCardTypeFloatingEffect(gameData, entry, perm, CardType.CREATURE,
-                    EffectDuration.UNTIL_END_OF_TURN);
+                    Duration.UNTIL_END_OF_TURN);
             for (CardType grantedType : effect.grantedCardTypes()) {
                 addAnimationCardTypeFloatingEffect(gameData, entry, perm, grantedType,
-                        EffectDuration.UNTIL_END_OF_TURN);
+                        Duration.UNTIL_END_OF_TURN);
             }
 
             log.info("Game {} - {} animated until end of turn", gameData.id, perm.getCard().getName());
@@ -543,11 +546,11 @@ public class AnimationSupport {
                 perm.getTransientSubtypes().addAll(effect.grantedSubtypes());
                 perm.getGrantedKeywords().addAll(effect.grantedKeywords());
                 perm.getGrantedCardTypes().addAll(effect.grantedCardTypes());
-                addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness, EffectDuration.UNTIL_END_OF_TURN);
+                addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness, Duration.UNTIL_END_OF_TURN);
                 // Layer 4 creature type as a timestamped floating effect, so it still applies to a land whose
                 // card types were overridden by an earlier effect (e.g. Imprisoned in the Moon, CR 613.1d/613.7).
                 addAnimationCardTypeFloatingEffect(gameData, entry, perm, CardType.CREATURE,
-                        EffectDuration.UNTIL_END_OF_TURN);
+                        Duration.UNTIL_END_OF_TURN);
 
                 log.info("Game {} - {} animated until end of turn", gameData.id, perm.getCard().getName());
             }
@@ -588,7 +591,7 @@ public class AnimationSupport {
                     permanent.getTransientSubtypes().addAll(effect.grantedSubtypes());
                     permanent.getGrantedKeywords().addAll(effect.grantedKeywords());
                     addAnimationBasePtFloatingEffect(gameData, entry, permanent, power, toughness,
-                            EffectDuration.UNTIL_END_OF_TURN);
+                            Duration.UNTIL_END_OF_TURN);
                     count++;
                     continue;
                 }
@@ -607,7 +610,7 @@ public class AnimationSupport {
                     permanent.getGrantedCardTypes().add(CardType.CREATURE);
                     permanent.getGrantedCardTypes().addAll(effect.grantedCardTypes());
                 }
-                addAnimationBasePtFloatingEffect(gameData, entry, permanent, power, toughness, EffectDuration.UNTIL_END_OF_TURN);
+                addAnimationBasePtFloatingEffect(gameData, entry, permanent, power, toughness, Duration.UNTIL_END_OF_TURN);
 
                 // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
                 if (permanent.isAttached() && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
@@ -775,7 +778,7 @@ public class AnimationSupport {
                     : new SetPowerToughnessToAmountEffect(effect.power(), effect.toughness());
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
                     sourcePermanentId, controllerId, basePowerToughnessEffect, target.getId(), null, null,
-                    EffectDuration.PERMANENT, 0));
+                    Duration.PERMANENT, 0));
         }
 
         for (CardSubtype subtype : effect.grantedSubtypes()) {
@@ -792,7 +795,7 @@ public class AnimationSupport {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
                     sourcePermanentId, controllerId,
                     new GrantKeywordEffect(effect.grantedKeywords(), GrantScope.TARGET),
-                    target.getId(), null, null, EffectDuration.PERMANENT, 0));
+                    target.getId(), null, null, Duration.PERMANENT, 0));
         }
 
         // The animation has no duration, so the granted card types must survive turn cleanup too
@@ -805,7 +808,7 @@ public class AnimationSupport {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
                     sourcePermanentId, controllerId,
                     new SetCardTypesEffect(replacementTypes, GrantScope.TARGET),
-                    target.getId(), null, null, EffectDuration.PERMANENT, 0));
+                    target.getId(), null, null, Duration.PERMANENT, 0));
         }
 
         boolean colorReplaced = false;
@@ -813,14 +816,14 @@ public class AnimationSupport {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
                     sourcePermanentId, controllerId,
                     new GrantColorEffect(effect.animatedColor(), GrantScope.TARGET, true),
-                    target.getId(), null, null, EffectDuration.PERMANENT, 0));
+                    target.getId(), null, null, Duration.PERMANENT, 0));
             colorReplaced = true;
         }
         for (CardColor color : effect.animatedColors()) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
                     sourcePermanentId, controllerId,
                     new GrantColorEffect(color, GrantScope.TARGET, !colorReplaced),
-                    target.getId(), null, null, EffectDuration.PERMANENT, 0));
+                    target.getId(), null, null, Duration.PERMANENT, 0));
             colorReplaced = true;
         }
 
@@ -874,7 +877,7 @@ public class AnimationSupport {
         target.setPermanentAnimatedPower(power);
         target.setPermanentAnimatedToughness(toughness);
         addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness,
-                EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD);
+                Duration.WHILE_SOURCE_ON_BATTLEFIELD);
 
         for (CardSubtype subtype : effect.grantedSubtypes()) {
             if (!target.getGrantedSubtypes().contains(subtype)) {
@@ -883,23 +886,23 @@ public class AnimationSupport {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                     new GrantSubtypeEffect(subtype, GrantScope.TARGET), target.getId(), null, null,
-                    EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+                    Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 new GrantCardTypeEffect(CardType.CREATURE, GrantScope.TARGET), target.getId(), null, null,
-                EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+                Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         for (CardType cardType : effect.grantedCardTypes()) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                     new GrantCardTypeEffect(cardType, GrantScope.TARGET), target.getId(), null, null,
-                    EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+                    Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
         if (!effect.grantedKeywords().isEmpty()) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                     new GrantKeywordEffect(effect.grantedKeywords(), GrantScope.TARGET), target.getId(), null, null,
-                    EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+                    Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
 
         if (effect.animatedColor() != null) {
@@ -973,7 +976,7 @@ public class AnimationSupport {
                 .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
         if (hasControlEffect) {
             creatureControlService.applyControlEffect(gameData, controllerId, target,
-                    new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
+                    new ControlEnchantedCreatureEffect(), Duration.WHILE_ATTACHED,
                     source.getId(), source.getCard().getName());
         }
     }

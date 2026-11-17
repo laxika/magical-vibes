@@ -7,10 +7,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * is useful when a resolving ability makes an Aura gain a static ability that follows the Aura's
  * current attachment.</p>
  */
-public record GrantStaticEffectToSourceEffect(CardEffect staticEffect, EffectDuration duration)
+public record GrantStaticEffectToSourceEffect(CardEffect staticEffect, Duration duration)
         implements CardEffect {
 
     public GrantStaticEffectToSourceEffect(CardEffect staticEffect) {
-        this(staticEffect, EffectDuration.WHILE_SOURCE_REMAINS);
+        this(staticEffect, Duration.WHILE_SOURCE_REMAINS);
     }
 }

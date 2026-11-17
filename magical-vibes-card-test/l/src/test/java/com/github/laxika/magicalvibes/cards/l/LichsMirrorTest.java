@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -297,10 +297,10 @@ class LichsMirrorTest extends BaseCardTest {
             CreatureControlService control = GameTestEngineContext.get().getBean(CreatureControlService.class);
             control.applyControlEffect(gd, player2.getId(), ownedBear,
                     new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                    EffectDuration.PERMANENT, null, "Test setup");
+                    Duration.PERMANENT, null, "Test setup");
             control.applyControlEffect(gd, player1.getId(), borrowedMirror,
                     new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                    EffectDuration.PERMANENT, null, "Test setup");
+                    Duration.PERMANENT, null, "Test setup");
         });
         harness.setLibrary(player1, shocks(10));
         harness.setLife(player1, -4);

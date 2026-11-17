@@ -9,22 +9,22 @@ public record GrantActivatedAbilityEffect(
         ActivatedAbility ability,
         GrantScope scope,
         PermanentPredicate filter,
-        EffectDuration duration,
+        Duration duration,
         UUID expirationCardId
 ) implements CardEffect {
 
     /** Continuous (static) grant — existing behavior. */
     public GrantActivatedAbilityEffect(ActivatedAbility ability, GrantScope scope) {
-        this(ability, scope, null, EffectDuration.CONTINUOUS, null);
+        this(ability, scope, null, Duration.STATIC, null);
     }
 
     /** Continuous (static) grant with filter — existing behavior. */
     public GrantActivatedAbilityEffect(ActivatedAbility ability, GrantScope scope, PermanentPredicate filter) {
-        this(ability, scope, filter, EffectDuration.CONTINUOUS, null);
+        this(ability, scope, filter, Duration.STATIC, null);
     }
 
     public GrantActivatedAbilityEffect(ActivatedAbility ability, GrantScope scope,
-                                       PermanentPredicate filter, EffectDuration duration) {
+                                       PermanentPredicate filter, Duration duration) {
         this(ability, scope, filter, duration, null);
     }
 

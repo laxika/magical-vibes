@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetWhileHasCounterEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -36,7 +36,7 @@ public class GainControlOfTargetWhileHasCounterEffectHandler implements NormalEf
                 continue;
             }
             creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
-                    counterConditioned, EffectDuration.PERMANENT, null, entry.getCard().getName());
+                    counterConditioned, Duration.PERMANENT, null, entry.getCard().getName());
         }
     }
 

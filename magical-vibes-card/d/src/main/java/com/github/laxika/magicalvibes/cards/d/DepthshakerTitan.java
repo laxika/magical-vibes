@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepEffect;
@@ -45,7 +45,7 @@ public class DepthshakerTitan extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new AnimatePermanentsEffect(
                         new Fixed(3), new Fixed(3), List.of(), Set.of(), null, Set.of(CardType.ARTIFACT),
-                        GrantScope.TARGET, EffectDuration.PERMANENT, noncreatureArtifact),
+                        GrantScope.TARGET, Duration.PERMANENT, noncreatureArtifact),
                         new SacrificeTargetPermanentAtEndStepEffect());
     }
 }

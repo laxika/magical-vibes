@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -46,7 +46,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantActivatedAbilityEffect) effect;
         if (e.scope() == GrantScope.OWN_CREATURES
-                && e.duration() == EffectDuration.WHILE_SOURCE_REMAINS
+                && Duration.WHILE_SOURCE_REMAINS.equals(e.duration())
                 && entry.getSourcePermanentId() != null) {
             Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             if (source == null) {
@@ -93,8 +93,8 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                 count++;
             }
         } else if (e.scope() == GrantScope.TARGET) {
-            if ((e.duration() == EffectDuration.WHILE_SOURCE_REMAINS
-                    || e.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD)
+            if ((Duration.WHILE_SOURCE_REMAINS.equals(e.duration())
+                    || Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(e.duration()))
                     && (entry.getSourcePermanentId() == null
                     || gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) == null)) {
                 return;
@@ -168,14 +168,14 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
             }
         }
 
-        String durationText = switch (e.duration()) {
-            case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
-            case UNTIL_SOURCE_CARD_CAST_FROM_EXILE -> "until the source card is cast from exile";
-            case WHILE_SOURCE_ON_BATTLEFIELD, WHILE_SOURCE_REMAINS ->
-                    "for as long as the source remains on the battlefield";
-            case PERMANENT, CONTINUOUS -> "indefinitely";
-            default -> "until end of turn";
-        };
+        Duration duration = e.duration();
+        String durationText = Duration.UNTIL_YOUR_NEXT_TURN.equals(duration) ? "until your next turn"
+                : Duration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE.equals(duration)
+                ? "until the source card is cast from exile"
+                : Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(duration) || Duration.WHILE_SOURCE_REMAINS.equals(duration)
+                ? "for as long as the source remains on the battlefield"
+                : Duration.PERMANENT.equals(duration) || Duration.STATIC.equals(duration) ? "indefinitely"
+                : "until end of turn";
         String recipientText = e.scope() == GrantScope.SELF ? "permanent(s)" :
                 e.scope() == GrantScope.OWN_LANDS ? "land(s)" :
                 e.scope() == GrantScope.OWN_PERMANENTS ? "permanent(s)" : "creature(s)";
@@ -187,14 +187,14 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
 
     private static void grantTo(GameData gameData, StackEntry entry, Permanent permanent,
                                 GrantActivatedAbilityEffect grant) {
-        EffectDuration duration = grant.duration();
-        if (duration == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
-                || duration == EffectDuration.WHILE_SOURCE_REMAINS
-                || duration == EffectDuration.PERMANENT
-                || duration == EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE
+        Duration duration = grant.duration();
+        if (Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(duration)
+                || Duration.WHILE_SOURCE_REMAINS.equals(duration)
+                || Duration.PERMANENT.equals(duration)
+                || Duration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE.equals(duration)
                 // "Until your next turn" ends on the turn of the effect's controller, even if the
                 // permanent has changed control since (Hydro-Man, Fluid Felon).
-                || duration == EffectDuration.UNTIL_YOUR_NEXT_TURN) {
+                || Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(),
                     entry.getCard().getName(),

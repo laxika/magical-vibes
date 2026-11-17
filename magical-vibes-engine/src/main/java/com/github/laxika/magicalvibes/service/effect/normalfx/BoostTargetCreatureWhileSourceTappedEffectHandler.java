@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureWhileSourceTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -67,7 +67,7 @@ public class BoostTargetCreatureWhileSourceTappedEffectHandler implements Normal
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), sourcePermanentId, entry.getControllerId(),
                     new BuffTargetCreatureIndefinitelyEffect(boost.power(), boost.toughness(), boost.keywords()),
-                    target.getId(), null, null, EffectDuration.WHILE_SOURCE_TAPPED, 0));
+                    target.getId(), null, null, Duration.WHILE_SOURCE_TAPPED, 0));
 
             gameLogService.append(gameData, GameLog.builder()
                     .card(target.getCard())

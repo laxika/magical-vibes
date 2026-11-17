@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
@@ -23,7 +23,7 @@ public class FinalShowdown extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "All creatures lose all abilities until end of turn",
-                        new LosesAllAbilitiesEffect(GrantScope.ALL_CREATURES, EffectDuration.UNTIL_END_OF_TURN)),
+                        new LosesAllAbilitiesEffect(GrantScope.ALL_CREATURES, Duration.UNTIL_END_OF_TURN)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Choose a creature you control. It gains indestructible until end of turn",
                         new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(Keyword.INDESTRUCTIBLE, null)),

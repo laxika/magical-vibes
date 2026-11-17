@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -27,7 +27,7 @@ public class WoodwraithCorrupter extends Card {
                         List.of(CardSubtype.ELEMENTAL, CardSubtype.HORROR),
                         Set.of(),
                         null, Set.of(),
-                        GrantScope.TARGET, EffectDuration.PERMANENT, null,
+                        GrantScope.TARGET, Duration.PERMANENT, null,
                         Set.of(CardColor.BLACK, CardColor.GREEN)
                 )),
                 "{1}{B}{G}, {T}: Target Forest becomes a 4/4 black and green Elemental Horror creature. It's still a land.",

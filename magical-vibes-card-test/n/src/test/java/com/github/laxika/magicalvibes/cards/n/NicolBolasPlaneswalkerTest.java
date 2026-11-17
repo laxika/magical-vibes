@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -69,7 +69,7 @@ class NicolBolasPlaneswalkerTest extends BaseCardTest {
         assertThat(bolas.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 5 - 2
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(bearId));
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(bearId));
-        assertThat(gd.newestControlEffectFor(bearId).duration()).isEqualTo(EffectDuration.PERMANENT);
+        assertThat(gd.newestControlEffectFor(bearId).duration()).isEqualTo(Duration.PERMANENT);
     }
 
     @Test

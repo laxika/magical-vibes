@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -41,6 +41,6 @@ public class KenkuArtificer extends Card {
                                 new Fixed(0), new Fixed(0), List.of(CardSubtype.HOMUNCULUS),
                                 Set.of(Keyword.FLYING), null,
                                 Set.of(CardType.ARTIFACT, CardType.CREATURE), GrantScope.TARGET,
-                                EffectDuration.PERMANENT, noncreatureArtifact));
+                                Duration.PERMANENT, noncreatureArtifact));
     }
 }

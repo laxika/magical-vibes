@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -28,7 +28,7 @@ public class LlanowarLoamspeaker extends Card {
                         3, 3,
                         List.of(CardSubtype.ELEMENTAL),
                         Set.of(Keyword.HASTE),
-                        null, Set.of(), GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN)),
+                        null, Set.of(), GrantScope.TARGET, Duration.UNTIL_END_OF_TURN)),
                 "{T}: Target land you control becomes a 3/3 Elemental creature with haste until end of turn. "
                         + "It's still a land. Activate only as a sorcery.",
                 TargetFilters.landYouControl(),

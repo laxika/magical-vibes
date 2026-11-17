@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
@@ -126,7 +126,7 @@ class DocOcksHenchmenTest extends BaseCardTest {
         gd.stolenCreatures.put(henchmen.getId(), player1.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control change", null,
                 player2.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                henchmen.getId(), null, null, EffectDuration.PERMANENT, 0));
+                henchmen.getId(), null, null, Duration.PERMANENT, 0));
         henchmen.setAttacking(false);
         henchmen.setSummoningSick(true);
         harness.passBothPriorities();

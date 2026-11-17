@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -32,7 +32,7 @@ public class TheCapitolineTriad extends Card {
                 List.of(
                         CollectEvidenceCost.forManaValueWithoutCollectingEvidence(30, HISTORIC),
                         new CreateEmblemEffect(List.of(new SetBasePowerToughnessEffect(
-                                9, 9, GrantScope.ALL_OWN_CREATURES, EffectDuration.CONTINUOUS)), EMBLEM_TEXT)
+                                9, 9, GrantScope.ALL_OWN_CREATURES, Duration.STATIC)), EMBLEM_TEXT)
                 ),
                 "Exile any number of historic cards from your graveyard with total mana value 30 or greater: "
                         + "You get an emblem with \"" + EMBLEM_TEXT + "\"."

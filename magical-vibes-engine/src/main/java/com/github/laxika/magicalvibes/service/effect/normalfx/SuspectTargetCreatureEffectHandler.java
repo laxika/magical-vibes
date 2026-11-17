@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SuspectTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectedEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -61,7 +61,7 @@ public class SuspectTargetCreatureEffectHandler implements NormalEffectHandlerBe
 
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
-                new SuspectedEffect(), targetId, null, null, EffectDuration.PERMANENT, 0));
+                new SuspectedEffect(), targetId, null, null, Duration.PERMANENT, 0));
         gameLogService.append(gameData, GameLog.builder().card(target.getCard())
                 .text(" becomes suspected.").build());
     }

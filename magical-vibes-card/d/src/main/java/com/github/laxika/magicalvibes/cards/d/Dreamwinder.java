@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -33,7 +33,7 @@ public class Dreamwinder extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.ISLAND),
                                 "an Island"
                         ),
-                        new GrantBasicLandTypeToTargetEffect(EffectDuration.UNTIL_END_OF_TURN, CardSubtype.ISLAND, true)
+                        new GrantBasicLandTypeToTargetEffect(Duration.UNTIL_END_OF_TURN, CardSubtype.ISLAND, true)
                 ),
                 "{U}, Sacrifice an Island: Target land becomes an Island until end of turn.",
                 TargetFilters.land()

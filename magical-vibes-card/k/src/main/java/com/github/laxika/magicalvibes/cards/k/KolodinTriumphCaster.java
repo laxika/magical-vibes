@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -42,6 +42,6 @@ public class KolodinTriumphCaster extends Card {
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 new AnimatePermanentsEffect(
                         null, null, List.of(), Set.of(), null, Set.of(CardType.CREATURE),
-                        GrantScope.TRIGGERING_PERMANENT, EffectDuration.UNTIL_END_OF_TURN, null));
+                        GrantScope.TRIGGERING_PERMANENT, Duration.UNTIL_END_OF_TURN, null));
     }
 }

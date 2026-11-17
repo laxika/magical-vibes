@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -100,7 +100,7 @@ public class EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUnti
                 supertypes.remove(CardSupertype.LEGENDARY);
                 permanent.getCard().setSupertypes(supertypes);
             }
-            permanent.setCopyUntilEndOfTurn(copyEffect.duration() != EffectDuration.PERMANENT);
+            permanent.setCopyUntilEndOfTurn(!Duration.PERMANENT.equals(copyEffect.duration()));
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), permanent.getId(),
                     entry.getControllerId(), new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(),
@@ -110,7 +110,7 @@ public class EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUnti
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" makes " + permanentsToCopy.size() + " other permanent(s) a copy of "
-                        + targetName + (copyEffect.duration() == EffectDuration.UNTIL_NEXT_END_STEP
+                        + targetName + (Duration.UNTIL_NEXT_END_STEP.equals(copyEffect.duration())
                         ? " until the next end step." : " until end of turn."))
                 .build());
         log.info("Game {} - {} copies onto {} permanents", gameData.id, targetName, permanentsToCopy.size());

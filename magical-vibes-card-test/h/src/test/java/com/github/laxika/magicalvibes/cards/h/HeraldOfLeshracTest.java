@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -139,9 +139,9 @@ class HeraldOfLeshracTest extends BaseCardTest {
         CreatureControlService control = GameTestEngineContext.get().getBean(CreatureControlService.class);
         harness.inMutationScope(() -> {
             control.applyControlEffect(gd, player1.getId(), landOwnedByPlayer2,
-                    new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT, null, "Test");
+                    new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT, null, "Test");
             control.applyControlEffect(gd, player2.getId(), landOwnedByPlayer1,
-                    new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT, null, "Test");
+                    new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT, null, "Test");
         });
 
         advanceToUpkeep(player1);

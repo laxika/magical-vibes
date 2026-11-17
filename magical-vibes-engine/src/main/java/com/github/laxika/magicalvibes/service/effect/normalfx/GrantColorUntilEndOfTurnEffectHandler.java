@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -173,6 +173,6 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
         // effect below adds the color after the snapshot, so it registers as a granted color.
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), null, entry.getControllerId(), e,
-                target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                target.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
     }
 }

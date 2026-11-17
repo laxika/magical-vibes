@@ -33,7 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
@@ -814,7 +814,7 @@ public class DestructionSupport {
 
     public void gainPermanentControl(GameData gameData, Permanent target, UUID controllerId, String sourceCardName) {
         creatureControlService.applyControlEffect(gameData, controllerId, target,
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT, null,
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT, null,
                 sourceCardName);
     }
 

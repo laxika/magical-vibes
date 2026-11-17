@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.VillainousChoiceState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.HuntedByTheFamilyEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
@@ -115,14 +115,14 @@ public class HuntedByTheFamilyEffectHandler implements NormalEffectHandlerBean {
 
         setCardTypesEffectHandler.resolve(gameData, targetEntry,
                 new SetCardTypesEffect(Set.of(CardType.CREATURE), GrantScope.TARGET,
-                        EffectDuration.PERMANENT));
+                        Duration.PERMANENT));
         setTargetColorEffectHandler.resolve(gameData, targetEntry, new SetTargetColorEffect(CardColor.WHITE));
         subtypeEffectHandler.resolve(gameData, targetEntry,
                 new TargetPermanentBecomesSubtypeEffect(CardSubtype.HUMAN));
         setBasePowerToughnessEffectHandler.resolve(gameData, targetEntry,
                 new SetBasePowerToughnessEffect(1, 1, GrantScope.TARGET,
-                        EffectDuration.PERMANENT));
+                        Duration.PERMANENT));
         losesAllAbilitiesEffectHandler.resolve(gameData, targetEntry,
-                new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT));
+                new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT));
     }
 }

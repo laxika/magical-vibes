@@ -90,7 +90,7 @@ public class OpponentMayGainControlOfCreatureYouControlEffectHandler implements 
         }
         var controlEffect = new GainControlOfTargetEffect(effect.duration());
         creatureControlService.applyControlEffect(gameData, opponentId, creature,
-                controlEffect, effect.duration().toEffectDuration(), sourcePermanentId, sourceCardName);
+                controlEffect, effect.duration().toDuration(), sourcePermanentId, sourceCardName);
         log.info("Game {} - {} gains control of {} via {}", gameData.id,
                 gameData.playerIdToName.get(opponentId), creature.getCard().getName(), sourceCardName);
     }

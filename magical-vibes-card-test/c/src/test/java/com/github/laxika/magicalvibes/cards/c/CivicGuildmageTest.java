@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -194,6 +194,6 @@ class CivicGuildmageTest extends BaseCardTest {
         gd.addFloatingEffect(new FloatingContinuousEffect(
                 java.util.UUID.randomUUID(), "Control setup", null, controller.getId(),
                 new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+                permanent.getId(), null, null, Duration.PERMANENT, 0));
     }
 }

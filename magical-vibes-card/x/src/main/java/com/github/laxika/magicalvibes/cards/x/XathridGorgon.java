@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -32,7 +32,7 @@ public class XathridGorgon extends Card {
                         new BuffTargetCreatureIndefinitelyEffect(0, 0, Set.of(Keyword.DEFENDER)),
                         new AddCardTypeToTargetPermanentEffect(CardType.ARTIFACT, true),
                         new BecomeColorlessIndefinitelyEffect(true),
-                        new LockTargetPermanentEffect(false, false, true, EffectDuration.PERMANENT)
+                        new LockTargetPermanentEffect(false, false, true, Duration.PERMANENT)
                 ),
                 "{2}{B}, {T}: Put a petrification counter on target creature. It gains defender and "
                         + "becomes a colorless artifact in addition to its other types. Its activated "

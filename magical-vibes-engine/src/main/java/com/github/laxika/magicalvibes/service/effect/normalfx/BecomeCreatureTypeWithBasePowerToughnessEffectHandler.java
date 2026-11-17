@@ -74,8 +74,8 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
             }
         } else {
             if (e.replacesGrantedSubtypes()) {
-                gameData.floatingEffects.removeIf(floating ->
-                        floating.duration() == com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT
+                gameData.expireFloatingEffects(floating ->
+                        floating.duration() == com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT
                                 && floating.effect() instanceof com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect
                                 && source.getId().equals(floating.affectedPermanentId()));
             }
@@ -123,7 +123,7 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
                 entry.getControllerId(), new com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect(
                         subtype, com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET, overriding),
                 source.getId(), null, null,
-                com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT, 0));
+                com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, 0));
     }
 
 }

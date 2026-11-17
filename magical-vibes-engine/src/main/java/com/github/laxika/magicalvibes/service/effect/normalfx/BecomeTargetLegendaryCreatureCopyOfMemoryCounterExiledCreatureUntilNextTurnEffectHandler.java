@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeTargetLegendaryCreatureCopyOfMemoryCounterExiledCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -62,7 +62,7 @@ public class BecomeTargetLegendaryCreatureCopyOfMemoryCounterExiledCreatureUntil
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(), new MakeTargetCopyOfTargetCreatureUntilNextTurnEffect(),
-                target.getId(), null, null, EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                target.getId(), null, null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
 
         gameLogService.append(gameData,
                 GameLog.text(originalName + " becomes a copy of " + exiled.card().getName()

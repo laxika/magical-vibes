@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -21,9 +21,9 @@ public class VedalkenHumiliator extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new Metalcraft()),
                 SequenceEffect.of(
                                 new LosesAllAbilitiesEffect(GrantScope.OPPONENT_CREATURES,
-                                        EffectDuration.UNTIL_END_OF_TURN),
+                                        Duration.UNTIL_END_OF_TURN),
                                 new SetBasePowerToughnessEffect(1, 1, GrantScope.OPPONENT_CREATURES,
-                                        EffectDuration.UNTIL_END_OF_TURN)
+                                        Duration.UNTIL_END_OF_TURN)
                         ));
     }
 }

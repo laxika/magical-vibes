@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -35,7 +35,7 @@ public class ForgebornPhoenix extends Card {
     public ForgebornPhoenix() {
         addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
-                EffectDuration.WHILE_ATTACHED));
+                Duration.WHILE_ATTACHED));
 
         var returnTrigger = new ReturnSourceCardFromGraveyardToBattlefieldEffect(true);
         var perpetualGrant = new PerpetuallyGrantTriggeredAbilityToSourceCardEffect(

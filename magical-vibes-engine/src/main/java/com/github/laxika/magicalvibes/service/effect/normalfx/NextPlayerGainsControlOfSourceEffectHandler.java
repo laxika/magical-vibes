@@ -49,7 +49,7 @@ public class NextPlayerGainsControlOfSourceEffectHandler implements NormalEffect
                 newControllerId,
                 source,
                 new GainControlOfTargetEffect(handoff.controlDuration()),
-                handoff.controlDuration().toEffectDuration(),
+                handoff.controlDuration().toDuration(),
                 null,
                 entry.getCard().getName());
     }

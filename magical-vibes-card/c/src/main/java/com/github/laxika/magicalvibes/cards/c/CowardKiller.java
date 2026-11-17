@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndCreaturesSharingCreatureTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -26,7 +26,7 @@ public class CowardKiller extends Card {
         TargetFilter creature = TargetFilters.creature();
         CardEffect coward = SequenceEffect.of(
                 new CantBlockThisTurnEffect(TapUntapScope.TARGET),
-                new GrantSubtypeToTargetCreatureEffect(CardSubtype.COWARD, EffectDuration.UNTIL_END_OF_TURN),
+                new GrantSubtypeToTargetCreatureEffect(CardSubtype.COWARD, Duration.UNTIL_END_OF_TURN),
                 new TimeTravelEffect(1));
 
         addSpellEffect(new ChooseOneEffect(List.of(

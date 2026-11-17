@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.w.WickerboughElder;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import java.util.UUID;
@@ -120,7 +120,7 @@ class CacheRaidersTest extends BaseCardTest {
         gd.stolenCreatures.put(elder.getId(), player2.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control effect", null,
                 player1.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT), elder.getId(),
-                null, null, EffectDuration.PERMANENT, 0));
+                null, null, Duration.PERMANENT, 0));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();

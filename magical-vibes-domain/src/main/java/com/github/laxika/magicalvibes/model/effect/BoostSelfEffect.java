@@ -10,18 +10,18 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * and "gets +2/+2" are the same effect with different amount parameters.
  */
 public record BoostSelfEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
-                              EffectDuration duration) implements CardEffect {
+                              Duration duration) implements CardEffect {
 
     public BoostSelfEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost) {
-        this(powerBoost, toughnessBoost, EffectDuration.UNTIL_END_OF_TURN);
+        this(powerBoost, toughnessBoost, Duration.UNTIL_END_OF_TURN);
     }
 
     /** Convenience for plain fixed boosts ("gets +2/+2 until end of turn"). */
     public BoostSelfEffect(int powerBoost, int toughnessBoost) {
-        this(new Fixed(powerBoost), new Fixed(toughnessBoost), EffectDuration.UNTIL_END_OF_TURN);
+        this(new Fixed(powerBoost), new Fixed(toughnessBoost), Duration.UNTIL_END_OF_TURN);
     }
 
-    public BoostSelfEffect(int powerBoost, int toughnessBoost, EffectDuration duration) {
+    public BoostSelfEffect(int powerBoost, int toughnessBoost, Duration duration) {
         this(new Fixed(powerBoost), new Fixed(toughnessBoost), duration);
     }
 

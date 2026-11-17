@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderControlEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -57,7 +57,7 @@ public class ReturnExiledCardToBattlefieldUnderControlEffectHandler implements N
             gameData.stolenCreatures.put(permanent.getId(), exiled.ownerId());
             creatureControlService.applyControlEffect(gameData, controllerId, permanent,
                     new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                    EffectDuration.PERMANENT, null, entry.getCard().getName());
+                    Duration.PERMANENT, null, entry.getCard().getName());
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);

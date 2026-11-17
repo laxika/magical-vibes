@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -51,7 +51,7 @@ public class ClavileOFirstOfTheBlessed extends Card {
                 .addTrigger(Triggers.youAttack(),
                         SequenceEffect.of(
                                 new GrantEffectToTargetEffect(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), DEATH_TRIGGER),
-                                        EffectDuration.PERMANENT, false),
+                                        Duration.PERMANENT, false),
                                 new GrantSubtypeToTargetCreatureEffect(CardSubtype.DEMON)));
     }
 }

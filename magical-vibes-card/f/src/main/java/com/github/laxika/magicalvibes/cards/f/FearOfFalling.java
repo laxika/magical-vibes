@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
@@ -28,6 +28,6 @@ public class FearOfFalling extends Card {
                 .addTrigger(Triggers.attacks(),
                         new BoostTargetCreatureEffect(-2, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN),
                         new RemoveKeywordEffect(Keyword.FLYING, GrantScope.TARGET,
-                                EffectDuration.UNTIL_YOUR_NEXT_TURN));
+                                Duration.UNTIL_YOUR_NEXT_TURN));
     }
 }

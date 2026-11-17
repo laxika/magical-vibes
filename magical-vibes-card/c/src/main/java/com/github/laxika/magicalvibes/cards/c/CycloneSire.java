@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -31,7 +31,7 @@ public class CycloneSire extends Card {
                                         List.of(CardSubtype.ELEMENTAL),
                                         Set.of(Keyword.HASTE),
                                         null, Set.of(),
-                                        GrantScope.TARGET, EffectDuration.PERMANENT
+                                        GrantScope.TARGET, Duration.PERMANENT
                                 )
                         ),
                         "Put three +1/+1 counters on target land you control?"

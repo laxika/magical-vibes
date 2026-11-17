@@ -58,7 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnter
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -2754,7 +2754,7 @@ public class ChoiceHandlerService {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                         source.getCard().getName(), null, ctx.playerId(),
                         new GrantColorUntilEndOfTurnEffect(sourceChosenColor), source.getId(), null, null,
-                        EffectDuration.UNTIL_END_OF_TURN, 0));
+                        Duration.UNTIL_END_OF_TURN, 0));
             }
         }
 
@@ -2923,7 +2923,7 @@ public class ChoiceHandlerService {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                         source.getCard().getName(), null, ctx.playerId(),
                         new GrantColorUntilEndOfTurnEffect(sourceChosenColor), source.getId(), null, null,
-                        EffectDuration.UNTIL_END_OF_TURN, 0));
+                        Duration.UNTIL_END_OF_TURN, 0));
             }
         }
 
@@ -3691,15 +3691,15 @@ public class ChoiceHandlerService {
                 ? context.sourcePermanentId() : null;
     }
 
-    private EffectDuration floatingDurationFor(GrantDuration duration) {
+    private Duration floatingDurationFor(GrantDuration duration) {
         return switch (duration) {
-            case UNTIL_END_OF_COMBAT -> EffectDuration.UNTIL_END_OF_COMBAT;
-            case UNTIL_YOUR_NEXT_TURN -> EffectDuration.UNTIL_YOUR_NEXT_TURN;
-            case UNTIL_YOUR_NEXT_UPKEEP -> EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP;
-            case WHILE_SOURCE_ON_BATTLEFIELD -> EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
-            case WHILE_SOURCE_REMAINS -> EffectDuration.WHILE_SOURCE_REMAINS;
-            case INDEFINITE -> EffectDuration.PERMANENT;
-            case END_OF_TURN -> EffectDuration.UNTIL_END_OF_TURN;
+            case UNTIL_END_OF_COMBAT -> Duration.UNTIL_END_OF_COMBAT;
+            case UNTIL_YOUR_NEXT_TURN -> Duration.UNTIL_YOUR_NEXT_TURN;
+            case UNTIL_YOUR_NEXT_UPKEEP -> Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP;
+            case WHILE_SOURCE_ON_BATTLEFIELD -> Duration.WHILE_SOURCE_ON_BATTLEFIELD;
+            case WHILE_SOURCE_REMAINS -> Duration.WHILE_SOURCE_REMAINS;
+            case INDEFINITE -> Duration.PERMANENT;
+            case END_OF_TURN -> Duration.UNTIL_END_OF_TURN;
         };
     }
 
@@ -4881,7 +4881,7 @@ public class ChoiceHandlerService {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), ctx.sourceCardName(), null, ctx.controllerId(),
                     new GrantColorUntilEndOfTurnEffect(chosenColor), target.getId(), null, null,
-                    EffectDuration.UNTIL_END_OF_TURN, 0));
+                    Duration.UNTIL_END_OF_TURN, 0));
             gameData.permanentHexproofFromColorsThisTurn
                     .computeIfAbsent(target.getId(), ignored -> ConcurrentHashMap.newKeySet())
                     .add(chosenColor);
@@ -4978,7 +4978,7 @@ public class ChoiceHandlerService {
                     UUID.randomUUID(), ctx.sourceCardName(), null, ctx.controllerId(),
                     new com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect(color),
                     target.getId(), null, null,
-                    com.github.laxika.magicalvibes.model.effect.EffectDuration.UNTIL_END_OF_TURN, 0));
+                    com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN, 0));
 
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " becomes " + colorName + " until end of turn."));
             log.info("Game {} - {} becomes {} until end of turn", gameData.id, target.getCard().getName(), colorName);
@@ -5015,7 +5015,7 @@ public class ChoiceHandlerService {
                     UUID.randomUUID(), ctx.sourceCardName(), null, ctx.controllerId(),
                     new com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect(chosenColor),
                     target.getId(), null, null,
-                    com.github.laxika.magicalvibes.model.effect.EffectDuration.UNTIL_END_OF_TURN, 0));
+                    com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN, 0));
 
             gameLogService.append(gameData,
                     GameLog.cardThen(target.getCard(), " becomes " + colorName + " until end of turn."));
@@ -5437,7 +5437,7 @@ public class ChoiceHandlerService {
         String colorList = colorSet.stream()
                 .map(c -> c.name().charAt(0) + c.name().substring(1).toLowerCase())
                 .reduce((a, b) -> a + " and " + b).orElse("");
-        String durationSuffix = ctx.duration() == EffectDuration.UNTIL_END_OF_TURN
+        String durationSuffix = Duration.UNTIL_END_OF_TURN.equals(ctx.duration())
                 ? " until end of turn." : ".";
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " becomes " + colorList + durationSuffix));
@@ -6886,22 +6886,20 @@ public class ChoiceHandlerService {
 
         Permanent targetLand = gameQueryService.findPermanentById(gameData, ctx.targetLandId());
         if (targetLand != null) {
-            if (ctx.replacing() && ctx.duration() == EffectDuration.UNTIL_END_OF_TURN) {
+            if (ctx.replacing() && Duration.UNTIL_END_OF_TURN.equals(ctx.duration())) {
                 // A timestamped layer-4 floating effect, so a later "becomes" effect (Phantasmal Terrain,
                 // Blood Moon) overrides it by timestamp rather than the transient override always winning.
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), "Basic land type choice", null, player.getId(),
                         new GrantSubtypeEffect(subtype, GrantScope.TARGET, true),
-                        targetLand.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                        targetLand.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             } else {
                 GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(targetLand, subtype, ctx.duration(), ctx.replacing());
             }
 
-            String durationText = switch (ctx.duration()) {
-                case UNTIL_END_OF_TURN -> " until end of turn";
-                case UNTIL_CONTROLLERS_NEXT_UNTAP_STEP -> " until its controller's next untap step";
-                default -> "";
-            };
+            String durationText = Duration.UNTIL_END_OF_TURN.equals(ctx.duration()) ? " until end of turn"
+                    : Duration.UNTIL_CONTROLLERS_NEXT_UNTAP_STEP.equals(ctx.duration())
+                    ? " until its controller's next untap step" : "";
             String typeSuffix = ctx.replacing() ? "" : " in addition to its other types";
             gameLogService.append(gameData, GameLog.cardThen(targetLand.getCard(),
                     " becomes a " + subtype.getDisplayName() + typeSuffix + durationText + "."));
@@ -6925,7 +6923,7 @@ public class ChoiceHandlerService {
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null) {
             synchronized (gameData.floatingEffects) {
-                gameData.floatingEffects.removeIf(floating -> target.getId().equals(floating.affectedPermanentId())
+                gameData.expireFloatingEffects(floating -> target.getId().equals(floating.affectedPermanentId())
                         && floating.effect() instanceof LandwalkIgnoredForBlockingEffect landwalkEffect
                         && landwalkEffect.ignoresAllLandwalk());
             }
@@ -6954,7 +6952,7 @@ public class ChoiceHandlerService {
                     gameData.addFloatingEffect(new FloatingContinuousEffect(
                             UUID.randomUUID(), "Elsewhere Flask", null, ctx.controllerId(),
                             new GrantSubtypeEffect(subtype, GrantScope.TARGET, true),
-                            permanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                            permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
                 }
             }
         }
@@ -6993,7 +6991,7 @@ public class ChoiceHandlerService {
                     continue;
                 }
                 GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(
-                        permanent, subtype, EffectDuration.UNTIL_END_OF_TURN, true);
+                        permanent, subtype, Duration.UNTIL_END_OF_TURN, true);
             }
         }
 

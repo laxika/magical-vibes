@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.LandsEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -39,7 +39,7 @@ public class EmergentSequence extends Card {
                         null,
                         Set.of(),
                         GrantScope.OWN_PERMANENTS,
-                        EffectDuration.PERMANENT,
+                        Duration.PERMANENT,
                         null,
                         Set.of(CardColor.GREEN, CardColor.BLUE))));
         addSpellEffect(new PutCountersOnChosenPermanentEffect(

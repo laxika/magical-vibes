@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.testutil;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
 import com.github.laxika.magicalvibes.model.rules.RulesObserver;
@@ -15,8 +16,8 @@ import java.util.Set;
 
 /**
  * Watches one game ({@link GameData#rulesObserver}): records every rules event batch the trigger pipeline drains, for
- * tests that look at the events an action emits, and hands every triggered ability that reaches the stack to the
- * {@link TriggerLedger} once.
+ * tests that look at the events an action emits, and hands every triggered ability that reaches the stack, and every
+ * floating effect that begins or ends, to the {@link TriggerLedger} once.
  */
 public final class RulesEventRecorder implements RulesObserver {
 
@@ -44,6 +45,16 @@ public final class RulesEventRecorder implements RulesObserver {
             return;
         }
         TriggerLedger.record(gameData, entry, route == Route.STACK_ADDITIONAL);
+    }
+
+    @Override
+    public void floatingEffectBegan(FloatingContinuousEffect effect) {
+        TriggerLedger.recordFloating(gameData, effect, true);
+    }
+
+    @Override
+    public void floatingEffectEnded(FloatingContinuousEffect effect) {
+        TriggerLedger.recordFloating(gameData, effect, false);
     }
 
     @Override

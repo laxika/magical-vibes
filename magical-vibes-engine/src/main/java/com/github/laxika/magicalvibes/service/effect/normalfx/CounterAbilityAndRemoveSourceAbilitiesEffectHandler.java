@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterAbilityAndRemoveSourceAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -67,7 +67,7 @@ public class CounterAbilityAndRemoveSourceAbilitiesEffectHandler implements Norm
         }
 
         LosesAllAbilitiesEffect loseAbilities = new LosesAllAbilitiesEffect(
-                GrantScope.TARGET, EffectDuration.WHILE_SOURCE_REMAINS);
+                GrantScope.TARGET, Duration.WHILE_SOURCE_REMAINS);
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), sourcePermanentId,
                 entry.getControllerId(), loseAbilities, targetSourcePermanentId, null, null,

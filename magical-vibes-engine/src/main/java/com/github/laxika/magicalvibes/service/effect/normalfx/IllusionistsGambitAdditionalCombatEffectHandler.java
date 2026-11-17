@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.IllusionistsGambitAdditionalCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -52,7 +52,7 @@ public class IllusionistsGambitAdditionalCombatEffectHandler implements NormalEf
                     gambit.protectedPlayerId(),
                     new CreaturesCantAttackControllerUnlessPredicateEffect(
                             new PermanentNotPredicate(new PermanentTruePredicate()), true),
-                    attackerId, gambit.protectedPlayerId(), null, EffectDuration.UNTIL_END_OF_COMBAT, 0L));
+                    attackerId, gambit.protectedPlayerId(), null, Duration.UNTIL_END_OF_COMBAT, 0L));
         }
     }
 }

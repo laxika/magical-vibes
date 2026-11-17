@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -119,7 +119,7 @@ class GainControlOfTargetEffectHandlerTest {
             handler.resolve(gd, entry, effect);
 
             verify(creatureControlService).applyControlEffect(gd, player1Id, target,
-                    effect, EffectDuration.PERMANENT, null, "Entrancing Melody");
+                    effect, Duration.PERMANENT, null, "Entrancing Melody");
         }
 
         @Test
@@ -150,12 +150,12 @@ class GainControlOfTargetEffectHandlerTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
 
             when(creatureControlService.applyControlEffect(eq(gd), eq(player1Id), any(Permanent.class),
-                    eq(effect), eq(EffectDuration.PERMANENT), eq(null), eq("Captivating Vampire")))
+                    eq(effect), eq(Duration.PERMANENT), eq(null), eq("Captivating Vampire")))
                     .thenReturn(true);
             handler.resolve(gd, entry, effect);
 
             verify(creatureControlService).applyControlEffect(gd, player1Id, target,
-                    effect, EffectDuration.PERMANENT, null, "Captivating Vampire");
+                    effect, Duration.PERMANENT, null, "Captivating Vampire");
             assertThat(target.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Grizzly Bears becomes a Vampire in addition to its other types.")));
         }
@@ -203,11 +203,11 @@ class GainControlOfTargetEffectHandlerTest {
             handler.resolve(gd, entry, effect);
 
             verify(creatureControlService).applyControlEffect(gd, player1Id, target1,
-                    effect, EffectDuration.PERMANENT, null, "Jace, Ingenious Mind-Mage");
+                    effect, Duration.PERMANENT, null, "Jace, Ingenious Mind-Mage");
             verify(creatureControlService).applyControlEffect(gd, player1Id, target2,
-                    effect, EffectDuration.PERMANENT, null, "Jace, Ingenious Mind-Mage");
+                    effect, Duration.PERMANENT, null, "Jace, Ingenious Mind-Mage");
             verify(creatureControlService).applyControlEffect(gd, player1Id, target3,
-                    effect, EffectDuration.PERMANENT, null, "Jace, Ingenious Mind-Mage");
+                    effect, Duration.PERMANENT, null, "Jace, Ingenious Mind-Mage");
         }
 
         @Test
@@ -232,9 +232,9 @@ class GainControlOfTargetEffectHandlerTest {
 
             verify(creatureControlService, times(2)).applyControlEffect(any(), any(), any(), any(), any(), any(), any());
             verify(creatureControlService).applyControlEffect(gd, player1Id, target1,
-                    effect, EffectDuration.PERMANENT, null, "Jace, Ingenious Mind-Mage");
+                    effect, Duration.PERMANENT, null, "Jace, Ingenious Mind-Mage");
             verify(creatureControlService).applyControlEffect(gd, player1Id, target2,
-                    effect, EffectDuration.PERMANENT, null, "Jace, Ingenious Mind-Mage");
+                    effect, Duration.PERMANENT, null, "Jace, Ingenious Mind-Mage");
         }
 
         @Test
@@ -266,7 +266,7 @@ class GainControlOfTargetEffectHandlerTest {
             when(gameQueryService.findPermanentById(gd, target2.getId())).thenReturn(target2);
 
             when(creatureControlService.applyControlEffect(eq(gd), eq(player1Id), any(Permanent.class),
-                    eq(effect), eq(EffectDuration.PERMANENT), eq(null), eq("Captivating Vampire")))
+                    eq(effect), eq(Duration.PERMANENT), eq(null), eq("Captivating Vampire")))
                     .thenReturn(true);
             handler.resolve(gd, entry, effect);
 
@@ -298,7 +298,7 @@ class GainControlOfTargetEffectHandlerTest {
             handler.resolve(gd, entry, effect);
 
             verify(creatureControlService).applyControlEffect(gd, player1Id, target,
-                    effect, EffectDuration.UNTIL_END_OF_TURN, null, "Threaten");
+                    effect, Duration.UNTIL_END_OF_TURN, null, "Threaten");
         }
 
         @Test
@@ -343,7 +343,7 @@ class GainControlOfTargetEffectHandlerTest {
             handler.resolve(gd, entry, effect);
 
             verify(creatureControlService).applyControlEffect(gd, player1Id, target,
-                    effect, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, source.getId(), "Olivia Voldaren");
+                    effect, Duration.WHILE_SOURCE_ON_BATTLEFIELD, source.getId(), "Olivia Voldaren");
         }
 
         @Test

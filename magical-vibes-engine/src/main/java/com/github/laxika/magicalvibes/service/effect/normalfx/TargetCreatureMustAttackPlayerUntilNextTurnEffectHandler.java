@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
@@ -42,7 +42,7 @@ public class TargetCreatureMustAttackPlayerUntilNextTurnEffectHandler implements
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                     entry.getControllerId(), new GrantEffectEffect(new MustAttackPlayerEffect(), GrantScope.TARGET),
-                    target.getId(), null, null, EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                    target.getId(), null, null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
         }
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -30,6 +30,6 @@ public class IronManFuturistParagon extends Card {
         )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new AnimatePermanentsEffect(
                         5, 5, List.of(), Set.of(Keyword.FLYING), null,
-                        Set.of(CardType.ARTIFACT), GrantScope.TARGET, EffectDuration.PERMANENT));
+                        Set.of(CardType.ARTIFACT), GrantScope.TARGET, Duration.PERMANENT));
     }
 }

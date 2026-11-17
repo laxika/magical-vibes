@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -58,7 +58,7 @@ public class CaseOfTheFilchedFalcon extends Card {
                                 null,
                                 Set.of(CardType.CREATURE),
                                 GrantScope.TARGET,
-                                EffectDuration.PERMANENT)
+                                Duration.PERMANENT)
                 ),
                 "{2}{U}, Sacrifice this Case: Put four +1/+1 counters on target noncreature artifact. "
                         + "It becomes a 0/0 Bird creature with flying in addition to its other types.",

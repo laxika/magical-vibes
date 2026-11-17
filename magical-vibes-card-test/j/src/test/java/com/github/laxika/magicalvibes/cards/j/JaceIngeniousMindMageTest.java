@@ -153,7 +153,7 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
                     .anyMatch(p -> p.getId().equals(targetId));
             assertThat(gd.playerBattlefields.get(player2.getId()))
                     .noneMatch(p -> p.getId().equals(targetId));
-            assertThat(gd.newestControlEffectFor(targetId).duration()).isEqualTo(com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT);
+            assertThat(gd.newestControlEffectFor(targetId).duration()).isEqualTo(com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT);
         }
     }
 

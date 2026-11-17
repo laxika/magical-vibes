@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ClashForControlOfEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -41,7 +41,7 @@ public class ClashForControlOfEnchantedCreatureEffectHandler implements NormalEf
             if (enchanted != null) {
                 creatureControlService.applyControlEffect(gameData, clash.recipientId(), enchanted,
                         new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                        EffectDuration.PERMANENT, null, entry.getCard().getName());
+                        Duration.PERMANENT, null, entry.getCard().getName());
             }
             return;
         }

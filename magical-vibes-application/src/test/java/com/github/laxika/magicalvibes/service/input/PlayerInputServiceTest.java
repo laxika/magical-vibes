@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -772,7 +772,7 @@ class PlayerInputServiceTest {
             UUID targetLandId = UUID.randomUUID();
 
             svc.beginAddBasicLandTypeChoice(gd, PLAYER1_ID, targetLandId,
-                    EffectDuration.UNTIL_END_OF_TURN,
+                    Duration.UNTIL_END_OF_TURN,
                     true, List.of(CardSubtype.PLAINS, CardSubtype.ISLAND));
 
             InteractionPromptMessage msg = projectedPrompt();

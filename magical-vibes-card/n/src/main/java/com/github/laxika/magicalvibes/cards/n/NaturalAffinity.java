@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class NaturalAffinity extends Card {
                 2, 2,
                 List.of(), Set.of(),
                 null, Set.of(),
-                GrantScope.ALL_LANDS, EffectDuration.UNTIL_END_OF_TURN
+                GrantScope.ALL_LANDS, Duration.UNTIL_END_OF_TURN
         ));
     }
 }

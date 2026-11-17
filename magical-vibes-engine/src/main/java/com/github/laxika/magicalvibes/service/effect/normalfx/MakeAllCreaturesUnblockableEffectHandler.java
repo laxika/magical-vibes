@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MakeAllCreaturesUnblockableEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -32,7 +32,7 @@ public class MakeAllCreaturesUnblockableEffectHandler implements NormalEffectHan
         var filter = ((MakeAllCreaturesUnblockableEffect) effect).filter();
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                effect, null, null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                effect, null, null, null, Duration.UNTIL_END_OF_TURN, 0));
 
         String logEntry = filter != null
                 ? "Matching creatures can't be blocked this turn."

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import java.util.Set;
 
 /** Layer-4 effect that replaces a permanent's card types with the given types. */
-public record SetCardTypesEffect(Set<CardType> cardTypes, GrantScope scope, EffectDuration duration)
+public record SetCardTypesEffect(Set<CardType> cardTypes, GrantScope scope, Duration duration)
         implements CardEffect {
 
     public SetCardTypesEffect {
@@ -13,7 +13,7 @@ public record SetCardTypesEffect(Set<CardType> cardTypes, GrantScope scope, Effe
     }
 
     public SetCardTypesEffect(Set<CardType> cardTypes, GrantScope scope) {
-        this(cardTypes, scope, EffectDuration.PERMANENT);
+        this(cardTypes, scope, Duration.PERMANENT);
     }
 
     @Override

@@ -63,7 +63,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.WrappedStackStaticEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.ErrataCreatureTypeForMatchEffect;
@@ -1450,7 +1450,7 @@ public class LayerSystemService {
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : gameData.floatingEffects) {
                 if (permanent.getId().equals(floating.affectedPermanentId())
-                        && floating.duration() == EffectDuration.UNTIL_END_OF_TURN
+                        && Duration.UNTIL_END_OF_TURN.equals(floating.duration())
                         && floating.effect() instanceof GrantSubtypeEffect grant
                         && grant.overriding()
                         && !BASIC_LAND_SUBTYPES.contains(grant.subtype())) {
@@ -1664,7 +1664,7 @@ public class LayerSystemService {
                     PrimevalCounterEffect primeval = new PrimevalCounterEffect();
                     FloatingContinuousEffect counterEffect = new FloatingContinuousEffect(
                             UUID.randomUUID(), "primeval counter", null, slot.controllerId(),
-                            primeval, permanent.getId(), null, null, EffectDuration.PERMANENT,
+                            primeval, permanent.getId(), null, null, Duration.PERMANENT,
                             permanent.getCounterTimestamp(CounterType.PRIMEVAL));
                     instances.add(new EffectInstance(null, primeval, primeval, counterEffect, false,
                             counterEffect.timestamp(), slot.position()));
@@ -1679,7 +1679,7 @@ public class LayerSystemService {
                     FloatingContinuousEffect counterEffect = new FloatingContinuousEffect(
                             UUID.randomUUID(), keyword.name().toLowerCase() + " counter", null,
                             slot.controllerId(), grant, permanent.getId(), null, null,
-                            EffectDuration.PERMANENT, permanent.getCounterTimestamp(counterType));
+                            Duration.PERMANENT, permanent.getCounterTimestamp(counterType));
                     instances.add(new EffectInstance(null, grant, grant, counterEffect, false,
                             counterEffect.timestamp(), slot.position()));
                 }
@@ -1693,7 +1693,7 @@ public class LayerSystemService {
                     FloatingContinuousEffect counterEffect = new FloatingContinuousEffect(
                             UUID.randomUUID(), "hexproof from " + hexproofColor.name().toLowerCase() + " counter",
                             null, slot.controllerId(), grant, permanent.getId(), null, null,
-                            EffectDuration.PERMANENT, permanent.getCounterTimestamp(counterType));
+                            Duration.PERMANENT, permanent.getCounterTimestamp(counterType));
                     instances.add(new EffectInstance(null, grant, grant, counterEffect, false,
                             counterEffect.timestamp(), slot.position()));
                 }
@@ -2333,7 +2333,7 @@ public class LayerSystemService {
             case SetCardTypesEffect set -> {
                 manage(board, instance);
                 if (set.scope() == GrantScope.SELF
-                        && set.duration() == EffectDuration.WHILE_ATTACHED
+                        && Duration.WHILE_ATTACHED.equals(set.duration())
                         && (instance.source() == null || !instance.source().permanent().isAttached())) {
                     return;
                 }
@@ -2359,7 +2359,7 @@ public class LayerSystemService {
             }
             case RemoveCardTypeFromAttachedPermanentEffect remove -> {
                 manage(board, instance);
-                if (remove.duration() == EffectDuration.WHILE_ATTACHED
+                if (Duration.WHILE_ATTACHED.equals(remove.duration())
                         && (instance.source() == null || !instance.source().permanent().isAttached())) {
                     return;
                 }
@@ -3475,7 +3475,7 @@ public class LayerSystemService {
             for (FloatingContinuousEffect floating : gameData.floatingEffects) {
                 if (!(floating.effect() instanceof GrantActivatedAbilityEffect grant)
                         || floating.sourcePermanentId() == null
-                        || grant.duration() != EffectDuration.WHILE_SOURCE_REMAINS) {
+                        || !Duration.WHILE_SOURCE_REMAINS.equals(grant.duration())) {
                     continue;
                 }
                 boolean ransom = grant.ability().getEffects().stream().anyMatch(PayRansomEffect.class::isInstance);

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectsToCounterBearersEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
@@ -57,7 +57,7 @@ public class GrantEffectsToCounterBearersEffectHandler implements NormalEffectHa
             CardEffect grantedEffect = boundPredicate == null
                     ? declaredEffect : narrowedToBoundPermanent(declaredEffect, boundPredicate);
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName, null,
-                    controllerId, grantedEffect, null, null, scope, EffectDuration.PERMANENT, 0,
+                    controllerId, grantedEffect, null, null, scope, Duration.PERMANENT, 0,
                     rule.boundToTargetCard()));
         }
     }

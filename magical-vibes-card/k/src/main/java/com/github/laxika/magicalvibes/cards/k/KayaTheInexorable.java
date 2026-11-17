@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastLegendarySpellFromAnyZoneEffect;
@@ -69,10 +69,10 @@ public class KayaTheInexorable extends Card {
                 List.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.GHOSTFORM),
                         new GrantEffectToTargetEffect(
-                                new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), returnFromGraveyard), EffectDuration.PERMANENT, false),
+                                new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), returnFromGraveyard), Duration.PERMANENT, false),
                         new GrantEffectToTargetEffect(
                                 new TriggeredAbility(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), null, ObjectRelation.THIS), returnFromExile),
-                                EffectDuration.PERMANENT,
+                                Duration.PERMANENT,
                                 false)),
                 "+1: Put a ghostform counter on up to one target nontoken creature. It gains \"When this creature dies "
                         + "or is put into exile, return it to its owner's hand and create a 1/1 white Spirit creature "

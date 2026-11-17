@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.model.rules;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
 import java.util.List;
 
 /**
- * Watches a game's rules events and the triggered abilities put toward the stack. Only the test fixtures implement
- * it (the rules event recorder and the trigger ledger). A game has none by default, and simulation copies never carry
+ * Watches a game's rules events, the triggered abilities put toward the stack and the floating effects that begin and
+ * end. Only the test fixtures implement it (the rules event recorder and the trigger ledger). A game has none by default, and simulation copies never carry
  * one.
  */
 public interface RulesObserver {
@@ -37,5 +39,13 @@ public interface RulesObserver {
 
     /** The trigger pipeline took these batches out of the game's {@link RulesEventLog}. */
     default void eventsDrained(List<RulesEventBatch> batches) {
+    }
+
+    /** {@code effect}, a continuous effect a resolving spell or ability made (CR 611.2), began to apply. */
+    default void floatingEffectBegan(FloatingContinuousEffect effect) {
+    }
+
+    /** {@code effect} ended: its duration was over, or the game took it away. */
+    default void floatingEffectEnded(FloatingContinuousEffect effect) {
     }
 }

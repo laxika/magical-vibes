@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.OwnLandsGainAllBasicLandTypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -57,7 +57,7 @@ public class OwnLandsGainAllBasicLandTypesUntilEndOfTurnEffectHandler implements
             for (CardSubtype subtype : BASIC_LAND_TYPES) {
                 if (!hasOwnBasicLandType(permanent, subtype)) {
                     GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(
-                            permanent, subtype, EffectDuration.UNTIL_END_OF_TURN, false);
+                            permanent, subtype, Duration.UNTIL_END_OF_TURN, false);
                 }
             }
         }

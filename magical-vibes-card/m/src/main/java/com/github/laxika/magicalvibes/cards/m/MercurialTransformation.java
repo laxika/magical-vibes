@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
@@ -26,7 +26,7 @@ public class MercurialTransformation extends Card {
 
     public MercurialTransformation() {
         target(TargetFilters.nonlandPermanent())
-                .addSpellEffect(new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN))
+                .addSpellEffect(new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(new ChooseOneForTargetPermanentEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(FROG_MODE, List.of(
                                 animate(1, 1, CardSubtype.FROG),
@@ -38,7 +38,7 @@ public class MercurialTransformation extends Card {
 
     private static AnimatePermanentsEffect animate(int power, int toughness, CardSubtype subtype) {
         return new AnimatePermanentsEffect(new Fixed(power), new Fixed(toughness), List.of(subtype), Set.of(),
-                CardColor.BLUE, Set.of(CardType.CREATURE), GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN,
+                CardColor.BLUE, Set.of(CardType.CREATURE), GrantScope.TARGET, Duration.UNTIL_END_OF_TURN,
                 null, true);
     }
 }

@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -56,29 +57,25 @@ public class PerpetuallyRemoveKeywordEffectHandler implements NormalEffectHandle
         permanent.getGrantedKeywords().remove(keyword);
         permanent.getPersistentGrantedKeywords().remove(keyword);
         permanent.getUntilNextTurnKeywords().remove(keyword);
-        synchronized (gameData.floatingEffects) {
-            for (int i = 0; i < gameData.floatingEffects.size(); i++) {
-                FloatingContinuousEffect floating = gameData.floatingEffects.get(i);
-                if (!permanent.getId().equals(floating.affectedPermanentId())
-                        || !(floating.effect() instanceof GrantKeywordEffect grant)
-                        || !grant.keywords().contains(keyword)) {
-                    continue;
-                }
-                Set<Keyword> remaining = new HashSet<>(grant.keywords());
-                remaining.remove(keyword);
-                if (remaining.isEmpty()) {
-                    gameData.floatingEffects.remove(i);
-                    i--;
-                    continue;
-                }
-                gameData.floatingEffects.set(i, new FloatingContinuousEffect(
-                        floating.id(), floating.sourceCardName(), floating.sourcePermanentId(),
-                        floating.controllerId(),
-                        new GrantKeywordEffect(remaining, grant.scope(), grant.filter(), grant.duration(),
-                                grant.grantCondition()),
-                        floating.affectedPermanentId(), floating.affectedPlayerId(), floating.scope(),
-                        floating.duration(), floating.timestamp(), floating.expiresWhenScopeNoLongerMatches()));
+        for (FloatingContinuousEffect floating : List.copyOf(gameData.floatingEffects)) {
+            if (!permanent.getId().equals(floating.affectedPermanentId())
+                    || !(floating.effect() instanceof GrantKeywordEffect grant)
+                    || !grant.keywords().contains(keyword)) {
+                continue;
             }
+            Set<Keyword> remaining = new HashSet<>(grant.keywords());
+            remaining.remove(keyword);
+            if (remaining.isEmpty()) {
+                gameData.endFloatingEffect(floating);
+                continue;
+            }
+            gameData.replaceFloatingEffect(floating, new FloatingContinuousEffect(
+                    floating.id(), floating.sourceCardName(), floating.sourcePermanentId(),
+                    floating.controllerId(),
+                    new GrantKeywordEffect(remaining, grant.scope(), grant.filter(), grant.duration(),
+                            grant.grantCondition()),
+                    floating.affectedPermanentId(), floating.affectedPlayerId(), floating.scope(),
+                    floating.duration(), floating.timestamp(), floating.expiresWhenScopeNoLongerMatches()));
         }
     }
 }

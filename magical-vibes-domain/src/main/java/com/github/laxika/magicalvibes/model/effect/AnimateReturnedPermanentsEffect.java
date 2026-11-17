@@ -12,7 +12,7 @@ public record AnimateReturnedPermanentsEffect(AnimatePermanentsEffect animation)
 
     public AnimateReturnedPermanentsEffect {
         Objects.requireNonNull(animation);
-        if (animation.scope() != GrantScope.TARGET || animation.duration() != EffectDuration.PERMANENT) {
+        if (animation.scope() != GrantScope.TARGET || !Duration.PERMANENT.equals(animation.duration())) {
             throw new IllegalArgumentException("Returned permanent animation must target permanently");
         }
     }

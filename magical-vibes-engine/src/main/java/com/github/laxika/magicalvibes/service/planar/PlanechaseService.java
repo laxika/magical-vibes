@@ -206,7 +206,7 @@ public class PlanechaseService {
     private boolean planarDiePlaneswalkIsReplaced(GameData game) {
         synchronized (game.floatingEffects) {
             return game.floatingEffects.stream()
-                    .filter(effect -> effect.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN)
+                    .filter(effect -> Duration.UNTIL_YOUR_NEXT_TURN.equals(effect.duration()))
                     .anyMatch(effect -> effect.effect() instanceof PlanarDiePlaneswalkToChaosReplacementEffect);
         }
     }
@@ -284,7 +284,7 @@ public class PlanechaseService {
             state.deck.add(object.getCard());
             trigger(game, object, Triggers.planeswalkAwayFromThis(), state.controllerId);
         }
-        game.floatingEffects.removeIf(effect -> effect.duration() == EffectDuration.UNTIL_PLANESWALK);
+        game.expireFloatingEffects(effect -> Duration.UNTIL_PLANESWALK.equals(effect.duration()));
         reveal(game, true);
     }
 
@@ -308,7 +308,7 @@ public class PlanechaseService {
             trigger(game, object, Triggers.planeswalkAwayFromThis(), controllerId);
         }
         state.deck.addAll(cardsToBottom);
-        game.floatingEffects.removeIf(effect -> effect.duration() == EffectDuration.UNTIL_PLANESWALK);
+        game.expireFloatingEffects(effect -> Duration.UNTIL_PLANESWALK.equals(effect.duration()));
 
         for (Card card : arrivingPlanes) {
             state.faceUp.add(new PlanarObject(card, game.nextTimestamp()));
@@ -337,7 +337,7 @@ public class PlanechaseService {
         state.planeswalkedToTurn = game.turnNumber;
         if (arrivingPlane.hasType(CardType.PLANE)) state.planeswalkedToNamesThisTurn.add(arrivingPlane.getName());
         if (phasingService != null) phasingService.phaseInUntilPlaneswalk(game);
-        game.floatingEffects.removeIf(effect -> effect.duration() == EffectDuration.UNTIL_PLANESWALK);
+        game.expireFloatingEffects(effect -> Duration.UNTIL_PLANESWALK.equals(effect.duration()));
         logs.append(game, GameLogEntry.text("The planar card is " + arrivingPlane.getName() + "."));
         if (ascendEffectHandler != null) {
             ascendEffectHandler.checkPlanarAscend(game);

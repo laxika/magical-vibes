@@ -677,6 +677,14 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Docs: `triggers.md` rewritten as the model; `TRIGGER_SLOT_TARGETING.md` replaced by `TRIGGERED_ABILITY_TARGETS.md`; refactor references dropped from `agent-docs/`, both card skills (`.claude`, `.codex`) and Javadoc.
 - Open: ~18 `ORACLE_TEXT_EFFECT_MAP.md` rows still use the removed `SpellCastTriggerEffect(...)` shorthand (the file's note says how to write it); dated history in the other plan docs still names `TriggerCollectionService`.
 
+**D (part 1: `Duration`, floating effects in the ledger).**
+- `Duration` (`model.effect`) replaces `EffectDuration`: an `End` event (`NEVER` for none, CR 611.2a) or an `AsLongAs` condition that ends it for good (CR 611.2b), never both. Its constants are the old names; `CONTINUOUS` is `STATIC` (an effect of a static ability, CR 611.3). Compare with `equals`; `ControlDuration.toDuration()`.
+- No start yet: "after this turn" (CR 702.185a) comes with the play-permission family, the only one that needs it.
+- Ledger: `RulesObserver.floatingEffectBegan` / `floatingEffectEnded`; `TriggerLedger` writes `floating began|ended` lines (source, effect class, duration, affected objects by role, turn and step). Only `GameData` changes `floatingEffects`: `putFloatingEffect` (keeps the effect's timestamp, CR 613.7a), `endFloatingEffect`, `replaceFloatingEffect` replace every direct `add` / `remove` / `removeIf` / `set` / `clear`.
+- No behaviour change. Ledger over the 973 card test classes of the touched effects and the route tests: no ability gained, lost or reordered; every difference is random (drawn and discarded cards, Ebony Fly's die, Setzer's coin flips). One log text changed: a `WHILE_SOURCE_CONTROLLED` "loses all abilities" is logged "for as long as", not "until end of turn".
+- Inventory: `python3 -I scripts/duration-inventory.py [--list FILE]` (counts per family; `--list` classifies each `GameData` field as an effect or turn history by name, so check its list before converting a family).
+- Next: part 2, the clock. Each `End` and `AsLongAs` is ended by its rules event in `RulesEventPipeline` (step events, the cleanup step included; the turn's start; `SpellEvent`; zone changes; tap; attachment; control change), deleting the `expire…` methods; take the floating lines before and after and keep each moment or cite the rule that moves it. Then the `GameData` families in the inventory's grouping, `Permanent`'s end-of-turn fields, the other duration enums (`GrantDuration`, `ControlDuration`, `ExilePlayDuration`, `NoMaximumHandSizeDuration`, the delayed spell-cast `Duration`) and `DelayedAction` (C51).
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

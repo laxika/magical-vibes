@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MoveKeywordFromTargetToTargetEffect;
@@ -60,7 +60,7 @@ public class MoveKeywordFromTargetToTargetEffectHandler implements NormalEffectH
             loser.getRemovedKeywords().add(keyword);
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), null, entry.getControllerId(), remove,
-                    loser.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                    loser.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             gameLogService.append(gameData, GameLog.builder().card(loser.getCard())
                     .text(" loses " + label(keyword) + " until end of turn.").build());
         }
@@ -70,7 +70,7 @@ public class MoveKeywordFromTargetToTargetEffectHandler implements NormalEffectH
             gainer.getGrantedKeywords().add(keyword);
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), null, entry.getControllerId(), grant,
-                    gainer.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                    gainer.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             gameLogService.append(gameData, GameLog.builder().card(gainer.getCard())
                     .text(" gains " + label(keyword) + " until end of turn.").build());
         }

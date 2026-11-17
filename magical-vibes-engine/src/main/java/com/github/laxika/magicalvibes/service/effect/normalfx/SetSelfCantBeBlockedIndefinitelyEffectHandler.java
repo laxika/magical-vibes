@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetSelfCantBeBlockedIndefinitelyEffect;
@@ -40,7 +40,7 @@ public class SetSelfCantBeBlockedIndefinitelyEffectHandler implements NormalEffe
         GrantEffectEffect grant = new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF);
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), source.getId(), entry.getControllerId(), grant,
-                source.getId(), null, null, EffectDuration.PERMANENT, 0));
+                source.getId(), null, null, Duration.PERMANENT, 0));
 
         gameLogService.append(gameData, GameLog.builder().card(source.getCard())
                 .text(" can't be blocked.").build());

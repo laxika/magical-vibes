@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -46,7 +46,7 @@ public class Ghirapur extends Card {
                         crewTwo,
                         GrantScope.OWN_PERMANENTS,
                         noncreatureNonVehicleArtifact,
-                        EffectDuration.UNTIL_END_OF_TURN),
+                        Duration.UNTIL_END_OF_TURN),
                 AnimatePermanentsEffect.vehicles(5, 3, Set.of(Keyword.TRAMPLE, Keyword.HASTE),
                         noncreatureNonVehicleArtifact)));
 

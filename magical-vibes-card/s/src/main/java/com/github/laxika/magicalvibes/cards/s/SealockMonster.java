@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -32,6 +32,6 @@ public class SealockMonster extends Card {
         ));
 
         target(TargetFilters.land()).addTrigger(Triggers.becomesMonstrous(),
-                new GrantBasicLandTypeToTargetEffect(EffectDuration.CONTINUOUS, CardSubtype.ISLAND));
+                new GrantBasicLandTypeToTargetEffect(Duration.STATIC, CardSubtype.ISLAND));
     }
 }

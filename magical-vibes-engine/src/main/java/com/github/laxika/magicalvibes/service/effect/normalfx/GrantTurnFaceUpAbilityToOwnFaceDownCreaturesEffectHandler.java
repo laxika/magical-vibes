@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantTurnFaceUpAbilityToOwnFaceDownCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceTurnFaceUpCostForPermanentEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -50,7 +50,7 @@ public class GrantTurnFaceUpAbilityToOwnFaceDownCreaturesEffectHandler
                     UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
                     new ReduceTurnFaceUpCostForPermanentEffect(
                             permanent.getId(), grant.turnFaceUpCostReduction()),
-                    permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+                    permanent.getId(), null, null, Duration.PERMANENT, 0));
         }
     }
 }

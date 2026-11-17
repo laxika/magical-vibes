@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.AbilityEffects;
 
 /**
  * When resolved, grants the targeted permanent an ability.
- * Duration {@link EffectDuration#PERMANENT} stores it on
+ * Duration {@link Duration#PERMANENT} stores it on
  * {@link com.github.laxika.magicalvibes.model.Permanent#addPersistentAbility} (survives
- * end-of-turn cleanup). Duration {@link EffectDuration#UNTIL_END_OF_TURN} uses
+ * end-of-turn cleanup). Duration {@link Duration#UNTIL_END_OF_TURN} uses
  * {@link com.github.laxika.magicalvibes.model.Permanent#addTemporaryAbility} (cleared by
  * {@code resetModifiers()}).
  *
@@ -24,39 +24,39 @@ import com.github.laxika.magicalvibes.model.AbilityEffects;
  */
 public record GrantEffectToTargetEffect(
         Ability grantedAbility,
-        EffectDuration duration,
+        Duration duration,
         boolean skipIfAlreadyPresent,
         GrantScope scope
 ) implements CardEffect {
 
     /** The grant of {@code grantedAbility}. */
     public GrantEffectToTargetEffect(Ability grantedAbility) {
-        this(grantedAbility, EffectDuration.PERMANENT, true);
+        this(grantedAbility, Duration.PERMANENT, true);
     }
 
     /** The grant of {@code grantedAbility}. */
-    public GrantEffectToTargetEffect(Ability grantedAbility, EffectDuration duration) {
+    public GrantEffectToTargetEffect(Ability grantedAbility, Duration duration) {
         this(grantedAbility, duration, true);
     }
 
     /** The grant of {@code grantedAbility}. */
-    public GrantEffectToTargetEffect(Ability grantedAbility, EffectDuration duration,
+    public GrantEffectToTargetEffect(Ability grantedAbility, Duration duration,
                                      boolean skipIfAlreadyPresent) {
         this(grantedAbility, duration, skipIfAlreadyPresent, GrantScope.TARGET);
     }
 
     /** Indefinite grant of {@code grantedAbility} to the source permanent. */
     public static GrantEffectToTargetEffect toSourcePermanent(Ability grantedAbility) {
-        return new GrantEffectToTargetEffect(grantedAbility, EffectDuration.PERMANENT, true, GrantScope.SELF);
+        return new GrantEffectToTargetEffect(grantedAbility, Duration.PERMANENT, true, GrantScope.SELF);
     }
 
     /** Grant to the permanent the source Aura enchants, for the given duration (Genju cycle). */
-    public static GrantEffectToTargetEffect toEnchantedPermanent(Ability grantedAbility, EffectDuration duration) {
+    public static GrantEffectToTargetEffect toEnchantedPermanent(Ability grantedAbility, Duration duration) {
         return new GrantEffectToTargetEffect(grantedAbility, duration, false, GrantScope.ENCHANTED_PERMANENT);
     }
 
     /** Grants {@code grantedAbility} to the resolving source permanent without targeting it. */
-    public static GrantEffectToTargetEffect toSource(Ability grantedAbility, EffectDuration duration) {
+    public static GrantEffectToTargetEffect toSource(Ability grantedAbility, Duration duration) {
         return new GrantEffectToTargetEffect(grantedAbility, duration, true, GrantScope.SELF);
     }
 

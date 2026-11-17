@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -35,7 +35,7 @@ public class SkarrgGuildmage extends Card {
                         List.of(CardSubtype.ELEMENTAL),
                         Set.of(),
                         null, Set.of(),
-                        GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN
+                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN
                 )),
                 "{1}{R}{G}: Target land you control becomes a 4/4 Elemental creature until end of turn. It's still a land.",
                 TargetFilters.landYouControl()

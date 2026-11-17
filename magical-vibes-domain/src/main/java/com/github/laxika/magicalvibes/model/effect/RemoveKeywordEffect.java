@@ -11,18 +11,18 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * block, which the collector records as the entry's non-targeting target (Talruum Champion).
  */
 public record RemoveKeywordEffect(Keyword keyword, GrantScope scope, PermanentPredicate filter,
-                                  EffectDuration duration)
+                                  Duration duration)
         implements CardEffect {
 
     public RemoveKeywordEffect(Keyword keyword, GrantScope scope) {
-        this(keyword, scope, null, EffectDuration.UNTIL_END_OF_TURN);
+        this(keyword, scope, null, Duration.UNTIL_END_OF_TURN);
     }
 
     public RemoveKeywordEffect(Keyword keyword, GrantScope scope, PermanentPredicate filter) {
-        this(keyword, scope, filter, EffectDuration.UNTIL_END_OF_TURN);
+        this(keyword, scope, filter, Duration.UNTIL_END_OF_TURN);
     }
 
-    public RemoveKeywordEffect(Keyword keyword, GrantScope scope, EffectDuration duration) {
+    public RemoveKeywordEffect(Keyword keyword, GrantScope scope, Duration duration) {
         this(keyword, scope, null, duration);
     }
 

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RollD20ForEachPlayerAndRestrictSourceAttacksEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -83,7 +83,7 @@ public class RollD20ForEachPlayerAndRestrictSourceAttacksEffectHandler implement
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(), controllerId,
                     new CreaturesCantAttackControllerUnlessPredicateEffect(
                             new PermanentNotPredicate(new PermanentTruePredicate()), true),
-                    entry.getSourcePermanentId(), opponentId, null, EffectDuration.UNTIL_END_OF_COMBAT, 0L));
+                    entry.getSourcePermanentId(), opponentId, null, Duration.UNTIL_END_OF_COMBAT, 0L));
         }
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -28,7 +28,7 @@ public class XuIfitOsteoharmonist extends Card {
                         .targetGraveyard(true)
                         .grantSubtype(CardSubtype.SKELETON)
                         .battlefieldEffectGrants(List.of(
-                                new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT)))
+                                new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT)))
                         .build()),
                 "Return target creature card from your graveyard to the battlefield. It's a Skeleton in addition to its other types and has no abilities. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED));

@@ -6,6 +6,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public record MakeCreatureBlockableOnlyByFilterEffect(
         PermanentPredicate blockerPredicate,
         String allowedBlockersDescription,
-        EffectDuration duration
+        Duration duration
 ) implements CardEffect {
 }

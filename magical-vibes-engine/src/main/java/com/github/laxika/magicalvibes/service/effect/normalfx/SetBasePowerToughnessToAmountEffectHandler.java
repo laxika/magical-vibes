@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
@@ -39,7 +39,7 @@ public class SetBasePowerToughnessToAmountEffectHandler implements NormalEffectH
             int toughness = amountEvaluationService.evaluate(gameData, setPT.toughness(), spellContext);
             setBasePowerToughnessEffectHandler.resolve(gameData, entry,
                     new SetBasePowerToughnessEffect(power, toughness, GrantScope.TARGET,
-                            EffectDuration.UNTIL_END_OF_TURN));
+                            Duration.UNTIL_END_OF_TURN));
             return;
         }
         if (setPT.scope() != GrantScope.SELF) {
@@ -54,6 +54,6 @@ public class SetBasePowerToughnessToAmountEffectHandler implements NormalEffectH
         int toughness = amountEvaluationService.evaluate(gameData, setPT.toughness(), amountContext);
         setBasePowerToughnessEffectHandler.resolve(gameData, entry,
                 new SetBasePowerToughnessEffect(power, toughness, GrantScope.SELF,
-                        EffectDuration.PERMANENT));
+                        Duration.PERMANENT));
     }
 }

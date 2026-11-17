@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -98,8 +98,8 @@ class LayerDependencyTest extends BaseCardTest {
     private void addLoseAllFloatingEffect(Player controller, Permanent target) {
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Test Lose All",
                 null, controller.getId(),
-                new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN),
-                target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.UNTIL_END_OF_TURN),
+                target.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
     }
 
     // ===== layer 4: applicability dependency (what the effect applies to) =====

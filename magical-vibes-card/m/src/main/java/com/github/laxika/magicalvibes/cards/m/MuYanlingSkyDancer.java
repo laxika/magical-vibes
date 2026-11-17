@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -34,7 +34,7 @@ public class MuYanlingSkyDancer extends Card {
                 List.of(
                         new BoostTargetCreatureEffect(-2, 0, GrantDuration.UNTIL_YOUR_NEXT_TURN),
                         new RemoveKeywordEffect(Keyword.FLYING, GrantScope.TARGET,
-                                EffectDuration.UNTIL_YOUR_NEXT_TURN)),
+                                Duration.UNTIL_YOUR_NEXT_TURN)),
                 "+2: Until your next turn, up to one target creature gets -2/-0 and loses flying.",
                 null, +2, null, null,
                 List.<TargetFilter>of(TargetFilters.creature()), 0, 1));

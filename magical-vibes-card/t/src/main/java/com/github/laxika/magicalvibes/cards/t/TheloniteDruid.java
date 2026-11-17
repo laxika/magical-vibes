@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -28,7 +28,7 @@ public class TheloniteDruid extends Card {
                                 new Fixed(2), new Fixed(3),
                                 List.of(), Set.of(),
                                 null, Set.of(),
-                                GrantScope.OWN_PERMANENTS, EffectDuration.UNTIL_END_OF_TURN,
+                                GrantScope.OWN_PERMANENTS, Duration.UNTIL_END_OF_TURN,
                                 new PermanentHasSubtypePredicate(CardSubtype.FOREST))
                 ),
                 "{1}{G}, {T}, Sacrifice a creature: Forests you control become 2/3 creatures until end of turn. They're still lands."

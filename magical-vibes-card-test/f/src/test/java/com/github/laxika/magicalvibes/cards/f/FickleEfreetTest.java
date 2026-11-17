@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -133,7 +133,7 @@ class FickleEfreetTest extends BaseCardTest {
         gd.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), "Test control change", null, player2.getId(),
                 new GainControlOfTargetEffect(ControlDuration.PERMANENT), efreet.getId(), null, null,
-                EffectDuration.PERMANENT, 0));
+                Duration.PERMANENT, 0));
         efreet.setAttacking(false);
 
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);

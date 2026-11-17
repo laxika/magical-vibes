@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -65,7 +65,7 @@ public class ExchangeControlOfSourceAndTriggeringSpellEffectHandler implements N
                 spellControllerId,
                 source,
                 new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                EffectDuration.PERMANENT,
+                Duration.PERMANENT,
                 null,
                 entry.getCard().getName());
 

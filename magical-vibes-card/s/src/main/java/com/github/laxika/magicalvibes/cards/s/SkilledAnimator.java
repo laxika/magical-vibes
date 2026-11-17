@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -25,6 +25,6 @@ public class SkilledAnimator extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new AnimatePermanentsEffect(
                                 5, 5, List.of(), Set.of(), null, Set.of(CardType.ARTIFACT, CardType.CREATURE),
-                                GrantScope.TARGET, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD));
+                                GrantScope.TARGET, Duration.WHILE_SOURCE_ON_BATTLEFIELD));
     }
 }

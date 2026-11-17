@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  *
  * <p>When {@code replacing} is {@code true}, the target land <em>becomes</em> the chosen basic
  * land type, losing its other land types and mana ability per MTG rule 305.7 (Tideshaper Mystic).
- * The replacing form supports {@link EffectDuration#UNTIL_END_OF_TURN} (Tideshaper Mystic) and
- * {@link EffectDuration#UNTIL_CONTROLLERS_NEXT_UNTAP_STEP} (Orcish Farmer).
+ * The replacing form supports {@link Duration#UNTIL_END_OF_TURN} (Tideshaper Mystic) and
+ * {@link Duration#UNTIL_CONTROLLERS_NEXT_UNTAP_STEP} (Orcish Farmer).
  *
  * <p>If {@code fixedSubtype} is {@code null}, the controller is prompted to choose a basic
  * land type from {@code allowedTypes}; an empty list offers all five basic land types. Otherwise
@@ -27,22 +27,22 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * @param allowedTypes the basic land types offered when {@code fixedSubtype} is {@code null};
  *                     an empty list offers all five
  */
-public record GrantBasicLandTypeToTargetEffect(EffectDuration duration, CardSubtype fixedSubtype,
+public record GrantBasicLandTypeToTargetEffect(Duration duration, CardSubtype fixedSubtype,
                                                boolean replacing, List<CardSubtype> allowedTypes) implements CardEffect {
 
     public GrantBasicLandTypeToTargetEffect {
         allowedTypes = allowedTypes == null ? List.of() : List.copyOf(allowedTypes);
     }
 
-    public GrantBasicLandTypeToTargetEffect(EffectDuration duration) {
+    public GrantBasicLandTypeToTargetEffect(Duration duration) {
         this(duration, null, false, List.of());
     }
 
-    public GrantBasicLandTypeToTargetEffect(EffectDuration duration, CardSubtype fixedSubtype) {
+    public GrantBasicLandTypeToTargetEffect(Duration duration, CardSubtype fixedSubtype) {
         this(duration, fixedSubtype, false, List.of());
     }
 
-    public GrantBasicLandTypeToTargetEffect(EffectDuration duration, CardSubtype fixedSubtype, boolean replacing) {
+    public GrantBasicLandTypeToTargetEffect(Duration duration, CardSubtype fixedSubtype, boolean replacing) {
         this(duration, fixedSubtype, replacing, List.of());
     }
 

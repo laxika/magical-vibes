@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
@@ -24,7 +24,7 @@ public class Brawl extends Card {
                 ),
                 GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 null,
-                EffectDuration.UNTIL_END_OF_TURN
+                Duration.UNTIL_END_OF_TURN
         ));
     }
 }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
@@ -28,9 +28,9 @@ public class ImmovableRod extends Card {
                 true,
                 "{3}{W}",
                 List.of(
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.WHILE_SOURCE_REMAINS_TAPPED),
+                        new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.WHILE_SOURCE_REMAINS_TAPPED),
                         new LockTargetPermanentEffect(
-                                true, true, false, EffectDuration.WHILE_SOURCE_REMAINS_TAPPED,
+                                true, true, false, Duration.WHILE_SOURCE_REMAINS_TAPPED,
                                 TargetPredicates.permanent())
                 ),
                 "{3}{W}, {T}: For as long as this artifact remains tapped, another target permanent loses all abilities and can't attack or block.",

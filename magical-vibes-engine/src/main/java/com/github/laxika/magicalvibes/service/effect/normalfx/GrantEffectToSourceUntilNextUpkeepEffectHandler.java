@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -49,7 +49,7 @@ public class GrantEffectToSourceUntilNextUpkeepEffectHandler implements NormalEf
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), sourceId, entry.getControllerId(),
                 continuousGrant, sourceId, null, null,
-                EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP, 0));
+                Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP, 0));
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(source.getCard())

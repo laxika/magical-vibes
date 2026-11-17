@@ -95,7 +95,7 @@ class DreamStalkerTest extends BaseCardTest {
                 .applyControlEffect(gd, player1.getId(), lens,
                         new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
                                 com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
-                        com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT, null, "borrowed permanent"));
+                        com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, null, "borrowed permanent"));
         castAndResolveSpell();
         resolveTriggerToChoice();
 

@@ -41,7 +41,7 @@ public class UnsuspectAllCreaturesEffectHandler implements NormalEffectHandlerBe
                     || predicateEvaluationService.matchesPermanentPredicate(permanent, unsuspect.filter(), filterContext))) {
                 permanent.setSuspected(false);
                 synchronized (gameData.floatingEffects) {
-                    gameData.floatingEffects.removeIf(floating -> permanent.getId().equals(floating.affectedPermanentId())
+                    gameData.expireFloatingEffects(floating -> permanent.getId().equals(floating.affectedPermanentId())
                             && floating.effect() instanceof SuspectedEffect);
                 }
             }

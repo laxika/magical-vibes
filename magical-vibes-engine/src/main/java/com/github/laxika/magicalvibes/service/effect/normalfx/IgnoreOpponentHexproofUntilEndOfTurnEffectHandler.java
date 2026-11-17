@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentHexproofUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import org.springframework.stereotype.Component;
@@ -29,7 +29,7 @@ public class IgnoreOpponentHexproofUntilEndOfTurnEffectHandler implements Normal
                 null,
                 null,
                 null,
-                EffectDuration.UNTIL_END_OF_TURN,
+                Duration.UNTIL_END_OF_TURN,
                 0
         ));
     }

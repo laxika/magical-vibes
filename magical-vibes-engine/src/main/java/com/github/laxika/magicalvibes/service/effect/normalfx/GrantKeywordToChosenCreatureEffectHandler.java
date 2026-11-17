@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureEffect;
@@ -69,9 +69,9 @@ public class GrantKeywordToChosenCreatureEffectHandler implements NormalEffectHa
                 .build());
     }
 
-    private EffectDuration floatingDurationFor(GrantDuration duration) {
+    private Duration floatingDurationFor(GrantDuration duration) {
         return duration == GrantDuration.UNTIL_YOUR_NEXT_TURN
-                ? EffectDuration.UNTIL_YOUR_NEXT_TURN : EffectDuration.UNTIL_END_OF_TURN;
+                ? Duration.UNTIL_YOUR_NEXT_TURN : Duration.UNTIL_END_OF_TURN;
     }
 
     private String durationLabel(GrantDuration duration) {

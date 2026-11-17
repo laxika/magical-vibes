@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadCreatedPermanentsUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
@@ -47,7 +47,7 @@ public class GoadCreatedPermanentsUntilSourceLeavesEffectHandler implements Norm
                     createdPermanentId,
                     null,
                     null,
-                    EffectDuration.WHILE_SOURCE_REMAINS,
+                    Duration.WHILE_SOURCE_REMAINS,
                     0));
         }
     }

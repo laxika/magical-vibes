@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -37,10 +37,10 @@ public class BeornsHospitality extends Card {
                 "{5}{G}{G}",
                 List.of(
                         new AnimatePermanentsEffect(null, null, List.of(CardSubtype.BEAR), Set.of(), null,
-                                Set.of(), GrantScope.SELF, EffectDuration.PERMANENT, null),
+                                Set.of(), GrantScope.SELF, Duration.PERMANENT, null),
                         new GrantStaticEffectToSourceEffect(
                                 new SetPowerToughnessToAmountEffect(landsYouControl, landsYouControl),
-                                EffectDuration.PERMANENT)),
+                                Duration.PERMANENT)),
                 "{5}{G}{G}: This enchantment becomes a Bear creature in addition to its other types and gains "
                         + "\"This creature's power and toughness are each equal to the number of lands you control.\" "
                         + "(This effect doesn't end.)"));

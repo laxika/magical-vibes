@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.JohanCombatEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -40,7 +40,7 @@ public class JohanCombatEffectHandler implements NormalEffectHandlerBean {
 
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), sourceId, entry.getControllerId(), effect,
-                sourceId, null, null, EffectDuration.UNTIL_END_OF_COMBAT, 0));
+                sourceId, null, null, Duration.UNTIL_END_OF_COMBAT, 0));
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                 " can't attack this combat; attacking creatures don't tap while it is untapped."));
         log.info("Game {} - {} can't attack this combat and attacking creatures do not tap while it is untapped",

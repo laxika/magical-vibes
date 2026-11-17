@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -66,7 +66,7 @@ public class PutCounterOnCombatOpponentAtEndOfCombatEffectHandler implements Nor
                                 new PermanentHasCountersPredicate(CounterType.PARALYZATION,
                                         combatOpponent.getLastCounterRemovalVersions()
                                                 .getOrDefault(CounterType.PARALYZATION, 0L)),
-                                EffectDuration.PERMANENT, 0));
+                                Duration.PERMANENT, 0));
                     }
                 }
             }

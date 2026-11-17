@@ -68,7 +68,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
@@ -1976,7 +1976,7 @@ class GameQueryServiceTest {
                     new GrantEffectEffect(new AssignCombatDamageWithToughnessEffect(
                             GrantScope.SELF, new PermanentToughnessGreaterThanPowerPredicate()),
                             GrantScope.TARGET),
-                    perm.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                    perm.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
 
             assertThat(gqs.getEffectiveCombatDamage(gd, perm)).isEqualTo(5);
         }

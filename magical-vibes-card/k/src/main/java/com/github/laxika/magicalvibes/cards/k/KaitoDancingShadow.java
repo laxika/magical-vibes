@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantExtraLoyaltyActivationToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
@@ -44,7 +44,7 @@ public class KaitoDancingShadow extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new LockTargetPermanentEffect(true, true, false, EffectDuration.UNTIL_YOUR_NEXT_TURN)),
+                List.of(new LockTargetPermanentEffect(true, true, false, Duration.UNTIL_YOUR_NEXT_TURN)),
                 "+1: Up to one target creature can't attack or block until your next turn.",
                 TargetFilters.creature(),
                 +1, null, null,

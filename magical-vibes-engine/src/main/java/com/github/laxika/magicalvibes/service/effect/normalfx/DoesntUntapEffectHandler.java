@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -72,7 +72,7 @@ public class DoesntUntapEffectHandler implements NormalEffectHandlerBean {
                         gameData.addFloatingEffect(new FloatingContinuousEffect(
                                 UUID.randomUUID(), entry.getCard().getName(), sourcePermanentId,
                                 entry.getControllerId(), doesntUntap, targetId, null, null,
-                                EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+                                Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
                     }
                 }
             }

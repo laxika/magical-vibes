@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterConditionedControlEffe
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetHauntedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.UntapLockCondition;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
@@ -118,7 +118,7 @@ public class CreatureControlService {
      * @param sourceCardName    name of the card whose spell/ability created the effect
      */
     public boolean applyControlEffect(GameData gameData, UUID newControllerId, Permanent target,
-                                   CardEffect wrappedEffect, EffectDuration duration,
+                                   CardEffect wrappedEffect, Duration duration,
                                    UUID sourcePermanentId, String sourceCardName) {
         return applyControlEffect(gameData, newControllerId, target, wrappedEffect, duration,
                 sourcePermanentId, sourceCardName, null);
@@ -126,7 +126,7 @@ public class CreatureControlService {
 
     /** Applies control with an optional player id whose monarch status governs the effect's lifetime. */
     public boolean applyControlEffect(GameData gameData, UUID newControllerId, Permanent target,
-                                   CardEffect wrappedEffect, EffectDuration duration,
+                                   CardEffect wrappedEffect, Duration duration,
                                    UUID sourcePermanentId, String sourceCardName,
                                    UUID affectedPlayerId) {
         UUID currentControllerId = gameData.findControllerOf(target);
@@ -137,7 +137,7 @@ public class CreatureControlService {
         FloatingContinuousEffect stamped = gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), sourceCardName, sourcePermanentId, newControllerId,
                 wrappedEffect, target.getId(), affectedPlayerId, null, duration, 0));
-        if (duration == EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN) {
+        if (Duration.UNTIL_END_OF_YOUR_NEXT_TURN.equals(duration)) {
             gameData.queueDelayedAction(new ExpireControlAtEndOfNextTurn(
                     stamped.id(), newControllerId, gameData.turnNumber));
         }
@@ -153,7 +153,7 @@ public class CreatureControlService {
      */
     public void applyControlEffectSimultaneously(GameData gameData, UUID newControllerId,
                                                  List<Permanent> targets, CardEffect wrappedEffect,
-                                                 EffectDuration duration, String sourceCardName) {
+                                                 Duration duration, String sourceCardName) {
         List<Permanent> stamped = new ArrayList<>();
         for (Permanent target : targets) {
             UUID currentControllerId = gameData.findControllerOf(target);
@@ -164,7 +164,7 @@ public class CreatureControlService {
             FloatingContinuousEffect effect = gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), sourceCardName, null, newControllerId,
                     wrappedEffect, target.getId(), null, null, duration, 0));
-            if (duration == EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN) {
+            if (Duration.UNTIL_END_OF_YOUR_NEXT_TURN.equals(duration)) {
                 gameData.queueDelayedAction(new ExpireControlAtEndOfNextTurn(
                         effect.id(), newControllerId, gameData.turnNumber));
             }
@@ -181,7 +181,7 @@ public class CreatureControlService {
      */
     public void exchangeControl(GameData gameData, Permanent first, UUID firstNewControllerId,
                                 Permanent second, UUID secondNewControllerId,
-                                CardEffect wrappedEffect, EffectDuration duration, String sourceCardName) {
+                                CardEffect wrappedEffect, Duration duration, String sourceCardName) {
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), sourceCardName, null, firstNewControllerId,
                 wrappedEffect, first.getId(), null, null, duration, 0));
@@ -213,7 +213,7 @@ public class CreatureControlService {
                 continue;
             }
             boolean controlApplied = applyControlEffect(gameData, newControllerId, permanent,
-                    new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                    new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT,
                     null, "Debt of Loyalty");
             applied |= controlApplied;
         }
@@ -238,8 +238,8 @@ public class CreatureControlService {
         synchronized (gameData.floatingEffects) {
             holdsTappedControl = gameData.floatingEffects.stream().anyMatch(fe ->
                     fe.isControlEffect()
-                            && (fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
-                            || fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED)
+                            && (Duration.WHILE_SOURCE_TAPPED.equals(fe.duration())
+                            || Duration.WHILE_SOURCE_REMAINS_TAPPED.equals(fe.duration()))
                             && permanent.getId().equals(fe.sourcePermanentId()));
         }
         if (holdsTappedControl) {
@@ -306,7 +306,7 @@ public class CreatureControlService {
         gameData.playerBattlefields.get(derived).add(permanent);
         // "For as long as you control" untap locks on this permanent end when its controller loses
         // control; the lock is dropped rather than resuming if control returns (CR 611.2b).
-        gameData.floatingEffects.removeIf(fe -> fe.effect() instanceof DoesntUntapEffect lock
+        gameData.expireFloatingEffects(fe -> fe.effect() instanceof DoesntUntapEffect lock
                 && lock.condition() == UntapLockCondition.WHILE_SOURCE_CONTROLLED
                 && permanent.getId().equals(fe.sourcePermanentId())
                 && !derived.equals(fe.controllerId()));
@@ -531,19 +531,19 @@ public class CreatureControlService {
                     ? gameData.monarchPlayerId
                     : gameData.findControllerOf(aura);
             if (monarchBound) {
-                gameData.floatingEffects.removeIf(fe -> fe.duration() == EffectDuration.WHILE_ATTACHED
+                gameData.expireFloatingEffects(fe -> Duration.WHILE_ATTACHED.equals(fe.duration())
                         && fe.isControlEffect()
                         && aura.getId().equals(fe.sourcePermanentId())
                         && !Objects.equals(fe.controllerId(), controllingPlayerId));
             }
             boolean present = gameData.controlEffectsFor(enchanted.getId()).stream()
-                    .anyMatch(fe -> fe.duration() == EffectDuration.WHILE_ATTACHED
+                    .anyMatch(fe -> Duration.WHILE_ATTACHED.equals(fe.duration())
                             && aura.getId().equals(fe.sourcePermanentId()));
             if (!present && controllingPlayerId != null) {
-                gameData.floatingEffects.add(new FloatingContinuousEffect(
+                gameData.putFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), aura.getCard().getName(), aura.getId(), controllingPlayerId,
                         controlEffect, enchanted.getId(), null, null,
-                        EffectDuration.WHILE_ATTACHED, aura.getTimestamp()));
+                        Duration.WHILE_ATTACHED, aura.getTimestamp()));
             }
         }
     }
@@ -569,7 +569,7 @@ public class CreatureControlService {
     private void expireStaleControlEffects(GameData gameData) {
         for (FloatingContinuousEffect fe : List.copyOf(gameData.floatingEffects)) {
             boolean sourceControllerDependent = fe.isControlEffect()
-                    || fe.duration() == EffectDuration.WHILE_SOURCE_CONTROLLED
+                    || Duration.WHILE_SOURCE_CONTROLLED.equals(fe.duration())
                     || (fe.effect() instanceof CombatAttackRequirementEffect requirement
                     && requirement.endsWhenSourceControllerChanges())
                     || fe.effect() instanceof GoadStatusEffect
@@ -577,30 +577,30 @@ public class CreatureControlService {
                     && lock.endsWhenSourceControllerChanges());
             if (!sourceControllerDependent) continue;
             boolean stale = false;
-            if (fe.duration() == EffectDuration.WHILE_ATTACHED) {
+            if (Duration.WHILE_ATTACHED.equals(fe.duration())) {
                 Permanent source = fe.sourcePermanentId() == null ? null
                         : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
                 stale = source == null || !source.isAttached()
                         || !source.getAttachedTo().equals(fe.affectedPermanentId());
-            } else if (fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
-                    || fe.duration() == EffectDuration.WHILE_SOURCE_CONTROLLED) {
+            } else if (Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(fe.duration())
+                    || Duration.WHILE_SOURCE_CONTROLLED.equals(fe.duration())) {
                 Permanent source = fe.sourcePermanentId() == null ? null
                         : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
                 UUID sourceController = source == null ? null : gameData.findControllerOf(source);
                 stale = sourceController == null || !sourceController.equals(fe.controllerId());
-            } else if (fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS) {
+            } else if (Duration.WHILE_SOURCE_REMAINS.equals(fe.duration())) {
                 // Infernal Denizen: only the source's presence matters, not who controls it.
                 Permanent source = fe.sourcePermanentId() == null ? null
                         : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
                 stale = source == null;
-            } else if (fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED) {
+            } else if (Duration.WHILE_SOURCE_TAPPED.equals(fe.duration())) {
                 // Seasinger: control also ends the moment the source becomes untapped.
                 Permanent source = fe.sourcePermanentId() == null ? null
                         : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
                 UUID sourceController = source == null ? null : gameData.findControllerOf(source);
                 stale = source == null || !source.isTapped()
                         || sourceController == null || !sourceController.equals(fe.controllerId());
-            } else if (fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED) {
+            } else if (Duration.WHILE_SOURCE_REMAINS_TAPPED.equals(fe.duration())) {
                 Permanent source = fe.sourcePermanentId() == null ? null
                         : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
                 stale = source == null || !source.isTapped();
@@ -635,7 +635,7 @@ public class CreatureControlService {
                 stale = !Objects.equals(gameData.monarchPlayerId, fe.affectedPlayerId());
             }
             if (stale) {
-                gameData.floatingEffects.remove(fe);
+                gameData.endFloatingEffect(fe);
             }
         }
     }
@@ -656,11 +656,11 @@ public class CreatureControlService {
                     || fe.effect() instanceof GrantActivatedAbilityEffect
                     || (fe.effect() instanceof PermanentLockEffect lock
                     && lock.endsWhenSourceControllerChanges()))
-                    && fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
-                    || fe.duration() == EffectDuration.WHILE_SOURCE_CONTROLLED)
+                    && Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(fe.duration())
+                    || Duration.WHILE_SOURCE_CONTROLLED.equals(fe.duration()))
                     && source.getId().equals(fe.sourcePermanentId())
                     && !fe.controllerId().equals(sourceController)) {
-                gameData.floatingEffects.remove(fe);
+                gameData.endFloatingEffect(fe);
                 expired.add(fe);
             }
         }

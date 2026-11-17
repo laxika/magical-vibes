@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -21,7 +21,7 @@ public class DeepwoodElder extends Card {
                 List.of(
                         new DiscardCardTypeCost(null, null),
                         new GrantBasicLandTypeToTargetEffect(
-                                EffectDuration.UNTIL_END_OF_TURN, CardSubtype.FOREST, true)
+                                Duration.UNTIL_END_OF_TURN, CardSubtype.FOREST, true)
                 ),
                 "{X}{G}{G}, {T}, Discard a card: X target lands become Forests until end of turn.",
                 TargetFilters.land(),

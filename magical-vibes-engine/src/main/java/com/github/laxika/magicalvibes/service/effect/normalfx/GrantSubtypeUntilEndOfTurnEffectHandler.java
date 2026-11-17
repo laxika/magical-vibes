@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeUntilEndOfTurnEffect;
@@ -125,7 +125,7 @@ public class GrantSubtypeUntilEndOfTurnEffectHandler implements NormalEffectHand
     }
 
     private String durationText(GrantSubtypeUntilEndOfTurnEffect effect) {
-        return effect.duration() == EffectDuration.UNTIL_END_OF_TURN ? " until end of turn" : "";
+        return Duration.UNTIL_END_OF_TURN.equals(effect.duration()) ? " until end of turn" : "";
     }
 
     private boolean matchesFilter(Permanent permanent, GrantSubtypeUntilEndOfTurnEffect effect,

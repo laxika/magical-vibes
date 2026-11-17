@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SwitchAllCreaturesPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -33,7 +33,7 @@ public class SwitchAllCreaturesPowerToughnessEffectHandler implements NormalEffe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var switchAll = (SwitchAllCreaturesPowerToughnessEffect) effect;
-        EffectDuration duration = switchAll.indefinite() ? EffectDuration.PERMANENT : EffectDuration.UNTIL_END_OF_TURN;
+        Duration duration = switchAll.indefinite() ? Duration.PERMANENT : Duration.UNTIL_END_OF_TURN;
         int[] count = {0};
         gameData.forEachPermanent((playerId, permanent) -> {
             if (!gameQueryService.isCreature(gameData, permanent)) {

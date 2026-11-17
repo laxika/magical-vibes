@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TurfWarCombatDamageEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -87,7 +87,7 @@ public class TurfWarCombatDamageEffectHandler implements NormalEffectHandlerBean
         boolean controlApplied = creatureControlService.applyControlEffect(
                 gameData, newControllerId, land,
                 new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                EffectDuration.PERMANENT, null, sourceName);
+                Duration.PERMANENT, null, sourceName);
         if (controlApplied) {
             tapUntapSupport.untapPermanent(gameData, land);
         }

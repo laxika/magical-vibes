@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentThenGoadEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -72,7 +72,7 @@ public class PutCounterOnEachMatchingPermanentThenGoadEffectHandler implements N
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                     entry.getControllerId(), new GoadTargetCreatureUntilNextTurnEffect(), goadedId,
-                    null, null, EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                    null, null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
         }
     }
 }

@@ -40,7 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -1585,7 +1585,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         } else {
             var controlEffect = new GainControlOfTargetEffect(context.duration());
             creatureControlService.applyControlEffect(gameData, context.choosingOpponentId(), target,
-                    controlEffect, context.duration().toEffectDuration(), context.sourcePermanentId(), context.sourceCardName());
+                    controlEffect, context.duration().toDuration(), context.sourcePermanentId(), context.sourceCardName());
             log.info("Game {} - {} gains control of {} via {}", gameData.id,
                     gameData.playerIdToName.get(context.choosingOpponentId()),
                     target.getCard().getName(), context.sourceCardName());
@@ -3003,7 +3003,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                     source.getId(),
                     null,
                     null,
-                    EffectDuration.UNTIL_END_OF_TURN,
+                    Duration.UNTIL_END_OF_TURN,
                     0));
             String keywordNames = formatKeywords(ctx.keywords());
             gameLogService.append(gameData, GameLog.builder()
@@ -3522,11 +3522,11 @@ public class PermanentChoiceBattlefieldHandlerService {
                                 && control.controlledByMonarch());
                 if (!monarchBound) {
                     creatureControlService.applyControlEffect(gameData, auraControllerId, enchantTarget,
-                            new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
+                            new ControlEnchantedCreatureEffect(), Duration.WHILE_ATTACHED,
                             auraPerm.getId(), auraCard.getName());
                 } else if (gameData.monarchPlayerId != null) {
                     creatureControlService.applyControlEffect(gameData, gameData.monarchPlayerId, enchantTarget,
-                            new ControlEnchantedCreatureEffect(true), EffectDuration.WHILE_ATTACHED,
+                            new ControlEnchantedCreatureEffect(true), Duration.WHILE_ATTACHED,
                             auraPerm.getId(), auraCard.getName());
                 }
             }

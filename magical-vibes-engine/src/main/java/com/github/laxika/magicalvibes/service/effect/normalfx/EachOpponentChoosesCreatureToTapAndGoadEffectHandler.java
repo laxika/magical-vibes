@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentChoosesCreatureToTapAndGoadEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -96,7 +96,7 @@ public class EachOpponentChoosesCreatureToTapAndGoadEffectHandler implements Nor
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), sourceCard.getName(), null, controllerId,
                     new GoadTargetCreatureUntilNextTurnEffect(), creature.getId(), null, null,
-                    EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                    Duration.UNTIL_YOUR_NEXT_TURN, 0));
         }
     }
 

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentNameEffect;
@@ -26,7 +26,7 @@ public class AwakeningOfVituGhazi extends Card {
                 .addSpellEffect(new AnimatePermanentsEffect(
                         0, 0,
                         List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE),
-                        null, Set.of(), GrantScope.TARGET, EffectDuration.PERMANENT))
+                        null, Set.of(), GrantScope.TARGET, Duration.PERMANENT))
                 .addSpellEffect(new SetTargetPermanentSupertypeEffect(CardSupertype.LEGENDARY, true))
                 .addSpellEffect(new SetTargetPermanentNameEffect("Vitu-Ghazi"));
     }

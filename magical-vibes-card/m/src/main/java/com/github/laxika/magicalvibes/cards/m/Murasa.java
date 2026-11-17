@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -43,6 +43,6 @@ public class Murasa extends Card {
                         MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));
         target(TargetFilters.land()).addTrigger(Triggers.chaosEnsues(),
                 new AnimatePermanentsEffect(4, 4, List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, EffectDuration.PERMANENT));
+                        GrantScope.TARGET, Duration.PERMANENT));
     }
 }

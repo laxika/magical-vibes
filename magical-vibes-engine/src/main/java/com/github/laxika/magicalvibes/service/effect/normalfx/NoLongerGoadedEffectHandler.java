@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.NoLongerGoadedEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -35,7 +35,7 @@ public class NoLongerGoadedEffectHandler implements NormalEffectHandlerBean {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard() == null ? "Goad" : entry.getCard().getName(),
                     entry.getSourcePermanentId(), entry.getControllerId(), noLongerGoaded,
-                    permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+                    permanent.getId(), null, null, Duration.PERMANENT, 0));
         }
     }
 }

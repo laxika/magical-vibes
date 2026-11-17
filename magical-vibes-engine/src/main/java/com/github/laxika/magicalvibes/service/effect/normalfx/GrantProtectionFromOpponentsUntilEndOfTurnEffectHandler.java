@@ -40,7 +40,7 @@ public class GrantProtectionFromOpponentsUntilEndOfTurnEffectHandler implements 
         gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(), effect,
                 target.getId(), null, null,
-                com.github.laxika.magicalvibes.model.effect.EffectDuration.UNTIL_END_OF_TURN, 0));
+                com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN, 0));
         for (UUID playerId : gameData.playerIds) {
             if (!playerId.equals(entry.getControllerId())) {
                 target.getProtectionFromPlayerIdsUntilEndOfTurn().add(playerId);

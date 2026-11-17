@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToBlockingCreaturesUnlessAttackerPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -111,7 +111,7 @@ public class GrantKeywordToBlockingCreaturesUnlessAttackerPaysEffectHandler impl
             blocker.getGrantedKeywords().add(effect.keyword());
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(), grant,
-                    blocker.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                    blocker.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             gameLogService.append(gameData,
                     GameLog.cardThen(blocker.getCard(), " gains " + formatKeyword(effect.keyword())
                             + " until end of turn."));

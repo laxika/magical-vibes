@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -41,7 +41,7 @@ public class LivingBrainMechanicalMarvel extends Card {
         )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
                 new AnimatePermanentsEffect(
                         new Fixed(3), new Fixed(3), List.of(), Set.of(), null, Set.of(CardType.CREATURE),
-                        GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN, targetArtifact),
+                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN, targetArtifact),
                 new UntapPermanentsEffect(TapUntapScope.TARGET)
         ));
     }

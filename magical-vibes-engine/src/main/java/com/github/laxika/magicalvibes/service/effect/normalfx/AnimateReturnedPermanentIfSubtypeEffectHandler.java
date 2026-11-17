@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AnimateReturnedPermanentIfSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -48,7 +48,7 @@ public class AnimateReturnedPermanentIfSubtypeEffectHandler implements NormalEff
             return;
         }
 
-        if (animateEffect.animation().duration() == EffectDuration.PERMANENT) {
+        if (Duration.PERMANENT.equals(animateEffect.animation().duration())) {
             AmountContext amountContext = AmountContext.forStackEntry(entry, returnedPermanent);
             int power = animateEffect.animation().power() == null
                     ? printedPower(returnedPermanent)

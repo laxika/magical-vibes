@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class JadeStatue extends Card {
                 false,
                 "{2}",
                 List.of(new AnimatePermanentsEffect(3, 6, List.of(CardSubtype.GOLEM), Set.of(), null,
-                        Set.of(), GrantScope.SELF, EffectDuration.UNTIL_END_OF_COMBAT)),
+                        Set.of(), GrantScope.SELF, Duration.UNTIL_END_OF_COMBAT)),
                 "{2}: Jade Statue becomes a 3/6 Golem artifact creature until end of combat. Activate only during combat.",
                 ActivationTimingRestriction.ONLY_DURING_COMBAT
         ));

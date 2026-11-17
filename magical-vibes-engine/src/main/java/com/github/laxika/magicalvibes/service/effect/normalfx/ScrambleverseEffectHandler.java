@@ -57,7 +57,7 @@ public class ScrambleverseEffectHandler implements NormalEffectHandlerBean {
         for (Permanent permanent : nonlands) {
             UUID chosen = players.get(ThreadLocalRandom.current().nextInt(players.size()));
             creatureControlService.applyControlEffect(gameData, chosen, permanent, CONTROL_EFFECT,
-                    ControlDuration.PERMANENT.toEffectDuration(), null, entry.getCard().getName());
+                    ControlDuration.PERMANENT.toDuration(), null, entry.getCard().getName());
         }
 
         // Untap only after every control change, so untap triggers see the final controllers.

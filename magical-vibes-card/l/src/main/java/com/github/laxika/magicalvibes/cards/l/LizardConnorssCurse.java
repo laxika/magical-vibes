@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -37,12 +37,12 @@ public class LizardConnorssCurse extends Card {
 
         target(new PermanentPredicateTargetFilter(otherCreature, "Target must be another creature"), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT),
+                        new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT),
                         new GrantColorEffect(CardColor.GREEN, GrantScope.TARGET, true),
                         new GrantSubtypeEffect(CardSubtype.LIZARD, GrantScope.TARGET, true),
                         new AnimatePermanentsEffect(
                                 new Fixed(4), new Fixed(4), List.of(), Set.of(), null,
-                                Set.of(CardType.CREATURE), GrantScope.TARGET, EffectDuration.PERMANENT,
+                                Set.of(CardType.CREATURE), GrantScope.TARGET, Duration.PERMANENT,
                                 null, true));
     }
 }

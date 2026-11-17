@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -36,7 +36,7 @@ public class KukemssaSerpent extends Card {
                         new SacrificePermanentCost(
                                 new PermanentHasSubtypePredicate(CardSubtype.ISLAND), "Sacrifice an Island"),
                         new GrantBasicLandTypeToTargetEffect(
-                                EffectDuration.UNTIL_END_OF_TURN, CardSubtype.ISLAND, true)),
+                                Duration.UNTIL_END_OF_TURN, CardSubtype.ISLAND, true)),
                 "{U}, Sacrifice an Island: Target land an opponent controls becomes an Island until end of turn.",
                 TargetFilters.landAnOpponentControls()
         ));

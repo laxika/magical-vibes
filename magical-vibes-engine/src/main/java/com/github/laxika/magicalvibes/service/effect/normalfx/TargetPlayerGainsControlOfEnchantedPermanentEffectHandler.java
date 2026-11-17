@@ -50,7 +50,7 @@ public class TargetPlayerGainsControlOfEnchantedPermanentEffectHandler implement
                 entry.getTargetId(),
                 enchantedPermanent,
                 new GainControlOfTargetEffect(controlEffect.duration()),
-                controlEffect.duration().toEffectDuration(),
+                controlEffect.duration().toDuration(),
                 null,
                 entry.getCard().getName());
     }

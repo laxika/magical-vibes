@@ -49,11 +49,11 @@ public class ExchangeControlOfAllMatchingPermanentsWithTargetPlayerEffectHandler
 
         for (Permanent permanent : controlledPermanents) {
             creatureControlService.applyControlEffect(gameData, targetPlayerId, permanent,
-                    controlEffect, exchange.duration().toEffectDuration(), null, entry.getCard().getName());
+                    controlEffect, exchange.duration().toDuration(), null, entry.getCard().getName());
         }
         for (Permanent permanent : targetPermanents) {
             creatureControlService.applyControlEffect(gameData, controllerId, permanent,
-                    controlEffect, exchange.duration().toEffectDuration(), null, entry.getCard().getName());
+                    controlEffect, exchange.duration().toDuration(), null, entry.getCard().getName());
         }
     }
 

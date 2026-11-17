@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerPoisonCounters;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -47,7 +47,7 @@ public class VraskaBetrayalsSting extends Card {
                 List.of(
                         new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.TARGET),
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.TREASURE),
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT),
+                        new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT),
                         new GrantActivatedAbilityEffect(
                                 new ActivatedAbility(
                                         true,
@@ -57,7 +57,7 @@ public class VraskaBetrayalsSting extends Card {
                                 ),
                                 GrantScope.TARGET,
                                 null,
-                                EffectDuration.PERMANENT
+                                Duration.PERMANENT
                         )
                 ),
                 "-2: Target creature becomes a Treasure artifact with \"{T}, Sacrifice this artifact: Add one mana of any color.\" and loses all other card types and abilities.",

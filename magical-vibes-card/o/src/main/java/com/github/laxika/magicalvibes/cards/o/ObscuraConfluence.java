@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -35,7 +35,7 @@ public class ObscuraConfluence extends Card {
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Until end of turn, target creature loses all abilities and has base power and toughness 1/1",
                         () -> SequenceEffect.of(
-                                new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN),
+                                new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.UNTIL_END_OF_TURN),
                                 new SetBasePowerToughnessEffect(1, 1)),
                         TargetFilters.creature()),
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(

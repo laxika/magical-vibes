@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -169,7 +169,7 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
         // The legacy UEOT fields are an all-or-nothing pair, so a partial setter
         // ("has base toughness 1") skips them entirely and rides on the floating 7b entry alone,
         // which carries per-component nulls.
-        if (e.duration() == EffectDuration.UNTIL_END_OF_TURN
+        if (Duration.UNTIL_END_OF_TURN.equals(e.duration())
                 && e.power() != null && e.toughness() != null) {
             target.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
             target.setBasePowerOverride(e.power());
@@ -178,7 +178,7 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
         FloatingContinuousEffect floating = gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 e, target.getId(), null, null, e.duration(), 0));
-        if (e.duration() == EffectDuration.PERMANENT) {
+        if (Duration.PERMANENT.equals(e.duration())) {
             long timestamp = floating.timestamp();
             if (e.power() != null) {
                 target.setBasePowerOverriddenPermanently(true);
@@ -194,7 +194,7 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
     }
 
     private String basePowerToughnessDescription(SetBasePowerToughnessEffect effect) {
-        String duration = effect.duration() == EffectDuration.UNTIL_END_OF_TURN
+        String duration = Duration.UNTIL_END_OF_TURN.equals(effect.duration())
                 ? " until end of turn" : "";
         return effect.power() == null
                 ? " has base toughness " + effect.toughness() + duration + "."

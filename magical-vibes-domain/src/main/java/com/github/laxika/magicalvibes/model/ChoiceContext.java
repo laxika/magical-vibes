@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
@@ -1880,18 +1880,18 @@ public sealed interface ChoiceContext {
      * @param replacing    {@code true} to replace the land's types, {@code false} to add
      * @param allowedTypes the offered basic land types; an empty list offers all five
      */
-    record AddBasicLandTypeChoice(UUID targetLandId, EffectDuration duration, boolean replacing,
+    record AddBasicLandTypeChoice(UUID targetLandId, Duration duration, boolean replacing,
                                   List<CardSubtype> allowedTypes) implements ChoiceContext {
 
         public AddBasicLandTypeChoice {
             allowedTypes = allowedTypes == null ? List.of() : List.copyOf(allowedTypes);
         }
 
-        public AddBasicLandTypeChoice(UUID targetLandId, EffectDuration duration, boolean replacing) {
+        public AddBasicLandTypeChoice(UUID targetLandId, Duration duration, boolean replacing) {
             this(targetLandId, duration, replacing, List.of());
         }
 
-        public AddBasicLandTypeChoice(UUID targetLandId, EffectDuration duration) {
+        public AddBasicLandTypeChoice(UUID targetLandId, Duration duration) {
             this(targetLandId, duration, false, List.of());
         }
     }
@@ -2268,7 +2268,7 @@ public sealed interface ChoiceContext {
      */
     record BecomeChosenColorsChoice(UUID targetId, String sourceCardName,
                                     List<CardColor> chosen,
-                                    EffectDuration duration) implements ChoiceContext {}
+                                    Duration duration) implements ChoiceContext {}
 
     /**
      * Quarry Hauler: "for each kind of counter on target permanent, put another counter of that kind

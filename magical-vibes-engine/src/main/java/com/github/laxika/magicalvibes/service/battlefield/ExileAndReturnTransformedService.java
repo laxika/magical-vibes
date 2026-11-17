@@ -142,7 +142,7 @@ public class ExileAndReturnTransformedService {
             gameData.stolenCreatures.put(newPerm.getId(), originalCard.getOwnerId());
             creatureControlService.applyControlEffect(gameData, returnControllerId, newPerm,
                     new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                    ControlDuration.PERMANENT.toEffectDuration(), null, originalCard.getName());
+                    ControlDuration.PERMANENT.toDuration(), null, originalCard.getName());
         }
 
         if (gameQueryService.isCreature(gameData, newPerm)) {

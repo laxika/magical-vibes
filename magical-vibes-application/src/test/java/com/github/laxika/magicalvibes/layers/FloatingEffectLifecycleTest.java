@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -37,9 +37,9 @@ class FloatingEffectLifecycleTest extends BaseCardTest {
         @DisplayName("addFloatingEffect stamps the next CR 613.7 timestamp on insertion")
         void addStampsTimestamp() {
             FloatingContinuousEffect first = gd.addFloatingEffect(
-                    floating(null, player1.getId(), EffectDuration.UNTIL_END_OF_TURN));
+                    floating(null, player1.getId(), Duration.UNTIL_END_OF_TURN));
             FloatingContinuousEffect second = gd.addFloatingEffect(
-                    floating(null, player1.getId(), EffectDuration.UNTIL_END_OF_TURN));
+                    floating(null, player1.getId(), Duration.UNTIL_END_OF_TURN));
 
             assertThat(first.timestamp()).isPositive();
             assertThat(second.timestamp()).isGreaterThan(first.timestamp());
@@ -55,9 +55,9 @@ class FloatingEffectLifecycleTest extends BaseCardTest {
         @Test
         @DisplayName("An UNTIL_END_OF_TURN effect disappears at the cleanup step; other durations survive")
         void endOfTurnEffectExpiresAtCleanup() {
-            gd.addFloatingEffect(floating(null, player1.getId(), EffectDuration.UNTIL_END_OF_TURN));
+            gd.addFloatingEffect(floating(null, player1.getId(), Duration.UNTIL_END_OF_TURN));
             FloatingContinuousEffect survivor = gd.addFloatingEffect(
-                    floating(null, player1.getId(), EffectDuration.UNTIL_YOUR_NEXT_TURN));
+                    floating(null, player1.getId(), Duration.UNTIL_YOUR_NEXT_TURN));
 
             harness.inMutationScope(
                     () -> GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
@@ -76,9 +76,9 @@ class FloatingEffectLifecycleTest extends BaseCardTest {
             Permanent source = addCreatureReady(player1, createCreature("Grizzly Bears"));
             Permanent other = addCreatureReady(player1, createCreature("Coral Merfolk"));
             gd.addFloatingEffect(floating(source.getId(), player1.getId(),
-                    EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD));
+                    Duration.WHILE_SOURCE_ON_BATTLEFIELD));
             FloatingContinuousEffect unrelated = gd.addFloatingEffect(floating(other.getId(),
-                    player1.getId(), EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD));
+                    player1.getId(), Duration.WHILE_SOURCE_ON_BATTLEFIELD));
 
             harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, source));
 
@@ -99,9 +99,9 @@ class FloatingEffectLifecycleTest extends BaseCardTest {
             equipment.setAttachedTo(creature.getId());
             gd.playerBattlefields.get(player1.getId()).add(equipment);
             gd.addFloatingEffect(floating(equipment.getId(), player1.getId(),
-                    EffectDuration.WHILE_ATTACHED));
+                    Duration.WHILE_ATTACHED));
             FloatingContinuousEffect sourceBacked = gd.addFloatingEffect(floating(equipment.getId(),
-                    player1.getId(), EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD));
+                    player1.getId(), Duration.WHILE_SOURCE_ON_BATTLEFIELD));
 
             // Destroying the equipped creature unattaches the equipment (CR 301.5c) but keeps
             // it on the battlefield, so only the WHILE_ATTACHED effect ends.
@@ -119,11 +119,11 @@ class FloatingEffectLifecycleTest extends BaseCardTest {
         @Test
         @DisplayName("expireFloatingEffectsAtTurnStart removes only the given player's UNTIL_YOUR_NEXT_TURN effects")
         void turnStartExpiryIsPerController() {
-            gd.addFloatingEffect(floating(null, player1.getId(), EffectDuration.UNTIL_YOUR_NEXT_TURN));
+            gd.addFloatingEffect(floating(null, player1.getId(), Duration.UNTIL_YOUR_NEXT_TURN));
             FloatingContinuousEffect opponents = gd.addFloatingEffect(
-                    floating(null, player2.getId(), EffectDuration.UNTIL_YOUR_NEXT_TURN));
+                    floating(null, player2.getId(), Duration.UNTIL_YOUR_NEXT_TURN));
             FloatingContinuousEffect permanent = gd.addFloatingEffect(
-                    floating(null, player1.getId(), EffectDuration.PERMANENT));
+                    floating(null, player1.getId(), Duration.PERMANENT));
 
             List<FloatingContinuousEffect> removed = gd.expireFloatingEffectsAtTurnStart(player1.getId());
 
@@ -140,20 +140,20 @@ class FloatingEffectLifecycleTest extends BaseCardTest {
         @DisplayName("simulationCopy carries floating effects and the copy's list is independent")
         void copyCarriesEffectsIndependently() {
             FloatingContinuousEffect effect = gd.addFloatingEffect(
-                    floating(null, player1.getId(), EffectDuration.UNTIL_END_OF_TURN));
+                    floating(null, player1.getId(), Duration.UNTIL_END_OF_TURN));
 
             GameData copy = gd.simulationCopy();
 
             assertThat(copy.floatingEffects).containsExactly(effect);
             copy.floatingEffects.clear();
-            copy.addFloatingEffect(floating(null, player2.getId(), EffectDuration.PERMANENT));
+            copy.addFloatingEffect(floating(null, player2.getId(), Duration.PERMANENT));
             assertThat(gd.floatingEffects).containsExactly(effect);
         }
     }
 
     // ===== helpers =====
 
-    private FloatingContinuousEffect floating(UUID sourcePermanentId, UUID controllerId, EffectDuration duration) {
+    private FloatingContinuousEffect floating(UUID sourcePermanentId, UUID controllerId, Duration duration) {
         return new FloatingContinuousEffect(UUID.randomUUID(), "Test Source", sourcePermanentId,
                 controllerId, new BoostTargetCreatureEffect(3, 3), null, null, null, duration, 0L);
     }

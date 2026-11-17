@@ -40,6 +40,6 @@ public class RandomOpponentGainsControlOfSourceEffectHandler implements NormalEf
 
         creatureControlService.applyControlEffect(gameData, newControllerId, source,
                 new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                ControlDuration.PERMANENT.toEffectDuration(), null, entry.getCard().getName());
+                ControlDuration.PERMANENT.toDuration(), null, entry.getCard().getName());
     }
 }

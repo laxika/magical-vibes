@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReturnedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -42,12 +42,12 @@ public class RiseAndShine extends Card {
                 SequenceEffect.of(
                         new AnimatePermanentsEffect(
                                 0, 0, List.of(), Set.of(), null, Set.of(CardType.CREATURE),
-                                GrantScope.TARGET, EffectDuration.PERMANENT),
+                                GrantScope.TARGET, Duration.PERMANENT),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 4)),
                 SequenceEffect.of(
                         new AnimatePermanentsEffect(
                                 new Fixed(0), new Fixed(0), List.of(), Set.of(), null, Set.of(CardType.CREATURE),
-                                GrantScope.OWN_PERMANENTS, EffectDuration.PERMANENT,
+                                GrantScope.OWN_PERMANENTS, Duration.PERMANENT,
                                 noncreatureArtifact),
                         new PutCounterOnReturnedPermanentsEffect(CounterType.PLUS_ONE_PLUS_ONE, 4))));
 

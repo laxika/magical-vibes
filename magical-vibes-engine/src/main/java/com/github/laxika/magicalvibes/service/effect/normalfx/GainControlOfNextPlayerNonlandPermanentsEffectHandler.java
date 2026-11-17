@@ -59,7 +59,7 @@ public class GainControlOfNextPlayerNonlandPermanentsEffectHandler implements No
         for (ControlChange change : changes) {
             creatureControlService.applyControlEffect(
                     gameData, change.newControllerId(), change.permanent(), controlEffect,
-                    rotation.controlDuration().toEffectDuration(), null, entry.getCard().getName());
+                    rotation.controlDuration().toDuration(), null, entry.getCard().getName());
         }
     }
 

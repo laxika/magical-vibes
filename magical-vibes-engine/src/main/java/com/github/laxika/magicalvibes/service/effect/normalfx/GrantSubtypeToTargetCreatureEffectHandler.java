@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
@@ -36,7 +36,7 @@ public class GrantSubtypeToTargetCreatureEffectHandler implements NormalEffectHa
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantSubtypeToTargetCreatureEffect) effect;
-        if (e.duration() == EffectDuration.WHILE_SOURCE_REMAINS
+        if (Duration.WHILE_SOURCE_REMAINS.equals(e.duration())
                 && (entry.getSourcePermanentId() == null
                 || gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) == null)) {
             return;
@@ -52,7 +52,7 @@ public class GrantSubtypeToTargetCreatureEffectHandler implements NormalEffectHa
                 continue;
             }
 
-            if (e.duration() == EffectDuration.PERMANENT) {
+            if (Duration.PERMANENT.equals(e.duration())) {
                 if (!target.getGrantedSubtypes().contains(e.subtype())) {
                     target.getGrantedSubtypes().add(e.subtype());
                 }

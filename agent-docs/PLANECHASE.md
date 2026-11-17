@@ -17,7 +17,7 @@ Rolling the die by special action requires the active player's main phase, prior
 - `RollPlanarDieEffect()` rolls without paying or increasing the special-action cost.
 - `BlankPlanarDieRollsCauseChaosEffect()` makes blank planar-die rolls trigger chaos while its source phenomenon remains face up; the source state is cleared when planeswalking away.
 - `ReverseTurnOrderEffect()` reverses the authoritative player-order list when it resolves; the phenomenon lifecycle then planeswalks away from Time Distortion.
-- `EffectDuration.UNTIL_PLANESWALK` expires on a planeswalk.
+- `Duration.UNTIL_PLANESWALK` expires on a planeswalk.
 - `PhaseOutCreaturesUntilPlaneswalkEffect()` holds phased-out creatures and their attachments until the next planeswalk, when `PhasingService` phases them back in.
 - `AllowPlayFromAnyLibraryTopEffect` is a controller-scoped static permission for playing lands and casting spells from any player's library top; it uses the normal costs, timing, and land-play allowance. Every nonempty library's top card is offered, tagged with its owner, and the request names which library to play from (see `findLibraryTopOwners` in ARCHITECTURE.md).
 - `AllowPlayCardsExiledWithPlanarSourceEffect` is a controller-scoped static permission for playing cards tracked with the current face-up planar object during that player's turn. Planar exile effects use the `PlanarObject` ID in the existing exile-source field, so the permission ends when that object leaves play.

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.layer;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterConditionedControlEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -33,7 +33,7 @@ import java.util.UUID;
  * @param affectedPermanentId the single permanent affected, or {@code null}
  * @param affectedPlayerId    the single player affected, or {@code null}
  * @param scope               predicate selecting the affected permanents, or {@code null}
- * @param duration            how long the effect lasts (see {@link EffectDuration})
+ * @param duration            how long the effect lasts (see {@link Duration})
  * @param timestamp           CR 613.7 timestamp, taken when the creating spell/ability resolved
  */
 public record FloatingContinuousEffect(
@@ -45,13 +45,13 @@ public record FloatingContinuousEffect(
         UUID affectedPermanentId,
         UUID affectedPlayerId,
         PermanentPredicate scope,
-        EffectDuration duration,
+        Duration duration,
         long timestamp,
         boolean expiresWhenScopeNoLongerMatches) {
 
     public FloatingContinuousEffect(UUID id, String sourceCardName, UUID sourcePermanentId, UUID controllerId,
                                     CardEffect effect, UUID affectedPermanentId, UUID affectedPlayerId,
-                                    PermanentPredicate scope, EffectDuration duration, long timestamp) {
+                                    PermanentPredicate scope, Duration duration, long timestamp) {
         this(id, sourceCardName, sourcePermanentId, controllerId, effect, affectedPermanentId,
                 affectedPlayerId, scope, duration, timestamp, false);
     }

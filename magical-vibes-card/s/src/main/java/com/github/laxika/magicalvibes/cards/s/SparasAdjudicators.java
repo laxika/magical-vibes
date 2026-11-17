@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AllowCastSourceCardFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
@@ -26,7 +26,7 @@ public class SparasAdjudicators extends Card {
     public SparasAdjudicators() {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new LockTargetPermanentEffect(
-                        true, true, false, EffectDuration.UNTIL_YOUR_NEXT_TURN));
+                        true, true, false, Duration.UNTIL_YOUR_NEXT_TURN));
 
         ActivatedAbility landManaAbility = new ActivatedAbility(
                 true,
@@ -54,7 +54,7 @@ public class SparasAdjudicators extends Card {
                         landManaAbility,
                         GrantScope.TARGET,
                         null,
-                        EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE
+                        Duration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE
                 ),
                         // "You may cast this card for as long as it remains exiled" only if the ability resolves.
                         AllowCastSourceCardFromExileEffect.whileExiled()),

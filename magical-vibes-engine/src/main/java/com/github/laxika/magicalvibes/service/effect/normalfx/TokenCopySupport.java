@@ -27,7 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -896,7 +896,7 @@ public class TokenCopySupport {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                         entry.getCard().getName(), null, entry.getControllerId(),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
-                        tokenPermanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                        tokenPermanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             }
 
             Card sourceCard = tokenPermanent.getCard();

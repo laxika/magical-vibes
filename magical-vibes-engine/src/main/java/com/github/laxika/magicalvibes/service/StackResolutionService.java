@@ -29,7 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterE
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
@@ -522,7 +522,7 @@ public class StackResolutionService {
                     new com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect(
                             Keyword.HASTE, com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET,
                             com.github.laxika.magicalvibes.model.effect.GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD),
-                    permanent.getId(), null, null, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+                    permanent.getId(), null, null, Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
         // CR 702.152a: a blitzed permanent has haste as a static ability, not as an enters-the-battlefield
         // trigger, so Torpor Orb-style suppression of enters triggers doesn't remove it.
@@ -535,7 +535,7 @@ public class StackResolutionService {
                     new com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect(
                             Keyword.HASTE, com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET,
                             com.github.laxika.magicalvibes.model.effect.GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD),
-                    permanent.getId(), null, null, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+                    permanent.getId(), null, null, Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
         // CR 702.152a: the blitz end-step sacrifice is a delayed triggered ability created as the spell
         // resolves, not an enters-the-battlefield trigger. A printed blitz cost is handled by
@@ -1064,7 +1064,7 @@ public class StackResolutionService {
                         .orElse(null);
                 if (controlEffect != null) {
                     creatureControlService.applyControlEffect(gameData, controllerId, target,
-                            controlEffect, EffectDuration.WHILE_ATTACHED,
+                            controlEffect, Duration.WHILE_ATTACHED,
                             perm.getId(), characteristics.getName());
                 }
 

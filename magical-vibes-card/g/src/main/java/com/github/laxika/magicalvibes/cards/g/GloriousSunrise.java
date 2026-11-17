@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -46,7 +46,7 @@ public class GloriousSunrise extends Card {
                                         "{T}: Add {G}{G}{G}."),
                                 GrantScope.TARGET,
                                 null,
-                                EffectDuration.UNTIL_END_OF_TURN),
+                                Duration.UNTIL_END_OF_TURN),
                         TargetFilters.land()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Draw a card if you control a creature with power 3 or greater.",

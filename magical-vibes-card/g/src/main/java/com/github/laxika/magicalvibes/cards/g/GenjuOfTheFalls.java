@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -34,7 +34,7 @@ public class GenjuOfTheFalls extends Card {
         // {2}: Enchanted Island becomes a 3/2 blue Spirit creature with flying until end of turn. It's still a land.
         addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(
                 new AnimatePermanentsEffect(3, 2, List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING),
-                        CardColor.BLUE, Set.of(), GrantScope.ENCHANTED_PERMANENT, EffectDuration.UNTIL_END_OF_TURN)
+                        CardColor.BLUE, Set.of(), GrantScope.ENCHANTED_PERMANENT, Duration.UNTIL_END_OF_TURN)
         ), "{2}: Enchanted Island becomes a 3/2 blue Spirit creature with flying until end of turn. "
                 + "It's still a land."));
 

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SetSelfColorIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -42,7 +42,7 @@ public class SetSelfColorIndefinitelyEffectHandler implements NormalEffectHandle
         source.setColorOverridden(true);
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), source.getId(), entry.getControllerId(), setter,
-                source.getId(), null, null, EffectDuration.PERMANENT, 0));
+                source.getId(), null, null, Duration.PERMANENT, 0));
 
         gameLogService.append(gameData, GameLog.builder().card(source.getCard())
                 .text(" becomes " + change.color().name().toLowerCase() + ".").build());

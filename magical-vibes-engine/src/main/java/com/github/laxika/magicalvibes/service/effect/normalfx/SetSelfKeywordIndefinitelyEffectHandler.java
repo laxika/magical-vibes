@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
@@ -46,8 +46,8 @@ public class SetSelfKeywordIndefinitelyEffectHandler implements NormalEffectHand
 
         // The gain and lose abilities are opposites of each other, so a new activation supersedes
         // whatever the previous one established for this keyword instead of stacking behind it.
-        gameData.floatingEffects.removeIf(floating ->
-                floating.duration() == EffectDuration.PERMANENT
+        gameData.expireFloatingEffects(floating ->
+                Duration.PERMANENT.equals(floating.duration())
                         && source.getId().equals(floating.affectedPermanentId())
                         && source.getId().equals(floating.sourcePermanentId())
                         && (floating.effect() instanceof GrantKeywordEffect grant
@@ -60,10 +60,10 @@ public class SetSelfKeywordIndefinitelyEffectHandler implements NormalEffectHand
         // source (Soar) wins over it and an earlier one loses to it.
         CardEffect layerEffect = change.gained()
                 ? new GrantKeywordEffect(change.keyword(), GrantScope.TARGET)
-                : new RemoveKeywordEffect(change.keyword(), GrantScope.TARGET, EffectDuration.PERMANENT);
+                : new RemoveKeywordEffect(change.keyword(), GrantScope.TARGET, Duration.PERMANENT);
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), source.getId(), entry.getControllerId(), layerEffect,
-                source.getId(), null, null, EffectDuration.PERMANENT, 0));
+                source.getId(), null, null, Duration.PERMANENT, 0));
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(source.getCard())

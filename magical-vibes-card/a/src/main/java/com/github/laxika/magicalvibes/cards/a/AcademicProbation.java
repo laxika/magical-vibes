@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOpponentsCantCastUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -23,7 +23,7 @@ public class AcademicProbation extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Choose target nonland permanent. Until your next turn, it can't attack or block, and its activated abilities can't be activated",
                         new LockTargetPermanentEffect(
-                                true, true, true, EffectDuration.UNTIL_YOUR_NEXT_TURN, TargetPredicates.permanent()),
+                                true, true, true, Duration.UNTIL_YOUR_NEXT_TURN, TargetPredicates.permanent()),
                         TargetFilters.nonlandPermanent())
         )));
     }

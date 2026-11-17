@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * Keywords, activated abilities, triggered abilities, and static abilities of the
  * affected permanent are suppressed.
  * <p>
- * With {@link EffectDuration#CONTINUOUS}: static effect used by auras like Deep Freeze.
+ * With {@link Duration#CONTINUOUS}: static effect used by auras like Deep Freeze.
  * Resolved by {@code LosesAllAbilitiesEffectHandler} in {@code staticfx}.
  * <p>
- * With {@link EffectDuration#UNTIL_END_OF_TURN}: one-shot effect that sets a temporary flag
+ * With {@link Duration#UNTIL_END_OF_TURN}: one-shot effect that sets a temporary flag
  * on the permanent, cleared by {@link com.github.laxika.magicalvibes.model.Permanent#resetModifiers()}.
  * Used by cards like Merfolk Trickster. Resolved by {@code KeywordGrantResolutionService}.
  * Source-linked durations create a floating layer effect that lasts while the source remains on
@@ -21,19 +21,19 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param duration how long the effect lasts
  */
 public record LosesAllAbilitiesEffect(GrantScope scope, PermanentPredicate filter,
-                                      EffectDuration duration) implements CardEffect {
+                                      Duration duration) implements CardEffect {
 
-    /** Convenience constructor defaulting to {@link EffectDuration#CONTINUOUS}. */
+    /** Convenience constructor defaulting to {@link Duration#CONTINUOUS}. */
     public LosesAllAbilitiesEffect(GrantScope scope) {
-        this(scope, null, EffectDuration.CONTINUOUS);
+        this(scope, null, Duration.STATIC);
     }
 
-    public LosesAllAbilitiesEffect(GrantScope scope, EffectDuration duration) {
+    public LosesAllAbilitiesEffect(GrantScope scope, Duration duration) {
         this(scope, null, duration);
     }
 
     public LosesAllAbilitiesEffect(GrantScope scope, PermanentPredicate filter) {
-        this(scope, filter, EffectDuration.CONTINUOUS);
+        this(scope, filter, Duration.STATIC);
     }
 
     @Override

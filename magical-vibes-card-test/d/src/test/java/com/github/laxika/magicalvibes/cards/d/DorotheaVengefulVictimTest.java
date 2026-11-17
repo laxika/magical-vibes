@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -148,7 +148,7 @@ class DorotheaVengefulVictimTest extends BaseCardTest {
         gd.stolenCreatures.put(dorothea.getId(), player1.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control change", null,
                 player2.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                dorothea.getId(), null, null, EffectDuration.PERMANENT, 0));
+                dorothea.getId(), null, null, Duration.PERMANENT, 0));
 
         harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
 

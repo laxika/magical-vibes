@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -59,7 +59,7 @@ public class EnchantedCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler im
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(), new GrantSubtypeEffect(chosenSubtype, GrantScope.TARGET, true),
-                enchanted.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                enchanted.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
         gameLogService.append(gameData, GameLog.builder()
                 .card(enchanted.getCard())
                 .text(" becomes a " + chosenSubtype.getDisplayName() + " until end of turn.")

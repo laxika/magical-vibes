@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantAttackTargetPlayerThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -37,6 +37,6 @@ public class ControllerCantAttackTargetPlayerThisTurnEffectHandler implements No
                 new CreaturesCantAttackControllerUnlessPredicateEffect(
                         new PermanentNotPredicate(new PermanentTruePredicate()), false,
                         attackingPlayerId),
-                null, protectedPlayerId, null, EffectDuration.UNTIL_END_OF_TURN, 0L));
+                null, protectedPlayerId, null, Duration.UNTIL_END_OF_TURN, 0L));
     }
 }

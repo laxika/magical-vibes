@@ -15,11 +15,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param duration how long the subtype grant applies
  */
 public record GrantSubtypeUntilEndOfTurnEffect(CardSubtype subtype, GrantScope scope,
-                                               PermanentPredicate filter, EffectDuration duration) implements CardEffect {
+                                               PermanentPredicate filter, Duration duration) implements CardEffect {
 
     public GrantSubtypeUntilEndOfTurnEffect(CardSubtype subtype, GrantScope scope,
                                            PermanentPredicate filter) {
-        this(subtype, scope, filter, EffectDuration.UNTIL_END_OF_TURN);
+        this(subtype, scope, filter, Duration.UNTIL_END_OF_TURN);
     }
 
     public GrantSubtypeUntilEndOfTurnEffect(CardSubtype subtype, GrantScope scope) {

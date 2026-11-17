@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
@@ -25,7 +25,7 @@ public class TaxCollector extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Arrest — Detain target creature an opponent controls",
                         new LockTargetPermanentEffect(true, true, true,
-                                EffectDuration.UNTIL_YOUR_NEXT_TURN),
+                                Duration.UNTIL_YOUR_NEXT_TURN),
                         TargetFilters.creatureAnOpponentControls())
         ))));
     }

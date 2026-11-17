@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantFlyingToTargetCreatureOrPlayerEffect;
@@ -62,7 +62,7 @@ public class GrantFlyingToTargetCreatureOrPlayerEffectHandler implements NormalE
                         Set.of(Keyword.FLYING),
                         GrantScope.TARGET),
                 target.getId(), null, null,
-                EffectDuration.UNTIL_END_OF_TURN, 0));
+                Duration.UNTIL_END_OF_TURN, 0));
         gameLogService.append(gameData, GameLog.text(target.getCard().getName()
                 + " gains flying until end of turn."));
     }

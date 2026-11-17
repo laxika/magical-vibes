@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -31,7 +31,7 @@ public class CloudsteelKirin extends Card {
         addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantEffectEffect(new CantLoseGameEffect(), GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF,
-                        EffectDuration.WHILE_ATTACHED));
+                        Duration.WHILE_ATTACHED));
 
         var reconfigureFilter = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

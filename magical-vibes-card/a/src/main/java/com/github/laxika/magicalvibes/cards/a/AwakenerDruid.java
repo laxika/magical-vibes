@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -27,6 +27,6 @@ public class AwakenerDruid extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new AnimatePermanentsEffect(
                                 4, 5, List.of(CardSubtype.TREEFOLK), Set.of(), CardColor.GREEN, Set.of(),
-                                GrantScope.TARGET, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD));
+                                GrantScope.TARGET, Duration.WHILE_SOURCE_ON_BATTLEFIELD));
     }
 }

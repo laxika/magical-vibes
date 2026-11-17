@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfBasePowerFromTargetPowerEffect;
@@ -41,7 +41,7 @@ public class SetSelfBasePowerFromTargetPowerEffectHandler implements NormalEffec
         var setter = new SetBasePowerToughnessEffect(power, null, GrantScope.SELF);
         FloatingContinuousEffect floating = gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), source.getId(), entry.getControllerId(),
-                setter, source.getId(), null, null, EffectDuration.PERMANENT, 0));
+                setter, source.getId(), null, null, Duration.PERMANENT, 0));
         source.setBasePowerOverriddenPermanently(true);
         source.setPermanentBasePowerOverride(power);
         source.setPermanentBasePowerOverrideTimestamp(floating.timestamp());

@@ -47,7 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EvolveEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
@@ -2321,7 +2321,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
     private void changeControl(Permanent permanent, Player newController) {
         CreatureControlService control = bean(CreatureControlService.class);
         harness.inMutationScope(() -> control.applyControlEffect(gd, newController.getId(), permanent,
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT, null, "Helper"));
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT), Duration.PERMANENT, null, "Helper"));
     }
 
     /** An Aura of player1 becomes attached to {@code enchanted}. */

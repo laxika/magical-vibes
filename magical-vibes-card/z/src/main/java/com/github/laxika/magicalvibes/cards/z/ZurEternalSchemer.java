@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -44,7 +44,7 @@ public class ZurEternalSchemer extends Card {
                 List.of(new AnimatePermanentsEffect(
                         new TargetManaValue(), new TargetManaValue(),
                         List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, EffectDuration.PERMANENT, null
+                        GrantScope.TARGET, Duration.PERMANENT, null
                 )),
                 "{1}{W}: Target non-Aura enchantment you control becomes a creature in addition to its other types and has base power and base toughness each equal to its mana value.",
                 new ControlledPermanentPredicateTargetFilter(

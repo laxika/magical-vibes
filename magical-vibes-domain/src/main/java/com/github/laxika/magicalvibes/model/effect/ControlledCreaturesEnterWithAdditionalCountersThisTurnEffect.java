@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 /**
  * One-shot effect that sets up a turn-long replacement effect (MTG Rule 614.1c): for the rest of
  * this turn, each creature the effect's controller controls enters the battlefield with
- * {@code count} additional +1/+1 counters on it. {@link EffectDuration#UNTIL_YOUR_NEXT_TURN}
+ * {@code count} additional +1/+1 counters on it. {@link Duration#UNTIL_YOUR_NEXT_TURN}
  * extends the replacement effect through the controller's next turn.
  * <p>
  * Unlike {@link ControlledCreaturesEnterWithAdditionalCountersEffect} this is not tied to a static
@@ -14,10 +14,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * +1/+1 counter on it.").
  */
 public record ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect(int count,
-                                                                             EffectDuration duration)
+                                                                             Duration duration)
         implements CardEffect {
 
     public ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect(int count) {
-        this(count, EffectDuration.UNTIL_END_OF_TURN);
+        this(count, Duration.UNTIL_END_OF_TURN);
     }
 }

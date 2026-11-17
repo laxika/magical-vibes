@@ -70,7 +70,7 @@ public class GainControlOfAllCommandersAndPutThemOntoBattlefieldEffectHandler
         GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
         for (Permanent permanent : commandersOnBattlefield) {
             creatureControlService.applyControlEffect(gameData, controllerId, permanent,
-                    controlEffect, ControlDuration.PERMANENT.toEffectDuration(), null,
+                    controlEffect, ControlDuration.PERMANENT.toDuration(), null,
                     entry.getCard().getName());
         }
 

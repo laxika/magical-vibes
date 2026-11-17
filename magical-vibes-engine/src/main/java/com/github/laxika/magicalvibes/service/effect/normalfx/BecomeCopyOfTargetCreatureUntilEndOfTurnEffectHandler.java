@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -127,7 +127,7 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), sourcePermanentId,
                 entry.getControllerId(), effect, sourcePermanentId, null, null,
-                EffectDuration.UNTIL_END_OF_TURN, 0));
+                Duration.UNTIL_END_OF_TURN, 0));
 
         String targetName = targetPerm != null ? targetPerm.getCard().getName() : lastKnownTarget.getName();
         String logMsg = originalName + " becomes a copy of " + targetName + " until end of turn.";

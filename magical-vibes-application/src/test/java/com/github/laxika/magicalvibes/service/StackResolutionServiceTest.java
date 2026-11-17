@@ -601,7 +601,7 @@ class StackResolutionServiceTest {
 
             verify(creatureControlService).applyControlEffect(eq(gd), eq(PLAYER1_ID), eq(targetPerm),
                     any(ControlEnchantedCreatureEffect.class),
-                    eq(com.github.laxika.magicalvibes.model.effect.EffectDuration.WHILE_ATTACHED),
+                    eq(com.github.laxika.magicalvibes.model.effect.Duration.WHILE_ATTACHED),
                     any(UUID.class), eq("Control Aura"));
         }
 

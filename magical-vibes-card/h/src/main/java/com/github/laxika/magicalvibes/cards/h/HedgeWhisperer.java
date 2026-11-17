@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -34,7 +34,7 @@ public class HedgeWhisperer extends Card {
                                 CardColor.GREEN,
                                 Set.of(),
                                 GrantScope.TARGET,
-                                EffectDuration.WHILE_SOURCE_REMAINS_TAPPED)
+                                Duration.WHILE_SOURCE_REMAINS_TAPPED)
                 ),
                 "{3}{G}, {T}, Collect evidence 4: Target land you control becomes a 5/5 green Plant Boar creature with haste for as long as this creature remains tapped. It's still a land. Activate only as a sorcery.",
                 TargetFilters.landYouControl(),

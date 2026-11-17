@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -58,7 +58,7 @@ public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target != null) {
             // CR 105.3 / 611.2b: "becomes [color]" with no stated duration is a floating layer-5 color
-            // setter that replaces all previous colors and lasts indefinitely (EffectDuration.PERMANENT).
+            // setter that replaces all previous colors and lasts indefinitely (Duration.PERMANENT).
             // The legacy fields are seeded for direct getEffectiveColor callers; the layered pass replays
             // the floating effect at its real timestamp.
             target.getTransientColors().clear();
@@ -69,7 +69,7 @@ public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
             SetTargetColorEffect resolvedEffect = new SetTargetColorEffect(color, e.spellOnly(), false);
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), null, entry.getControllerId(), resolvedEffect,
-                    target.getId(), null, null, EffectDuration.PERMANENT, 0));
+                    target.getId(), null, null, Duration.PERMANENT, 0));
 
             
             gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" becomes " + colorName + ".").build());

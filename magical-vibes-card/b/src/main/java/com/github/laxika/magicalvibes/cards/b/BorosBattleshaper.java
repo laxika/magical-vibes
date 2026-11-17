@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
@@ -28,7 +28,7 @@ public class BorosBattleshaper extends Card {
                 new GrantStaticEffectToTargetUntilEndOfCombatEffect(new MustAttackEffect()),
                 new GrantStaticEffectToTargetUntilEndOfCombatEffect(new MustBlockEachCombatEffect()));
         CardEffect cantAttackOrBlock = new LockTargetPermanentEffect(true, true, false,
-                EffectDuration.UNTIL_END_OF_COMBAT);
+                Duration.UNTIL_END_OF_COMBAT);
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY), attacksOrBlocks, cantAttackOrBlock);
         target(TargetFilters.creature(), 0, 1).bindEffect(attacksOrBlocks);
         target(TargetFilters.creature(), 0, 1).bindEffect(cantAttackOrBlock);

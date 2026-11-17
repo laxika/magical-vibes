@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -188,7 +188,7 @@ class SirensRuseTest extends BaseCardTest {
         gd.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), "Control setup", null, player1.getId(),
                 new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                pirate.getId(), null, null, EffectDuration.PERMANENT, 0));
+                pirate.getId(), null, null, Duration.PERMANENT, 0));
         harness.setHand(player1, List.of(new SirensRuse()));
         harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new JungleDelver()));

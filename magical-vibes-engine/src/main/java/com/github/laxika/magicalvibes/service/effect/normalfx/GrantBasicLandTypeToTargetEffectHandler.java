@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -59,8 +59,8 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
                 continue;
             }
 
-            if (e.replacing() && (e.duration() == EffectDuration.UNTIL_END_OF_TURN
-                    || e.duration() == EffectDuration.UNTIL_CONTROLLERS_NEXT_UNTAP_STEP)) {
+            if (e.replacing() && (Duration.UNTIL_END_OF_TURN.equals(e.duration())
+                    || Duration.UNTIL_CONTROLLERS_NEXT_UNTAP_STEP.equals(e.duration()))) {
                 // A timestamped layer-4 floating effect, so a later "becomes" effect (Blood Moon,
                 // Phantasmal Terrain) overrides it by timestamp rather than the transient override
                 // always winning. The next-untap-step form is removed by the untap step itself.
@@ -91,15 +91,15 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
      * of turn, replacing its other land types/mana ability via a transient override (rule 305.7).
      * Shared by this handler (fixed-type path) and the player's basic-land-type choice resolution.
      */
-    public static void applyBasicLandType(Permanent targetLand, CardSubtype subtype, EffectDuration duration, boolean replacing) {
+    public static void applyBasicLandType(Permanent targetLand, CardSubtype subtype, Duration duration, boolean replacing) {
         if (replacing) {
             // Type-replacing "becomes" (rule 305.7): the override is read by the static-bonus system
             // (subtypes/mana). Until end of turn (Tideshaper Mystic) it is cleared by resetModifiers();
             // until the controller's next untap step (Orcish Farmer) it survives end-of-turn cleanup
             // and is cleared at that controller's next turn by clearUntilNextTurnEffects().
-            if (duration == EffectDuration.UNTIL_CONTROLLERS_NEXT_UNTAP_STEP) {
+            if (Duration.UNTIL_CONTROLLERS_NEXT_UNTAP_STEP.equals(duration)) {
                 targetLand.setUntilNextTurnLandTypeOverride(subtype);
-            } else if (duration == EffectDuration.CONTINUOUS || duration == EffectDuration.PERMANENT) {
+            } else if (Duration.STATIC.equals(duration) || Duration.PERMANENT.equals(duration)) {
                 targetLand.setPersistentLandTypeOverride(subtype);
             } else {
                 targetLand.setTransientLandTypeOverride(subtype);
@@ -112,7 +112,7 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
                 true, null, List.of(new AwardManaEffect(manaColor)),
                 "{T}: Add {" + manaColor.getCode() + "}.");
 
-        if (duration == EffectDuration.UNTIL_END_OF_TURN) {
+        if (Duration.UNTIL_END_OF_TURN.equals(duration)) {
             // Transient: cleared at end of turn by resetModifiers()
             if (!targetLand.getTransientSubtypes().contains(subtype)) {
                 targetLand.getTransientSubtypes().add(subtype);
@@ -131,12 +131,10 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
 
     /** Log line describing a basic land type change, shared with the choice-resolution path. */
     public static String describeBasicLandTypeChange(Permanent targetLand, CardSubtype subtype,
-                                                     EffectDuration duration, boolean replacing) {
-        String durationText = switch (duration) {
-            case UNTIL_END_OF_TURN -> " until end of turn";
-            case UNTIL_CONTROLLERS_NEXT_UNTAP_STEP -> " until its controller's next untap step";
-            default -> "";
-        };
+                                                     Duration duration, boolean replacing) {
+        String durationText = Duration.UNTIL_END_OF_TURN.equals(duration) ? " until end of turn"
+                : Duration.UNTIL_CONTROLLERS_NEXT_UNTAP_STEP.equals(duration)
+                ? " until its controller's next untap step" : "";
         String suffix = replacing ? "" : " in addition to its other types";
         return targetLand.getCard().getName() + " becomes a " + subtype.getDisplayName() + suffix + durationText + ".";
     }

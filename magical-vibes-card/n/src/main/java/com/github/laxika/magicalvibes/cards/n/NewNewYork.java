@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -41,12 +41,12 @@ public class NewNewYork extends Card {
                 "Crew 1");
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
                 new GrantActivatedAbilityEffect(crewOne, GrantScope.OWN_PERMANENTS,
-                        noncreatureArtifact, EffectDuration.UNTIL_END_OF_TURN),
+                        noncreatureArtifact, Duration.UNTIL_END_OF_TURN),
                 new AnimatePermanentsEffect(
                         new Fixed(3), new Fixed(3), List.of(CardSubtype.VEHICLE),
                         Set.of(Keyword.FLYING, Keyword.HASTE),
                         null, Set.of(CardType.CREATURE), GrantScope.OWN_PERMANENTS,
-                        EffectDuration.UNTIL_END_OF_TURN, noncreatureArtifact)));
+                        Duration.UNTIL_END_OF_TURN, noncreatureArtifact)));
 
         addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(CreateTokenEffect.ofTreasureToken(1),
                 new CreateTokenEffect(

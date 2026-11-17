@@ -107,7 +107,7 @@ public class ChooseUpToThreeNonlandPermanentsThenOpponentChoosesOneEffectHandler
         GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
         for (Permanent permanent : toSeize) {
             creatureControlService.applyControlEffect(gameData, controllerId, permanent,
-                    controlEffect, ControlDuration.PERMANENT.toEffectDuration(), null, sourceName);
+                    controlEffect, ControlDuration.PERMANENT.toDuration(), null, sourceName);
         }
     }
 }

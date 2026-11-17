@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -34,7 +34,7 @@ public class TheloniteMonk extends Card {
                                 false
                         ),
                         new GrantBasicLandTypeToTargetEffect(
-                                EffectDuration.PERMANENT, CardSubtype.FOREST, true)
+                                Duration.PERMANENT, CardSubtype.FOREST, true)
                 ),
                 "{T}, Sacrifice a green creature: Target land becomes a Forest. (This effect lasts indefinitely.)",
                 TargetFilters.land()

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -175,7 +175,7 @@ class RemoveEnchantmentsTest extends BaseCardTest {
             gd.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), "Test control effect", permanent.getId(), controllerId,
                     new GainControlOfTargetEffect(ControlDuration.PERMANENT), permanent.getId(),
-                    null, null, EffectDuration.PERMANENT, 0));
+                    null, null, Duration.PERMANENT, 0));
         }
     }
 }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
@@ -50,7 +50,7 @@ public class KomaCosmosSerpent extends Card {
                                 "Sacrifice another Serpent"),
                         new TapPermanentsEffect(TapUntapScope.TARGET),
                         new LockTargetPermanentEffect(false, false, true,
-                                EffectDuration.UNTIL_END_OF_TURN, TargetPredicates.permanent())
+                                Duration.UNTIL_END_OF_TURN, TargetPredicates.permanent())
                 ),
                 "Sacrifice another Serpent: Tap target permanent. Its activated abilities can't be activated this turn.",
                 TargetFilters.permanent()

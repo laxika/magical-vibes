@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -37,7 +37,7 @@ public class RoarOfTheFifthPeople extends Card {
                 ),
                 GrantScope.OWN_CREATURES,
                 null,
-                EffectDuration.WHILE_SOURCE_REMAINS
+                Duration.WHILE_SOURCE_REMAINS
         ));
 
         addTrigger(Triggers.chapter(3),

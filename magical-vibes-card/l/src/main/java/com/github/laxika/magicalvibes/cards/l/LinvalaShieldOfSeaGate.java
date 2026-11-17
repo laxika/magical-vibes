@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.FullParty;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
@@ -27,7 +27,7 @@ public class LinvalaShieldOfSeaGate extends Card {
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         TriggerOptions.DEFAULT.withInterveningIf(new FullParty()),
                         new LockTargetPermanentEffect(true, true, true,
-                                EffectDuration.UNTIL_YOUR_NEXT_TURN, TargetPredicates.permanent()));
+                                Duration.UNTIL_YOUR_NEXT_TURN, TargetPredicates.permanent()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

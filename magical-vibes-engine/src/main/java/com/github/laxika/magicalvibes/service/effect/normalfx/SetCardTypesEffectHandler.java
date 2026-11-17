@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -32,7 +32,7 @@ public class SetCardTypesEffectHandler implements NormalEffectHandlerBean {
         if (set.scope() != GrantScope.TARGET) {
             return;
         }
-        if (set.duration() == EffectDuration.WHILE_SOURCE_REMAINS
+        if (Duration.WHILE_SOURCE_REMAINS.equals(set.duration())
                 && (entry.getSourcePermanentId() == null
                 || gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) == null)) {
             return;

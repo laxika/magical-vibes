@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseLegacyWordEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
@@ -457,7 +457,7 @@ public class MayMiscHandlerService {
                     null,
                     drawingPlayerId,
                     null,
-                    EffectDuration.UNTIL_YOUR_NEXT_TURN,
+                    Duration.UNTIL_YOUR_NEXT_TURN,
                     0L));
 
             gameLogService.append(gameData, GameLog.textCardText(playerName + " skips their draw with " , ability.sourceCard(), "."));

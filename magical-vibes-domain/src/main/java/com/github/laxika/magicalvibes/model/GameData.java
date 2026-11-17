@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPerm
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersWithChosenPlanarModePlayAdditionalLandEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -4799,7 +4799,50 @@ public class GameData {
         if (stamped.id() != null && activePlayerId != null) {
             floatingEffectCreatingActivePlayerIds.put(stamped.id(), activePlayerId);
         }
+        observeFloatingEffect(stamped, true);
         return stamped;
+    }
+
+    /**
+     * Stores the given floating effect with the timestamp it carries: the effect of a static ability that keeps the
+     * timestamp it had (CR 613.7a), or a control effect an Aura's attachment makes.
+     */
+    public void putFloatingEffect(FloatingContinuousEffect effect) {
+        floatingEffects.add(effect);
+        observeFloatingEffect(effect, true);
+    }
+
+    /** Ends the given floating effect, if it still applies. */
+    public void endFloatingEffect(FloatingContinuousEffect effect) {
+        expireFloatingEffects(floating -> floating == effect);
+    }
+
+    /**
+     * Puts {@code replacement} in place of {@code effect}, keeping its place in the list: a grant that perpetually
+     * lost part of what it gives. Reported as {@code effect} ending and {@code replacement} beginning.
+     */
+    public void replaceFloatingEffect(FloatingContinuousEffect effect, FloatingContinuousEffect replacement) {
+        synchronized (floatingEffects) {
+            int index = floatingEffects.indexOf(effect);
+            if (index < 0) {
+                return;
+            }
+            floatingEffects.set(index, replacement);
+        }
+        observeFloatingEffect(effect, false);
+        observeFloatingEffect(replacement, true);
+    }
+
+    /** Reports a floating effect that began or ended to {@link #rulesObserver}. */
+    private void observeFloatingEffect(FloatingContinuousEffect effect, boolean began) {
+        if (rulesObserver == null || rulesEvents.isSuppressed()) {
+            return;
+        }
+        if (began) {
+            rulesObserver.floatingEffectBegan(effect);
+        } else {
+            rulesObserver.floatingEffectEnded(effect);
+        }
     }
 
     /**
@@ -4883,8 +4926,8 @@ public class GameData {
     }
 
     private boolean endsAtCleanup(FloatingContinuousEffect fe) {
-        return fe.duration() == EffectDuration.UNTIL_END_OF_TURN
-                || (fe.duration() == EffectDuration.UNTIL_MATCHING_SPELL_CAST
+        return Duration.UNTIL_END_OF_TURN.equals(fe.duration())
+                || (Duration.UNTIL_MATCHING_SPELL_CAST.equals(fe.duration())
                 && !(fe.effect() instanceof ReduceCastCostForNextMatchingSpellEffect reduction
                 && !reduction.expiresAtCleanup()));
     }
@@ -5653,17 +5696,17 @@ public class GameData {
 
     /** Removes and returns all floating effects that expire at the beginning of the next end step. */
     public List<FloatingContinuousEffect> expireFloatingEffectsAtNextEndStep() {
-        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_NEXT_END_STEP);
+        return expireFloatingEffects(fe -> Duration.UNTIL_NEXT_END_STEP.equals(fe.duration()));
     }
 
     /** Removes and returns all floating effects with {@code UNTIL_END_OF_COMBAT} duration. */
     public List<FloatingContinuousEffect> expireEndOfCombatFloatingEffects() {
-        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_END_OF_COMBAT);
+        return expireFloatingEffects(fe -> Duration.UNTIL_END_OF_COMBAT.equals(fe.duration()));
     }
 
     /** Removes floating effects that last until any player casts a creature spell. */
     public List<FloatingContinuousEffect> expireFloatingEffectsOnCreatureSpellCast() {
-        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_CREATURE_SPELL_CAST);
+        return expireFloatingEffects(fe -> Duration.UNTIL_CREATURE_SPELL_CAST.equals(fe.duration()));
     }
 
     /**
@@ -5674,12 +5717,12 @@ public class GameData {
      */
     public List<FloatingContinuousEffect> expireFloatingEffectsForDepartedSource(UUID sourcePermanentId) {
         return expireFloatingEffects(fe ->
-                (fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
-                        || fe.duration() == EffectDuration.WHILE_SOURCE_CONTROLLED
-                        || fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS
-                        || fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
-                        || fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED
-                        || fe.duration() == EffectDuration.WHILE_ATTACHED)
+                (Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(fe.duration())
+                        || Duration.WHILE_SOURCE_CONTROLLED.equals(fe.duration())
+                        || Duration.WHILE_SOURCE_REMAINS.equals(fe.duration())
+                        || Duration.WHILE_SOURCE_TAPPED.equals(fe.duration())
+                        || Duration.WHILE_SOURCE_REMAINS_TAPPED.equals(fe.duration())
+                        || Duration.WHILE_ATTACHED.equals(fe.duration()))
                         && sourcePermanentId.equals(fe.sourcePermanentId()));
     }
 
@@ -5689,8 +5732,8 @@ public class GameData {
      * handled separately by the control reconciliation in {@code CreatureControlService}.
      */
     public List<FloatingContinuousEffect> expireTappedSourceFloatingEffects(UUID sourcePermanentId) {
-        return expireFloatingEffects(fe -> (fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
-                || fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED)
+        return expireFloatingEffects(fe -> (Duration.WHILE_SOURCE_TAPPED.equals(fe.duration())
+                || Duration.WHILE_SOURCE_REMAINS_TAPPED.equals(fe.duration()))
                 && !fe.isControlEffect()
                 && sourcePermanentId.equals(fe.sourcePermanentId()));
     }
@@ -5701,7 +5744,7 @@ public class GameData {
      * permanent (the old attachment's effects end either way).
      */
     public List<FloatingContinuousEffect> expireFloatingEffectsForUnattachedSource(UUID sourcePermanentId) {
-        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.WHILE_ATTACHED
+        return expireFloatingEffects(fe -> Duration.WHILE_ATTACHED.equals(fe.duration())
                 && sourcePermanentId.equals(fe.sourcePermanentId()));
     }
 
@@ -5710,13 +5753,13 @@ public class GameData {
      * given player. Called when that player's turn begins.
      */
     public List<FloatingContinuousEffect> expireFloatingEffectsAtTurnStart(UUID playerId) {
-        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN
+        return expireFloatingEffects(fe -> Duration.UNTIL_YOUR_NEXT_TURN.equals(fe.duration())
                 && playerId.equals(fe.controllerId()));
     }
 
     /** Removes floating effects controlled by the given player after that player's next turn. */
     public List<FloatingContinuousEffect> expireFloatingEffectsAtTurnEnd(UUID playerId) {
-        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN
+        return expireFloatingEffects(fe -> Duration.UNTIL_END_OF_YOUR_NEXT_TURN.equals(fe.duration())
                 && playerId != null
                 && playerId.equals(fe.controllerId())
                 && turnStartTimestamp > 0
@@ -5728,7 +5771,7 @@ public class GameData {
      * the given player. Called at the beginning of that player's upkeep step (Cycle of Life).
      */
     public List<FloatingContinuousEffect> expireFloatingEffectsAtUpkeep(UUID playerId) {
-        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP
+        return expireFloatingEffects(fe -> Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(fe.duration())
                 && playerId.equals(fe.controllerId()));
     }
 
@@ -5739,7 +5782,7 @@ public class GameData {
 
     /** Removes effects that lasted through the end of the current upkeep. */
     public List<FloatingContinuousEffect> expireFloatingEffectsAtUpkeepEnd(UUID playerId) {
-        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_END_OF_CONTROLLERS_NEXT_UPKEEP
+        return expireFloatingEffects(fe -> Duration.UNTIL_END_OF_CONTROLLERS_NEXT_UPKEEP.equals(fe.duration())
                 && playerId.equals(fe.controllerId())
                 && upkeepStartTimestamp > 0
                 && fe.timestamp() < upkeepStartTimestamp);
@@ -5758,6 +5801,7 @@ public class GameData {
                 }
             }
         }
+        removed.forEach(fe -> observeFloatingEffect(fe, false));
         return removed;
     }
 
@@ -5808,7 +5852,7 @@ public class GameData {
                 && control.controlledByMonarch()) {
             return monarchPlayerId != null ? monarchPlayerId : defaultControllerOf(fe.affectedPermanentId());
         }
-        if (fe.duration() == EffectDuration.WHILE_ATTACHED && fe.sourcePermanentId() != null) {
+        if (Duration.WHILE_ATTACHED.equals(fe.duration()) && fe.sourcePermanentId() != null) {
             UUID auraController = findControllerOf(fe.sourcePermanentId());
             if (auraController != null) {
                 return auraController;
@@ -5882,13 +5926,13 @@ public class GameData {
      */
     public boolean isStolenUntilEndOfTurn(UUID permanentId) {
         FloatingContinuousEffect newest = newestControlEffectFor(permanentId);
-        if (newest == null || newest.duration() != EffectDuration.UNTIL_END_OF_TURN) {
+        if (newest == null || !Duration.UNTIL_END_OF_TURN.equals(newest.duration())) {
             return false;
         }
         UUID withEffect = resolveControlEffectController(newest);
         FloatingContinuousEffect newestSurviving = null;
         for (FloatingContinuousEffect fe : controlEffectsFor(permanentId)) {
-            if (fe.duration() == EffectDuration.UNTIL_END_OF_TURN) continue;
+            if (Duration.UNTIL_END_OF_TURN.equals(fe.duration())) continue;
             if (newestSurviving == null || fe.timestamp() > newestSurviving.timestamp()) {
                 newestSurviving = fe;
             }
@@ -8959,7 +9003,7 @@ public class GameData {
             exiledCardHitCounters.remove(cardId);
             lukkaExileCastPermissions.remove(cardId);
             suspendedSpellExiles.removeIf(pending -> cardId.equals(pending.cardId()));
-            expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE
+            expireFloatingEffects(fe -> Duration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE.equals(fe.duration())
                     && fe.effect() instanceof com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect grant
                     && grant.ability().getEffects().stream()
                             .anyMatch(com.github.laxika.magicalvibes.model.effect.TeachCastCopyEffect.class::isInstance)

@@ -919,8 +919,11 @@ or one limited to once each turn.
 - **Trigger ledger** (`TriggerLedger`, test fixtures, fed by the `RulesEventRecorder` every `GameTestHarness` attaches as the game's `RulesObserver`): with `MV_TRIGGER_LEDGER=<file>`, each triggered ability reaching
   the stack or a holding queue in a card test appends one line (test, position, source name, effect classes, the entry's
   event and choice fields, ids by role: `SOURCE`, `SELFCARD`, `p1`/`p2`, `perm:`, `card:`, `stack:`; `(additional)` for
-  doubled objects). Run the same card tests before and after a change and diff; JVMs share the file, so sort it and drop
-  the per-test sequence numbers (two players' abilities arrive in map order).
+  doubled objects). Each floating effect that begins or ends (`GameData.addFloatingEffect`, `putFloatingEffect`,
+  `expireFloatingEffects`, `endFloatingEffect`, `replaceFloatingEffect`; nothing else changes `floatingEffects`) appends
+  a `floating began` / `floating ended` line: source name, effect class, its `Duration`, the objects it affects by role
+  and the turn and step it happened in. Run the same card tests before and after a change and diff; JVMs share the
+  file, so sort it and drop the per-test sequence numbers (two players' abilities arrive in map order).
 - **Record audit** (`MV_TRIGGER_RECORD_AUDIT=<file>`, `BaseCardTest.watchTriggerRecords`): `ROUTING` (also a test
   failure) and `UNSCOPED` choices begun without a record, `LEFT` records that left the hand untaken
   (`GameData.triggerRecordLeftBehind`), `MISSED` when such a record's ability is on the stack without one; each with

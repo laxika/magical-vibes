@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
@@ -101,7 +101,7 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), card.getName(), null, entry.getControllerId(),
                     new SetCardTypesEffect(e.overriddenCardTypes(), GrantScope.TARGET),
-                    permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+                    permanent.getId(), null, null, Duration.PERMANENT, 0));
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent, enterTappedTypes);
 
@@ -112,8 +112,8 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
 
         if (e.losesAllAbilities()) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), card.getName(), null,
-                    entry.getControllerId(), new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT),
-                    permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+                    entry.getControllerId(), new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT),
+                    permanent.getId(), null, null, Duration.PERMANENT, 0));
         }
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, ownerId, permanent, card);
         if (e.useReturnedPermanentAsSource()) {

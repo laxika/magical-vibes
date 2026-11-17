@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -42,7 +42,7 @@ public class KaitoBaneOfNightmares extends Card {
                 )),
                 new AnimatePermanentsEffect(new Fixed(3), new Fixed(4), List.of(CardSubtype.NINJA),
                         Set.of(Keyword.HEXPROOF), null, Set.of(CardType.CREATURE), GrantScope.SELF,
-                        EffectDuration.UNTIL_END_OF_TURN, null, true)));
+                        Duration.UNTIL_END_OF_TURN, null, true)));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

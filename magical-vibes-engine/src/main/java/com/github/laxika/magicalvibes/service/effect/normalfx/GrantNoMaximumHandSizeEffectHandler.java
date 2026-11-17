@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -45,7 +45,7 @@ public class GrantNoMaximumHandSizeEffectHandler implements NormalEffectHandlerB
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(), controllerId,
                     new NoMaximumHandSizeEffect(), null, controllerId, null,
-                    EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+                    Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
             period = "for as long as they control " + entry.getCard().getName();
         } else {
             gameData.playersWithNoMaximumHandSizeUntilNextTurn.add(controllerId);

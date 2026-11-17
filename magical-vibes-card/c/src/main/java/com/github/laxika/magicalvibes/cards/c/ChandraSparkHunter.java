@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
@@ -43,7 +43,7 @@ public class ChandraSparkHunter extends Card {
                 "Target must be a Vehicle you control"), 0, 1)
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new AnimatePermanentsEffect(
                         null, null, List.of(), Set.of(Keyword.HASTE), null, Set.of(CardType.CREATURE),
-                        GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN, null));
+                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN, null));
 
         addActivatedAbility(new ActivatedAbility(
                 +2,

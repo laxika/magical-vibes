@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackDamagedPlayerUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -47,7 +47,7 @@ public class TargetCreatureMustAttackDamagedPlayerUntilNextTurnEffectHandler
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                     entry.getControllerId(),
                     new TargetCreatureMustAttackDamagedPlayerUntilNextTurnEffect(damagedPlayerId),
-                    targetId, null, null, EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN, 0));
+                    targetId, null, null, Duration.UNTIL_END_OF_YOUR_NEXT_TURN, 0));
         }
     }
 }

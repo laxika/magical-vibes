@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AllowCastSourceCardFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
@@ -48,7 +48,7 @@ public class MaskedBandits extends Card {
                         landManaAbility,
                         GrantScope.TARGET,
                         null,
-                        EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE
+                        Duration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE
                 ),
                         // "You may cast this card for as long as it remains exiled" only if the ability resolves.
                         AllowCastSourceCardFromExileEffect.whileExiled()),

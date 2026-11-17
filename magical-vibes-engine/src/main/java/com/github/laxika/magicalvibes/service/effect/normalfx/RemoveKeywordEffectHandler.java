@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -137,7 +137,7 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
                 entry.getCard().getName(), null, entry.getControllerId(), remove,
                 target.getId(), null, null, remove.duration(), 0));
         String keywordName = remove.keyword().name().charAt(0) + remove.keyword().name().substring(1).toLowerCase().replace('_', ' ');
-        String durationLabel = remove.duration() == EffectDuration.UNTIL_END_OF_TURN ? " until end of turn" : "";
+        String durationLabel = Duration.UNTIL_END_OF_TURN.equals(remove.duration()) ? " until end of turn" : "";
         
         gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" loses " + keywordName + durationLabel + ".").build());
         log.info("Game {} - {} loses {} ({})", gameData.id, target.getCard().getName(), remove.keyword(), remove.scope());

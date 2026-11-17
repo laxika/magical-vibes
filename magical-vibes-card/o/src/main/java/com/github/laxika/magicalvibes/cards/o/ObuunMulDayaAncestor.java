@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -27,7 +27,7 @@ public class ObuunMulDayaAncestor extends Card {
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new AnimatePermanentsEffect(
                         new SourcePower(), new SourcePower(),
                         List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.TRAMPLE, Keyword.HASTE),
-                        null, Set.of(), GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN,
+                        null, Set.of(), GrantScope.TARGET, Duration.UNTIL_END_OF_TURN,
                         null, Set.of()));
 
         target(TargetFilters.creature())

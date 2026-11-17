@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -124,7 +124,7 @@ public class TargetOpponentChoosesCardFromGraveyardEffectHandler implements Norm
         for (CardEffect grantedEffect : battlefieldEffectGrants) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(), controllerId,
-                    grantedEffect, permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+                    grantedEffect, permanent.getId(), null, null, Duration.PERMANENT, 0));
         }
         graveyardReturnSupport.trackStolenCreature(gameData, permanent.getId(), controllerId, graveyardOwnerId);
 

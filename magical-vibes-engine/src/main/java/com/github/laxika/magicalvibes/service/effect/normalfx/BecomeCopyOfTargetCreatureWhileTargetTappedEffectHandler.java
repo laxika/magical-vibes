@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureWhileTargetTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -55,7 +55,7 @@ public class BecomeCopyOfTargetCreatureWhileTargetTappedEffectHandler implements
 
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), targetId, entry.getControllerId(), effect,
-                sourceId, null, null, EffectDuration.WHILE_SOURCE_REMAINS_TAPPED, 0));
+                sourceId, null, null, Duration.WHILE_SOURCE_REMAINS_TAPPED, 0));
 
         gameLogService.append(gameData, GameLog.text(
                 originalName + " becomes a copy of " + target.getCard().getName()

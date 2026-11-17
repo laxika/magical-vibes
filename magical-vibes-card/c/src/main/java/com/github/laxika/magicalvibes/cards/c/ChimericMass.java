@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public class ChimericMass extends Card {
                 List.of(new AnimatePermanentsEffect(
                         new CountersOnSource(CounterType.CHARGE), new CountersOnSource(CounterType.CHARGE),
                         List.of(CardSubtype.CONSTRUCT), Set.of(), null, Set.of(),
-                        GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN, null, Set.of(), false, true)),
+                        GrantScope.SELF, Duration.UNTIL_END_OF_TURN, null, Set.of(), false, true)),
                 "{1}: Until end of turn, Chimeric Mass becomes a Construct artifact creature with \"This creature's power and toughness are each equal to the number of charge counters on it.\""
         ));
     }

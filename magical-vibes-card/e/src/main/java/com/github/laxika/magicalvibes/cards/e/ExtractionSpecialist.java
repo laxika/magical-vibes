@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -26,8 +26,8 @@ public class ExtractionSpecialist extends Card {
                         new CardMaxManaValuePredicate(2))))
                 .targetGraveyard(true)
                 .battlefieldEffectGrants(List.of(new LockTargetPermanentEffect(
-                        true, true, false, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD)))
-                .battlefieldEffectGrantDuration(EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD)
+                        true, true, false, Duration.WHILE_SOURCE_ON_BATTLEFIELD)))
+                .battlefieldEffectGrantDuration(Duration.WHILE_SOURCE_ON_BATTLEFIELD)
                 .build());
     }
 }

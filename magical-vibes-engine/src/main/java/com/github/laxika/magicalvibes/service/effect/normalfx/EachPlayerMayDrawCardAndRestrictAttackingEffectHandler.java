@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDrawCardAndRestrictAttackingEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -91,7 +91,7 @@ public class EachPlayerMayDrawCardAndRestrictAttackingEffectHandler implements N
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(), playerId,
                     new CreaturesCantAttackControllerUnlessPredicateEffect(
                             new PermanentNotPredicate(new PermanentTruePredicate()), false, playerId, true),
-                    null, entry.getControllerId(), null, EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN, 0L));
+                    null, entry.getControllerId(), null, Duration.UNTIL_END_OF_YOUR_NEXT_TURN, 0L));
         }
         promptNextPlayer(gameData, entry);
     }

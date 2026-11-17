@@ -111,12 +111,12 @@ public class CulturalExchangeSupport {
         }
         for (Permanent permanent : firstCreatures) {
             creatureControlService.applyControlEffect(gameData, context.secondPlayerId(), permanent,
-                    controlEffect, ControlDuration.PERMANENT.toEffectDuration(), null,
+                    controlEffect, ControlDuration.PERMANENT.toDuration(), null,
                     context.sourceCard().getName());
         }
         for (Permanent permanent : secondCreatures) {
             creatureControlService.applyControlEffect(gameData, context.firstPlayerId(), permanent,
-                    controlEffect, ControlDuration.PERMANENT.toEffectDuration(), null,
+                    controlEffect, ControlDuration.PERMANENT.toDuration(), null,
                     context.sourceCard().getName());
         }
 

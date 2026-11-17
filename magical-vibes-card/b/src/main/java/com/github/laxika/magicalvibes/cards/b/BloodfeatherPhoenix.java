@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -32,7 +32,7 @@ public class BloodfeatherPhoenix extends Card {
                                 .filter(new CardIsSelfPredicate())
                                 .returnAll(true)
                                 .battlefieldEffectGrants(List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)))
-                                .battlefieldEffectGrantDuration(EffectDuration.UNTIL_END_OF_TURN)
+                                .battlefieldEffectGrantDuration(Duration.UNTIL_END_OF_TURN)
                                 .build(),
                         "Pay {R} to return Bloodfeather Phoenix from your graveyard to the battlefield?"));
     }

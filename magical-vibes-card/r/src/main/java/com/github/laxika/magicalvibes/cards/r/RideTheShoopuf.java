@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -30,7 +30,7 @@ public class RideTheShoopuf extends Card {
                 "{5}{G}{G}",
                 List.of(new AnimatePermanentsEffect(
                         7, 7, List.of(CardSubtype.BEAST), Set.of(), null,
-                        Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.PERMANENT)),
+                        Set.of(CardType.CREATURE), GrantScope.SELF, Duration.PERMANENT)),
                 "{5}{G}{G}: This enchantment becomes a 7/7 Beast creature in addition to its other types."
         ));
     }

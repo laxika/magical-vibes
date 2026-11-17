@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureCardFromControllerGraveyardUnderTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -84,7 +84,7 @@ public class PutTargetCreatureCardFromControllerGraveyardUnderTargetPlayerEffect
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
                 new GoadTargetCreatureUntilNextTurnEffect(), permanent.getId(), null, null,
-                EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                Duration.UNTIL_YOUR_NEXT_TURN, 0));
 
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(targetPlayerId) + " puts ", targetCard,

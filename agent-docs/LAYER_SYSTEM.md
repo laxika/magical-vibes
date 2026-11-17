@@ -444,22 +444,21 @@ Each source is classified into one or more layers:
    `permanentControlStolenCreatures` — were deleted in step 8, leaving only the
    `stolenCreatures` OWNERSHIP record, maintained by `recomputeControl`.)
 
-### Duration enum
+### Duration
 
-Floating effects reuse the existing **`EffectDuration`** enum (reuse over creation) —
-`FloatingDuration` from the original design maps onto it as follows; `WHILE_ATTACHED` was
-added for attachment-backed effects:
+A floating effect's **`Duration`** (`model.effect`) is how long it lasts (CR 611.2a): an `End` event that ends it
+(`NEVER` for one with no stated duration), or, for a "for as long as" duration, an `AsLongAs` condition it lasts
+while and ends for good once it stops holding (CR 611.2b). Every duration is one of its named constants:
+`UNTIL_END_OF_TURN` (CR 514.2), `UNTIL_END_OF_COMBAT`, `UNTIL_YOUR_NEXT_TURN`, `UNTIL_END_OF_YOUR_NEXT_TURN`,
+the upkeep, untap-step, next-end-step, spell-cast and planeswalk ends, `PERMANENT`, the source-linked
+`WHILE_SOURCE_ON_BATTLEFIELD` / `_CONTROLLED` / `_REMAINS` / `_TAPPED` / `_REMAINS_TAPPED`, and `WHILE_ATTACHED` for
+attachment-backed effects. Compare durations with `equals`. `STATIC` marks the effect of a static ability (CR 611.3)
+and is not valid for a floating effect.
 
-| Design name | `EffectDuration` value |
-|---|---|
-| UNTIL_END_OF_TURN | `UNTIL_END_OF_TURN` |
-| UNTIL_SOURCE_LEAVES_BATTLEFIELD | `WHILE_SOURCE_ON_BATTLEFIELD` |
-| WHILE_ATTACHED | `WHILE_ATTACHED` (new) |
-| UNTIL_CONTROLLER_NEXT_TURN | `UNTIL_YOUR_NEXT_TURN` |
-| PERMANENT | `PERMANENT` |
-
-(`CONTINUOUS` and `UNTIL_END_OF_COMBAT` also exist on the enum for its pre-existing users;
-floating effects may use `UNTIL_END_OF_COMBAT`, and `CONTINUOUS` is not valid for them.)
+Only `GameData`'s methods change `floatingEffects`: `addFloatingEffect` (stamps a new timestamp), `putFloatingEffect`
+(keeps the effect's own, CR 613.7a), `expireFloatingEffects` and the `expire…` methods built on it,
+`endFloatingEffect` and `replaceFloatingEffect`. Each reports the effect beginning or ending to the game's
+`RulesObserver`, which the trigger ledger writes.
 
 ## 7. Classification notes
 
@@ -985,7 +984,7 @@ and any deviations from this document.
 1. **2026-07-10 — Step 1: design doc, domain scaffolding, timestamp infrastructure.**
    Created this document. Added `model/layer/` in `magical-vibes-domain` with `Layer`,
    `FloatingContinuousEffect`, and `CharacteristicState` (not yet wired into the engine).
-   Extended `EffectDuration` with `WHILE_ATTACHED` instead of adding the planned
+   Extended `Duration` with `WHILE_ATTACHED` instead of adding the planned
    `FloatingDuration` enum (deviation: reuse over creation; mapping table in §6). Added
    `GameData.timestampCounter`/`nextTimestamp()` (copied in `simulationCopy`),
    `Permanent.timestamp` (copied in the copy constructor; no field-count guard test exists
@@ -1258,7 +1257,7 @@ and any deviations from this document.
    `returnStolenCreatures` at `removeOrphanedAuras`/cleanup time). Producers migrated to
    `CreatureControlService.applyControlEffect` (which replaces `stealPermanent`):
    `GainControlOfTargetEffectHandler` (all three `ControlDuration`s, via the new
-   `ControlDuration.toEffectDuration()`), the four control-Aura attach sites
+   `ControlDuration.toDuration()`), the four control-Aura attach sites
    (StackResolutionService, WarpWorldService, AnimationSupport transform-attach,
    PermanentChoiceBattlefieldHandlerService — `WHILE_ATTACHED` keyed to the Aura;
    `reconcileControl` additionally auto-creates missing Aura effects as the reattach safety

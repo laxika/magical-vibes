@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,13 +27,13 @@ public class ControlledCreaturesEnterWithAdditionalCountersThisTurnEffectHandler
                 (ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect) effect;
         int count = counters.count();
 
-        if (counters.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN) {
+        if (Duration.UNTIL_YOUR_NEXT_TURN.equals(counters.duration())) {
             gameData.additionalEnterCountersUntilNextTurn.merge(entry.getControllerId(), count, Integer::sum);
         } else {
             gameData.additionalEnterCountersThisTurn.merge(entry.getControllerId(), count, Integer::sum);
         }
 
-        String durationText = counters.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN
+        String durationText = Duration.UNTIL_YOUR_NEXT_TURN.equals(counters.duration())
                 ? "until their next turn" : "this turn";
         gameLogService.append(gameData, GameLog.text(
                 "Creatures entering " + durationText + " get " + count

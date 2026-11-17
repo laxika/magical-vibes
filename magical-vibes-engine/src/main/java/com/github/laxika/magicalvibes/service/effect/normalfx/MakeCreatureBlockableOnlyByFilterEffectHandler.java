@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterEffect;
@@ -47,7 +47,7 @@ public class MakeCreatureBlockableOnlyByFilterEffectHandler implements NormalEff
                 new GrantEffectEffect(blockRestriction, GrantScope.TARGET),
                 target.getId(), null, null, restriction.duration(), 0));
 
-        String duration = restriction.duration() == EffectDuration.UNTIL_END_OF_COMBAT
+        String duration = Duration.UNTIL_END_OF_COMBAT.equals(restriction.duration())
                 ? " this combat" : "";
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " can be blocked" + duration + " only by " + restriction.allowedBlockersDescription() + "."));

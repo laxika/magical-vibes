@@ -403,7 +403,7 @@ new ActivatedAbility(requiresTap, manaCost, effects, description)
 ```java
 // {1}, {T}: <detain effect>. Activate only if there are three or more brick counters on this artifact.
 new ActivatedAbility(true, "{1}",
-    List.of(new LockTargetPermanentEffect(true, true, true, EffectDuration.UNTIL_YOUR_NEXT_TURN)),
+    List.of(new LockTargetPermanentEffect(true, true, true, Duration.UNTIL_YOUR_NEXT_TURN)),
     "{1}, {T}: Until your next turn, ...")
     .withRequiredSourceCounters(CounterType.BRICK, 3)
 ```

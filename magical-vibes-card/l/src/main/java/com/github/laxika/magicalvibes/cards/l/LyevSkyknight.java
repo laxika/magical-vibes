@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,6 +19,6 @@ public class LyevSkyknight extends Card {
         // When this creature enters, detain target nonland permanent an opponent controls.
         target(TargetFilters.nonlandPermanentAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new LockTargetPermanentEffect(
-                        true, true, true, EffectDuration.UNTIL_YOUR_NEXT_TURN, TargetPredicates.permanent()));
+                        true, true, true, Duration.UNTIL_YOUR_NEXT_TURN, TargetPredicates.permanent()));
     }
 }

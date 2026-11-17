@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -33,7 +33,7 @@ public class JolraelVoiceOfZhalfir extends Card {
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new AnimatePermanentsEffect(
                         cardsInHand, cardsInHand,
                         List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING, Keyword.HASTE), null,
-                        Set.of(CardType.CREATURE), GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN,
+                        Set.of(CardType.CREATURE), GrantScope.TARGET, Duration.UNTIL_END_OF_TURN,
                         new PermanentIsLandPredicate(), Set.of(CardColor.GREEN, CardColor.BLUE)
                 ));
 

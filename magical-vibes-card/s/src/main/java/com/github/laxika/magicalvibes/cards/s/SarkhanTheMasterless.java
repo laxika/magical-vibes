@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -39,7 +39,7 @@ public class SarkhanTheMasterless extends Card {
                 List.of(new AnimatePermanentsEffect(
                         new Fixed(4), new Fixed(4), List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), CardColor.RED,
                         Set.of(CardType.CREATURE), GrantScope.OWN_PERMANENTS,
-                        EffectDuration.UNTIL_END_OF_TURN, new PermanentIsPlaneswalkerPredicate(), true
+                        Duration.UNTIL_END_OF_TURN, new PermanentIsPlaneswalkerPredicate(), true
                 )),
                 "+1: Until end of turn, each planeswalker you control becomes a 4/4 red Dragon creature and gains flying."
         ));

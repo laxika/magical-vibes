@@ -1631,7 +1631,7 @@ intervening "if" `TriggeringPermanentMatches` on the entering creature, so no wr
 
 **19b Target**
 ```java
-GrantEffectToTargetEffect(Ability grantedAbility, EffectDuration duration,
+GrantEffectToTargetEffect(Ability grantedAbility, Duration duration,
                           boolean skipIfAlreadyPresent, GrantScope scope, TargetPredicate declaredTarget)
 ```
 **Absorbs**: `GrantEffectToTargetUntilEndOfTurnEffect` (6),
@@ -1778,7 +1778,7 @@ check it, don't copy it forward blindly.
 
 ### Step 24 — Colour-setting `Become*` family
 
-**Target**: `SetColorsEffect(Set<CardColor> colors, boolean chooseColors, boolean targeted, EffectDuration duration)`.
+**Target**: `SetColorsEffect(Set<CardColor> colors, boolean chooseColors, boolean targeted, Duration duration)`.
 **Absorbs**: `BecomeAllColorsUntilEndOfTurnEffect` (1), `BecomeChosenColorsIndefinitelyEffect` (2),
 `BecomeColorlessUntilEndOfTurnEffect` (2), `BecomeColorlessIndefinitelyEffect` (1) — surviving into
 `BecomeChosenColorsUntilEndOfTurnEffect` (3).
@@ -1789,7 +1789,7 @@ does `overrideColors(Set.of())` — colorless is literally the empty-set case.
 `BecomeAllColorsUntilEndOfTurnEffectHandler` **already floats** a
 `BecomeChosenColorsUntilEndOfTurnEffect(EnumSet.allOf(CardColor.class))`, and
 `BecomeColorlessIndefinitelyEffectHandler` **already floats** a `BecomeColorlessUntilEndOfTurnEffect(false)`
-with `EffectDuration.PERMANENT` — the merge is what the code already does by hand.
+with `Duration.PERMANENT` — the merge is what the code already does by hand.
 
 **Gotcha** — the explicit `chooseColors` flag is load-bearing: `applyL5Instance:1734` currently uses
 `if (becomes.colors().isEmpty()) return;` to distinguish a prompting instance from an applied one,

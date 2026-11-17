@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -109,7 +109,7 @@ public class EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUn
             permanent.setCopyUntilEndOfTurn(true);
             gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), permanent.getId(), controllerId,
-                    effect, permanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                    effect, permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
         }
 
         gameLogService.append(gameData, GameLog.builder()

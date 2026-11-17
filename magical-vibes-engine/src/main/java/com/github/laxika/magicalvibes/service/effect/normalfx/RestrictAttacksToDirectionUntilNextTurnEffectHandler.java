@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttackDirectionRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RestrictAttacksToDirectionUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -25,7 +25,7 @@ public class RestrictAttacksToDirectionUntilNextTurnEffectHandler implements Nor
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId != null) {
-            gameData.floatingEffects.removeIf(floating -> sourcePermanentId.equals(floating.sourcePermanentId())
+            gameData.expireFloatingEffects(floating -> sourcePermanentId.equals(floating.sourcePermanentId())
                     && floating.effect() instanceof AttackDirectionRestrictionEffect);
         }
         gameData.addFloatingEffect(new FloatingContinuousEffect(
@@ -37,7 +37,7 @@ public class RestrictAttacksToDirectionUntilNextTurnEffectHandler implements Nor
                 null,
                 null,
                 new PermanentTruePredicate(),
-                EffectDuration.UNTIL_YOUR_NEXT_TURN,
+                Duration.UNTIL_YOUR_NEXT_TURN,
                 0));
     }
 }

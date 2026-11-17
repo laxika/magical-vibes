@@ -60,7 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffe
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
 import com.github.laxika.magicalvibes.model.effect.RiotEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsEnterUntappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
@@ -1238,7 +1238,7 @@ public class BattlefieldPlacementService {
             permanent.setColorOverridden(true);
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     permanent.getCard().getName(), null, controllerId, new SetTargetColorEffect(color),
-                    permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+                    permanent.getId(), null, null, Duration.PERMANENT, 0));
         }
         if (temporaryColors != null && !temporaryColors.isEmpty()) {
             CardColor color = temporaryColors.iterator().next();
@@ -1248,7 +1248,7 @@ public class BattlefieldPlacementService {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     permanent.getCard().getName(), null, controllerId,
                     new com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect(color),
-                    permanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                    permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
         }
     }
 

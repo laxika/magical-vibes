@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -31,7 +31,7 @@ public class LifeAndLimb extends Card {
                 new Fixed(1),
                 new Fixed(1),
                 List.of(CardSubtype.SAPROLING, CardSubtype.FOREST), Set.of(), null,
-                Set.of(CardType.LAND), GrantScope.ALL_PERMANENTS, EffectDuration.CONTINUOUS,
+                Set.of(CardType.LAND), GrantScope.ALL_PERMANENTS, Duration.STATIC,
                 FOREST_OR_SAPROLING, Set.of(CardColor.GREEN)));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapFor(ManaColor.GREEN), GrantScope.ALL_PERMANENTS,

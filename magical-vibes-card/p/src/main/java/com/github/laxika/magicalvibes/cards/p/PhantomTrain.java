@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -34,7 +34,7 @@ public class PhantomTrain extends Card {
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new AnimatePermanentsEffect(
                                 null, null, List.of(CardSubtype.SPIRIT), Set.of(), null, Set.of(),
-                                GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN, null)
+                                GrantScope.SELF, Duration.UNTIL_END_OF_TURN, null)
                 ),
                 "Sacrifice another artifact or creature: Put a +1/+1 counter on this Vehicle. "
                         + "It becomes a Spirit artifact creature in addition to its other types until end of turn."

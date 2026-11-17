@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -48,7 +48,7 @@ public class SorinVampireLord extends Card {
                         ),
                         GrantScope.OWN_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
-                        EffectDuration.UNTIL_END_OF_TURN
+                        Duration.UNTIL_END_OF_TURN
                 )),
                 "\u22128: Until end of turn, each Vampire you control gains \"{T}: Gain control of target creature.\""
         ));

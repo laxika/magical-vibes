@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -60,7 +60,7 @@ public class NissaWhoShakesTheWorld extends Card {
                         new AnimatePermanentsEffect(
                                 0, 0, List.of(CardSubtype.ELEMENTAL),
                                 Set.of(Keyword.VIGILANCE, Keyword.HASTE), null, Set.of(),
-                                GrantScope.TARGET, EffectDuration.PERMANENT)),
+                                GrantScope.TARGET, Duration.PERMANENT)),
                 "+1: Put three +1/+1 counters on up to one target noncreature land you control. "
                         + "Untap it. It becomes a 0/0 Elemental creature with vigilance and haste "
                         + "that's still a land.",

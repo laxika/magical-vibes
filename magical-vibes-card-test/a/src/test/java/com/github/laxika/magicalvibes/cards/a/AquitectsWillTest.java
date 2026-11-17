@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -99,7 +99,7 @@ class AquitectsWillTest extends BaseCardTest {
                 .filter(p -> p.getId().equals(mountainId))
                 .findFirst().orElseThrow();
         GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(
-                simMountain, CardSubtype.ISLAND, EffectDuration.CONTINUOUS, false);
+                simMountain, CardSubtype.ISLAND, Duration.STATIC, false);
 
         assertThat(simMountain.getPersistentGrantedActivatedAbilities()).hasSize(1);
         assertThat(realMountain.getPersistentGrantedActivatedAbilities()).isEmpty();

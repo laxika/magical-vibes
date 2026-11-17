@@ -36,7 +36,7 @@ import com.github.laxika.magicalvibes.cards.w.WakestoneGargoyle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackDamagedPlayerUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -527,7 +527,7 @@ class AttackLegalityServiceTest extends BaseCardTest {
                 new PermanentControlledBySourceControllerPredicate()));
         gd.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), "Kardur, Doomscourge", null, player1.getId(), goad,
-                null, null, goad.affectedPredicate(), EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                null, null, goad.affectedPredicate(), Duration.UNTIL_YOUR_NEXT_TURN, 0));
 
         assertThat(als.getMustAttackRequirementCount(gd, bears)).isEqualTo(1);
     }
@@ -540,7 +540,7 @@ class AttackLegalityServiceTest extends BaseCardTest {
         var requirement = new TargetCreatureMustAttackDamagedPlayerUntilNextTurnEffect(player2.getId());
         gd.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), "Silver Surfer, Galactus's Herald", null, player1.getId(), requirement,
-                bears.getId(), null, null, EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN, 0));
+                bears.getId(), null, null, Duration.UNTIL_END_OF_YOUR_NEXT_TURN, 0));
 
         assertThat(als.getRequiredAttackTargetIds(gd, bears)).containsExactly(player2.getId());
         assertThat(als.getMustAttackRequirementCount(gd, bears, player2.getId())).isEqualTo(1);

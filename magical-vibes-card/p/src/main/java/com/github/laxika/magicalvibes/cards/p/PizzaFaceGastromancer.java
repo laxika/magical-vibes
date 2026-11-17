@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -66,7 +66,7 @@ public class PizzaFaceGastromancer extends Card {
                                                 null,
                                                 Set.of(CardType.CREATURE),
                                                 GrantScope.TARGET,
-                                                EffectDuration.PERMANENT))));
+                                                Duration.PERMANENT))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

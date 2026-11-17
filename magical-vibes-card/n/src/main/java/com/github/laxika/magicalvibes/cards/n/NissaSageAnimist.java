@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardLandToBattlefieldElseToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -46,7 +46,7 @@ public class NissaSageAnimist extends Card {
         ));
 
         // −7: Untap up to six target lands. They become 6/6 Elemental creatures. They're still lands.
-        // The animation has no duration, so it uses EffectDuration.PERMANENT over the whole target group.
+        // The animation has no duration, so it uses Duration.PERMANENT over the whole target group.
         TargetFilter land = TargetFilters.land();
         addActivatedAbility(new ActivatedAbility(
                 false, null,
@@ -54,7 +54,7 @@ public class NissaSageAnimist extends Card {
                         new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS),
                         new AnimatePermanentsEffect(6, 6, List.of(CardSubtype.ELEMENTAL),
                                 Set.<Keyword>of(), null, Set.of(),
-                                GrantScope.TARGET, EffectDuration.PERMANENT)),
+                                GrantScope.TARGET, Duration.PERMANENT)),
                 "−7: Untap up to six target lands. They become 6/6 Elemental creatures. "
                         + "They're still lands.",
                 null, -7, null, null,

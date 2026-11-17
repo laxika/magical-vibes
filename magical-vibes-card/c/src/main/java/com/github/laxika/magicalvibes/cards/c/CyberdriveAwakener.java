@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -38,6 +38,6 @@ public class CyberdriveAwakener extends Card {
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate())));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new AnimatePermanentsEffect(
                 new Fixed(4), new Fixed(4), List.of(), Set.of(), null, Set.of(CardType.ARTIFACT),
-                GrantScope.OWN_PERMANENTS, EffectDuration.UNTIL_END_OF_TURN, noncreatureArtifact));
+                GrantScope.OWN_PERMANENTS, Duration.UNTIL_END_OF_TURN, noncreatureArtifact));
     }
 }

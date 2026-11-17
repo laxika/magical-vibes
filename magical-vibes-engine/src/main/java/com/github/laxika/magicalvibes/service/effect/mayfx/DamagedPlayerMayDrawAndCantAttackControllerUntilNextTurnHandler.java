@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagedPlayerMayDrawAndCantAttackControllerUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -47,7 +47,7 @@ public class DamagedPlayerMayDrawAndCantAttackControllerUntilNextTurnHandler
                     null,
                     effect.protectedPlayerId(),
                     null,
-                    EffectDuration.UNTIL_END_OF_YOUR_NEXT_TURN,
+                    Duration.UNTIL_END_OF_YOUR_NEXT_TURN,
                     0));
         }
 

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnEarthbendedLandEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -64,7 +64,7 @@ public class EarthbendTargetLandEffectHandler implements NormalEffectHandlerBean
 
         AnimatePermanentsEffect animation = new AnimatePermanentsEffect(
                 0, 0, List.of(), Set.of(Keyword.HASTE), null, Set.of(CardType.LAND),
-                GrantScope.TARGET, EffectDuration.PERMANENT);
+                GrantScope.TARGET, Duration.PERMANENT);
         boolean applied = false;
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);

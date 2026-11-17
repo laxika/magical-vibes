@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellCostEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
@@ -118,13 +118,13 @@ public class SpellEvents {
 
         if (castZone == Zone.EXILE) {
             gameData.expireFloatingEffects(fe ->
-                    fe.duration() == EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE
+                    Duration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE.equals(fe.duration())
                             && fe.effect() instanceof GrantActivatedAbilityEffect grant
                             && spellCard.getId().equals(grant.expirationCardId()));
         }
         gameData.expireFloatingEffects(fe ->
-                (fe.duration() == EffectDuration.UNTIL_MATCHING_SPELL_CAST
-                        || fe.duration() == EffectDuration.UNTIL_TARGET_PLAYER_MATCHING_SPELL_CAST)
+                (Duration.UNTIL_MATCHING_SPELL_CAST.equals(fe.duration())
+                        || Duration.UNTIL_TARGET_PLAYER_MATCHING_SPELL_CAST.equals(fe.duration()))
                         && fe.effect() instanceof NextMatchingSpellCostEffect next
                         && next.appliesToPlayer(castingPlayerId, fe.controllerId())
                         && next.appliesToFaceDownCast(castFaceDown)

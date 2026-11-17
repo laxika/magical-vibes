@@ -52,7 +52,7 @@ public class DestroyTargetNonblackCreatureAndGainControlOfAttachedEquipmentEffec
         GainControlOfTargetEffect gainControl = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
         for (Permanent equipment : attachedEquipment) {
             creatureControlService.applyControlEffect(gameData, entry.getControllerId(), equipment,
-                    gainControl, ControlDuration.PERMANENT.toEffectDuration(), null,
+                    gainControl, ControlDuration.PERMANENT.toDuration(), null,
                     entry.getCard().getName());
         }
     }

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
@@ -33,7 +33,7 @@ public class FlashConscription extends Card {
                         new GrantEffectToTargetEffect(
                                 new TriggeredAbility(Triggers.dealsCombatDamage(),
                                 new GainLifeEffect(new EventValue())),
-                                EffectDuration.UNTIL_END_OF_TURN,
+                                Duration.UNTIL_END_OF_TURN,
                                 false)));
     }
 }

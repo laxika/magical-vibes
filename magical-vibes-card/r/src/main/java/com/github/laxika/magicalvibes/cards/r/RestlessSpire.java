@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -47,7 +47,7 @@ public class RestlessSpire extends Card {
                         new GrantStaticEffectToSourceEffect(
                                 new ConditionalEffect(new ControllerTurn(),
                                         new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)),
-                                EffectDuration.UNTIL_END_OF_TURN)),
+                                Duration.UNTIL_END_OF_TURN)),
                 "{U}{R}: This land becomes a 2/1 blue and red Elemental creature with "
                         + "\"During your turn, this creature has first strike.\" It's still a land."
         ));

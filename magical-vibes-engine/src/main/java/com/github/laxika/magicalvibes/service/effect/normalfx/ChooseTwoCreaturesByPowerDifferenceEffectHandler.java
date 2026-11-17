@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseTwoCreaturesByPowerDifferenceEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -76,7 +76,7 @@ public class ChooseTwoCreaturesByPowerDifferenceEffectHandler implements NormalE
             permanent.getGrantedKeywords().addAll(trampleGrant.keywords());
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceCardName, null,
                     entry.getControllerId(), trampleGrant, permanent.getId(), null, null,
-                    EffectDuration.UNTIL_END_OF_TURN, 0));
+                    Duration.UNTIL_END_OF_TURN, 0));
         }
     }
 }

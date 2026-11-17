@@ -101,7 +101,7 @@ public class ReturnDamagedCreaturesThatDiedUnderControlEffectHandler implements 
                 gameData.stolenCreatures.put(permanent.getId(), ownerId);
                 creatureControlService.applyControlEffect(gameData, entry.getControllerId(), permanent,
                         new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                        ControlDuration.PERMANENT.toEffectDuration(), null, entry.getCard().getName());
+                        ControlDuration.PERMANENT.toDuration(), null, entry.getCard().getName());
             }
 
             String playerName = gameData.playerIdToName.get(entry.getControllerId());

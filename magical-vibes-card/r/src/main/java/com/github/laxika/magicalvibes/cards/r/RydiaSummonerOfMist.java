@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
@@ -41,7 +41,7 @@ public class RydiaSummonerOfMist extends Card {
                         .enterWithCounter(CounterType.FINALITY)
                         .enterWithCounterCount(1)
                         .battlefieldEffectGrants(List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)))
-                        .battlefieldEffectGrantDuration(EffectDuration.UNTIL_END_OF_TURN)
+                        .battlefieldEffectGrantDuration(Duration.UNTIL_END_OF_TURN)
                         .build()),
                 "{X}, {T}: Return target Saga card with mana value X from your graveyard to the battlefield "
                         + "with a finality counter on it. It gains haste until end of turn. Activate only as "

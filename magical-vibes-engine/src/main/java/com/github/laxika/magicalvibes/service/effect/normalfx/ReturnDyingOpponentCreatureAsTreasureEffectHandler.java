@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureAsTreasureEffect;
@@ -78,6 +78,6 @@ public class ReturnDyingOpponentCreatureAsTreasureEffectHandler implements Norma
                         true, null,
                         List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),
                         "{T}, Sacrifice this artifact: Add one mana of any color."), GrantScope.TARGET),
-                permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+                permanent.getId(), null, null, Duration.PERMANENT, 0));
     }
 }

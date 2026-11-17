@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -35,6 +35,6 @@ public class TatyovaStewardOfTides extends Card {
                         new AnimatePermanentsEffect(
                                 3, 3,
                                 List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE),
-                                null, Set.of(), GrantScope.TARGET, EffectDuration.PERMANENT));
+                                null, Set.of(), GrantScope.TARGET, Duration.PERMANENT));
     }
 }

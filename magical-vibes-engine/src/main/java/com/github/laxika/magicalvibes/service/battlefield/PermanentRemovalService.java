@@ -44,7 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureReturnToHandReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedByControlledSourceInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedBySourceInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesInsteadOfDyingWithLifeLossEffect;
@@ -2530,10 +2530,10 @@ public class PermanentRemovalService {
                 .findFirst()
                 // The effect of the static ability continues with the timestamp it had on the battlefield
                 // (CR 613.7a), so abilities granted after it entered are not removed by it.
-                .ifPresent(effect -> gameData.floatingEffects.add(new FloatingContinuousEffect(
+                .ifPresent(effect -> gameData.putFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), target.getCard().getName(), null, controllerId,
                         effect, null, null, new PermanentIsArtifactPredicate(),
-                        EffectDuration.UNTIL_END_OF_TURN, target.getTimestamp())));
+                        Duration.UNTIL_END_OF_TURN, target.getTimestamp())));
         UUID ownerId = resolvePermanentOwner(gameData, target, controllerId);
         gameData.stolenCreatures.remove(target.getId());
         // A departing Aura ends the layer-1 copy it granted (Metamorphic Alteration): its
@@ -3310,7 +3310,7 @@ public class PermanentRemovalService {
                 if (animatedTarget != null) {
                     FloatingContinuousEffect remainingAnimation = gameData.floatingEffects.stream()
                             .filter(floating -> animatedTarget.getId().equals(floating.affectedPermanentId())
-                                    && floating.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                                    && Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(floating.duration())
                                     && floating.effect() instanceof com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect
                                     && floating.sourcePermanentId() != null)
                             .max(java.util.Comparator.comparingLong(FloatingContinuousEffect::timestamp))

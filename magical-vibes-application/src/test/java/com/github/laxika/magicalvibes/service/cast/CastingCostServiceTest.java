@@ -83,7 +83,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -465,7 +465,7 @@ class CastingCostServiceTest {
                     UUID.randomUUID(), "Temporary reducer", null, player1Id,
                     new ReduceCastCostForMatchingSpellsEffect(
                             new CardTypePredicate(CardType.ARTIFACT), 2, CostModificationScope.SELF),
-                    null, null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                    null, null, null, Duration.UNTIL_END_OF_TURN, 0));
             evaluateCardTypePredicates();
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);

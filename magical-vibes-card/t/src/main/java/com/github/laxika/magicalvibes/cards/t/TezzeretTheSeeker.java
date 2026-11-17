@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -53,7 +53,7 @@ public class TezzeretTheSeeker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -5,
                 List.of(new AnimatePermanentsEffect(new Fixed(5), new Fixed(5), List.of(), Set.of(), null, Set.of(),
-                        GrantScope.OWN_PERMANENTS, EffectDuration.UNTIL_END_OF_TURN,
+                        GrantScope.OWN_PERMANENTS, Duration.UNTIL_END_OF_TURN,
                         new PermanentIsArtifactPredicate())),
                 "−5: Artifacts you control become artifact creatures with base power and toughness 5/5 until end of turn."
         ));

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -36,7 +36,7 @@ public class DownInTheValley extends Card {
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.HAND));
         addTrigger(Triggers.chapter(2), new GrantEffectToTargetEffect(
                 new TriggeredAbility(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), ELF_TOKEN),
-                EffectDuration.PERMANENT, false, GrantScope.SELF));
+                Duration.PERMANENT, false, GrantScope.SELF));
         addBuffChapter(3);
         addBuffChapter(4);
     }

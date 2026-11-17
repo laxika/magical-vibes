@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -16,6 +16,6 @@ public class ArchonOfTheTriumvirate extends Card {
         // Whenever this creature attacks, detain up to two target nonland permanents your opponents control.
         target(TargetFilters.nonlandPermanentAnOpponentControls(), 0, 2)
                 .addTrigger(Triggers.attacks(), new LockTargetPermanentEffect(
-                        true, true, true, EffectDuration.UNTIL_YOUR_NEXT_TURN, TargetPredicates.permanent()));
+                        true, true, true, Duration.UNTIL_YOUR_NEXT_TURN, TargetPredicates.permanent()));
     }
 }

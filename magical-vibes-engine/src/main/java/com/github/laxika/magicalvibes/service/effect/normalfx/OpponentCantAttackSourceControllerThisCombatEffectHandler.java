@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.OpponentCantAttackSourceControllerThisCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -35,6 +35,6 @@ public class OpponentCantAttackSourceControllerThisCombatEffectHandler implement
                 protectedPlayerId,
                 new CreaturesCantAttackControllerUnlessPredicateEffect(
                         new PermanentNotPredicate(new PermanentTruePredicate()), false, attackingPlayerId),
-                null, protectedPlayerId, null, EffectDuration.UNTIL_END_OF_COMBAT, 0L));
+                null, protectedPlayerId, null, Duration.UNTIL_END_OF_COMBAT, 0L));
     }
 }

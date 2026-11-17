@@ -83,7 +83,7 @@ public class GainControlOfCreaturesOfChosenTypeIfMoreThanEachOtherPlayerEffectHa
 
         for (Permanent permanent : toSeize) {
             creatureControlService.applyControlEffect(gameData, controllerId, permanent,
-                    CONTROL_EFFECT, ControlDuration.PERMANENT.toEffectDuration(), null,
+                    CONTROL_EFFECT, ControlDuration.PERMANENT.toDuration(), null,
                     entry.getCard().getName());
         }
     }

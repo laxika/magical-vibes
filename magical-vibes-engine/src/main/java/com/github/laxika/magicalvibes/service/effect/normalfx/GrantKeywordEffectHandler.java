@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -452,7 +452,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
         gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
                 sourceName, null, controllerId,
                 new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET),
-                permanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
         String keywordNames = formatKeywords(grantableKeywords);
         gameLogService.append(gameData, GameLog.builder().card(permanent.getCard())
                 .text(" gains " + keywordNames + " until end of turn.").build());
@@ -487,15 +487,15 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
         return bandmates;
     }
 
-    private EffectDuration floatingDurationFor(GrantDuration duration) {
+    private Duration floatingDurationFor(GrantDuration duration) {
         return switch (duration) {
-            case UNTIL_END_OF_COMBAT -> EffectDuration.UNTIL_END_OF_COMBAT;
-            case UNTIL_YOUR_NEXT_TURN -> EffectDuration.UNTIL_YOUR_NEXT_TURN;
-            case UNTIL_YOUR_NEXT_UPKEEP -> EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP;
-            case WHILE_SOURCE_ON_BATTLEFIELD -> EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
-            case WHILE_SOURCE_REMAINS -> EffectDuration.WHILE_SOURCE_REMAINS;
-            case INDEFINITE -> EffectDuration.PERMANENT;
-            case END_OF_TURN -> EffectDuration.UNTIL_END_OF_TURN;
+            case UNTIL_END_OF_COMBAT -> Duration.UNTIL_END_OF_COMBAT;
+            case UNTIL_YOUR_NEXT_TURN -> Duration.UNTIL_YOUR_NEXT_TURN;
+            case UNTIL_YOUR_NEXT_UPKEEP -> Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP;
+            case WHILE_SOURCE_ON_BATTLEFIELD -> Duration.WHILE_SOURCE_ON_BATTLEFIELD;
+            case WHILE_SOURCE_REMAINS -> Duration.WHILE_SOURCE_REMAINS;
+            case INDEFINITE -> Duration.PERMANENT;
+            case END_OF_TURN -> Duration.UNTIL_END_OF_TURN;
         };
     }
 

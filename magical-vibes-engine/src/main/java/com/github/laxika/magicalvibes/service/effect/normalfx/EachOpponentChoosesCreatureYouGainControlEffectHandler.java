@@ -132,7 +132,7 @@ public class EachOpponentChoosesCreatureYouGainControlEffectHandler implements N
         GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
         for (Permanent permanent : toSeize) {
             creatureControlService.applyControlEffect(gameData, gainingControllerId, permanent,
-                    controlEffect, ControlDuration.PERMANENT.toEffectDuration(), null, sourceName);
+                    controlEffect, ControlDuration.PERMANENT.toDuration(), null, sourceName);
         }
     }
 

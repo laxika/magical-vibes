@@ -139,7 +139,7 @@ public class IllicitAuctionEffectHandler implements NormalEffectHandlerBean, Ask
             }
             creatureControlService.applyControlEffect(gameData, winnerId, target,
                     new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                    ControlDuration.PERMANENT.toEffectDuration(), null, cardName);
+                    ControlDuration.PERMANENT.toDuration(), null, cardName);
             gameLogService.append(gameData, GameLog.textCardText(gameData.playerIdToName.get(winnerId) + " gains control of ", target.getCard(), "."));
         }
         state.reset();

@@ -47,12 +47,12 @@ public class ExchangeControlOfAllCreaturesWithTargetPlayerEffectHandler implemen
 
         for (Permanent creature : targetCreatures) {
             creatureControlService.applyControlEffect(gameData, controllerId, creature,
-                    controlEffect, ControlDuration.END_OF_TURN.toEffectDuration(), null,
+                    controlEffect, ControlDuration.END_OF_TURN.toDuration(), null,
                     entry.getCard().getName());
         }
         for (Permanent creature : controllerCreatures) {
             creatureControlService.applyControlEffect(gameData, targetPlayerId, creature,
-                    controlEffect, ControlDuration.END_OF_TURN.toEffectDuration(), null,
+                    controlEffect, ControlDuration.END_OF_TURN.toDuration(), null,
                     entry.getCard().getName());
         }
     }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesTargetPlayerControlsUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnSnapshotEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -50,7 +50,7 @@ public class GoadCreaturesTargetPlayerControlsUntilNextTurnEffectHandler
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), entry.getCard() == null ? "Goad" : entry.getCard().getName(),
                         entry.getSourcePermanentId(), entry.getControllerId(), goad, permanent.getId(),
-                        null, null, EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+                        null, null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
             }
         }
     }

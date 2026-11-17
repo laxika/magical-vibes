@@ -84,7 +84,7 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
             simultaneous.add(permanent);
         }
         creatureControlService.applyControlEffectSimultaneously(gameData, controllerId, simultaneous,
-                controlEffect, duration.toEffectDuration(), entry.getCard().getName());
+                controlEffect, duration.toDuration(), entry.getCard().getName());
 
         for (CardEffect thenEffect : riderSteps(gameData, entry, e.thenEffects())) {
             EffectHandler handler = effectHandlerRegistry.getHandler(thenEffect);

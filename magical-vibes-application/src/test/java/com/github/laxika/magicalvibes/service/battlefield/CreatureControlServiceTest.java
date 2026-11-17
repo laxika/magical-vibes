@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetWhileHasCounterEffect;
@@ -61,7 +61,7 @@ class CreatureControlServiceTest {
         creature.markControllerUpkeepStarted();
         creature.markControllerUpkeepStarted();
 
-        applySteal(player2Id, creature, EffectDuration.PERMANENT, null);
+        applySteal(player2Id, creature, Duration.PERMANENT, null);
 
         assertThat(creature.getControllerUpkeepsSinceControlled()).isZero();
     }
@@ -125,14 +125,12 @@ class CreatureControlServiceTest {
         return permanent;
     }
 
-    private void applySteal(UUID newControllerId, Permanent target, EffectDuration duration,
+    private void applySteal(UUID newControllerId, Permanent target, Duration duration,
                             UUID sourcePermanentId) {
-        ControlDuration controlDuration = switch (duration) {
-            case UNTIL_END_OF_TURN -> ControlDuration.END_OF_TURN;
-            case WHILE_SOURCE_ON_BATTLEFIELD -> ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD;
-            case WHILE_SOURCE_TAPPED -> ControlDuration.WHILE_SOURCE_TAPPED;
-            default -> ControlDuration.PERMANENT;
-        };
+        ControlDuration controlDuration = Duration.UNTIL_END_OF_TURN.equals(duration) ? ControlDuration.END_OF_TURN
+                : Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(duration) ? ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                : Duration.WHILE_SOURCE_TAPPED.equals(duration) ? ControlDuration.WHILE_SOURCE_TAPPED
+                : ControlDuration.PERMANENT;
         creatureControlService.applyControlEffect(gd, newControllerId, target,
                 new GainControlOfTargetEffect(controlDuration), duration, sourcePermanentId, "Test Source");
     }
@@ -146,7 +144,7 @@ class CreatureControlServiceTest {
         void movesCreatureBetweenBattlefields() {
             Permanent bear = addCreature(player1Id, "Grizzly Bears");
 
-            applySteal(player2Id, bear, EffectDuration.UNTIL_END_OF_TURN, null);
+            applySteal(player2Id, bear, Duration.UNTIL_END_OF_TURN, null);
 
             assertThat(gd.playerBattlefields.get(player1Id))
                     .noneMatch(p -> p.getId().equals(bear.getId()));
@@ -162,7 +160,7 @@ class CreatureControlServiceTest {
             gd.exilePlayPermissions.put(exiledCardId, player1Id);
             gd.exilePlayPermissionSourcePermanents.put(exiledCardId, source.getId());
 
-            applySteal(player2Id, source, EffectDuration.PERMANENT, null);
+            applySteal(player2Id, source, Duration.PERMANENT, null);
 
             assertThat(gd.exilePlayPermissions).doesNotContainKey(exiledCardId);
             assertThat(gd.exilePlayPermissionSourcePermanents).doesNotContainKey(exiledCardId);
@@ -177,7 +175,7 @@ class CreatureControlServiceTest {
             blocker.setBlocking(true);
             blocker.addBlockingTargetId(attacker.getId());
 
-            applySteal(player1Id, blocker, EffectDuration.PERMANENT, null);
+            applySteal(player1Id, blocker, Duration.PERMANENT, null);
 
             assertThat(blocker.isBlocking()).isFalse();
             assertThat(blocker.getBlockingTargetIds()).isEmpty();
@@ -190,7 +188,7 @@ class CreatureControlServiceTest {
             Permanent bear = addCreature(player1Id, "Grizzly Bears");
             assertThat(bear.isSummoningSick()).isFalse();
 
-            applySteal(player2Id, bear, EffectDuration.UNTIL_END_OF_TURN, null);
+            applySteal(player2Id, bear, Duration.UNTIL_END_OF_TURN, null);
 
             assertThat(bear.isSummoningSick()).isTrue();
         }
@@ -201,7 +199,7 @@ class CreatureControlServiceTest {
             Permanent bear = addCreature(player1Id, "Grizzly Bears");
             long stamp = bear.getTimestamp();
 
-            applySteal(player2Id, bear, EffectDuration.UNTIL_END_OF_TURN, null);
+            applySteal(player2Id, bear, Duration.UNTIL_END_OF_TURN, null);
 
             assertThat(bear.getTimestamp()).isEqualTo(stamp);
         }
@@ -211,7 +209,7 @@ class CreatureControlServiceTest {
         void recordsOriginalOwner() {
             Permanent bear = addCreature(player1Id, "Grizzly Bears");
 
-            applySteal(player2Id, bear, EffectDuration.PERMANENT, null);
+            applySteal(player2Id, bear, Duration.PERMANENT, null);
 
             assertThat(gd.stolenCreatures).containsEntry(bear.getId(), player1Id);
         }
@@ -221,8 +219,8 @@ class CreatureControlServiceTest {
         void doesNotOverwriteOriginalOwnerOnSecondSteal() {
             Permanent bear = addCreature(player1Id, "Grizzly Bears");
 
-            applySteal(player2Id, bear, EffectDuration.PERMANENT, null);
-            applySteal(player2Id, bear, EffectDuration.PERMANENT, null);
+            applySteal(player2Id, bear, Duration.PERMANENT, null);
+            applySteal(player2Id, bear, Duration.PERMANENT, null);
 
             assertThat(gd.stolenCreatures).containsEntry(bear.getId(), player1Id);
         }
@@ -232,7 +230,7 @@ class CreatureControlServiceTest {
         void doesNothingWhenAlreadyControlled() {
             Permanent bear = addCreature(player1Id, "Grizzly Bears");
 
-            applySteal(player1Id, bear, EffectDuration.UNTIL_END_OF_TURN, null);
+            applySteal(player1Id, bear, Duration.UNTIL_END_OF_TURN, null);
 
             assertThat(gd.playerBattlefields.get(player1Id))
                     .anyMatch(p -> p.getId().equals(bear.getId()));
@@ -246,7 +244,7 @@ class CreatureControlServiceTest {
         void logsControlChange() {
             Permanent bear = addCreature(player1Id, "Grizzly Bears");
 
-            applySteal(player2Id, bear, EffectDuration.UNTIL_END_OF_TURN, null);
+            applySteal(player2Id, bear, Duration.UNTIL_END_OF_TURN, null);
 
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player2 gains control of Grizzly Bears.")));
         }
@@ -256,10 +254,10 @@ class CreatureControlServiceTest {
         void latestEffectWins() {
             Permanent bear = addCreature(player2Id, "Grizzly Bears");
 
-            applySteal(player1Id, bear, EffectDuration.PERMANENT, null);
+            applySteal(player1Id, bear, Duration.PERMANENT, null);
             assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
 
-            applySteal(player2Id, bear, EffectDuration.UNTIL_END_OF_TURN, null);
+            applySteal(player2Id, bear, Duration.UNTIL_END_OF_TURN, null);
 
             assertThat(gd.playerBattlefields.get(player2Id)).contains(bear);
         }
@@ -273,7 +271,7 @@ class CreatureControlServiceTest {
         @DisplayName("Expired until-end-of-turn effect reverts the creature to its owner")
         void expiredStealRevertsToOwner() {
             Permanent bear = addCreature(player2Id, "Grizzly Bears");
-            applySteal(player1Id, bear, EffectDuration.UNTIL_END_OF_TURN, null);
+            applySteal(player1Id, bear, Duration.UNTIL_END_OF_TURN, null);
 
             gd.expireEndOfTurnFloatingEffects();
             creatureControlService.reconcileControl(gd);
@@ -291,7 +289,7 @@ class CreatureControlServiceTest {
 
             creatureControlService.applyControlEffect(gd, player1Id, bear,
                     new GainControlOfTargetWhileHasCounterEffect(CounterType.SHIELD),
-                    EffectDuration.PERMANENT, null, "Shield Broker");
+                    Duration.PERMANENT, null, "Shield Broker");
             assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
 
             bear.setCounterCount(CounterType.SHIELD, 0);
@@ -306,8 +304,8 @@ class CreatureControlServiceTest {
         void expiredStealFallsBackToEarlierEffect() {
             Permanent bear = addCreature(player2Id, "Grizzly Bears");
             Permanent sower = addCreature(player1Id, "Sower of Temptation");
-            applySteal(player1Id, bear, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, sower.getId());
-            applySteal(player2Id, bear, EffectDuration.UNTIL_END_OF_TURN, null);
+            applySteal(player1Id, bear, Duration.WHILE_SOURCE_ON_BATTLEFIELD, sower.getId());
+            applySteal(player2Id, bear, Duration.UNTIL_END_OF_TURN, null);
             assertThat(gd.playerBattlefields.get(player2Id)).contains(bear);
 
             gd.expireEndOfTurnFloatingEffects();
@@ -332,7 +330,7 @@ class CreatureControlServiceTest {
             when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
             when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player1Id);
 
-            applySteal(player1Id, equipment, EffectDuration.UNTIL_END_OF_TURN, null);
+            applySteal(player1Id, equipment, Duration.UNTIL_END_OF_TURN, null);
             gd.expireEndOfTurnFloatingEffects();
             creatureControlService.reconcileControl(gd);
 
@@ -347,8 +345,8 @@ class CreatureControlServiceTest {
         void sourceDeathLeavesLaterEffectActive() {
             Permanent bear = addCreature(player2Id, "Grizzly Bears");
             Permanent sower = addCreature(player1Id, "Sower of Temptation");
-            applySteal(player1Id, bear, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, sower.getId());
-            applySteal(player1Id, bear, EffectDuration.UNTIL_END_OF_TURN, null);
+            applySteal(player1Id, bear, Duration.WHILE_SOURCE_ON_BATTLEFIELD, sower.getId());
+            applySteal(player1Id, bear, Duration.UNTIL_END_OF_TURN, null);
 
             gd.playerBattlefields.get(player1Id).remove(sower);
             gd.expireFloatingEffectsForDepartedSource(sower.getId());
@@ -362,7 +360,7 @@ class CreatureControlServiceTest {
         void expiresEffectWhenSourceChangesController() {
             Permanent bear = addCreature(player2Id, "Grizzly Bears");
             Permanent olivia = addCreature(player1Id, "Olivia Voldaren");
-            applySteal(player1Id, bear, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, olivia.getId());
+            applySteal(player1Id, bear, Duration.WHILE_SOURCE_ON_BATTLEFIELD, olivia.getId());
             assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
 
             gd.playerBattlefields.get(player1Id).remove(olivia);
@@ -381,8 +379,8 @@ class CreatureControlServiceTest {
             gd.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), source.getCard().getName(), source.getId(), player1Id,
                     new LockTargetPermanentEffect(true, true, false,
-                            EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD),
-                    bear.getId(), null, null, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+                            Duration.WHILE_SOURCE_ON_BATTLEFIELD),
+                    bear.getId(), null, null, Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
 
             gd.playerBattlefields.get(player1Id).remove(source);
             gd.playerBattlefields.get(player2Id).add(source);
@@ -397,7 +395,7 @@ class CreatureControlServiceTest {
         void expiresWhileEnchantedEffect() {
             Permanent bear = addCreature(player2Id, "Grizzly Bears");
             creatureControlService.applyControlEffect(gd, player1Id, bear,
-                    new GainControlOfEnchantedTargetEffect(), EffectDuration.PERMANENT,
+                    new GainControlOfEnchantedTargetEffect(), Duration.PERMANENT,
                     null, "Rootwater Matriarch");
             assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
 
@@ -422,7 +420,7 @@ class CreatureControlServiceTest {
 
             assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
             assertThat(gd.floatingEffects).anyMatch(fe -> fe.isControlEffect()
-                    && fe.duration() == EffectDuration.WHILE_ATTACHED
+                    && Duration.WHILE_ATTACHED.equals(fe.duration())
                     && aura.getId().equals(fe.sourcePermanentId()));
         }
 
@@ -434,7 +432,7 @@ class CreatureControlServiceTest {
             gd.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
                     UUID.randomUUID(), "Test", null, player1Id,
                     new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                    goneId, null, null, EffectDuration.PERMANENT, 0));
+                    goneId, null, null, Duration.PERMANENT, 0));
 
             creatureControlService.reconcileControl(gd);
 
@@ -452,7 +450,7 @@ class CreatureControlServiceTest {
             aura.setAttachedTo(bear.getId());
             gd.playerBattlefields.get(player1Id).add(aura);
             creatureControlService.applyControlEffect(gd, player1Id, bear,
-                    new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
+                    new ControlEnchantedCreatureEffect(), Duration.WHILE_ATTACHED,
                     aura.getId(), auraCard.getName());
             assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
 
@@ -480,7 +478,7 @@ class CreatureControlServiceTest {
             GainControlOfTargetEffect effect =
                     GainControlOfTargetEffect.whileSourceRemainsTappedAndTargetMatches(predicate);
             creatureControlService.applyControlEffect(gd, player1Id, target, effect,
-                    EffectDuration.WHILE_SOURCE_REMAINS_TAPPED, source.getId(), source.getCard().getName());
+                    Duration.WHILE_SOURCE_REMAINS_TAPPED, source.getId(), source.getCard().getName());
             org.mockito.Mockito.doReturn(false).when(predicateEvaluationService)
                     .matchesPermanentPredicate(eq(target), eq(predicate), any());
 
@@ -496,7 +494,7 @@ class CreatureControlServiceTest {
             Permanent bear = addCreature(player2Id, "Grizzly Bears");
             Permanent seasinger = addCreature(player1Id, "Seasinger");
             seasinger.tap();
-            applySteal(player1Id, bear, EffectDuration.WHILE_SOURCE_TAPPED, seasinger.getId());
+            applySteal(player1Id, bear, Duration.WHILE_SOURCE_TAPPED, seasinger.getId());
             assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
 
             creatureControlService.reconcileControl(gd);
@@ -510,7 +508,7 @@ class CreatureControlServiceTest {
             Permanent bear = addCreature(player2Id, "Grizzly Bears");
             Permanent seasinger = addCreature(player1Id, "Seasinger");
             seasinger.tap();
-            applySteal(player1Id, bear, EffectDuration.WHILE_SOURCE_TAPPED, seasinger.getId());
+            applySteal(player1Id, bear, Duration.WHILE_SOURCE_TAPPED, seasinger.getId());
 
             seasinger.untap();
             creatureControlService.onSourceUntapped(gd, seasinger);
@@ -525,7 +523,7 @@ class CreatureControlServiceTest {
             Permanent bear = addCreature(player2Id, "Grizzly Bears");
             Permanent seasinger = addCreature(player1Id, "Seasinger");
             seasinger.tap();
-            applySteal(player1Id, bear, EffectDuration.WHILE_SOURCE_TAPPED, seasinger.getId());
+            applySteal(player1Id, bear, Duration.WHILE_SOURCE_TAPPED, seasinger.getId());
 
             seasinger.untap();
             creatureControlService.reconcileControl(gd);
@@ -539,7 +537,7 @@ class CreatureControlServiceTest {
             Permanent bear = addCreature(player2Id, "Grizzly Bears");
             Permanent seasinger = addCreature(player1Id, "Seasinger");
             seasinger.tap();
-            applySteal(player1Id, bear, EffectDuration.WHILE_SOURCE_TAPPED, seasinger.getId());
+            applySteal(player1Id, bear, Duration.WHILE_SOURCE_TAPPED, seasinger.getId());
 
             gd.playerBattlefields.get(player1Id).remove(seasinger);
             gd.expireFloatingEffectsForDepartedSource(seasinger.getId());
@@ -553,7 +551,7 @@ class CreatureControlServiceTest {
         void ignoresUnrelatedUntap() {
             Permanent bear = addCreature(player2Id, "Grizzly Bears");
             Permanent other = addCreature(player1Id, "Air Elemental");
-            applySteal(player1Id, bear, EffectDuration.PERMANENT, null);
+            applySteal(player1Id, bear, Duration.PERMANENT, null);
             assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
 
             creatureControlService.onSourceUntapped(gd, other);
@@ -570,7 +568,7 @@ class CreatureControlServiceTest {
         @DisplayName("isStolenUntilEndOfTurn is true for a plain temporary steal")
         void stolenUntilEndOfTurn() {
             Permanent bear = addCreature(player2Id, "Grizzly Bears");
-            applySteal(player1Id, bear, EffectDuration.UNTIL_END_OF_TURN, null);
+            applySteal(player1Id, bear, Duration.UNTIL_END_OF_TURN, null);
 
             assertThat(gd.isStolenUntilEndOfTurn(bear.getId())).isTrue();
         }
@@ -579,7 +577,7 @@ class CreatureControlServiceTest {
         @DisplayName("isStolenUntilEndOfTurn is false for a temporary effect on your own creature")
         void notStolenWhenOwnCreature() {
             Permanent bear = addCreature(player1Id, "Grizzly Bears");
-            applySteal(player1Id, bear, EffectDuration.UNTIL_END_OF_TURN, null);
+            applySteal(player1Id, bear, Duration.UNTIL_END_OF_TURN, null);
 
             assertThat(gd.isStolenUntilEndOfTurn(bear.getId())).isFalse();
         }
@@ -588,8 +586,8 @@ class CreatureControlServiceTest {
         @DisplayName("isStolenUntilEndOfTurn is false when a permanent steal would survive cleanup")
         void notStolenWhenPermanentEffectHoldsIt() {
             Permanent bear = addCreature(player2Id, "Grizzly Bears");
-            applySteal(player1Id, bear, EffectDuration.PERMANENT, null);
-            applySteal(player1Id, bear, EffectDuration.UNTIL_END_OF_TURN, null);
+            applySteal(player1Id, bear, Duration.PERMANENT, null);
+            applySteal(player1Id, bear, Duration.UNTIL_END_OF_TURN, null);
 
             assertThat(gd.isStolenUntilEndOfTurn(bear.getId())).isFalse();
         }
@@ -606,7 +604,7 @@ class CreatureControlServiceTest {
             Permanent bear = addCreature(player1Id, "Grizzly Bears");
             addIndestructibleGrant(angel, bear);
 
-            applySteal(player2Id, angel, EffectDuration.PERMANENT, null);
+            applySteal(player2Id, angel, Duration.PERMANENT, null);
 
             assertThat(gd.floatingEffects).noneMatch(fe -> fe.effect() instanceof GrantKeywordEffect);
         }
@@ -618,7 +616,7 @@ class CreatureControlServiceTest {
             Permanent bear = addCreature(player1Id, "Grizzly Bears");
             addIndestructibleGrant(angel, bear);
 
-            applySteal(player2Id, bear, EffectDuration.PERMANENT, null);
+            applySteal(player2Id, bear, Duration.PERMANENT, null);
 
             assertThat(gd.floatingEffects).anyMatch(fe -> fe.effect() instanceof GrantKeywordEffect);
         }
@@ -628,7 +626,7 @@ class CreatureControlServiceTest {
                     source.getId(), player1Id,
                     new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET,
                             GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD),
-                    affected.getId(), null, null, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+                    affected.getId(), null, null, Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
     }
 }

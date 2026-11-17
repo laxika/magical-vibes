@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -115,7 +115,7 @@ public class LookAtTopSevenAndPerpetuallyGainKeywordsEffectHandler implements No
                     UUID.randomUUID(), sourceName, null, entry.getControllerId(),
                     new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, null,
                             GrantDuration.INDEFINITE, null),
-                    sourceId, null, null, EffectDuration.PERMANENT, 0));
+                    sourceId, null, null, Duration.PERMANENT, 0));
         }
 
         for (CardEffect protectionEffect : protectionEffects) {

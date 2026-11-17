@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToOtherCreaturesControlledByTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -64,7 +64,7 @@ public class GrantStaticEffectToOtherCreaturesControlledByTargetEffectHandler
                         grant.staticEffect() instanceof BlockingRestrictionEffect
                                 ? new GrantEffectEffect(grant.staticEffect(), GrantScope.SELF)
                                 : grant.staticEffect(),
-                        permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
+                        permanent.getId(), null, null, Duration.PERMANENT, 0));
             }
         }
     }

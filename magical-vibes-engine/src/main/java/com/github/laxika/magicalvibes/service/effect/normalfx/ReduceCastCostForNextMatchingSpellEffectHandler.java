@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import org.springframework.stereotype.Component;
@@ -43,7 +43,7 @@ public class ReduceCastCostForNextMatchingSpellEffectHandler implements NormalEf
                 null,
                 null,
                 null,
-                EffectDuration.UNTIL_MATCHING_SPELL_CAST,
+                Duration.UNTIL_MATCHING_SPELL_CAST,
                 0
         ));
     }

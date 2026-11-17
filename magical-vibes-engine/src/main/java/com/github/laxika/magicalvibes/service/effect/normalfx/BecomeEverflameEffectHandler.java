@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeEverflameEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -61,12 +61,12 @@ public class BecomeEverflameEffectHandler implements NormalEffectHandlerBean {
         // "It loses all other card types": a layer-4 effect stamped now, so it overrides an earlier
         // animation that made the permanent a creature.
         addFloatingEffect(gameData, entry, source,
-                new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.TARGET, EffectDuration.PERMANENT));
+                new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.TARGET, Duration.PERMANENT));
         addFloatingEffect(gameData, entry, source,
-                new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT));
+                new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT));
         addFloatingEffect(gameData, entry, source,
                 new GrantActivatedAbilityEffect(new EquipActivatedAbility("{3}"), GrantScope.TARGET,
-                        null, EffectDuration.PERMANENT));
+                        null, Duration.PERMANENT));
         addFloatingEffect(gameData, entry, source,
                 new GrantEffectEffect(new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE),
                         GrantScope.TARGET));
@@ -80,6 +80,6 @@ public class BecomeEverflameEffectHandler implements NormalEffectHandlerBean {
                                    CardEffect effect) {
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), source.getId(), entry.getControllerId(),
-                effect, source.getId(), null, null, EffectDuration.PERMANENT, 0));
+                effect, source.getId(), null, null, Duration.PERMANENT, 0));
     }
 }

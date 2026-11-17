@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnFrontEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -40,7 +40,7 @@ public class TheGrandEvolution extends Card {
                                 TargetFilters.creatureAnOpponentControls()),
                         GrantScope.OWN_CREATURES,
                         null,
-                        EffectDuration.UNTIL_END_OF_TURN),
+                        Duration.UNTIL_END_OF_TURN),
                 new ExileSelfAndReturnFrontEffect()));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -25,7 +25,7 @@ public class LifeDeath extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Life — All lands you control become 1/1 creatures until end of turn. They're still lands",
                         new AnimatePermanentsEffect(1, 1, List.of(), Set.of(), null,
-                                Set.of(CardType.CREATURE), GrantScope.OWN_LANDS, EffectDuration.UNTIL_END_OF_TURN)
+                                Set.of(CardType.CREATURE), GrantScope.OWN_LANDS, Duration.UNTIL_END_OF_TURN)
                 ).withManaCost("{G}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Death — Return target creature card from your graveyard to the battlefield. You lose life equal to its mana value",

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -39,6 +39,6 @@ public class TawnossTinkering extends Card {
                                 0, 0,
                                 List.of(), Set.of(),
                                 null, Set.of(),
-                                GrantScope.TARGET, EffectDuration.PERMANENT)));
+                                GrantScope.TARGET, Duration.PERMANENT)));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateReturnedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -34,6 +34,6 @@ public class TheWarInHeaven extends Card {
                         null, null, CounterType.NECRODERMIS, 1),
                 new AnimateReturnedPermanentsEffect(
                         new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
-                                Set.of(CardType.ARTIFACT), GrantScope.TARGET, EffectDuration.PERMANENT, null)));
+                                Set.of(CardType.ARTIFACT), GrantScope.TARGET, Duration.PERMANENT, null)));
     }
 }

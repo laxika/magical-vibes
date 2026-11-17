@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -57,7 +57,7 @@ class RishadanPawnshopTest extends BaseCardTest {
                 stolenVolunteers.getId(),
                 null,
                 null,
-                EffectDuration.PERMANENT,
+                Duration.PERMANENT,
                 0));
         int player1DeckSizeBefore = gd.playerDecks.get(player1.getId()).size();
         int player2DeckSizeBefore = gd.playerDecks.get(player2.getId()).size();

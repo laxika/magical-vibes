@@ -37,11 +37,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                  keeps applying to it even if the source's abilities are removed in layer 6.
  */
 public record SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope,
-                                           EffectDuration duration, PermanentPredicate filter,
+                                           Duration duration, PermanentPredicate filter,
                                            CardEffect sameAbilityLayer4Part) implements CardEffect {
 
     public SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope,
-                                       EffectDuration duration, PermanentPredicate filter) {
+                                       Duration duration, PermanentPredicate filter) {
         this(power, toughness, scope, duration, filter, null);
     }
 
@@ -54,18 +54,18 @@ public record SetBasePowerToughnessEffect(Integer power, Integer toughness, Gran
     }
 
     public SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope) {
-        this(power, toughness, scope, EffectDuration.UNTIL_END_OF_TURN, null);
+        this(power, toughness, scope, Duration.UNTIL_END_OF_TURN, null);
     }
 
     public SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope,
-                                       EffectDuration duration) {
+                                       Duration duration) {
         this(power, toughness, scope, duration, null);
     }
 
     /** Convenience constructor for a filtered continuous static setter. */
     public SetBasePowerToughnessEffect(Integer power, Integer toughness, GrantScope scope,
                                        PermanentPredicate filter) {
-        this(power, toughness, scope, EffectDuration.CONTINUOUS, filter);
+        this(power, toughness, scope, Duration.STATIC, filter);
     }
 
     /**
@@ -77,7 +77,7 @@ public record SetBasePowerToughnessEffect(Integer power, Integer toughness, Gran
     }
 
     /** One-shot setter with a resolution-time predicate over the target. */
-    public SetBasePowerToughnessEffect(int power, int toughness, EffectDuration duration,
+    public SetBasePowerToughnessEffect(int power, int toughness, Duration duration,
                                        PermanentPredicate filter) {
         this(power, toughness, GrantScope.TARGET, duration, filter);
     }
@@ -99,13 +99,13 @@ public record SetBasePowerToughnessEffect(Integer power, Integer toughness, Gran
     /** One-shot "target creature has base power and toughness 4/4" indefinitely. */
     public static SetBasePowerToughnessEffect indefinitely(int power, int toughness) {
         return new SetBasePowerToughnessEffect(power, toughness, GrantScope.TARGET,
-                EffectDuration.PERMANENT);
+                Duration.PERMANENT);
     }
 
     @Override
     public TargetSpec targetSpec() {
         return switch (scope) {
-            case TARGET -> TargetSpec.benign(filter != null || duration == EffectDuration.PERMANENT
+            case TARGET -> TargetSpec.benign(filter != null || Duration.PERMANENT.equals(duration)
                     ? TargetPredicates.permanent()
                     : TargetPredicates.creature());
             case TARGET_PLAYERS_CREATURES -> TargetSpec.benign(TargetPredicates.player());

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -47,7 +47,7 @@ public class CoronationOfTheWilds extends Card {
                 .addSpellEffect(new SetTargetPermanentSupertypeEffect(CardSupertype.LEGENDARY, true))
                 .addSpellEffect(new GrantSubtypeEffect(CardSubtype.NOBLE, GrantScope.TARGET))
                 .addSpellEffect(new GrantActivatedAbilityEffect(
-                        ManaAbilities.tapForAnyColor(), GrantScope.TARGET, null, EffectDuration.PERMANENT))
+                        ManaAbilities.tapForAnyColor(), GrantScope.TARGET, null, Duration.PERMANENT))
                 .addSpellEffect(new DrawCardEffect(1));
     }
 }

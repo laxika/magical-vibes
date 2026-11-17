@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -19,7 +19,7 @@ public class NetterEnDal extends Card {
                 "{W}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new LockTargetPermanentEffect(true, false, false, EffectDuration.UNTIL_END_OF_TURN)
+                        new LockTargetPermanentEffect(true, false, false, Duration.UNTIL_END_OF_TURN)
                 ),
                 "{W}, {T}, Discard a card: Target creature can't attack this turn.",
                 TargetFilters.creature()

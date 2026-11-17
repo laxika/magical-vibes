@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNe
 import com.github.laxika.magicalvibes.model.action.GrantExilePlayPermissionAtNextTurn;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -1000,7 +1000,7 @@ public class StepTriggerService {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), card.getName(), null, controllerId,
                         new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.TARGET),
-                        perm.getId(), null, null, EffectDuration.UNTIL_END_OF_COMBAT, 0));
+                        perm.getId(), null, null, Duration.UNTIL_END_OF_COMBAT, 0));
             }
             boolean isCreature = card.hasType(CardType.CREATURE)
                     || (pending.plusOnePlusOneCountersOnlyOnCreatures() && gameQueryService.isCreature(

@@ -39,7 +39,7 @@ class RiptideEntrancerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.newestControlEffectFor(target.getId()).duration())
-                .isEqualTo(com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT);
+                .isEqualTo(com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT);
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(attacker.getId()));
     }
 

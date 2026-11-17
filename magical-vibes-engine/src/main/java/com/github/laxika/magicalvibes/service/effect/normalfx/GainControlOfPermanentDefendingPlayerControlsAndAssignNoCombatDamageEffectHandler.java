@@ -62,7 +62,7 @@ public class GainControlOfPermanentDefendingPlayerControlsAndAssignNoCombatDamag
         }
 
         creatureControlService.applyControlEffect(gameData, controllerId, target,
-                new GainControlOfTargetEffect(e.duration()), e.duration().toEffectDuration(),
+                new GainControlOfTargetEffect(e.duration()), e.duration().toDuration(),
                 e.duration().isSourceLinked() ? sourcePermanentId : null, entry.getCard().getName());
         if (source != null) {
             gameData.creaturesPreventedFromDealingCombatDamage.add(sourcePermanentId);

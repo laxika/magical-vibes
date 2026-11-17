@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LockMatchingPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,6 +31,6 @@ public class LaviniaOfTheTenth extends Card {
                         new PermanentNotPredicate(new PermanentIsLandPredicate()),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                         new PermanentMaxManaValuePredicate(4))),
-                true, true, true, EffectDuration.UNTIL_YOUR_NEXT_TURN));
+                true, true, true, Duration.UNTIL_YOUR_NEXT_TURN));
     }
 }

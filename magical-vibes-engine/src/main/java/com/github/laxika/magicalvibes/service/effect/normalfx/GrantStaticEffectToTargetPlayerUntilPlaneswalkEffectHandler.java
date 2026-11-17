@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetPlayerUntilPlaneswalkEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import org.springframework.stereotype.Component;
@@ -45,7 +45,7 @@ public class GrantStaticEffectToTargetPlayerUntilPlaneswalkEffectHandler
                     null,
                     targetId,
                     null,
-                    EffectDuration.UNTIL_PLANESWALK,
+                    Duration.UNTIL_PLANESWALK,
                     0L));
         }
     }

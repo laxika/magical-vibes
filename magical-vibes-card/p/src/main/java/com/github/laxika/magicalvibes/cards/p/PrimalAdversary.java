@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayManaAnyNumberOfTimesPutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,7 +25,7 @@ public class PrimalAdversary extends Card {
         AnimatePermanentsEffect animateLands = new AnimatePermanentsEffect(
                 3, 3,
                 List.of(CardSubtype.WOLF), Set.of(Keyword.HASTE),
-                null, Set.of(), GrantScope.TARGET, EffectDuration.PERMANENT
+                null, Set.of(), GrantScope.TARGET, Duration.PERMANENT
         );
         targetUpTo(new XValue(), TargetFilters.landYouControl(), 100)
                 .bindEffect(animateLands);

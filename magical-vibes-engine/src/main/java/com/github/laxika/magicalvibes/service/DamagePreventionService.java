@@ -92,7 +92,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceT
 import com.github.laxika.magicalvibes.model.effect.SelfDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagePreventionControlChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
@@ -986,7 +986,7 @@ public class DamagePreventionService {
             creatureControlServiceProvider.getObject().applyControlEffect(
                     gameData, opponents.getFirst(), permanent,
                     new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                    EffectDuration.PERMANENT, null, permanent.getCard().getName());
+                    Duration.PERMANENT, null, permanent.getCard().getName());
             return;
         }
 

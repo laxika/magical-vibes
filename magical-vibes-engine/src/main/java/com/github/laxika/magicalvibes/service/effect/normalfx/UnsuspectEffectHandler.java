@@ -58,7 +58,7 @@ public class UnsuspectEffectHandler implements NormalEffectHandlerBean {
             }
             target.setSuspected(false);
             synchronized (gameData.floatingEffects) {
-                gameData.floatingEffects.removeIf(floating -> targetId.equals(floating.affectedPermanentId())
+                gameData.expireFloatingEffects(floating -> targetId.equals(floating.affectedPermanentId())
                         && floating.effect() instanceof SuspectedEffect);
             }
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is no longer suspected."));

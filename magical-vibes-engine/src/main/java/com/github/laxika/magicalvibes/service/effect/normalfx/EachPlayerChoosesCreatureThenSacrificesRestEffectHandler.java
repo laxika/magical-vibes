@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesCreatureThenSacrificesRestEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -108,7 +108,7 @@ public class EachPlayerChoosesCreatureThenSacrificesRestEffectHandler
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), sourceName, null, controllerId,
                     new CreaturesCantAttackControllerUnlessPredicateEffect(exemption, true, null),
-                    chosenId, controllerId, null, EffectDuration.PERMANENT, 0));
+                    chosenId, controllerId, null, Duration.PERMANENT, 0));
         }
 
         Set<UUID> keptIds = new HashSet<>(chosenIds);

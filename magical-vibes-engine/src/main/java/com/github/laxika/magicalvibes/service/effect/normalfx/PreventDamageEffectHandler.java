@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -628,7 +628,7 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), sourcePermanentId,
                     entry.getControllerId(), effect, target.getId(), null, null,
-                    EffectDuration.WHILE_SOURCE_REMAINS, 0));
+                    Duration.WHILE_SOURCE_REMAINS, 0));
             gameLogService.append(gameData, GameLog.textCardText(
                     "All damage ", target.getCard(),
                     " would deal is prevented for as long as this source remains on the battlefield."));

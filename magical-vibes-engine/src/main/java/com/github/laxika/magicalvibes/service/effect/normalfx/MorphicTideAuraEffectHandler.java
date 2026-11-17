@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MorphicTideAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.MorphicTideBottomCardsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -88,7 +88,7 @@ public class MorphicTideAuraEffectHandler implements NormalEffectHandlerBean {
         if (target != null && auraCard.getStaticEffects().stream()
                 .anyMatch(ControlEnchantedCreatureEffect.class::isInstance)) {
             creatureControlService.applyControlEffect(gameData, controllerId, target,
-                    new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
+                    new ControlEnchantedCreatureEffect(), Duration.WHILE_ATTACHED,
                     aura.getId(), auraCard.getName());
         }
 

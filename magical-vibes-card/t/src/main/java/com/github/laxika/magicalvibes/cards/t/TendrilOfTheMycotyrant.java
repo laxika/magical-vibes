@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -33,7 +33,7 @@ public class TendrilOfTheMycotyrant extends Card {
                                 List.of(CardSubtype.FUNGUS),
                                 Set.of(Keyword.HASTE),
                                 null, Set.of(),
-                                GrantScope.TARGET, EffectDuration.PERMANENT
+                                GrantScope.TARGET, Duration.PERMANENT
                         )
                 ),
                 "{5}{G}{G}: Put seven +1/+1 counters on target noncreature land you control. "

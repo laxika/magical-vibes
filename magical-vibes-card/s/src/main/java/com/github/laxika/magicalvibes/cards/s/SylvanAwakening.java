@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class SylvanAwakening extends Card {
                 List.of(CardSubtype.ELEMENTAL),
                 Set.of(Keyword.REACH, Keyword.INDESTRUCTIBLE, Keyword.HASTE),
                 null, Set.of(),
-                GrantScope.OWN_LANDS, EffectDuration.UNTIL_YOUR_NEXT_TURN
+                GrantScope.OWN_LANDS, Duration.UNTIL_YOUR_NEXT_TURN
         ));
     }
 }

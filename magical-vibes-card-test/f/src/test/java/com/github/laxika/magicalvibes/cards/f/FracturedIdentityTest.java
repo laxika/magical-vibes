@@ -188,7 +188,7 @@ class FracturedIdentityTest extends BaseCardTest {
                 .applyControlEffect(gd, player1.getId(), target,
                         new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
                                 com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
-                        com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT, null, "Test"));
+                        com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, null, "Test"));
 
         harness.passBothPriorities();
 

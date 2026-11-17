@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardType;
 
 /** Removes a card type in the stated scope, optionally only while its source is attached. */
-public record RemoveCardTypeFromAttachedPermanentEffect(CardType cardType, GrantScope scope, EffectDuration duration)
+public record RemoveCardTypeFromAttachedPermanentEffect(CardType cardType, GrantScope scope, Duration duration)
         implements CardEffect {
 
     public RemoveCardTypeFromAttachedPermanentEffect(CardType cardType, GrantScope scope) {
-        this(cardType, scope, EffectDuration.PERMANENT);
+        this(cardType, scope, Duration.PERMANENT);
     }
 
     public RemoveCardTypeFromAttachedPermanentEffect(CardType cardType) {

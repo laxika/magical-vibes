@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -92,7 +92,7 @@ public class BecomeCreatureEffectHandler implements NormalEffectHandlerBean {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), source.getId(), entry.getControllerId(),
                     new ProtectionFromColorsEffect(becomeCreature.protectionFromColors()), source.getId(), null,
-                    null, EffectDuration.PERMANENT, 0));
+                    null, Duration.PERMANENT, 0));
         }
 
         gameLogService.append(gameData, GameLog.cardThen(copy,

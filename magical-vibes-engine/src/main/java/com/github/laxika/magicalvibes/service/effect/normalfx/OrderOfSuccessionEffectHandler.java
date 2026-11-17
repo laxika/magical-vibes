@@ -140,7 +140,7 @@ public class OrderOfSuccessionEffectHandler implements NormalEffectHandlerBean {
         GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
         for (ControlChange change : changes) {
             creatureControlService.applyControlEffect(gameData, change.gainingPlayerId(), change.permanent(),
-                    controlEffect, ControlDuration.PERMANENT.toEffectDuration(), null, sourceCardName);
+                    controlEffect, ControlDuration.PERMANENT.toDuration(), null, sourceCardName);
         }
     }
 

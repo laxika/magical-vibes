@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedAndSharingCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -57,7 +57,7 @@ public class GrantKeywordToEnchantedAndSharingCreaturesUntilEndOfTurnEffectHandl
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
                     new GrantKeywordEffect(grant.keywords(), GrantScope.TARGET),
-                    permanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                    permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             count[0]++;
         });
 

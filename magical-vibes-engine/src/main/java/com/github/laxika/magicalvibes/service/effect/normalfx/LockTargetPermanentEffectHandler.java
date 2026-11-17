@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -56,18 +56,18 @@ public class LockTargetPermanentEffectHandler implements NormalEffectHandlerBean
         if (targetId == null) {
             return;
         }
-        if (lock.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
-                || lock.duration() == EffectDuration.WHILE_SOURCE_REMAINS
-                || lock.duration() == EffectDuration.WHILE_SOURCE_TAPPED
-                || lock.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED
-                || lock.duration() == EffectDuration.WHILE_ATTACHED) {
+        if (Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(lock.duration())
+                || Duration.WHILE_SOURCE_REMAINS.equals(lock.duration())
+                || Duration.WHILE_SOURCE_TAPPED.equals(lock.duration())
+                || Duration.WHILE_SOURCE_REMAINS_TAPPED.equals(lock.duration())
+                || Duration.WHILE_ATTACHED.equals(lock.duration())) {
             UUID sourcePermanentId = entry.getSourcePermanentId();
             Permanent source = sourcePermanentId == null ? null
                     : gameQueryService.findPermanentById(gameData, sourcePermanentId);
             if (source == null) {
                 return;
             }
-            if (lock.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED && !source.isTapped()) {
+            if (Duration.WHILE_SOURCE_REMAINS_TAPPED.equals(lock.duration()) && !source.isTapped()) {
                 return;
             }
             if (lock.endsWhenSourceControllerChanges()) {

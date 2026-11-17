@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
@@ -55,7 +55,7 @@ public class GreatHallOfTheBiblioplex extends Card {
                 List.of(new ConditionalEffect(
                         new NotCondition(new SourceIsCreature()),
                         new AnimatePermanentsEffect(2, 4, List.of(CardSubtype.WIZARD), Set.of(), null,
-                                Set.of(), GrantScope.SELF, EffectDuration.PERMANENT))),
+                                Set.of(), GrantScope.SELF, Duration.PERMANENT))),
                 "{5}: If this land isn't a creature, it becomes a 2/4 Wizard creature with \"Whenever you cast an instant or sorcery spell, this creature gets +1/+0 until end of turn.\" It's still a land."
         ));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));

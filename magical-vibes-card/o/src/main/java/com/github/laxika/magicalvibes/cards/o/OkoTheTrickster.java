@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
@@ -59,7 +59,7 @@ public class OkoTheTrickster extends Card {
                                 10,
                                 10,
                                 GrantScope.ALL_CREATURES,
-                                EffectDuration.UNTIL_END_OF_TURN,
+                                Duration.UNTIL_END_OF_TURN,
                                 creatureYouControlPredicate),
                         new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES)),
                 "\u22127: Until end of turn, each creature you control has base power and toughness 10/10 "

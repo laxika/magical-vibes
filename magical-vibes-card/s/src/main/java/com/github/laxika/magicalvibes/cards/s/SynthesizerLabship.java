@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -62,7 +62,7 @@ public class SynthesizerLabship extends Card {
                 new SourceCounterThreshold(2, CounterType.CHARGE)),
                 new AnimatePermanentsEffect(
                         new Fixed(2), new Fixed(2), List.of(), Set.of(Keyword.FLYING), null,
-                        Set.of(CardType.CREATURE), GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN,
+                        Set.of(CardType.CREATURE), GrantScope.TARGET, Duration.UNTIL_END_OF_TURN,
                         OTHER_ARTIFACT_YOU_CONTROL
                 ));
 
@@ -70,7 +70,7 @@ public class SynthesizerLabship extends Card {
                 new SourceCounterThreshold(9, CounterType.CHARGE),
                 new AnimatePermanentsEffect(
                         (DynamicAmount) null, (DynamicAmount) null, List.of(), Set.of(), null,
-                        Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.CONTINUOUS, null
+                        Set.of(CardType.CREATURE), GrantScope.SELF, Duration.STATIC, null
                 )));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(9, CounterType.CHARGE),

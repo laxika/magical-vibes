@@ -75,7 +75,7 @@ public class GainControlOfDefendingPlayerCreatureAndAttackEffectHandler implemen
         boolean applied = creatureControlService.applyControlEffect(
                 gameData, newControllerId, creature,
                 new GainControlOfTargetEffect(com.github.laxika.magicalvibes.model.effect.ControlDuration.END_OF_TURN),
-                com.github.laxika.magicalvibes.model.effect.ControlDuration.END_OF_TURN.toEffectDuration(),
+                com.github.laxika.magicalvibes.model.effect.ControlDuration.END_OF_TURN.toDuration(),
                 sourcePermanentId, sourceCardName);
         if (!applied) {
             return;

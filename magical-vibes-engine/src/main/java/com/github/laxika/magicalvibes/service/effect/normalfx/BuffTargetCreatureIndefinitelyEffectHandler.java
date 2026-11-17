@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -51,7 +51,7 @@ public class BuffTargetCreatureIndefinitelyEffectHandler implements NormalEffect
             // permanent exists, so a second copy stacks additively rather than being replaced.
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), null, entry.getControllerId(), buff,
-                    target.getId(), null, null, EffectDuration.PERMANENT, 0));
+                    target.getId(), null, null, Duration.PERMANENT, 0));
 
             gameLogService.append(gameData, GameLog.builder()
                     .card(target.getCard())

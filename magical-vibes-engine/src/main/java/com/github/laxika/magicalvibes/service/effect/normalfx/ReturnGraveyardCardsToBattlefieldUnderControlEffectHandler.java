@@ -112,7 +112,7 @@ public class ReturnGraveyardCardsToBattlefieldUnderControlEffectHandler implemen
                 gameData.stolenCreatures.put(permanent.getId(), returning.ownerId());
                 creatureControlService.applyControlEffect(gameData, controllerId, permanent,
                         new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                        ControlDuration.PERMANENT.toEffectDuration(), null, sourceName);
+                        ControlDuration.PERMANENT.toDuration(), null, sourceName);
             }
 
             String playerName = gameData.playerIdToName.get(controllerId);
