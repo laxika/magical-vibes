@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachCreatedEquipmentToTarge
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class AttachCreatedEquipmentToTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final EquipSupport equipSupport;
 
@@ -54,8 +56,7 @@ public class AttachCreatedEquipmentToTargetCreatureEffectHandler implements Norm
         }
 
         var oldAttachedTo = equipment.getAttachedTo();
-        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
-        equipSupport.expireAttachedCopyEffects(gameData, equipment);
+        durationClock.sourceUnattached(gameData, equipment.getId());
         equipment.setAttachedTo(creature.getId());
         equipment.setTimestamp(gameData.nextTimestamp());
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, creature.getId());

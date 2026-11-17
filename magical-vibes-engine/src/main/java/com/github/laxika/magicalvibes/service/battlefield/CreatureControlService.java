@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.RingState;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
-import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -16,13 +16,9 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.effect.CounterConditionedControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetHauntedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.UntapLockCondition;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MonarchBoundControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -31,11 +27,9 @@ import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentIfAttachedTo
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.rules.ControlChangeEvent;
-import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -74,7 +68,7 @@ public class CreatureControlService {
 
     @Autowired
     @Lazy
-    private AuraCopyService auraCopyService;
+    private DurationClock durationClock;
 
     @Autowired
     @Lazy
@@ -212,28 +206,14 @@ public class CreatureControlService {
     }
 
     /**
-     * Hook for the tap/untap machinery: when a permanent becomes untapped, any
-     * {@code WHILE_SOURCE_TAPPED} effect it is the source of ends (CR 611.2b). Non-control buffs
-     * (Tawnos's Weaponry's +1/+1) are dropped outright; control effects (Seasinger) are dropped by
-     * the control reconciliation, which also reverts the held permanent immediately. No-op when the
-     * untapped permanent holds no such effect, so it is cheap to call on every untap.
+     * Hook for the tap/untap machinery: when a permanent becomes untapped, the effects that last for
+     * as long as it remains tapped end (CR 611.2b), and a permanent one of them held (Seasinger)
+     * reverts to its controller immediately. No-op when the untapped permanent is the source of no
+     * such effect, so it is cheap to call on every untap.
      */
     public void onSourceUntapped(GameData gameData, Permanent permanent) {
-        List<FloatingContinuousEffect> expired =
-                gameData.expireTappedSourceFloatingEffects(permanent.getId());
-        if (auraCopyService != null) {
-            auraCopyService.revertExpiredCopies(gameData, expired);
-        }
-
-        boolean holdsTappedControl;
-        synchronized (gameData.floatingEffects) {
-            holdsTappedControl = gameData.floatingEffects.stream().anyMatch(fe ->
-                    fe.isControlEffect()
-                            && (Duration.WHILE_SOURCE_TAPPED.equals(fe.duration())
-                            || Duration.WHILE_SOURCE_REMAINS_TAPPED.equals(fe.duration()))
-                            && permanent.getId().equals(fe.sourcePermanentId()));
-        }
-        if (holdsTappedControl) {
+        if (durationClock.sourceUntapped(gameData, permanent.getId()).stream()
+                .anyMatch(FloatingContinuousEffect::isControlEffect)) {
             reconcileControl(gameData);
         }
     }
@@ -295,12 +275,6 @@ public class CreatureControlService {
         removeFromCombat(gameData, permanent);
         gameData.playerBattlefields.get(current).remove(permanent);
         gameData.playerBattlefields.get(derived).add(permanent);
-        // "For as long as you control" untap locks on this permanent end when its controller loses
-        // control; the lock is dropped rather than resuming if control returns (CR 611.2b).
-        gameData.expireFloatingEffects(fe -> fe.effect() instanceof DoesntUntapEffect lock
-                && lock.condition() == UntapLockCondition.WHILE_SOURCE_CONTROLLED
-                && permanent.getId().equals(fe.sourcePermanentId())
-                && !derived.equals(fe.controllerId()));
         permanent.recordControlChange();
         permanent.setSummoningSick(true);
         if (creaturePositioningSupport != null) {
@@ -364,8 +338,13 @@ public class CreatureControlService {
         queueSelfControlChangeTriggers(gameData, permanent, derived);
 
         // "For as long as you control [source]" effects keyed to THIS permanent end when it
-        // changes controllers away from their creator; cascade to the permanents they held.
-        expireSourceControllerDependentEffects(gameData, permanent);
+        // changes controllers away from their creator (CR 611.2b); cascade to the permanents they held.
+        for (FloatingContinuousEffect ended : durationClock.sourceChangedControl(gameData, permanent, derived)) {
+            Permanent affected = gameQueryService.findPermanentById(gameData, ended.affectedPermanentId());
+            if (affected != null) {
+                recomputeControl(gameData, affected);
+            }
+        }
         gameData.expireExilePlayPermissionsForSource(permanent.getId());
     }
 
@@ -540,21 +519,15 @@ public class CreatureControlService {
     }
 
     /**
-     * Expires source-controller-dependent floating effects whose "for as long as ..." condition
-     * stopped holding (such
-     * effects end for good — they do not resume, CR 611.2b):
+     * Ends the source-controller-dependent floating effects whose condition stopped holding; an ended
+     * effect doesn't resume if the condition holds again:
      * <ul>
-     *   <li>{@code WHILE_ATTACHED} — the source Aura left or enchants something else (the
-     *       departure/unattach hooks normally expire these already; this covers moves that
-     *       bypass them).</li>
-     *   <li>{@code WHILE_SOURCE_ON_BATTLEFIELD} — the source left, or its creator no longer
-     *       controls it (Olivia Voldaren's "for as long as you control Olivia Voldaren").</li>
-     *   <li>{@code WHILE_SOURCE_TAPPED} — the source left, its creator no longer controls it,
-     *       or it is no longer tapped (Seasinger).</li>
-     *   <li>{@link GainControlOfEnchantedTargetEffect} — the affected permanent is no longer
-     *       enchanted (Rootwater Matriarch).</li>
-     *   <li>{@link CombatAttackRequirementEffect} implementations that opt into source-controller
-     *       dependence, such as Vislor Turlough's source-bound goad.</li>
+     *   <li>a "for as long as" duration that no longer holds ({@link DurationClock#holds}): the
+     *       state changes end these through the clock already, and this catches a change made
+     *       without telling it.</li>
+     *   <li>{@link GainControlOfTargetEffect} that maintains its target's predicate (Old Man of the
+     *       Sea), a counter-conditioned control effect, {@link GainControlOfEnchantedTargetEffect}
+     *       (Rootwater Matriarch), a haunted creature and a monarch-bound control effect.</li>
      * </ul>
      */
     private void expireStaleControlEffects(GameData gameData) {
@@ -567,35 +540,7 @@ public class CreatureControlService {
                     || (fe.effect() instanceof PermanentLockEffect lock
                     && lock.endsWhenSourceControllerChanges());
             if (!sourceControllerDependent) continue;
-            boolean stale = false;
-            if (Duration.WHILE_ATTACHED.equals(fe.duration())) {
-                Permanent source = fe.sourcePermanentId() == null ? null
-                        : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
-                stale = source == null || !source.isAttached()
-                        || !source.getAttachedTo().equals(fe.affectedPermanentId());
-            } else if (Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(fe.duration())
-                    || Duration.WHILE_SOURCE_CONTROLLED.equals(fe.duration())) {
-                Permanent source = fe.sourcePermanentId() == null ? null
-                        : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
-                UUID sourceController = source == null ? null : gameData.findControllerOf(source);
-                stale = sourceController == null || !sourceController.equals(fe.controllerId());
-            } else if (Duration.WHILE_SOURCE_REMAINS.equals(fe.duration())) {
-                // Infernal Denizen: only the source's presence matters, not who controls it.
-                Permanent source = fe.sourcePermanentId() == null ? null
-                        : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
-                stale = source == null;
-            } else if (Duration.WHILE_SOURCE_TAPPED.equals(fe.duration())) {
-                // Seasinger: control also ends the moment the source becomes untapped.
-                Permanent source = fe.sourcePermanentId() == null ? null
-                        : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
-                UUID sourceController = source == null ? null : gameData.findControllerOf(source);
-                stale = source == null || !source.isTapped()
-                        || sourceController == null || !sourceController.equals(fe.controllerId());
-            } else if (Duration.WHILE_SOURCE_REMAINS_TAPPED.equals(fe.duration())) {
-                Permanent source = fe.sourcePermanentId() == null ? null
-                        : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
-                stale = source == null || !source.isTapped();
-            }
+            boolean stale = !durationClock.holds(gameData, fe);
             if (!stale && fe.effect() instanceof GainControlOfTargetEffect control
                     && control.maintainTargetPredicate()) {
                 Permanent source = fe.sourcePermanentId() == null ? null
@@ -627,38 +572,6 @@ public class CreatureControlService {
             }
             if (stale) {
                 gameData.endFloatingEffect(fe);
-            }
-        }
-    }
-
-    /**
-     * When a permanent changes controllers, "for as long as you control [source]" effects keyed
-     * to it as their SOURCE end if their creator lost it; the permanents they were holding get
-     * recomputed.
-     */
-    private void expireSourceControllerDependentEffects(GameData gameData, Permanent source) {
-        UUID sourceController = gameData.findControllerOf(source);
-        List<FloatingContinuousEffect> expired = new ArrayList<>();
-        for (FloatingContinuousEffect fe : List.copyOf(gameData.floatingEffects)) {
-            if (((fe.isControlEffect()
-                    || (fe.effect() instanceof CombatAttackRequirementEffect requirement
-                    && requirement.endsWhenSourceControllerChanges())
-                    || fe.effect() instanceof GrantKeywordEffect
-                    || fe.effect() instanceof GrantActivatedAbilityEffect
-                    || (fe.effect() instanceof PermanentLockEffect lock
-                    && lock.endsWhenSourceControllerChanges()))
-                    && Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(fe.duration())
-                    || Duration.WHILE_SOURCE_CONTROLLED.equals(fe.duration()))
-                    && source.getId().equals(fe.sourcePermanentId())
-                    && !fe.controllerId().equals(sourceController)) {
-                gameData.endFloatingEffect(fe);
-                expired.add(fe);
-            }
-        }
-        for (FloatingContinuousEffect fe : expired) {
-            Permanent affected = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());
-            if (affected != null) {
-                recomputeControl(gameData, affected);
             }
         }
     }

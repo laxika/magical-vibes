@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBecomeCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,7 @@ import java.util.EnumSet;
 public class PerpetuallyBecomeCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final UnattachTriggerSupport unattachTriggerSupport;
 
@@ -63,7 +65,7 @@ public class PerpetuallyBecomeCreatureEffectHandler implements NormalEffectHandl
         if (losesAttachmentSubtype) {
             unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, source, source.getAttachedTo());
             source.setAttachedTo(null);
-            gameData.expireFloatingEffectsForUnattachedSource(source.getId());
+            durationClock.sourceUnattached(gameData, source.getId());
         }
 
         gameLogService.append(gameData, GameLog.cardThen(copy,

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class AttachOneOfEquipmentToSamuraiSupport {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final PredicateEvaluationService predicateEvaluationService;
     private final EquipSupport equipSupport;
     private final GameLogService gameLogService;
@@ -66,8 +68,7 @@ public class AttachOneOfEquipmentToSamuraiSupport {
         }
 
         UUID oldAttachedTo = equipment.getAttachedTo();
-        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
-        equipSupport.expireAttachedCopyEffects(gameData, equipment);
+        durationClock.sourceUnattached(gameData, equipment.getId());
         equipment.setAttachedTo(samurai.getId());
         equipment.setTimestamp(gameData.nextTimestamp());
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, samurai.getId());

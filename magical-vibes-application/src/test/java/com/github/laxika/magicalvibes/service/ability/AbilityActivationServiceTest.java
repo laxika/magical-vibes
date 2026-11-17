@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellEvents;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -99,6 +100,7 @@ class AbilityActivationServiceTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
+    @Mock private DurationClock durationClock;
     @Mock private GameLogService gameLogService;
     @Mock private CastingCostService castingCostService;
     @Mock private TargetLegalityService targetLegalityService;

@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -43,7 +45,7 @@ class MathasFiendSeekerTest extends BaseCardTest {
         putBountyOn(bears);
 
         gd.playerBattlefields.get(player1.getId()).remove(mathas);
-        gd.expireFloatingEffectsForDepartedSource(mathas.getId());
+        GameTestEngineContext.get().getBean(DurationClock.class).sourceLeft(gd, mathas.getId());
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, bears));

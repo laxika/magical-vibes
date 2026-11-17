@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToDefendingPlayerEffect;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import java.util.UUID;
 public class CreateTokenAttachedToDefendingPlayerEffectHandler implements NormalEffectHandlerBean {
 
     private final PermanentControlSupport permanentControlSupport;
+    private final DurationClock durationClock;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final AuraAttachmentService auraAttachmentService;
@@ -76,7 +78,7 @@ public class CreateTokenAttachedToDefendingPlayerEffectHandler implements Normal
                     gameData, aura.getCard(), entry.getControllerId(), defendingPlayerId)) {
                 continue;
             }
-            gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
+            durationClock.sourceUnattached(gameData, aura.getId());
             aura.setAttachedTo(defendingPlayerId);
             aura.setTimestamp(gameData.nextTimestamp());
             gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, defendingPlayerId));

@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -53,6 +54,7 @@ class AuraAttachmentServiceTest {
 
     @Mock private GameQueryService gameQueryService;
     @Mock private GameLogService gameLogService;
+    @Mock private DurationClock durationClock;
     @Mock private GraveyardService graveyardService;
     @Mock private CreatureControlService creatureControlService;
     @Mock private PredicateEvaluationService predicateEvaluationService;

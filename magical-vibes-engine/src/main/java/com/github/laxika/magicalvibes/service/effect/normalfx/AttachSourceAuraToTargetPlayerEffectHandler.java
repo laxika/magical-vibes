@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class AttachSourceAuraToTargetPlayerEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final AuraAttachmentService auraAttachmentService;
     private final GameLogService gameLogService;
 
@@ -46,7 +48,7 @@ public class AttachSourceAuraToTargetPlayerEffectHandler implements NormalEffect
             return;
         }
 
-        gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
+        durationClock.sourceUnattached(gameData, aura.getId());
         aura.setAttachedTo(targetPlayerId);
         aura.setTimestamp(gameData.nextTimestamp());
         gameLogService.append(gameData, GameLog.text(aura.getCard().getName() + " is now attached to "

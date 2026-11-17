@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceFortificationToTa
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class AttachSourceFortificationToTargetLandEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
 
     @Override
@@ -38,7 +40,7 @@ public class AttachSourceFortificationToTargetLandEffectHandler implements Norma
             return;
         }
 
-        gameData.expireFloatingEffectsForUnattachedSource(source.getId());
+        durationClock.sourceUnattached(gameData, source.getId());
         source.setAttachedTo(target.getId());
         source.setTimestamp(gameData.nextTimestamp());
 

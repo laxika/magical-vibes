@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,7 @@ import java.util.UUID;
 public class ReturnSourceFromGraveyardAttachedToEnteringCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
+    private final DurationClock durationClock;
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
@@ -67,7 +69,7 @@ public class ReturnSourceFromGraveyardAttachedToEnteringCreatureEffectHandler im
                 : equipSupport.canAttachEquipment(gameData, attachment, enteringCreature));
         if (canAttach) {
             if (sourceCard.isAura()) {
-                gameData.expireFloatingEffectsForUnattachedSource(attachment.getId());
+                durationClock.sourceUnattached(gameData, attachment.getId());
                 attachment.setAttachedTo(enteringCreature.getId());
                 attachment.setTimestamp(gameData.nextTimestamp());
             } else {

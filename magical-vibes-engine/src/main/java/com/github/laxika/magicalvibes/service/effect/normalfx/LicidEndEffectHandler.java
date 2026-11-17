@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LicidEndEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 public class LicidEndEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
 
     @Override
@@ -38,7 +40,7 @@ public class LicidEndEffectHandler implements NormalEffectHandlerBean {
         }
 
         source.setAttachedTo(null);
-        gameData.expireFloatingEffectsForUnattachedSource(source.getId());
+        durationClock.sourceUnattached(gameData, source.getId());
         source.setCard(source.getOriginalCard());
         source.setTimestamp(gameData.nextTimestamp());
 

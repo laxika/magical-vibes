@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.InventoryManagementEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ import java.util.UUID;
 public class InventoryManagementEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final PlayerInputService playerInputService;
     private final AuraAttachmentService auraAttachmentService;
     private final EquipSupport equipSupport;
@@ -160,7 +162,7 @@ public class InventoryManagementEffectHandler implements NormalEffectHandlerBean
         }
 
         if (attachment.getCard().isAura()) {
-            gameData.expireFloatingEffectsForUnattachedSource(attachment.getId());
+            durationClock.sourceUnattached(gameData, attachment.getId());
             attachment.setAttachedTo(creature.getId());
             attachment.setTimestamp(gameData.nextTimestamp());
             gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(attachment, creature.getId()));

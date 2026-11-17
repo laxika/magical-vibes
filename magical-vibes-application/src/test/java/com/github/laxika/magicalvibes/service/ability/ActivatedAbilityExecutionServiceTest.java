@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.ability;
 
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -117,6 +118,7 @@ class ActivatedAbilityExecutionServiceTest {
     }
 
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
+    @Mock private DurationClock durationClock;
     @Mock private com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService landManaReplacementService;
     @Mock private DrawService drawService;
     @Mock private PermanentRemovalService permanentRemovalService;

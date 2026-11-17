@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.LicidEndEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Component;
 public class LicidBecomeAuraEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
 
     @Override
@@ -58,7 +60,7 @@ public class LicidBecomeAuraEffectHandler implements NormalEffectHandlerBean {
         }
 
         source.setCard(auraForm(source.getCard(), ((LicidBecomeAuraEffect) effect).endCost(), entry.getControllerId()));
-        gameData.expireFloatingEffectsForUnattachedSource(source.getId());
+        durationClock.sourceUnattached(gameData, source.getId());
         source.setAttachedTo(host.getId());
         source.setTimestamp(gameData.nextTimestamp());
 

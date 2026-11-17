@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTarget
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class AttachTargetEquipmentToTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final EquipSupport equipSupport;
 
@@ -71,7 +73,7 @@ public class AttachTargetEquipmentToTargetCreatureEffectHandler implements Norma
             return;
         }
 
-        equipSupport.expireAttachedCopyEffects(gameData, equipment);
+        durationClock.sourceUnattached(gameData, equipment.getId());
         equipment.setAttachedTo(creature.getId());
         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
         equipment.setTimestamp(gameData.nextTimestamp());

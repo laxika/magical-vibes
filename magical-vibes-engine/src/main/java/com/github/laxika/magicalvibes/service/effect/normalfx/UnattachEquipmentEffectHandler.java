@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class UnattachEquipmentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final EquipSupport equipSupport;
     private final GameLogService gameLogService;
 
@@ -40,8 +42,7 @@ public class UnattachEquipmentEffectHandler implements NormalEffectHandlerBean {
         UUID oldAttachedTo = equipment.getAttachedTo();
         Permanent creature = gameQueryService.findPermanentById(gameData, oldAttachedTo);
         equipment.setAttachedTo(null);
-        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
-        equipSupport.expireAttachedCopyEffects(gameData, equipment);
+        durationClock.sourceUnattached(gameData, equipment.getId());
         if (creature != null) {
             gameLogService.append(gameData, GameLog.builder()
                     .card(entry.getCard())

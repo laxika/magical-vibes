@@ -74,6 +74,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
@@ -126,6 +127,7 @@ public class CardChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.effect.normalfx.StepDepartureSupport stepDepartureSupport;
 
     private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
+    private final DurationClock durationClock;
 
     private final DrawService drawService;
 
@@ -3292,12 +3294,11 @@ public class CardChoiceHandlerService {
             return;
         }
         UUID oldAttachedTo = equipment.getAttachedTo();
-        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+        durationClock.sourceUnattached(gameData, equipment.getId());
         equipment.setAttachedTo(target.getId());
         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
         equipment.setTimestamp(gameData.nextTimestamp());
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, target.getId());
-        equipSupport.expireAttachedCopyEffects(gameData, equipment);
         equipment.setAttachedTo(target.getId());
         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
         equipment.setTimestamp(gameData.nextTimestamp());

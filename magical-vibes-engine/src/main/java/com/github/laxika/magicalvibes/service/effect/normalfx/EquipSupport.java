@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.AttachmentTriggers;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,11 +32,7 @@ public class EquipSupport {
     private final PredicateEvaluationService predicateEvaluationService;
     private final UnattachTriggerSupport unattachTriggerSupport;
     private final AttachmentTriggers attachmentTriggers;
-    private final AuraCopyService auraCopyService;
-
-    public void expireAttachedCopyEffects(GameData gameData, Permanent equipment) {
-        auraCopyService.expireAttachedCopyEffects(gameData, equipment.getId());
-    }
+    private final DurationClock durationClock;
 
     public void notifyEquipmentAttached(GameData gameData, Permanent equipment, UUID oldAttachedTo) {
         attachmentTriggers.equipmentBecameAttached(gameData, equipment, oldAttachedTo);
@@ -91,8 +87,7 @@ public class EquipSupport {
         if (host.getId().equals(oldAttachedTo)) {
             return true;
         }
-        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
-        expireAttachedCopyEffects(gameData, equipment);
+        durationClock.sourceUnattached(gameData, equipment.getId());
         equipment.setAttachedTo(host.getId());
         equipment.setTimestamp(gameData.nextTimestamp());
         applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, host.getId());

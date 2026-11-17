@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -69,6 +70,7 @@ import java.util.stream.Collectors;
 public class AnimationSupport {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final CreatureControlService creatureControlService;
@@ -303,7 +305,7 @@ public class AnimationSupport {
         if (self.isAttached() && self.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
             unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, self, self.getAttachedTo());
             self.setAttachedTo(null);
-            gameData.expireFloatingEffectsForUnattachedSource(self.getId());
+            durationClock.sourceUnattached(gameData, self.getId());
             gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " becomes unattached."));
         }
 
@@ -616,7 +618,7 @@ public class AnimationSupport {
                 if (permanent.isAttached() && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
                     unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, permanent, permanent.getAttachedTo());
                     permanent.setAttachedTo(null);
-                    gameData.expireFloatingEffectsForUnattachedSource(permanent.getId());
+                    durationClock.sourceUnattached(gameData, permanent.getId());
                     gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " becomes unattached."));
                 }
                 count++;
@@ -831,7 +833,7 @@ public class AnimationSupport {
         if (target.isAttached() && target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
             unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, target, target.getAttachedTo());
             target.setAttachedTo(null);
-            gameData.expireFloatingEffectsForUnattachedSource(target.getId());
+            durationClock.sourceUnattached(gameData, target.getId());
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " becomes unattached."));
             log.info("Game {} - {} unattached (equipment became creature)", gameData.id, target.getCard().getName());
         }
@@ -965,7 +967,7 @@ public class AnimationSupport {
             return;
         }
 
-        gameData.expireFloatingEffectsForUnattachedSource(source.getId());
+        durationClock.sourceUnattached(gameData, source.getId());
         source.setAttachedTo(target.getId());
         // CR 613.7e: an attachment receives a new timestamp each time it becomes attached.
         source.setTimestamp(gameData.nextTimestamp());
@@ -1053,7 +1055,7 @@ public class AnimationSupport {
         if (self.isAttached() && !backFace.getSubtypes().contains(CardSubtype.EQUIPMENT)) {
             unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, self, self.getAttachedTo());
             self.setAttachedTo(null);
-            gameData.expireFloatingEffectsForUnattachedSource(self.getId());
+            durationClock.sourceUnattached(gameData, self.getId());
             gameLogService.append(gameData, GameLog.cardThen(frontCard, " becomes unattached."));
             log.info("Game {} - {} unattached (transformed into non-Equipment)", gameData.id, frontName);
         }

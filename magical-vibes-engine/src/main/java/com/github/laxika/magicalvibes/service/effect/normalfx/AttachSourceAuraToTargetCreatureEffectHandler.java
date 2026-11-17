@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 public class AttachSourceAuraToTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final AuraAttachmentService auraAttachmentService;
     private final GameLogService gameLogService;
 
@@ -55,7 +57,7 @@ public class AttachSourceAuraToTargetCreatureEffectHandler implements NormalEffe
             return;
         }
 
-        gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
+        durationClock.sourceUnattached(gameData, aura.getId());
         aura.setAttachedTo(target.getId());
         // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
         aura.setTimestamp(gameData.nextTimestamp());

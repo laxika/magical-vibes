@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentFromSourceCost;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,17 +22,20 @@ public class UnattachEquipmentFromSourceCostHandler implements PermanentChoiceCo
     private final UUID sourcePermanentId;
     private final GameQueryService gameQueryService;
     private final EquipSupport equipSupport;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
 
     public UnattachEquipmentFromSourceCostHandler(UnattachEquipmentFromSourceCost cost,
                                                    UUID sourcePermanentId,
                                                    GameQueryService gameQueryService,
                                                    EquipSupport equipSupport,
+                                                   DurationClock durationClock,
                                                    GameLogService gameLogService) {
         this.cost = cost;
         this.sourcePermanentId = sourcePermanentId;
         this.gameQueryService = gameQueryService;
         this.equipSupport = equipSupport;
+        this.durationClock = durationClock;
         this.gameLogService = gameLogService;
     }
 
@@ -80,8 +84,7 @@ public class UnattachEquipmentFromSourceCostHandler implements PermanentChoiceCo
 
         UUID oldAttachedTo = chosen.getAttachedTo();
         chosen.setAttachedTo(null);
-        gameData.expireFloatingEffectsForUnattachedSource(chosen.getId());
-        equipSupport.expireAttachedCopyEffects(gameData, chosen);
+        durationClock.sourceUnattached(gameData, chosen.getId());
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, chosen, oldAttachedTo, null);
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " unattaches ", chosen.getCard(), " as a cost."));

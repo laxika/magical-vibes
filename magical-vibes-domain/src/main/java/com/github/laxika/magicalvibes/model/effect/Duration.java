@@ -5,7 +5,7 @@ import java.util.Objects;
 /**
  * How long an effect lasts. An effect a resolving spell or ability makes lasts as long as the spell or ability states,
  * and to the end of the game if it states nothing (CR 611.2a): it ends at an event ({@link #end}), or it lasts "for as
- * long as" something holds ({@link #asLongAs}) and ends for good once that stops holding (CR 611.2b). An effect of a
+ * long as" something holds ({@link #asLongAs}, CR 611.2b) and ends for good once that stops holding. An effect of a
  * static ability lasts as long as the ability does ({@link #STATIC}).
  *
  * <p>The named constants are the durations cards write; every duration is one of them.
@@ -65,8 +65,20 @@ public record Duration(End end, AsLongAs asLongAs) {
         SOURCE_REMAINS_TAPPED,
         /** Its source, an Aura or Equipment, stays attached to the affected permanent. */
         ATTACHED,
+        /** Its source card stays in exile (teach); it ends as the card leaves exile, cast or not. */
+        SOURCE_CARD_EXILED,
         /** The static ability that generates it applies (CR 611.3). */
-        STATIC_ABILITY
+        STATIC_ABILITY;
+
+        /** Whether it holds only while its source permanent is on the battlefield: it ends as the source leaves. */
+        public boolean needsSourceOnBattlefield() {
+            return this != SOURCE_CARD_EXILED && this != STATIC_ABILITY;
+        }
+
+        /** Whether it holds only while its source stays tapped: it ends as the source untaps. */
+        public boolean needsSourceTapped() {
+            return this == SOURCE_TAPPED || this == SOURCE_REMAINS_TAPPED;
+        }
     }
 
     /** No stated duration: it lasts to the end of the game (CR 611.2a), "becomes a creature permanently". */
@@ -112,6 +124,8 @@ public record Duration(End end, AsLongAs asLongAs) {
     /** For as long as its source remains tapped (Vedalken Shackles). */
     public static final Duration WHILE_SOURCE_REMAINS_TAPPED =
             new Duration(End.NEVER, AsLongAs.SOURCE_REMAINS_TAPPED);
+    /** For as long as its source card remains exiled (teach). */
+    public static final Duration WHILE_SOURCE_CARD_EXILED = new Duration(End.NEVER, AsLongAs.SOURCE_CARD_EXILED);
     /** For as long as its source, an Aura or Equipment, stays attached to the affected permanent. */
     public static final Duration WHILE_ATTACHED = new Duration(End.NEVER, AsLongAs.ATTACHED);
     /** The effect of a static ability (CR 611.3): Auras, Equipment, Stations. */

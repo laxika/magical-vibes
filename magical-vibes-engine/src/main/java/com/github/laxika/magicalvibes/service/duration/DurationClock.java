@@ -5,12 +5,17 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureWhileTargetTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellCostEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TapRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TemporaryCopyEffect;
@@ -24,6 +29,7 @@ import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -44,8 +50,16 @@ import java.util.function.Predicate;
  * cleanup step's damage removal ({@link TurnEvent.Cleanup}: "until end of turn", "until the end of your next turn",
  * CR 514.2), a step beginning ({@link StepEvent}: "until your next upkeep", "until the next end step"), the untap step's
  * untapping ("until its controller's next untap step"), a spell being cast ({@link SpellEvent.Cast}) and a planeswalk
- * ({@link ActionEvent.Planeswalked}). A "for as long as" duration (CR 611.2b) ends where its condition stops holding,
- * not here.
+ * ({@link ActionEvent.Planeswalked}).
+ *
+ * <p>A "for as long as" duration (CR 611.2b) ends as soon as its condition stops holding, not at a batch: the
+ * engine tells the clock where the state changes, and the clock ends the effects of that source the change ends. Its
+ * source leaves the battlefield ({@link #sourceLeft}), untaps ({@link #sourceUntapped}), becomes unattached or attached
+ * to another object ({@link #sourceUnattached}), or comes under the control of a player other than the effect's
+ * creator ({@link #sourceChangedControl}). {@link #holds} judges the same conditions against the board, for the control
+ * reconciliation that catches a change made without telling the clock. Whatever ends an effect, the clock undoes what
+ * it kept on the permanent it affected; control itself is recomputed by its caller, which may be iterating a
+ * battlefield.
  */
 @Service
 public class DurationClock {
@@ -54,10 +68,14 @@ public class DurationClock {
 
     private final GameQueryService gameQueryService;
 
+    private final AuraCopyService auraCopyService;
+
     public DurationClock(@Lazy PredicateEvaluationService predicateEvaluationService,
-                         @Lazy GameQueryService gameQueryService) {
+                         @Lazy GameQueryService gameQueryService,
+                         @Lazy AuraCopyService auraCopyService) {
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameQueryService = gameQueryService;
+        this.auraCopyService = auraCopyService;
     }
 
     /** Ends the durations the events of {@code batch} end, in event order. */
@@ -73,9 +91,103 @@ public class DurationClock {
         if (ends == null) {
             return List.of();
         }
+        return end(gameData, ends);
+    }
+
+    /**
+     * Ends the "for as long as" effects (CR 611.2b) that hold only while {@code sourcePermanentId} is on the
+     * battlefield, as it leaves, and returns them.
+     */
+    public List<FloatingContinuousEffect> sourceLeft(GameData gameData, UUID sourcePermanentId) {
+        return end(gameData, effect -> sourcePermanentId.equals(effect.sourcePermanentId())
+                && asLongAs(effect) != null && asLongAs(effect).needsSourceOnBattlefield());
+    }
+
+    /** Ends the effects that last for as long as {@code sourcePermanentId} remains tapped, as it untaps. */
+    public List<FloatingContinuousEffect> sourceUntapped(GameData gameData, UUID sourcePermanentId) {
+        return end(gameData, effect -> sourcePermanentId.equals(effect.sourcePermanentId())
+                && asLongAs(effect) != null && asLongAs(effect).needsSourceTapped());
+    }
+
+    /**
+     * Ends the effects that last for as long as the Aura or Equipment {@code sourcePermanentId} stays attached, as it
+     * becomes unattached or attached to another object.
+     */
+    public List<FloatingContinuousEffect> sourceUnattached(GameData gameData, UUID sourcePermanentId) {
+        return end(gameData, effect -> sourcePermanentId.equals(effect.sourcePermanentId())
+                && asLongAs(effect) == Duration.AsLongAs.ATTACHED);
+    }
+
+    /**
+     * Ends the effects that last only while their creator controls {@code source}, as it comes under
+     * {@code controllerId}'s control and their creator is another player.
+     */
+    public List<FloatingContinuousEffect> sourceChangedControl(GameData gameData, Permanent source,
+                                                               UUID controllerId) {
+        return end(gameData, effect -> source.getId().equals(effect.sourcePermanentId())
+                && needsCreatorToControlSource(effect) && !effect.controllerId().equals(controllerId));
+    }
+
+    /**
+     * Whether the "for as long as" condition of {@code effect} still holds on the board (CR 611.2b): its source is on
+     * the battlefield, under its creator's control when the effect needs that, tapped when it needs that, and
+     * attached to the affected permanent when it lasts while attached. A duration that ends at an event holds.
+     */
+    public boolean holds(GameData gameData, FloatingContinuousEffect effect) {
+        Duration.AsLongAs asLongAs = asLongAs(effect);
+        if (asLongAs == null || !asLongAs.needsSourceOnBattlefield()) {
+            return true;
+        }
+        Permanent source = effect.sourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, effect.sourcePermanentId());
+        if (source == null) {
+            return false;
+        }
+        if (needsCreatorToControlSource(effect) && !effect.controllerId().equals(gameData.findControllerOf(source))) {
+            return false;
+        }
+        if (asLongAs.needsSourceTapped() && !source.isTapped()) {
+            return false;
+        }
+        return asLongAs != Duration.AsLongAs.ATTACHED
+                || (source.isAttached() && source.getAttachedTo().equals(effect.affectedPermanentId()));
+    }
+
+    /**
+     * Whether {@code effect} lasts only while its creator controls its source: "for as long as you control this
+     * Saga", and a source-linked control effect, goad, attack requirement, lock or grant, which say "for as long as
+     * you control" it (Olivia Voldaren, Seasinger).
+     */
+    private static boolean needsCreatorToControlSource(FloatingContinuousEffect effect) {
+        Duration.AsLongAs asLongAs = asLongAs(effect);
+        if (asLongAs == Duration.AsLongAs.SOURCE_CONTROLLED) {
+            return true;
+        }
+        if (asLongAs != Duration.AsLongAs.SOURCE_ON_BATTLEFIELD && asLongAs != Duration.AsLongAs.SOURCE_TAPPED) {
+            return false;
+        }
+        CardEffect wrapped = effect.effect();
+        return effect.isControlEffect()
+                || wrapped instanceof GoadStatusEffect
+                || wrapped instanceof GrantKeywordEffect
+                || wrapped instanceof GrantActivatedAbilityEffect
+                || (wrapped instanceof CombatAttackRequirementEffect requirement
+                && requirement.endsWhenSourceControllerChanges())
+                || (wrapped instanceof PermanentLockEffect lock && lock.endsWhenSourceControllerChanges());
+    }
+
+    private static Duration.AsLongAs asLongAs(FloatingContinuousEffect effect) {
+        return effect.duration() == null ? null : effect.duration().asLongAs();
+    }
+
+    /** Ends the floating effects {@code ends} matches, undoes what each kept, and returns them. */
+    private List<FloatingContinuousEffect> end(GameData gameData, Predicate<FloatingContinuousEffect> ends) {
         List<FloatingContinuousEffect> ended = gameData.expireFloatingEffects(ends);
         for (FloatingContinuousEffect effect : ended) {
             undo(gameData, effect);
+        }
+        if (!ended.isEmpty()) {
+            auraCopyService.revertExpiredCopies(gameData, ended);
         }
         return ended;
     }
@@ -173,6 +285,9 @@ public class DurationClock {
             return;
         }
         switch (effect.effect()) {
+            // AuraCopyService reverts it, or keeps the copy of a newer target that remains tapped.
+            case BecomeCopyOfTargetCreatureWhileTargetTappedEffect ignored -> {
+            }
             case TemporaryCopyEffect ignored -> affected.revertEndOfTurnCopy();
             case TapRestrictionEffect restriction when restriction.preventsTappingUnlessAttacking() ->
                     affected.removeTapRestriction(effect.id());

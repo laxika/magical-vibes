@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AttachSelectedAurasToLegalTargetsEffectHandler implements NormalEffectHandlerBean {
     private final AuraAttachmentService auraAttachmentService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final InputCompletionService inputCompletionService;
@@ -124,7 +126,7 @@ public class AttachSelectedAurasToLegalTargetsEffectHandler implements NormalEff
 
     private void attach(GameData gameData, Permanent aura, UUID targetId) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
+        durationClock.sourceUnattached(gameData, aura.getId());
         aura.setAttachedTo(targetId);
         aura.setTimestamp(gameData.nextTimestamp());
         if (target != null) {

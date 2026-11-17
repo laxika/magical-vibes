@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,7 @@ import java.util.UUID;
 public class AttachCurseToOpponentAndDrawEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final AuraAttachmentService auraAttachmentService;
     private final PlayerInputService playerInputService;
     private final GameLogService gameLogService;
@@ -118,7 +120,7 @@ public class AttachCurseToOpponentAndDrawEffectHandler implements NormalEffectHa
             return;
         }
 
-        gameData.expireFloatingEffectsForUnattachedSource(curse.getId());
+        durationClock.sourceUnattached(gameData, curse.getId());
         curse.setAttachedTo(opponentId);
         curse.setTimestamp(gameData.nextTimestamp());
         gameLogService.append(gameData, GameLog.text(curse.getCard().getName() + " is now attached to "

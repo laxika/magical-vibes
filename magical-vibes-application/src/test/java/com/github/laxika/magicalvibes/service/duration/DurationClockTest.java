@@ -3,12 +3,18 @@ package com.github.laxika.magicalvibes.service.duration;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.ActionEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
@@ -146,6 +152,109 @@ class DurationClockTest extends BaseCardTest {
                 UUID.randomUUID(), null, null, Duration.UNTIL_END_OF_TURN, 0));
 
         assertThat(advance(new TurnEvent.Cleanup(player1.getId()))).hasSize(1);
+        assertThat(gd.floatingEffects).isEmpty();
+    }
+
+    private FloatingContinuousEffect addFrom(Permanent source, Duration duration, CardEffect effect) {
+        return gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Test", source.getId(),
+                player1.getId(), effect, null, null, null, duration, 0));
+    }
+
+    private DurationClock clock() {
+        return GameTestEngineContext.get().getBean(DurationClock.class);
+    }
+
+    @Test
+    @DisplayName("Its source leaving ends every \"for as long as\" effect of that source (CR 611.2b)")
+    void sourceLeavingEndsItsAsLongAsEffects() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        FloatingContinuousEffect remains = addFrom(source, Duration.WHILE_SOURCE_REMAINS, new BoostTargetCreatureEffect(1, 1));
+        FloatingContinuousEffect tapped = addFrom(source, Duration.WHILE_SOURCE_TAPPED, new BoostTargetCreatureEffect(1, 1));
+        FloatingContinuousEffect attached = addFrom(source, Duration.WHILE_ATTACHED, new BoostTargetCreatureEffect(1, 1));
+        FloatingContinuousEffect endOfTurn = addFrom(source, Duration.UNTIL_END_OF_TURN, new BoostTargetCreatureEffect(1, 1));
+        FloatingContinuousEffect othersEffect = addFrom(other, Duration.WHILE_SOURCE_REMAINS,
+                new BoostTargetCreatureEffect(1, 1));
+
+        assertThat(clock().sourceLeft(gd, source.getId())).containsExactly(remains, tapped, attached);
+        assertThat(gd.floatingEffects).containsExactly(endOfTurn, othersEffect);
+    }
+
+    @Test
+    @DisplayName("Its source untapping ends only the effects that last while it remains tapped")
+    void sourceUntappingEndsTappedEffects() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        FloatingContinuousEffect tapped = addFrom(source, Duration.WHILE_SOURCE_TAPPED, new BoostTargetCreatureEffect(1, 1));
+        FloatingContinuousEffect remainsTapped = addFrom(source, Duration.WHILE_SOURCE_REMAINS_TAPPED,
+                new BoostTargetCreatureEffect(1, 1));
+        FloatingContinuousEffect remains = addFrom(source, Duration.WHILE_SOURCE_REMAINS, new BoostTargetCreatureEffect(1, 1));
+
+        assertThat(clock().sourceUntapped(gd, source.getId())).containsExactly(tapped, remainsTapped);
+        assertThat(gd.floatingEffects).containsExactly(remains);
+    }
+
+    @Test
+    @DisplayName("Its source becoming unattached ends only the effects that last while it stays attached")
+    void sourceUnattachedEndsAttachedEffects() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        FloatingContinuousEffect attached = addFrom(source, Duration.WHILE_ATTACHED, new BoostTargetCreatureEffect(1, 1));
+        FloatingContinuousEffect remains = addFrom(source, Duration.WHILE_SOURCE_REMAINS, new BoostTargetCreatureEffect(1, 1));
+
+        assertThat(clock().sourceUnattached(gd, source.getId())).containsExactly(attached);
+        assertThat(gd.floatingEffects).containsExactly(remains);
+    }
+
+    @Test
+    @DisplayName("Its source changing control ends the effects that last while their creator controls it")
+    void sourceChangingControlEndsCreatorControlledEffects() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        FloatingContinuousEffect controlled = addFrom(source, Duration.WHILE_SOURCE_CONTROLLED,
+                new BoostTargetCreatureEffect(1, 1));
+        FloatingContinuousEffect grant = addFrom(source, Duration.WHILE_SOURCE_ON_BATTLEFIELD,
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD));
+        FloatingContinuousEffect onBattlefield = addFrom(source, Duration.WHILE_SOURCE_ON_BATTLEFIELD,
+                new BoostTargetCreatureEffect(1, 1));
+        FloatingContinuousEffect remains = addFrom(source, Duration.WHILE_SOURCE_REMAINS, new BoostTargetCreatureEffect(1, 1));
+
+        assertThat(clock().sourceChangedControl(gd, source, player1.getId())).isEmpty();
+        assertThat(clock().sourceChangedControl(gd, source, player2.getId())).containsExactly(controlled, grant);
+        assertThat(gd.floatingEffects).containsExactly(onBattlefield, remains);
+    }
+
+    @Test
+    @DisplayName("A \"for as long as\" effect holds while its source is on the battlefield, tapped and attached as it needs")
+    void holdsJudgesTheBoard() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        FloatingContinuousEffect tapped = addFrom(source, Duration.WHILE_SOURCE_TAPPED, new BoostTargetCreatureEffect(1, 1));
+        FloatingContinuousEffect attached = gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Test",
+                source.getId(), player1.getId(), new BoostTargetCreatureEffect(1, 1), enchanted.getId(), null, null,
+                Duration.WHILE_ATTACHED, 0));
+        FloatingContinuousEffect endOfTurn = addFrom(source, Duration.UNTIL_END_OF_TURN, new BoostTargetCreatureEffect(1, 1));
+
+        assertThat(clock().holds(gd, tapped)).isFalse();
+        source.tap();
+        assertThat(clock().holds(gd, tapped)).isTrue();
+        assertThat(clock().holds(gd, attached)).isFalse();
+        source.setAttachedTo(enchanted.getId());
+        assertThat(clock().holds(gd, attached)).isTrue();
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        assertThat(clock().holds(gd, attached)).isFalse();
+        assertThat(clock().holds(gd, endOfTurn)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A grant that lasts while its card remains exiled ends as the card leaves exile")
+    void cardLeavingExileEndsWhileExiledGrant() {
+        Card lesson = new GrizzlyBears();
+        gd.addToExile(player1.getId(), lesson);
+        FloatingContinuousEffect grant = gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Test",
+                null, player1.getId(), new GrantActivatedAbilityEffect(null, GrantScope.TARGET, null,
+                Duration.WHILE_SOURCE_CARD_EXILED, lesson.getId()), null, null, null,
+                Duration.WHILE_SOURCE_CARD_EXILED, 0));
+
+        assertThat(gd.floatingEffects).containsExactly(grant);
+        gd.removeFromExile(lesson.getId());
         assertThat(gd.floatingEffects).isEmpty();
     }
 

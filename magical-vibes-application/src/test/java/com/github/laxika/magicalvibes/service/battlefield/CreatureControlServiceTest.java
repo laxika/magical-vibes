@@ -24,6 +24,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePow
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
+import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -94,6 +96,9 @@ class CreatureControlServiceTest {
         // The stack door puts a delayed ability on the stack (its own routes are TriggeredAbilityStackServiceTest's).
         org.springframework.test.util.ReflectionTestUtils.setField(creatureControlService,
                 "triggeredAbilityStackService", triggeredAbilityStackService);
+        org.springframework.test.util.ReflectionTestUtils.setField(creatureControlService, "durationClock",
+                new DurationClock(predicateEvaluationService, gameQueryService,
+                        org.mockito.Mockito.mock(AuraCopyService.class)));
         org.mockito.Mockito.doAnswer(invocation -> {
             com.github.laxika.magicalvibes.testutil.TestStackDoor.enqueue(invocation.getArgument(0), invocation.getArgument(1));
             return null;
@@ -109,6 +114,11 @@ class CreatureControlServiceTest {
                     }
                     return null;
                 });
+    }
+
+    private DurationClock durationClock() {
+        return (DurationClock) org.springframework.test.util.ReflectionTestUtils.getField(creatureControlService,
+                "durationClock");
     }
 
     private Card createCreatureCard(String name) {
@@ -349,7 +359,7 @@ class CreatureControlServiceTest {
             applySteal(player1Id, bear, Duration.UNTIL_END_OF_TURN, null);
 
             gd.playerBattlefields.get(player1Id).remove(sower);
-            gd.expireFloatingEffectsForDepartedSource(sower.getId());
+            durationClock().sourceLeft(gd, sower.getId());
             creatureControlService.reconcileControl(gd);
 
             assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
@@ -540,7 +550,7 @@ class CreatureControlServiceTest {
             applySteal(player1Id, bear, Duration.WHILE_SOURCE_TAPPED, seasinger.getId());
 
             gd.playerBattlefields.get(player1Id).remove(seasinger);
-            gd.expireFloatingEffectsForDepartedSource(seasinger.getId());
+            durationClock().sourceLeft(gd, seasinger.getId());
             creatureControlService.reconcileControl(gd);
 
             assertThat(gd.playerBattlefields.get(player2Id)).contains(bear);

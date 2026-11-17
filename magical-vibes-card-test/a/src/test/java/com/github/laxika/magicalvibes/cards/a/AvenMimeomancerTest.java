@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -57,7 +59,7 @@ class AvenMimeomancerTest extends BaseCardTest {
         // Aven Mimeomancer leaves — the resolved upkeep effect continues for its stated duration.
         Permanent aven = findAven();
         gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getId().equals(aven.getId()));
-        gd.expireFloatingEffectsForDepartedSource(aven.getId());
+        GameTestEngineContext.get().getBean(DurationClock.class).sourceLeft(gd, aven.getId());
 
         assertThat(gqs.getEffectivePower(gd, leotau)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, leotau)).isEqualTo(1);
@@ -161,7 +163,7 @@ class AvenMimeomancerTest extends BaseCardTest {
 
         Permanent aven = findAven();
         gd.playerBattlefields.get(player1.getId()).remove(aven);
-        gd.expireFloatingEffectsForDepartedSource(aven.getId());
+        GameTestEngineContext.get().getBean(DurationClock.class).sourceLeft(gd, aven.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 

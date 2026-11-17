@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentIfAttachedToControlledCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,7 @@ import java.util.Objects;
 public class UnattachEquipmentIfAttachedToControlledCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final EquipSupport equipSupport;
 
@@ -42,8 +44,7 @@ public class UnattachEquipmentIfAttachedToControlledCreatureEffectHandler implem
 
         var oldAttachedTo = equipment.getAttachedTo();
         equipment.setAttachedTo(null);
-        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
-        equipSupport.expireAttachedCopyEffects(gameData, equipment);
+        durationClock.sourceUnattached(gameData, equipment.getId());
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" unattaches ")

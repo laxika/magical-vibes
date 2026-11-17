@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,7 @@ import java.util.UUID;
 public class BecomeAuraManifestTopCardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
 
@@ -63,7 +65,7 @@ public class BecomeAuraManifestTopCardEffectHandler implements NormalEffectHandl
             return;
         }
 
-        gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
+        durationClock.sourceUnattached(gameData, aura.getId());
         aura.setAttachedTo(manifested.getId());
         aura.setTimestamp(gameData.nextTimestamp());
         gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, manifested.getId()));

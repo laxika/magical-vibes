@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -70,7 +71,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
-import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
@@ -127,7 +127,7 @@ public class PermanentRemovalService {
     private final GameLogService gameLogService;
     private final ExileService exileService;
     private final UntapLockReleaseService untapLockReleaseService;
-    private final AuraCopyService auraCopyService;
+    private final DurationClock durationClock;
     private final CreatureControlService creatureControlService;
     private final UnattachTriggerSupport unattachTriggerSupport;
     private final LifeSupport lifeSupport;
@@ -155,7 +155,7 @@ public class PermanentRemovalService {
                                    GameLogService gameLogService,
                                    ExileService exileService,
                                    UntapLockReleaseService untapLockReleaseService,
-                                   @Lazy AuraCopyService auraCopyService,
+                                   @Lazy DurationClock durationClock,
                                    @Lazy CreatureControlService creatureControlService,
                                    UnattachTriggerSupport unattachTriggerSupport,
                                    @Lazy LifeSupport lifeSupport,
@@ -173,7 +173,7 @@ public class PermanentRemovalService {
         this.gameLogService = gameLogService;
         this.exileService = exileService;
         this.untapLockReleaseService = untapLockReleaseService;
-        this.auraCopyService = auraCopyService;
+        this.durationClock = durationClock;
         this.creatureControlService = creatureControlService;
         this.unattachTriggerSupport = unattachTriggerSupport;
         this.lifeSupport = lifeSupport;
@@ -2536,10 +2536,8 @@ public class PermanentRemovalService {
                         Duration.UNTIL_END_OF_TURN, target.getTimestamp())));
         UUID ownerId = resolvePermanentOwner(gameData, target, controllerId);
         gameData.stolenCreatures.remove(target.getId());
-        // A departing Aura ends the layer-1 copy it granted (Metamorphic Alteration): its
-        // WHILE_ATTACHED floating effect expires here and drives the enchanted creature's revert.
-        auraCopyService.revertExpiredCopies(gameData,
-                gameData.expireFloatingEffectsForDepartedSource(target.getId()));
+        // Its "for as long as" effects end as it leaves (CR 611.2b); a departing Aura's copy reverts with them.
+        durationClock.sourceLeft(gameData, target.getId());
         gameData.expireControlEffectsForDepartedPermanent(target.getId());
         gameData.expireExilePlayPermissionsForSource(target.getId());
         creatureControlService.reconcileControl(gameData);

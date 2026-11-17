@@ -693,6 +693,15 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Ledger (3,099 card test classes of time-bound effects and the route tests): every floating effect begins and ends in the same turn and step; no ability gained, lost or reordered; the rest is random (Umaro's modes, coin flips, dice, draws, Forth Eorlingas's opponent order). The ledger shows turn and step, not the order within a step. Gradle skips an up-to-date test task, so a ledger run must change its inputs or use `--rerun`.
 - Next: part 3, the "for as long as" durations (`AsLongAs`: the departed, unattached and untapped source, control change; the GameData card-left-exile end of a teach grant), ended where the state changes; then the families.
 
+**D (part 3: "for as long as").**
+- `DurationClock` ends the `AsLongAs` durations where the state changes, not at a batch: `sourceLeft` (`PermanentRemovalService`, the orphaned-Aura sweeps), `sourceUntapped` (`CreatureControlService.onSourceUntapped`), `sourceUnattached` (every unattach or re-attach site) and `sourceChangedControl` (the control move). `Duration.AsLongAs.needsSourceOnBattlefield` / `needsSourceTapped`; which effects need their creator to control the source is the clock's one list (was two: the control move's and the reconciliation's). `holds` judges the conditions on the board for the reconciliation's safety net.
+- Every end undoes what it kept, by event or by state: `end` runs `AuraCopyService.revertExpiredCopies` (a tapped-target copy is left to it, which keeps a newer copy). Gone: `GameData.expireFloatingEffectsForDepartedSource` / `…ForUnattachedSource` / `expireTappedSourceFloatingEffects`, `AuraCopyService` and `EquipSupport.expireAttachedCopyEffects`, `CreatureControlService.expireSourceControllerDependentEffects` and the move's untap-lock case.
+- Teach's grant is `WHILE_SOURCE_CARD_EXILED` (`AsLongAs.SOURCE_CARD_EXILED`), ended by `GameData.removeFromExile`; no `TeachCastCopyEffect` check. Dungeon Geists' "for as long as you control" untap lock is `WHILE_SOURCE_CONTROLLED`.
+- Rules fix (test fails before): an Equipment or Aura moved or unattached by an effect ends its "for as long as it remains attached" copy (Blade of Shared Souls, Grip of Phyresis; `BladeOfSharedSoulsTest`). About 15 sites expired the effect before the copy revert looked for it, and the Aura paths didn't revert at all.
+- Ledger (1,192 card test classes of source-linked, attachment and teach effects and the route tests): every ability and floating effect begins and ends in the same turn and step; differences are the two renamed durations, the new test and random draws or drafts (Adaptive Armorer, Arms Scavenger, Masterpiece Vault, Diviner's Wand, route fixtures).
+- Open: a "for as long as" effect that tracks a permanent ends when it phases out (CR 702.26f); `sourceLeft` isn't told then. Raw `Permanent.untap()` calls (untap costs, a few choices) don't tell the clock.
+- Next: the families (inventory grouping), `Permanent`'s end-of-turn fields, `GrantDuration` / `ControlDuration` / `ExilePlayDuration` / `NoMaximumHandSizeDuration`, and `DelayedAction` (C51).
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

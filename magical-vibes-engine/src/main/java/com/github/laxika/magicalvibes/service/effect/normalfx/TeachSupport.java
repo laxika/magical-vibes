@@ -64,7 +64,7 @@ public class TeachSupport {
                     ability,
                     GrantScope.TARGET,
                     null,
-                    Duration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE,
+                    Duration.WHILE_SOURCE_CARD_EXILED,
                     entry.getCard().getId());
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(),
@@ -75,7 +75,7 @@ public class TeachSupport {
                     creature.getId(),
                     null,
                     null,
-                    Duration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE,
+                    Duration.WHILE_SOURCE_CARD_EXILED,
                     0));
             gameLogService.append(gameData, GameLog.builder()
                     .card(entry.getCard())

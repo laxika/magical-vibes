@@ -5666,55 +5666,7 @@ public class GameData {
                 map.computeIfAbsent(entry.getKey(), key -> new CopyOnWriteArrayList<>()).add(entry.getValue()));
     }
 
-    /** Removes and returns all floating effects with {@code UNTIL_END_OF_COMBAT} duration. */
-        /**
-     * Removes and returns all floating effects that depended on the given source permanent still
-     * being on the battlefield ({@code WHILE_SOURCE_ON_BATTLEFIELD}, {@code WHILE_SOURCE_TAPPED},
-     * {@code WHILE_SOURCE_REMAINS_TAPPED}, and {@code WHILE_ATTACHED}).
-     * Called whenever a permanent leaves any battlefield.
-     */
-    public List<FloatingContinuousEffect> expireFloatingEffectsForDepartedSource(UUID sourcePermanentId) {
-        return expireFloatingEffects(fe ->
-                (Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(fe.duration())
-                        || Duration.WHILE_SOURCE_CONTROLLED.equals(fe.duration())
-                        || Duration.WHILE_SOURCE_REMAINS.equals(fe.duration())
-                        || Duration.WHILE_SOURCE_TAPPED.equals(fe.duration())
-                        || Duration.WHILE_SOURCE_REMAINS_TAPPED.equals(fe.duration())
-                        || Duration.WHILE_ATTACHED.equals(fe.duration()))
-                        && sourcePermanentId.equals(fe.sourcePermanentId()));
-    }
-
-    /**
-     * Removes and returns all NON-control source-tapped floating effects sourced from the given
-     * permanent. Called when that permanent becomes untapped. Control source-tapped effects are
-     * handled separately by the control reconciliation in {@code CreatureControlService}.
-     */
-    public List<FloatingContinuousEffect> expireTappedSourceFloatingEffects(UUID sourcePermanentId) {
-        return expireFloatingEffects(fe -> (Duration.WHILE_SOURCE_TAPPED.equals(fe.duration())
-                || Duration.WHILE_SOURCE_REMAINS_TAPPED.equals(fe.duration()))
-                && !fe.isControlEffect()
-                && sourcePermanentId.equals(fe.sourcePermanentId()));
-    }
-
-    /**
-     * Removes and returns all {@code WHILE_ATTACHED} floating effects sourced from the given
-     * Aura/Equipment. Called whenever the attachment becomes unattached or attaches to a new
-     * permanent (the old attachment's effects end either way).
-     */
-    public List<FloatingContinuousEffect> expireFloatingEffectsForUnattachedSource(UUID sourcePermanentId) {
-        return expireFloatingEffects(fe -> Duration.WHILE_ATTACHED.equals(fe.duration())
-                && sourcePermanentId.equals(fe.sourcePermanentId()));
-    }
-
-    /**
-     * Removes and returns all {@code UNTIL_YOUR_NEXT_TURN} floating effects controlled by the
-     * given player. Called when that player's turn begins.
-     */
-        /**
-     * Removes and returns all {@code UNTIL_CONTROLLERS_NEXT_UPKEEP} floating effects controlled by
-     * the given player. Called at the beginning of that player's upkeep step (Cycle of Life).
-     */
-        /** Marks the beginning of an upkeep for effects that last through the end of that upkeep. */
+    /** Marks the beginning of an upkeep for effects that last through the end of that upkeep. */
     public void markUpkeepStart() {
         upkeepStartTimestamp = timestampCounter + 1;
     }
@@ -8934,10 +8886,9 @@ public class GameData {
             exiledCardHitCounters.remove(cardId);
             lukkaExileCastPermissions.remove(cardId);
             suspendedSpellExiles.removeIf(pending -> cardId.equals(pending.cardId()));
-            expireFloatingEffects(fe -> Duration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE.equals(fe.duration())
+            // A grant that lasts for as long as its card remains exiled ends as the card leaves (CR 611.2b).
+            expireFloatingEffects(fe -> Duration.WHILE_SOURCE_CARD_EXILED.equals(fe.duration())
                     && fe.effect() instanceof com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect grant
-                    && grant.ability().getEffects().stream()
-                            .anyMatch(com.github.laxika.magicalvibes.model.effect.TeachCastCopyEffect.class::isInstance)
                     && cardId.equals(grant.expirationCardId()));
         }
         return removed;

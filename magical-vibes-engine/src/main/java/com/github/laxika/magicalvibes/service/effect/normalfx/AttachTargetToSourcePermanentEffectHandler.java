@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanent
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -20,19 +21,22 @@ public class AttachTargetToSourcePermanentEffectHandler implements NormalEffectH
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final EquipSupport equipSupport;
+    private final DurationClock durationClock;
 
     @Autowired
     public AttachTargetToSourcePermanentEffectHandler(GameQueryService gameQueryService,
                                                       GameLogService gameLogService,
-                                                      EquipSupport equipSupport) {
+                                                      EquipSupport equipSupport,
+                                                      DurationClock durationClock) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.equipSupport = equipSupport;
+        this.durationClock = durationClock;
     }
 
     public AttachTargetToSourcePermanentEffectHandler(GameQueryService gameQueryService,
                                                       GameLogService gameLogService) {
-        this(gameQueryService, gameLogService, null);
+        this(gameQueryService, gameLogService, null, null);
     }
 
     @Override
@@ -52,7 +56,7 @@ public class AttachTargetToSourcePermanentEffectHandler implements NormalEffectH
             if (!equipSupport.canAttachEquipment(gameData, target, source)) return;
             equipSupport.attachEquipment(gameData, target, source);
         } else {
-            gameData.expireFloatingEffectsForUnattachedSource(target.getId());
+            durationClock.sourceUnattached(gameData, target.getId());
             target.setAttachedTo(source.getId());
             target.setTimestamp(gameData.nextTimestamp());
         }

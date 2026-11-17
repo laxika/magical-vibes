@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.aura;
 
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
@@ -57,6 +58,7 @@ import java.util.function.Predicate;
 public class AuraAttachmentService {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final CreatureControlService creatureControlService;
@@ -113,7 +115,7 @@ public class AuraAttachmentService {
                         p.setCard(p.getOriginalCard());
                         p.setBestow(false);
                         p.setAttachedTo(null);
-                        gameData.expireFloatingEffectsForUnattachedSource(p.getId());
+                        durationClock.sourceUnattached(gameData, p.getId());
                         anyUnattached = true;
                         gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes an enchantment creature (bestow attachment ended)."));
                         log.info("Game {} - {} becomes a creature after bestow attachment ended", gameData.id, p.getCard().getName());
@@ -121,7 +123,7 @@ public class AuraAttachmentService {
                         // Equipment and Fortification stay on the battlefield unattached when their host leaves
                         unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
                         p.setAttachedTo(null);
-                        gameData.expireFloatingEffectsForUnattachedSource(p.getId());
+                        durationClock.sourceUnattached(gameData, p.getId());
                         anyUnattached = true;
 
                         gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes unattached (attached permanent left the battlefield)."));
@@ -142,7 +144,7 @@ public class AuraAttachmentService {
                         }
                         emitSweptDeparture(gameData, p, playerId, auraOwnerId, attachmentIsMissing);
                         it.remove();
-                        gameData.expireFloatingEffectsForDepartedSource(p.getId());
+                        durationClock.sourceLeft(gameData, p.getId());
                         if (p.isExileIfLeavesBattlefield() && !gameQueryService.hasLostAllAbilities(gameData, p)) {
                             // "If this would leave the battlefield, exile it instead" (Storm Herald's Auras).
                             gameData.addToExile(auraOwnerId, p.getOriginalCard());
@@ -370,7 +372,7 @@ public class AuraAttachmentService {
                         // CR 704.5p — neither Aura, Equipment, nor Fortification may stay attached
                         unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
                         p.setAttachedTo(null);
-                        gameData.expireFloatingEffectsForUnattachedSource(p.getId());
+                        durationClock.sourceUnattached(gameData, p.getId());
                         anyUnattached = true;
                         gameLogService.append(gameData, GameLog.builder().card(p.getCard())
                                 .text(" becomes unattached (it is no longer an Aura, Equipment, or Fortification).").build());
@@ -379,7 +381,7 @@ public class AuraAttachmentService {
                         // CR 704.5n — illegally attached equipment becomes unattached but stays
                         unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
                         p.setAttachedTo(null);
-                        gameData.expireFloatingEffectsForUnattachedSource(p.getId());
+                        durationClock.sourceUnattached(gameData, p.getId());
                         anyUnattached = true;
 
                         gameLogService.append(gameData, GameLog.builder().card(p.getCard()).text(" becomes unattached (" + reason + ").").build());
@@ -388,7 +390,7 @@ public class AuraAttachmentService {
                         p.setCard(p.getOriginalCard());
                         p.setBestow(false);
                         p.setAttachedTo(null);
-                        gameData.expireFloatingEffectsForUnattachedSource(p.getId());
+                        durationClock.sourceUnattached(gameData, p.getId());
                         anyUnattached = true;
                         gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes an enchantment creature (bestow attachment became illegal)."));
                         log.info("Game {} - {} becomes a creature after illegal bestow attachment", gameData.id, p.getCard().getName());
@@ -398,7 +400,7 @@ public class AuraAttachmentService {
                         snapshotDepartingSource(gameData, p, false);
                         emitSweptDeparture(gameData, p, playerId, playerId, false);
                         it.remove();
-                        gameData.expireFloatingEffectsForDepartedSource(p.getId());
+                        durationClock.sourceLeft(gameData, p.getId());
                         boolean wentToGraveyard = graveyardService.addCardToGraveyard(
                                 gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD, playerId, p);
                         if (wentToGraveyard && hadOilCounter) {

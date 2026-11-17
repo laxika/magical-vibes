@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureCardsAttachedToOpposin
 import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Component;
 public class ConjureCardsAttachedToOpposingCreaturesEffectHandler implements NormalEffectHandlerBean {
 
     private final ConjureCardToBattlefieldEffectHandler conjureCardToBattlefieldEffectHandler;
+    private final DurationClock durationClock;
 
     private final GameQueryService gameQueryService;
 
@@ -51,7 +53,7 @@ public class ConjureCardsAttachedToOpposingCreaturesEffectHandler implements Nor
                     gameData, aura.getCard(), entry.getControllerId(), creature)) {
                 continue;
             }
-            gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
+            durationClock.sourceUnattached(gameData, aura.getId());
             aura.setAttachedTo(creature.getId());
             aura.setTimestamp(gameData.nextTimestamp());
             gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, creature.getId()));

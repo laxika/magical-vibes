@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSacrificedPermanentCountersAndAttachEquipmentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ public class PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler
         implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final PermanentCounterSupport permanentCounterSupport;
     private final EquipSupport equipSupport;
     private final PlayerInputService playerInputService;
@@ -100,8 +102,7 @@ public class PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler
         }
 
         UUID oldAttachedTo = equipment.getAttachedTo();
-        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
-        equipSupport.expireAttachedCopyEffects(gameData, equipment);
+        durationClock.sourceUnattached(gameData, equipment.getId());
         equipment.setAttachedTo(target.getId());
         equipment.setTimestamp(gameData.nextTimestamp());
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, target.getId());

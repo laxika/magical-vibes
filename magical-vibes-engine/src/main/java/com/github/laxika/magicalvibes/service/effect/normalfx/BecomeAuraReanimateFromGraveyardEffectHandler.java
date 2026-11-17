@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Component;
 public class BecomeAuraReanimateFromGraveyardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final AuraAttachmentService auraAttachmentService;
@@ -90,7 +92,7 @@ public class BecomeAuraReanimateFromGraveyardEffectHandler implements NormalEffe
             return;
         }
 
-        gameData.expireFloatingEffectsForUnattachedSource(source.getId());
+        durationClock.sourceUnattached(gameData, source.getId());
         source.setAttachedTo(creature.getId());
         source.setChosenPermanentId(creature.getId());
         source.setTimestamp(gameData.nextTimestamp());

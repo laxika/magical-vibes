@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.UntapLockReleaseService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
@@ -70,6 +71,7 @@ import org.springframework.stereotype.Service;
 public class MayMiscHandlerService {
 
     private final InputCompletionService inputCompletionService;
+    private final DurationClock durationClock;
 
     private final GameQueryService gameQueryService;
 
@@ -149,15 +151,12 @@ public class MayMiscHandlerService {
                     : equipSupport.canAttachEquipment(gameData, equipPerm, targetPerm));
             if (canAttach) {
                 UUID oldAttachedTo = equipPerm.getAttachedTo();
-                gameData.expireFloatingEffectsForUnattachedSource(equipPerm.getId());
+                durationClock.sourceUnattached(gameData, equipPerm.getId());
                 equipPerm.setAttachedTo(targetPerm.getId());
                 // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
                 equipPerm.setTimestamp(gameData.nextTimestamp());
                 equipSupport.applySacrificeOnUnattachIfNeeded(
                         gameData, equipPerm, oldAttachedTo, targetPerm.getId());
-                if (!equipPerm.getCard().isAura()) {
-                    equipSupport.expireAttachedCopyEffects(gameData, equipPerm);
-                }
                 equipPerm.setAttachedTo(targetPerm.getId());
                 // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
                 equipPerm.setTimestamp(gameData.nextTimestamp());

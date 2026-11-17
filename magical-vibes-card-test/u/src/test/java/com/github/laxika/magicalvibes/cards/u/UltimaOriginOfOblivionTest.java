@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -52,7 +54,7 @@ class UltimaOriginOfOblivionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         gd.playerBattlefields.get(player1.getId()).remove(ultima);
-        gd.expireFloatingEffectsForDepartedSource(ultima.getId());
+        GameTestEngineContext.get().getBean(DurationClock.class).sourceLeft(gd, ultima.getId());
         gd.playerManaPools.get(player1.getId()).clear();
         forest.untap();
 

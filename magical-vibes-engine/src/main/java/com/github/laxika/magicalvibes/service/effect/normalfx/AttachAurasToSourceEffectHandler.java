@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -43,6 +44,7 @@ import java.util.UUID;
 public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final AuraAttachmentService auraAttachmentService;
@@ -195,7 +197,7 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
             return false;
         }
         if (attachment.getCard().isAura()) {
-            gameData.expireFloatingEffectsForUnattachedSource(attachment.getId());
+            durationClock.sourceUnattached(gameData, attachment.getId());
             attachment.setAttachedTo(host.getId());
             // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
             attachment.setTimestamp(gameData.nextTimestamp());

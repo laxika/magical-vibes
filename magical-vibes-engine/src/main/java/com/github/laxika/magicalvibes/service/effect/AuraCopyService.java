@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component;
  * stay free of concrete-effect knowledge. The copy itself follows the layer-1 model documented in
  * {@code agent-docs/LAYER_SYSTEM.md}: a card swap through {@link PermanentCopierService} applied
  * before the layer pass, paired with a {@code WHILE_ATTACHED} floating effect whose expiry drives
- * the revert.
+ * the revert as the duration clock ends it.
  */
 @Slf4j
 @Component
@@ -117,12 +117,6 @@ public class AuraCopyService {
 
         applyWhileAttachedCopy(gameData, equipment, equipped, chosen,
                 new EquippedCreatureBecomesCopyOfTargetCreatureEffect());
-    }
-
-    /** Expires and reverts copy effects that were tied to an attachment that just ended. */
-    public void expireAttachedCopyEffects(GameData gameData, UUID sourcePermanentId) {
-        revertExpiredCopies(gameData,
-                gameData.expireFloatingEffectsForUnattachedSource(sourcePermanentId));
     }
 
     private void applyWhileAttachedCopy(GameData gameData, Permanent source, Permanent affected,

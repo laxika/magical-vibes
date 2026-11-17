@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroySelfThenRevealUntilCre
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -31,6 +32,7 @@ public class DestroySelfThenRevealUntilCreatureAndAttachGrantingAuraEffectHandle
         implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
+    private final DurationClock durationClock;
     private final RevealUntilCardPredicateRestOnBottomRandomEffectHandler revealHandler;
     private final GameQueryService gameQueryService;
     private final AuraAttachmentService auraAttachmentService;
@@ -81,7 +83,7 @@ public class DestroySelfThenRevealUntilCreatureAndAttachGrantingAuraEffectHandle
             return;
         }
 
-        gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
+        durationClock.sourceUnattached(gameData, aura.getId());
         aura.setAttachedTo(target.getId());
         aura.setTimestamp(gameData.nextTimestamp());
         gameLogService.append(gameData,

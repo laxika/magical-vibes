@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetToSourcePermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
@@ -54,7 +54,7 @@ class PermanentTimestampTest {
     @Mock private AsEntersInteractionService asEntersInteractionService;
     @Mock private EtbTriggerService etbTriggerService;
     @Mock private UnattachTriggerSupport unattachTriggerSupport;
-    @Mock private AuraCopyService auraCopyService;
+    @Mock private DurationClock durationClock;
 
     private BattlefieldEntryService battlefieldEntryService;
     private EquipSupport equipSupport;
@@ -75,7 +75,7 @@ class PermanentTimestampTest {
         equipSupport = new EquipSupport(gameQueryService, gameLogService, permanentRemovalService,
                 predicateEvaluationService, unattachTriggerSupport,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.pipeline.AttachmentTriggers.class),
-                auraCopyService);
+                durationClock);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -129,7 +129,8 @@ class PermanentTimestampTest {
         @DisplayName("An attachment gets a fresh timestamp when it becomes attached")
         void attachRestampsTimestamp() {
             AttachTargetToSourcePermanentEffectHandler handler =
-                    new AttachTargetToSourcePermanentEffectHandler(gameQueryService, gameLogService, equipSupport);
+                    new AttachTargetToSourcePermanentEffectHandler(gameQueryService, gameLogService, equipSupport,
+                            durationClock);
             Permanent equipment = createEquipment("Darksteel Axe");
             Permanent creature = createCreature("Grizzly Bears");
             battlefieldEntryService.putPermanentOntoBattlefield(gd, player1Id, equipment);
@@ -162,6 +163,7 @@ class PermanentTimestampTest {
         void stealKeepsTimestamp() {
             CreatureControlService controlService =
                     new CreatureControlService(gameLogService, gameQueryService);
+            org.springframework.test.util.ReflectionTestUtils.setField(controlService, "durationClock", durationClock);
             Permanent bears = createCreature("Grizzly Bears");
             battlefieldEntryService.putPermanentOntoBattlefield(gd, player2Id, bears);
             long entryStamp = bears.getTimestamp();

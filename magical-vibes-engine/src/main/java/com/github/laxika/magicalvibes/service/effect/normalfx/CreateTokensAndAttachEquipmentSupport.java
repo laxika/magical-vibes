@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.UUID;
 public class CreateTokensAndAttachEquipmentSupport {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final EquipSupport equipSupport;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
@@ -120,7 +122,7 @@ public class CreateTokensAndAttachEquipmentSupport {
             Permanent equipment = equipmentPermanents.get(i);
             Permanent token = tokenPermanents.get(i);
             UUID oldAttachedTo = equipment.getAttachedTo();
-            gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+            durationClock.sourceUnattached(gameData, equipment.getId());
             equipment.setAttachedTo(token.getId());
             equipment.setTimestamp(gameData.nextTimestamp());
             equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, token.getId());

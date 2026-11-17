@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ public class AttachAnyNumberOfControlledAurasAndEquipmentToSourceEffectHandler
         implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final PlayerInputService playerInputService;
     private final AuraAttachmentService auraAttachmentService;
     private final EquipSupport equipSupport;
@@ -107,7 +109,7 @@ public class AttachAnyNumberOfControlledAurasAndEquipmentToSourceEffectHandler
         if (!auraAttachmentService.canEnchant(gameData, aura.getCard(), controllerId, source)) {
             return;
         }
-        gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
+        durationClock.sourceUnattached(gameData, aura.getId());
         aura.setAttachedTo(source.getId());
         aura.setTimestamp(gameData.nextTimestamp());
         gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, source.getId()));

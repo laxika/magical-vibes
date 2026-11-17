@@ -72,7 +72,7 @@ public class DoesntUntapEffectHandler implements NormalEffectHandlerBean {
                         gameData.addFloatingEffect(new FloatingContinuousEffect(
                                 UUID.randomUUID(), entry.getCard().getName(), sourcePermanentId,
                                 entry.getControllerId(), doesntUntap, targetId, null, null,
-                                Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+                                Duration.WHILE_SOURCE_CONTROLLED, 0));
                     }
                 }
             }

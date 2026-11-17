@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentFromTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 public class UnattachEquipmentFromTargetPermanentsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final UnattachTriggerSupport unattachTriggerSupport;
 
@@ -50,7 +52,7 @@ public class UnattachEquipmentFromTargetPermanentsEffectHandler implements Norma
                         && p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
                     unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
                     p.setAttachedTo(null);
-                    gameData.expireFloatingEffectsForUnattachedSource(p.getId());
+                    durationClock.sourceUnattached(gameData, p.getId());
                     
                     gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" unattaches ").card(p.getCard()).text(" from ").card(target.getCard()).text(".").build());
                     log.info("Game {} - {} unattaches {} from {}", gameData.id, entry.getCard().getName(),

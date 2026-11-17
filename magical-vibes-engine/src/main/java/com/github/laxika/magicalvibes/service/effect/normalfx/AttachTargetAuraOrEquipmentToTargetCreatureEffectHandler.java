@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ import java.util.UUID;
 public class AttachTargetAuraOrEquipmentToTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final AuraAttachmentService auraAttachmentService;
     private final GameLogService gameLogService;
     private final EquipSupport equipSupport;
@@ -58,7 +60,7 @@ public class AttachTargetAuraOrEquipmentToTargetCreatureEffectHandler implements
                 return;
             }
 
-            gameData.expireFloatingEffectsForUnattachedSource(attachment.getId());
+            durationClock.sourceUnattached(gameData, attachment.getId());
             attachment.setAttachedTo(destination.getId());
             attachment.setTimestamp(gameData.nextTimestamp());
             gameLogService.append(gameData, GameLog.cardTextCard(attachment.getCard(), " is now attached to ",
@@ -67,7 +69,7 @@ public class AttachTargetAuraOrEquipmentToTargetCreatureEffectHandler implements
         } else if (attachment.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
                 && equipSupport.canAttachEquipment(gameData, attachment, destination)) {
             UUID oldAttachedTo = attachment.getAttachedTo();
-            gameData.expireFloatingEffectsForUnattachedSource(attachment.getId());
+            durationClock.sourceUnattached(gameData, attachment.getId());
             attachment.setAttachedTo(destination.getId());
             attachment.setTimestamp(gameData.nextTimestamp());
             gameLogService.append(gameData, GameLog.cardTextCard(attachment.getCard(), " is now attached to ",

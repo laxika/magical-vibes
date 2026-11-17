@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentAction
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
@@ -167,6 +168,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             triggeredAbilityStackService;
 
     private final CreateTokensAndAttachEquipmentSupport createTokensAndAttachEquipmentSupport;
+    private final DurationClock durationClock;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenEffectHandler createTokenEffectHandler;
 
@@ -595,13 +597,12 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (equipment != null && creature != null
                 && equipSupport.canAttachEquipment(gameData, equipment, creature)) {
             UUID oldAttachedTo = equipment.getAttachedTo();
-            gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+            durationClock.sourceUnattached(gameData, equipment.getId());
             equipment.setAttachedTo(creature.getId());
             // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
             equipment.setTimestamp(gameData.nextTimestamp());
             equipSupport.applySacrificeOnUnattachIfNeeded(
                     gameData, equipment, oldAttachedTo, creature.getId());
-            equipSupport.expireAttachedCopyEffects(gameData, equipment);
             equipment.setAttachedTo(creature.getId());
             // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
             equipment.setTimestamp(gameData.nextTimestamp());
@@ -740,7 +741,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Target permanent no longer exists");
         }
 
-        gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
+        durationClock.sourceUnattached(gameData, aura.getId());
         aura.setAttachedTo(permanentId);
         // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
         aura.setTimestamp(gameData.nextTimestamp());
@@ -766,7 +767,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             if (aura == null) {
                 continue;
             }
-            gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
+            durationClock.sourceUnattached(gameData, aura.getId());
             aura.setAttachedTo(permanentId);
             // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
             aura.setTimestamp(gameData.nextTimestamp());
@@ -811,7 +812,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             }
         }
 
-        gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
+        durationClock.sourceUnattached(gameData, aura.getId());
         aura.setAttachedTo(permanentId);
         // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
         aura.setTimestamp(gameData.nextTimestamp());
@@ -834,7 +835,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             return;
         }
 
-        gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
+        durationClock.sourceUnattached(gameData, aura.getId());
         aura.setAttachedTo(target.getId());
         aura.setTimestamp(gameData.nextTimestamp());
         gameLogService.append(gameData, GameLog.cardTextCard(aura.getCard(), " is now attached to ", target.getCard(), "."));
@@ -3387,8 +3388,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         UUID oldAttachedTo = equipment.getAttachedTo();
-        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
-        equipSupport.expireAttachedCopyEffects(gameData, equipment);
+        durationClock.sourceUnattached(gameData, equipment.getId());
         equipment.setAttachedTo(chosen.getId());
         equipment.setTimestamp(gameData.nextTimestamp());
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, chosen.getId());

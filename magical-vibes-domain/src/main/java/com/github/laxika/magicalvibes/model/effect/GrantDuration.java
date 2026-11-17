@@ -31,8 +31,7 @@ public enum GrantDuration {
      * "for as long as you control [source]" (Aegis Angel). Neither temporary bucket applies: the
      * grant is stamped as an {@code Duration.WHILE_SOURCE_ON_BATTLEFIELD} floating layer-6
      * effect keyed to the source permanent, so it survives cleanup and ends only when the source
-     * leaves the battlefield ({@code GameData.expireFloatingEffectsForDepartedSource}) or its
-     * creator loses control of it ({@code CreatureControlService}).
+     * leaves the battlefield or its creator loses control of it ({@code DurationClock}).
      */
     WHILE_SOURCE_ON_BATTLEFIELD,
 

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseSubtypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 public class LoseSubtypesUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final UnattachTriggerSupport unattachTriggerSupport;
 
@@ -43,7 +45,7 @@ public class LoseSubtypesUntilEndOfTurnEffectHandler implements NormalEffectHand
                 && !GameQueryService.permanentHasSubtype(self, CardSubtype.AURA)) {
             unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, self, self.getAttachedTo());
             self.setAttachedTo(null);
-            gameData.expireFloatingEffectsForUnattachedSource(self.getId());
+            durationClock.sourceUnattached(gameData, self.getId());
             gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " becomes unattached."));
         }
 

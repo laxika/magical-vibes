@@ -24,9 +24,8 @@ import java.util.stream.Collectors;
  * Resolves {@link BoostTargetCreatureWhileSourceTappedEffect}: records a {@code WHILE_SOURCE_TAPPED}
  * floating continuous effect on the target that grants the +P/+T boost for as long as the source
  * permanent remains tapped. The wrapped {@link BuffTargetCreatureIndefinitelyEffect} is read by the
- * CR 613 layered pass in sublayer 7c. The effect is expired when the source becomes untapped
- * ({@code CreatureControlService.onSourceUntapped}) or leaves the battlefield
- * ({@code GameData.expireFloatingEffectsForDepartedSource}).
+ * CR 613 layered pass in sublayer 7c. The duration clock ends the effect when the source becomes
+ * untapped or leaves the battlefield ({@code DurationClock}).
  */
 @Slf4j
 @Component

@@ -189,6 +189,7 @@ import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
@@ -301,6 +302,7 @@ public class AbilityActivationService {
     private final PermanentCounterSupport permanentCounterSupport;
 
     private final EquipSupport equipSupport;
+    private final DurationClock durationClock;
 
     private final RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterFromExiledCardEffectHandler;
 
@@ -5925,7 +5927,7 @@ public class AbilityActivationService {
         PermanentBounceAction bounceAction = this::returnPermanentToHandAsCost;
         if (effect instanceof UnattachEquipmentFromSourceCost cost) {
             return new UnattachEquipmentFromSourceCostHandler(
-                    cost, sourcePermanentId, gameQueryService, equipSupport, gameLogService);
+                    cost, sourcePermanentId, gameQueryService, equipSupport, durationClock, gameLogService);
         }
         if (effect instanceof SacrificeCreatureCost c) return new CreatureSacrificeCostHandler(c, gameQueryService, sacAction, sourcePermanentId);
         if (effect instanceof SacrificePermanentCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction, sourcePermanentId);
@@ -5952,7 +5954,7 @@ public class AbilityActivationService {
         if (effect instanceof BlightXCost c) return new BlightXCostHandler(c, xValue, gameQueryService, amountEvaluationService, gameLogService);
         if (effect instanceof PutCounterOnControlledCreatureCost c) return new PutCounterOnCreatureCostHandler(c, gameQueryService, gameLogService);
         if (effect instanceof UnattachEquipmentFromSourceCost c) return new UnattachEquipmentFromSourceCostHandler(
-                c, sourcePermanentId, gameQueryService, equipSupport, gameLogService);
+                c, sourcePermanentId, gameQueryService, equipSupport, durationClock, gameLogService);
         return null;
     }
 

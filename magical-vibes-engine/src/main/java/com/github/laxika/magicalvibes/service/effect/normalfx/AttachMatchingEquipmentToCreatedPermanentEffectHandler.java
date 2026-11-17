@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import java.util.List;
 public class AttachMatchingEquipmentToCreatedPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final EquipSupport equipSupport;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -84,7 +86,7 @@ public class AttachMatchingEquipmentToCreatedPermanentEffectHandler implements N
             }
 
             var oldAttachedTo = equipment.getAttachedTo();
-            equipSupport.expireAttachedCopyEffects(gameData, equipment);
+            durationClock.sourceUnattached(gameData, equipment.getId());
             equipment.setAttachedTo(host.getId());
             equipment.setTimestamp(gameData.nextTimestamp());
             equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, host.getId());

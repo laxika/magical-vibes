@@ -87,6 +87,7 @@ import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -147,6 +148,9 @@ public class BattlefieldPlacementService {
 
     @Autowired @Lazy
     private CloneService cloneService;
+
+    @Autowired @Lazy
+    private DurationClock durationClock;
 
     @Autowired @Lazy
     private DepartureService departureService;
@@ -2213,7 +2217,7 @@ public class BattlefieldPlacementService {
                 if (!auraAttachmentService.canEnchant(gameData, aura.getCard(), controllerId, permanent)) {
                     continue;
                 }
-                gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
+                durationClock.sourceUnattached(gameData, aura.getId());
                 aura.setAttachedTo(permanent.getId());
                 aura.setTimestamp(gameData.nextTimestamp());
                 gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, permanent.getId()));

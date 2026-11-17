@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RegisterDrawCardsAtNextUpkeepEffectHandler;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
@@ -167,6 +168,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ActivatedAbilityExecutionService {
     private final com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry effectHandlerRegistry;
+    private final DurationClock durationClock;
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.EffectResolutionService> effectResolutionServiceProvider;
 
     /** Performs a paid special action immediately, without activation triggers or a stack entry. */
@@ -943,7 +945,7 @@ public class ActivatedAbilityExecutionService {
             unattachedEquipmentCard = equipmentIsDamageSource ? equipment.getCard() : null;
             equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, equipment.getAttachedTo(), null);
             equipment.setAttachedTo(null);
-            equipSupport.expireAttachedCopyEffects(gameData, equipment);
+            durationClock.sourceUnattached(gameData, equipment.getId());
         }
 
         for (CardEffect effect : abilityEffects) {

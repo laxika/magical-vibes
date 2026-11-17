@@ -449,8 +449,8 @@ A floating effect's **`Duration`** (`model.effect`) is how long it lasts (CR 611
 while and ends for good once it stops holding (CR 611.2b). Every duration is one of its named constants:
 `UNTIL_END_OF_TURN` (CR 514.2), `UNTIL_END_OF_COMBAT`, `UNTIL_YOUR_NEXT_TURN`, `UNTIL_END_OF_YOUR_NEXT_TURN`,
 the upkeep, untap-step, next-end-step, spell-cast and planeswalk ends, `PERMANENT`, the source-linked
-`WHILE_SOURCE_ON_BATTLEFIELD` / `_CONTROLLED` / `_REMAINS` / `_TAPPED` / `_REMAINS_TAPPED`, and `WHILE_ATTACHED` for
-attachment-backed effects. Compare durations with `equals`. `STATIC` marks the effect of a static ability (CR 611.3)
+`WHILE_SOURCE_ON_BATTLEFIELD` / `_CONTROLLED` / `_REMAINS` / `_TAPPED` / `_REMAINS_TAPPED`, `WHILE_ATTACHED` for
+attachment-backed effects and `WHILE_SOURCE_CARD_EXILED` (teach's grant, ended by `GameData.removeFromExile`). Compare durations with `equals`. `STATIC` marks the effect of a static ability (CR 611.3)
 and is not valid for a floating effect.
 
 Only `GameData`'s methods change `floatingEffects`: `addFloatingEffect` (stamps a new timestamp), `putFloatingEffect`
@@ -467,9 +467,15 @@ what the effect kept on its permanent (a copy's card, a tap restriction, mirrore
 (`UNTIL_CONTROLLERS_NEXT_UPKEEP`, `UNTIL_NEXT_END_STEP`), `TapEvent.UntappedDuringUntapStep`
 (`UNTIL_CONTROLLERS_NEXT_UNTAP_STEP`), `SpellEvent.Cast` (the spell-cast ends) and `ActionEvent.Planeswalked`
 (`UNTIL_PLANESWALK`). A test ends a duration the same way: `gd.rulesEvents.occur(new TurnEvent.Cleanup(...))`.
-"For as long as" durations still end at their state changes (`expireFloatingEffectsForDepartedSource`,
-`…ForUnattachedSource`, `expireTappedSourceFloatingEffects`, the control reconciliation). The migration notes below
-name the expiry helpers the clock replaced.
+A "for as long as" duration (CR 611.2b) ends as its condition stops holding, so it ends where the state changes, not
+at a batch: the engine tells the clock `sourceLeft` (`PermanentRemovalService`, the orphaned-Aura sweep),
+`sourceUntapped` (`TapUntapSupport.untapPermanent` via `CreatureControlService.onSourceUntapped`), `sourceUnattached`
+(every site that unattaches or moves an Aura or Equipment, before or after it sets `attachedTo`) and
+`sourceChangedControl` (`CreatureControlService`'s control move). Which effects need their creator to control the
+source is the clock's (`SOURCE_CONTROLLED`, and source-linked control, goad, attack-requirement, lock and grant
+effects). `DurationClock.holds` judges the same conditions on the board for the control reconciliation's safety net.
+Every end, by event or by state, undoes what the effect kept, copies of `AuraCopyService` included; control is
+recomputed by the caller. The migration notes below name the expiry helpers the clock replaced.
 
 ## 7. Classification notes
 

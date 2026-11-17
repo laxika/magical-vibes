@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.g.GripOfPhyresis;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BladeOfSharedSouls.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({BladeOfSharedSouls.class, GripOfPhyresis.class, GrizzlyBears.class, HillGiant.class})
 class BladeOfSharedSoulsTest extends BaseCardTest {
 
     @Test
@@ -88,6 +89,27 @@ class BladeOfSharedSoulsTest extends BaseCardTest {
         assertThat(equipped.getCard().getName()).isEqualTo("Hill Giant");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An effect that attaches Blade of Shared Souls elsewhere ends the copy of the creature it left")
+    void attachingElsewhereByEffectEndsCopy() {
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new BladeOfSharedSouls());
+        Permanent equipped = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new HillGiant());
+        equipAndCopy(0, equipped, target);
+        assertThat(equipped.getCard().getName()).isEqualTo("Hill Giant");
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new GripOfPhyresis()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, List.of(blade.getId()));
+
+        assertThat(blade.getAttachedTo()).isNotEqualTo(equipped.getId());
+        assertThat(equipped.getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, equipped)).isEqualTo(2);
     }
 
     @Test

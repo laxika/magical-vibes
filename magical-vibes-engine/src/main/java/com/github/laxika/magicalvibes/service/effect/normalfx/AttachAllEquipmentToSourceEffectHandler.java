@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachAllEquipmentToSourceEff
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ import java.util.UUID;
 public class AttachAllEquipmentToSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final EquipSupport equipSupport;
 
@@ -54,7 +56,7 @@ public class AttachAllEquipmentToSourceEffectHandler implements NormalEffectHand
             }
 
             UUID oldAttachedTo = equipment.getAttachedTo();
-            equipSupport.expireAttachedCopyEffects(gameData, equipment);
+            durationClock.sourceUnattached(gameData, equipment.getId());
             equipment.setAttachedTo(host.getId());
             equipment.setTimestamp(gameData.nextTimestamp());
             equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, host.getId());

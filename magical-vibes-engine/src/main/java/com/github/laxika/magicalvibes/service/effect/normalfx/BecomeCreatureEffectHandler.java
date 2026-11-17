@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ import java.util.UUID;
 public class BecomeCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final DurationClock durationClock;
     private final GameLogService gameLogService;
     private final UnattachTriggerSupport unattachTriggerSupport;
     private final AmountEvaluationService amountEvaluationService;
@@ -85,7 +87,7 @@ public class BecomeCreatureEffectHandler implements NormalEffectHandlerBean {
         if (losesAttachmentSubtype) {
             unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, source, oldAttachedTo);
             source.setAttachedTo(null);
-            gameData.expireFloatingEffectsForUnattachedSource(source.getId());
+            durationClock.sourceUnattached(gameData, source.getId());
             gameLogService.append(gameData, GameLog.cardThen(copy, " becomes unattached."));
         }
         if (!becomeCreature.protectionFromColors().isEmpty()) {
