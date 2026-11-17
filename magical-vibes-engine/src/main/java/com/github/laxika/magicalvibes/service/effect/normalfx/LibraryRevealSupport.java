@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardCatalog;
+import com.github.laxika.magicalvibes.cards.CatalogEntry;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -34,7 +36,7 @@ public class LibraryRevealSupport {
     private volatile List<String> catalogCreatureNames;
     private volatile List<String> catalogNonBasicLandNames;
     private volatile List<String> catalogAllNames;
-    private volatile java.util.Map<String, List<Card>> catalogSplitCardsByHalfName;
+    private volatile java.util.Map<String, List<OracleData>> catalogSplitCardsByHalfName;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)
@@ -91,16 +93,7 @@ public class LibraryRevealSupport {
         if (cardCatalog != null) {
             List<String> cached = catalogCreatureNames;
             if (cached == null) {
-                Set<String> catalogNames = new TreeSet<>();
-                for (CardSet set : CardSet.values()) {
-                    for (var printing : cardCatalog.getPrintings(set)) {
-                        Card card = printing.createCard();
-                        if (card.getName() != null && card.hasType(CardType.CREATURE) && !card.isToken()) {
-                            catalogNames.addAll(card.getNames());
-                        }
-                    }
-                }
-                cached = List.copyOf(catalogNames);
+                cached = catalogNames(oracle -> oracle.hasType(CardType.CREATURE));
                 catalogCreatureNames = cached;
             }
             names.addAll(cached);
@@ -168,48 +161,37 @@ public class LibraryRevealSupport {
             }
         }
         // A split card's name is one of its halves' names, never both at once (CR 709.4a).
-        for (Card splitCard : catalogSplitCardsByHalfName().getOrDefault(name.toLowerCase(java.util.Locale.ROOT), List.of())) {
+        for (OracleData splitCard : catalogSplitCardsByHalfName().getOrDefault(name.toLowerCase(java.util.Locale.ROOT), List.of())) {
             if (excludedTypes.stream().noneMatch(splitCard::hasType)) {
                 return true;
             }
         }
         // A double-faced card has two names, and either face's name may be chosen.
-        Set<String> checkedFronts = new java.util.HashSet<>();
-        for (CardSet set : CardSet.values()) {
-            for (var printing : cardCatalog.getPrintings(set)) {
-                if (!printing.hasBackFace() || !checkedFronts.add(printing.cardClassName())) {
-                    continue;
-                }
-                Card backFace = printing.createCard().getBackFaceCard();
-                if (backFace != null && name.equalsIgnoreCase(backFace.getName())
-                        && excludedTypes.stream().noneMatch(backFace::hasType)) {
-                    return true;
-                }
+        for (CatalogEntry entry : cardCatalog.getEntries()) {
+            OracleData backFace = entry.backFace();
+            if (backFace != null && name.equalsIgnoreCase(backFace.name())
+                    && excludedTypes.stream().noneMatch(backFace::hasType)) {
+                return true;
             }
         }
         return false;
     }
 
-    /** One catalog card per split card, keyed by each half's lower-cased name. */
-    private java.util.Map<String, List<Card>> catalogSplitCardsByHalfName() {
-        java.util.Map<String, List<Card>> cached = catalogSplitCardsByHalfName;
+    /** One catalog card's oracle data per split card, keyed by each half's lower-cased name. */
+    private java.util.Map<String, List<OracleData>> catalogSplitCardsByHalfName() {
+        java.util.Map<String, List<OracleData>> cached = catalogSplitCardsByHalfName;
         if (cached != null) {
             return cached;
         }
-        java.util.Map<String, List<Card>> byHalfName = new java.util.HashMap<>();
-        Set<String> checkedClasses = new java.util.HashSet<>();
-        for (CardSet set : CardSet.values()) {
-            for (var printing : cardCatalog.getPrintings(set)) {
-                if (!checkedClasses.add(printing.cardClassName())) {
-                    continue;
-                }
-                Card card = printing.createCard();
-                if (card.getNames().size() < 2) {
-                    continue;
-                }
-                for (String half : card.getNames()) {
-                    byHalfName.computeIfAbsent(half.toLowerCase(java.util.Locale.ROOT), key -> new ArrayList<>()).add(card);
-                }
+        java.util.Map<String, List<OracleData>> byHalfName = new java.util.HashMap<>();
+        for (CatalogEntry entry : cardCatalog.getEntries()) {
+            List<String> names = entry.oracle().names();
+            if (names.size() < 2) {
+                continue;
+            }
+            for (String half : names) {
+                byHalfName.computeIfAbsent(half.toLowerCase(java.util.Locale.ROOT), key -> new ArrayList<>())
+                        .add(entry.oracle());
             }
         }
         byHalfName.replaceAll((key, cards) -> List.copyOf(cards));
@@ -226,14 +208,7 @@ public class LibraryRevealSupport {
         Set<String> names = new TreeSet<>(collectCardNamesInGame(gameData,
                 card -> card.hasType(requiredType)));
         if (cardCatalog != null) {
-            for (CardSet set : CardSet.values()) {
-                for (var printing : cardCatalog.getPrintings(set)) {
-                    Card card = printing.createCard();
-                    if (card.getName() != null && card.hasType(requiredType)) {
-                        names.addAll(card.getNames());
-                    }
-                }
-            }
+            names.addAll(catalogNames(oracle -> oracle.hasType(requiredType)));
         }
         return new ArrayList<>(names);
     }
@@ -244,16 +219,7 @@ public class LibraryRevealSupport {
         if (cardCatalog != null) {
             List<String> cached = catalogAllNames;
             if (cached == null) {
-                Set<String> catalogNames = new TreeSet<>();
-                for (CardSet set : CardSet.values()) {
-                    for (var printing : cardCatalog.getPrintings(set)) {
-                        Card card = printing.createCard();
-                        if (card.getName() != null) {
-                            catalogNames.addAll(card.getNames());
-                        }
-                    }
-                }
-                cached = List.copyOf(catalogNames);
+                cached = catalogNames(oracle -> true);
                 catalogAllNames = cached;
             }
             names.addAll(cached);
@@ -268,23 +234,24 @@ public class LibraryRevealSupport {
         if (cardCatalog != null) {
             List<String> cached = catalogNonBasicLandNames;
             if (cached == null) {
-                Set<String> catalogNames = new TreeSet<>();
-                for (CardSet set : CardSet.values()) {
-                    for (var printing : cardCatalog.getPrintings(set)) {
-                        Card card = printing.createCard();
-                        if (card.getName() != null
-                                && !(card.hasType(CardType.LAND)
-                                && card.getSupertypes().contains(CardSupertype.BASIC))) {
-                            catalogNames.addAll(card.getNames());
-                        }
-                    }
-                }
-                cached = List.copyOf(catalogNames);
+                cached = catalogNames(oracle -> !(oracle.hasType(CardType.LAND)
+                        && oracle.supertypes().contains(CardSupertype.BASIC)));
                 catalogNonBasicLandNames = cached;
             }
             names.addAll(cached);
         }
         return new ArrayList<>(names);
+    }
+
+    /** Every name an implemented card whose oracle data matches can be chosen by, sorted. */
+    private List<String> catalogNames(java.util.function.Predicate<OracleData> candidate) {
+        Set<String> names = new TreeSet<>();
+        for (CatalogEntry entry : cardCatalog.getEntries()) {
+            if (candidate.test(entry.oracle())) {
+                names.addAll(entry.oracle().names());
+            }
+        }
+        return List.copyOf(names);
     }
 
     private List<String> collectCardNamesInGame(GameData gameData, java.util.function.Predicate<Card> candidate) {

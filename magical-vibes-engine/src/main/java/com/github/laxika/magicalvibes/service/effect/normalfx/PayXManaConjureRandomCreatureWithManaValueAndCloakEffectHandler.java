@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
-import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -26,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -144,17 +142,7 @@ public class PayXManaConjureRandomCreatureWithManaValueAndCloakEffectHandler
     }
 
     private List<CardPrinting> findCandidates(int manaValue) {
-        Map<String, CardPrinting> uniquePrintings = new LinkedHashMap<>();
-        for (CardSet set : CardSet.values()) {
-            for (CardPrinting printing : cardCatalog.getPrintings(set)) {
-                uniquePrintings.putIfAbsent(printing.cardClassName(), printing);
-            }
-        }
-        return uniquePrintings.values().stream()
-                .filter(printing -> {
-                    Card card = printing.createCard();
-                    return card.hasType(CardType.CREATURE) && card.getManaValue() == manaValue;
-                })
-                .toList();
+        return cardCatalog.findPrintings(oracle ->
+                oracle.hasType(CardType.CREATURE) && oracle.manaValue() == manaValue);
     }
 }

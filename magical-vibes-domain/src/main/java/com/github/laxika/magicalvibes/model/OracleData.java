@@ -55,6 +55,53 @@ public record OracleData(
                 subtypes, cardText, power, toughness, keywords, loyalty, defense, watermark, null);
     }
 
+    /**
+     * The mana value of a card with this data, read without building the card. {@link Card} uses
+     * the same rule, so the two cannot disagree.
+     */
+    public int manaValue() {
+        return manaValue(combinedManaValue, manaCost == null ? null : new ManaCost(manaCost));
+    }
+
+    /** Whether a card with this data has the card type, read without building the card. */
+    public boolean hasType(CardType cardType) {
+        return hasType(type, additionalTypes, cardType);
+    }
+
+    /** The names a card with this data can be chosen by, read without building the card. */
+    public List<String> names() {
+        return names(name);
+    }
+
+    /**
+     * The one naming rule, shared with {@link Card#getNames()} like
+     * {@link #manaValue(Integer, ManaCost)}: each half's name for a split card, otherwise its one
+     * name, and none without a name.
+     */
+    static List<String> names(String name) {
+        if (name == null) {
+            return List.of();
+        }
+        return name.contains(" // ") ? List.of(name.split(" // ")) : List.of(name);
+    }
+
+    /**
+     * The one mana-value rule: a split card's combined value, otherwise that of its mana cost, and
+     * 0 with no mana cost. Takes the characteristics rather than reading this record because
+     * {@link Card} applies it to its own fields, which runtime effects can change.
+     */
+    static int manaValue(Integer combinedManaValue, ManaCost manaCost) {
+        if (combinedManaValue != null) {
+            return combinedManaValue;
+        }
+        return manaCost != null ? manaCost.getManaValue() : 0;
+    }
+
+    /** The one card-type rule, shared with {@link Card} like {@link #manaValue(Integer, ManaCost)}. */
+    static boolean hasType(CardType type, Set<CardType> additionalTypes, CardType cardType) {
+        return type == cardType || additionalTypes.contains(cardType);
+    }
+
     /** This card's data with its split halves attached. */
     public OracleData withSplitHalves(List<OracleData> halves) {
         return new OracleData(name, type, additionalTypes, manaCost, color, colors, colorIdentity,

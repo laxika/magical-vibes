@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.carddata;
 
 import com.github.laxika.magicalvibes.cards.CardCatalog;
+import com.github.laxika.magicalvibes.cards.CatalogEntry;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.CardScanner;
@@ -74,6 +75,12 @@ public class CardRegistry implements CardCatalog {
     private final Map<String, CardPrinting> loadedPrintingsByName = new ConcurrentHashMap<>();
     private volatile Map<CardSet, List<CardPrinting>> printings = Map.of();
     private volatile Map<Class<? extends Card>, CardSet> backFaceSets = Map.of();
+    /**
+     * The back-face class of each double-faced front class built so far, keyed by the front's class
+     * name. Recorded wherever the registry builds a front anyway, so catalog entries can read a back
+     * face's oracle data without building the front again.
+     */
+    private final Map<String, Class<? extends Card>> backFaceClasses = new ConcurrentHashMap<>();
 
     public CardRegistry(OracleLoader loader) {
         this(loader, OracleLoadMode.EAGER);
@@ -174,6 +181,7 @@ public class CardRegistry implements CardCatalog {
                 Card front = constructForRegistration(printing);
                 Card back = front.getBackFaceCard();
                 if (back != null) {
+                    backFaceClasses.put(printing.cardClassName(), back.getClass().asSubclass(Card.class));
                     // Matches registerOracleIfAbsent: a back-face-only class's first set wins.
                     backFaces.putIfAbsent(back.getClass().asSubclass(Card.class), cardSet);
                 }
@@ -188,13 +196,20 @@ public class CardRegistry implements CardCatalog {
             return;
         }
 
-        // A provider may omit a printing from an otherwise available set. Try the remaining
-        // registered printings before leaving the card without its name, type and mana cost.
         // Synthetic test cards have no registered sets and require no oracle data.
-        for (CardSet cardSet : setsFor(cardClass).stream()
+        loadUntilRegistered(cardClass.getSimpleName(), setsFor(cardClass));
+    }
+
+    /**
+     * Loads a class's sets, latest first, until one registers its oracle data. A provider may omit
+     * a printing from an otherwise available set, so the remaining printings are tried before the
+     * class is left without its name, type and mana cost.
+     */
+    private void loadUntilRegistered(String simpleClassName, Collection<CardSet> cardSets) {
+        for (CardSet cardSet : cardSets.stream()
                 .sorted(Comparator.comparingInt(CardSet::ordinal).reversed()).toList()) {
             ensureSetLoaded(cardSet);
-            if (loadedOracleClassNames.contains(cardClass.getSimpleName())) {
+            if (loadedOracleClassNames.contains(simpleClassName)) {
                 return;
             }
         }
@@ -280,6 +295,10 @@ public class CardRegistry implements CardCatalog {
 
             if (loadMode == OracleLoadMode.EAGER || printing.hasBackFace()) {
                 Card tempCard = constructForRegistration(printing);
+                if (tempCard.getBackFaceCard() != null) {
+                    backFaceClasses.put(printing.cardClassName(),
+                            tempCard.getBackFaceCard().getClass().asSubclass(Card.class));
+                }
                 String backFaceClassName = tempCard.getBackFaceClassName();
                 if (backFaceClassName != null && back != null) {
                     // If-absent: the back face may name a standalone card class (prepare spells
@@ -404,6 +423,51 @@ public class CardRegistry implements CardCatalog {
     @Override
     public List<CardPrinting> getPrintings(CardSet set) {
         return printings.getOrDefault(set, List.of());
+    }
+
+    /**
+     * Collects each class's printings from the scan, so finding a class's sets loads no class.
+     * Missing oracle data is resolved the way {@link #resolveMissingOracleData} resolves it for a
+     * card being built, the back face's included.
+     */
+    @Override
+    public List<CatalogEntry> getEntries() {
+        Map<String, CardPrinting> firstPrintings = new LinkedHashMap<>();
+        Map<String, List<CardSet>> setsByClassName = new HashMap<>();
+        for (CardSet cardSet : CardSet.values()) {
+            for (CardPrinting printing : getPrintings(cardSet)) {
+                firstPrintings.putIfAbsent(printing.cardClassName(), printing);
+                setsByClassName.computeIfAbsent(printing.cardClassName(), className -> new ArrayList<>())
+                        .add(cardSet);
+            }
+        }
+
+        List<CatalogEntry> entries = new ArrayList<>();
+        for (CardPrinting printing : firstPrintings.values()) {
+            OracleData oracle = resolvedOracle(
+                    printing.simpleCardClassName(), setsByClassName.get(printing.cardClassName()));
+            if (oracle == null) {
+                continue;
+            }
+            Class<? extends Card> backFaceClass = printing.hasBackFace()
+                    ? backFaceClasses.get(printing.cardClassName())
+                    : null;
+            OracleData backFace = backFaceClass == null
+                    ? null
+                    : resolvedOracle(backFaceClass.getSimpleName(), setsFor(backFaceClass));
+            entries.add(new CatalogEntry(printing, oracle, backFace));
+        }
+        return List.copyOf(entries);
+    }
+
+    /** The oracle data registered for a class, loading it first where building the card would. */
+    private OracleData resolvedOracle(String simpleClassName, Collection<CardSet> cardSets) {
+        OracleData oracle = Card.findRegisteredOracle(simpleClassName);
+        if (oracle == null && loadMode == OracleLoadMode.ON_DEMAND) {
+            loadUntilRegistered(simpleClassName, cardSets);
+            oracle = Card.findRegisteredOracle(simpleClassName);
+        }
+        return oracle;
     }
 
     @Override

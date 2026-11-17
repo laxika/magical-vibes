@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
-import com.github.laxika.magicalvibes.cards.CardSet;
+import com.github.laxika.magicalvibes.cards.CatalogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscordRandomCardCopyEffect;
@@ -69,12 +70,10 @@ public class DiscordRandomCardCopyEffectHandler implements NormalEffectHandlerBe
         }
 
         Map<String, CardPrinting> byName = new LinkedHashMap<>();
-        for (CardSet set : CardSet.values()) {
-            for (CardPrinting printing : cardCatalog.getPrintings(set)) {
-                Card card = printing.createCard();
-                if (card.getName() != null && !card.hasType(CardType.LAND)) {
-                    byName.putIfAbsent(card.getName(), printing);
-                }
+        for (CatalogEntry catalogEntry : cardCatalog.getEntries()) {
+            OracleData oracle = catalogEntry.oracle();
+            if (oracle.name() != null && !oracle.hasType(CardType.LAND)) {
+                byName.putIfAbsent(oracle.name(), catalogEntry.printing());
             }
         }
         cached = List.copyOf(new ArrayList<>(byName.values()));

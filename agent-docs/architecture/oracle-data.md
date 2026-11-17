@@ -36,6 +36,11 @@ A `SetSource` handles provider quirks and builds uninterpreted `RawFace`s; every
 Owner: `FaceOracleMapper`.
 Why: a rule written per provider diverges (a back face inheriting Defender could not attack).
 
+### Catalog-wide searches read oracle data, not built cards
+A random card from the whole catalog, or the card names a prompt offers, comes from `CardCatalog.getEntries()` or `findPrintings(Predicate<OracleData>)`; only a chosen printing is built. Characteristic rules shared with `Card` (`manaValue`, `hasType`, `names`) live on `OracleData`.
+Owner: `CardRegistry.getEntries`.
+Why: building all ~32k card classes to read two fields cost a test JVM about 20 seconds.
+
 ### Card data is wired by the outer context
 `GameEngineConfig` does not import `CardDataConfiguration`; the application and test contexts do, and the headless simulation context reuses the application's beans.
 Owner: `HeadlessSimulationContext`.

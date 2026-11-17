@@ -114,6 +114,14 @@ public class Card {
         oracleRegistry.putIfAbsent(className, data);
     }
 
+        /**
+     * The oracle data {@code Card()} would give a card of this class right now, or null when none is
+     * registered. Never resolves missing data, so it loads no set.
+     */
+    public static OracleData findRegisteredOracle(String className) {
+        return oracleRegistry.get(className);
+    }
+
     public static void clearOracleRegistry() {
         oracleRegistry.clear();
         oracleRegistry.putAll(embeddedOracleRegistry);
@@ -2678,9 +2686,7 @@ public class Card {
     }
 
     public int getManaValue() {
-        if (combinedManaValue != null) return combinedManaValue;
-        ManaCost cost = getParsedManaCost();
-        return cost != null ? cost.getManaValue() : 0;
+        return OracleData.manaValue(combinedManaValue, getParsedManaCost());
     }
 
     /**
@@ -2696,7 +2702,7 @@ public class Card {
     }
 
     public boolean hasType(CardType cardType) {
-        return type == cardType || additionalTypes.contains(cardType);
+        return OracleData.hasType(type, additionalTypes, cardType);
     }
 
     public boolean hasKeyword(Keyword keyword) {
@@ -2715,10 +2721,7 @@ public class Card {
      * (CR 709.4a). The combined "A // B" name is never a name a player can choose.
      */
     public List<String> getNames() {
-        if (name == null) {
-            return List.of();
-        }
-        return name.contains(" // ") ? List.of(name.split(" // ")) : List.of(name);
+        return OracleData.names(name);
     }
 
     /** Whether this card has the chosen name, including either half of a split card (CR 709.4a). */

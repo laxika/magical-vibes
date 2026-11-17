@@ -205,6 +205,11 @@ class CardBrowserServiceTest {
             }
 
             @Override
+            public List<com.github.laxika.magicalvibes.cards.CatalogEntry> getEntries() {
+                return List.of();
+            }
+
+            @Override
             public java.util.Optional<CardPrinting> findLoadedPrintingByName(String cardName) {
                 return java.util.Optional.empty();
             }

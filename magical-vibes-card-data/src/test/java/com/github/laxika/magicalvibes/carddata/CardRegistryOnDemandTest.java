@@ -110,6 +110,59 @@ class CardRegistryOnDemandTest {
     }
 
     @Test
+    void findPrintingsLoadsMissingDataAndGivesEachMatchingClassItsFirstPrinting() {
+        RecordingLoader loader = new RecordingLoader();
+        registry = new CardRegistry(loader, OracleLoadMode.ON_DEMAND);
+        registry.load();
+
+        List<CardPrinting> matches = registry.findPrintings(oracle -> "Pacifism".equals(oracle.name())
+                && oracle.hasType(CardType.ENCHANTMENT) && oracle.manaValue() == 2);
+
+        // Nothing was loaded before the call, so a match proves the call loaded the data. Which set
+        // gave Pacifism its data depends on which other class's load reached a Pacifism set first.
+        String firstSet = setsPrinting(Pacifism.class).getFirst().getCode();
+        assertThat(matches).singleElement().satisfies(printing -> {
+            assertThat(printing.cardClassName()).isEqualTo(Pacifism.class.getName());
+            assertThat(printing.setCode()).isEqualTo(firstSet);
+        });
+        assertThat(loader.loadedSetCodes).doesNotHaveDuplicates();
+    }
+
+    @Test
+    void catalogEntryCarriesTheBackFaceDataWithoutBuildingTheFront() {
+        RecordingLoader loader = new RecordingLoader();
+        registry = new CardRegistry(loader, OracleLoadMode.ON_DEMAND);
+        registry.load();
+
+        assertThat(registry.getEntries())
+                .filteredOn(entry -> entry.printing().cardClassName().equals(HuntmasterOfTheFells.class.getName()))
+                .singleElement()
+                .satisfies(entry -> {
+                    assertThat(entry.oracle().name()).isEqualTo("HuntmasterOfTheFells");
+                    assertThat(entry.backFace().name()).isEqualTo("Ravager of the Fells");
+                });
+        assertThat(registry.getEntries())
+                .filteredOn(entry -> entry.printing().cardClassName().equals(Pacifism.class.getName()))
+                .singleElement()
+                .satisfies(entry -> assertThat(entry.backFace()).isNull());
+    }
+
+    @Test
+    void findPrintingsInExplicitModeMatchesOnlyClassesWithLoadedData() {
+        RecordingLoader loader = new RecordingLoader();
+        registry = new CardRegistry(loader, OracleLoadMode.EXPLICIT);
+        registry.load();
+        registry.ensureCardDataLoaded(Pacifism.class);
+        List<String> loadedBefore = List.copyOf(loader.loadedSetCodes);
+        assertThat(loadedBefore).noneMatch(setCode ->
+                CardScanner.collectorNumberOf(CurseclothWrappings.class, setCode).isPresent());
+
+        assertThat(registry.findPrintings(oracle -> "Pacifism".equals(oracle.name()))).hasSize(1);
+        assertThat(registry.findPrintings(oracle -> "CurseclothWrappings".equals(oracle.name()))).isEmpty();
+        assertThat(loader.loadedSetCodes).isEqualTo(loadedBefore);
+    }
+
+    @Test
     void missingPreferredPrintingFallsBackToAnotherRegisteredSet() {
         List<CardSet> cardSets = Arrays.stream(CardSet.values())
                 .filter(set -> CardScanner.collectorNumberOf(Pacifism.class, set.getCode()).isPresent())
@@ -198,6 +251,12 @@ class CardRegistryOnDemandTest {
 
         assertThat(ravager.getName()).isEqualTo("Ravager of the Fells");
         assertThat(loader.loadedSetCodes).containsExactly(frontSet, frontSet);
+    }
+
+    private static List<CardSet> setsPrinting(Class<? extends Card> cardClass) {
+        return Arrays.stream(CardSet.values())
+                .filter(set -> CardScanner.collectorNumberOf(cardClass, set.getCode()).isPresent())
+                .toList();
     }
 
     /**

@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.OracleData;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * Read access to what is known about each {@link CardSet}: which printings are implemented, and
@@ -41,6 +43,26 @@ public interface CardCatalog {
             return null;
         }
         return findByCollectorNumber(set, collectorNumber).createCard();
+    }
+
+    /**
+     * Every implemented card class once, by its first printing in {@link CardSet} order, with the
+     * oracle data a card built from that printing would carry. No card is built. Random-card effects
+     * and card-name prompts search the whole catalog this way, because building every card to read
+     * its characteristics loads every card class.
+     *
+     * <p>A class whose oracle data is not registered yet has it loaded first, from the set a built
+     * card would load it from, wherever the load mode lets construction do that. A class without
+     * oracle data has no entry.
+     */
+    List<CatalogEntry> getEntries();
+
+    /** The printings of the {@link #getEntries() entries} whose oracle data matches. */
+    default List<CardPrinting> findPrintings(Predicate<OracleData> predicate) {
+        return getEntries().stream()
+                .filter(entry -> predicate.test(entry.oracle()))
+                .map(CatalogEntry::printing)
+                .toList();
     }
 
     /**
