@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.library;
 
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardGrantFreePlayUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
@@ -18,7 +19,8 @@ public final class LibraryShuffleHelper {
 
     public static void shuffleLibrary(GameData gameData, UUID playerId) {
         gameData.restoreBombardmentLibraryCards(playerId);
-        gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.remove(playerId);
+        gameData.floatingEffectsOnPlayer(playerId, RevealTopCardGrantFreePlayUntilEndOfTurnEffect.class)
+                .forEach(gameData::endFloatingEffect);
         gameData.pendingCommanderZoneMoves.replaceAll(move -> move.ownerId().equals(playerId)
                 && move.destination() == com.github.laxika.magicalvibes.model.Zone.LIBRARY ? move.shuffled() : move);
         List<Card> deck = gameData.playerDecks.get(playerId);

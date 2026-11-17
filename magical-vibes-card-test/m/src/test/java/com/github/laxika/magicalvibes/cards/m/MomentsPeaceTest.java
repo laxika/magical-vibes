@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.f.Firebolt;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -27,7 +28,7 @@ class MomentsPeaceTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(harness.getGameData().preventAllCombatDamage).isTrue();
+        assertThat(harness.getGameData().hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
     }
 
     @Test
@@ -62,12 +63,12 @@ class MomentsPeaceTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.preventAllCombatDamage).isFalse();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isFalse();
     }
 
     @Test
@@ -81,7 +82,7 @@ class MomentsPeaceTest extends BaseCardTest {
         harness.castAndResolveFlashback(player1, 0, null);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(graveyardCard -> graveyardCard.getId().equals(card.getId()));
         assertThat(gd.getPlayerExiledCards(player1.getId()))

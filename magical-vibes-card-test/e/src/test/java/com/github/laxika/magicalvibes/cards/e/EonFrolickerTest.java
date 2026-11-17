@@ -29,8 +29,6 @@ class EonFrolickerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.extraTurns).containsExactly(player2.getId());
-        assertThat(gd.playerProtectionFromPlayerIdsUntilNextTurn.get(player1.getId()))
-                .containsExactly(player2.getId());
         assertThat(gqs.playerHasProtectionFromOpponents(gd, player1.getId(), player2.getId())).isTrue();
         assertThat(gqs.hasProtectionFromOpponents(gd, jace, player2.getId())).isTrue();
 
@@ -61,8 +59,7 @@ class EonFrolickerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
-        assertThat(gd.playerProtectionFromPlayerIdsUntilNextTurn)
-                .doesNotContainKey(player1.getId());
+        assertThat(gqs.playerHasProtectionFromOpponents(gd, player1.getId(), player2.getId())).isFalse();
     }
 
     @Test
@@ -72,7 +69,7 @@ class EonFrolickerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.extraTurns).isEmpty();
-        assertThat(gd.playerProtectionFromPlayerIdsUntilNextTurn).doesNotContainKey(player1.getId());
+        assertThat(gqs.playerHasProtectionFromOpponents(gd, player1.getId(), player2.getId())).isFalse();
     }
 
     @Test

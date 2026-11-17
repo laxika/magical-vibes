@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.n.NestInvader;
 import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
 import com.github.laxika.magicalvibes.cards.v.Vendetta;
@@ -106,7 +108,7 @@ class WrapInFlamesTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new NestInvader());
         harness.setHand(player1, List.of(new WrapInFlames()));
         harness.addMana(player1, ManaColor.RED, 4);
-        gd.preventAllDamageToAllCreatures = true;
+        Prevention.add(gd, PreventDamageEffect.allToCreatures());
 
         harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
 

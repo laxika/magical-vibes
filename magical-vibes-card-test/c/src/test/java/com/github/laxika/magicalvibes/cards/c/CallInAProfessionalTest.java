@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -43,7 +44,7 @@ class CallInAProfessionalTest extends BaseCardTest {
         castCallInAProfessional(player2.getId());
 
         harness.assertLife(player2, 17);
-        assertThat(gd.playersCantGainLifeThisTurn).isTrue();
+        assertThat(gd.hasFloatingEffectOnPlayer(null, PlayersCantGainLifeThisTurnEffect.class)).isTrue();
         assertThat(gqs.canPlayerGainLife(gd, player1.getId())).isFalse();
         assertThat(gqs.canPlayerGainLife(gd, player2.getId())).isFalse();
         assertThat(gqs.isDamagePreventable(gd)).isFalse();

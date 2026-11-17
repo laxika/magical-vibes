@@ -615,7 +615,7 @@ public class SplitCardCastSupport {
         }
         gameData.stack.add(entry);
         if (cast.restrictAdditionalSpellsThisTurn()) {
-            gameData.preventAdditionalSpellCastsThisTurn(controllerId);
+            gameData.preventAdditionalSpellCastsThisTurn(card.getName(), controllerId);
         }
         if (cast.sourceZone() == Zone.GRAVEYARD) {
             copySupport.copyGraveyardCastSpell(gameData, entry, card, controllerId, cast.copyCount());

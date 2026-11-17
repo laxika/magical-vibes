@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.v.VeteranSwordsmith;
@@ -89,7 +90,7 @@ class KnightCaptainOfEosTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(swordsmith);
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
     }
 
     @Test

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.AskedLifeLossDeparture;
 import com.github.laxika.magicalvibes.model.replacement.DamagePortion;
@@ -882,9 +883,9 @@ public class DamageSupport {
         return gameQueryService.isDamagePreventable(gameData)
                 && sourceCard != null && sourceCard.hasType(CardType.CREATURE)
                 && (snapshot == null || !gameQueryService.damageCantBePreventedFromSource(gameData, snapshot))
-                && (gameData.preventAllDamageByCreatures
-                || gameData.playersWithDamageFromOpponentCreaturesPrevented.stream()
-                        .anyMatch(playerId -> !playerId.equals(entry.getControllerId())));
+                && (gameData.hasPrevention(PreventionScope.ALL_BY_CREATURES)
+                || gameData.preventionEffects(PreventionScope.ALL_BY_OPPONENT_CREATURES).stream()
+                        .anyMatch(prevention -> !prevention.affectedPlayerId().equals(entry.getControllerId())));
     }
 
     public void applyGlobalCreaturePreventionLifeGain(GameData gameData, StackEntry entry, int damage,
@@ -945,7 +946,7 @@ public class DamageSupport {
                 return 0;
             }
             if (isDamageSourcePreventedWithLog(gameData, entry)) return 0;
-            // dealDamageToPlayer handles per-permanent prevention (permanentsPreventedFromDealingDamage)
+            // dealDamageToPlayer handles per-permanent prevention (floating prevention effects on the source)
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
             if (cantRegenerate) {
                 markCreaturesDamagedSinceAsUnregenerable(gameData, damageBefore);

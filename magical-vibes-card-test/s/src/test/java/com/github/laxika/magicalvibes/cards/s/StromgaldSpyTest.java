@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishRanger;
@@ -61,7 +62,7 @@ class StromgaldSpyTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isNull();
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
         assertThat(player1SeesOpponentHand()).isTrue();
         assertThat(player2SeesOpponentHand()).isFalse();
 
@@ -98,7 +99,7 @@ class StromgaldSpyTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.interaction.activeInteraction()).isNull();
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
         assertThat(player1SeesOpponentHand()).isFalse();
 
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);

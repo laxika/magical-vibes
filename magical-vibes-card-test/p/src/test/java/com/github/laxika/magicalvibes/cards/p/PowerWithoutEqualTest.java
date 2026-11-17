@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -29,7 +32,8 @@ class PowerWithoutEqualTest extends BaseCardTest {
         resolveScheme();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(drawn);
-        assertThat(gd.playersWithNoMaximumHandSizeUntilNextTurn).contains(player1.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).contains(Duration.UNTIL_YOUR_NEXT_TURN);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

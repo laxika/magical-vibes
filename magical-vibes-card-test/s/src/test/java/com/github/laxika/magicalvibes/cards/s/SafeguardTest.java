@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.f.FightingDrake;
 import com.github.laxika.magicalvibes.cards.f.Fireslinger;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -41,8 +42,8 @@ class SafeguardTest extends BaseCardTest {
 
         activateSafeguard(attacker);
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
-        assertThat(gd.permanentsPreventedFromDealingDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).doesNotContain(attacker.getId());
     }
 
     @Test
@@ -52,17 +53,17 @@ class SafeguardTest extends BaseCardTest {
         Permanent attacker = addAttacker(player2, new FightingDrake());
 
         activateSafeguard(attacker);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
+        assertThat(Prevention.preventedFromDealingCombat(gd)).isEmpty();
 
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());

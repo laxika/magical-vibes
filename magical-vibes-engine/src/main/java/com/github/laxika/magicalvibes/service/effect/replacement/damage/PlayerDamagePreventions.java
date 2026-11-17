@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -44,7 +45,7 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                 preventAll("SourcePrevented", "Prevent the damage from this source",
                         ctx -> !ctx.combat() && gameQueryService.isDamageFromStackEntryPrevented(ctx.gameData(), ctx.entry())),
                 preventAll("AllCombatDamagePrevented", "Prevent all combat damage",
-                        ctx -> ctx.combat() && ctx.gameData().preventAllCombatDamage
+                        ctx -> ctx.combat() && ctx.gameData().hasPrevention(PreventionScope.ALL_COMBAT)
                                 && preventable(ctx)).whole(),
                 pure("Flying", PREVENTION,
                         ctx -> preventable(ctx)
@@ -103,7 +104,8 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                         }),
                 preventAll("AttackerDamagePrevented", "Prevent damage from attacking creatures",
                         ctx -> ctx.combat()
-                                ? prevention.isCombatDamageFromAttackersPreventedForPlayer(ctx.gameData(), ctx.playerId())
+                                ? prevention.isCombatDamageFromAttackersPreventedForPlayer(ctx.gameData(),
+                                        ctx.playerId())
                                 && ctx.sourcePermanent() != null && ctx.sourcePermanent().isAttacking()
                                 : prevention.isNoncombatDamageFromAttackerPreventedForPlayer(
                                 ctx.gameData(), ctx.playerId(), ctx.damageSourceId())),
@@ -114,7 +116,8 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                                 : gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(
                                 ctx.gameData(), ctx.playerId(), ctx.entry())),
                 effect("CreatureDamagePrevented", PREVENTION,
-                        ctx -> damageSupport.getObject().isGlobalCreaturePreventionForEntry(ctx.gameData(), ctx.entry()),
+                        ctx -> damageSupport.getObject().isGlobalCreaturePreventionForEntry(ctx.gameData(),
+                                ctx.entry()),
                         ctx -> "Prevent damage dealt by creatures",
                         this::preventedWithCreatureLifeGain),
                 preventAll("SourcePreventedFromDealingDamage", "Prevent all damage the source would deal",
@@ -176,7 +179,8 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                             return ctx.event().withAmount(remaining);
                         }),
                 effect("ChannelHarm", PREVENTION,
-                        ctx -> prevention.hasChannelHarmShield(ctx.gameData(), ctx.playerId(), ctx.sourceControllerId()),
+                        ctx -> prevention.hasChannelHarmShield(ctx.gameData(), ctx.playerId(),
+                                ctx.sourceControllerId()),
                         ctx -> "Channel Harm: prevent the damage",
                         ctx -> ctx.event().withAmount(prevention.applyChannelHarmPrevention(
                                 ctx.gameData(), ctx.playerId(), ctx.sourceControllerId(), ctx.amount()))),
@@ -205,16 +209,19 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                         ctx -> ctx.event().withAmount(prevention.applyCombatDamagePreventionTokenShield(
                                 ctx.gameData(), ctx.playerId(), ctx.amount()))).whole(),
                 playerFlag("AllCombatDamageToPlayersPrevented", "Prevent all combat damage to players",
-                        ctx -> ctx.combat() && ctx.gameData().preventAllCombatDamageToPlayers),
+                        ctx -> ctx.combat() && ctx.gameData().hasPrevention(PreventionScope.ALL_COMBAT_TO_PLAYERS)),
                 playerFlag("AllCombatDamageToPlayerPrevented", "Prevent all combat damage to you and your planeswalkers",
-                        ctx -> ctx.combat() && ctx.gameData().playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented
-                                .contains(ctx.playerId())),
+                        ctx -> ctx.combat() && ctx.gameData().hasPreventionOnPlayer(ctx.playerId(),
+                                PreventionScope.ALL_COMBAT_TO_CONTROLLER_AND_PLANESWALKERS)),
                 playerFlag("AllDamagePrevented", "Prevent all damage dealt to you",
-                        ctx -> ctx.gameData().playersWithAllDamagePrevented.contains(ctx.playerId())),
+                        ctx -> ctx.gameData().hasPreventionOnPlayer(ctx.playerId(),
+                                PreventionScope.ALL_TO_CONTROLLER_AND_PERMANENTS,
+                                PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES)),
                 playerFlag("AllPlayerDamagePrevented", "Prevent all damage dealt to you this turn",
-                        ctx -> ctx.gameData().playersWithAllPlayerDamagePrevented.contains(ctx.playerId())),
+                        ctx -> ctx.gameData().hasPreventionOnPlayer(ctx.playerId(), PreventionScope.ALL_TO_CONTROLLER)),
                 playerFlag("AllPlayerDamagePreventedUntilNextTurn", "Prevent all damage dealt to you until your next turn",
-                        ctx -> ctx.gameData().playersWithAllPlayerDamagePreventedUntilNextTurn.contains(ctx.playerId())),
+                        ctx -> ctx.gameData().hasPreventionOnPlayer(ctx.playerId(),
+                                PreventionScope.ALL_TO_CONTROLLER_UNTIL_NEXT_TURN)),
                 pure("HalfDamagePrevention", PREVENTION,
                         ctx -> preventable(ctx) && prevention.hasHalfDamagePrevention(ctx.gameData(), ctx.playerId()),
                         ctx -> "Prevent half the damage",
@@ -232,13 +239,15 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                         ctx -> ctx.event().withAmount(prevention.applyGlobalPreventionShield(
                                 ctx.gameData(), ctx.amount(), ctx.combat()))).whole(),
                 effect("PreventionLifeGainShield", PREVENTION,
-                        ctx -> preventable(ctx) && prevention.hasDamagePreventionLifeGainShield(ctx.gameData(), ctx.playerId()),
+                        ctx -> preventable(ctx) && prevention.hasDamagePreventionLifeGainShield(ctx.gameData(),
+                                ctx.playerId()),
                         ctx -> "Prevent damage and gain life",
                         ctx -> ctx.event().withAmount(prevention.applyDamagePreventionLifeGainShield(
                                 ctx.gameData(), ctx.playerId(), ctx.amount(), ctx.combat()))).whole(),
                 effect("PreventNextCombatDamageShield", PREVENTION,
                         ctx -> ctx.combat() && preventable(ctx)
-                                && ctx.gameData().playerCombatDamagePreventionShields.getOrDefault(ctx.playerId(), 0) > 0,
+                                && ctx.gameData().playerCombatDamagePreventionShields.getOrDefault(ctx.playerId(),
+                                        0) > 0,
                         ctx -> "Prevent the next " + ctx.gameData().playerCombatDamagePreventionShields.get(ctx.playerId())
                                 + " combat damage to you",
                         ctx -> ctx.event().withAmount(prevention.applyPlayerCombatDamagePreventionShield(

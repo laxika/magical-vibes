@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.k.KithkinGreatheart;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -39,7 +40,7 @@ class PollenLullabyTest extends BaseCardTest {
 
         castPollenLullaby();
 
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
     }
 
     @Test

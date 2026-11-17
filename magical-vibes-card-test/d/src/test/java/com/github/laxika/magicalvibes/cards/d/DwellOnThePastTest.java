@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardGrantFreePlayUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.cards.g.GroundSeal;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -99,7 +102,8 @@ class DwellOnThePastTest extends BaseCardTest {
     void emptyGraveyardStillShufflesLibrary() {
         harness.setGraveyard(player2, List.of());
         int librarySizeBefore = gd.playerDecks.get(player2.getId()).size();
-        gd.libraryTopCardFreePlayPermissionsUntilEndOfTurn.put(player2.getId(), UUID.randomUUID());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                new RevealTopCardGrantFreePlayUntilEndOfTurnEffect(UUID.randomUUID()), player2.getId(), Duration.UNTIL_END_OF_TURN));
 
         castDwell(player2.getId());
 
@@ -108,7 +112,7 @@ class DwellOnThePastTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySizeBefore);
-        assertThat(gd.libraryTopCardFreePlayPermissionsUntilEndOfTurn).doesNotContainKey(player2.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player2.getId(), RevealTopCardGrantFreePlayUntilEndOfTurnEffect.class)).isFalse();
         harness.assertInGraveyard(player1, "Dwell on the Past");
     }
 
@@ -139,7 +143,8 @@ class DwellOnThePastTest extends BaseCardTest {
         Card removed = new DwellOnThePast();
         harness.setGraveyard(player2, List.of(removed));
         int librarySizeBefore = gd.playerDecks.get(player2.getId()).size();
-        gd.libraryTopCardFreePlayPermissionsUntilEndOfTurn.put(player2.getId(), UUID.randomUUID());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                new RevealTopCardGrantFreePlayUntilEndOfTurnEffect(UUID.randomUUID()), player2.getId(), Duration.UNTIL_END_OF_TURN));
 
         castDwell(player2.getId());
         harness.handleMultipleCardsChosen(player1, List.of(removed.getId()));
@@ -149,7 +154,7 @@ class DwellOnThePastTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySizeBefore).doesNotContain(removed);
         assertThat(gd.playerHands.get(player2.getId())).contains(removed);
-        assertThat(gd.libraryTopCardFreePlayPermissionsUntilEndOfTurn).doesNotContainKey(player2.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player2.getId(), RevealTopCardGrantFreePlayUntilEndOfTurnEffect.class)).isFalse();
         harness.assertInGraveyard(player1, "Dwell on the Past");
     }
 
@@ -160,7 +165,8 @@ class DwellOnThePastTest extends BaseCardTest {
         Card target = new DwellOnThePast();
         harness.setGraveyard(player2, List.of(target));
         int librarySizeBefore = gd.playerDecks.get(player2.getId()).size();
-        gd.libraryTopCardFreePlayPermissionsUntilEndOfTurn.put(player2.getId(), UUID.randomUUID());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                new RevealTopCardGrantFreePlayUntilEndOfTurnEffect(UUID.randomUUID()), player2.getId(), Duration.UNTIL_END_OF_TURN));
 
         castDwell(player2.getId());
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
@@ -169,7 +175,7 @@ class DwellOnThePastTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySizeBefore).doesNotContain(target);
-        assertThat(gd.libraryTopCardFreePlayPermissionsUntilEndOfTurn).doesNotContainKey(player2.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player2.getId(), RevealTopCardGrantFreePlayUntilEndOfTurnEffect.class)).isFalse();
         harness.assertInGraveyard(player1, "Dwell on the Past");
     }
 }

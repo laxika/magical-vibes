@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.d.DwarvenVigilantes;
 import com.github.laxika.magicalvibes.cards.j.JungleBasin;
 import com.github.laxika.magicalvibes.cards.p.PantherWarriors;
@@ -56,8 +57,8 @@ class ResistanceFighterTest extends BaseCardTest {
 
         activateFighter(attacker);
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
-        assertThat(gd.permanentsPreventedFromDealingDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).doesNotContain(attacker.getId());
     }
 
     @Test
@@ -86,14 +87,14 @@ class ResistanceFighterTest extends BaseCardTest {
         Permanent attacker = addAttacker(player2, new Warthog());
 
         activateFighter(attacker);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
+        assertThat(Prevention.preventedFromDealingCombat(gd)).isEmpty();
     }
 
     @Test

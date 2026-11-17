@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -50,7 +51,7 @@ class ZealotIlVecTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(victim.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
 
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -67,7 +68,7 @@ class ZealotIlVecTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(victim.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
     }
 
     @Test
@@ -80,7 +81,7 @@ class ZealotIlVecTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(victim.getMarkedDamage()).isZero();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
     }
 
     @Test
@@ -97,7 +98,7 @@ class ZealotIlVecTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
     }
 
     @Test
@@ -109,13 +110,13 @@ class ZealotIlVecTest extends BaseCardTest {
         advanceToUnblockedMay(victim);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
+        assertThat(Prevention.preventedFromDealingCombat(gd)).isEmpty();
     }
 
     @Test

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
 import com.github.laxika.magicalvibes.cards.a.AncestralVision;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.d.Delay;
@@ -104,7 +107,8 @@ class TalonGatesTest extends BaseCardTest {
     void specialActionIsAllowedWhenActivatedAbilitiesAreProhibited() {
         GrizzlyBears bear = new GrizzlyBears();
         harness.setHand(player1, List.of(bear));
-        gd.playersCantActivateAbilitiesThisTurn.add(player1.getId());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                new SenTripletsUpkeepEffect(), player1.getId(), Duration.UNTIL_END_OF_TURN));
 
         gs.activatePlanarAbility(gd, player1, source.getId(), 0, null, null, null);
         harness.handleCardChosen(player1, 0);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.m.MoriokReplica;
@@ -32,7 +33,7 @@ class SoulParryTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(bear.getId()));
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(bear.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(bear.getId());
     }
 
     @Test
@@ -45,7 +46,7 @@ class SoulParryTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(bear1.getId(), bear2.getId()));
 
-        assertThat(gd.permanentsPreventedFromDealingDamage)
+        assertThat(Prevention.preventedFromDealing(gd))
                 .contains(bear1.getId(), bear2.getId());
     }
 
@@ -106,7 +107,7 @@ class SoulParryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only the remaining target should be prevented
-        assertThat(gd.permanentsPreventedFromDealingDamage)
+        assertThat(Prevention.preventedFromDealing(gd))
                 .doesNotContain(bear1.getId())
                 .contains(bear2.getId());
     }
@@ -127,7 +128,7 @@ class SoulParryTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.permanentsPreventedFromDealingDamage).isEmpty();
+        assertThat(Prevention.preventedFromDealing(gd)).isEmpty();
     }
 
     @Test
@@ -139,14 +140,14 @@ class SoulParryTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(bear.getId()));
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(bear.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(bear.getId());
 
         // Advance past end of turn
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).isEmpty();
+        assertThat(Prevention.preventedFromDealing(gd)).isEmpty();
     }
 
     @Test

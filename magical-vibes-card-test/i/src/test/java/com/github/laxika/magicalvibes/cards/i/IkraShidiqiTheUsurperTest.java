@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SakuraTribeElder;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -99,7 +101,7 @@ class IkraShidiqiTheUsurperTest extends BaseCardTest {
     void preventedDamageDoesNotTrigger() {
         Permanent ikra = addCreatureReady(player1, new IkraShidiqiTheUsurper());
         ikra.setAttacking(true);
-        gd.preventAllCombatDamageToPlayers = true;
+        Prevention.add(gd, PreventDamageEffect.allCombatToPlayers());
 
         resolveCombat();
         resolveAllTriggers();

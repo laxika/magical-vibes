@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.cards.r.RealityTwist;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.MayTapLandsYouDontControlForSpellsUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -38,7 +40,8 @@ class PiracyTest extends BaseCardTest {
     void grantsForeignTapPermission() {
         castPiracy();
 
-        assertThat(gd.mayTapLandsForSpellsUntilEndOfTurn).contains(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(),
+                MayTapLandsYouDontControlForSpellsUntilEndOfTurnEffect.class)).isTrue();
     }
 
     @Test
@@ -183,10 +186,13 @@ class PiracyTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         castPiracy();
 
-        assertThat(gd.mayTapLandsForSpellsUntilEndOfTurn).isNotEmpty();
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(),
+                MayTapLandsYouDontControlForSpellsUntilEndOfTurnEffect.class)).isTrue();
 
-        harness.inMutationScope(() ->
-                GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
+        harness.inMutationScope(() -> {
+            GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+            gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
+        });
 
         assertThatThrownBy(() -> harness.tapForeignLandForMana(player1, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);

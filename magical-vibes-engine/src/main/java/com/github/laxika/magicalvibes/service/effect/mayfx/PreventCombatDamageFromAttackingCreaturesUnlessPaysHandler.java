@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PreventionSupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -60,7 +62,8 @@ public class PreventCombatDamageFromAttackingCreaturesUnlessPaysHandler implemen
             UUID attackerId = ability.targetCardId();
             Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
             if (attacker != null) {
-                gameData.creaturesPreventedFromDealingCombatDamage.add(attackerId);
+                PreventionSupport.preventCombatDamageDealtBy(gameData, ability.sourceCard().getName(),
+                        ability.sourcePermanentId(), ability.controllerId(), attackerId, Duration.UNTIL_END_OF_TURN);
                 gameLogService.append(gameData, GameLog.builder()
                         .text("All combat damage ")
                         .card(attacker.getCard())

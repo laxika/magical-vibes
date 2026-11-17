@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromNamedPlanesToControlledPermanentsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
@@ -29,9 +31,8 @@ public class PreventDamageFromNamedPlanesToControlledPermanentsEffectHandler imp
             return;
         }
 
-        gameData.playersWithDamageFromNamedPlanesPrevented
-                .computeIfAbsent(controllerId, ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
-                .add(e.planeName());
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), controllerId, e, controllerId, Duration.PERMANENT));
         gameLogService.append(gameData, GameLog.text(
                 "All damage that planes named " + e.planeName()
                         + " would deal to permanents controlled by "

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantActivatePlaneswalkerLoyaltyAbilitiesThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -88,6 +91,8 @@ import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryNinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayLifeForColorlessManaUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MayTapLandsYouDontControlForSpellsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
@@ -830,7 +835,7 @@ public class AbilityActivationService {
 
     /**
      * Taps a land the player does not control for mana (Piracy). Legal only while the player is marked in
-     * {@code gameData.mayTapLandsForSpellsUntilEndOfTurn}. The produced mana is routed into the player's
+     * floating {@link MayTapLandsYouDontControlForSpellsUntilEndOfTurnEffect}. The produced mana is routed into the player's
      * spell-only bucket so it can be spent only to cast spells.
      *
      * @param gameData     the current game state
@@ -841,7 +846,7 @@ public class AbilityActivationService {
      */
     public void tapForeignLandForMana(GameData gameData, Player player, UUID permanentId) {
         UUID playerId = player.getId();
-        if (!gameData.mayTapLandsForSpellsUntilEndOfTurn.contains(playerId)) {
+        if (!gameData.hasFloatingEffectOnPlayer(playerId, MayTapLandsYouDontControlForSpellsUntilEndOfTurnEffect.class)) {
             throw new IllegalStateException("You may not tap lands you don't control");
         }
 
@@ -983,7 +988,7 @@ public class AbilityActivationService {
     /**
      * Pays 1 life to add {@code {C}} to the player's mana pool (Channel). This is a mana ability special
      * action, legal only while the player is marked in
-     * {@code gameData.mayPayLifeForColorlessManaUntilEndOfTurn} and only if they have at least 1 life.
+     * a {@link MayPayLifeForColorlessManaUntilEndOfTurnEffect} floating effect and only if they have at least 1 life.
      *
      * @param gameData the current game state
      * @param player   the player paying life for mana
@@ -1049,7 +1054,7 @@ public class AbilityActivationService {
 
     public void payLifeForColorlessMana(GameData gameData, Player player) {
         UUID playerId = player.getId();
-        if (!gameData.mayPayLifeForColorlessManaUntilEndOfTurn.contains(playerId)) {
+        if (!gameData.hasFloatingEffectOnPlayer(playerId, MayPayLifeForColorlessManaUntilEndOfTurnEffect.class)) {
             throw new IllegalStateException("You may not pay life for mana");
         }
         if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
@@ -2184,7 +2189,7 @@ public class AbilityActivationService {
         }
 
         validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
-        if (gameData.playersCantActivateAbilitiesThisTurn.contains(playerId)) {
+        if (gameData.hasFloatingEffectOnPlayer(playerId, SenTripletsUpkeepEffect.class)) {
             throw new IllegalStateException("You can't activate abilities this turn");
         }
 
@@ -7048,7 +7053,7 @@ public class AbilityActivationService {
         }
 
         // Sen Triplets: a player locked out this turn can't activate any ability.
-        if (gameData.playersCantActivateAbilitiesThisTurn.contains(playerId)) {
+        if (gameData.hasFloatingEffectOnPlayer(playerId, SenTripletsUpkeepEffect.class)) {
             throw new IllegalStateException("You can't activate abilities this turn");
         }
         if (gameData.powerUpAbilitiesCantBeActivatedThisTurn && ability.isPowerUpAbility()) {
@@ -9042,7 +9047,8 @@ public class AbilityActivationService {
      * (possibly negative) loyalty delta the activation will apply.
      */
     private int validateLoyaltyCost(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int effectiveXValue) {
-        if (gameData.playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn.contains(playerId)) {
+        if (gameData.hasFloatingEffectOnPlayer(playerId,
+                OpponentsCantActivatePlaneswalkerLoyaltyAbilitiesThisTurnEffect.class)) {
             throw new IllegalStateException(
                     "You can't activate planeswalkers' loyalty abilities this turn");
         }
@@ -10891,7 +10897,8 @@ public class AbilityActivationService {
             throw new IllegalStateException(
                     "You can't activate abilities that aren't mana abilities while a spell with split second is on the stack");
         }
-        if (gameData.playersCantActivateNonManaAbilitiesThisTurn.contains(playerId)) {
+        if (gameData.hasFloatingEffectOnPlayer(playerId,
+                TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect.class)) {
             throw new IllegalStateException("You can't activate abilities that aren't mana abilities this turn");
         }
     }

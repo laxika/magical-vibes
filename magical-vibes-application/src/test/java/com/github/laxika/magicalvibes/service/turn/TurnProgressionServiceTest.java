@@ -561,20 +561,6 @@ class TurnProgressionServiceTest {
         }
 
         @Test
-        @DisplayName("Clears hand-play restrictions when their controller's next turn begins")
-        void clearsHandPlayRestrictionsAtControllerNextTurn() {
-            gd.activePlayerId = player2Id;
-            gd.playersCantPlayCardsFromHandUntilControllerNextTurn.put(
-                    player1Id, Set.of(player1Id, player2Id));
-
-            turnProgressionService.advanceTurn(gd);
-
-            assertThat(gd.activePlayerId).isEqualTo(player1Id);
-            assertThat(gd.playersCantPlayCardsFromHandUntilControllerNextTurn)
-                    .doesNotContainKey(player1Id);
-        }
-
-        @Test
         @DisplayName("Uses extra turn queue when available")
         void usesExtraTurnQueue() {
             gd.activePlayerId = player1Id;
@@ -736,7 +722,6 @@ class TurnProgressionServiceTest {
             gd.recordSpellCast(player1Id, newNamedCard());
             gd.recordSpellCast(player1Id, newNamedCard());
             gd.playersDeclaredAttackersThisTurn.add(player1Id);
-            gd.playersSilencedThisTurn.add(player1Id);
             gd.activatedAbilityUsesThisTurn.put(player1Id, new HashMap<>());
             gd.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.put(player1Id, new HashSet<>());
             gd.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.put(player1Id, new HashSet<>());
@@ -757,7 +742,6 @@ class TurnProgressionServiceTest {
             assertThat(gd.landsPlayedThisTurn).isEmpty();
             assertThat(gd.isSpellsCastThisTurnEmpty()).isTrue();
             assertThat(gd.playersDeclaredAttackersThisTurn).isEmpty();
-            assertThat(gd.playersSilencedThisTurn).isEmpty();
             assertThat(gd.activatedAbilityUsesThisTurn).isEmpty();
             assertThat(gd.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn).isEmpty();
             assertThat(gd.creatureCardsPutIntoGraveyardFromAnywhereThisTurn).isEmpty();

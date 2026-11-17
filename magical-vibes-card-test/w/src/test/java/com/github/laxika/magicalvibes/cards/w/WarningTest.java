@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -67,16 +68,16 @@ class WarningTest extends BaseCardTest {
         Permanent attacker = addAttacker(player1, player2, 2, 2);
 
         castWarning(attacker);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
+        assertThat(Prevention.preventedFromDealingCombat(gd)).isEmpty();
     }
 
     @Test
@@ -100,7 +101,7 @@ class WarningTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gameLogContains("fizzles (illegal target)")).isTrue();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -100,7 +102,7 @@ class RestoreThePeaceTest extends BaseCardTest {
     @DisplayName("Does not return a creature whose damage was fully prevented")
     void leavesCreatureWhoseDamageWasPrevented() {
         Permanent sorcerer = addCreatureReady(player2, new ProdigalSorcerer());
-        gd.preventAllDamageByCreatures = true;
+        Prevention.add(gd, PreventDamageEffect.allByCreatures());
         harness.activateAbility(player2, indexOf(player2, sorcerer), null, player1.getId());
         harness.passBothPriorities();
 

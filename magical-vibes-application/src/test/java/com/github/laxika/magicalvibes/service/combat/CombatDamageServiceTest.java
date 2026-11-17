@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -1039,7 +1041,7 @@ class CombatDamageServiceTest {
         @DisplayName("Defending player not tracked when all combat damage is prevented")
         void defenderNotTrackedWhenDamagePrevented() {
             addAttacker("Bear", 2, 2);
-            gameData.preventAllCombatDamage = true;
+            Prevention.add(gameData, PreventDamageEffect.allCombat());
 
             combatDamageService.resolveCombatDamage(gameData);
 

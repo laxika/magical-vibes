@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -26,7 +28,9 @@ public class OpponentsCantCastSpellsThisTurnEffectHandler implements NormalEffec
         UUID controllerId = entry.getControllerId();
         for (UUID pid : gameData.orderedPlayerIds) {
             if (!pid.equals(controllerId)) {
-                gameData.playersSilencedThisTurn.add(pid);
+                gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                        entry.getSourcePermanentId(), entry.getControllerId(), effect, pid,
+                        Duration.UNTIL_END_OF_TURN));
             }
         }
 

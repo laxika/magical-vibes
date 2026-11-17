@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
@@ -7,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatDamagePreventionTokenShield;
 import com.github.laxika.magicalvibes.model.ChannelHarmShield;
-import com.github.laxika.magicalvibes.model.CombatDamagePreventionTokenShield;
 import com.github.laxika.magicalvibes.model.CombatDamageState;
 import com.github.laxika.magicalvibes.model.ComeuppanceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.CreatureControllerDamageRedirectShield;
@@ -408,7 +409,8 @@ public class DamagePreventionService {
                 .anyMatch(e -> e instanceof PreventDamageAndAddPlusCountersEffect);
     }
 
-    public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage, boolean isCombatDamage) {
+    public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage,
+            boolean isCombatDamage) {
         return applyCreaturePreventionShield(gameData, permanent, damage, isCombatDamage, null);
     }
 
@@ -516,7 +518,8 @@ public class DamagePreventionService {
         ReplacementOption.Kind prevention = ReplacementOption.Kind.PREVENTION;
         List<CreatureDamageStep> steps = new ArrayList<>();
         steps.add(preventAll("AllCombatDamagePrevented", "Prevent all combat damage",
-                (gd, c, damage) -> c.combatDamage() && gd.preventAllCombatDamage && preventable(gd, c)));
+                (gd, c,
+                        damage) -> c.combatDamage() && gd.hasPrevention(PreventionScope.ALL_COMBAT) && preventable(gd, c)));
         steps.add(new CreatureDamageStep("DestructionShield", "Destroy it instead", replacement, false,
                 (gd, c, damage) -> damage > 0 && c.permanent().getDamageDestructionShield() > 0
                         && gameQueryService.isCreature(gd, c.permanent())
@@ -590,10 +593,12 @@ public class DamagePreventionService {
                         && applyControllerAndPermanentsNoncombatDamagePrevention(gd, c.permanent(), damage) < damage));
         steps.add(preventAll("AllCreaturesPrevented", "Prevent all damage to creatures",
                 (gd, c, damage) -> gameQueryService.isDamagePreventable(gd, c.combatDamage())
-                        && gd.preventAllDamageToAllCreatures));
+                        && gd.hasPrevention(PreventionScope.ALL_TO_CREATURES)));
         steps.add(preventAll("CreaturePrevented", "Prevent all damage to it this turn",
                 (gd, c, damage) -> gameQueryService.isDamagePreventable(gd, c.combatDamage())
-                        && gd.creaturesWithAllDamagePrevented.contains(c.permanent().getId())));
+                        && gd.hasPreventionOnPermanent(c.permanent().getId(), false,
+                        PreventionScope.ALL_TO_TARGET_CREATURES, PreventionScope.ALL_TO_SELF,
+                        PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS_AT_RESOLUTION)));
         steps.add(preventAll("PredicatePrevented", "Prevent all damage to it this turn",
                 (gd, c, damage) -> gameQueryService.isDamagePreventable(gd, c.combatDamage())
                         && gameQueryService.isAllDamagePreventedByPredicate(gd, c.permanent())));
@@ -602,24 +607,28 @@ public class DamagePreventionService {
                         && gameQueryService.isDamagePreventedByControlledPredicate(gd, c.permanent(), c.combatDamage())));
         steps.add(preventAll("CombatDamagePreventedForCreature", "Prevent combat damage to it",
                 (gd, c, damage) -> c.combatDamage() && gameQueryService.isDamagePreventable(gd, true)
-                        && (gd.creaturesWithCombatDamagePrevented.contains(c.permanent().getId())
-                        || gd.creaturesWithCombatDamagePreventedThisCombat.contains(c.permanent().getId()))));
+                        && gd.hasPreventionOnPermanent(c.permanent().getId(), true,
+                        PreventionScope.ALL_TO_TARGET_CREATURES, PreventionScope.ALL_TO_SELF)));
         steps.add(preventAll("ControllerCreaturesPrevented", "Prevent all damage to your creatures",
                 (gd, c, damage) -> gameQueryService.isDamagePreventable(gd, c.combatDamage())
                         && controllerOf(gd, c.permanent()) != null
-                        && gd.playersWithAllCreatureDamagePrevented.contains(controllerOf(gd, c.permanent()))));
+                        && gd.hasPreventionOnPlayer(controllerOf(gd, c.permanent()),
+                        PreventionScope.ALL_TO_CONTROLLED_CREATURES)));
         steps.add(preventAll("ControllerAllDamagePrevented", "Prevent all damage to you and your creatures or permanents",
                 (gd, c, damage) -> gameQueryService.isDamagePreventable(gd, c.combatDamage())
                         && controllerOf(gd, c.permanent()) != null
-                        && (gd.playersWithAllPermanentDamagePrevented.contains(controllerOf(gd, c.permanent()))
+                        && (gd.hasPreventionOnPlayer(controllerOf(gd, c.permanent()),
+                        PreventionScope.ALL_TO_CONTROLLER_AND_PERMANENTS)
                         || (gameQueryService.isCreature(gd, c.permanent())
-                        && gd.playersWithAllDamagePrevented.contains(controllerOf(gd, c.permanent()))))));
+                        && gd.hasPreventionOnPlayer(controllerOf(gd, c.permanent()),
+                        PreventionScope.ALL_TO_CONTROLLER_AND_PERMANENTS,
+                        PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES)))));
         steps.add(preventAll("PlaneswalkerCombatPrevented", "Prevent combat damage to your planeswalkers",
                 (gd, c, damage) -> c.combatDamage() && gameQueryService.isDamagePreventable(gd, true)
                         && gameQueryService.isPlaneswalker(gd, c.permanent())
                         && controllerOf(gd, c.permanent()) != null
-                        && gd.playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented
-                        .contains(controllerOf(gd, c.permanent()))));
+                        && gd.hasPreventionOnPlayer(controllerOf(gd, c.permanent()),
+                        PreventionScope.ALL_COMBAT_TO_CONTROLLER_AND_PLANESWALKERS)));
         steps.add(new CreatureDamageStep("RemoveCountersOrSacrifice", "Remove counters from it, or sacrifice it, instead",
                 replacement, false,
                 (gd, c, damage) -> damagePreventionReplacementSupport.removesCountersOrSacrificesForDamage(
@@ -659,7 +668,8 @@ public class DamagePreventionService {
                 (gd, c, damage) -> preventable(gd, c) && c.applySelfDamagePrevention()
                         && applySelfDamagePreventionAmount(gd, c.permanent(), damage) > 0,
                 (gd, c, damage) -> applySelfDamagePreventionShield(gd, c.permanent(), damage)));
-        steps.add(step("ControllerAndCreaturesPerSource", "Prevent some of the damage from this source", prevention, true,
+        steps.add(step("ControllerAndCreaturesPerSource", "Prevent some of the damage from this source", prevention,
+                true,
                 (gd, c, damage) -> preventable(gd, c) && gameQueryService.isCreature(gd, c.permanent())
                         && controllerAndCreaturesPerSourcePrevention(gd, controllerOf(gd, c.permanent()),
                         damage, c.combatDamage(), c.damageSource(), c.permanent()) > 0,
@@ -668,7 +678,8 @@ public class DamagePreventionService {
         steps.add(step("AllButOneToHero", "Prevent all but 1 of the damage", prevention, true,
                 (gd, c, damage) -> preventable(gd, c)
                         && applyAllButOneDamageToHeroPrevention(gd, c.permanent(), damage, c.combatDamage()) > 0,
-                (gd, c, damage) -> damage - applyAllButOneDamageToHeroPrevention(gd, c.permanent(), damage, c.combatDamage())));
+                (gd, c, damage) -> damage - applyAllButOneDamageToHeroPrevention(gd, c.permanent(), damage,
+                        c.combatDamage())));
         steps.add(preventAll("PreventAllDamageToSelf", "Prevent all damage to it",
                 (gd, c, damage) -> preventable(gd, c)
                         && gameQueryService.hasActiveStaticEffect(gd, c.permanent(), PreventAllDamageEffect.class)));
@@ -746,7 +757,8 @@ public class DamagePreventionService {
         steps.add(step("HalfDamage", "Prevent half the damage", prevention, true,
                 (gd, c, damage) -> preventable(gd, c) && hasHalfDamagePrevention(gd, controllerOf(gd, c.permanent())),
                 (gd, c, damage) -> applyHalfDamagePrevention(gd, controllerOf(gd, c.permanent()), damage)));
-        steps.add(step("AttachedPerSourceReduction", "Prevent some of the damage to the equipped creature", prevention, true,
+        steps.add(step("AttachedPerSourceReduction", "Prevent some of the damage to the equipped creature",
+                prevention, true,
                 (gd, c, damage) -> preventable(gd, c)
                         && applyAttachedPerSourceDamageReduction(gd, c.permanent(), damage) < damage,
                 (gd, c, damage) -> applyAttachedPerSourceDamageReduction(gd, c.permanent(), damage)));
@@ -766,13 +778,15 @@ public class DamagePreventionService {
                     return damage;
                 }));
         steps.add(step("PlusOneCounterShield", "Prevent the damage and put +1/+1 counters on it", prevention, false,
-                (gd, c, damage) -> preventable(gd, c) && c.permanent().isAllDamageToPlusOnePlusOneCounterPreventionShield(),
+                (gd, c, damage) -> preventable(gd,
+                        c) && c.permanent().isAllDamageToPlusOnePlusOneCounterPreventionShield(),
                 (gd, c, damage) -> {
                     putShieldPlusOneCounters(gd, c.permanent(), damage);
                     return 0;
                 }));
         steps.add(step("Temper", "Prevent damage and put +1/+1 counters on it (Temper)", prevention, false,
-                (gd, c, damage) -> preventable(gd, c) && c.permanent().getDamageToPlusOnePlusOneCounterPreventionShield() > 0,
+                (gd, c, damage) -> preventable(gd,
+                        c) && c.permanent().getDamageToPlusOnePlusOneCounterPreventionShield() > 0,
                 (gd, c, damage) -> {
                     Permanent permanent = c.permanent();
                     int temperShield = permanent.getDamageToPlusOnePlusOneCounterPreventionShield();
@@ -788,7 +802,8 @@ public class DamagePreventionService {
                     }
                     return damage - temperPrevented;
                 }));
-        steps.add(step("SacredBoon", "Prevent damage and put +0/+1 counters on it later (Sacred Boon)", prevention, false,
+        steps.add(step("SacredBoon", "Prevent damage and put +0/+1 counters on it later (Sacred Boon)", prevention,
+                false,
                 (gd, c, damage) -> preventable(gd, c) && c.permanent().getDamageToCounterPreventionShield() > 0,
                 (gd, c, damage) -> {
                     Permanent permanent = c.permanent();
@@ -806,7 +821,8 @@ public class DamagePreventionService {
                 (gd, c, damage) -> applyGlobalPreventionShield(gd, damage, c.combatDamage())));
         steps.add(step("PreventionLifeGainShield", "Prevent damage and gain life", prevention, false,
                 (gd, c, damage) -> preventable(gd, c) && hasDamagePreventionLifeGainShield(gd, c.permanent().getId()),
-                (gd, c, damage) -> applyDamagePreventionLifeGainShield(gd, c.permanent().getId(), damage, c.combatDamage())));
+                (gd, c, damage) -> applyDamagePreventionLifeGainShield(gd, c.permanent().getId(), damage,
+                        c.combatDamage())));
         steps.add(step("PermanentPreventionShield", "Prevent the next damage to it", prevention, false,
                 (gd, c, damage) -> preventable(gd, c) && c.permanent().getDamagePreventionShield() > 0,
                 (gd, c, damage) -> applyPermanentDamagePreventionShield(gd, c.permanent(), damage, c.combatDamage())));
@@ -1397,7 +1413,7 @@ public class DamagePreventionService {
      */
     public boolean isCombatDamageFromAttackersPreventedForPlayer(GameData gameData, UUID playerId) {
         if (!gameQueryService.isDamagePreventable(gameData, true)) return false;
-        return gameData.playersWithDamageFromAttackersPrevented.contains(playerId);
+        return gameData.hasPreventionOnPlayer(playerId, PreventionScope.ALL_TO_CONTROLLER_FROM_ATTACKERS);
     }
 
     /**
@@ -1406,7 +1422,9 @@ public class DamagePreventionService {
      */
     public boolean isNoncombatDamageFromAttackerPreventedForPlayer(GameData gameData, UUID playerId, UUID sourcePermanentId) {
         if (!gameQueryService.isDamagePreventable(gameData)
-                || !gameData.playersWithDamageFromAttackersPrevented.contains(playerId)) return false;
+                || !gameData.hasPreventionOnPlayer(playerId, PreventionScope.ALL_TO_CONTROLLER_FROM_ATTACKERS)) {
+            return false;
+        }
         if (sourcePermanentId == null) return false;
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         return source != null && source.isAttacking();
@@ -1478,26 +1496,28 @@ public class DamagePreventionService {
                 return 0;
             }
         }
-        if (combatDamage && gameData.preventAllCombatDamageToPlayers) {
+        if (combatDamage && gameData.hasPrevention(PreventionScope.ALL_COMBAT_TO_PLAYERS)) {
             notifyControllerDamagePrevented(gameData, playerId, damage);
             return 0;
         }
         if (combatDamage
-                && gameData.playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented.contains(playerId)) {
+                && gameData.hasPreventionOnPlayer(playerId,
+                PreventionScope.ALL_COMBAT_TO_CONTROLLER_AND_PLANESWALKERS)) {
             notifyControllerDamagePrevented(gameData, playerId, damage);
             return 0;
         }
-        if (gameData.playersWithAllDamagePrevented.contains(playerId)) {
+        if (gameData.hasPreventionOnPlayer(playerId, PreventionScope.ALL_TO_CONTROLLER_AND_PERMANENTS,
+                PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES)) {
             notifyControllerDamagePrevented(gameData, playerId, damage);
             return 0;
         }
         // Riot Control: prevent all damage that would be dealt to the caster this turn (their creatures are unaffected)
-        if (gameData.playersWithAllPlayerDamagePrevented.contains(playerId)) {
+        if (gameData.hasPreventionOnPlayer(playerId, PreventionScope.ALL_TO_CONTROLLER)) {
             notifyControllerDamagePrevented(gameData, playerId, damage);
             return 0;
         }
         // Morningtide's Light: prevent all damage that would be dealt to the caster until their next turn.
-        if (gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.contains(playerId)) {
+        if (gameData.hasPreventionOnPlayer(playerId, PreventionScope.ALL_TO_CONTROLLER_UNTIL_NEXT_TURN)) {
             notifyControllerDamagePrevented(gameData, playerId, damage);
             return 0;
         }
@@ -1583,8 +1603,10 @@ public class DamagePreventionService {
     /** Applies exactly one rider after the affected player selects overlapping shields. */
     public void applyAllByCreaturesPreventionLifeGain(GameData gameData, int preventedDamage,
                                                       UUID affectedPlayerId) {
-        if (preventedDamage <= 0 || gameData.damageByCreaturesPreventionLifeGainPlayers.isEmpty()) return;
-        List<UUID> controllers = gameData.damageByCreaturesPreventionLifeGainPlayers.stream().distinct().toList();
+        List<UUID> controllers = gameData.preventionEffects(PreventionScope.ALL_BY_CREATURES).stream()
+                .filter(prevention -> ((PreventDamageEffect) prevention.effect()).gainLife())
+                .map(prevention -> prevention.controllerId()).distinct().toList();
+        if (preventedDamage <= 0 || controllers.isEmpty()) return;
         if (controllers.size() == 1) {
             lifeSupport.applyGainLife(gameData, controllers.getFirst(), preventedDamage, "prevented damage");
             return;
@@ -3015,14 +3037,14 @@ public class DamagePreventionService {
 
     private boolean isControlledCreatureColorDamagePrevented(GameData gameData, UUID targetId,
                                                              Set<CardColor> damageSourceColors) {
-        if (gameData.colorDamagePreventionForControlledCreaturesUntilEndOfTurn.isEmpty()) return false;
         Permanent creature = gameQueryService.findPermanentById(gameData, targetId);
         if (creature == null || !gameQueryService.isCreature(gameData, creature)) return false;
         UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
         if (controllerId == null) return false;
-        Set<CardColor> preventedColors =
-                gameData.colorDamagePreventionForControlledCreaturesUntilEndOfTurn.get(controllerId);
-        return preventedColors != null && damageSourceColors.stream().anyMatch(preventedColors::contains);
+        return gameData.preventionEffectsOnPlayer(controllerId,
+                        PreventionScope.ALL_FROM_COLORS_TO_CONTROLLED_CREATURES).stream()
+                .anyMatch(prevention -> damageSourceColors.stream()
+                        .anyMatch(((PreventDamageEffect) prevention.effect()).sourceColors()::contains));
     }
 
     /**
@@ -3262,7 +3284,8 @@ public class DamagePreventionService {
                 gameData, playerId, damage, sourceIsCreature, sourceIsArtifact, null, false);
     }
 
-    public int applyControllerFixedPerSourceDamagePrevention(GameData gameData, UUID playerId, int damage, boolean sourceIsCreature) {
+    public int applyControllerFixedPerSourceDamagePrevention(GameData gameData, UUID playerId, int damage,
+            boolean sourceIsCreature) {
         return applyControllerFixedPerSourceDamagePrevention(
                 gameData, playerId, damage, sourceIsCreature, false, null, false);
     }
@@ -3399,7 +3422,8 @@ public class DamagePreventionService {
      * (combat and noncombat). Returns the amount prevented (the caller subtracts it); 0 when damage
      * can't be prevented or no such permanent is present.
      */
-    public int applyPlaneswalkerFixedPerSourceDamagePrevention(GameData gameData, UUID planeswalkerControllerId, int damage) {
+    public int applyPlaneswalkerFixedPerSourceDamagePrevention(GameData gameData, UUID planeswalkerControllerId,
+            int damage) {
         return applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, planeswalkerControllerId, damage, false);
     }
 

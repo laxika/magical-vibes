@@ -30,6 +30,7 @@ public class AllLandsProduceChosenColorUntilEndOfTurnEffectHandler implements No
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID choosingPlayerId = entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
-        playerInputService.beginAllLandsProduceChosenColorChoice(gameData, choosingPlayerId);
+        playerInputService.beginAllLandsProduceChosenColorChoice(gameData, choosingPlayerId,
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
     }
 }

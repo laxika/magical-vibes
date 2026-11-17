@@ -21,6 +21,7 @@ public class GrantProtectionChoiceToControllerAndPermanentsUntilEndOfTurnEffectH
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        playerInputService.beginMassProtectionColorChoice(gameData, entry.getControllerId());
+        playerInputService.beginMassProtectionColorChoice(gameData, entry.getControllerId(),
+                entry.getCard().getName());
     }
 }

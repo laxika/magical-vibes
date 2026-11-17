@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesInsteadOfDyingThisTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,11 +26,8 @@ public class ExileCreaturesInsteadOfDyingThisTurnEffectHandler implements Normal
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ExileCreaturesInsteadOfDyingThisTurnEffect exileEffect =
                 (ExileCreaturesInsteadOfDyingThisTurnEffect) effect;
-        if (exileEffect.opponentsOnly()) {
-            gameData.playersExilingOpponentCreaturesInsteadOfDyingThisTurn.add(entry.getControllerId());
-        } else {
-            gameData.playersExilingCreaturesInsteadOfDyingThisTurn.add(entry.getControllerId());
-        }
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), exileEffect, entry.getControllerId(), Duration.UNTIL_END_OF_TURN));
         gameLogService.append(gameData, GameLog.text(
                 exileEffect.opponentsOnly()
                         ? "Creatures opponents control that would die this turn are exiled instead."

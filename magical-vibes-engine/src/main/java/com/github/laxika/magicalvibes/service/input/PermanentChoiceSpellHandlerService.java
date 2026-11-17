@@ -773,7 +773,7 @@ public class PermanentChoiceSpellHandlerService {
             }
             gameData.recordSpellCast(gct.controllerId(), castCharacteristics);
             if (gct.restrictAdditionalSpellsThisTurn()) {
-                gameData.preventAdditionalSpellCastsThisTurn(gct.controllerId());
+                gameData.preventAdditionalSpellCastsThisTurn(gct.cardToCast().getName(), gct.controllerId());
             }
             gameData.priorityPassedBy.clear();
 

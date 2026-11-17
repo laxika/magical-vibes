@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -26,9 +28,9 @@ public class GrantControllerSpellsCantBeCounteredByColorsEffectHandler implement
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantControllerSpellsCantBeCounteredByColorsEffect) effect;
         UUID controllerId = entry.getControllerId();
-        gameData.playerSpellsCantBeCounteredByColorsThisTurn
-                .computeIfAbsent(controllerId, k -> ConcurrentHashMap.newKeySet())
-                .addAll(e.colors());
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), effect, controllerId,
+                Duration.UNTIL_END_OF_TURN));
 
         String colorNames = e.colors().stream()
                 .map(c -> c.name().toLowerCase())

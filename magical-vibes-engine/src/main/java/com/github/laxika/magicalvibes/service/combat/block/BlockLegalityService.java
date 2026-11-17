@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat.block;
 
+import com.github.laxika.magicalvibes.model.effect.RagingRiverEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -395,10 +396,10 @@ public class BlockLegalityService {
                 return new BlockDenial(BlockDenial.Reason.ATTACKER_LIMITED_TO_BLOCKERS, restriction.allowedBlockersDescription());
             }
         }
-        for (Set<UUID> chosenGroundPile : gameData.ragingRiverBlockRestrictionsThisCombat
-                .getOrDefault(attacker.getId(), List.of())) {
+        for (FloatingContinuousEffect restriction
+                : gameData.floatingEffectsOnPermanent(attacker.getId(), RagingRiverEffect.class)) {
             if (!gameQueryService.hasKeyword(gameData, blocker, Keyword.FLYING)
-                    && !chosenGroundPile.contains(blocker.getId())) {
+                    && !((RagingRiverEffect) restriction.effect()).chosenGroundPile().contains(blocker.getId())) {
                 return new BlockDenial(BlockDenial.Reason.ATTACKER_LIMITED_TO_BLOCKERS,
                         "creatures with flying or creatures in the chosen pile");
             }

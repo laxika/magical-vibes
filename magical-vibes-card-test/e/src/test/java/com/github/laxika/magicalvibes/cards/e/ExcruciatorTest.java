@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SoulsFire;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
@@ -37,7 +39,7 @@ class ExcruciatorTest extends BaseCardTest {
     void preventAllCombatDamageStillPreventsOtherSources() {
         addExcruciatorReady(player1);
         addCreatureReady(player1, new GrizzlyBears());
-        gd.preventAllCombatDamage = true;
+        Prevention.add(gd, PreventDamageEffect.allCombat());
 
         declareAttackers(List.of(0, 1));
         resolveCombat();

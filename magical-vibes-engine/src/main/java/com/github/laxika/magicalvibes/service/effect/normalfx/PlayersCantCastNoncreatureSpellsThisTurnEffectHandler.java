@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.UUID;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -25,11 +28,17 @@ public class PlayersCantCastNoncreatureSpellsThisTurnEffectHandler implements No
         PlayersCantCastNoncreatureSpellsThisTurnEffect restriction =
                 (PlayersCantCastNoncreatureSpellsThisTurnEffect) effect;
         if (restriction.opponentsOnly()) {
-            gameData.orderedPlayerIds.stream()
-                    .filter(playerId -> !playerId.equals(entry.getControllerId()))
-                    .forEach(gameData.playersCantCastNoncreatureSpellsThisTurn::add);
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                if (!playerId.equals(entry.getControllerId())) {
+                    gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                            entry.getSourcePermanentId(), entry.getControllerId(), effect, playerId,
+                            Duration.UNTIL_END_OF_TURN));
+                }
+            }
         } else {
-            gameData.playersCantCastNoncreatureSpellsThisTurn.addAll(gameData.orderedPlayerIds);
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), effect, null,
+                    Duration.UNTIL_END_OF_TURN));
         }
         String logEntry = restriction.opponentsOnly()
                 ? gameData.playerIdToName.get(entry.getControllerId())

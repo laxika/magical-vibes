@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantActivatePlaneswalkerLoyaltyAbilitiesThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GrinningIgnus;
@@ -62,8 +63,8 @@ class FlamescrollCelebrantTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 1, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.playersSilencedThisTurn).contains(player2.getId());
-        assertThat(gd.playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn)
+        assertThat(silencedPlayers()).contains(player2.getId());
+        assertThat(playersAffectedBy(OpponentsCantActivatePlaneswalkerLoyaltyAbilitiesThisTurnEffect.class))
                 .contains(player2.getId())
                 .doesNotContain(player1.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -145,7 +146,7 @@ class FlamescrollCelebrantTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Flamescroll Celebrant");
-        assertThat(gd.playersSilencedThisTurn).isEmpty();
+        assertThat(silencedPlayers()).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
@@ -170,7 +171,7 @@ class FlamescrollCelebrantTest extends BaseCardTest {
         harness.castModalInstant(player2, 0, 1, List.of());
         resolveAllTriggers();
 
-        assertThat(gd.playersSilencedThisTurn).contains(player1.getId()).doesNotContain(player2.getId());
+        assertThat(silencedPlayers()).contains(player1.getId()).doesNotContain(player2.getId());
     }
 
     @Test

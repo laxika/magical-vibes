@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardGrantFreePlayUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantPlayLandsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -585,19 +589,20 @@ public class GameViewProjectionFactory {
                 revealedPlayerIds.add(pid);
             }
             if (pid.equals(viewerId)
-                    && data.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(pid)) {
+                    && data.hasFloatingEffectOnPlayer(pid, AllowPlayFromTopOfLibraryUntilEndOfTurnEffect.class)) {
                 revealedPlayerIds.add(pid);
             }
             if (pid.equals(viewerId) && isChoosingWhetherToExileLookedAtTopCard(data, pid)) {
                 revealedPlayerIds.add(pid);
             }
-            UUID freePlayCardId = data.libraryTopCardFreePlayPermissionsUntilEndOfTurn.get(pid);
-            if (freePlayCardId != null && deck != null && !deck.isEmpty()
-                    && freePlayCardId.equals(deck.getFirst().getId())) {
+            if (deck != null && !deck.isEmpty() && data.floatingEffectsOnPlayer(pid,
+                    RevealTopCardGrantFreePlayUntilEndOfTurnEffect.class).stream().anyMatch(fe ->
+                    deck.getFirst().getId().equals(
+                            ((RevealTopCardGrantFreePlayUntilEndOfTurnEffect) fe.effect()).cardId()))) {
                 revealedPlayerIds.add(pid);
             }
             if ((castingPermissionService.hasLibraryTopPermission(data, viewerId, pid)
-                    || (pid.equals(viewerId) && data.libraryTopCardLifePlayPermissionsUntilEndOfTurn.contains(pid)))
+                    || (pid.equals(viewerId) && data.hasFloatingEffectOnPlayer(pid, MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect.class)))
                     && deck != null && !deck.isEmpty()) {
                 revealedPlayerIds.add(pid);
             }
@@ -855,7 +860,7 @@ public class GameViewProjectionFactory {
 
             if (card.hasType(CardType.LAND)) {
                 if (isActivePlayer && isMainPhase && landsPlayed < gameQueryService.getMaxLandsThisTurn(gameData, playerId) && stackEmpty
-                        && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
+                        && !gameData.hasFloatingEffectOnPlayer(playerId, TargetPlayerCantPlayLandsThisTurnEffect.class)
                         && !castingPermissionService.isLandPlayRestricted(gameData, playerId)
                         && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)) {
                     playable.add(exileCardView(gameData, playerId, card));

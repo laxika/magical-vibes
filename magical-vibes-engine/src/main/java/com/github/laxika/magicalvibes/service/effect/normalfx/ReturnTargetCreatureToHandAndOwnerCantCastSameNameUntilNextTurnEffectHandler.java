@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -63,9 +65,8 @@ public class ReturnTargetCreatureToHandAndOwnerCantCastSameNameUntilNextTurnEffe
         if (entry.getControllerId() == null || ownerId == null || creatureName == null) {
             return;
         }
-        gameData.playersCantCastNamedSpellsUntilControllerNextTurn
-                .computeIfAbsent(entry.getControllerId(), ignored -> new ConcurrentHashMap<>())
-                .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet())
-                .add(creatureName);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), new ReturnTargetCreatureToHandAndOwnerCantCastSameNameUntilNextTurnEffect(creatureName), ownerId,
+                Duration.UNTIL_YOUR_NEXT_TURN));
     }
 }

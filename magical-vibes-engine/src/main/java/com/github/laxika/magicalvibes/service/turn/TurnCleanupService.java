@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -100,7 +101,6 @@ public class TurnCleanupService {
         sacrificePermanentsFlaggedForCleanup(gameData);
         returnPermanentsFlaggedForCleanup(gameData);
         removeCountersScheduledForCleanup(gameData);
-        clearSpellTypeRestrictionsEndingThisTurn(gameData);
         gameData.restoreBombardmentCards();
         resetEndOfTurnModifiers(gameData);
         expirePhasingRestrictionsAtEndOfNextTurn(gameData);
@@ -192,20 +192,6 @@ public class TurnCleanupService {
             });
             p.getCountersToRemoveAtNextCleanup().clear();
         });
-    }
-
-    private void clearSpellTypeRestrictionsEndingThisTurn(GameData gameData) {
-        UUID activePlayerId = gameData.activePlayerId;
-        Map<CardType, Integer> restrictions =
-                gameData.playersCantCastSpellTypesUntilEndOfControllerNextTurn.get(activePlayerId);
-        if (restrictions == null) {
-            return;
-        }
-        int turnsTaken = gameData.turnsTakenByPlayer.getOrDefault(activePlayerId, 0);
-        restrictions.entrySet().removeIf(entry -> entry.getValue() <= turnsTaken);
-        if (restrictions.isEmpty()) {
-            gameData.playersCantCastSpellTypesUntilEndOfControllerNextTurn.remove(activePlayerId);
-        }
     }
 
     /**
@@ -307,7 +293,6 @@ public class TurnCleanupService {
         }
         gameData.combatDamagePreventionTokenShields.clear();
         gameData.channelHarmShields.clear();
-        gameData.playerStaticEffectsUntilEndOfTurn.clear();
         gameData.damageRedirectShields.clear();
         gameData.comeuppanceDamagePreventionShields.clear();
         gameData.judgmentOfAlexanderDamagePreventionShields.clear();
@@ -322,16 +307,8 @@ public class TurnCleanupService {
         gameData.sourceNextCombatDamageToOpponentRedirectShields.clear();
         gameData.targetSourceDamagePreventionShields.clear();
         gameData.damagePreventionLifeGainShields.clear();
-        gameData.damageByCreaturesPreventionLifeGainPlayers.clear();
         gameData.globalDamagePreventionShield = 0;
-        gameData.preventAllCombatDamage = false;
-        gameData.preventAllCombatDamageByAttackingCreatures = false;
-        gameData.preventAllCombatDamageToPlayers = false;
-        gameData.preventAllDamageToAllCreatures = false;
-        gameData.preventAllDamageByCreatures = false;
-        gameData.preventAllDamageFromNonHumanSources = false;
         gameData.combatDamageExemptPredicate = null;
-        gameData.combatDamageExemptPredicatesByController.clear();
         gameData.combatDamageExemptControllerId = null;
         gameData.allPermanentsEnterTappedThisTurn = false;
         gameData.permanentEnterTappedFiltersThisTurn.clear();
@@ -340,13 +317,10 @@ public class TurnCleanupService {
         gameData.activeAdditionalCountersForEnchantmentCreatureEntryBatch.clear();
         gameData.skippedStepOrPhasesThisTurn.clear();
         gameData.matchingCreatureBlockRestrictionsThisTurn.clear();
-        gameData.counterHolderMustBlockRequirementsThisTurn.clear();
-        gameData.preventDamageFromColors.clear();
         gameData.combatDamageRedirectTarget = null;
         gameData.combatDamageRedirectPlayer = null;
         gameData.playerColorDamagePreventionCount.clear();
         gameData.colorDamagePreventionUntilEndOfTurn.clear();
-        gameData.colorDamagePreventionForControlledCreaturesUntilEndOfTurn.clear();
         gameData.colorlessDamagePreventionUntilEndOfTurn.clear();
         gameData.playerSourceDamagePreventionIds.clear();
         gameData.playerSourceDamagePreventionRequiredColors.clear();
@@ -363,58 +337,21 @@ public class TurnCleanupService {
         gameData.pendingEyeForAnEyeReflections.clear();
         gameData.pendingSourceDamageForReflection.clear();
         gameData.clearDelayedActions(DelayedAction.class, GameData::isThisTurnDelayedAction);
-        gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.creaturesProtectedFromTargetingDamage.clear();
         gameData.targetSpellDamagePreventionShields.clear();
         gameData.targetSorceryDamageRedirectShields.clear();
-        gameData.playersWithAllDamagePrevented.clear();
-        gameData.playersWithAllPermanentDamagePrevented.clear();
-        gameData.playersWithAllCreatureDamagePrevented.clear();
         gameData.playersRedirectingAllCreatureDamage.clear();
-        gameData.playersWithAllPlayerDamagePrevented.clear();
-        gameData.playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented.clear();
         gameData.combatDamagePreventionTokenShields.clear();
-        gameData.playersWithDamageFromAttackersPrevented.clear();
-        gameData.playersWithDamageFromOpponentCreaturesPrevented.clear();
-        gameData.playersWithCombatDamageFromTargetOpponentCreaturesPrevented.clear();
-        gameData.playersWithDamageFromMatchingSourcesPrevented.clear();
         gameData.playerNextDamageFromMatchingSourcesPrevented.clear();
-        gameData.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented.clear();
-        gameData.playersGatheringSpecimensThisTurn.clear();
-        gameData.playersGatheringTokensThisTurn.clear();
-        gameData.playersExilingUncastEnteringCreaturesThisTurn.clear();
-        gameData.playersExilingUncastEnteringNontokenCreaturesThisTurn.clear();
-        gameData.playersShufflingCreaturesEnteringFromExileThisTurn.clear();
-        gameData.playersExilingCreaturesInsteadOfDyingThisTurn.clear();
-        gameData.playersExilingOpponentCreaturesInsteadOfDyingThisTurn.clear();
-        gameData.playersExilingControlledPermanentsInsteadOfDyingThisTurn.clear();
         gameData.playersWhoPlayedCardFromExileThisTurn.clear();
         gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.clear();
-        gameData.creaturesWithAllDamagePrevented.clear();
-        gameData.allDamagePreventionPredicates.clear();
-        gameData.allDamagePreventionPredicatesByController.clear();
-        gameData.creaturesWithCombatDamagePrevented.clear();
-        gameData.creaturesPreventedFromDealingCombatDamage.clear();
         gameData.creaturesAssigningNoCombatDamageThisTurn.clear();
         gameData.creaturesAssigningNoCombatDamageThisCombat.clear();
-        gameData.creaturesWithCombatDamagePreventedThisCombat.clear();
-        gameData.creaturesPreventedFromDealingCombatDamageThisCombat.clear();
-        gameData.combatDamagePreventionPredicatesByController.clear();
         gameData.damageCantBePreventedThisTurn = false;
         gameData.clearDamageLifeFloorsUntilEndOfTurn();
         gameData.damageReplacementsThisTurn.clear();
-        gameData.playersCantGainLifeThisTurn = false;
-        gameData.playersCantLoseLifeThisTurn = false;
         gameData.playersCantSearchLibrariesThisTurn = false;
-        gameData.creaturesCantAttackThisTurn = false;
         gameData.playerCreaturesCantAttackThisTurn.clear();
-        gameData.creaturesCantAttackThisCombat = false;
-        gameData.playersWhoCantGainLifeThisTurn.clear();
-        gameData.playersWhoGainNoLifeThisTurn.clear();
-        gameData.playersWhoCantLoseLifeThisTurn.clear();
-        gameData.combatDamageToCreaturesDoublingsThisTurn = 0;
-        gameData.controllerDamageDoublingsThisTurn.clear();
-        gameData.permanentDamageDoublingsThisTurn.clear();
         gameData.opponentGraveyardLifeLossWatchers.clear();
         gameData.lifeGainOpponentLifeLossWatchers.clear();
         gameData.playersWhoseSpeedIncreasedThisTurn.clear();
@@ -445,45 +382,12 @@ public class TurnCleanupService {
         gameData.activeMysticReflectionsForEntryBatch.clear();
         gameData.drawStepFirstDrawTaken.clear();
         gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.clear();
-        gameData.colorSourceDamageBonusThisTurn.clear();
-        gameData.controllerDamageBonusThisTurn.clear();
-        gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
-        gameData.playersSpellsCantBeCounteredThisTurn.clear();
-        gameData.playersCreatureSpellsCantBeCounteredThisTurn.clear();
-        gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
-        gameData.playerHexproofFromColorsThisTurn.clear();
-        gameData.playersWithHexproofThisTurn.clear();
-        gameData.playersWithShroudThisTurn.clear();
-        gameData.permanentHexproofFromColorsThisTurn.clear();
-        gameData.playerProtectionFromColorsUntilEndOfTurn.clear();
-        gameData.playerProtectionFromPlayerIdsUntilEndOfTurn.clear();
-        gameData.playerKeywordsUntilEndOfTurn.clear();
         gameData.spellColorOverridesUntilEndOfTurn.clear();
-        gameData.playersSilencedThisTurn.clear();
-        gameData.clearSpellLimitsThisTurn();
         gameData.extraManaOnLandSubtypeTapThisTurn.clear();
-        gameData.landSubtypeFixedManaColorThisTurn.clear();
-        gameData.nonbasicLandsFixedManaColorThisTurn = null;
-        gameData.allLandsFixedManaColorThisTurn = null;
-        gameData.playersWithColoredManaReplacementThisTurn.clear();
-        gameData.playersWithWhiteManaAsAnyColorThisTurn.clear();
-        gameData.playersWithLandManaChoiceReplacementThisTurn.clear();
-        gameData.landManaFixedColorThisTurn.clear();
-        gameData.playersCantPlayLandsThisTurn.clear();
-        gameData.playersCantPlayFromGraveyardsThisTurn.clear();
-        gameData.playersCantCastSpellTypesThisTurn.clear();
-        gameData.playersCantCastNoncreatureSpellsThisTurn.clear();
-        gameData.playersCantActivateAbilitiesThisTurn.clear();
-        gameData.playersCantActivateNonManaAbilitiesThisTurn.clear();
-        gameData.playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn.clear();
         gameData.playerExtraLoyaltyActivationsThisTurn.clear();
         gameData.playersAllowedTwiceLoyaltyActivationsThisTurn.clear();
         gameData.senControllerPlayerId = null;
         gameData.senControlledPlayerId = null;
-        gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.clear();
-        gameData.libraryTopCardPermissionsUntilEndOfTurn.clear();
-        gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.clear();
-        gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.clear();
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
         gameData.cardsGrantedFlashbackDespiteLostAbilitiesUntilEndOfTurn.clear();
         gameData.cardsGrantedFlashbackCostsUntilEndOfTurn.clear();
@@ -493,10 +397,7 @@ public class TurnCleanupService {
         gameData.cardsGrantedEmbalmUntilEndOfTurn.clear();
         gameData.cardsGrantedUnearthUntilEndOfTurn.clear();
         gameData.cardsGrantedUnearthGraveyardVersions.clear();
-        gameData.playersWithFlashUntilEndOfTurn.clear();
-        gameData.playersWithFreeHandCastUntilEndOfTurn.clear();
         gameData.playersWhoMayLookAtFaceDownCreaturesThisTurn.clear();
-        gameData.cardTypeFlashGrantsThisTurn.clear();
         gameData.nextSpellFlashGrantsThisTurn.clear();
         gameData.nextSpellChosenSubtypeFlashGrantsThisTurn.clear();
         gameData.nextSpellConvokeGrantsThisTurn.clear();
@@ -511,8 +412,6 @@ public class TurnCleanupService {
         gameData.spellsGrantedHasteOnEntry.clear();
         gameData.spellsGrantedPermanentHasteOnEntry.clear();
         gameData.spellsGrantedRiotOnEntry.clear();
-        gameData.mayTapLandsForSpellsUntilEndOfTurn.clear();
-        gameData.mayPayLifeForColorlessManaUntilEndOfTurn.clear();
         gameData.guardianAngelTargetsUntilEndOfTurn.clear();
         gameData.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn.clear();
         gameData.graveyardCardCastPermissionsUntilEndOfTurn.clear();
@@ -535,8 +434,6 @@ public class TurnCleanupService {
         gameData.outsideGamePlayPermissions.clear();
         gameData.outsideGameAdditionalModalModePermissions.clear();
         gameData.graveyardPlayFilterPermissionsThisTurn.clear();
-        gameData.playersExilingCardsInsteadOfGraveyardThisTurn.clear();
-        gameData.playersMayPlayFaceUpCardsFromExileThisTurn.clear();
         gameData.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn.clear();
         gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.clear();
         gameData.pendingNextSpellUncounterableThisTurnCount.clear();
@@ -610,7 +507,6 @@ public class TurnCleanupService {
         }
         gameData.graveyardAdventureCastPermissions.entrySet()
                 .removeIf(entry -> entry.getValue().expireTurn() <= currentTurn);
-        gameData.sacrificeForbiddenThisTurn.clear();
         gameData.addGameEndOfTurnState(retainedGameState);
 
         // Clear persistent mana tracking so the next drain empties pools fully
@@ -959,8 +855,7 @@ public class TurnCleanupService {
 
     /**
      * Checks whether the given player's hand size is unlimited, either via
-     * the {@code playersWithNoMaximumHandSize} and
-     * {@code playersWithNoMaximumHandSizeUntilNextTurn} sets on {@link GameData}, by
+     * a {@link GrantNoMaximumHandSizeEffect} floating effect on the player, by
      * controlling a permanent with {@link NoMaximumHandSizeEffect} (e.g. Spellbook),
      * or by any player controlling a permanent with
      * {@link PlayersHaveNoMaximumHandSizeEffect} (e.g. Anvil of Bogardan).
@@ -970,13 +865,14 @@ public class TurnCleanupService {
      * @return {@code true} if the player has no maximum hand size
      */
     public boolean hasNoMaximumHandSize(GameData gameData, UUID playerId) {
-        if (gameData.playersWithNoMaximumHandSize.contains(playerId)
-                || gameData.playersWithNoMaximumHandSizeUntilNextTurn.contains(playerId)) {
-            // A hand-size setter that entered after the grant overrides it (CR 613.7).
-            Long grantedAt = gameData.noMaximumHandSizeGrantTimestamps.get(playerId);
+        List<FloatingContinuousEffect> grants =
+                gameData.floatingEffectsOnPlayer(playerId, GrantNoMaximumHandSizeEffect.class);
+        if (!grants.isEmpty()) {
+            // Effects on game rules apply in timestamp order: a hand-size setter that began after the newest grant
+            // overrides it (CR 613.11).
+            long grantedAt = grants.get(grants.size() - 1).timestamp();
             HandSizeStamp setterStamp = latestHandSizeSettingStamp(gameData, playerId);
-            if (grantedAt == null || setterStamp == null
-                    || new HandSizeStamp(grantedAt, Integer.MAX_VALUE).isNewerThan(setterStamp)) {
+            if (setterStamp == null || new HandSizeStamp(grantedAt, Integer.MAX_VALUE).isNewerThan(setterStamp)) {
                 return true;
             }
         }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.a.AnuridBarkripper;
 import com.github.laxika.magicalvibes.cards.f.FledglingDragon;
 import com.github.laxika.magicalvibes.cards.g.GoblinRaider;
@@ -144,7 +145,7 @@ class PrismaticStrandsTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.preventDamageFromColors).containsExactly(CardColor.RED);
+        assertThat(Prevention.sourceColors(gd)).containsExactly(CardColor.RED);
     }
 
     @Test

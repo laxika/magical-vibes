@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.b.Banefire;
 import com.github.laxika.magicalvibes.cards.c.CanyonMinotaur;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
@@ -51,7 +54,7 @@ class SafePassageTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Resolving Safe Passage adds controller to playersWithAllDamagePrevented")
+    @DisplayName("Resolving Safe Passage prevents all damage to its controller and creatures")
     void resolvingAddsControllerToPrevented() {
         harness.setHand(player1, List.of(new SafePassage()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -60,7 +63,7 @@ class SafePassageTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playersWithAllDamagePrevented).contains(player1.getId());
+        assertThat(Prevention.playersWithAllDamagePrevented(gd)).contains(player1.getId());
     }
 
     @Test
@@ -79,7 +82,8 @@ class SafePassageTest extends BaseCardTest {
     @DisplayName("Prevents combat damage to controller from attacking creature")
     void preventsCombatDamageToPlayer() {
         harness.setLife(player2, 20);
-        harness.getGameData().playersWithAllDamagePrevented.add(player2.getId());
+        Prevention.addOnPlayer(harness.getGameData(), PreventDamageEffect.allToControllerAndCreatures(),
+                player2.getId());
 
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new CanyonMinotaur());
         attacker.setSummoningSick(false);
@@ -97,7 +101,8 @@ class SafePassageTest extends BaseCardTest {
     @Test
     @DisplayName("Prevents combat damage to controller's blocking creature")
     void preventsCombatDamageToBlockingCreature() {
-        harness.getGameData().playersWithAllDamagePrevented.add(player2.getId());
+        Prevention.addOnPlayer(harness.getGameData(), PreventDamageEffect.allToControllerAndCreatures(),
+                player2.getId());
 
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
         attacker.setSummoningSick(false);
@@ -123,7 +128,8 @@ class SafePassageTest extends BaseCardTest {
     void doesNotPreventDamageToOpponent() {
         harness.setLife(player1, 20);
         // Only player2 has Safe Passage protection
-        harness.getGameData().playersWithAllDamagePrevented.add(player2.getId());
+        Prevention.addOnPlayer(harness.getGameData(), PreventDamageEffect.allToControllerAndCreatures(),
+                player2.getId());
 
         Permanent attacker = harness.addToBattlefieldAndReturn(player2, new CanyonMinotaur());
         attacker.setSummoningSick(false);
@@ -142,7 +148,8 @@ class SafePassageTest extends BaseCardTest {
     @DisplayName("Does not prevent damage to opponent's creatures")
     void doesNotPreventDamageToOpponentsCreatures() {
         // Only player1 has Safe Passage protection
-        harness.getGameData().playersWithAllDamagePrevented.add(player1.getId());
+        Prevention.addOnPlayer(harness.getGameData(), PreventDamageEffect.allToControllerAndCreatures(),
+                player1.getId());
 
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
         attacker.setSummoningSick(false);
@@ -167,7 +174,8 @@ class SafePassageTest extends BaseCardTest {
     @DisplayName("Prevents spell damage to controller")
     void preventsSpellDamageToPlayer() {
         harness.setLife(player2, 20);
-        harness.getGameData().playersWithAllDamagePrevented.add(player2.getId());
+        Prevention.addOnPlayer(harness.getGameData(), PreventDamageEffect.allToControllerAndCreatures(),
+                player2.getId());
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -180,7 +188,8 @@ class SafePassageTest extends BaseCardTest {
     @Test
     @DisplayName("Prevents spell damage to controller's creature")
     void preventsSpellDamageToCreature() {
-        harness.getGameData().playersWithAllDamagePrevented.add(player2.getId());
+        Prevention.addOnPlayer(harness.getGameData(), PreventDamageEffect.allToControllerAndCreatures(),
+                player2.getId());
 
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
         creature.setSummoningSick(false);
@@ -197,14 +206,15 @@ class SafePassageTest extends BaseCardTest {
     @Test
     @DisplayName("Prevention is cleared at end of turn")
     void preventionClearedAtEndOfTurn() {
-        harness.getGameData().playersWithAllDamagePrevented.add(player1.getId());
+        Prevention.addOnPlayer(harness.getGameData(), PreventDamageEffect.allToControllerAndCreatures(),
+                player1.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playersWithAllDamagePrevented).isEmpty();
+        assertThat(Prevention.playersWithAllDamagePrevented(gd)).isEmpty();
     }
 
     @Test

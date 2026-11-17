@@ -1,13 +1,17 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.v.VitalSurge;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -90,7 +94,7 @@ class FlamesOfTheBloodHandTest extends BaseCardTest {
     @Test
     @DisplayName("The damage can't be prevented")
     void damageIsUnpreventable() {
-        gd.playersWithAllDamagePrevented.add(player2.getId());
+        Prevention.addOnPlayer(gd, PreventDamageEffect.allToControllerAndCreatures(), player2.getId());
 
         harness.setHand(player1, List.of(new FlamesOfTheBloodHand()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -105,11 +109,12 @@ class FlamesOfTheBloodHandTest extends BaseCardTest {
     @Test
     @DisplayName("The life gain lock wears off at end of turn")
     void lockClearedAtEndOfTurn() {
-        gd.playersWhoCantGainLifeThisTurn.add(player2.getId());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                new OpponentsCantGainLifeThisTurnEffect(), player2.getId(), Duration.UNTIL_END_OF_TURN));
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
-        assertThat(gd.playersWhoCantGainLifeThisTurn).isEmpty();
+        assertThat(gd.hasFloatingEffectOnPlayer(player2.getId(), OpponentsCantGainLifeThisTurnEffect.class)).isFalse();
         assertThat(gqs.canPlayerGainLife(gd, player2.getId())).isTrue();
     }
 

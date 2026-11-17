@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -77,7 +79,7 @@ class ColdEyedSelkieTest extends BaseCardTest {
         addAttackingSelkie(player1);
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setHand(player1, List.of());
-        gd.preventAllCombatDamage = true;
+        Prevention.add(gd, PreventDamageEffect.allCombat());
         int defendingLife = gd.playerLifeTotals.get(player2.getId());
 
         resolveCombatAndTrigger();

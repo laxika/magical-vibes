@@ -1,6 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.D20RollService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RollD20EffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -52,8 +57,10 @@ class AncientSilverDragonTest extends BaseCardTest {
     void combatDamageGrantsNoMaximumHandSize() {
         attackWithRoll(1);
 
-        assertThat(gd.playersWithNoMaximumHandSize).contains(player1.getId());
-        assertThat(gd.playersWithNoMaximumHandSizeUntilNextTurn).doesNotContain(player1.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).contains(Duration.PERMANENT);
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).doesNotContain(Duration.UNTIL_YOUR_NEXT_TURN);
     }
 
     @Test
@@ -66,7 +73,8 @@ class AncientSilverDragonTest extends BaseCardTest {
 
         harness.assertLife(player2, 12);
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.playersWithNoMaximumHandSize).doesNotContain(player1.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).doesNotContain(Duration.PERMANENT);
     }
 
     @ParameterizedTest
@@ -85,7 +93,10 @@ class AncientSilverDragonTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(controllerHandSize + result);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(20 - result);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
-        assertThat(gd.playersWithNoMaximumHandSize).contains(player1.getId()).doesNotContain(player2.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).contains(Duration.PERMANENT);
+        assertThat(gd.floatingEffectsOnPlayer(player2.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).doesNotContain(Duration.PERMANENT);
     }
 
     @Test
@@ -93,7 +104,7 @@ class AncientSilverDragonTest extends BaseCardTest {
     void preventedCombatDamageDoesNotTrigger() {
         addCreatureReady(player1, new AncientSilverDragon()).setAttacking(true);
         harness.forceActivePlayer(player1);
-        gd.preventAllCombatDamage = true;
+        Prevention.add(gd, PreventDamageEffect.allCombat());
         int handSize = gd.playerHands.get(player1.getId()).size();
 
         harness.resolveCombatDamage();
@@ -101,7 +112,8 @@ class AncientSilverDragonTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
-        assertThat(gd.playersWithNoMaximumHandSize).doesNotContain(player1.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).doesNotContain(Duration.PERMANENT);
     }
 
     @Test
@@ -112,8 +124,10 @@ class AncientSilverDragonTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        assertThat(gd.playersWithNoMaximumHandSize).contains(player1.getId());
-        assertThat(gd.playersWithNoMaximumHandSizeUntilNextTurn).doesNotContain(player1.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).contains(Duration.PERMANENT);
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).doesNotContain(Duration.UNTIL_YOUR_NEXT_TURN);
     }
 
     private void attackWithRoll(int result) {

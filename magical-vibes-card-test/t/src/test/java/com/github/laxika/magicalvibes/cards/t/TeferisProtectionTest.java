@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAscendant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -38,8 +39,9 @@ class TeferisProtectionTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(land);
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(land);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentBears);
-        assertThat(gd.playersWithLifeTotalCantChangeUntilNextTurn).contains(player1.getId());
-        assertThat(gd.playersWithProtectionFromEverythingUntilNextTurn).contains(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), LifeTotalCantChangeUntilNextTurnEffect.class))
+                .isTrue();
+        assertThat(gqs.playerHasProtectionFromEverything(gd, player1.getId())).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Teferi's Protection"));
 
@@ -76,16 +78,18 @@ class TeferisProtectionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playersWithLifeTotalCantChangeUntilNextTurn).contains(player1.getId());
-        assertThat(gd.playersWithProtectionFromEverythingUntilNextTurn).contains(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), LifeTotalCantChangeUntilNextTurnEffect.class))
+                .isTrue();
+        assertThat(gqs.playerHasProtectionFromEverything(gd, player1.getId())).isTrue();
 
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
-        assertThat(gd.playersWithLifeTotalCantChangeUntilNextTurn).doesNotContain(player1.getId());
-        assertThat(gd.playersWithProtectionFromEverythingUntilNextTurn).doesNotContain(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), LifeTotalCantChangeUntilNextTurnEffect.class))
+                .isFalse();
+        assertThat(gqs.playerHasProtectionFromEverything(gd, player1.getId())).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
         assertThat(gqs.canPlayerLifeChange(gd, player1.getId())).isTrue();
     }

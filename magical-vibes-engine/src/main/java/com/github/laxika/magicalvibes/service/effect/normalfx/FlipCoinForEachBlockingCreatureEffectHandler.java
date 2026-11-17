@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -54,7 +55,8 @@ public class FlipCoinForEachBlockingCreatureEffectHandler
                 if (result.isActualCoinFlip()) {
                     ActionEvents.coinFlipWon(gameData, entry.getControllerId());
                 }
-                gameData.creaturesPreventedFromDealingCombatDamage.add(blocker.getId());
+                PreventionSupport.preventCombatDamageDealtBy(gameData, cardName, entry.getSourcePermanentId(),
+                        entry.getControllerId(), blocker.getId(), Duration.UNTIL_END_OF_TURN);
                 gameLogService.append(gameData,
                         GameLog.cardThen(blocker.getCard(), " will deal no combat damage this turn."));
             } else {

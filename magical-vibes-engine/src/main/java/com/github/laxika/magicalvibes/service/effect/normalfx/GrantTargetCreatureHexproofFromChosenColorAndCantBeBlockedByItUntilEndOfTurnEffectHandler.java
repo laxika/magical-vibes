@@ -47,7 +47,8 @@ public class GrantTargetCreatureHexproofFromChosenColorAndCantBeBlockedByItUntil
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 entry.getControllerId(), null, null,
-                new ChoiceContext.TargetCreatureHexproofFromChosenColorChoice(targetId),
+                new ChoiceContext.TargetCreatureHexproofFromChosenColorChoice(targetId, entry.getControllerId(),
+                        entry.getCard().getName()),
                 COLORS, "Choose a color."));
     }
 }

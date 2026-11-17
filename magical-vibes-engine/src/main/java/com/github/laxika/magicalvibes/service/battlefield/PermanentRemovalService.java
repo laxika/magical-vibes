@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.effect.ExileCreaturesInsteadOfDyingThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileControlledPermanentsInsteadOfDyingThisTurnEffect;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
@@ -693,7 +695,7 @@ public class PermanentRemovalService {
             riders.add(new DeathExileReplacement(planar.sourceCard().getName(),
                     DeathExileReplacement.Kind.PLANAR, null, planar.sourceCard(), null, null));
         }
-        if (gameData.playersExilingControlledPermanentsInsteadOfDyingThisTurn.contains(controllerId)) {
+        if (gameData.hasFloatingEffectOnPlayer(controllerId, ExileControlledPermanentsInsteadOfDyingThisTurnEffect.class)) {
             riders.add(new DeathExileReplacement("Exile it and return it at the beginning of the next end step",
                     DeathExileReplacement.Kind.RETURN_AT_END_STEP, null, null, null, null));
         }
@@ -705,9 +707,7 @@ public class PermanentRemovalService {
                         effectiveCreatureSubtypesAtDeath(gameData, target))
                 || creature && opponentExilesOwnedNontokenCreature(gameData, ownerId, target.getCard())
                 || creature && damagerExilesDyingCreature(gameData, target)
-                || creature && !gameData.playersExilingCreaturesInsteadOfDyingThisTurn.isEmpty()
-                || creature && gameData.playersExilingOpponentCreaturesInsteadOfDyingThisTurn.stream()
-                        .anyMatch(exilingPlayerId -> !exilingPlayerId.equals(controllerId))
+                || creature && creatureExiledInsteadOfDyingThisTurn(gameData, controllerId)
                 || graveyardService.exilesBattlefieldCardPlainlyInsteadOfGraveyard(
                         gameData, ownerId, target.getCard(), controllerId, target);
 
@@ -2055,6 +2055,17 @@ public class PermanentRemovalService {
         }
     }
 
+    /**
+     * Whether a resolved effect makes the creatures {@code controllerId} controls be exiled instead of dying this turn
+     * (CR 614.1): the one that exiles every creature, or one that exiles only an opponent's creatures, resolved by
+     * another player.
+     */
+    private static boolean creatureExiledInsteadOfDyingThisTurn(GameData gameData, UUID controllerId) {
+        return gameData.floatingEffectsOfTypes(ExileCreaturesInsteadOfDyingThisTurnEffect.class).stream()
+                .anyMatch(fe -> !((ExileCreaturesInsteadOfDyingThisTurnEffect) fe.effect()).opponentsOnly()
+                        || !controllerId.equals(fe.affectedPlayerId()));
+    }
+
     private PlanarCreatureExileReplacement planarCreatureExileReplacement(GameData gameData) {
         if (gameData.planechase == null) {
             return null;
@@ -2930,8 +2941,8 @@ public class PermanentRemovalService {
                 : null;
         boolean ownSubtypeExileReplacement = wasCreature
                 && ownSubtypeExileReplacement(gameData, target, controllerId, creatureSubtypesAtDeath);
-        boolean controlledPermanentExileReplacement = gameData.playersExilingControlledPermanentsInsteadOfDyingThisTurn
-                .contains(controllerId);
+        boolean controlledPermanentExileReplacement = gameData.hasFloatingEffectOnPlayer(
+                controllerId, ExileControlledPermanentsInsteadOfDyingThisTurnEffect.class);
         boolean exileInstead = (hadPrintedAbilitiesAtDeparture
                         && GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard()))
                 || opponentExileReplacement != null
@@ -2940,9 +2951,7 @@ public class PermanentRemovalService {
                 || (wasCreature && opponentExilesOwnedNontokenCreature(gameData, ownerId, target.getCard()))
                 || (wasCreature && damagerExilesDyingCreature(gameData, target))
                 || planarExileReplacement != null
-                || (wasCreature && !gameData.playersExilingCreaturesInsteadOfDyingThisTurn.isEmpty())
-                || (wasCreature && gameData.playersExilingOpponentCreaturesInsteadOfDyingThisTurn.stream()
-                        .anyMatch(exilingPlayerId -> !exilingPlayerId.equals(controllerId)))
+                || (wasCreature && creatureExiledInsteadOfDyingThisTurn(gameData, controllerId))
                 || controlledPermanentExileReplacement;
         if (chosenReplacement != null && EnumSet.of(DeathExileReplacement.Kind.LIBRARY,
                 DeathExileReplacement.Kind.BOTTOM_OF_LIBRARY, DeathExileReplacement.Kind.SHUFFLE_INTO_LIBRARY,

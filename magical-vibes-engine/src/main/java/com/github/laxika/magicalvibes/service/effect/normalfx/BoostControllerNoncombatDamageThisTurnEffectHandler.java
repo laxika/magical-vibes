@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.DamageBonusGrant;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostControllerNoncombatDamageThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,8 +25,10 @@ public class BoostControllerNoncombatDamageThisTurnEffectHandler implements Norm
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         int bonus = Math.max(0, entry.getXValue());
-        GameData.addDamageBonusGrant(gameData.controllerNoncombatDamageBonusThisTurn, entry.getControllerId(),
-                new DamageBonusGrant(entry.getCard().getName(), null, bonus));
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(),
+                new BoostControllerNoncombatDamageThisTurnEffect(bonus), entry.getControllerId(),
+                Duration.UNTIL_END_OF_TURN));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 ": noncombat damage dealt by sources you control gets +" + bonus + " this turn."));
     }

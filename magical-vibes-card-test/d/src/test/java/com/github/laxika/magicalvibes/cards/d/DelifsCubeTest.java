@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.i.IcatianPhalanx;
 import com.github.laxika.magicalvibes.cards.q.QuestingBeast;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -34,7 +35,7 @@ class DelifsCubeTest extends BaseCardTest {
         declareBlockers(List.of());
 
         assertThat(cube.getCounterCount(CounterType.CUBE)).isEqualTo(1);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
 
         harness.passBothPriorities();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -58,7 +59,7 @@ class DelifsCubeTest extends BaseCardTest {
         declareBlockers(List.of());
 
         assertThat(cube.getCounterCount(CounterType.CUBE)).isEqualTo(1);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(chosen.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(chosen.getId());
     }
 
     @Test
@@ -78,7 +79,7 @@ class DelifsCubeTest extends BaseCardTest {
         declareBlockers(List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
 
         assertThat(cube.getCounterCount(CounterType.CUBE)).isZero();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
         assertThat(blocker.getMarkedDamage()).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }

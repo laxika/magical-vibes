@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.s.Skullcrack;
 import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
@@ -35,7 +36,7 @@ class LimDLsPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife - 4);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(paladin.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(paladin.getId());
     }
 
     @Test
@@ -55,7 +56,7 @@ class LimDLsPaladinTest extends BaseCardTest {
 
         assertThat(paladin.getPowerModifier()).isEqualTo(6);
         assertThat(paladin.getToughnessModifier()).isEqualTo(3);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(paladin.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(paladin.getId());
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife - 3);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
     }

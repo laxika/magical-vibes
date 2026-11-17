@@ -36,8 +36,8 @@ class RenderSilentTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, elves.getId());
 
         harness.assertInGraveyard(player1, "Llanowar Elves");
-        assertThat(gd.playersSilencedThisTurn).contains(player1.getId());
-        assertThat(gd.playersSilencedThisTurn).doesNotContain(player2.getId());
+        assertThat(silencedPlayers()).contains(player1.getId());
+        assertThat(silencedPlayers()).doesNotContain(player2.getId());
     }
 
     @Test
@@ -119,7 +119,7 @@ class RenderSilentTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, elves.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playersSilencedThisTurn).doesNotContain(player1.getId());
+        assertThat(silencedPlayers()).doesNotContain(player1.getId());
         harness.assertInGraveyard(player2, "Render Silent");
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -144,7 +144,7 @@ class RenderSilentTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(bears.getId());
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(gd.playersSilencedThisTurn).contains(player1.getId());
+        assertThat(silencedPlayers()).contains(player1.getId());
     }
 
     @Test

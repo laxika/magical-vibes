@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -149,7 +151,7 @@ class BlindingAngelTest extends BaseCardTest {
         Permanent angel = addCreatureReady(player1, new BlindingAngel());
         angel.setAttacking(true);
         harness.setLife(player2, 20);
-        gd.preventAllCombatDamageToPlayers = true;
+        Prevention.add(gd, PreventDamageEffect.allCombatToPlayers());
 
         resolveCombat();
         harness.passBothPriorities();

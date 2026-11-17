@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.effect.GrantControllerCreatureSpellsCantBeCounteredThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LandManaProducesFixedColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBeChosenEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.DamageBonusGrant;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -50,7 +53,11 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToO
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsFromColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageFromColorSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFromColorSourcesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostColorSourceDamageThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostControllerNoncombatDamageThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromTargetPermanentThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
@@ -127,7 +134,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -147,6 +153,7 @@ import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBySelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandManaWithColorEffect;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
 
 @ExtendWith(MockitoExtension.class)
 class GameQueryServiceTest {
@@ -352,7 +359,9 @@ class GameQueryServiceTest {
         secondLandCard.setType(CardType.LAND);
         Permanent secondPlayersLand = new Permanent(secondLandCard);
         gd.playerBattlefields.get(player2Id).add(secondPlayersLand);
-        gd.landManaFixedColorThisTurn.put(player1Id, ManaColor.BLUE);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
+                new LandManaProducesFixedColorUntilEndOfTurnEffect(ManaColor.BLUE), player1Id,
+                Duration.UNTIL_END_OF_TURN));
 
         assertThat(gqs.fixedLandManaColor(gd, firstPlayersLand)).isEqualTo(ManaColor.BLUE);
         assertThat(gqs.fixedLandManaColor(gd, secondPlayersLand)).isNull();
@@ -2501,7 +2510,8 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("turn-scoped controller protection applies only to that player's creature spells")
         void controllerCreatureSpellProtectionThisTurn() {
-            gd.playersCreatureSpellsCantBeCounteredThisTurn.add(player1Id);
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
+                new GrantControllerCreatureSpellsCantBeCounteredThisTurnEffect(), player1Id, Duration.UNTIL_END_OF_TURN));
             Card creature = creatureOnStack("Grizzly Bears", 2, player1Id);
             Card instant = new Card();
             instant.setName("Shock");
@@ -2684,7 +2694,8 @@ class GameQueryServiceTest {
         void appliesSourcePermanentDamageDoubling() {
             Permanent source = addPermanent(player1Id,
                     createCreatureWithSubtypes("Source", 2, 2, CardColor.RED, List.of(CardSubtype.BEAR)));
-            gd.permanentDamageDoublingsThisTurn.put(source.getId(), 1);
+            gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("Test", null, player1Id,
+                    new DoubleDamageFromTargetPermanentThisTurnEffect(), source.getId(), Duration.UNTIL_END_OF_TURN));
             StackEntry entry = TestStackDoor.triggered(source.getCard(),
                     player1Id,
                     "Source ability",
@@ -3043,9 +3054,10 @@ class GameQueryServiceTest {
         }
 
         @Test
-        @DisplayName("returns 2 from controllerDamageDoublingsThisTurn for combat and noncombat")
+        @DisplayName("returns 2 from a turn-scoped controller doubling for combat and noncombat")
         void returnsTwoFromTurnScopedDoubling() {
-            gd.controllerDamageDoublingsThisTurn.put(player1Id, 1);
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
+                    new DoubleControllerDamageThisTurnEffect(), player1Id, Duration.UNTIL_END_OF_TURN));
 
             assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, null, true)).isEqualTo(2);
 
@@ -3255,8 +3267,8 @@ class GameQueryServiceTest {
     class ColorSourceDamageBonus {
 
         private void setBonus(UUID playerId, CardColor color, int bonus) {
-            GameData.addDamageBonusGrant(gd.colorSourceDamageBonusThisTurn, playerId,
-                    new DamageBonusGrant("The Flame of Keld", color, bonus));
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("The Flame of Keld", null, playerId,
+                    new BoostColorSourceDamageThisTurnEffect(color, bonus), playerId, Duration.UNTIL_END_OF_TURN));
         }
 
         @Test
@@ -3318,10 +3330,10 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("lists each noncombat grant as its own bonus")
         void listsEachNoncombatGrantSeparately() {
-            GameData.addDamageBonusGrant(gd.controllerNoncombatDamageBonusThisTurn, player1Id,
-                    new DamageBonusGrant("Taii Wakeen, Perfect Shot", null, 1));
-            GameData.addDamageBonusGrant(gd.controllerNoncombatDamageBonusThisTurn, player1Id,
-                    new DamageBonusGrant("Taii Wakeen, Perfect Shot", null, 2));
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Taii Wakeen, Perfect Shot", null, player1Id,
+                    new BoostControllerNoncombatDamageThisTurnEffect(1), player1Id, Duration.UNTIL_END_OF_TURN));
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Taii Wakeen, Perfect Shot", null, player1Id,
+                    new BoostControllerNoncombatDamageThisTurnEffect(2), player1Id, Duration.UNTIL_END_OF_TURN));
 
             assertThat(gqs.getControllerNoncombatDamageBonuses(gd, player1Id))
                     .extracting(GameQueryService.DamageBonus::amount).containsExactly(1, 2);
@@ -3388,7 +3400,7 @@ class GameQueryServiceTest {
         @DisplayName("returns true when permanent is in prevention set")
         void returnsTrueWhenInPreventionSet() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            gd.permanentsPreventedFromDealingDamage.add(perm.getId());
+            Prevention.addOnPermanent(gd, PreventDamageEffect.allByTargetCreatures(), perm.getId());
 
             assertThat(gqs.isPreventedFromDealingDamage(gd, perm)).isTrue();
         }
@@ -3398,7 +3410,7 @@ class GameQueryServiceTest {
         void returnsTrueWithColorPrevention() {
             Card card = createCreature("Green Bear", 2, 2, CardColor.GREEN);
             Permanent perm = addPermanent(player1Id, card);
-            gd.preventDamageFromColors.add(CardColor.GREEN);
+            Prevention.add(gd, PreventDamageEffect.fromColors(Set.of(CardColor.GREEN)));
 
             assertThat(gqs.isPreventedFromDealingDamage(gd, perm)).isTrue();
         }
@@ -3419,7 +3431,7 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("returns true when color is in prevention set")
         void returnsTrueWhenColorPrevented() {
-            gd.preventDamageFromColors.add(CardColor.RED);
+            Prevention.add(gd, PreventDamageEffect.fromColors(Set.of(CardColor.RED)));
 
             assertThat(gqs.isDamageFromSourcePrevented(gd, CardColor.RED)).isTrue();
         }
@@ -3427,7 +3439,7 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("returns false when source color is null")
         void returnsFalseForNullColor() {
-            gd.preventDamageFromColors.add(CardColor.RED);
+            Prevention.add(gd, PreventDamageEffect.fromColors(Set.of(CardColor.RED)));
 
             assertThat(gqs.isDamageFromSourcePrevented(gd, null)).isFalse();
         }
@@ -3435,7 +3447,7 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("returns false when different color is prevented")
         void returnsFalseForDifferentColor() {
-            gd.preventDamageFromColors.add(CardColor.RED);
+            Prevention.add(gd, PreventDamageEffect.fromColors(Set.of(CardColor.RED)));
 
             assertThat(gqs.isDamageFromSourcePrevented(gd, CardColor.BLUE)).isFalse();
         }
@@ -4129,8 +4141,9 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("Returns true only for a color the player is protected from")
         void returnsTrueForProtectedColor() {
-            gd.playerProtectionFromColorsUntilEndOfTurn
-                    .computeIfAbsent(player1Id, k -> new HashSet<>()).add(CardColor.RED);
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
+                new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.RED), player1Id,
+                Duration.UNTIL_END_OF_TURN));
 
             assertThat(gqs.playerHasProtectionFromColor(gd, player1Id, CardColor.RED)).isTrue();
             assertThat(gqs.playerHasProtectionFromColor(gd, player1Id, CardColor.BLUE)).isFalse();

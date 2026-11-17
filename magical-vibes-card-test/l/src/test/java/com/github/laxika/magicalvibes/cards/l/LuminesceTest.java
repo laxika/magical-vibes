@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -63,7 +65,7 @@ class LuminesceTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(gd.preventDamageFromColors).containsExactlyInAnyOrder(CardColor.BLACK, CardColor.RED);
+        assertThat(Prevention.sourceColors(gd)).containsExactlyInAnyOrder(CardColor.BLACK, CardColor.RED);
     }
 
     @Test
@@ -84,8 +86,8 @@ class LuminesceTest extends BaseCardTest {
     @DisplayName("Prevents combat damage from black creature to player")
     void preventsBlackCreatureDamageToPlayer() {
         harness.setLife(player2, 20);
-        harness.getGameData().preventDamageFromColors.add(CardColor.BLACK);
-        harness.getGameData().preventDamageFromColors.add(CardColor.RED);
+        Prevention.add(harness.getGameData(), PreventDamageEffect.fromColors(java.util.Set.of(CardColor.BLACK)));
+        Prevention.add(harness.getGameData(), PreventDamageEffect.fromColors(java.util.Set.of(CardColor.RED)));
 
         Permanent attacker = addCreatureReady(player1, new DuskImp());
         attacker.setAttacking(true);
@@ -98,8 +100,8 @@ class LuminesceTest extends BaseCardTest {
     @Test
     @DisplayName("Prevents combat damage from black creature to blocking creature")
     void preventsBlackCreatureDamageToBlocker() {
-        harness.getGameData().preventDamageFromColors.add(CardColor.BLACK);
-        harness.getGameData().preventDamageFromColors.add(CardColor.RED);
+        Prevention.add(harness.getGameData(), PreventDamageEffect.fromColors(java.util.Set.of(CardColor.BLACK)));
+        Prevention.add(harness.getGameData(), PreventDamageEffect.fromColors(java.util.Set.of(CardColor.RED)));
 
         Permanent attacker = addCreatureReady(player1, new MassOfGhouls());
         attacker.setAttacking(true);
@@ -122,8 +124,8 @@ class LuminesceTest extends BaseCardTest {
     @DisplayName("Prevents combat damage from red creature to player")
     void preventsRedCreatureDamageToPlayer() {
         harness.setLife(player2, 20);
-        harness.getGameData().preventDamageFromColors.add(CardColor.BLACK);
-        harness.getGameData().preventDamageFromColors.add(CardColor.RED);
+        Prevention.add(harness.getGameData(), PreventDamageEffect.fromColors(java.util.Set.of(CardColor.BLACK)));
+        Prevention.add(harness.getGameData(), PreventDamageEffect.fromColors(java.util.Set.of(CardColor.RED)));
 
         Permanent attacker = addCreatureReady(player1, new GoblinPiker());
         attacker.setAttacking(true);
@@ -139,8 +141,8 @@ class LuminesceTest extends BaseCardTest {
     @DisplayName("Does not prevent combat damage from green creature")
     void doesNotPreventGreenCreatureDamage() {
         harness.setLife(player2, 20);
-        harness.getGameData().preventDamageFromColors.add(CardColor.BLACK);
-        harness.getGameData().preventDamageFromColors.add(CardColor.RED);
+        Prevention.add(harness.getGameData(), PreventDamageEffect.fromColors(java.util.Set.of(CardColor.BLACK)));
+        Prevention.add(harness.getGameData(), PreventDamageEffect.fromColors(java.util.Set.of(CardColor.RED)));
 
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
@@ -155,8 +157,8 @@ class LuminesceTest extends BaseCardTest {
     @DisplayName("Does not prevent combat damage from white creature")
     void doesNotPreventWhiteCreatureDamage() {
         harness.setLife(player2, 20);
-        harness.getGameData().preventDamageFromColors.add(CardColor.BLACK);
-        harness.getGameData().preventDamageFromColors.add(CardColor.RED);
+        Prevention.add(harness.getGameData(), PreventDamageEffect.fromColors(java.util.Set.of(CardColor.BLACK)));
+        Prevention.add(harness.getGameData(), PreventDamageEffect.fromColors(java.util.Set.of(CardColor.RED)));
 
         Permanent attacker = addCreatureReady(player1, new YouthfulKnight());
         attacker.setAttacking(true);
@@ -197,8 +199,8 @@ class LuminesceTest extends BaseCardTest {
     void doesNotPreventGreenSpellDamage() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.getGameData().preventDamageFromColors.add(CardColor.BLACK);
-        harness.getGameData().preventDamageFromColors.add(CardColor.RED);
+        Prevention.add(harness.getGameData(), PreventDamageEffect.fromColors(java.util.Set.of(CardColor.BLACK)));
+        Prevention.add(harness.getGameData(), PreventDamageEffect.fromColors(java.util.Set.of(CardColor.RED)));
 
         harness.setHand(player1, List.of(new Hurricane()));
         harness.addMana(player1, ManaColor.GREEN, 3);
@@ -231,13 +233,13 @@ class LuminesceTest extends BaseCardTest {
     @Test
     @DisplayName("Prevented colors are cleared at end of turn")
     void preventedColorsClearedAtEndOfTurn() {
-        harness.getGameData().preventDamageFromColors.add(CardColor.BLACK);
-        harness.getGameData().preventDamageFromColors.add(CardColor.RED);
+        Prevention.add(harness.getGameData(), PreventDamageEffect.fromColors(java.util.Set.of(CardColor.BLACK)));
+        Prevention.add(harness.getGameData(), PreventDamageEffect.fromColors(java.util.Set.of(CardColor.RED)));
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(gd.preventDamageFromColors).isEmpty();
+        assertThat(Prevention.sourceColors(gd)).isEmpty();
     }
 
     @Test

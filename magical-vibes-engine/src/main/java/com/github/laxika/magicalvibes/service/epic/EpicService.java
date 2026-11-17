@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.epic;
 
+import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DelayedReferents;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -36,7 +39,9 @@ public class EpicService {
         UUID controllerId = entry.getControllerId();
         if (controllerId == null) return;
 
-        gameData.playersCantCastSpellsForRestOfGame.add(controllerId);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), controllerId, new PlayerCantCastSpellsEffect(), controllerId,
+                Duration.PERMANENT));
         Card prototype = copySupport.createCopyCardWithoutEpic(entry.getCard());
         // "At the beginning of each of your upkeeps for the rest of the game, copy this spell": a delayed triggered
         // ability the spell made as it resolved, made by the spell and controlled by its controller (CR 702.50a,

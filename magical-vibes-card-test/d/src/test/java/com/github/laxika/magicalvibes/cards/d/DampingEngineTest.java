@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
 import com.github.laxika.magicalvibes.cards.b.Bloodbriar;
 import com.github.laxika.magicalvibes.cards.f.ForbiddingWatchtower;
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
@@ -51,7 +54,8 @@ class DampingEngineTest extends BaseCardTest {
         Permanent engine = harness.addToBattlefieldAndReturn(player1, new DampingEngine());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new ForbiddingWatchtower());
         harness.addToBattlefield(player2, new ForbiddingWatchtower());
-        gd.playersCantActivateAbilitiesThisTurn.add(player1.getId());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                new SenTripletsUpkeepEffect(), player1.getId(), Duration.UNTIL_END_OF_TURN));
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handlePermanentChosen(player1, land.getId());

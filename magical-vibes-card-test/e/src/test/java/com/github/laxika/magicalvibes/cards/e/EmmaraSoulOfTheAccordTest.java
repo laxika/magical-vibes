@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.d.DouserOfLights;
 import com.github.laxika.magicalvibes.cards.p.PauseForReflection;
@@ -86,11 +87,11 @@ class EmmaraSoulOfTheAccordTest extends BaseCardTest {
         assertThat(emmara.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).toList()).hasSize(1);
-        assertThat(gd.preventAllCombatDamage).isFalse();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
     }
 
     @Test

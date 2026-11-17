@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.f.FieryTemper;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -57,7 +59,7 @@ class LonghornFirebeastTest extends BaseCardTest {
     @DisplayName("Opponent accepts even when the damage is prevented, so Firebeast is sacrificed")
     void acceptingStillSacrificesWhenDamageIsPrevented() {
         castAndResolveToChoice();
-        gd.playersWithAllDamagePrevented.add(player2.getId());
+        Prevention.addOnPlayer(gd, PreventDamageEffect.allToControllerAndCreatures(), player2.getId());
 
         harness.handleMayAbilityChosen(player2, true);
 

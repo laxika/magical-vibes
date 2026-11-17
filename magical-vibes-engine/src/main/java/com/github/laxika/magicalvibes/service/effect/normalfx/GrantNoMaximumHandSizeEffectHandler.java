@@ -35,8 +35,8 @@ public class GrantNoMaximumHandSizeEffectHandler implements NormalEffectHandlerB
 
         String period;
         if (e.duration() == NoMaximumHandSizeDuration.REST_OF_GAME) {
-            gameData.playersWithNoMaximumHandSize.add(controllerId);
-            gameData.noMaximumHandSizeGrantTimestamps.put(controllerId, gameData.nextTimestamp());
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), controllerId, e, controllerId, Duration.PERMANENT));
             period = "for the rest of the game";
         } else if (e.duration() == NoMaximumHandSizeDuration.WHILE_SOURCE_ON_BATTLEFIELD) {
             if (entry.getSourcePermanentId() == null) {
@@ -48,8 +48,8 @@ public class GrantNoMaximumHandSizeEffectHandler implements NormalEffectHandlerB
                     Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
             period = "for as long as they control " + entry.getCard().getName();
         } else {
-            gameData.playersWithNoMaximumHandSizeUntilNextTurn.add(controllerId);
-            gameData.noMaximumHandSizeGrantTimestamps.put(controllerId, gameData.nextTimestamp());
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), controllerId, e, controllerId, Duration.UNTIL_YOUR_NEXT_TURN));
             period = "until their next turn";
         }
 

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -96,8 +98,9 @@ public class CantAttackThisTurnEffectHandler implements NormalEffectHandlerBean 
 
     private void applyRestriction(GameData gameData, StackEntry entry, Permanent permanent, CantAttackThisTurnEffect effect) {
         if (effect.duration() == com.github.laxika.magicalvibes.model.effect.GrantDuration.UNTIL_YOUR_NEXT_TURN) {
-            gameData.permanentsCantAttackUntilNextTurn.computeIfAbsent(permanent.getId(),
-                    ignored -> new java.util.HashSet<>()).add(entry.getControllerId());
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), effect, permanent.getId(),
+                    Duration.UNTIL_YOUR_NEXT_TURN));
         } else if (effect.duration() == com.github.laxika.magicalvibes.model.effect.GrantDuration.END_OF_TURN) {
             permanent.setCantAttackThisTurn(true);
         } else {

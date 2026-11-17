@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -28,11 +30,11 @@ public class OpponentsCantCastSpellsFromOutsideHandUntilNextTurnEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        Set<UUID> opponents = gameData.playersCantCastSpellsFromOutsideHandUntilControllerNextTurn
-                .computeIfAbsent(controllerId, ignored -> ConcurrentHashMap.newKeySet());
         for (UUID playerId : gameData.playerIds) {
             if (!playerId.equals(controllerId)) {
-                opponents.add(playerId);
+                gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                        entry.getSourcePermanentId(), controllerId, effect, playerId,
+                        Duration.UNTIL_YOUR_NEXT_TURN));
             }
         }
         gameLogService.append(gameData, GameLog.text(

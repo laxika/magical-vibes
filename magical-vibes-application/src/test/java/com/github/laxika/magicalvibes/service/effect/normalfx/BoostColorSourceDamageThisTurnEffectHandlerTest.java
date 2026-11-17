@@ -4,16 +4,15 @@ import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.DamageBonusGrant;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostColorSourceDamageThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
@@ -38,15 +37,20 @@ class BoostColorSourceDamageThisTurnEffectHandlerTest extends AbstractDamageHand
 
                 boostColorSourceDamageThisTurnHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.colorSourceDamageBonusThisTurn.get(player1Id))
-                        .containsExactly(new DamageBonusGrant("The Flame of Keld", CardColor.RED, 2));
+                assertThat(gd.floatingEffectsOnPlayer(player1Id, BoostColorSourceDamageThisTurnEffect.class))
+                        .singleElement().satisfies(floating -> {
+                            assertThat(floating.effect()).isEqualTo(effect);
+                            assertThat(floating.sourceCardName()).isEqualTo("The Flame of Keld");
+                            assertThat(floating.duration()).isEqualTo(Duration.UNTIL_END_OF_TURN);
+                        });
             }
 
             @Test
             @DisplayName("keeps each grant as its own effect")
             void keepsEachGrantSeparate() {
-                GameData.addDamageBonusGrant(gd.colorSourceDamageBonusThisTurn, player1Id,
-                        new DamageBonusGrant("The Flame of Keld", CardColor.RED, 2));
+                gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("The Flame of Keld", null, player1Id,
+                        new BoostColorSourceDamageThisTurnEffect(CardColor.RED, 2), player1Id,
+                        Duration.UNTIL_END_OF_TURN));
 
                 Card card = createCard("Second Flame");
                 BoostColorSourceDamageThisTurnEffect effect = new BoostColorSourceDamageThisTurnEffect(CardColor.RED, 3);
@@ -55,9 +59,9 @@ class BoostColorSourceDamageThisTurnEffectHandlerTest extends AbstractDamageHand
 
                 boostColorSourceDamageThisTurnHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.colorSourceDamageBonusThisTurn.get(player1Id)).containsExactly(
-                        new DamageBonusGrant("The Flame of Keld", CardColor.RED, 2),
-                        new DamageBonusGrant("Second Flame", CardColor.RED, 3));
+                assertThat(gd.floatingEffectsOnPlayer(player1Id, BoostColorSourceDamageThisTurnEffect.class))
+                        .extracting(floating -> ((BoostColorSourceDamageThisTurnEffect) floating.effect()).bonus())
+                        .containsExactly(2, 3);
             }
 
             @Test
@@ -70,6 +74,7 @@ class BoostColorSourceDamageThisTurnEffectHandlerTest extends AbstractDamageHand
 
                 boostColorSourceDamageThisTurnHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.colorSourceDamageBonusThisTurn).doesNotContainKey(player2Id);
+                assertThat(gd.floatingEffectsOnPlayer(player2Id, BoostColorSourceDamageThisTurnEffect.class))
+                        .isEmpty();
             }
 }

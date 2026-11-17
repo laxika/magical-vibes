@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantGainLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
@@ -35,7 +37,8 @@ public class TargetPlayerCantGainLifeThisTurnEffectHandler implements NormalEffe
                 : gameQueryService.findPermanentController(gameData, targetId);
         if (playerId == null) return;
 
-        gameData.playersWhoGainNoLifeThisTurn.add(playerId);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), effect, playerId, Duration.UNTIL_END_OF_TURN));
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(playerId) + " gains no life this turn."));
     }

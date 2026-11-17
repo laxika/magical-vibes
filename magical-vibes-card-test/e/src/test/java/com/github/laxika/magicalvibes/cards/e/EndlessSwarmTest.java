@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsEffect;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -31,7 +32,7 @@ class EndlessSwarmTest extends BaseCardTest {
                 && token.getEffectiveToughness() == 1
                 && token.getCard().getColor() == CardColor.GREEN
                 && token.getCard().getSubtypes().contains(CardSubtype.SNAKE));
-        assertThat(gd.playersCantCastSpellsForRestOfGame).contains(player1.getId());
+        assertThat(playersAffectedBy(PlayerCantCastSpellsEffect.class)).contains(player1.getId());
 
         harness.setHand(player1, List.of(new EndlessSwarm()));
         harness.addMana(player1, ManaColor.GREEN, 8);
@@ -49,7 +50,7 @@ class EndlessSwarmTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(findPermanents(player1, "Snake")).isEmpty();
-        assertThat(gd.playersCantCastSpellsForRestOfGame).contains(player1.getId());
+        assertThat(playersAffectedBy(PlayerCantCastSpellsEffect.class)).contains(player1.getId());
     }
 
     @Test
@@ -115,7 +116,7 @@ class EndlessSwarmTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(findPermanents(player1, "Snake")).hasSize(1);
-        assertThat(gd.playersCantCastSpellsForRestOfGame).doesNotContain(player2.getId());
+        assertThat(playersAffectedBy(PlayerCantCastSpellsEffect.class)).doesNotContain(player2.getId());
     }
 
     @Test
@@ -132,7 +133,7 @@ class EndlessSwarmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player2, "Snake")).hasSize(1);
-        assertThat(gd.playersCantCastSpellsForRestOfGame).contains(player2.getId());
+        assertThat(playersAffectedBy(PlayerCantCastSpellsEffect.class)).contains(player2.getId());
         harness.passBothPriorities();
         advanceToUpkeep(player2);
         resolveAllTriggers();

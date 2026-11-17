@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.planar;
 
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
 import com.github.laxika.magicalvibes.model.*;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.effect.ActivationCostCardReferenceEffect;
@@ -73,8 +75,8 @@ public class PlanarAbilityService {
         if (game.status != GameStatus.RUNNING || game.interaction.isAwaitingInput()
                 || !Objects.equals(query.getPriorityPlayerId(game), playerId)) return false;
         if (!ability.isSpecialAction()
-                && (game.playersCantActivateAbilitiesThisTurn.contains(playerId)
-                || (!ability.isManaAbility() && game.playersCantActivateNonManaAbilitiesThisTurn.contains(playerId)))) {
+                && (game.hasFloatingEffectOnPlayer(playerId, SenTripletsUpkeepEffect.class)
+                || (!ability.isManaAbility() && game.hasFloatingEffectOnPlayer(playerId, TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect.class)))) {
             return false;
         }
         if (!ability.isActivatableByAnyPlayer() && !Objects.equals(game.planechase.controllerId, playerId)) return false;

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.cards.j.JabarisBanner;
 import com.github.laxika.magicalvibes.cards.w.WeldingJar;
@@ -54,7 +55,7 @@ class GoblinVandalTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(millstone);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore);
     }
 
@@ -71,7 +72,7 @@ class GoblinVandalTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(millstone);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore - 1);
     }
 
@@ -90,7 +91,7 @@ class GoblinVandalTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
     }
 
     @Test
@@ -109,7 +110,7 @@ class GoblinVandalTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownArtifact);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(defender);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
     }
 
     @Test
@@ -126,7 +127,7 @@ class GoblinVandalTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(chosenArtifact);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(otherArtifact);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
     }
 
     @Test
@@ -149,7 +150,7 @@ class GoblinVandalTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(replacementArtifact);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -25,7 +27,9 @@ public class GrantControllerSpellsCantBeCounteredThisTurnEffectHandler implement
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        gameData.playersSpellsCantBeCounteredThisTurn.add(controllerId);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), effect, controllerId,
+                Duration.UNTIL_END_OF_TURN));
         gameLogService.append(gameData, GameLog.text("Spells "
                 + gameData.playerIdToName.get(controllerId) + " controls can't be countered this turn."));
     }

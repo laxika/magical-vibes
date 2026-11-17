@@ -7,14 +7,18 @@ import java.util.List;
 /**
  * Spell effect: choose a card name; until your next turn, your opponents can't cast spells with
  * the chosen name (Comply, Academic Probation). Prompts for the name on resolution; the lock is
- * stamped on {@code GameData.opponentsCantCastNamedSpellsUntilControllerNextTurn} and cleared at
- * the start of the controller's next turn.
+ * made a floating effect of this record carrying the chosen {@code cardName}, which ends at the start of the
+ * controller's next turn.
  */
-public record ChooseCardNameOpponentsCantCastUntilNextTurnEffect(List<CardType> excludedTypes)
+public record ChooseCardNameOpponentsCantCastUntilNextTurnEffect(List<CardType> excludedTypes, String cardName)
         implements CardEffect {
 
+    public ChooseCardNameOpponentsCantCastUntilNextTurnEffect(List<CardType> excludedTypes) {
+        this(excludedTypes, null);
+    }
+
     public ChooseCardNameOpponentsCantCastUntilNextTurnEffect() {
-        this(List.of());
+        this(List.of(), null);
     }
 
     public ChooseCardNameOpponentsCantCastUntilNextTurnEffect {

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GatherSpecimensEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -70,7 +73,8 @@ class ChainersTormentTest extends BaseCardTest {
         saga.setCounterCount(CounterType.LORE, 2);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        gd.playersGatheringSpecimensThisTurn.add(player2.getId());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                new GatherSpecimensEffect(), player2.getId(), Duration.UNTIL_END_OF_TURN));
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
 

@@ -12,7 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 @Component
 @RequiredArgsConstructor
@@ -46,9 +47,10 @@ public class GrantProtectionFromChosenPlayerToControllerAndTargetPermanentUntilE
         }
 
         target.getProtectionFromPlayerIdsUntilEndOfTurn().add(chosenPlayerId);
-        gameData.playerProtectionFromPlayerIdsUntilEndOfTurn
-                .computeIfAbsent(entry.getControllerId(), ignored -> ConcurrentHashMap.newKeySet())
-                .add(chosenPlayerId);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(),
+                new GrantProtectionFromChosenPlayerToControllerAndTargetPermanentUntilEndOfTurnEffect(chosenPlayerId),
+                entry.getControllerId(), Duration.UNTIL_END_OF_TURN));
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " and " + gameData.playerIdToName.get(entry.getControllerId())

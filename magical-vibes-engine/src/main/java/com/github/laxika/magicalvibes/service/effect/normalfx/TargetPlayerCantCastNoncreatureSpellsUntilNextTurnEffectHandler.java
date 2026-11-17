@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -27,9 +29,9 @@ public class TargetPlayerCantCastNoncreatureSpellsUntilNextTurnEffectHandler imp
         UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null) return;
 
-        gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn
-                .computeIfAbsent(entry.getControllerId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
-                .add(targetPlayerId);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), effect, targetPlayerId,
+                Duration.UNTIL_YOUR_NEXT_TURN));
 
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(targetPlayerId)

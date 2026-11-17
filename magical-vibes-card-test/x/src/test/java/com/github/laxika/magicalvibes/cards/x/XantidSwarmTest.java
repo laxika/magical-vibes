@@ -34,7 +34,7 @@ class XantidSwarmTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(gd.playersSilencedThisTurn).containsOnly(player2.getId());
+        assertThat(silencedPlayers()).containsOnly(player2.getId());
 
         harness.setHand(player2, List.of(new AvenFarseer()));
         harness.addMana(player2, ManaColor.WHITE, 1);
@@ -80,7 +80,7 @@ class XantidSwarmTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
         resolveAllTriggers();
 
-        assertThat(gd.playersSilencedThisTurn).containsOnly(player2.getId());
+        assertThat(silencedPlayers()).containsOnly(player2.getId());
     }
 
     @Test
@@ -90,7 +90,7 @@ class XantidSwarmTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        assertThat(gd.playersSilencedThisTurn).contains(player2.getId());
+        assertThat(silencedPlayers()).contains(player2.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
@@ -102,7 +102,7 @@ class XantidSwarmTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         GameActionAvailabilityService availability = harness.getGameActionAvailabilityService();
-        assertThat(gd.playersSilencedThisTurn).doesNotContain(player2.getId());
+        assertThat(silencedPlayers()).doesNotContain(player2.getId());
         assertThat(availability.getPlayableCardIndices(gd, player2.getId())).contains(0);
     }
 
@@ -115,13 +115,13 @@ class XantidSwarmTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.playersSilencedThisTurn).isEmpty();
+        assertThat(silencedPlayers()).isEmpty();
         var triggerCardId = gd.stack.getLast().getCard().getId();
         harness.ensurePriority(player2);
         harness.castAndResolveInstant(player2, 0, triggerCardId);
         resolveAllTriggers();
 
-        assertThat(gd.playersSilencedThisTurn).isEmpty();
+        assertThat(silencedPlayers()).isEmpty();
     }
 
     @Test
@@ -140,7 +140,7 @@ class XantidSwarmTest extends BaseCardTest {
         gd.playerGraveyards.get(player2.getId()).add(jace.getCard());
         resolveAllTriggers();
 
-        assertThat(gd.playersSilencedThisTurn).containsOnly(player2.getId());
+        assertThat(silencedPlayers()).containsOnly(player2.getId());
     }
 
     @Test
@@ -156,6 +156,6 @@ class XantidSwarmTest extends BaseCardTest {
         gs.declareAttackers(gd, player1, List.of(0), Map.of(0, battle.getId()));
         resolveAllTriggers();
 
-        assertThat(gd.playersSilencedThisTurn).containsOnly(player2.getId());
+        assertThat(silencedPlayers()).containsOnly(player2.getId());
     }
 }

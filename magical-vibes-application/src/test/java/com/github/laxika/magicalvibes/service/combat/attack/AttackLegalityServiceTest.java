@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
+import com.github.laxika.magicalvibes.model.effect.OtherCreaturesCantAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.a.AngelicArbiter;
 import com.github.laxika.magicalvibes.cards.a.AnimateWall;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
@@ -232,7 +234,8 @@ class AttackLegalityServiceTest extends BaseCardTest {
     @DisplayName("A global turn-scoped restriction stops every creature from attacking")
     void globalCantAttackThisTurnRestrictionStopsAttacking() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        gd.creaturesCantAttackThisTurn = true;
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
+                new CreaturesCantAttackThisTurnEffect(), null, Duration.UNTIL_END_OF_TURN));
 
         assertThat(als.canAttack(gd, bears, player1.getId())).isFalse();
     }
@@ -384,7 +387,9 @@ class AttackLegalityServiceTest extends BaseCardTest {
 
         assertThat(als.canAttack(gd, other, player1.getId())).isTrue();
 
-        gd.otherCreaturesCantAttackExemptCreatureIds.add(spared.getId());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
+                new OtherCreaturesCantAttackThisTurnEffect(spared.getId()), null,
+                Duration.UNTIL_END_OF_TURN));
 
         assertThat(als.canAttack(gd, spared, player1.getId())).isTrue();
         assertThat(als.canAttack(gd, other, player1.getId())).isFalse();

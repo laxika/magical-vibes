@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerCreaturesCantBeTargetedByColorsEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,9 +27,8 @@ public class GrantControllerCreaturesCantBeTargetedByColorsEffectHandler impleme
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantControllerCreaturesCantBeTargetedByColorsEffect) effect;
         UUID controllerId = entry.getControllerId();
-        gameData.playerCreaturesCantBeTargetedByColorsThisTurn
-                .computeIfAbsent(controllerId, k -> ConcurrentHashMap.newKeySet())
-                .addAll(e.colors());
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), controllerId, e, controllerId, Duration.UNTIL_END_OF_TURN));
 
         String colorNames = e.colors().stream()
                 .map(c -> c.name().toLowerCase())

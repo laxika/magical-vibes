@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -78,7 +80,7 @@ class CombustionManTest extends BaseCardTest {
     void acceptingPreventedDamageStillSavesPermanent() {
         Permanent combustionMan = addReadyCombustionMan();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        gd.preventAllDamageByCreatures = true;
+        Prevention.add(gd, PreventDamageEffect.allByCreatures());
 
         queueAttackTrigger(combustionMan, target);
         resolveDamageChoice(player2, true);

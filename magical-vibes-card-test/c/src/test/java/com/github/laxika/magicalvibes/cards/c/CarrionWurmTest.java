@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
@@ -36,7 +37,7 @@ class CarrionWurmTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(first, second, third);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(wurm.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(wurm.getId());
         harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.assertLife(player2, 20);
     }
@@ -53,7 +54,7 @@ class CarrionWurmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(wurm.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(wurm.getId());
         harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.assertLife(player2, 14);
     }
@@ -69,7 +70,7 @@ class CarrionWurmTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(wurm.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(wurm.getId());
         harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.assertLife(player2, 14);
     }
@@ -94,7 +95,7 @@ class CarrionWurmTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(first, second, third);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(fourth);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(wurm.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(wurm.getId());
     }
 
     @Test
@@ -116,7 +117,7 @@ class CarrionWurmTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(ownCards);
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyElementsOf(opponentCards);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(wurm.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(wurm.getId());
     }
 
     @Test
@@ -139,7 +140,7 @@ class CarrionWurmTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player2, 0);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(first, second, third);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(wurm.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(wurm.getId());
         harness.passUntil(TurnStep.END_OF_COMBAT);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(wurm);

@@ -15,9 +15,13 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -46,7 +50,7 @@ class FaithsShieldTest extends BaseCardTest {
         assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
         assertThat(other.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.RED);
         // The player does not gain protection in normal mode.
-        assertThat(gd.playerProtectionFromColorsUntilEndOfTurn.getOrDefault(player1.getId(), new HashSet<>()))
+        assertThat(playerProtectionColors(player1.getId()))
                 .doesNotContain(CardColor.RED);
     }
 
@@ -66,7 +70,7 @@ class FaithsShieldTest extends BaseCardTest {
         harness.handleListChoice(player1, "WHITE");
 
         // The controller gains protection from the chosen color.
-        assertThat(gd.playerProtectionFromColorsUntilEndOfTurn.get(player1.getId())).contains(CardColor.WHITE);
+        assertThat(playerProtectionColors(player1.getId())).contains(CardColor.WHITE);
 
         // Every permanent the controller controls gains protection from the chosen color.
         for (Permanent permanent : gd.playerBattlefields.get(player1.getId())) {
@@ -78,8 +82,9 @@ class FaithsShieldTest extends BaseCardTest {
     @DisplayName("Fateful hour: protection from a color prevents combat damage to the protected player")
     void fatefulHourProtectionPreventsCombatDamageToPlayer() {
         // player2 has protection from red; player1 attacks with a red Russet Wolves.
-        gd.playerProtectionFromColorsUntilEndOfTurn
-                .computeIfAbsent(player2.getId(), k -> new HashSet<>()).add(CardColor.RED);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.RED), player2.getId(),
+                Duration.UNTIL_END_OF_TURN));
 
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new RussetWolves());
         giant.setSummoningSick(false);
@@ -108,7 +113,7 @@ class FaithsShieldTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
         harness.handleListChoice(player1, "RED");
 
-        assertThat(gd.playerProtectionFromColorsUntilEndOfTurn.get(player1.getId())).contains(CardColor.RED);
+        assertThat(playerProtectionColors(player1.getId())).contains(CardColor.RED);
 
         // A red spell can no longer target the protected player (protection blocks all sources).
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player1.getId()))
@@ -133,7 +138,7 @@ class FaithsShieldTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
-        assertThat(gd.playerProtectionFromColorsUntilEndOfTurn.getOrDefault(player1.getId(), new HashSet<>()))
+        assertThat(playerProtectionColors(player1.getId()))
                 .doesNotContain(CardColor.WHITE, CardColor.RED, CardColor.BLUE, CardColor.BLACK, CardColor.GREEN);
     }
 
@@ -149,13 +154,13 @@ class FaithsShieldTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
         harness.handleListChoice(player1, "RED");
 
-        assertThat(gd.playerProtectionFromColorsUntilEndOfTurn.get(player1.getId())).contains(CardColor.RED);
+        assertThat(playerProtectionColors(player1.getId())).contains(CardColor.RED);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playerProtectionFromColorsUntilEndOfTurn.getOrDefault(player1.getId(), new HashSet<>()))
+        assertThat(playerProtectionColors(player1.getId()))
                 .doesNotContain(CardColor.RED);
     }
 
@@ -172,7 +177,7 @@ class FaithsShieldTest extends BaseCardTest {
 
         assertThat(target.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.GREEN);
         assertThat(other.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
-        assertThat(gd.playerProtectionFromColorsUntilEndOfTurn.getOrDefault(player1.getId(), new HashSet<>())).isEmpty();
+        assertThat(playerProtectionColors(player1.getId())).isEmpty();
     }
 
     @Test
@@ -191,9 +196,9 @@ class FaithsShieldTest extends BaseCardTest {
 
         assertThat(target.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.BLUE);
         assertThat(land.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.BLUE);
-        assertThat(gd.playerProtectionFromColorsUntilEndOfTurn.get(player1.getId())).containsExactly(CardColor.BLUE);
+        assertThat(playerProtectionColors(player1.getId())).containsExactly(CardColor.BLUE);
         assertThat(opponent.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
-        assertThat(gd.playerProtectionFromColorsUntilEndOfTurn.getOrDefault(player2.getId(), new HashSet<>())).isEmpty();
+        assertThat(playerProtectionColors(player2.getId())).isEmpty();
     }
 
     @Test
@@ -211,7 +216,7 @@ class FaithsShieldTest extends BaseCardTest {
 
         assertThat(target.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.BLACK);
         assertThat(other.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
-        assertThat(gd.playerProtectionFromColorsUntilEndOfTurn.getOrDefault(player1.getId(), new HashSet<>())).isEmpty();
+        assertThat(playerProtectionColors(player1.getId())).isEmpty();
     }
 
     @Test
@@ -267,7 +272,7 @@ class FaithsShieldTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
         assertThat(remaining.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
-        assertThat(gd.playerProtectionFromColorsUntilEndOfTurn.getOrDefault(player1.getId(), new HashSet<>())).isEmpty();
+        assertThat(playerProtectionColors(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Faith's Shield");
     }
 
@@ -327,5 +332,11 @@ class FaithsShieldTest extends BaseCardTest {
 
         assertThat(target.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
         assertThat(land.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+    }
+
+    private Set<CardColor> playerProtectionColors(UUID playerId) {
+        return gd.floatingPlayerEffects(playerId, GrantProtectionFromColorUntilEndOfTurnEffect.class).stream()
+                .map(effect -> ((GrantProtectionFromColorUntilEndOfTurnEffect) effect).color())
+                .collect(Collectors.toSet());
     }
 }

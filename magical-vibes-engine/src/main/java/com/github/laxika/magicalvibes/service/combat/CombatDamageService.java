@@ -2756,8 +2756,7 @@ public class CombatDamageService {
     }
 
     private boolean isGlobalCreaturePreventionLifeGain(GameData gameData, Permanent source) {
-        return gameData.preventAllDamageByCreatures
-                && !gameData.damageByCreaturesPreventionLifeGainPlayers.isEmpty()
+        return gameQueryService.hasCreaturePreventionLifeGain(gameData)
                 && gameQueryService.isDamagePreventable(gameData, true)
                 && gameQueryService.isCreature(gameData, source)
                 && !gameQueryService.damageCantBePreventedFromSource(gameData, source);
@@ -2870,7 +2869,10 @@ public class CombatDamageService {
         effects.addAll(gameQueryService.getGrantedEffects(gameData, attacker));
         UUID attackerControllerId = gameData.findControllerOf(attacker);
         if (attackerControllerId != null) {
-            effects.addAll(gameData.playerStaticEffectsUntilEndOfTurn.getOrDefault(attackerControllerId, List.of()));
+            effects.addAll(gameData.floatingPlayerEffects(attackerControllerId,
+                    AssignCombatDamageAsThoughUnblockedEffect.class,
+                    CombatDamageAssignmentToDefendingPlayerAndCreaturesEffect.class,
+                    AssignCombatDamageToDefendingCreatureWhenUnblockedEffect.class));
         }
         effects.addAll(attachedAssignAsThoughUnblockedEffects(gameData, attacker, attackerControllerId));
         return effects;

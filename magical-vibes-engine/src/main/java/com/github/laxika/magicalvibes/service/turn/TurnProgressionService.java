@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastSpellTypesThisTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Card;
@@ -107,12 +110,9 @@ public class TurnProgressionService {
 
         if (gameData.currentStep == TurnStep.END_OF_COMBAT) {
             combatService.clearCombatState(gameData);
-            gameData.creaturesWithCombatDamagePreventedThisCombat.clear();
-            gameData.creaturesPreventedFromDealingCombatDamageThisCombat.clear();
             gameData.creaturesAssigningNoCombatDamageThisCombat.clear();
             gameData.onlyLandCreaturesCanAttackThisCombat = false;
             gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
-            gameData.creaturesCantAttackThisCombat = false;
             gameData.onlyPermanentCanAttackThisCombatId = null;
             gameData.onlyPermanentsCanAttackThisCombatIds = null;
             gameData.playerManaPools.values().forEach(manaPool -> manaPool.clearCombatMana());
@@ -1034,7 +1034,6 @@ public class TurnProgressionService {
         gameData.crimeCandidatesThisTurn.clear();
         gameData.clearSpellsCastFromHandThisTurn();
         gameData.clearSpellsCastFromOutsideHandThisTurn();
-        gameData.controllerNoncombatDamageBonusThisTurn.clear();
         gameData.playersWhoSearchedLibraryThisTurn.clear();
         gameData.playersWhoInvestigatedThisTurn.clear();
         gameData.playersWhoVenturedIntoDungeonThisTurn.clear();
@@ -1073,16 +1072,12 @@ public class TurnProgressionService {
         gameData.creaturesAttackedWithThisTurn.clear();
         gameData.creaturesAttackedCountBySubtypeThisTurn.clear();
         gameData.permanentsThatAttackedBattlesThisTurn.clear();
-        gameData.playersSilencedThisTurn.clear();
-        gameData.clearSpellLimitsThisTurn();
         Set<CardType> nextTurnRestrictedTypes = gameData.playersCantCastSpellTypesNextTurn.remove(nextActive);
         if (nextTurnRestrictedTypes != null) {
-            gameData.playersCantCastSpellTypesThisTurn.merge(nextActive, nextTurnRestrictedTypes,
-                    (existing, pending) -> {
-                        Set<CardType> merged = new HashSet<>(existing);
-                        merged.addAll(pending);
-                        return merged;
-                    });
+            // The opponents' next turn has begun: what was barred "during their next turns" now holds this turn.
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer("Spell type restriction", null, nextActive,
+                    new TargetPlayerCantCastSpellTypesThisTurnEffect(nextTurnRestrictedTypes), nextActive,
+                    Duration.UNTIL_END_OF_TURN));
         }
         gameData.activatedAbilityUsesThisTurn.clear();
         gameData.playersWhoUsedMaxSpeedFreeUnearthThisTurn.clear();
@@ -1226,7 +1221,6 @@ public class TurnProgressionService {
         gameData.bendingTypesCompletedThisTurn.clear();
         gameData.tokenCreationReplacementUsedThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
-        gameData.damagedCreaturesCantRegenerateSourceIdsThisTurn.clear();
         gameData.exileDamagedCreaturesSourceIdsThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySource.clear();
         gameData.creatureCardsDamagedThisTurnByController.clear();
@@ -1243,7 +1237,6 @@ public class TurnProgressionService {
         gameData.onlyLandCreaturesCanAttackThisCombat = false;
         gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
         gameData.onlyPermanentsCanAttackThisCombatIds = null;
-        gameData.creaturesCantAttackThisCombat = false;
         gameData.additionalCombatPhasesAfterMain = 0;
         gameData.additionalCombatPhasesAfterMainReturnStep = null;
         gameData.additionalUpkeepStepsAfterCombat = 0;
@@ -1259,8 +1252,6 @@ public class TurnProgressionService {
         gameData.additionalEndStepsPending = 0;
         gameData.cleanupDiscardPending = false;
         gameData.paidSearchTaxPermanentIds.clear();
-        gameData.otherCreaturesCantAttackExemptCreatureIds.clear();
-        gameData.creaturesCantAttackThisTurn = false;
         gameData.playerCreaturesCantAttackThisTurn.clear();
         if (gameData.peaceTalksTurnsRemaining > 0) {
             gameData.peaceTalksTurnsRemaining--;
@@ -1294,36 +1285,17 @@ public class TurnProgressionService {
         }
         gameData.forEachPermanent((controllerId, permanent) ->
                 permanent.clearLosesAllAbilitiesUntilNextTurnController(nextActive));
-        gameData.additionalEnterCountersUntilNextTurn.remove(nextActive);
-        gameData.cardTypeFlashGrantsUntilNextTurn.remove(nextActive);
         // Gideon of the Trials +1: "until your next turn" damage-dealing prevention ends now for the
         // player whose turn is beginning (its entries are keyed by that controlling player).
-        gameData.permanentsPreventedFromDealingDamageUntilNextTurn.values().removeIf(nextActive::equals);
-        gameData.permanentsCantAttackUntilNextTurn.values().forEach(controllers -> controllers.remove(nextActive));
-        gameData.permanentsCantAttackUntilNextTurn.values().removeIf(java.util.Set::isEmpty);
-        gameData.permanentsProtectedFromDamageUntilNextTurn.values().removeIf(nextActive::equals);
         gameData.creatureControllerDamageRedirectShields.removeIf(
                 shield -> nextActive.equals(shield.protectedPlayerId()));
         // Comply: "until your next turn, your opponents can't cast spells with the chosen name".
-        gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
-        gameData.opponentsCantCastSpellsWithManaValueUntilControllerNextTurn.remove(nextActive);
-        gameData.playersCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
         gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.remove(nextActive);
-        gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.remove(nextActive);
         gameData.cardsRevealedInHandUntilOwnerNextTurn.values().removeIf(nextActive::equals);
         gameData.cardsCantBePlayedInHandUntilOwnerNextTurn.values().removeIf(nextActive::equals);
-        gameData.playersCantCastSpellsFromOutsideHandUntilControllerNextTurn.remove(nextActive);
-        gameData.playersCantPlayCardsFromHandUntilControllerNextTurn.remove(nextActive);
-        gameData.cardTypeFlashGrantsUntilNextTurn.remove(nextActive);
-        gameData.playersWithNoMaximumHandSizeUntilNextTurn.remove(nextActive);
-        gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.remove(nextActive);
-        gameData.playersWithProtectionFromEverythingUntilNextTurn.remove(nextActive);
-        gameData.playersWithLifeTotalCantChangeUntilNextTurn.remove(nextActive);
-        gameData.playerProtectionFromPlayerIdsUntilNextTurn.remove(nextActive);
         final UUID turnStartPlayerId = nextActive;
         gameData.forEachPermanent((ignored, permanent) ->
                 permanent.clearProtectionFromPlayersUntilTurnOf(turnStartPlayerId));
-        gameData.playerKeywordsUntilNextTurn.remove(nextActive);
         gameData.clearDelayedActions(DelayedDamageDoubling.class,
                 doubling -> doubling.controllerId().equals(nextActive));
         gameData.clearDelayedActions(DelayedSourceDamageMultiplication.class,

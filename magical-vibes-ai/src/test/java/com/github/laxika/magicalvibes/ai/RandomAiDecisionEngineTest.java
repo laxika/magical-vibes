@@ -115,11 +115,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.LandManaProducesFixedColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.Tag;
@@ -189,7 +192,9 @@ class RandomAiDecisionEngineTest {
 
         Permanent swamp = harness.addToBattlefieldAndReturn(aiPlayer, new Swamp());
         harness.setHand(aiPlayer, List.of(blueSpell));
-        gameData.landManaFixedColorThisTurn.put(aiPlayer.getId(), ManaColor.BLUE);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, aiPlayer.getId(),
+                new LandManaProducesFixedColorUntilEndOfTurnEffect(ManaColor.BLUE), aiPlayer.getId(),
+                Duration.UNTIL_END_OF_TURN));
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

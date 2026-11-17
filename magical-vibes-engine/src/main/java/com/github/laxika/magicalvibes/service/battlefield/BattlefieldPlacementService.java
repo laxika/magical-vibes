@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.effect.ExileUncastEnteringCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleCreaturesEnteringFromExileEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
@@ -1118,8 +1121,7 @@ public class BattlefieldPlacementService {
                     && !hasLostAbilitiesAsEntering(gameData, controllerId, permanent)
                     && enterAsCopyCandidates(gameData, controllerId, permanent).isEmpty();
             applies = selfReplacementApplies
-                    || (!permanent.isCast() && (!gameData.playersExilingUncastEnteringCreaturesThisTurn.isEmpty()
-                    || (!card.isToken() && !gameData.playersExilingUncastEnteringNontokenCreaturesThisTurn.isEmpty())
+                    || (!permanent.isCast() && (uncastEnteringCreatureExiledThisTurn(gameData, card)
                     || UncastEnteringCreatureExileSupport.hasActiveStaticReplacement(gameData, card, gameQueryService)));
         } finally {
             restoreHiddenBattlefields(gameData, hidden);
@@ -1169,10 +1171,19 @@ public class BattlefieldPlacementService {
         }
     }
 
+    /**
+     * Whether a resolved Hallowed Moonlight or Mistcaller still makes this card, entering without having been cast,
+     * be exiled instead (CR 614.1): the nontoken variant leaves tokens alone.
+     */
+    private static boolean uncastEnteringCreatureExiledThisTurn(GameData gameData, Card card) {
+        return gameData.floatingEffectsOfTypes(ExileUncastEnteringCreaturesEffect.class).stream()
+                .anyMatch(fe -> !((ExileUncastEnteringCreaturesEffect) fe.effect()).nontokenOnly() || !card.isToken());
+    }
+
     /** Don't Blink replacement effect: creatures entering from exile are shuffled into their owners' libraries instead. */
     private boolean applyShuffleCreatureEnteringFromExile(GameData gameData, UUID controllerId, Permanent permanent,
                                                            StackEntry sourceStackEntry) {
-        if (gameData.playersShufflingCreaturesEnteringFromExileThisTurn.isEmpty()
+        if (gameData.floatingEffectsOfTypes(ShuffleCreaturesEnteringFromExileEffect.class).isEmpty()
                 || !isCreatureAsEntering(gameData, controllerId, permanent)) {
             return false;
         }
@@ -2819,7 +2830,10 @@ public class BattlefieldPlacementService {
         if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
 
         int additionalCounters = gameData.additionalEnterCountersThisTurn.getOrDefault(controllerId, 0)
-                + gameData.additionalEnterCountersUntilNextTurn.getOrDefault(controllerId, 0);
+                + gameData.floatingEffectsOnPlayer(controllerId,
+                        ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect.class).stream()
+                .mapToInt(fe -> ((ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect) fe.effect()).count())
+                .sum();
         if (additionalCounters <= 0) return;
 
         additionalCounters = gameQueryService.doublePlusOnePlusOneCounters(

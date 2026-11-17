@@ -1561,7 +1561,8 @@ public sealed interface ChoiceContext {
 
     record PreventDamageToTargetFromChosenColorChoice(UUID targetId) implements ChoiceContext {}
 
-    record TargetCreatureHexproofFromChosenColorChoice(UUID targetId) implements ChoiceContext {}
+    record TargetCreatureHexproofFromChosenColorChoice(UUID targetId, UUID controllerId, String sourceCardName)
+            implements ChoiceContext {}
 
     record BecomeChosenColorAndGainHexproofChoice(UUID targetId, UUID controllerId,
                                                     String sourceCardName) implements ChoiceContext {}
@@ -1586,10 +1587,10 @@ public sealed interface ChoiceContext {
      * A single color choice that grants the chosen controller and each permanent they control
      * protection from the chosen color until end of turn (e.g. Faith's Shield fateful hour).
      */
-    record MassProtectionColorChoice(UUID controllerId) implements ChoiceContext {}
+    record MassProtectionColorChoice(UUID controllerId, String sourceCardName) implements ChoiceContext {}
 
     /** The controller chooses a color and gains protection from it until end of turn. */
-    record ControllerProtectionColorChoice(UUID controllerId) implements ChoiceContext {}
+    record ControllerProtectionColorChoice(UUID controllerId, String sourceCardName) implements ChoiceContext {}
 
     record SubtypeChoice(UUID permanentId, boolean landPlay, boolean continueGameStart,
                          boolean buddyListChoice) implements ChoiceContext {
@@ -2025,8 +2026,8 @@ public sealed interface ChoiceContext {
 
     /**
      * Comply / Academic Probation: the controller names a card; until their next turn, their
-     * opponents can't cast spells with that name. Stamped on
-     * {@code GameData.opponentsCantCastNamedSpellsUntilControllerNextTurn}.
+     * opponents can't cast spells with that name. Resolving it makes a floating effect on each opponent that
+     * ends at the start of the controller's next turn.
      */
     record OpponentsCantCastNamedSpellsUntilNextTurnChoice(UUID controllerId,
                                                            boolean restrictToAllowedNames,
@@ -2221,7 +2222,8 @@ public sealed interface ChoiceContext {
      * Hall of Gemstone: {@code playerId} (the player whose upkeep it is) chooses a color; until end
      * of turn every land tapped for mana produces that color instead of any other color.
      */
-    record AllLandsProduceChosenColorChoice(UUID playerId) implements ChoiceContext {}
+    record AllLandsProduceChosenColorChoice(UUID playerId, String sourceCardName, UUID sourcePermanentId,
+                                            UUID controllerId) implements ChoiceContext {}
 
     /** The controller is choosing the two distinct colors stored by Tablet of the Guilds. */
     record ChooseTwoColorsOnEnterChoice(UUID permanentId, UUID etbTargetId,

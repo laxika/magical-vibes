@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -70,7 +71,8 @@ public class DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffec
         UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source != null) {
-            gameData.creaturesPreventedFromDealingCombatDamage.add(sourcePermanentId);
+            PreventionSupport.preventCombatDamageDealtBy(gameData, entry.getCard().getName(), sourcePermanentId,
+                    entry.getControllerId(), sourcePermanentId, Duration.UNTIL_END_OF_TURN);
             gameData.creaturesAssigningNoCombatDamageThisTurn.add(sourcePermanentId);
             gameLogService.append(gameData,
                     GameLog.cardThen(source.getCard(), " assigns no combat damage this turn."));

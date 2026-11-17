@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.e.EyeForAnEye;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -68,7 +70,7 @@ class ScreamingNemesisTest extends BaseCardTest {
     @DisplayName("Does not lock life gain when the reflected damage is prevented")
     void preventedReflectedDamageDoesNotLockLifeGain() {
         harness.addToBattlefield(player2, new ScreamingNemesis());
-        gd.playersWithAllDamagePrevented.add(player1.getId());
+        Prevention.addOnPlayer(gd, PreventDamageEffect.allToControllerAndCreatures(), player1.getId());
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 

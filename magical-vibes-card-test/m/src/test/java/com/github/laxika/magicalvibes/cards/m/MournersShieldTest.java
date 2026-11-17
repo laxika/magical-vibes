@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.f.FangrenHunter;
 import com.github.laxika.magicalvibes.cards.v.VulshokBerserker;
@@ -155,7 +156,7 @@ class MournersShieldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.permanentsPreventedFromDealingDamage).isEmpty();
+        assertThat(Prevention.preventedFromDealing(gd)).isEmpty();
 
         redSource.setAttacking(true);
         resolveCombat(player2);

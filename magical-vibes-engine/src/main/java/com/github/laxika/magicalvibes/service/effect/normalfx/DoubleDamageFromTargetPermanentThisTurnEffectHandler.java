@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromTargetPermanentThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +43,9 @@ public class DoubleDamageFromTargetPermanentThisTurnEffectHandler implements Nor
             return;
         }
 
-        gameData.permanentDamageDoublingsThisTurn.merge(target.getId(), 1, Integer::sum);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), effect, target.getId(),
+                Duration.UNTIL_END_OF_TURN));
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())
                 .text("'s damage is doubled this turn.")

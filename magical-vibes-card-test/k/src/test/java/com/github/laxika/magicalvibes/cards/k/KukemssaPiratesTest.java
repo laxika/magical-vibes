@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
 import com.github.laxika.magicalvibes.cards.l.LeylineOfPunishment;
@@ -56,7 +57,7 @@ class KukemssaPiratesTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
 
         resolveCombat();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore);
@@ -79,7 +80,7 @@ class KukemssaPiratesTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
         // The combat-damage prevention itself is only for the turn.
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
+        assertThat(Prevention.preventedFromDealingCombat(gd)).isEmpty();
     }
 
     @Test
@@ -94,7 +95,7 @@ class KukemssaPiratesTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
 
         resolveCombat();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore - 2);
@@ -111,7 +112,7 @@ class KukemssaPiratesTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(artifact);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
 
         resolveCombat();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore - 2);
@@ -131,7 +132,7 @@ class KukemssaPiratesTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
     }
 
     @Test
@@ -164,7 +165,7 @@ class KukemssaPiratesTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(replacementArtifact);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(replacementArtifact);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
     }
 
     @Test

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.p.PowerSink;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.MayPayLifeForColorlessManaUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -30,7 +31,8 @@ class ChannelTest extends BaseCardTest {
     void grantsChannelPermission() {
         castChannel();
 
-        assertThat(gd.mayPayLifeForColorlessManaUntilEndOfTurn).contains(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), MayPayLifeForColorlessManaUntilEndOfTurnEffect.class))
+                .isTrue();
     }
 
     @Test
@@ -100,7 +102,8 @@ class ChannelTest extends BaseCardTest {
     void permissionClearedAtEndOfTurn() {
         castChannel();
 
-        assertThat(gd.mayPayLifeForColorlessManaUntilEndOfTurn).isNotEmpty();
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), MayPayLifeForColorlessManaUntilEndOfTurnEffect.class))
+                .isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 

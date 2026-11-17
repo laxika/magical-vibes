@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.b.BlindSeer;
 import com.github.laxika.magicalvibes.cards.g.GhituFire;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElite;
@@ -36,7 +37,7 @@ class ProtectiveSphereTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, redSource.getId());
 
         assertThat(gd.playerSourceDamagePreventionIds.get(player1.getId())).contains(redSource.getId());
-        assertThat(gd.permanentsPreventedFromDealingDamage).doesNotContain(redSource.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).doesNotContain(redSource.getId());
     }
 
     @Test

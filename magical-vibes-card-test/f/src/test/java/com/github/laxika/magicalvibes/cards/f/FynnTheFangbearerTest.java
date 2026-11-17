@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.a.AmbushViper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,6 +10,10 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PlayersGainKeywordUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.Keyword;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,7 +46,9 @@ class FynnTheFangbearerTest extends BaseCardTest {
     @Test
     @DisplayName("Poison applies to the damaged player without targeting through shroud")
     void damagedPlayerWithShroudStillGetsPoison() {
-        gd.playersWithShroudThisTurn.add(player2.getId());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                new PlayersGainKeywordUntilEndOfTurnEffect(Keyword.SHROUD), player2.getId(),
+                Duration.UNTIL_END_OF_TURN));
         addCreatureReady(player1, new FynnTheFangbearer()).setAttacking(true);
 
         resolveCombat();
@@ -92,7 +100,7 @@ class FynnTheFangbearerTest extends BaseCardTest {
     @DisplayName("Prevented combat damage does not trigger Fynn")
     void preventedCombatDamageDoesNotTrigger() {
         addCreatureReady(player1, new FynnTheFangbearer()).setAttacking(true);
-        gd.preventAllCombatDamage = true;
+        Prevention.add(gd, PreventDamageEffect.allCombat());
 
         resolveCombat();
         resolveAllTriggers();

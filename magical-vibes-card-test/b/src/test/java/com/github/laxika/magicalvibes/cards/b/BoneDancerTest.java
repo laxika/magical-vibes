@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.laxika.magicalvibes.cards.a.Abeyance;
@@ -102,7 +103,7 @@ class BoneDancerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(Card::getId)
                 .containsExactly(noncreature.getId());
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
         harness.assertLife(player2, 18);
     }
@@ -116,7 +117,7 @@ class BoneDancerTest extends BaseCardTest {
         attackUnblocked();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
         harness.assertLife(player2, 18);
     }
@@ -136,7 +137,7 @@ class BoneDancerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(Card::getId)
                 .contains(creature.getId());
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
 
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
         harness.assertLife(player2, 18);

@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.LandManaProducesOneChosenColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceColoredManaWithWhiteUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceTargetLandManaWithColorEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.replacement.LandManaEvent;
@@ -21,19 +23,19 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Land-mana replacements that resolving spells and abilities create, recorded on {@link GameData}:
+ * Land-mana replacements that resolving spells and abilities create, kept as floating effects:
  * <ul>
  *   <li>Deep Water — lands a player controls produce one fixed color
- *       ({@code landManaFixedColorThisTurn});</li>
+ *       (a floating effect on the player);</li>
  *   <li>Harvest Mage — lands a player taps produce one mana of a color of their choice instead of
- *       any other type and amount ({@code playersWithLandManaChoiceReplacementThisTurn});</li>
- *   <li>Pale Moon — nonbasic lands produce a fixed type ({@code nonbasicLandsFixedManaColorThisTurn});</li>
+ *       any other type and amount (a floating effect on the player);</li>
+ *   <li>Pale Moon — nonbasic lands produce a fixed type (a floating effect on every player);</li>
  *   <li>Chaos Moon — lands of a basic land type produce a fixed type
- *       ({@code landSubtypeFixedManaColorThisTurn});</li>
+ *       (a floating effect on every player);</li>
  *   <li>Hall of Gemstone — lands produce the chosen color instead of any other <em>color</em>, so
- *       it leaves colorless mana alone ({@code allLandsFixedManaColorThisTurn});</li>
+ *       it leaves colorless mana alone (a floating effect on every player);</li>
  *   <li>False Dawn — abilities a player controls that would add colored mana add that much white
- *       mana instead ({@code playersWithColoredManaReplacementThisTurn});</li>
+ *       mana instead (a floating effect on the player);</li>
  *   <li>Quarum Trench Gnomes — one land produces another type instead of one type, indefinitely
  *       (a floating {@link ReplaceTargetLandManaWithColorEffect}).</li>
  * </ul>
@@ -58,34 +60,37 @@ class TurnScopedLandManaReplacements extends LandManaCandidateSource {
         List<ReplacementOption> options = new ArrayList<>();
         UUID controllerId = gameQueryService.findPermanentController(gameData, land.getId());
         boolean tappedByController = controllerId != null && controllerId.equals(event.playerId());
-        ManaColor controllerColor = tappedByController ? gameData.landManaFixedColorThisTurn.get(controllerId) : null;
+        ManaColor controllerColor = tappedByController
+                ? gameQueryService.controllerLandsFixedColor(gameData, controllerId) : null;
         if (controllerColor != null) {
             options.add(option(CONTROLLER_FIXED + controllerId,
                     "Your lands produce " + manaText(controllerColor) + " this turn"));
         }
-        if (tappedByController && gameData.playersWithLandManaChoiceReplacementThisTurn.contains(controllerId)) {
+        if (tappedByController && gameData.hasFloatingEffectOnPlayer(controllerId,
+                LandManaProducesOneChosenColorUntilEndOfTurnEffect.class)) {
             options.add(option(CONTROLLER_CHOICE + controllerId,
                     "Your lands produce one mana of a color of your choice this turn"));
         }
-        ManaColor nonbasicColor = gameData.nonbasicLandsFixedManaColorThisTurn;
+        ManaColor nonbasicColor = gameQueryService.nonbasicLandsFixedColor(gameData);
         if (nonbasicColor != null && !gameQueryService.hasEffectiveSupertype(gameData, land, CardSupertype.BASIC)) {
             options.add(option(NONBASIC_FIXED, "Nonbasic lands produce " + manaText(nonbasicColor) + " this turn"));
         }
-        if (!gameData.landSubtypeFixedManaColorThisTurn.isEmpty()) {
+        Map<CardSubtype, ManaColor> subtypeColors = gameQueryService.landSubtypeFixedColors(gameData);
+        if (!subtypeColors.isEmpty()) {
             Set<CardSubtype> types = gameQueryService.effectiveBasicLandTypes(gameData, land);
-            for (Map.Entry<CardSubtype, ManaColor> entry : gameData.landSubtypeFixedManaColorThisTurn.entrySet()) {
+            for (Map.Entry<CardSubtype, ManaColor> entry : subtypeColors.entrySet()) {
                 if (types.contains(entry.getKey())) {
                     options.add(option(SUBTYPE_FIXED + entry.getKey(), entry.getKey().getDisplayName()
                             + "s produce " + manaText(entry.getValue()) + " this turn"));
                 }
             }
         }
-        ManaColor allLandsColor = gameData.allLandsFixedManaColorThisTurn;
+        ManaColor allLandsColor = gameQueryService.allLandsFixedColor(gameData);
         if (allLandsColor != null && event.colors().stream().anyMatch(ManaColor.COLORS::contains)) {
             options.add(option(ALL_LANDS_COLOR, "Lands produce " + manaText(allLandsColor)
                     + " instead of any other color this turn"));
         }
-        if (gameData.playersWithColoredManaReplacementThisTurn.contains(event.playerId())
+        if (gameData.hasFloatingEffectOnPlayer(event.playerId(), ReplaceColoredManaWithWhiteUntilEndOfTurnEffect.class)
                 && event.colors().stream().anyMatch(ManaColor.COLORS::contains)) {
             options.add(option(COLORED_TO_WHITE + event.playerId(), "Your colored mana becomes "
                     + manaText(ManaColor.WHITE) + " this turn"));
@@ -118,17 +123,17 @@ class TurnScopedLandManaReplacements extends LandManaCandidateSource {
         String key = option.key();
         if (key.startsWith(CONTROLLER_FIXED)) {
             UUID controllerId = UUID.fromString(key.substring(CONTROLLER_FIXED.length()));
-            return event.withColors(Set.of(gameData.landManaFixedColorThisTurn.get(controllerId)));
+            return event.withColors(Set.of(gameQueryService.controllerLandsFixedColor(gameData, controllerId)));
         }
         if (key.startsWith(CONTROLLER_CHOICE)) {
             return event.withColors(anyColor()).withAmount(1);
         }
         if (key.equals(NONBASIC_FIXED)) {
-            return event.withColors(Set.of(gameData.nonbasicLandsFixedManaColorThisTurn));
+            return event.withColors(Set.of(gameQueryService.nonbasicLandsFixedColor(gameData)));
         }
         if (key.startsWith(SUBTYPE_FIXED)) {
             CardSubtype subtype = CardSubtype.valueOf(key.substring(SUBTYPE_FIXED.length()));
-            return event.withColors(Set.of(gameData.landSubtypeFixedManaColorThisTurn.get(subtype)));
+            return event.withColors(Set.of(gameQueryService.landSubtypeFixedColors(gameData).get(subtype)));
         }
         if (key.startsWith(COLORED_TO_WHITE)) {
             return event.withColors(replaceColors(event.colors(), ManaColor.COLORS, ManaColor.WHITE));
@@ -143,7 +148,7 @@ class TurnScopedLandManaReplacements extends LandManaCandidateSource {
             return event.withColors(replaceColors(event.colors(), Set.of(replacement.fromColor()),
                     replacement.replacementColor()));
         }
-        Set<ManaColor> colors = EnumSet.of(gameData.allLandsFixedManaColorThisTurn);
+        Set<ManaColor> colors = EnumSet.of(gameQueryService.allLandsFixedColor(gameData));
         if (event.colors().contains(ManaColor.COLORLESS)) {
             colors.add(ManaColor.COLORLESS);
         }

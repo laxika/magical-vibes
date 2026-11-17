@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 @Component
 @RequiredArgsConstructor
@@ -29,9 +31,8 @@ public class EachOpponentCreatureBlocksThisTurnIfAbleEffectHandler implements No
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        gameData.playerStaticEffectsUntilEndOfTurn
-                .computeIfAbsent(controllerId, ignored -> new ArrayList<>())
-                .add(effect);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), controllerId, effect, controllerId, Duration.UNTIL_END_OF_TURN));
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) {

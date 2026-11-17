@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.d.DireWolfProwler;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -70,7 +72,7 @@ class HoardRobberTest extends BaseCardTest {
     @DisplayName("Prevented combat damage does not create a Treasure")
     void doesNotTriggerWhenCombatDamageIsPrevented() {
         addReadyHoardRobber().setAttacking(true);
-        gd.preventAllCombatDamageToPlayers = true;
+        Prevention.add(gd, PreventDamageEffect.allCombatToPlayers());
 
         resolveCombat();
         resolveAllTriggers();

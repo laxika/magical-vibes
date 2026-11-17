@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,21 +19,25 @@ import static org.mockito.Mockito.*;
 class GrantNoMaximumHandSizeEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
     @Test
-    @DisplayName("Rest-of-game duration adds the player to the permanent set only")
+    @DisplayName("Rest-of-game duration is a permanent floating effect on the player")
     void restOfGameAddsPlayerToPermanentSet() {
         resolve(NoMaximumHandSizeDuration.REST_OF_GAME);
 
-        assertThat(gd.playersWithNoMaximumHandSize).contains(player1Id);
-        assertThat(gd.playersWithNoMaximumHandSizeUntilNextTurn).doesNotContain(player1Id);
+        assertThat(gd.floatingEffectsOnPlayer(player1Id, GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).contains(Duration.PERMANENT);
+        assertThat(gd.floatingEffectsOnPlayer(player1Id, GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).doesNotContain(Duration.UNTIL_YOUR_NEXT_TURN);
     }
 
     @Test
-    @DisplayName("Until-next-turn duration adds the player to the temporary set only")
+    @DisplayName("Until-next-turn duration is a floating effect until the player's next turn")
     void untilNextTurnAddsPlayerToTemporarySet() {
         resolve(NoMaximumHandSizeDuration.UNTIL_NEXT_TURN);
 
-        assertThat(gd.playersWithNoMaximumHandSizeUntilNextTurn).contains(player1Id);
-        assertThat(gd.playersWithNoMaximumHandSize).doesNotContain(player1Id);
+        assertThat(gd.floatingEffectsOnPlayer(player1Id, GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).contains(Duration.UNTIL_YOUR_NEXT_TURN);
+        assertThat(gd.floatingEffectsOnPlayer(player1Id, GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).doesNotContain(Duration.PERMANENT);
     }
 
     @Test

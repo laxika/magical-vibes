@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
@@ -41,8 +42,8 @@ class DeliriumTest extends BaseCardTest {
 
         castDelirium(target);
 
-        assertThat(gd.creaturesWithCombatDamagePrevented).contains(target.getId());
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(target.getId());
+        assertThat(Prevention.combatDamagePrevented(gd)).contains(target.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(target.getId());
     }
 
     @Test
@@ -142,8 +143,8 @@ class DeliriumTest extends BaseCardTest {
 
         harness.assertLife(player2, 20);
         assertThat(target.isTapped()).isTrue();
-        assertThat(gd.creaturesWithCombatDamagePrevented).contains(target.getId());
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(target.getId());
+        assertThat(Prevention.combatDamagePrevented(gd)).contains(target.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(target.getId());
     }
 
     @Test
@@ -163,8 +164,8 @@ class DeliriumTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
         assertThat(target.isTapped()).isFalse();
-        assertThat(gd.creaturesWithCombatDamagePrevented).doesNotContain(target.getId());
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(target.getId());
+        assertThat(Prevention.combatDamagePrevented(gd)).doesNotContain(target.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(target.getId());
     }
 
     @Test

@@ -12,8 +12,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 @Slf4j
 @Component
@@ -36,9 +37,10 @@ public class TargetPlayersCreaturesMustAttackThisTurnEffectHandler implements No
 
         // Not a characteristic or control change, so it modifies the game rules and also binds creatures
         // that player gains control of or that enter later this turn (CR 611.2c).
-        gameData.playerStaticEffectsUntilEndOfTurn
-                .computeIfAbsent(entry.getControllerId(), ignored -> new ArrayList<>())
-                .add(new MatchingCreaturesMustAttackEffect(new PermanentControlledByPlayerPredicate(targetPlayerId)));
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), new MatchingCreaturesMustAttackEffect(
+                        new PermanentControlledByPlayerPredicate(targetPlayerId)), entry.getControllerId(),
+                Duration.UNTIL_END_OF_TURN));
 
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),

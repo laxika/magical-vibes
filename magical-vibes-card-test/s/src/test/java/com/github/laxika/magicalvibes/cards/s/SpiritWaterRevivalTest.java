@@ -4,6 +4,9 @@ import com.github.laxika.magicalvibes.cards.w.WanderingMusicians;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -30,7 +33,8 @@ class SpiritWaterRevivalTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playersWithNoMaximumHandSize).doesNotContain(player1.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).doesNotContain(Duration.PERMANENT);
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card() instanceof SpiritWaterRevival);
     }
 
@@ -61,7 +65,8 @@ class SpiritWaterRevivalTest extends BaseCardTest {
         assertThat(sources).allMatch(Permanent::isTapped);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrderElementsOf(graveyard);
-        assertThat(gd.playersWithNoMaximumHandSize).contains(player1.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).contains(Duration.PERMANENT);
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card() instanceof SpiritWaterRevival);
     }
 
@@ -81,7 +86,8 @@ class SpiritWaterRevivalTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(library.subList(0, 2));
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library.subList(2, 9));
-        assertThat(gd.playersWithNoMaximumHandSize).doesNotContain(player1.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).doesNotContain(Duration.PERMANENT);
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card() instanceof SpiritWaterRevival);
     }
 
@@ -100,7 +106,10 @@ class SpiritWaterRevivalTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrderElementsOf(library);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playersWithNoMaximumHandSize).contains(player1.getId()).doesNotContain(player2.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).contains(Duration.PERMANENT);
+        assertThat(gd.floatingEffectsOnPlayer(player2.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).doesNotContain(Duration.PERMANENT);
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card() instanceof SpiritWaterRevival);
     }
 
@@ -134,7 +143,10 @@ class SpiritWaterRevivalTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(opponentLibrary);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentGraveyardCard);
-        assertThat(gd.playersWithNoMaximumHandSize).contains(player1.getId()).doesNotContain(player2.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).contains(Duration.PERMANENT);
+        assertThat(gd.floatingEffectsOnPlayer(player2.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).doesNotContain(Duration.PERMANENT);
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card() instanceof SpiritWaterRevival);
     }
 
@@ -152,7 +164,8 @@ class SpiritWaterRevivalTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playersWithNoMaximumHandSize).doesNotContain(player1.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).doesNotContain(Duration.PERMANENT);
     }
 
     private List<Card> supportCards(int count) {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.c.CryptRats;
 import com.github.laxika.magicalvibes.cards.l.LongbowArcher;
 import com.github.laxika.magicalvibes.model.Card;
@@ -38,7 +39,7 @@ class GossamerChainsTest extends BaseCardTest {
 
         harness.assertInHand(player2, "Gossamer Chains");
         harness.assertNotOnBattlefield(player2, "Gossamer Chains");
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
 
         resolveCombat(player1);
         harness.assertLife(player2, 20);
@@ -136,7 +137,7 @@ class GossamerChainsTest extends BaseCardTest {
         harness.assertInHand(player1, "Gossamer Chains");
         harness.assertNotOnBattlefield(player1, "Gossamer Chains");
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
 
         harness.passBothPriorities();
         resolveCombat(player1);
@@ -181,7 +182,7 @@ class GossamerChainsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Gossamer Chains");
         harness.assertLife(player2, 19);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.y.YamabushisFlame;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -72,7 +73,7 @@ class KitsuneHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.creaturesWithAllDamagePrevented).contains(targetId);
+        assertThat(Prevention.allDamagePrevented(gd)).contains(targetId);
     }
 
     @Test

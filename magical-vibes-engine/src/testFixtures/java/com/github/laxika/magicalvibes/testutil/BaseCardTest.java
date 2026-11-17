@@ -9,6 +9,12 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DefendingPlayerCantCastSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerCantCastSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
@@ -27,7 +33,9 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.platform.commons.support.AnnotationSupport;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Tag("scryfall")
@@ -401,5 +409,24 @@ public abstract class BaseCardTest {
 
     protected boolean gameLogContains(GameData data, String substring) {
         return data.gameLog.stream().anyMatch(entry -> entry.plainText().contains(substring));
+    }
+
+    /** The players a floating effect of any of {@code types} applies to right now. */
+    @SafeVarargs
+    protected final Set<UUID> playersAffectedBy(Class<? extends CardEffect>... types) {
+        Set<UUID> affected = new LinkedHashSet<>();
+        for (UUID playerId : gd.orderedPlayerIds) {
+            if (gd.hasFloatingEffectOnPlayer(playerId, types)) {
+                affected.add(playerId);
+            }
+        }
+        return affected;
+    }
+
+    /** The players who can't cast spells this turn because of a resolved "can't cast spells this turn" effect. */
+    protected Set<UUID> silencedPlayers() {
+        return playersAffectedBy(TargetSpellControllerCantCastSpellsThisTurnEffect.class,
+                SenTripletsUpkeepEffect.class, PlayersCantCastSpellsThisTurnEffect.class,
+                OpponentsCantCastSpellsThisTurnEffect.class, DefendingPlayerCantCastSpellsThisTurnEffect.class);
     }
 }

@@ -197,7 +197,7 @@ class PanglacialWurmTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         gs.passPriority(gd, player1);
         harness.castAndResolveInstant(player2, 0);
-        assertThat(gd.playersSilencedThisTurn).contains(player1.getId());
+        assertThat(silencedPlayers()).contains(player1.getId());
         harness.passBothPriorities();
 
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantGainLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.LifeEvent;
 import com.github.laxika.magicalvibes.model.effect.IncreaseControllerSpeedEffect;
@@ -164,7 +165,7 @@ public class LifeSupport {
             gameLogService.append(gameData, GameLog.text(playerName + " can't gain life."));
             return;
         }
-        if (gameData.playersWhoGainNoLifeThisTurn.contains(controllerId)) {
+        if (gameData.hasFloatingEffectOnPlayer(controllerId, TargetPlayerCantGainLifeThisTurnEffect.class)) {
             String playerName = gameData.playerIdToName.get(controllerId);
             gameLogService.append(gameData, GameLog.text(playerName + " gains no life."));
             return;

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -31,10 +33,9 @@ public class PlayersCantCastSpellTypesUntilEndOfYourNextTurnEffectHandler implem
         UUID controllerId = entry.getControllerId();
         Set<CardType> restrictedTypes =
                 ((PlayersCantCastSpellTypesUntilEndOfYourNextTurnEffect) effect).restrictedTypes();
-        int expirationTurn = gameData.turnsTakenByPlayer.getOrDefault(controllerId, 0) + 1;
-        Map<CardType, Integer> restrictions = gameData.playersCantCastSpellTypesUntilEndOfControllerNextTurn
-                .computeIfAbsent(controllerId, ignored -> new java.util.concurrent.ConcurrentHashMap<>());
-        restrictedTypes.forEach(type -> restrictions.merge(type, expirationTurn, Math::max));
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), controllerId, effect, null,
+                Duration.UNTIL_END_OF_YOUR_NEXT_TURN));
 
         String typeText = restrictedTypes.stream()
                 .map(type -> type.name().toLowerCase())

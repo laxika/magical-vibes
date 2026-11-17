@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
@@ -157,7 +159,7 @@ class WaterbenderAscensionTest extends BaseCardTest {
     void preventedCombatDamageDoesNotTrigger() {
         Permanent ascension = harness.addToBattlefieldAndReturn(player1, new WaterbenderAscension());
         addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
-        gd.preventAllCombatDamage = true;
+        Prevention.add(gd, PreventDamageEffect.allCombat());
 
         resolveCombat();
         resolveAllTriggers();

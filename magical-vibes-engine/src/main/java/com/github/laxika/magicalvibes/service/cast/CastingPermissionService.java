@@ -1,5 +1,29 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayFaceUpCardsFromExileThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOpponentsCantCastUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.DefendingPlayerCantCastSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerLibraryTopPermissionForTargetPlayerUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashToSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastNoncreatureSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastNoncreatureSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellTypesUntilEndOfYourNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantPlayCardsFromHandUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandAndOwnerCantCastSameNameUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardGrantFreePlayUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastNoncreatureSpellsUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastSpellTypesThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantPlayLandsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerCantCastSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
@@ -176,7 +200,8 @@ public class CastingPermissionService {
         if (isNoncreatureSpellCastRestricted(gameData, playerId, card)) return false;
         // Aurelia's Fury etc.: per-turn "can't cast noncreature spells" restriction on a player.
         if (!card.hasType(CardType.CREATURE)
-                && gameData.playersCantCastNoncreatureSpellsThisTurn.contains(playerId)) return false;
+                && gameData.hasFloatingEffectOnPlayer(playerId,
+                PlayersCantCastNoncreatureSpellsThisTurnEffect.class, OpponentsCantCastNoncreatureSpellsThisTurnEffect.class)) return false;
         if (!card.hasType(CardType.CREATURE)
                 && isNoncreatureSpellCastRestrictedUntilNextTurn(gameData, playerId)) return false;
         if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return false;
@@ -194,7 +219,7 @@ public class CastingPermissionService {
     }
 
     public int getMaxSpellsPerTurn(GameData gameData, UUID playerId) {
-        int limit = gameData.playersMaxSpellsThisTurn.getOrDefault(playerId, Integer.MAX_VALUE);
+        int limit = gameData.spellLimitThisTurn(playerId);
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
@@ -227,8 +252,7 @@ public class CastingPermissionService {
      * Unfiltered limits count every spell; filtered limits count only matching spells.
      */
     public boolean isSpellLimitReached(GameData gameData, UUID playerId, Card card) {
-        Integer maxSpells = gameData.playersMaxSpellsThisTurn.get(playerId);
-        if (maxSpells != null && gameData.getSpellsCastThisTurnCount(playerId) >= maxSpells) {
+        if (gameData.getSpellsCastThisTurnCount(playerId) >= gameData.spellLimitThisTurn(playerId)) {
             return true;
         }
 
@@ -272,8 +296,8 @@ public class CastingPermissionService {
      * "Each opponent who attacked with a creature this turn can't cast spells").
      */
     public boolean isPlayerPreventedFromCasting(GameData gameData, UUID playerId) {
-        if (gameData.playersCantCastSpellsForRestOfGame.contains(playerId)) return true;
-        if (gameData.playersSilencedThisTurn.contains(playerId)) return true;
+        if (gameData.hasFloatingEffectOnPlayer(playerId,
+                TargetSpellControllerCantCastSpellsThisTurnEffect.class, SenTripletsUpkeepEffect.class, PlayersCantCastSpellsThisTurnEffect.class, OpponentsCantCastSpellsThisTurnEffect.class, DefendingPlayerCantCastSpellsThisTurnEffect.class)) return true;
         synchronized (gameData.floatingEffects) {
             if (gameData.floatingEffects.stream().anyMatch(floating ->
                     playerId.equals(floating.affectedPlayerId())
@@ -371,9 +395,14 @@ public class CastingPermissionService {
     public Set<CardType> getRestrictedSpellTypes(GameData gameData, UUID playerId) {
         Set<CardType> restricted = EnumSet.noneOf(CardType.class);
         // Moonhold / Abeyance etc.: per-turn "can't cast spells of these types" restriction on a player.
-        restricted.addAll(gameData.playersCantCastSpellTypesThisTurn.getOrDefault(playerId, Set.of()));
-        gameData.playersCantCastSpellTypesUntilEndOfControllerNextTurn.values()
-                .forEach(types -> restricted.addAll(types.keySet()));
+        for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPlayer(playerId,
+                TargetPlayerCantCastSpellTypesThisTurnEffect.class)) {
+            restricted.addAll(((TargetPlayerCantCastSpellTypesThisTurnEffect) fe.effect()).restrictedTypes());
+        }
+        for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPlayer(playerId,
+                PlayersCantCastSpellTypesUntilEndOfYourNextTurnEffect.class)) {
+            restricted.addAll(((PlayersCantCastSpellTypesUntilEndOfYourNextTurnEffect) fe.effect()).restrictedTypes());
+        }
         // Hand to Hand: during combat no player can cast instant spells.
         if (gameQueryService.isCombatActionLockActive(gameData)) {
             restricted.add(CardType.INSTANT);
@@ -502,8 +531,7 @@ public class CastingPermissionService {
     }
 
     private boolean isPlayingCardsFromHandRestricted(GameData gameData, UUID playerId) {
-        return gameData.playersCantPlayCardsFromHandUntilControllerNextTurn.values().stream()
-                .anyMatch(affectedPlayers -> affectedPlayers.contains(playerId));
+        return gameData.hasFloatingEffectOnPlayer(playerId, PlayersCantPlayCardsFromHandUntilNextTurnEffect.class);
     }
 
     private boolean hasActiveDampingEngine(GameData gameData, UUID playerId) {
@@ -637,10 +665,9 @@ public class CastingPermissionService {
             manaValue += chosenX * Math.max(1, cost.getXSymbolCount());
         }
 
-        Set<Integer> exactRestrictedValues = gameData
-                .opponentsCantCastSpellsWithManaValueUntilControllerNextTurn.entrySet().stream()
-                .filter(entry -> !entry.getKey().equals(castingPlayerId))
-                .flatMap(entry -> entry.getValue().stream())
+        Set<Integer> exactRestrictedValues = gameData.floatingEffectsOnPlayer(castingPlayerId,
+                        OpponentsCantCastSpellsWithManaValueUntilNextTurnEffect.class).stream()
+                .map(fe -> ((OpponentsCantCastSpellsWithManaValueUntilNextTurnEffect) fe.effect()).manaValue())
                 .collect(java.util.stream.Collectors.toSet());
         boolean exactRestricted = chosenX != null
                 ? exactRestrictedValues.contains(manaValue)
@@ -945,18 +972,16 @@ public class CastingPermissionService {
             }
         }
         // Comply: until the namer's next turn, their opponents can't cast spells with the chosen name(s).
-        for (var e : gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.entrySet()) {
-            if (e.getKey().equals(castingPlayerId)) {
-                continue;
-            }
-            forbidden.addAll(e.getValue());
+        for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPlayer(castingPlayerId,
+                ChooseCardNameOpponentsCantCastUntilNextTurnEffect.class)) {
+            forbidden.add(((ChooseCardNameOpponentsCantCastUntilNextTurnEffect) fe.effect()).cardName());
         }
-        gameData.playersCantCastNamedSpellsUntilControllerNextTurn.values().forEach(restrictions -> {
-            Set<String> names = restrictions.get(castingPlayerId);
-            if (names != null) {
-                forbidden.addAll(names);
-            }
-        });
+        // Reflector Mage: until its controller's next turn, the owner can't cast spells with the returned name.
+        for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPlayer(castingPlayerId,
+                ReturnTargetCreatureToHandAndOwnerCantCastSameNameUntilNextTurnEffect.class)) {
+            forbidden.add(
+                    ((ReturnTargetCreatureToHandAndOwnerCantCastSameNameUntilNextTurnEffect) fe.effect()).cardName());
+        }
         gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.values()
                 .forEach(forbidden::addAll);
         return forbidden;
@@ -1023,7 +1048,8 @@ public class CastingPermissionService {
         if (isSpellCastingRestrictedByMostRecentSpell(gameData, card)) return true;
         if (isSpellCastingRestrictedByTopLibraryCard(gameData, card)) return true;
         if (!card.hasType(CardType.CREATURE)
-                && gameData.playersCantCastNoncreatureSpellsThisTurn.contains(playerId)) return true;
+                && gameData.hasFloatingEffectOnPlayer(playerId,
+                PlayersCantCastNoncreatureSpellsThisTurnEffect.class, OpponentsCantCastNoncreatureSpellsThisTurnEffect.class)) return true;
         if (!card.hasType(CardType.CREATURE)
                 && isNoncreatureSpellCastRestrictedUntilNextTurn(gameData, playerId)) return true;
         if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return true;
@@ -1055,8 +1081,8 @@ public class CastingPermissionService {
     }
 
     private boolean isNoncreatureSpellCastRestrictedUntilNextTurn(GameData gameData, UUID playerId) {
-        return gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.values().stream()
-                .anyMatch(targetPlayers -> targetPlayers.contains(playerId));
+        return gameData.hasFloatingEffectOnPlayer(playerId,
+                TargetPlayerCantCastNoncreatureSpellsUntilNextTurnEffect.class);
     }
 
     public boolean controlsLegendaryCreatureOrPlaneswalker(GameData gameData, UUID playerId) {
@@ -1428,17 +1454,16 @@ public class CastingPermissionService {
 
     private boolean hasFlashGrantForCard(GameData gameData, UUID playerId, Card card,
                                           boolean includeAlternativeCostFlash) {
-        if (gameData.playersWithFlashUntilEndOfTurn.contains(playerId)) return true;
-        if (gameData.hasCardTypeFlashGrant(playerId, card)) return true;
-        if (gameData.hasCardTypeFlashGrantUntilNextTurn(playerId, card)) return true;
-        if (gameData.cardTypeFlashGrantsThisTurn.getOrDefault(playerId, Set.of()).stream()
-                .anyMatch(filter -> predicateEvaluationService.matchesCardPredicate(
-                        card, filter, null, gameData, playerId))) {
+        if (gameData.hasFloatingEffectOnPlayer(playerId, GrantFlashToSpellsThisTurnEffect.class)) return true;
+        if (gameData.floatingEffectsOnPlayer(playerId, GrantFlashToCardTypeThisTurnEffect.class).stream()
+                .anyMatch(fe -> predicateEvaluationService.matchesCardPredicate(card,
+                        ((GrantFlashToCardTypeThisTurnEffect) fe.effect()).filter(), null, gameData, playerId))) {
             return true;
         }
-        if (gameData.cardTypeFlashGrantsUntilNextTurn.getOrDefault(playerId, Set.of()).stream()
-                .anyMatch(filter -> predicateEvaluationService.matchesCardPredicate(
-                        card, filter, null, gameData, playerId))) {
+        if (gameData.floatingEffectsOnPlayer(playerId, GrantFlashToCardTypeUntilNextTurnEffect.class).stream()
+                .anyMatch(fe -> predicateEvaluationService.matchesCardPredicate(card,
+                        ((GrantFlashToCardTypeUntilNextTurnEffect) fe.effect()).filter(), null, gameData,
+                        playerId))) {
             return true;
         }
         // Quicken: an unconsumed grant for the next spell of a given type this turn.
@@ -1643,8 +1668,8 @@ public class CastingPermissionService {
     }
 
     public boolean canPlayLandsFromTopOfLibrary(GameData gameData, UUID playerId) {
-        if (gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(playerId)
-                || gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.contains(playerId)) {
+        if (gameData.hasFloatingEffectOnPlayer(playerId, AllowPlayFromTopOfLibraryUntilEndOfTurnEffect.class)
+                || gameData.hasFloatingEffectOnPlayer(playerId, MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect.class)) {
             return true;
         }
         if (hasAnyLibraryTopPermission(gameData, playerId)) {
@@ -1693,7 +1718,7 @@ public class CastingPermissionService {
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN)
                 && gameData.landsPlayedThisTurn.getOrDefault(playerId, 0) < gameQueryService.getMaxLandsThisTurn(gameData, playerId)
                 && gameData.stack.isEmpty()
-                && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
+                && !gameData.hasFloatingEffectOnPlayer(playerId, TargetPlayerCantPlayLandsThisTurnEffect.class)
                 && !isLandPlayRestricted(gameData, playerId)
                 && !isLandPlayForbiddenByChosenName(gameData, card)
                 && !isCardPlayRestrictedInHand(gameData, playerId, card);
@@ -1709,7 +1734,7 @@ public class CastingPermissionService {
                 && playerId.equals(gameData.activePlayerId)
                 && gameData.landsPlayedThisTurn.getOrDefault(playerId, 0)
                 < gameQueryService.getMaxLandsThisTurn(gameData, playerId)
-                && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
+                && !gameData.hasFloatingEffectOnPlayer(playerId, TargetPlayerCantPlayLandsThisTurnEffect.class)
                 && !isLandPlayRestricted(gameData, playerId)
                 && !isLandPlayForbiddenByChosenName(gameData, card)
                 && !isCardPlayRestrictedInHand(gameData, playerId, card);
@@ -1727,8 +1752,8 @@ public class CastingPermissionService {
             return false;
         }
         boolean permission = libraryOwnerId.equals(playerId)
-                ? gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(playerId)
-                    || gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.contains(playerId)
+                ? gameData.hasFloatingEffectOnPlayer(playerId, AllowPlayFromTopOfLibraryUntilEndOfTurnEffect.class)
+                    || gameData.hasFloatingEffectOnPlayer(playerId, MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect.class)
                     || hasAnyLibraryTopPermission(gameData, playerId)
                     || hasMatchingLandTopLibraryPermission(gameData, playerId, card)
                     || hasMatchingOncePerTurnTopLibraryPermission(gameData, playerId, card)
@@ -1839,8 +1864,7 @@ public class CastingPermissionService {
             }
         }
 
-        for (CardEffect effect : gameData.playerStaticEffectsUntilEndOfTurn
-                .getOrDefault(playerId, List.of())) {
+        for (CardEffect effect : gameData.floatingPlayerEffects(playerId, CastSpellsFromGraveyardPermission.class)) {
             if (effect instanceof CastSpellsFromGraveyardPermission permission
                     && predicateEvaluationService.matchesCardPredicate(
                     card, permission.filter(), null, gameData, playerId)) {
@@ -2362,7 +2386,7 @@ public class CastingPermissionService {
      */
     public Set<CardType> getCastableTypesFromTopOfLibrary(GameData gameData, UUID playerId) {
         Set<CardType> castableTypes = new HashSet<>();
-        if (gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(playerId)) {
+        if (gameData.hasFloatingEffectOnPlayer(playerId, AllowPlayFromTopOfLibraryUntilEndOfTurnEffect.class)) {
             castableTypes.addAll(EnumSet.allOf(CardType.class));
             castableTypes.remove(CardType.LAND);
         }
@@ -2382,19 +2406,23 @@ public class CastingPermissionService {
         return castableTypes;
     }
 
-    /** Returns whether the current top card has a temporary free-play permission from the library. */
+    /**
+     * Returns whether the current top card has a temporary free-play permission from the library. A permission whose
+     * card is no longer the top card is gone: it ends as this finds that out.
+     */
     public boolean hasLibraryTopCardFreePlayPermission(GameData gameData, UUID playerId, Card card) {
         List<Card> deck = gameData.playerDecks.get(playerId);
-        UUID permittedId = gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.get(playerId);
-        if (permittedId != null && (deck == null || deck.isEmpty()
-                || !permittedId.equals(deck.getFirst().getId()))) {
-            gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.remove(playerId, permittedId);
-            return false;
+        boolean granted = false;
+        for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPlayer(playerId,
+                RevealTopCardGrantFreePlayUntilEndOfTurnEffect.class)) {
+            UUID permittedId = ((RevealTopCardGrantFreePlayUntilEndOfTurnEffect) fe.effect()).cardId();
+            if (deck == null || deck.isEmpty() || !permittedId.equals(deck.getFirst().getId())) {
+                gameData.endFloatingEffect(fe);
+            } else if (permittedId.equals(card.getId())) {
+                granted = true;
+            }
         }
-        if (deck == null || deck.isEmpty() || !deck.getFirst().getId().equals(card.getId())) {
-            return false;
-        }
-        return card.getId().equals(gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.get(playerId));
+        return granted;
     }
 
     /**
@@ -2423,9 +2451,11 @@ public class CastingPermissionService {
 
     /** Returns whether the caster may use the specified opponent's current library top. */
     public boolean hasLibraryTopPermission(GameData gameData, UUID castingPlayerId, UUID libraryOwnerId) {
-        return gameData.libraryTopCardPermissionsUntilEndOfTurn.stream()
-                .anyMatch(permission -> permission.castingPlayerId().equals(castingPlayerId)
-                        && permission.libraryOwnerId().equals(libraryOwnerId));
+        return gameData.floatingEffectsOnPlayer(castingPlayerId,
+                        GrantControllerLibraryTopPermissionForTargetPlayerUntilEndOfTurnEffect.class).stream()
+                .anyMatch(fe -> libraryOwnerId.equals(
+                        ((GrantControllerLibraryTopPermissionForTargetPlayerUntilEndOfTurnEffect) fe.effect())
+                                .libraryOwnerId()));
     }
 
     /**
@@ -2512,11 +2542,12 @@ public class CastingPermissionService {
     }
 
     public boolean hasLibraryTopPermissionForCard(GameData gameData, UUID castingPlayerId, Card card) {
-        for (GameData.LibraryTopCardPermission permission : gameData.libraryTopCardPermissionsUntilEndOfTurn) {
-            if (!permission.castingPlayerId().equals(castingPlayerId)) {
-                continue;
-            }
-            List<Card> deck = gameData.playerDecks.get(permission.libraryOwnerId());
+        for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPlayer(castingPlayerId,
+                GrantControllerLibraryTopPermissionForTargetPlayerUntilEndOfTurnEffect.class)) {
+            UUID libraryOwnerId =
+                    ((GrantControllerLibraryTopPermissionForTargetPlayerUntilEndOfTurnEffect) fe.effect())
+                            .libraryOwnerId();
+            List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
             if (deck != null && !deck.isEmpty() && deck.getFirst().getId().equals(card.getId())) {
                 return true;
             }
@@ -2529,7 +2560,7 @@ public class CastingPermissionService {
         List<Card> deck = gameData.playerDecks.get(playerId);
         return deck != null && !deck.isEmpty()
                 && deck.getFirst().getId().equals(card.getId())
-                && gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.contains(playerId);
+                && gameData.hasFloatingEffectOnPlayer(playerId, MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect.class);
     }
 
     /** Builds the characteristics used when announcing a face-down creature spell. */
@@ -2586,7 +2617,7 @@ public class CastingPermissionService {
             return true;
         }
         if (!card.hasType(CardType.LAND)
-                && gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(playerId)
+                && gameData.hasFloatingEffectOnPlayer(playerId, AllowPlayFromTopOfLibraryUntilEndOfTurnEffect.class)
                 && ownLibraryTopPermissionCovers(gameData, playerId, card)) {
             return true;
         }
@@ -2724,7 +2755,7 @@ public class CastingPermissionService {
         if (card.hasType(CardType.LAND) || !ownLibraryTopPermissionCovers(gameData, playerId, card)) {
             return OptionalInt.empty();
         }
-        if (gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(playerId)) {
+        if (gameData.hasFloatingEffectOnPlayer(playerId, AllowPlayFromTopOfLibraryUntilEndOfTurnEffect.class)) {
             return OptionalInt.of(0);
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -2781,7 +2812,7 @@ public class CastingPermissionService {
     public List<CastingCost> findTopLibraryAdditionalCosts(GameData gameData, UUID playerId, Card card) {
         if (card.hasType(CardType.LAND)
                 || !ownLibraryTopPermissionCovers(gameData, playerId, card)
-                || gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(playerId)
+                || gameData.hasFloatingEffectOnPlayer(playerId, AllowPlayFromTopOfLibraryUntilEndOfTurnEffect.class)
                 || hasAnyLibraryTopPermission(gameData, playerId)
                 || hasLibraryTopPermissionForCard(gameData, playerId, card)) {
             return List.of();
@@ -3031,7 +3062,7 @@ public class CastingPermissionService {
         if (exiledCard != null
                 && !exiledCard.faceDown()
                 && playerId.equals(exiledCard.ownerId())
-                && gameData.playersMayPlayFaceUpCardsFromExileThisTurn.contains(playerId)) {
+                && gameData.hasFloatingEffectOnPlayer(playerId, AllowPlayFaceUpCardsFromExileThisTurnEffect.class)) {
             return true;
         }
         if (!playerId.equals(gameData.exilePlayPermissions.get(cardId))) return false;

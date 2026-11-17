@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -66,7 +68,7 @@ class DuelistOfDeepFaithTest extends BaseCardTest {
         Permanent duelist = addCreatureReady(player1, new DuelistOfDeepFaith());
         duelist.setAttacking(true);
         harness.setLife(player2, 20);
-        gd.preventAllCombatDamage = true;
+        Prevention.add(gd, PreventDamageEffect.allCombat());
 
         resolveCombat();
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.cards.v.VulshokReplica;
 import com.github.laxika.magicalvibes.cards.g.GalvanicBlast;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -71,7 +72,7 @@ class BluntTheAssaultTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
     }
 
     @Test
@@ -93,7 +94,7 @@ class BluntTheAssaultTest extends BaseCardTest {
         // Should gain 3 life (3 creatures on battlefield)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(13);
         // Should prevent all combat damage
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
     }
 
     @Test
@@ -145,7 +146,7 @@ class BluntTheAssaultTest extends BaseCardTest {
         harness.assertLife(player1, 21);
         harness.assertLife(player2, 20);
         harness.assertInGraveyard(player2, "Vulshok Replica");
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
     }
 
     @Test
@@ -156,7 +157,7 @@ class BluntTheAssaultTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(gd.preventAllCombatDamage).isFalse();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isFalse();
     }
 
     private Permanent addCreature(Player player) {

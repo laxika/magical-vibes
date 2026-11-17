@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ReplaceColoredManaWithWhiteUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceTargetLandManaWithColorEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
@@ -20,7 +21,8 @@ public final class ManaProductionSupport {
 
     public static ManaColor effectiveColor(GameData gameData, UUID sourceControllerId, ManaColor color) {
         if (color != null && color != ManaColor.COLORLESS && sourceControllerId != null
-                && gameData.playersWithColoredManaReplacementThisTurn.contains(sourceControllerId)) {
+                && gameData.hasFloatingEffectOnPlayer(sourceControllerId,
+                ReplaceColoredManaWithWhiteUntilEndOfTurnEffect.class)) {
             return ManaColor.WHITE;
         }
         return color;

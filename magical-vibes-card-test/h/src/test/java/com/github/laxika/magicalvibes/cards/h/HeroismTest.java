@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.b.BrassclawOrcs;
 import com.github.laxika.magicalvibes.cards.f.FarrelitePriest;
 import com.github.laxika.magicalvibes.cards.r.RiverMerfolk;
@@ -33,7 +34,7 @@ class HeroismTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
     }
 
     @Test
@@ -50,7 +51,7 @@ class HeroismTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 17);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
+        assertThat(Prevention.preventedFromDealingCombat(gd)).isEmpty();
     }
 
     @Test
@@ -66,7 +67,7 @@ class HeroismTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
     }
 
     @Test
@@ -77,7 +78,7 @@ class HeroismTest extends BaseCardTest {
         activateHeroism();
 
         assertThat(gd.pendingMayAbilities).isEmpty();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
+        assertThat(Prevention.preventedFromDealingCombat(gd)).isEmpty();
     }
 
     @Test
@@ -108,9 +109,9 @@ class HeroismTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 18);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage)
+        assertThat(Prevention.preventedFromDealingCombat(gd))
                 .contains(redAttacker.getId(), secondRedAttacker.getId());
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(redNotAttacking.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(redNotAttacking.getId());
     }
 
     @Test
@@ -129,7 +130,7 @@ class HeroismTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 17);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(unpaidAttacker.getId())
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(unpaidAttacker.getId())
                 .doesNotContain(paidAttacker.getId());
     }
 

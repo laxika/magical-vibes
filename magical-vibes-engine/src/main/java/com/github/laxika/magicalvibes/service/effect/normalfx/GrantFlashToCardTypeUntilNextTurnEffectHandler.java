@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -27,9 +29,9 @@ public class GrantFlashToCardTypeUntilNextTurnEffectHandler implements NormalEff
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         GrantFlashToCardTypeUntilNextTurnEffect grant =
                 (GrantFlashToCardTypeUntilNextTurnEffect) effect;
-        gameData.cardTypeFlashGrantsUntilNextTurn
-                .computeIfAbsent(entry.getControllerId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
-                .add(grant.filter());
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), grant, entry.getControllerId(),
+                Duration.UNTIL_YOUR_NEXT_TURN));
         String typeName = grant.filter() instanceof CardTypePredicate type
                 ? type.cardType().name().toLowerCase(Locale.ROOT) : "matching";
         gameLogService.append(gameData, GameLog.builder()

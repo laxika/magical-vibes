@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerCreaturesCantBeTargetedByColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerSpellsCantBeCounteredByColorsEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
@@ -20,6 +25,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.v.Voidslime;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -97,9 +103,7 @@ class AutumnsVeilTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.GREEN, 1);
             harness.castAndResolveInstant(player1, 0);
 
-            assertThat(gd.playerSpellsCantBeCounteredByColorsThisTurn).containsKey(player1.getId());
-            assertThat(gd.playerSpellsCantBeCounteredByColorsThisTurn.get(player1.getId()))
-                    .containsExactlyInAnyOrder(CardColor.BLUE, CardColor.BLACK);
+            assertThat(protectedColors(player1)).containsExactlyInAnyOrder(CardColor.BLUE, CardColor.BLACK);
         }
 
         @Test
@@ -119,8 +123,9 @@ class AutumnsVeilTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Protection flags should NOT be set since Autumn's Veil was countered
-            assertThat(gd.playerSpellsCantBeCounteredByColorsThisTurn).doesNotContainKey(player1.getId());
-            assertThat(gd.playerCreaturesCantBeTargetedByColorsThisTurn).doesNotContainKey(player1.getId());
+            assertThat(protectedColors(player1)).isEmpty();
+            assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(),
+                    GrantControllerCreaturesCantBeTargetedByColorsEffect.class)).isFalse();
 
             // Autumn's Veil should be in graveyard
             harness.assertInGraveyard(player1, "Autumn's Veil");
@@ -175,7 +180,7 @@ class AutumnsVeilTest extends BaseCardTest {
             harness.castAndResolveInstant(player1, 0);
 
             // Verify protection is set — but only protects from blue/black
-            Set<CardColor> protectedColors = gd.playerSpellsCantBeCounteredByColorsThisTurn.get(player1.getId());
+            Set<CardColor> protectedColors = protectedColors(player1);
             assertThat(protectedColors).doesNotContain(CardColor.RED);
         }
     }
@@ -385,8 +390,11 @@ class AutumnsVeilTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.GREEN, 1);
             harness.castAndResolveInstant(player1, 0);
 
-            assertThat(gd.playerCreaturesCantBeTargetedByColorsThisTurn).containsKey(player1.getId());
-            assertThat(gd.playerCreaturesCantBeTargetedByColorsThisTurn.get(player1.getId()))
+            assertThat(gd.floatingEffectsOnPlayer(player1.getId(),
+                    GrantControllerCreaturesCantBeTargetedByColorsEffect.class))
+                    .singleElement()
+                    .extracting(veil -> ((GrantControllerCreaturesCantBeTargetedByColorsEffect) veil.effect()).colors())
+                    .asInstanceOf(InstanceOfAssertFactories.COLLECTION)
                     .containsExactlyInAnyOrder(CardColor.BLUE, CardColor.BLACK);
         }
     }
@@ -401,19 +409,20 @@ class AutumnsVeilTest extends BaseCardTest {
         @Test
         @DisplayName("Protection flags are cleared at end of turn")
         void protectionClearedAtEndOfTurn() {
-            Set<CardColor> colors = ConcurrentHashMap.newKeySet();
-            colors.addAll(Set.of(CardColor.BLUE, CardColor.BLACK));
-            gd.playerSpellsCantBeCounteredByColorsThisTurn.put(player1.getId(), colors);
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
+                new GrantControllerSpellsCantBeCounteredByColorsEffect(Set.of(CardColor.BLUE, CardColor.BLACK)), player1.getId(), Duration.UNTIL_END_OF_TURN));
 
-            Set<CardColor> colors2 = ConcurrentHashMap.newKeySet();
-            colors2.addAll(Set.of(CardColor.BLUE, CardColor.BLACK));
-            gd.playerCreaturesCantBeTargetedByColorsThisTurn.put(player1.getId(), colors2);
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
+                    new GrantControllerCreaturesCantBeTargetedByColorsEffect(Set.of(CardColor.BLUE, CardColor.BLACK)),
+                    player1.getId(), Duration.UNTIL_END_OF_TURN));
 
             TurnCleanupService svc = GameTestEngineContext.get().getBean(TurnCleanupService.class);
             svc.resetEndOfTurnModifiers(gd);
+            gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
-            assertThat(gd.playerSpellsCantBeCounteredByColorsThisTurn).isEmpty();
-            assertThat(gd.playerCreaturesCantBeTargetedByColorsThisTurn).isEmpty();
+            assertThat(protectedColors(player1)).isEmpty();
+            assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(),
+                    GrantControllerCreaturesCantBeTargetedByColorsEffect.class)).isFalse();
         }
     }
 
@@ -504,5 +513,12 @@ class AutumnsVeilTest extends BaseCardTest {
     }
     private Permanent addCreature(Player player) {
         return addCreatureReady(player, new GrizzlyBears());
+    }
+
+    private Set<CardColor> protectedColors(com.github.laxika.magicalvibes.model.Player player) {
+        return gd.floatingEffectsOnPlayer(player.getId(), GrantControllerSpellsCantBeCounteredByColorsEffect.class)
+                .stream()
+                .flatMap(fe -> ((GrantControllerSpellsCantBeCounteredByColorsEffect) fe.effect()).colors().stream())
+                .collect(java.util.stream.Collectors.toSet());
     }
 }

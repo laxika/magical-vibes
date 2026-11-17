@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -21,6 +24,25 @@ import java.util.UUID;
 public class PreventionSupport {
 
     private final GameLogService gameLogService;
+
+    /**
+     * "All combat damage {@code permanentId} would deal is prevented" for {@code duration} (CR 615): the floating effect
+     * every card that has a creature deal no combat damage makes.
+     */
+    public static void preventCombatDamageDealtBy(GameData gameData, String sourceCardName, UUID sourcePermanentId,
+                                                  UUID controllerId, UUID permanentId, Duration duration) {
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(sourceCardName, sourcePermanentId,
+                controllerId, PreventDamageEffect.allCombatBySelf(), permanentId, duration));
+    }
+
+    /**
+     * "All combat damage that would be dealt to {@code permanentId} is prevented" for {@code duration} (CR 615).
+     */
+    public static void preventCombatDamageDealtTo(GameData gameData, String sourceCardName, UUID sourcePermanentId,
+                                                  UUID controllerId, UUID permanentId, Duration duration) {
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(sourceCardName, sourcePermanentId,
+                controllerId, PreventDamageEffect.allCombatToSelf(), permanentId, duration));
+    }
 
     public List<UUID> collectAllBattlefieldPermanentIds(GameData gameData) {
         List<UUID> validIds = new ArrayList<>();

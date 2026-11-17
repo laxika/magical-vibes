@@ -24,7 +24,7 @@ class BilbosGambitTest extends BaseCardTest {
         castBilbosGambit(targetSpellId, false);
 
         harness.assertInHand(player2, "Might of Oaks");
-        assertThat(gd.playersSilencedThisTurn).isEmpty();
+        assertThat(silencedPlayers()).isEmpty();
         harness.assertNotOnBattlefield(player2, "Treasure");
     }
 
@@ -36,7 +36,7 @@ class BilbosGambitTest extends BaseCardTest {
 
         harness.assertInHand(player2, "Might of Oaks");
         harness.assertOnBattlefield(player2, "Treasure");
-        assertThat(gd.playersSilencedThisTurn).containsExactlyInAnyOrder(player1.getId(), player2.getId());
+        assertThat(silencedPlayers()).containsExactlyInAnyOrder(player1.getId(), player2.getId());
 
         harness.forceActivePlayer(player1);
         harness.clearPriorityPassed();
@@ -82,7 +82,7 @@ class BilbosGambitTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Bilbo's Gambit");
         harness.assertNotOnBattlefield(player1, "Treasure");
         harness.assertNotOnBattlefield(player2, "Treasure");
-        assertThat(gd.playersSilencedThisTurn).isEmpty();
+        assertThat(silencedPlayers()).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 

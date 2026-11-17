@@ -14,7 +14,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 @Slf4j
 @Component
@@ -57,9 +58,9 @@ public class MatchingCreaturesMustAttackThisTurnEffectHandler implements NormalE
 
         // A group requirement doesn't change characteristics or control, so it modifies the game rules
         // and also binds creatures that enter or start matching later this turn (CR 611.2c).
-        gameData.playerStaticEffectsUntilEndOfTurn
-                .computeIfAbsent(entry.getControllerId(), ignored -> new ArrayList<>())
-                .add(new MatchingCreaturesMustAttackEffect(e.matcher()));
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), new MatchingCreaturesMustAttackEffect(e.matcher()), entry.getControllerId(),
+                Duration.UNTIL_END_OF_TURN));
 
         gameLogService.append(gameData,
                 GameLog.cardThen(entry.getCard(), " forces matching creatures to attack this turn if able."));

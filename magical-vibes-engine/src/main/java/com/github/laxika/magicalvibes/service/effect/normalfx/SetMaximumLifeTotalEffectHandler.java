@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SetMaximumLifeTotalEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -28,8 +30,8 @@ public class SetMaximumLifeTotalEffectHandler implements NormalEffectHandlerBean
         }
 
         SetMaximumLifeTotalEffect maximumLifeTotalEffect = (SetMaximumLifeTotalEffect) effect;
-        gameData.playerMaximumLifeTotals.put(
-                entry.getControllerId(), maximumLifeTotalEffect.maximumLifeTotal());
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), effect, entry.getControllerId(), Duration.PERMANENT));
 
         String playerName = gameData.playerIdToName.getOrDefault(entry.getControllerId(), "Player");
         gameLogService.append(gameData, GameLog.text(

@@ -56,6 +56,34 @@ public record FloatingContinuousEffect(
                 affectedPlayerId, scope, duration, timestamp, false);
     }
 
+    /**
+     * A rules-modifying effect on {@code playerId} (CR 611.2a), or on every player when {@code playerId} is
+     * {@code null}: "you can't lose life this turn", "players can't gain life this turn". Its timestamp is stamped as
+     * it is added.
+     */
+    public static FloatingContinuousEffect onPlayer(String sourceCardName, UUID sourcePermanentId, UUID controllerId,
+                                                    CardEffect effect, UUID playerId, Duration duration) {
+        return new FloatingContinuousEffect(UUID.randomUUID(), sourceCardName, sourcePermanentId, controllerId, effect,
+                null, playerId, null, duration, 0);
+    }
+
+    /**
+     * A rules-modifying effect on the permanent {@code permanentId} (CR 611.2a): "it can't block this turn", "prevent
+     * all damage that would be dealt to it this turn". Its timestamp is stamped as it is added.
+     */
+    public static FloatingContinuousEffect onPermanent(String sourceCardName, UUID sourcePermanentId,
+                                                       UUID controllerId, CardEffect effect, UUID permanentId,
+                                                       Duration duration) {
+        return new FloatingContinuousEffect(UUID.randomUUID(), sourceCardName, sourcePermanentId, controllerId, effect,
+                permanentId, null, null, duration, 0);
+    }
+
+    /** Whether this effect applies to {@code playerId}: it names that player, or it names no object at all. */
+    public boolean appliesToPlayer(UUID playerId) {
+        return affectedPlayerId == null ? affectedPermanentId == null && scope == null
+                : affectedPlayerId.equals(playerId);
+    }
+
     /** Whether this is a CR 613 layer-2 control-changing effect. All floating control effects
      *  wrap one of these effect types (see {@code CreatureControlService}). */
     public boolean isControlEffect() {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KamahlFistOfKrosa;
@@ -30,7 +31,7 @@ class ChainOfSilenceTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(target.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(target.getId());
     }
 
     @Test
@@ -101,7 +102,7 @@ class ChainOfSilenceTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(target.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(target.getId());
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
@@ -135,7 +136,7 @@ class ChainOfSilenceTest extends BaseCardTest {
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.permanentsPreventedFromDealingDamage)
+        assertThat(Prevention.preventedFromDealing(gd))
                 .contains(originalTarget.getId(), newTarget.getId());
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(newTargetControllerLand.getId()));
@@ -163,7 +164,7 @@ class ChainOfSilenceTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(target.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(target.getId());
         assertThat(gd.stack).isEmpty();
     }
 
@@ -178,7 +179,7 @@ class ChainOfSilenceTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(target);
         harness.passBothPriorities();
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).doesNotContain(target.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).doesNotContain(target.getId());
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
@@ -222,7 +223,7 @@ class ChainOfSilenceTest extends BaseCardTest {
         assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(newTarget.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(newTarget.getId());
         assertThat(gd.stack).isEmpty();
     }
 
@@ -240,7 +241,7 @@ class ChainOfSilenceTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         harness.assertInGraveyard(player2, "Island");
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(target.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(target.getId());
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }

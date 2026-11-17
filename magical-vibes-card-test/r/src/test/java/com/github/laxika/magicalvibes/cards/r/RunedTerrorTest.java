@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashToSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LimitControllerToOneMoreSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.a.AbandonThePost;
 import com.github.laxika.magicalvibes.cards.a.ActOnImpulse;
 import com.github.laxika.magicalvibes.cards.a.AegisOfHonor;
@@ -63,7 +69,11 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerDamageMultiplication;
+import com.github.laxika.magicalvibes.model.effect.ControllerCantSacrificeTargetThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleCombatDamageToCreaturesThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromTargetPermanentThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -78,6 +88,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -300,13 +312,13 @@ class RunedTerrorTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Fog()));
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.castAndResolveInstant(player2, 0);
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.preventAllCombatDamage).isFalse();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isFalse();
     }
 
     @Test
@@ -320,7 +332,7 @@ class RunedTerrorTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(gd.preventAllCombatDamage).isFalse();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isFalse();
     }
 
     @Test
@@ -333,13 +345,13 @@ class RunedTerrorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castAndResolveInstant(player2, 0);
-        assertThat(gd.playersWithAllDamagePrevented).containsExactly(player2.getId());
+        assertThat(Prevention.playersWithAllDamagePrevented(gd)).containsExactly(player2.getId());
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.playersWithAllDamagePrevented).containsExactly(player2.getId());
+        assertThat(Prevention.playersWithAllDamagePrevented(gd)).containsExactly(player2.getId());
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.playersWithAllDamagePrevented).isEmpty();
+        assertThat(Prevention.playersWithAllDamagePrevented(gd)).isEmpty();
     }
 
     @Test
@@ -352,16 +364,16 @@ class RunedTerrorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castAndResolveInstant(player2, 0);
-        assertThat(gd.playersWithDamageFromMatchingSourcesPrevented.get(player2.getId())).hasSize(1);
+        assertThat(gd.preventionEffectsOnPlayer(player2.getId(),
+                PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES_FROM_MATCHING_SOURCES)).hasSize(1);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.playersWithDamageFromMatchingSourcesPrevented.get(player2.getId())).hasSize(1);
-        assertThat(gd.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented.get(player2.getId()))
-                .hasSize(1);
+        assertThat(gd.preventionEffectsOnPlayer(player2.getId(),
+                PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES_FROM_MATCHING_SOURCES)).hasSize(1);
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.playersWithDamageFromMatchingSourcesPrevented).isEmpty();
-        assertThat(gd.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented).isEmpty();
+        assertThat(gd.preventionEffects(PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES_FROM_MATCHING_SOURCES))
+                .isEmpty();
     }
 
     @Test
@@ -374,13 +386,13 @@ class RunedTerrorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player2, 0, player1.getId());
-        assertThat(gd.playersCantGainLifeThisTurn).isTrue();
+        assertThat(gd.hasFloatingEffectOnPlayer(null, PlayersCantGainLifeThisTurnEffect.class)).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.playersCantGainLifeThisTurn).isTrue();
+        assertThat(gd.hasFloatingEffectOnPlayer(null, PlayersCantGainLifeThisTurnEffect.class)).isTrue();
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.playersCantGainLifeThisTurn).isFalse();
+        assertThat(gd.hasFloatingEffectOnPlayer(null, PlayersCantGainLifeThisTurnEffect.class)).isFalse();
     }
 
     @Test
@@ -392,13 +404,13 @@ class RunedTerrorTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Silence()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.castAndResolveInstant(player2, 0);
-        assertThat(gd.playersSilencedThisTurn).containsExactly(player1.getId());
+        assertThat(silencedPlayers()).containsExactly(player1.getId());
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.playersSilencedThisTurn).containsExactly(player1.getId());
+        assertThat(silencedPlayers()).containsExactly(player1.getId());
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.playersSilencedThisTurn).isEmpty();
+        assertThat(silencedPlayers()).isEmpty();
     }
 
     @Test
@@ -409,11 +421,11 @@ class RunedTerrorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Silence()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castAndResolveInstant(player1, 0);
-        assertThat(gd.playersSilencedThisTurn).containsExactly(player2.getId());
+        assertThat(silencedPlayers()).containsExactly(player2.getId());
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(gd.playersSilencedThisTurn).isEmpty();
+        assertThat(silencedPlayers()).isEmpty();
     }
 
     @Test
@@ -426,13 +438,13 @@ class RunedTerrorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player2, 0);
-        assertThat(gd.playerKeywordsUntilEndOfTurn.get(player2.getId())).containsExactly(Keyword.SHROUD);
+        assertThat(gqs.playerHasShroud(gd, player2.getId())).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.playerKeywordsUntilEndOfTurn.get(player2.getId())).containsExactly(Keyword.SHROUD);
+        assertThat(gqs.playerHasShroud(gd, player2.getId())).isTrue();
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.playerKeywordsUntilEndOfTurn).isEmpty();
+        assertThat(gqs.playerHasShroud(gd, player2.getId())).isFalse();
     }
 
     @Test
@@ -445,13 +457,13 @@ class RunedTerrorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player2, 0);
-        assertThat(gd.playersWithFlashUntilEndOfTurn).containsExactly(player2.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player2.getId(), GrantFlashToSpellsThisTurnEffect.class)).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.playersWithFlashUntilEndOfTurn).containsExactly(player2.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player2.getId(), GrantFlashToSpellsThisTurnEffect.class)).isTrue();
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.playersWithFlashUntilEndOfTurn).isEmpty();
+        assertThat(gd.hasFloatingEffectOnPlayer(player2.getId(), GrantFlashToSpellsThisTurnEffect.class)).isFalse();
     }
 
     @Test
@@ -570,13 +582,13 @@ class RunedTerrorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castAndResolveInstant(player2, 0);
-        assertThat(gd.combatDamageToCreaturesDoublingsThisTurn).isEqualTo(1);
+        assertThat(gd.floatingEffectsOnPlayer(null, DoubleCombatDamageToCreaturesThisTurnEffect.class)).hasSize(1);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.combatDamageToCreaturesDoublingsThisTurn).isEqualTo(1);
+        assertThat(gd.floatingEffectsOnPlayer(null, DoubleCombatDamageToCreaturesThisTurnEffect.class)).hasSize(1);
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.combatDamageToCreaturesDoublingsThisTurn).isZero();
+        assertThat(gd.floatingEffectsOnPlayer(null, DoubleCombatDamageToCreaturesThisTurnEffect.class)).isEmpty();
     }
 
     @Test
@@ -594,13 +606,16 @@ class RunedTerrorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castAndResolveInstant(player2, 0, bears.getId());
-        assertThat(gd.permanentDamageDoublingsThisTurn.get(bears.getId())).isEqualTo(2);
+        assertThat(gd.floatingEffectsOnPermanent(bears.getId(),
+                DoubleDamageFromTargetPermanentThisTurnEffect.class)).hasSize(2);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.permanentDamageDoublingsThisTurn.get(bears.getId())).isEqualTo(1);
+        assertThat(gd.floatingEffectsOnPermanent(bears.getId(),
+                DoubleDamageFromTargetPermanentThisTurnEffect.class)).hasSize(1);
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.permanentDamageDoublingsThisTurn).isEmpty();
+        assertThat(gd.floatingEffectsOnPermanent(bears.getId(),
+                DoubleDamageFromTargetPermanentThisTurnEffect.class)).isEmpty();
     }
 
     @Test
@@ -652,13 +667,16 @@ class RunedTerrorTest extends BaseCardTest {
         harness.setHand(player2, List.of(new AngelsGrace()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.castAndResolveInstant(player2, 0);
-        assertThat(gd.playerStaticEffectsUntilEndOfTurn.get(player2.getId())).hasSize(2);
+        assertThat(gd.floatingPlayerEffects(player2.getId(), CantLoseGameEffect.class,
+                DamageLifeFloorEffect.class)).hasSize(2);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.playerStaticEffectsUntilEndOfTurn.get(player2.getId())).hasSize(2);
+        assertThat(gd.floatingPlayerEffects(player2.getId(), CantLoseGameEffect.class,
+                DamageLifeFloorEffect.class)).hasSize(2);
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.playerStaticEffectsUntilEndOfTurn).isEmpty();
+        assertThat(gd.floatingPlayerEffects(player2.getId(), CantLoseGameEffect.class,
+                DamageLifeFloorEffect.class)).isEmpty();
     }
 
     @Test
@@ -672,13 +690,14 @@ class RunedTerrorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castSorcery(player2, 0);
         harness.passBothPriorities();
-        assertThat(gd.playersMaxSpellsThisTurn).containsEntry(player2.getId(), 2);
+        assertThat(gd.spellLimitThisTurn(player2.getId())).isEqualTo(2);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.playersMaxSpellsThisTurn).containsEntry(player2.getId(), 2);
+        assertThat(gd.spellLimitThisTurn(player2.getId())).isEqualTo(2);
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.playersMaxSpellsThisTurn).isEmpty();
+        assertThat(gd.spellLimitThisTurn(player1.getId())).isEqualTo(Integer.MAX_VALUE);
+        assertThat(gd.spellLimitThisTurn(player2.getId())).isEqualTo(Integer.MAX_VALUE);
     }
 
     @Test
@@ -686,16 +705,19 @@ class RunedTerrorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RunedTerror());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        gd.limitSpellsThisTurn(player1.getId(), 1);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
+                new LimitControllerToOneMoreSpellThisTurnEffect(1), player1.getId(), Duration.UNTIL_END_OF_TURN));
         gs.advanceStep(gd);
-        gd.limitSpellsThisTurn(player1.getId(), 3);
-        assertThat(gd.playersMaxSpellsThisTurn).containsEntry(player1.getId(), 1);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
+                new LimitControllerToOneMoreSpellThisTurnEffect(3), player1.getId(), Duration.UNTIL_END_OF_TURN));
+        assertThat(gd.spellLimitThisTurn(player1.getId())).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.playersMaxSpellsThisTurn).containsEntry(player1.getId(), 3);
+        assertThat(gd.spellLimitThisTurn(player1.getId())).isEqualTo(3);
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.playersMaxSpellsThisTurn).isEmpty();
+        assertThat(gd.spellLimitThisTurn(player1.getId())).isEqualTo(Integer.MAX_VALUE);
+        assertThat(gd.spellLimitThisTurn(player2.getId())).isEqualTo(Integer.MAX_VALUE);
     }
 
     @Test
@@ -1138,12 +1160,12 @@ class RunedTerrorTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
         assertThat(gd.canPlayFromHandOf(player2.getId(), player1.getId())).isTrue();
-        assertThat(gd.playersSilencedThisTurn).containsExactly(player1.getId());
+        assertThat(silencedPlayers()).containsExactly(player1.getId());
 
         harness.passUntil(player2, TurnStep.CLEANUP);
         assertThat(gd.senControllerPlayerId).isNull();
         assertThat(gd.senControlledPlayerId).isNull();
-        assertThat(gd.playersSilencedThisTurn).isEmpty();
+        assertThat(silencedPlayers()).isEmpty();
     }
 
     @Test
@@ -1558,22 +1580,28 @@ class RunedTerrorTest extends BaseCardTest {
         UUID otherCreature = UUID.randomUUID();
         UUID ownEquipment = UUID.randomUUID();
         UUID otherEquipment = UUID.randomUUID();
-        gd.sacrificeForbiddenThisTurn.put(ownCreature, player1.getId());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("Test", null, player1.getId(),
+                new ControllerCantSacrificeTargetThisTurnEffect(), ownCreature, Duration.UNTIL_END_OF_TURN));
         gd.registerControlLossUnattachTrigger(ownEquipment, player1.getId(), source);
         gs.advanceStep(gd);
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        gd.sacrificeForbiddenThisTurn.put(otherCreature, player2.getId());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("Test", null, player2.getId(),
+                new ControllerCantSacrificeTargetThisTurnEffect(), otherCreature, Duration.UNTIL_END_OF_TURN));
         gd.registerControlLossUnattachTrigger(otherEquipment, player2.getId(), source);
         gs.advanceStep(gd);
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.sacrificeForbiddenThisTurn).containsExactly(Map.entry(otherCreature, player2.getId()));
+        assertThat(gd.hasFloatingEffectOnPermanent(ownCreature, ControllerCantSacrificeTargetThisTurnEffect.class))
+                .isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(otherCreature, ControllerCantSacrificeTargetThisTurnEffect.class))
+                .isTrue();
         assertThat(gd.controlLossUnattachTriggersFor(ownEquipment)).isEmpty();
         assertThat(gd.controlLossUnattachTriggersFor(otherEquipment)).hasSize(1);
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.sacrificeForbiddenThisTurn).isEmpty();
+        assertThat(gd.hasFloatingEffectOnPermanent(otherCreature, ControllerCantSacrificeTargetThisTurnEffect.class))
+                .isFalse();
         assertThat(gd.controlLossUnattachTriggersFor(otherEquipment)).isEmpty();
     }
 

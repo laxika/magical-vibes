@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofUntilE
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 @Component
 @RequiredArgsConstructor
@@ -22,7 +24,9 @@ public class GrantControllerHexproofUntilEndOfTurnEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        gameData.playersWithHexproofThisTurn.add(entry.getControllerId());
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), effect, entry.getControllerId(),
+                Duration.UNTIL_END_OF_TURN));
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(entry.getControllerId())
                 + " gains hexproof until end of turn."));
     }

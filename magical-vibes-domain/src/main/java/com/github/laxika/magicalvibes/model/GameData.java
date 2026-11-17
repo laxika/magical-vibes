@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
+import com.github.laxika.magicalvibes.model.effect.SetMaximumLifeTotalEffect;
 import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
 import com.github.laxika.magicalvibes.model.rules.RulesEventLog;
@@ -17,6 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPerm
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersWithChosenPlanarModePlayAdditionalLandEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.LimitControllerToOneMoreSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastSpellTypesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -40,6 +45,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -440,7 +446,6 @@ public class GameData {
     public final Set<UUID> creaturesThatEnlistedThisCombat = ConcurrentHashMap.newKeySet();
     /** Raging River: each attacking permanent maps to the independent nonflying pile restrictions
      * chosen for it during the current combat. */
-    public final Map<UUID, List<Set<UUID>>> ragingRiverBlockRestrictionsThisCombat = new ConcurrentHashMap<>();
     /** Players who put at least one counter on a creature this turn. */
     public final Set<UUID> playersWhoPutCountersOnCreaturesThisTurn = ConcurrentHashMap.newKeySet();
     /** Permanent IDs keyed by the player who put a counter on them during this turn. */
@@ -647,8 +652,6 @@ public class GameData {
      */
     public final Set<UUID> aiPlayerIds = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> playerLifeTotals = new ConcurrentHashMap<>();
-    /** Persistent per-player maximum life totals, when an effect imposes one. */
-    public final Map<UUID, Integer> playerMaximumLifeTotals = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerPoisonCounters = new ConcurrentHashMap<>();
     /** Rad counters are held by players and resolve during their precombat main phase. */
     public final Map<UUID, Integer> playerRadCounters = new ConcurrentHashMap<>();
@@ -734,8 +737,6 @@ public class GameData {
     public final Map<UUID, Long> exileEntryVersions = new ConcurrentHashMap<>();
     /** Number of times each card has entered a hand through {@link #addCardToHand}. A card that returns to hand is a new object (CR 400.7), so a delayed effect that refers to an earlier hand entry checks this version. */
     public final Map<UUID, Long> handEntryVersions = new ConcurrentHashMap<>();
-    /** Affected permanent mapped to the player whose next turn ends the attack restriction. */
-    public final Map<UUID, Set<UUID>> permanentsCantAttackUntilNextTurn = new ConcurrentHashMap<>();
     private long graveyardEntryVersion;
     /** Cards in each player's command zone (CR 903.6). Used by Eminence and similar command-zone abilities. */
     public final Map<UUID, List<Card>> playerCommandZones = new CommandZoneMap();
@@ -839,11 +840,6 @@ public class GameData {
     /** Sums the last-known effective power of creature deaths by effective subtype and controller this turn. */
     public final Map<UUID, Map<CardSubtype, Integer>> creatureSubtypeDeathPowerThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySourcePermanent = new ConcurrentHashMap<>();
-    /**
-     * Source permanent ids whose resolved ability gave them "creatures dealt damage by this creature this turn
-     * can't be regenerated this turn" (Runesword, Bone Shaman). The effect outlives the source leaving the battlefield.
-     */
-    public final Set<UUID> damagedCreaturesCantRegenerateSourceIdsThisTurn = ConcurrentHashMap.newKeySet();
     /**
      * Source permanent ids whose resolved ability gave them "if a creature dealt damage by this creature this turn
      * would die, exile it instead" (Runesword). The effect outlives the source leaving the battlefield.
@@ -999,7 +995,6 @@ public class GameData {
      * creature that has such a counter whenever blockers are declared (CR 611.2c), not just to those that had
      * one when the ability resolved.
      */
-    public final Map<UUID, Set<CounterType>> counterHolderMustBlockRequirementsThisTurn = new ConcurrentHashMap<>();
     /** Restrictions evaluated against the player's permanents during upcoming untap steps. */
     public final Map<UUID, List<SkipNextUntapEffect>>
             matchingPermanentUntapRestrictions = new ConcurrentHashMap<>();
@@ -1018,11 +1013,6 @@ public class GameData {
      */
     public final Map<UUID, Integer> skipNextUntapStepCount = new ConcurrentHashMap<>();
     public int globalDamagePreventionShield;
-    public boolean preventAllCombatDamage;
-    /** When true, all combat damage that would be dealt by attacking creatures is prevented this turn (Harmless Assault). */
-    public boolean preventAllCombatDamageByAttackingCreatures;
-    /** When true, all combat damage that would be dealt to players is prevented this turn (Defend the Hearth). */
-    public boolean preventAllCombatDamageToPlayers;
     /** When true, all damage to all creatures (both players') is prevented this turn (Blinding Fog). */
     /**
      * The "one or more" abilities, by source, already put on the stack for the current simultaneous creature-entry
@@ -1034,19 +1024,9 @@ public class GameData {
      *  as-enters choice of one of them (Rescuer Sphinx) can't pick another, as they weren't there yet. */
     public final Set<UUID> permanentsEnteringSimultaneously = ConcurrentHashMap.newKeySet();
 
-    public boolean preventAllDamageToAllCreatures;
-    /** When true, all damage that would be dealt by creatures is prevented this turn (Ethereal Haze). */
-    public boolean preventAllDamageByCreatures;
-    /** Controllers who gain life for damage prevented by their global creature-source shields this turn. */
-    public final List<UUID> damageByCreaturesPreventionLifeGainPlayers =
-            Collections.synchronizedList(new ArrayList<>());
-    /** When true, all damage that would be dealt by non-Human sources is prevented this turn (Repel the Abominable). */
-    public boolean preventAllDamageFromNonHumanSources;
     /** When non-null, creatures NOT matching this predicate are prevented from dealing combat damage this turn. */
     public PermanentPredicate combatDamageExemptPredicate;
     public UUID combatDamageExemptControllerId;
-    /** Independent turn-long source exemptions, grouped by the controller evaluating each filter. */
-    public final Map<UUID, Set<PermanentPredicate>> combatDamageExemptPredicatesByController = new ConcurrentHashMap<>();
     /** Opponents chosen for a simultaneous attacking-token-copy event, keyed by its choice batch. */
     public final Map<UUID, List<UUID>> pendingAttackingCopyOpponents = new ConcurrentHashMap<>();
     /** Remaining independent opponent choices for each attacking-token-copy event. */
@@ -1062,31 +1042,17 @@ public class GameData {
     public final Map<UUID, Integer> additionalEnterCountersThisTurn = new ConcurrentHashMap<>();
     /** Per-player count of additional +1/+1 counters that creatures entering under that player's
      *  control receive until the beginning of that player's next turn. */
-    public final Map<UUID, Integer> additionalEnterCountersUntilNextTurn = new ConcurrentHashMap<>();
     /** Additional +1/+1 counters waiting for the next qualifying enchantment creature entry event this turn. */
     public final Map<UUID, Integer> pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn =
             new ConcurrentHashMap<>();
     /** Counts already applied to members of the current simultaneous enchantment creature entry event. */
     public final Map<UUID, Integer> activeAdditionalCountersForEnchantmentCreatureEntryBatch =
             new ConcurrentHashMap<>();
-    /** Per-controller damage bonuses this turn for sources of one color (The Flame of Keld Chapter III), one per grant. */
-    public final Map<UUID, List<DamageBonusGrant>> colorSourceDamageBonusThisTurn = new ConcurrentHashMap<>();
-    /** Per-player damage bonuses this turn for all sources they control, one per grant. */
-    public final Map<UUID, List<DamageBonusGrant>> controllerDamageBonusThisTurn = new ConcurrentHashMap<>();
-    /** Per-player noncombat damage bonuses this turn for sources they control (Taii Wakeen), one per grant. */
-    public final Map<UUID, List<DamageBonusGrant>> controllerNoncombatDamageBonusThisTurn = new ConcurrentHashMap<>();
-    public final Set<CardColor> preventDamageFromColors = ConcurrentHashMap.newKeySet();
     public UUID combatDamageRedirectTarget;
     public UUID combatDamageRedirectPlayer;
     public final Map<UUID, Map<CardColor, Integer>> playerColorDamagePreventionCount = new ConcurrentHashMap<>();
     /** Target IDs to colors whose damage is prevented to that target until end of turn. */
     public final Map<UUID, Set<CardColor>> colorDamagePreventionUntilEndOfTurn = new ConcurrentHashMap<>();
-    /**
-     * Controller IDs to colors whose damage is prevented to every creature that controller controls,
-     * including creatures that enter later this turn (one-shot prevention is not a continuous effect).
-     */
-    public final Map<UUID, Set<CardColor>> colorDamagePreventionForControlledCreaturesUntilEndOfTurn =
-            new ConcurrentHashMap<>();
     /** Target IDs to which damage from colorless sources is prevented until end of turn. */
     public final Set<UUID> colorlessDamagePreventionUntilEndOfTurn = ConcurrentHashMap.newKeySet();
     public final List<PendingMayAbility> pendingMayAbilities = new ObservedMayAbilityList();
@@ -1549,8 +1515,6 @@ public class GameData {
     /** Delayed tap triggers registered until the watched permanent changes controllers. */
     public final Map<UUID, List<ControlLossTapTrigger>> controlLossTapTriggers =
             new ConcurrentHashMap<>();
-    /** Permanent id to the player who can't sacrifice it this turn (Call for Aid). */
-    public final Map<UUID, UUID> sacrificeForbiddenThisTurn = new ConcurrentHashMap<>();
     /** Number of end steps that have begun during the current turn. */
     public int endStepsThisTurn;
     /** Extra end steps waiting to occur during the current turn. */
@@ -1643,8 +1607,6 @@ public class GameData {
     public boolean onlyLandCreaturesCanAttackThisCombat;
     /** Whether only creatures with Aggressive may attack during the current additional combat. */
     public boolean onlyAggressiveCreaturesCanAttackThisCombat;
-    /** Whether creatures cannot attack during the current combat. */
-    public boolean creaturesCantAttackThisCombat;
     /** If non-null, only this permanent may attack during the current additional combat phase. */
     public UUID onlyPermanentCanAttackThisCombatId;
     /** If non-null, only these chosen permanents may attack during the current additional combat phase. */
@@ -1680,7 +1642,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
     /** Colors a chosen source must still have for {@link #playerSourceDamagePreventionIds} to apply, keyed by
      *  player and then source id; rechecked each time the source would deal damage (CR 609.7b). */
-    public final Map<UUID, Map<UUID, Set<CardColor>>> playerSourceDamagePreventionRequiredColors = new ConcurrentHashMap<>();
+    public final Map<UUID, Map<UUID,
+            Set<CardColor>>> playerSourceDamagePreventionRequiredColors = new ConcurrentHashMap<>();
     /** Whole-turn chosen-source prevention entries that gain life for black or red damage prevented. */
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionLifeGainIds = new ConcurrentHashMap<>();
     /** One-shot shields (Circle of Protection cycle): prevent the next damage event from a chosen source to a player. */
@@ -1727,7 +1690,6 @@ public class GameData {
     public final Map<UUID, Integer> pendingProliferateLinks = new java.util.LinkedHashMap<>();
     /** The damage event the resolving spell or ability is in, or null outside a resolution. */
     public ResolutionDamageEvent openDamageEvent;
-    public final Set<UUID> permanentsPreventedFromDealingDamage = ConcurrentHashMap.newKeySet();
     /** Creatures protected from damage caused by spells or abilities targeting them this turn. */
     public final Set<UUID> creaturesProtectedFromTargetingDamage = ConcurrentHashMap.newKeySet();
     /** Instant and sorcery spells whose damage is prevented for the rest of this turn. */
@@ -1736,91 +1698,20 @@ public class GameData {
     /** Sorcery spells whose damage is redirected to their controllers for the rest of this turn. */
     public final List<TargetSorceryDamageRedirectShield> targetSorceryDamageRedirectShields =
             Collections.synchronizedList(new ArrayList<>());
-    /** Permanents prevented from dealing damage until a player's next turn (Gideon of the Trials +1),
-     *  keyed by prevented permanent id → the player whose next turn ends the prevention. Unlike
-     *  {@link #permanentsPreventedFromDealingDamage} these entries survive the cleanup step and are
-     *  removed at the start of that player's next turn. */
-    public final Map<UUID, UUID> permanentsPreventedFromDealingDamageUntilNextTurn = new ConcurrentHashMap<>();
-    /** Permanents protected from all damage until a player's next turn, keyed by permanent id → expiring player id. */
-    public final Map<UUID, UUID> permanentsProtectedFromDamageUntilNextTurn = new ConcurrentHashMap<>();
-    /** Players whose damage (to themselves and their creatures) is fully prevented this turn (Safe Passage). */
-    public final Set<UUID> playersWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
-    /** Players whose noncreature permanents are also fully protected from damage this turn (Endure). */
-    public final Set<UUID> playersWithAllPermanentDamagePrevented = ConcurrentHashMap.newKeySet();
-    /** Players whose creatures' damage is fully prevented this turn (Divine Light). */
-    public final Set<UUID> playersWithAllCreatureDamagePrevented = ConcurrentHashMap.newKeySet();
-    /** Players whose own damage (but not their creatures') is fully prevented this turn (Riot Control). */
-    public final Set<UUID> playersWithAllPlayerDamagePrevented = ConcurrentHashMap.newKeySet();
-    /** Players whose combat damage and controlled planeswalker damage are prevented this turn (Take the Bait). */
-    public final Set<UUID> playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented = ConcurrentHashMap.newKeySet();
-    /** Players whose own damage is fully prevented until the beginning of their next turn (Morningtide's Light). */
-    public final Set<UUID> playersWithAllPlayerDamagePreventedUntilNextTurn = ConcurrentHashMap.newKeySet();
     /** Players whose combat damage is prevented this turn; creates one token per damage prevented. */
     public final Map<UUID, CombatDamagePreventionTokenShield> combatDamagePreventionTokenShields =
-            new ConcurrentHashMap<>();
-    /** Players with protection from everything until the beginning of their next turn. */
-    public final Set<UUID> playersWithProtectionFromEverythingUntilNextTurn = ConcurrentHashMap.newKeySet();
-    /** Players whose life totals can't change until the beginning of their next turn. */
-    public final Set<UUID> playersWithLifeTotalCantChangeUntilNextTurn = ConcurrentHashMap.newKeySet();
-    /** Players for whom damage dealt by attacking creatures is prevented this turn (Deep Wood). */
-    public final Set<UUID> playersWithDamageFromAttackersPrevented = ConcurrentHashMap.newKeySet();
-    /** Players whose opponents' creatures cannot deal damage this turn (Thwart the Enemy). */
-    public final Set<UUID> playersWithDamageFromOpponentCreaturesPrevented = ConcurrentHashMap.newKeySet();
-    /** Players whose targeted opponent's creatures cannot deal combat damage this turn (Encircling Fissure). */
-    public final Set<UUID> playersWithCombatDamageFromTargetOpponentCreaturesPrevented =
-            ConcurrentHashMap.newKeySet();
-    /** Players for whom damage from matching source permanents is prevented this turn. */
-    public final Map<UUID, Set<PermanentPredicate>> playersWithDamageFromMatchingSourcesPrevented =
             new ConcurrentHashMap<>();
     /** Players for whom the next damage from a matching source is prevented. */
     public final Map<UUID, List<PermanentPredicate>> playerNextDamageFromMatchingSourcesPrevented =
             new ConcurrentHashMap<>();
-    /** Players for whom damage from matching sources is prevented this turn to creatures they control. */
-    public final Map<UUID, Set<PermanentPredicate>> playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented =
-            new ConcurrentHashMap<>();
-    /** Players whose permanents are protected for the game from damage dealt by named planes. */
-    public final Map<UUID, Set<String>> playersWithDamageFromNamedPlanesPrevented = new ConcurrentHashMap<>();
     /**
      * One entry per Gather Specimens resolved this turn, naming its controller: each is a separate
      * replacement effect that gains control of a creature that would enter under an opponent's control.
      */
-    public final List<UUID> playersGatheringSpecimensThisTurn = new java.util.concurrent.CopyOnWriteArrayList<>();
-    /** Players who, this turn, gain control of tokens that would be created under an opponent's control (Crafty Cutpurse). */
-    public final List<UUID> playersGatheringTokensThisTurn = new java.util.concurrent.CopyOnWriteArrayList<>();
-    /** Players who, this turn, exile creatures that would enter without having been cast (Hallowed Moonlight). */
-    public final Set<UUID> playersExilingUncastEnteringCreaturesThisTurn = ConcurrentHashMap.newKeySet();
-    /** Players who, this turn, exile nontoken creatures that would enter without having been cast (Mistcaller). */
-    public final Set<UUID> playersExilingUncastEnteringNontokenCreaturesThisTurn = ConcurrentHashMap.newKeySet();
-    /** Players whose effects, this turn, shuffle creatures entering from exile into their owners' libraries instead. */
-    public final Set<UUID> playersShufflingCreaturesEnteringFromExileThisTurn = ConcurrentHashMap.newKeySet();
-    /** Players whose effects, this turn, exile creatures that would die instead of putting them into graveyards. */
-    public final Set<UUID> playersExilingCreaturesInsteadOfDyingThisTurn = ConcurrentHashMap.newKeySet();
-    /** Players whose effects, this turn, exile creatures their opponents control instead of putting them into graveyards. */
-    public final Set<UUID> playersExilingOpponentCreaturesInsteadOfDyingThisTurn = ConcurrentHashMap.newKeySet();
-    /** Players whose effects, this turn, exile their controlled permanents instead of putting them into graveyards. */
-    public final Set<UUID> playersExilingControlledPermanentsInsteadOfDyingThisTurn = ConcurrentHashMap.newKeySet();
-    /** Specific creatures whose damage is fully prevented this turn (Wellgabber Apothecary). */
-    public final Set<UUID> creaturesWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Players with an active effect that redirects damage dealt to any creature to them. */
     public final Set<UUID> playersRedirectingAllCreatureDamage = ConcurrentHashMap.newKeySet();
     /** Suppresses re-offering an optional creature-damage redirect while a declined event resumes. */
     public boolean resolvingDeclinedAllCreatureDamageRedirect;
-    /**
-     * Predicates whose matching permanents have all damage to them prevented this turn
-     * (Ethersworn Shieldmage). Re-evaluated per damage event, so it covers permanents that
-     * start/stop matching after the effect resolved (official ruling).
-     */
-    public final Set<PermanentPredicate> allDamagePreventionPredicates = ConcurrentHashMap.newKeySet();
-    /** Predicates whose matching permanents controlled by the keyed player have all damage prevented. */
-    public final Map<UUID, Set<PermanentPredicate>> allDamagePreventionPredicatesByController =
-            new ConcurrentHashMap<>();
-    /** Predicates whose matching permanents controlled by the keyed player have combat damage prevented. */
-    public final Map<UUID, Set<PermanentPredicate>> combatDamagePreventionPredicatesByController =
-            new ConcurrentHashMap<>();
-    /** Specific creatures whose combat damage dealt to them is prevented this turn (Foxfire). */
-    public final Set<UUID> creaturesWithCombatDamagePrevented = ConcurrentHashMap.newKeySet();
-    /** Specific creatures whose combat damage is prevented this turn (Resistance Fighter). */
-    public final Set<UUID> creaturesPreventedFromDealingCombatDamage = ConcurrentHashMap.newKeySet();
     /**
      * Creatures that assign no combat damage this turn (Carrion Wurm, Laccolith Titan). Unlike prevention this
      * can't be overridden by "damage can't be prevented" effects.
@@ -1828,10 +1719,6 @@ public class GameData {
     public final Set<UUID> creaturesAssigningNoCombatDamageThisTurn = ConcurrentHashMap.newKeySet();
     /** Creatures that assign no combat damage during the current combat only (cleared when it ends). */
     public final Set<UUID> creaturesAssigningNoCombatDamageThisCombat = ConcurrentHashMap.newKeySet();
-    /** Specific creatures whose combat damage dealt to them is prevented during the current combat. */
-    public final Set<UUID> creaturesWithCombatDamagePreventedThisCombat = ConcurrentHashMap.newKeySet();
-    /** Specific creatures whose combat damage is prevented during the current combat. */
-    public final Set<UUID> creaturesPreventedFromDealingCombatDamageThisCombat = ConcurrentHashMap.newKeySet();
     /**
      * Players who play with their hand revealed for as long as a given source permanent remains on
      * the battlefield (Stromgald Spy), keyed by that source permanent's id. Entries stay until the
@@ -1863,14 +1750,8 @@ public class GameData {
     /** Active global damage replacement effects registered by spells for the current turn. */
     public final List<ReplaceDamageAboveThresholdThisTurnEffect> damageReplacementsThisTurn =
             Collections.synchronizedList(new ArrayList<>());
-    /** When true, no player can gain life this turn (Skullcrack). Cleared at turn cleanup. */
-    public boolean playersCantGainLifeThisTurn = false;
-    /** When true, no player can lose life this turn (Everybody Lives!). Cleared at turn cleanup. */
-    public boolean playersCantLoseLifeThisTurn = false;
     /** When true, no player can search a library this turn (Shadow of Doubt). Cleared at turn cleanup. */
     public boolean playersCantSearchLibrariesThisTurn = false;
-    /** When true, no creature can attack this turn. Cleared at turn cleanup. */
-    public boolean creaturesCantAttackThisTurn = false;
     /**
      * Turn-scoped rule restrictions on the creatures a player controls (CR 611.2c: a "can't attack"
      * effect modifies the rules, so it covers creatures that come under that player's control later and
@@ -1891,19 +1772,6 @@ public class GameData {
      * double that damage instead" replacement effects (Blind Fury). Each one doubles the damage, so
      * the multiplier is {@code 2^count}. Cleared at turn cleanup.
      */
-    public int combatDamageToCreaturesDoublingsThisTurn = 0;
-    /**
-     * Per-player count of "if a source you control would deal damage this turn, it deals double
-     * that damage instead" replacement effects (Insult). Each one doubles the damage, so the
-     * multiplier is {@code 2^count}. Cleared at turn cleanup.
-     */
-    public final Map<UUID, Integer> controllerDamageDoublingsThisTurn = new ConcurrentHashMap<>();
-    /**
-     * Per-permanent count of effects that double damage dealt by that permanent this turn
-     * (Overblaze). Each instance doubles the damage again, so the multiplier is {@code 2^count}.
-     * Cleared at turn cleanup.
-     */
-    public final Map<UUID, Integer> permanentDamageDoublingsThisTurn = new ConcurrentHashMap<>();
     /**
      * Active "whenever a card is put into an opponent's graveyard from anywhere this turn, that
      * player loses 1 life" delayed triggers (Duskmantle Guildmage). One entry per activation, so
@@ -1939,7 +1807,8 @@ public class GameData {
     public final List<JudgmentOfAlexanderDamagePreventionShield> judgmentOfAlexanderDamagePreventionShields =
             Collections.synchronizedList(new ArrayList<>());
     public final List<ChannelHarmShield> channelHarmShields = Collections.synchronizedList(new ArrayList<>());
-    /** Pending redirect damage to deal after damage prevention (populated by DamagePreventionService, consumed by callers). */
+    /** Pending redirect damage to deal after damage prevention (populated by DamagePreventionService,
+            consumed by callers). */
     public final List<DamageRedirectShield> pendingRedirectDamage = Collections.synchronizedList(new ArrayList<>());
     /** Source-specific damage redirect shields (e.g. Harm's Way): prevent damage from a chosen source and redirect to any target. */
     public final List<SourceDamageRedirectShield> sourceDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
@@ -2089,22 +1958,8 @@ public class GameData {
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
     /** Finite-use triggered abilities granted directly to players. */
     public final List<Boon> boons = Collections.synchronizedList(new ArrayList<>());
-    /** Players who have been granted "no maximum hand size" for the rest of the game. */
-    public final Set<UUID> playersWithNoMaximumHandSize = ConcurrentHashMap.newKeySet();
-    /** Players who have no maximum hand size until the beginning of their next turn. */
-    public final Set<UUID> playersWithNoMaximumHandSizeUntilNextTurn = ConcurrentHashMap.newKeySet();
-    /** Timestamp of each player's latest set-based "no maximum hand size" grant, so later hand-size setters can override it (CR 613.7). */
-    public final Map<UUID, Long> noMaximumHandSizeGrantTimestamps = new ConcurrentHashMap<>();
-    /** Players who can't gain life for the rest of the game (e.g. Stigma Lasher). */
-    public final Set<UUID> playersWhoCantGainLifeRestOfGame = ConcurrentHashMap.newKeySet();
     /** Players who play with their hand revealed for the rest of the game (e.g. Truth or Dare). */
     public final Set<UUID> playersWithHandRevealed = ConcurrentHashMap.newKeySet();
-    /** Players who can't gain life this turn (e.g. opponents can't gain life). Cleared at turn cleanup. */
-    public final Set<UUID> playersWhoCantGainLifeThisTurn = ConcurrentHashMap.newKeySet();
-    /** Players whose life gain this turn is replaced with 0 (e.g. Flames of the Blood Hand). Cleared at turn cleanup. */
-    public final Set<UUID> playersWhoGainNoLifeThisTurn = ConcurrentHashMap.newKeySet();
-    /** Players who can't lose life this turn (e.g. Courageous Resolve). Cleared at turn cleanup. */
-    public final Set<UUID> playersWhoCantLoseLifeThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Tracks source-linked animations (Awakener Druid-style).
      *  Maps animated target permanent UUID → source permanent UUID.
@@ -2126,25 +1981,9 @@ public class GameData {
     public final Map<UUID, GraveyardCardAnimation> temporaryGraveyardCardAnimationsUntilEndOfTurn =
             new ConcurrentHashMap<>();
 
-    /** Per-player: spells controlled by this player can't be countered by spells of these colors this turn. Cleared at end of turn. */
-    public final Map<UUID, Set<CardColor>> playerSpellsCantBeCounteredByColorsThisTurn = new ConcurrentHashMap<>();
 
-    /** Players whose spells can't be countered this turn. Cleared at end of turn. */
-    public final Set<UUID> playersSpellsCantBeCounteredThisTurn = ConcurrentHashMap.newKeySet();
 
-    /** Players whose creature spells can't be countered this turn. Cleared at end of turn. */
-    public final Set<UUID> playersCreatureSpellsCantBeCounteredThisTurn = ConcurrentHashMap.newKeySet();
 
-    /** Per-player: creatures controlled by this player can't be the targets of spells of these colors this turn. Cleared at end of turn. */
-    public final Map<UUID, Set<CardColor>> playerCreaturesCantBeTargetedByColorsThisTurn = new ConcurrentHashMap<>();
-
-    /** Per-player: this player has hexproof from these colors this turn. Cleared at end of turn. */
-    public final Map<UUID, Set<CardColor>> playerHexproofFromColorsThisTurn = new ConcurrentHashMap<>();
-    public final Set<UUID> playersWithHexproofThisTurn = ConcurrentHashMap.newKeySet();
-    public final Set<UUID> playersWithShroudThisTurn = ConcurrentHashMap.newKeySet();
-
-    /** Per-permanent: this permanent has hexproof from these colors this turn. Cleared at end of turn. */
-    public final Map<UUID, Set<CardColor>> permanentHexproofFromColorsThisTurn = new ConcurrentHashMap<>();
 
     /** Card IDs of individual spells on the stack that have been made uncounterable (e.g. Vexing Shusher's
      *  "Target spell can't be countered"). Only relevant while the spell is on the stack. */
@@ -2163,71 +2002,18 @@ public class GameData {
     /** Temporary color override applied to a spell on the stack, cleared at end of turn. */
     public final Map<UUID, Set<CardColor>> spellColorOverridesUntilEndOfTurn = new ConcurrentHashMap<>();
 
-    /** Per-player: this player has protection from these colors until end of turn (e.g. Faith's Shield fateful hour). Cleared at end of turn. */
-    public final Map<UUID, Set<CardColor>> playerProtectionFromColorsUntilEndOfTurn = new ConcurrentHashMap<>();
 
-    /** Per-player: this player has protection from these players until end of turn. */
-    public final Map<UUID, Set<UUID>> playerProtectionFromPlayerIdsUntilEndOfTurn = new ConcurrentHashMap<>();
 
-    /** Per-player: this player has protection from these players until the beginning of their next turn. */
-    public final Map<UUID, Set<UUID>> playerProtectionFromPlayerIdsUntilNextTurn = new ConcurrentHashMap<>();
 
-    /** Per-player: this player has a temporary targeting keyword until end of turn. */
-    public final Map<UUID, Set<Keyword>> playerKeywordsUntilEndOfTurn = new ConcurrentHashMap<>();
-    /** Per-player: this player has a temporary targeting keyword until the beginning of their next turn. */
-    public final Map<UUID, Set<Keyword>> playerKeywordsUntilNextTurn = new ConcurrentHashMap<>();
-    /** Static effects granted directly to players until end of turn (e.g. Angel's Grace). */
-    public final Map<UUID, List<CardEffect>> playerStaticEffectsUntilEndOfTurn = new ConcurrentHashMap<>();
 
-    /** Players who can't cast spells this turn (e.g. Silence). Cleared at end of turn and on new turn. */
-    public final Set<UUID> playersSilencedThisTurn = ConcurrentHashMap.newKeySet();
-
-    /** Maximum total spells each player may cast this turn from resolution-time restrictions. */
-    public final Map<UUID, Integer> playersMaxSpellsThisTurn = new ConcurrentHashMap<>();
-    /**
-     * Every limit merged into {@link #playersMaxSpellsThisTurn} this turn, as {@code (player, limit)} pairs. The map
-     * keeps only the most restrictive limit, so these are what lets a looser limit created during another player's
-     * phase outlive the cleanup step that ends the tighter one under Runed Terror's sequential phases.
-     */
-    public final List<Map.Entry<UUID, Integer>> playersMaxSpellsContributionsThisTurn = new CopyOnWriteArrayList<>();
-
-    /** Players who can't cast spells for the rest of the game because an Epic spell resolved. */
-    public final Set<UUID> playersCantCastSpellsForRestOfGame = ConcurrentHashMap.newKeySet();
-
-    /**
-     * Card names opponents of the key player can't cast spells with, until that player's next turn
-     * (Comply). Keyed by the naming controller → set of forbidden names. Cleared at the start of
-     * that controller's next turn (survives end-of-turn cleanup).
-     */
-    public final Map<UUID, Set<String>> opponentsCantCastNamedSpellsUntilControllerNextTurn =
-            new ConcurrentHashMap<>();
-
-    /** Mana values opponents can't cast until the key player's next turn. */
-    public final Map<UUID, Set<Integer>> opponentsCantCastSpellsWithManaValueUntilControllerNextTurn =
-            new ConcurrentHashMap<>();
-    /** Card names a specific player can't cast until the key player's next turn (Reflector Mage). */
-    public final Map<UUID, Map<UUID, Set<String>>> playersCantCastNamedSpellsUntilControllerNextTurn =
-            new ConcurrentHashMap<>();
 
     /** Card names no player may cast or play until the key player's next turn. */
     public final Map<UUID, Set<String>> spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn =
             new ConcurrentHashMap<>();
 
-    /** Players who can't cast noncreature spells until the key player's next turn. */
-    public final Map<UUID, Set<UUID>> playersCantCastNoncreatureSpellsUntilControllerNextTurn =
-            new ConcurrentHashMap<>();
 
-    /** Players who can't cast spells from outside their hands until the key player's next turn. */
-    public final Map<UUID, Set<UUID>> playersCantCastSpellsFromOutsideHandUntilControllerNextTurn =
-            new ConcurrentHashMap<>();
 
-    /** Players who can't play cards from their hand until the key player's next turn. */
-    public final Map<UUID, Set<UUID>> playersCantPlayCardsFromHandUntilControllerNextTurn =
-            new ConcurrentHashMap<>();
 
-    /** Card types all players can't cast until the end of the key player's next turn. */
-    public final Map<UUID, Map<CardType, Integer>> playersCantCastSpellTypesUntilEndOfControllerNextTurn =
-            new ConcurrentHashMap<>();
 
     /** Cards revealed in their owner's hand until that owner's next turn. */
     public final Map<UUID, UUID> cardsRevealedInHandUntilOwnerNextTurn = new ConcurrentHashMap<>();
@@ -2238,9 +2024,6 @@ public class GameData {
     /** Cards that can't be played from their owner's hand until that owner's next turn. */
     public final Map<UUID, UUID> cardsCantBePlayedInHandUntilOwnerNextTurn = new ConcurrentHashMap<>();
 
-    /** Card predicates the key player may cast as though they had flash until their next turn. */
-    public final Map<UUID, Set<CardPredicate>> cardTypeFlashGrantsUntilNextTurn =
-            new ConcurrentHashMap<>();
 
     /** Land subtype -&gt; extra mana colors and creating controllers, used when a player taps that subtype for mana
      *  this turn (Chaos Moon's odd branch: "whenever a player taps a Mountain for mana, that player
@@ -2250,27 +2033,15 @@ public class GameData {
     /** Land subtype -&gt; the mana color lands of that subtype produce instead of any other type this
      *  turn (Chaos Moon's even branch: "that Mountain produces colorless mana instead of any other
      *  type"). Amount is unchanged. Cleared at end of turn. */
-    public final Map<CardSubtype, ManaColor> landSubtypeFixedManaColorThisTurn = new ConcurrentHashMap<>();
 
-    /** The mana color nonbasic lands produce instead of any other color this turn. */
-    public volatile ManaColor nonbasicLandsFixedManaColorThisTurn;
 
     /** The mana color every land produces instead of any other color this turn (Hall of Gemstone,
      *  chosen by the player whose upkeep it is). Amount is unchanged. Null when inactive; cleared at
      *  end of turn. */
-    public volatile ManaColor allLandsFixedManaColorThisTurn;
 
-    /** Players whose spells and abilities replace colored mana they would add with white mana this turn. */
-    public final Set<UUID> playersWithColoredManaReplacementThisTurn = ConcurrentHashMap.newKeySet();
 
-    /** Players who may spend white mana as though it were mana of any color this turn. */
-    public final Set<UUID> playersWithWhiteManaAsAnyColorThisTurn = ConcurrentHashMap.newKeySet();
 
-    /** Players whose land taps for mana produce one mana of a color chosen separately per tap. */
-    public final Set<UUID> playersWithLandManaChoiceReplacementThisTurn = ConcurrentHashMap.newKeySet();
 
-    /** The mana color the specified players' lands produce instead of any other type this turn. */
-    public final Map<UUID, ManaColor> landManaFixedColorThisTurn = new ConcurrentHashMap<>();
 
     /**
      * Players who tapped a land for mana this turn (Desolation). Recorded whenever a land is tapped
@@ -2278,27 +2049,13 @@ public class GameData {
      */
     public final Set<UUID> playersWhoTappedLandForManaThisTurn = ConcurrentHashMap.newKeySet();
 
-    /** Players who can't play lands this turn (e.g. Moonhold). Cleared at end of turn. */
-    public final Set<UUID> playersCantPlayLandsThisTurn = ConcurrentHashMap.newKeySet();
 
-    /** Card types each player can't cast this turn (e.g. Moonhold, Abeyance). Cleared at end of turn. */
-    public final Map<UUID, Set<CardType>> playersCantCastSpellTypesThisTurn = new ConcurrentHashMap<>();
 
     /** Card types each player can't cast during their next turn. Promoted when that turn begins. */
     public final Map<UUID, Set<CardType>> playersCantCastSpellTypesNextTurn = new ConcurrentHashMap<>();
 
-    /** Players who can't cast noncreature spells this turn (e.g. Aurelia's Fury). Cleared at end of turn. */
-    public final Set<UUID> playersCantCastNoncreatureSpellsThisTurn = ConcurrentHashMap.newKeySet();
 
-    /** Players who can't activate abilities this turn — including mana abilities (e.g. Sen Triplets).
-     *  Cleared at end of turn. */
-    public final Set<UUID> playersCantActivateAbilitiesThisTurn = ConcurrentHashMap.newKeySet();
 
-    /** Players who can't activate abilities that aren't mana abilities this turn (e.g. Abeyance).
-     *  Cleared at end of turn. */
-    public final Set<UUID> playersCantActivateNonManaAbilitiesThisTurn = ConcurrentHashMap.newKeySet();
-    public final Set<UUID> playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn =
-            ConcurrentHashMap.newKeySet();
     /** Extra loyalty activations each planeswalker a player controls may use this turn, granted to the player
      *  (The Chain Veil); applies to planeswalkers that come under the player's control later in the turn too. */
     public final Map<UUID, Integer> playerExtraLoyaltyActivationsThisTurn = new ConcurrentHashMap<>();
@@ -2352,20 +2109,12 @@ public class GameData {
     /** Graveyard-entry identity each unearth grant in {@link #cardsGrantedUnearthUntilEndOfTurn} was made for. */
     public final Map<UUID, Long> cardsGrantedUnearthGraveyardVersions = new ConcurrentHashMap<>();
 
-    /** Player IDs that may cast spells as though they had flash until end of turn (Alchemist's
-     *  Refuge, Vedalken Orrery-style one-shot grants). Cleared at end of turn. */
-    public final Set<UUID> playersWithFlashUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
-    /** Player IDs that may cast spells from hand without paying their mana costs until end of turn. */
-    public final Set<UUID> playersWithFreeHandCastUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
     /** Player IDs that may look at face-down creatures they don't control until end of turn
      *  (Lumbering Laundry). Cleared at end of turn. */
     public final Set<UUID> playersWhoMayLookAtFaceDownCreaturesThisTurn = ConcurrentHashMap.newKeySet();
 
-    /** Player IDs that may cast spells of a given type as though they had flash until end of turn.
-     *  Cleared at end of turn. */
-    public final Map<UUID, Set<CardPredicate>> cardTypeFlashGrantsThisTurn = new ConcurrentHashMap<>();
 
     /** Pending "the next spell of this type you cast this turn can be cast as though it had flash"
      *  grants (Quicken), keyed by player. Each list element is one unconsumed grant; a grant is
@@ -2429,13 +2178,9 @@ public class GameData {
      *  enter with riot. Consumed by {@code BattlefieldEntryService} and cleared at end of turn. */
     public final Set<UUID> spellsGrantedRiotOnEntry = ConcurrentHashMap.newKeySet();
 
-    /** Player IDs that may tap lands they don't control for mana until end of turn (Piracy). The
-     *  mana produced this way may only be spent to cast spells. Cleared at end of turn. */
-    public final Set<UUID> mayTapLandsForSpellsUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
     /** Player IDs that may pay 1 life to add {C} any time they could activate a mana ability until end
      *  of turn (Channel). Cleared at end of turn. */
-    public final Set<UUID> mayPayLifeForColorlessManaUntilEndOfTurn = ConcurrentHashMap.newKeySet();
     /** Controller IDs to Guardian Angel target IDs that may receive another one-damage shield this turn. */
     public final Map<UUID, Set<UUID>> guardianAngelTargetsUntilEndOfTurn = new ConcurrentHashMap<>();
 
@@ -2767,18 +2512,7 @@ public class GameData {
     /** Tracks which players have cast their first spell of the game (for opening hand triggers). */
     public final Set<UUID> playersWhoCastFirstSpellInGame = ConcurrentHashMap.newKeySet();
 
-    /** Player UUID to card UUID for a temporary free-play permission on the current library top card. */
-    public final Map<UUID, UUID> libraryTopCardFreePlayPermissionsUntilEndOfTurn = new ConcurrentHashMap<>();
-    /** Players who may look at and play cards from the top of their library until end of turn. */
-    public final Set<UUID> playersAllowedToPlayFromLibraryTopUntilEndOfTurn = ConcurrentHashMap.newKeySet();
-    /** Players who may play cards from the top of their library for life until end of turn. */
-    public final Set<UUID> libraryTopCardLifePlayPermissionsUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
-    /** Pairs of caster and library owner for temporary access to another player's library top. */
-    public record LibraryTopCardPermission(UUID castingPlayerId, UUID libraryOwnerId) {}
-
-    /** Temporary permissions to look at and play another player's current library top card. */
-    public final Set<LibraryTopCardPermission> libraryTopCardPermissionsUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
     /** Maps exiled card UUID → player UUID who has permission to play it (e.g. Praetor's Grasp). */
     public final Map<UUID, UUID> exilePlayPermissions = new ConcurrentHashMap<>();
@@ -2891,15 +2625,9 @@ public class GameData {
     /** Turn-scoped grants to cast one foretold card owned by the granting player for free. */
     public final List<ForetoldCardCastPermission> foretoldCardCastPermissionsThisTurn =
             new CopyOnWriteArrayList<>();
-    /** Players whose cards are exiled instead of entering their graveyards for the rest of the turn. */
-    public final Set<UUID> playersExilingCardsInsteadOfGraveyardThisTurn = ConcurrentHashMap.newKeySet();
-    /** Players who may play face-up cards they own from exile until end of turn. */
-    public final Set<UUID> playersMayPlayFaceUpCardsFromExileThisTurn = ConcurrentHashMap.newKeySet();
     /** Players whose cards go to the bottom of their owner's library instead of graveyard or exile this turn. */
     public final Set<UUID> playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn =
             ConcurrentHashMap.newKeySet();
-    /** Players who can't play lands or cast spells from graveyards this turn. */
-    public final Set<UUID> playersCantPlayFromGraveyardsThisTurn = ConcurrentHashMap.newKeySet();
     /** Turn-scoped blanket permissions to play matching cards from graveyards. */
     public final List<GraveyardPlayFilterPermission> graveyardPlayFilterPermissionsThisTurn =
             new CopyOnWriteArrayList<>();
@@ -4227,8 +3955,6 @@ public class GameData {
      *  matches no living creature, locking everyone (CR-accurate: if the target dies, no creature may
      *  attack). Enforced in {@code CombatAttackService.canCreatureAttack}, so it also covers creatures
      *  that enter later this turn. Cleared at each turn transition. */
-    public final List<UUID> otherCreaturesCantAttackExemptCreatureIds =
-            Collections.synchronizedList(new ArrayList<>());
 
     /**
      * Peace Talks — "This turn and next turn, creatures can't attack, and players and permanents
@@ -4843,18 +4569,20 @@ public class GameData {
 
     /**
      * Returns {@code true} if the permanent with the given id is prevented from dealing damage,
-     * whether via the turn-scoped {@link #permanentsPreventedFromDealingDamage} set (Soul Parry)
-     * or the until-your-next-turn {@link #permanentsPreventedFromDealingDamageUntilNextTurn} map
+     * whether by a this-turn floating prevention effect (Soul Parry) or an until-your-next-turn one
      * (Gideon of the Trials +1).
      */
     public boolean isPreventedFromDealingDamage(UUID permanentId) {
-        return permanentsPreventedFromDealingDamage.contains(permanentId)
-                || permanentsPreventedFromDealingDamageUntilNextTurn.containsKey(permanentId);
+        return hasPreventionOnPermanent(permanentId, false,
+                PreventionScope.ALL_BY_TARGET_CREATURES, PreventionScope.ALL_BY_SELF)
+                || hasPreventionOnPermanent(permanentId,
+                PreventionScope.ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN,
+                PreventionScope.ALL_TO_AND_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN);
     }
 
     /** Returns whether all damage to the permanent is prevented until a player's next turn. */
     public boolean isProtectedFromDamageUntilNextTurn(UUID permanentId) {
-        return permanentsProtectedFromDamageUntilNextTurn.containsKey(permanentId);
+        return hasPreventionOnPermanent(permanentId, PreventionScope.ALL_TO_AND_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN);
     }
 
     /**
@@ -4956,105 +4684,21 @@ public class GameData {
     private Object gameEndOfTurnStateValue(EndOfTurnStateField field) {
         return switch (field) {
             case GAME_DAMAGE_PREVENTION_SHIELD -> globalDamagePreventionShield;
-            case GAME_PREVENT_ALL_COMBAT_DAMAGE -> preventAllCombatDamage;
-            case GAME_PREVENT_ALL_COMBAT_DAMAGE_BY_ATTACKING_CREATURES -> preventAllCombatDamageByAttackingCreatures;
-            case GAME_PREVENT_ALL_COMBAT_DAMAGE_TO_PLAYERS -> preventAllCombatDamageToPlayers;
-            case GAME_PREVENT_ALL_DAMAGE_TO_ALL_CREATURES -> preventAllDamageToAllCreatures;
-            case GAME_PREVENT_ALL_DAMAGE_BY_CREATURES -> preventAllDamageByCreatures;
-            case GAME_DAMAGE_BY_CREATURES_PREVENTION_LIFE_GAIN_PLAYERS -> {
-                synchronized (damageByCreaturesPreventionLifeGainPlayers) {
-                    yield new ArrayList<>(damageByCreaturesPreventionLifeGainPlayers);
-                }
-            }
-            case GAME_PREVENT_ALL_DAMAGE_FROM_NON_HUMAN_SOURCES -> preventAllDamageFromNonHumanSources;
-            case GAME_COMBAT_DAMAGE_EXEMPT_PREDICATES_BY_CONTROLLER -> mapEntries(combatDamageExemptPredicatesByController);
-            case GAME_PREVENT_DAMAGE_FROM_COLORS -> preventDamageFromColors;
-            case GAME_COLOR_DAMAGE_PREVENTION -> mapEntries(colorDamagePreventionUntilEndOfTurn);
-            case GAME_COLOR_DAMAGE_PREVENTION_FOR_CONTROLLED_CREATURES ->
-                    mapEntries(colorDamagePreventionForControlledCreaturesUntilEndOfTurn);
             case GAME_COLORLESS_DAMAGE_PREVENTION -> colorlessDamagePreventionUntilEndOfTurn;
-            case GAME_PERMANENTS_PREVENTED_FROM_DEALING_DAMAGE -> permanentsPreventedFromDealingDamage;
             case GAME_CREATURES_PROTECTED_FROM_TARGETING_DAMAGE -> creaturesProtectedFromTargetingDamage;
-            case GAME_PLAYERS_WITH_ALL_DAMAGE_PREVENTED -> playersWithAllDamagePrevented;
-            case GAME_PLAYERS_WITH_ALL_PERMANENT_DAMAGE_PREVENTED -> playersWithAllPermanentDamagePrevented;
-            case GAME_PLAYERS_WITH_ALL_CREATURE_DAMAGE_PREVENTED -> playersWithAllCreatureDamagePrevented;
-            case GAME_PLAYERS_WITH_ALL_PLAYER_DAMAGE_PREVENTED -> playersWithAllPlayerDamagePrevented;
-            case GAME_PLAYERS_WITH_ALL_COMBAT_DAMAGE_TO_PLAYER_AND_PLANESWALKERS_PREVENTED ->
-                    playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented;
-            case GAME_PLAYERS_WITH_DAMAGE_FROM_ATTACKERS_PREVENTED -> playersWithDamageFromAttackersPrevented;
-            case GAME_PLAYERS_WITH_DAMAGE_FROM_OPPONENT_CREATURES_PREVENTED -> playersWithDamageFromOpponentCreaturesPrevented;
-            case GAME_PLAYERS_WITH_COMBAT_DAMAGE_FROM_TARGET_OPPONENT_CREATURES_PREVENTED ->
-                    playersWithCombatDamageFromTargetOpponentCreaturesPrevented;
-            case GAME_PLAYERS_WITH_DAMAGE_FROM_MATCHING_SOURCES_PREVENTED ->
-                    mapEntries(playersWithDamageFromMatchingSourcesPrevented);
-            case GAME_PLAYERS_WITH_DAMAGE_TO_CONTROLLED_CREATURES_FROM_MATCHING_SOURCES_PREVENTED ->
-                    mapEntries(playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented);
-            case GAME_CREATURES_WITH_ALL_DAMAGE_PREVENTED -> creaturesWithAllDamagePrevented;
             case GAME_PLAYERS_REDIRECTING_ALL_CREATURE_DAMAGE -> playersRedirectingAllCreatureDamage;
-            case GAME_ALL_DAMAGE_PREVENTION_PREDICATES -> allDamagePreventionPredicates;
-            case GAME_ALL_DAMAGE_PREVENTION_PREDICATES_BY_CONTROLLER -> mapEntries(allDamagePreventionPredicatesByController);
-            case GAME_COMBAT_DAMAGE_PREVENTION_PREDICATES_BY_CONTROLLER ->
-                    mapEntries(combatDamagePreventionPredicatesByController);
-            case GAME_CREATURES_WITH_COMBAT_DAMAGE_PREVENTED -> creaturesWithCombatDamagePrevented;
-            case GAME_CREATURES_PREVENTED_FROM_DEALING_COMBAT_DAMAGE -> creaturesPreventedFromDealingCombatDamage;
             case GAME_CREATURES_ASSIGNING_NO_COMBAT_DAMAGE -> creaturesAssigningNoCombatDamageThisTurn;
             case GAME_DAMAGE_CANT_BE_PREVENTED -> damageCantBePreventedThisTurn;
-            case GAME_PLAYERS_CANT_GAIN_LIFE -> playersCantGainLifeThisTurn;
-            case GAME_PLAYERS_CANT_LOSE_LIFE -> playersCantLoseLifeThisTurn;
             case GAME_PLAYERS_CANT_SEARCH_LIBRARIES -> playersCantSearchLibrariesThisTurn;
-            case GAME_CREATURES_CANT_ATTACK -> creaturesCantAttackThisTurn;
-            case GAME_PLAYERS_WHO_CANT_GAIN_LIFE -> playersWhoCantGainLifeThisTurn;
-            case GAME_PLAYERS_WHO_GAIN_NO_LIFE -> playersWhoGainNoLifeThisTurn;
-            case GAME_PLAYERS_WHO_CANT_LOSE_LIFE -> playersWhoCantLoseLifeThisTurn;
-            case GAME_PLAYERS_WITH_HEXPROOF -> playersWithHexproofThisTurn;
-            case GAME_PLAYERS_WITH_SHROUD -> playersWithShroudThisTurn;
-            case GAME_PLAYER_HEXPROOF_FROM_COLORS -> mapEntries(playerHexproofFromColorsThisTurn);
-            case GAME_PERMANENT_HEXPROOF_FROM_COLORS -> mapEntries(permanentHexproofFromColorsThisTurn);
-            case GAME_PLAYER_PROTECTION_FROM_COLORS -> mapEntries(playerProtectionFromColorsUntilEndOfTurn);
-            case GAME_PLAYER_PROTECTION_FROM_PLAYERS -> mapEntries(playerProtectionFromPlayerIdsUntilEndOfTurn);
-            case GAME_PLAYER_KEYWORDS -> mapEntries(playerKeywordsUntilEndOfTurn);
-            case GAME_PLAYER_CREATURES_CANT_BE_TARGETED_BY_COLORS -> mapEntries(playerCreaturesCantBeTargetedByColorsThisTurn);
-            case GAME_PLAYER_SPELLS_CANT_BE_COUNTERED_BY_COLORS -> mapEntries(playerSpellsCantBeCounteredByColorsThisTurn);
-            case GAME_PLAYERS_SPELLS_CANT_BE_COUNTERED -> playersSpellsCantBeCounteredThisTurn;
-            case GAME_PLAYERS_CREATURE_SPELLS_CANT_BE_COUNTERED -> playersCreatureSpellsCantBeCounteredThisTurn;
-            case GAME_PLAYERS_SILENCED -> playersSilencedThisTurn;
-            case GAME_PLAYERS_CANT_PLAY_LANDS -> playersCantPlayLandsThisTurn;
-            case GAME_PLAYERS_CANT_PLAY_FROM_GRAVEYARDS -> playersCantPlayFromGraveyardsThisTurn;
-            case GAME_PLAYERS_CANT_CAST_SPELL_TYPES -> mapEntries(playersCantCastSpellTypesThisTurn);
-            case GAME_PLAYERS_CANT_CAST_NONCREATURE_SPELLS -> playersCantCastNoncreatureSpellsThisTurn;
-            case GAME_PLAYERS_CANT_ACTIVATE_ABILITIES -> playersCantActivateAbilitiesThisTurn;
-            case GAME_PLAYERS_CANT_ACTIVATE_NON_MANA_ABILITIES -> playersCantActivateNonManaAbilitiesThisTurn;
-            case GAME_PLAYERS_CANT_ACTIVATE_LOYALTY_ABILITIES -> playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn;
             case GAME_PLAYER_CREATURES_CANT_ATTACK -> listMapEntries(playerCreaturesCantAttackThisTurn);
-            case GAME_PLAYERS_GATHERING_SPECIMENS -> new ArrayList<>(playersGatheringSpecimensThisTurn);
-            case GAME_PLAYERS_GATHERING_TOKENS -> new ArrayList<>(playersGatheringTokensThisTurn);
-            case GAME_PLAYERS_EXILING_UNCAST_ENTERING_CREATURES -> playersExilingUncastEnteringCreaturesThisTurn;
-            case GAME_PLAYERS_EXILING_UNCAST_ENTERING_NONTOKEN_CREATURES ->
-                    playersExilingUncastEnteringNontokenCreaturesThisTurn;
-            case GAME_PLAYERS_SHUFFLING_CREATURES_ENTERING_FROM_EXILE -> playersShufflingCreaturesEnteringFromExileThisTurn;
-            case GAME_PLAYERS_EXILING_CREATURES_INSTEAD_OF_DYING -> playersExilingCreaturesInsteadOfDyingThisTurn;
-            case GAME_PLAYERS_EXILING_OPPONENT_CREATURES_INSTEAD_OF_DYING ->
-                    playersExilingOpponentCreaturesInsteadOfDyingThisTurn;
-            case GAME_PLAYERS_EXILING_CONTROLLED_PERMANENTS_INSTEAD_OF_DYING ->
-                    playersExilingControlledPermanentsInsteadOfDyingThisTurn;
-            case GAME_PLAYERS_EXILING_CARDS_INSTEAD_OF_GRAVEYARD -> playersExilingCardsInsteadOfGraveyardThisTurn;
             case GAME_PLAYERS_PUTTING_CARDS_ON_BOTTOM_OF_LIBRARY ->
                     playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn;
-            case GAME_PLAYERS_WITH_FLASH -> playersWithFlashUntilEndOfTurn;
-            case GAME_PLAYERS_WITH_FREE_HAND_CAST -> playersWithFreeHandCastUntilEndOfTurn;
             case GAME_PLAYERS_WHO_MAY_LOOK_AT_FACE_DOWN_CREATURES -> playersWhoMayLookAtFaceDownCreaturesThisTurn;
-            case GAME_PLAYERS_MAY_PLAY_FACE_UP_CARDS_FROM_EXILE -> playersMayPlayFaceUpCardsFromExileThisTurn;
-            case GAME_CARD_TYPE_FLASH_GRANTS -> mapEntries(cardTypeFlashGrantsThisTurn);
             case GAME_PLAYERS_ALLOWED_TWICE_LOYALTY_ACTIVATIONS -> playersAllowedTwiceLoyaltyActivationsThisTurn;
             case GAME_GRAVEYARD_CARD_ANIMATIONS -> Set.copyOf(temporaryGraveyardCardAnimationsUntilEndOfTurn.entrySet().stream()
                     .map(entry -> Map.entry(entry.getKey(), entry.getValue()))
                     .toList());
             case GAME_PLAYER_COLOR_DAMAGE_PREVENTION_COUNTS -> nestedCounts(playerColorDamagePreventionCount);
-            case GAME_COMBAT_DAMAGE_TO_CREATURES_DOUBLINGS -> combatDamageToCreaturesDoublingsThisTurn;
-            case GAME_CONTROLLER_DAMAGE_DOUBLINGS -> new HashMap<>(controllerDamageDoublingsThisTurn);
-            case GAME_PERMANENT_DAMAGE_DOUBLINGS -> new HashMap<>(permanentDamageDoublingsThisTurn);
-            case GAME_COLOR_SOURCE_DAMAGE_BONUSES -> listMapEntries(colorSourceDamageBonusThisTurn);
-            case GAME_CONTROLLER_DAMAGE_BONUSES -> listMapEntries(controllerDamageBonusThisTurn);
             case GAME_DAMAGE_REPLACEMENTS -> {
                 synchronized (damageReplacementsThisTurn) {
                     yield new ArrayList<>(damageReplacementsThisTurn);
@@ -5064,19 +4708,9 @@ public class GameData {
             case GAME_PERMANENT_ENTER_TAPPED_FILTERS -> mapEntries(permanentEnterTappedFiltersThisTurn);
             case GAME_ADDITIONAL_ENTER_COUNTERS -> new HashMap<>(additionalEnterCountersThisTurn);
             case GAME_MATCHING_CREATURE_BLOCK_RESTRICTIONS -> listMapEntries(matchingCreatureBlockRestrictionsThisTurn);
-            case GAME_COUNTER_HOLDER_MUST_BLOCK_REQUIREMENTS -> mapEntries(counterHolderMustBlockRequirementsThisTurn);
             case GAME_PLAYER_EXTRA_LOYALTY_ACTIVATIONS -> new HashMap<>(playerExtraLoyaltyActivationsThisTurn);
             case GAME_EXTRA_MANA_ON_LAND_SUBTYPE_TAP -> listMapEntries(extraManaOnLandSubtypeTapThisTurn);
-            case GAME_LAND_SUBTYPE_FIXED_MANA_COLOR -> Set.copyOf(plainMapEntries(landSubtypeFixedManaColorThisTurn));
-            case GAME_NONBASIC_LANDS_FIXED_MANA_COLOR -> nonbasicLandsFixedManaColorThisTurn;
-            case GAME_ALL_LANDS_FIXED_MANA_COLOR -> allLandsFixedManaColorThisTurn;
-            case GAME_PLAYERS_WITH_COLORED_MANA_REPLACEMENT -> playersWithColoredManaReplacementThisTurn;
-            case GAME_PLAYERS_WITH_WHITE_MANA_AS_ANY_COLOR -> playersWithWhiteManaAsAnyColorThisTurn;
-            case GAME_PLAYERS_WITH_LAND_MANA_CHOICE_REPLACEMENT -> playersWithLandManaChoiceReplacementThisTurn;
-            case GAME_LAND_MANA_FIXED_COLOR -> Set.copyOf(plainMapEntries(landManaFixedColorThisTurn));
-            case GAME_PLAYER_STATIC_EFFECTS -> listMapEntries(playerStaticEffectsUntilEndOfTurn);
             case GAME_DAMAGE_LIFE_FLOORS -> List.copyOf(damageLifeFloorContributionsUntilEndOfTurn);
-            case GAME_SPELL_LIMITS -> List.copyOf(playersMaxSpellsContributionsThisTurn);
             case GAME_CHANNEL_HARM_SHIELDS -> synchronizedCopy(channelHarmShields);
             case GAME_COMEUPPANCE_SHIELDS -> synchronizedCopy(comeuppanceDamagePreventionShields);
             case GAME_JUDGMENT_OF_ALEXANDER_SHIELDS -> synchronizedCopy(judgmentOfAlexanderDamagePreventionShields);
@@ -5126,13 +4760,6 @@ public class GameData {
             case GAME_CARDS_GRANTED_UNEARTH -> Set.copyOf(plainMapEntries(cardsGrantedUnearthUntilEndOfTurn));
             case GAME_CARDS_GRANTED_UNEARTH_GRAVEYARD_VERSIONS ->
                     Set.copyOf(plainMapEntries(cardsGrantedUnearthGraveyardVersions));
-            case GAME_LIBRARY_TOP_CARD_FREE_PLAY_PERMISSIONS ->
-                    Set.copyOf(plainMapEntries(libraryTopCardFreePlayPermissionsUntilEndOfTurn));
-            case GAME_LIBRARY_TOP_CARD_PERMISSIONS -> libraryTopCardPermissionsUntilEndOfTurn;
-            case GAME_PLAYERS_ALLOWED_TO_PLAY_FROM_LIBRARY_TOP -> playersAllowedToPlayFromLibraryTopUntilEndOfTurn;
-            case GAME_LIBRARY_TOP_CARD_LIFE_PLAY_PERMISSIONS -> libraryTopCardLifePlayPermissionsUntilEndOfTurn;
-            case GAME_MAY_TAP_LANDS_FOR_SPELLS -> mayTapLandsForSpellsUntilEndOfTurn;
-            case GAME_MAY_PAY_LIFE_FOR_COLORLESS_MANA -> mayPayLifeForColorlessManaUntilEndOfTurn;
             case GAME_GUARDIAN_ANGEL_TARGETS -> mapEntries(guardianAngelTargetsUntilEndOfTurn);
             case GAME_MAY_CAST_TOP_INSTANT_OR_SORCERY_FROM_GRAVEYARD -> mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn;
             case GAME_GRAVEYARD_CARD_CAST_PERMISSIONS ->
@@ -5194,7 +4821,6 @@ public class GameData {
                     .toList();
             case GAME_DRAW_REPLACEMENT_TARGET_TO_CONTROLLER ->
                     Set.copyOf(plainMapEntries(drawReplacementTargetToController));
-            case GAME_SACRIFICE_FORBIDDEN -> Set.copyOf(plainMapEntries(sacrificeForbiddenThisTurn));
             case GAME_CONTROL_LOSS_UNATTACH_TRIGGERS -> synchronizedListMapEntries(controlLossUnattachTriggers);
             case GAME_SKIPPED_STEPS_OR_PHASES -> mapEntries(skippedStepOrPhasesThisTurn);
             case GAME_PLAYERS_WHOSE_SPEED_INCREASED -> playersWhoseSpeedIncreasedThisTurn;
@@ -5215,125 +4841,20 @@ public class GameData {
     private void addGameEndOfTurnStateValue(EndOfTurnStateField field, Object value) {
         switch (field) {
             case GAME_DAMAGE_PREVENTION_SHIELD -> globalDamagePreventionShield += (Integer) value;
-            case GAME_PREVENT_ALL_COMBAT_DAMAGE -> preventAllCombatDamage = true;
-            case GAME_PREVENT_ALL_COMBAT_DAMAGE_BY_ATTACKING_CREATURES -> preventAllCombatDamageByAttackingCreatures = true;
-            case GAME_PREVENT_ALL_COMBAT_DAMAGE_TO_PLAYERS -> preventAllCombatDamageToPlayers = true;
-            case GAME_PREVENT_ALL_DAMAGE_TO_ALL_CREATURES -> preventAllDamageToAllCreatures = true;
-            case GAME_PREVENT_ALL_DAMAGE_BY_CREATURES -> preventAllDamageByCreatures = true;
-            case GAME_DAMAGE_BY_CREATURES_PREVENTION_LIFE_GAIN_PLAYERS ->
-                    damageByCreaturesPreventionLifeGainPlayers.addAll((List<UUID>) value);
-            case GAME_PREVENT_ALL_DAMAGE_FROM_NON_HUMAN_SOURCES -> preventAllDamageFromNonHumanSources = true;
-            case GAME_COMBAT_DAMAGE_EXEMPT_PREDICATES_BY_CONTROLLER ->
-                    addMapEntries(combatDamageExemptPredicatesByController, (Set<Map.Entry<UUID, PermanentPredicate>>) value);
-            case GAME_PREVENT_DAMAGE_FROM_COLORS -> preventDamageFromColors.addAll((Set<CardColor>) value);
             case GAME_COLOR_DAMAGE_PREVENTION ->
                     addMapEntries(colorDamagePreventionUntilEndOfTurn, (Set<Map.Entry<UUID, CardColor>>) value);
-            case GAME_COLOR_DAMAGE_PREVENTION_FOR_CONTROLLED_CREATURES ->
-                    addMapEntries(colorDamagePreventionForControlledCreaturesUntilEndOfTurn,
-                            (Set<Map.Entry<UUID, CardColor>>) value);
             case GAME_COLORLESS_DAMAGE_PREVENTION -> colorlessDamagePreventionUntilEndOfTurn.addAll((Set<UUID>) value);
-            case GAME_PERMANENTS_PREVENTED_FROM_DEALING_DAMAGE -> permanentsPreventedFromDealingDamage.addAll((Set<UUID>) value);
             case GAME_CREATURES_PROTECTED_FROM_TARGETING_DAMAGE -> creaturesProtectedFromTargetingDamage.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_WITH_ALL_DAMAGE_PREVENTED -> playersWithAllDamagePrevented.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_WITH_ALL_PERMANENT_DAMAGE_PREVENTED ->
-                    playersWithAllPermanentDamagePrevented.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_WITH_ALL_CREATURE_DAMAGE_PREVENTED ->
-                    playersWithAllCreatureDamagePrevented.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_WITH_ALL_PLAYER_DAMAGE_PREVENTED -> playersWithAllPlayerDamagePrevented.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_WITH_ALL_COMBAT_DAMAGE_TO_PLAYER_AND_PLANESWALKERS_PREVENTED ->
-                    playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_WITH_DAMAGE_FROM_ATTACKERS_PREVENTED ->
-                    playersWithDamageFromAttackersPrevented.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_WITH_DAMAGE_FROM_OPPONENT_CREATURES_PREVENTED ->
-                    playersWithDamageFromOpponentCreaturesPrevented.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_WITH_COMBAT_DAMAGE_FROM_TARGET_OPPONENT_CREATURES_PREVENTED ->
-                    playersWithCombatDamageFromTargetOpponentCreaturesPrevented.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_WITH_DAMAGE_FROM_MATCHING_SOURCES_PREVENTED ->
-                    addMapEntries(playersWithDamageFromMatchingSourcesPrevented,
-                            (Set<Map.Entry<UUID, PermanentPredicate>>) value);
-            case GAME_PLAYERS_WITH_DAMAGE_TO_CONTROLLED_CREATURES_FROM_MATCHING_SOURCES_PREVENTED ->
-                    addMapEntries(playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented,
-                            (Set<Map.Entry<UUID, PermanentPredicate>>) value);
-            case GAME_CREATURES_WITH_ALL_DAMAGE_PREVENTED -> creaturesWithAllDamagePrevented.addAll((Set<UUID>) value);
             case GAME_PLAYERS_REDIRECTING_ALL_CREATURE_DAMAGE -> playersRedirectingAllCreatureDamage.addAll((Set<UUID>) value);
-            case GAME_ALL_DAMAGE_PREVENTION_PREDICATES ->
-                    allDamagePreventionPredicates.addAll((Set<PermanentPredicate>) value);
-            case GAME_ALL_DAMAGE_PREVENTION_PREDICATES_BY_CONTROLLER ->
-                    addMapEntries(allDamagePreventionPredicatesByController,
-                            (Set<Map.Entry<UUID, PermanentPredicate>>) value);
-            case GAME_COMBAT_DAMAGE_PREVENTION_PREDICATES_BY_CONTROLLER ->
-                    addMapEntries(combatDamagePreventionPredicatesByController,
-                            (Set<Map.Entry<UUID, PermanentPredicate>>) value);
-            case GAME_CREATURES_WITH_COMBAT_DAMAGE_PREVENTED -> creaturesWithCombatDamagePrevented.addAll((Set<UUID>) value);
-            case GAME_CREATURES_PREVENTED_FROM_DEALING_COMBAT_DAMAGE ->
-                    creaturesPreventedFromDealingCombatDamage.addAll((Set<UUID>) value);
             case GAME_CREATURES_ASSIGNING_NO_COMBAT_DAMAGE -> creaturesAssigningNoCombatDamageThisTurn.addAll((Set<UUID>) value);
             case GAME_DAMAGE_CANT_BE_PREVENTED -> damageCantBePreventedThisTurn = true;
-            case GAME_PLAYERS_CANT_GAIN_LIFE -> playersCantGainLifeThisTurn = true;
-            case GAME_PLAYERS_CANT_LOSE_LIFE -> playersCantLoseLifeThisTurn = true;
             case GAME_PLAYERS_CANT_SEARCH_LIBRARIES -> playersCantSearchLibrariesThisTurn = true;
-            case GAME_CREATURES_CANT_ATTACK -> creaturesCantAttackThisTurn = true;
-            case GAME_PLAYERS_WHO_CANT_GAIN_LIFE -> playersWhoCantGainLifeThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_WHO_GAIN_NO_LIFE -> playersWhoGainNoLifeThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_WHO_CANT_LOSE_LIFE -> playersWhoCantLoseLifeThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_WITH_HEXPROOF -> playersWithHexproofThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_WITH_SHROUD -> playersWithShroudThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYER_HEXPROOF_FROM_COLORS ->
-                    addMapEntries(playerHexproofFromColorsThisTurn, (Set<Map.Entry<UUID, CardColor>>) value);
-            case GAME_PERMANENT_HEXPROOF_FROM_COLORS ->
-                    addMapEntries(permanentHexproofFromColorsThisTurn, (Set<Map.Entry<UUID, CardColor>>) value);
-            case GAME_PLAYER_PROTECTION_FROM_COLORS ->
-                    addMapEntries(playerProtectionFromColorsUntilEndOfTurn, (Set<Map.Entry<UUID, CardColor>>) value);
-            case GAME_PLAYER_PROTECTION_FROM_PLAYERS ->
-                    addMapEntries(playerProtectionFromPlayerIdsUntilEndOfTurn, (Set<Map.Entry<UUID, UUID>>) value);
-            case GAME_PLAYER_KEYWORDS -> addMapEntries(playerKeywordsUntilEndOfTurn, (Set<Map.Entry<UUID, Keyword>>) value);
-            case GAME_PLAYER_CREATURES_CANT_BE_TARGETED_BY_COLORS ->
-                    addMapEntries(playerCreaturesCantBeTargetedByColorsThisTurn, (Set<Map.Entry<UUID, CardColor>>) value);
-            case GAME_PLAYER_SPELLS_CANT_BE_COUNTERED_BY_COLORS ->
-                    addMapEntries(playerSpellsCantBeCounteredByColorsThisTurn, (Set<Map.Entry<UUID, CardColor>>) value);
-            case GAME_PLAYERS_SPELLS_CANT_BE_COUNTERED -> playersSpellsCantBeCounteredThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_CREATURE_SPELLS_CANT_BE_COUNTERED ->
-                    playersCreatureSpellsCantBeCounteredThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_SILENCED -> playersSilencedThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_CANT_PLAY_LANDS -> playersCantPlayLandsThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_CANT_PLAY_FROM_GRAVEYARDS -> playersCantPlayFromGraveyardsThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_CANT_CAST_SPELL_TYPES ->
-                    addMapEntries(playersCantCastSpellTypesThisTurn, (Set<Map.Entry<UUID, CardType>>) value);
-            case GAME_PLAYERS_CANT_CAST_NONCREATURE_SPELLS ->
-                    playersCantCastNoncreatureSpellsThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_CANT_ACTIVATE_ABILITIES -> playersCantActivateAbilitiesThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_CANT_ACTIVATE_NON_MANA_ABILITIES ->
-                    playersCantActivateNonManaAbilitiesThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_CANT_ACTIVATE_LOYALTY_ABILITIES ->
-                    playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn.addAll((Set<UUID>) value);
             case GAME_PLAYER_CREATURES_CANT_ATTACK ->
                     addListMapEntries(playerCreaturesCantAttackThisTurn, (List<Map.Entry<UUID, PermanentPredicate>>) value);
-            case GAME_PLAYERS_GATHERING_SPECIMENS -> playersGatheringSpecimensThisTurn.addAll((List<UUID>) value);
-            case GAME_PLAYERS_GATHERING_TOKENS -> playersGatheringTokensThisTurn.addAll((List<UUID>) value);
-            case GAME_PLAYERS_EXILING_UNCAST_ENTERING_CREATURES ->
-                    playersExilingUncastEnteringCreaturesThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_EXILING_UNCAST_ENTERING_NONTOKEN_CREATURES ->
-                    playersExilingUncastEnteringNontokenCreaturesThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_SHUFFLING_CREATURES_ENTERING_FROM_EXILE ->
-                    playersShufflingCreaturesEnteringFromExileThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_EXILING_CREATURES_INSTEAD_OF_DYING ->
-                    playersExilingCreaturesInsteadOfDyingThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_EXILING_OPPONENT_CREATURES_INSTEAD_OF_DYING ->
-                    playersExilingOpponentCreaturesInsteadOfDyingThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_EXILING_CONTROLLED_PERMANENTS_INSTEAD_OF_DYING ->
-                    playersExilingControlledPermanentsInsteadOfDyingThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_EXILING_CARDS_INSTEAD_OF_GRAVEYARD ->
-                    playersExilingCardsInsteadOfGraveyardThisTurn.addAll((Set<UUID>) value);
             case GAME_PLAYERS_PUTTING_CARDS_ON_BOTTOM_OF_LIBRARY ->
                     playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_WITH_FLASH -> playersWithFlashUntilEndOfTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_WITH_FREE_HAND_CAST -> playersWithFreeHandCastUntilEndOfTurn.addAll((Set<UUID>) value);
             case GAME_PLAYERS_WHO_MAY_LOOK_AT_FACE_DOWN_CREATURES ->
                     playersWhoMayLookAtFaceDownCreaturesThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_MAY_PLAY_FACE_UP_CARDS_FROM_EXILE ->
-                    playersMayPlayFaceUpCardsFromExileThisTurn.addAll((Set<UUID>) value);
-            case GAME_CARD_TYPE_FLASH_GRANTS ->
-                    addMapEntries(cardTypeFlashGrantsThisTurn, (Set<Map.Entry<UUID, CardPredicate>>) value);
             case GAME_PLAYERS_ALLOWED_TWICE_LOYALTY_ACTIVATIONS ->
                     playersAllowedTwiceLoyaltyActivationsThisTurn.addAll((Set<UUID>) value);
             case GAME_GRAVEYARD_CARD_ANIMATIONS -> ((Set<Map.Entry<UUID, GraveyardCardAnimation>>) value)
@@ -5342,13 +4863,6 @@ public class GameData {
                     .forEach((key, count) -> playerColorDamagePreventionCount
                             .computeIfAbsent(key.getKey(), id -> new ConcurrentHashMap<>())
                             .merge(key.getValue(), count, Integer::sum));
-            case GAME_COMBAT_DAMAGE_TO_CREATURES_DOUBLINGS -> combatDamageToCreaturesDoublingsThisTurn += (Integer) value;
-            case GAME_CONTROLLER_DAMAGE_DOUBLINGS -> addCounts(controllerDamageDoublingsThisTurn, (Map<UUID, Integer>) value);
-            case GAME_PERMANENT_DAMAGE_DOUBLINGS -> addCounts(permanentDamageDoublingsThisTurn, (Map<UUID, Integer>) value);
-            case GAME_COLOR_SOURCE_DAMAGE_BONUSES -> ((List<Map.Entry<UUID, DamageBonusGrant>>) value)
-                    .forEach(entry -> addDamageBonusGrant(colorSourceDamageBonusThisTurn, entry.getKey(), entry.getValue()));
-            case GAME_CONTROLLER_DAMAGE_BONUSES -> ((List<Map.Entry<UUID, DamageBonusGrant>>) value)
-                    .forEach(entry -> addDamageBonusGrant(controllerDamageBonusThisTurn, entry.getKey(), entry.getValue()));
             case GAME_DAMAGE_REPLACEMENTS ->
                     damageReplacementsThisTurn.addAll((List<ReplaceDamageAboveThresholdThisTurnEffect>) value);
             case GAME_ALL_PERMANENTS_ENTER_TAPPED -> allPermanentsEnterTappedThisTurn = true;
@@ -5357,31 +4871,12 @@ public class GameData {
             case GAME_ADDITIONAL_ENTER_COUNTERS -> addCounts(additionalEnterCountersThisTurn, (Map<UUID, Integer>) value);
             case GAME_MATCHING_CREATURE_BLOCK_RESTRICTIONS -> addListMapEntries(matchingCreatureBlockRestrictionsThisTurn,
                     (List<Map.Entry<UUID, GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect>>) value);
-            case GAME_COUNTER_HOLDER_MUST_BLOCK_REQUIREMENTS ->
-                    addMapEntries(counterHolderMustBlockRequirementsThisTurn, (Set<Map.Entry<UUID, CounterType>>) value);
             case GAME_PLAYER_EXTRA_LOYALTY_ACTIVATIONS ->
                     addCounts(playerExtraLoyaltyActivationsThisTurn, (Map<UUID, Integer>) value);
             case GAME_EXTRA_MANA_ON_LAND_SUBTYPE_TAP -> addListMapEntries(extraManaOnLandSubtypeTapThisTurn,
                     (List<Map.Entry<CardSubtype, TemporaryLandTapMana>>) value);
-            case GAME_LAND_SUBTYPE_FIXED_MANA_COLOR -> ((Set<Map.Entry<CardSubtype, ManaColor>>) value)
-                    .forEach(entry -> landSubtypeFixedManaColorThisTurn.put(entry.getKey(), entry.getValue()));
-            case GAME_NONBASIC_LANDS_FIXED_MANA_COLOR -> nonbasicLandsFixedManaColorThisTurn = (ManaColor) value;
-            case GAME_ALL_LANDS_FIXED_MANA_COLOR -> allLandsFixedManaColorThisTurn = (ManaColor) value;
-            case GAME_PLAYERS_WITH_COLORED_MANA_REPLACEMENT ->
-                    playersWithColoredManaReplacementThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_WITH_WHITE_MANA_AS_ANY_COLOR ->
-                    playersWithWhiteManaAsAnyColorThisTurn.addAll((Set<UUID>) value);
-            case GAME_PLAYERS_WITH_LAND_MANA_CHOICE_REPLACEMENT ->
-                    playersWithLandManaChoiceReplacementThisTurn.addAll((Set<UUID>) value);
-            case GAME_LAND_MANA_FIXED_COLOR -> ((Set<Map.Entry<UUID, ManaColor>>) value)
-                    .forEach(entry -> landManaFixedColorThisTurn.put(entry.getKey(), entry.getValue()));
-            case GAME_PLAYER_STATIC_EFFECTS -> ((List<Map.Entry<UUID, CardEffect>>) value).forEach(entry ->
-                    playerStaticEffectsUntilEndOfTurn.computeIfAbsent(entry.getKey(), key -> new ArrayList<>())
-                            .add(entry.getValue()));
             case GAME_DAMAGE_LIFE_FLOORS -> ((List<Map.Entry<UUID, Integer>>) value)
                     .forEach(entry -> addDamageLifeFloorUntilEndOfTurn(entry.getKey(), entry.getValue()));
-            case GAME_SPELL_LIMITS -> ((List<Map.Entry<UUID, Integer>>) value)
-                    .forEach(entry -> limitSpellsThisTurn(entry.getKey(), entry.getValue()));
             case GAME_CHANNEL_HARM_SHIELDS -> channelHarmShields.addAll((List<ChannelHarmShield>) value);
             case GAME_COMEUPPANCE_SHIELDS ->
                     comeuppanceDamagePreventionShields.addAll((List<ComeuppanceDamagePreventionShield>) value);
@@ -5406,7 +4901,8 @@ public class GameData {
                     turnDamageRedirectToCreatureShields.addAll((List<TurnDamageRedirectToCreatureShield>) value);
             case GAME_TARGET_SORCERY_DAMAGE_REDIRECT_SHIELDS ->
                     targetSorceryDamageRedirectShields.addAll((List<TargetSorceryDamageRedirectShield>) value);
-            case GAME_COMBAT_DAMAGE_PREVENTION_TOKEN_SHIELDS -> ((Set<Map.Entry<UUID, CombatDamagePreventionTokenShield>>) value)
+            case GAME_COMBAT_DAMAGE_PREVENTION_TOKEN_SHIELDS -> ((Set<Map.Entry<UUID,
+                    CombatDamagePreventionTokenShield>>) value)
                     .forEach(entry -> combatDamagePreventionTokenShields.putIfAbsent(entry.getKey(), entry.getValue()));
             case GAME_NEXT_SPELL_FLASH_GRANTS ->
                     addSynchronizedListMapEntries(nextSpellFlashGrantsThisTurn, (List<Map.Entry<UUID, CardType>>) value);
@@ -5436,16 +4932,6 @@ public class GameData {
                     .forEach(entry -> cardsGrantedUnearthUntilEndOfTurn.putIfAbsent(entry.getKey(), entry.getValue()));
             case GAME_CARDS_GRANTED_UNEARTH_GRAVEYARD_VERSIONS -> ((Set<Map.Entry<UUID, Long>>) value)
                     .forEach(entry -> cardsGrantedUnearthGraveyardVersions.putIfAbsent(entry.getKey(), entry.getValue()));
-            case GAME_LIBRARY_TOP_CARD_FREE_PLAY_PERMISSIONS -> ((Set<Map.Entry<UUID, UUID>>) value).forEach(entry ->
-                    libraryTopCardFreePlayPermissionsUntilEndOfTurn.putIfAbsent(entry.getKey(), entry.getValue()));
-            case GAME_LIBRARY_TOP_CARD_PERMISSIONS ->
-                    libraryTopCardPermissionsUntilEndOfTurn.addAll((Set<LibraryTopCardPermission>) value);
-            case GAME_PLAYERS_ALLOWED_TO_PLAY_FROM_LIBRARY_TOP ->
-                    playersAllowedToPlayFromLibraryTopUntilEndOfTurn.addAll((Set<UUID>) value);
-            case GAME_LIBRARY_TOP_CARD_LIFE_PLAY_PERMISSIONS ->
-                    libraryTopCardLifePlayPermissionsUntilEndOfTurn.addAll((Set<UUID>) value);
-            case GAME_MAY_TAP_LANDS_FOR_SPELLS -> mayTapLandsForSpellsUntilEndOfTurn.addAll((Set<UUID>) value);
-            case GAME_MAY_PAY_LIFE_FOR_COLORLESS_MANA -> mayPayLifeForColorlessManaUntilEndOfTurn.addAll((Set<UUID>) value);
             case GAME_GUARDIAN_ANGEL_TARGETS ->
                     addMapEntries(guardianAngelTargetsUntilEndOfTurn, (Set<Map.Entry<UUID, UUID>>) value);
             case GAME_MAY_CAST_TOP_INSTANT_OR_SORCERY_FROM_GRAVEYARD ->
@@ -5530,8 +5016,6 @@ public class GameData {
             case GAME_THIS_TURN_DELAYED_ACTIONS -> delayedActions.addAll((List<DelayedAction>) value);
             case GAME_DRAW_REPLACEMENT_TARGET_TO_CONTROLLER -> ((Set<Map.Entry<UUID, UUID>>) value).forEach(entry ->
                     drawReplacementTargetToController.putIfAbsent(entry.getKey(), entry.getValue()));
-            case GAME_SACRIFICE_FORBIDDEN -> ((Set<Map.Entry<UUID, UUID>>) value).forEach(entry ->
-                    sacrificeForbiddenThisTurn.putIfAbsent(entry.getKey(), entry.getValue()));
             // Not cleared before the retained state is re-applied: the cleanup step drops only the ending triggers,
             // after control is recomputed (see retainControlLossUnattachTriggers).
             case GAME_CONTROL_LOSS_UNATTACH_TRIGGERS -> {
@@ -5698,6 +5182,209 @@ public class GameData {
     public List<FloatingContinuousEffect> expireControlEffectsForDepartedPermanent(UUID permanentId) {
         return expireFloatingEffects(fe -> fe.isControlEffect()
                 && permanentId.equals(fe.affectedPermanentId()));
+    }
+
+    /**
+     * The floating effects of any of {@code types} that apply to {@code playerId} (they name that player, or no object
+     * at all), oldest first: the rules-modifying effects resolutions made on players (CR 611.2a). A {@code null}
+     * player matches only the effects on every player.
+     */
+    @SafeVarargs
+    public final List<FloatingContinuousEffect> floatingEffectsOnPlayer(UUID playerId,
+                                                                         Class<? extends CardEffect>... types) {
+        List<FloatingContinuousEffect> result = new ArrayList<>();
+        synchronized (floatingEffects) {
+            for (FloatingContinuousEffect fe : floatingEffects) {
+                if (fe.appliesToPlayer(playerId) && isAnyOf(fe.effect(), types)) {
+                    result.add(fe);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * The effects of the floating effects of any of {@code types} that apply to {@code playerId} (see
+     * {@link #floatingEffectsOnPlayer}), oldest first.
+     */
+    @SafeVarargs
+    public final List<CardEffect> floatingPlayerEffects(UUID playerId, Class<? extends CardEffect>... types) {
+        return floatingEffectsOnPlayer(playerId, types).stream().map(FloatingContinuousEffect::effect).toList();
+    }
+
+    /**
+     * The floating effects of any of {@code types} that apply to some player (each names one), oldest first. Read the
+     * player from {@link FloatingContinuousEffect#affectedPlayerId()}.
+     */
+    @SafeVarargs
+    public final List<FloatingContinuousEffect> floatingEffectsOnNamedPlayers(Class<? extends CardEffect>... types) {
+        return floatingEffectsOfTypes(types).stream().filter(fe -> fe.affectedPlayerId() != null).toList();
+    }
+
+    /** Whether a floating effect of any of {@code types} applies to {@code playerId}. */
+    @SafeVarargs
+    public final boolean hasFloatingEffectOnPlayer(UUID playerId, Class<? extends CardEffect>... types) {
+        synchronized (floatingEffects) {
+            for (FloatingContinuousEffect fe : floatingEffects) {
+                if (fe.appliesToPlayer(playerId) && isAnyOf(fe.effect(), types)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * The floating effects of any of {@code types} that name the permanent {@code permanentId} as the one they affect,
+     * oldest first. An effect whose affected set is a {@code scope} predicate is not among them: judge those against
+     * the permanent where they are read.
+     */
+    @SafeVarargs
+    public final List<FloatingContinuousEffect> floatingEffectsOnPermanent(UUID permanentId,
+                                                                            Class<? extends CardEffect>... types) {
+        List<FloatingContinuousEffect> result = new ArrayList<>();
+        synchronized (floatingEffects) {
+            for (FloatingContinuousEffect fe : floatingEffects) {
+                if (permanentId.equals(fe.affectedPermanentId()) && isAnyOf(fe.effect(), types)) {
+                    result.add(fe);
+                }
+            }
+        }
+        return result;
+    }
+
+    /** Whether a floating effect of any of {@code types} names the permanent {@code permanentId}. */
+    @SafeVarargs
+    public final boolean hasFloatingEffectOnPermanent(UUID permanentId, Class<? extends CardEffect>... types) {
+        return !floatingEffectsOnPermanent(permanentId, types).isEmpty();
+    }
+
+    /**
+     * The floating effects of any of {@code types}, whatever they apply to, oldest first: for a rule that looks at
+     * every player's effect of a kind (each Gather Specimens is its own replacement effect, CR 614.5).
+     */
+    @SafeVarargs
+    public final List<FloatingContinuousEffect> floatingEffectsOfTypes(Class<? extends CardEffect>... types) {
+        List<FloatingContinuousEffect> result = new ArrayList<>();
+        synchronized (floatingEffects) {
+            for (FloatingContinuousEffect fe : floatingEffects) {
+                if (isAnyOf(fe.effect(), types)) {
+                    result.add(fe);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * The floating damage-prevention effects (CR 615) whose {@link PreventDamageEffect#scope()} is any of
+     * {@code scopes}, oldest first, whoever and whatever they apply to.
+     */
+    public final List<FloatingContinuousEffect> preventionEffects(PreventionScope... scopes) {
+        List<FloatingContinuousEffect> result = new ArrayList<>();
+        synchronized (floatingEffects) {
+            for (FloatingContinuousEffect fe : floatingEffects) {
+                if (hasPreventionScope(fe, scopes)) {
+                    result.add(fe);
+                }
+            }
+        }
+        return result;
+    }
+
+    /** Whether a floating damage-prevention effect of any of {@code scopes} is in force, on whomever. */
+    public final boolean hasPrevention(PreventionScope... scopes) {
+        synchronized (floatingEffects) {
+            for (FloatingContinuousEffect fe : floatingEffects) {
+                if (hasPreventionScope(fe, scopes)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * The floating damage-prevention effects of any of {@code scopes} that apply to {@code playerId} (they name that
+     * player, or every player), oldest first.
+     */
+    public final List<FloatingContinuousEffect> preventionEffectsOnPlayer(UUID playerId, PreventionScope... scopes) {
+        List<FloatingContinuousEffect> result = new ArrayList<>();
+        synchronized (floatingEffects) {
+            for (FloatingContinuousEffect fe : floatingEffects) {
+                if (fe.appliesToPlayer(playerId) && hasPreventionScope(fe, scopes)) {
+                    result.add(fe);
+                }
+            }
+        }
+        return result;
+    }
+
+    /** Whether a floating damage-prevention effect of any of {@code scopes} applies to {@code playerId}. */
+    public final boolean hasPreventionOnPlayer(UUID playerId, PreventionScope... scopes) {
+        synchronized (floatingEffects) {
+            for (FloatingContinuousEffect fe : floatingEffects) {
+                if (fe.appliesToPlayer(playerId) && hasPreventionScope(fe, scopes)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Whether a floating damage-prevention effect of any of {@code scopes} whose combat-only flag is
+     * {@code combatOnly} names the permanent {@code permanentId}.
+     */
+    public final boolean hasPreventionOnPermanent(UUID permanentId, boolean combatOnly, PreventionScope... scopes) {
+        if (permanentId == null) {
+            return false;
+        }
+        synchronized (floatingEffects) {
+            for (FloatingContinuousEffect fe : floatingEffects) {
+                if (permanentId.equals(fe.affectedPermanentId()) && hasPreventionScope(fe, scopes)
+                        && ((PreventDamageEffect) fe.effect()).combatOnly() == combatOnly) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Whether a floating damage-prevention effect of any of {@code scopes} names the permanent {@code permanentId}. */
+    public final boolean hasPreventionOnPermanent(UUID permanentId, PreventionScope... scopes) {
+        if (permanentId == null) {
+            return false;
+        }
+        synchronized (floatingEffects) {
+            for (FloatingContinuousEffect fe : floatingEffects) {
+                if (permanentId.equals(fe.affectedPermanentId()) && hasPreventionScope(fe, scopes)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasPreventionScope(FloatingContinuousEffect fe, PreventionScope[] scopes) {
+        if (!(fe.effect() instanceof PreventDamageEffect prevention)) {
+            return false;
+        }
+        for (PreventionScope scope : scopes) {
+            if (prevention.scope() == scope) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isAnyOf(CardEffect effect, Class<? extends CardEffect>[] types) {
+        for (Class<? extends CardEffect> type : types) {
+            if (type.isInstance(effect)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** All active control-changing floating effects that apply to the given permanent. */
@@ -7108,43 +6795,6 @@ public class GameData {
         nextSpellPayLifeEqualToManaValueThisTurn.remove(playerId);
     }
 
-    /** Adds an unlimited flash permission for spells of the given type until end of turn. */
-    public void addCardTypeFlashGrant(UUID playerId, CardType cardType) {
-        addCardPredicateFlashGrant(playerId, new CardTypePredicate(cardType));
-    }
-
-    /** Adds an unlimited flash permission for spells matching the predicate until end of turn. */
-    public void addCardPredicateFlashGrant(UUID playerId, CardPredicate predicate) {
-        cardTypeFlashGrantsThisTurn
-                .computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet())
-                .add(predicate);
-    }
-
-    /** Adds an unlimited flash permission for spells matching the predicate until the player's next turn. */
-    public void addCardPredicateFlashGrantUntilNextTurn(UUID playerId, CardPredicate predicate) {
-        cardTypeFlashGrantsUntilNextTurn
-                .computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet())
-                .add(predicate);
-    }
-
-    /** Returns true if the player may cast spells of the card's type as though they had flash. */
-    public boolean hasCardTypeFlashGrant(UUID playerId, Card card) {
-        Set<CardPredicate> grants = cardTypeFlashGrantsThisTurn.get(playerId);
-        return grants != null && grants.stream()
-                .filter(CardTypePredicate.class::isInstance)
-                .map(CardTypePredicate.class::cast)
-                .anyMatch(grant -> card.hasType(grant.cardType()));
-    }
-
-    /** Returns true if a until-next-turn flash grant names one of the card's types. */
-    public boolean hasCardTypeFlashGrantUntilNextTurn(UUID playerId, Card card) {
-        Set<CardPredicate> grants = cardTypeFlashGrantsUntilNextTurn.get(playerId);
-        return grants != null && grants.stream()
-                .filter(CardTypePredicate.class::isInstance)
-                .map(CardTypePredicate.class::cast)
-                .anyMatch(grant -> card.hasType(grant.cardType()));
-    }
-
     /**
      * Returns true if the player holds an unconsumed next-spell flash grant matching this card's types.
      */
@@ -7661,17 +7311,17 @@ public class GameData {
                 .count();
     }
 
-    /** Applies an absolute spell limit for the rest of this turn, keeping the most restrictive one. */
-    public void limitSpellsThisTurn(UUID playerId, int maxSpells) {
-        if (playerId == null) return;
-        playersMaxSpellsThisTurn.merge(playerId, maxSpells, Math::min);
-        playersMaxSpellsContributionsThisTurn.add(Map.entry(playerId, maxSpells));
-    }
-
-    /** Clears every "this turn" spell limit set by {@link #limitSpellsThisTurn}. */
-    public void clearSpellLimitsThisTurn() {
-        playersMaxSpellsThisTurn.clear();
-        playersMaxSpellsContributionsThisTurn.clear();
+    /**
+     * The most spells {@code playerId} may cast this turn under the limits the resolving "you can cast only one more
+     * spell this turn" effects made: the most restrictive of them, or {@link Integer#MAX_VALUE} when none applies.
+     */
+    public int spellLimitThisTurn(UUID playerId) {
+        int limit = Integer.MAX_VALUE;
+        for (FloatingContinuousEffect fe : floatingEffectsOnPlayer(playerId,
+                LimitControllerToOneMoreSpellThisTurnEffect.class)) {
+            limit = Math.min(limit, ((LimitControllerToOneMoreSpellThisTurnEffect) fe.effect()).maxSpells());
+        }
+        return limit;
     }
 
     /**
@@ -7690,17 +7340,18 @@ public class GameData {
         damageLifeFloorContributionsUntilEndOfTurn.clear();
     }
 
-    /** Prevents {@code playerId} from casting any further spells this turn. */
-    public void preventAdditionalSpellCastsThisTurn(UUID playerId) {
+    /**
+     * Prevents {@code playerId} from casting any further spells this turn: a floating effect that bars every
+     * spell type but land (CR 611.2a), made by the spell or ability named {@code sourceName}.
+     */
+    public void preventAdditionalSpellCastsThisTurn(String sourceName, UUID playerId) {
         if (playerId == null) return;
 
         EnumSet<CardType> allSpellTypes = EnumSet.allOf(CardType.class);
         allSpellTypes.remove(CardType.LAND);
-        playersCantCastSpellTypesThisTurn.merge(playerId, allSpellTypes, (existing, added) -> {
-            EnumSet<CardType> merged = EnumSet.copyOf(existing);
-            merged.addAll(added);
-            return merged;
-        });
+        addFloatingEffect(FloatingContinuousEffect.onPlayer(sourceName, null, playerId,
+                new TargetPlayerCantCastSpellTypesThisTurnEffect(allSpellTypes), playerId,
+                Duration.UNTIL_END_OF_TURN));
     }
 
     /** Records an oil counter removal from a permanent currently controlled by a player. */
@@ -8111,7 +7762,11 @@ public class GameData {
 
     /** Returns the player's maximum life total, or no effective maximum when none is set. */
     public int getMaximumLifeTotal(UUID playerId) {
-        return playerMaximumLifeTotals.getOrDefault(playerId, Integer.MAX_VALUE);
+        // Effects on players apply in timestamp order, so the newest maximum applies (CR 613.10).
+        return floatingEffectsOnPlayer(playerId, SetMaximumLifeTotalEffect.class).stream()
+                .max(Comparator.comparingLong(FloatingContinuousEffect::timestamp))
+                .map(newest -> ((SetMaximumLifeTotalEffect) newest.effect()).maximumLifeTotal())
+                .orElse(Integer.MAX_VALUE);
     }
 
     /** Applies the player's maximum life total to a proposed new life total. */
@@ -9327,18 +8982,10 @@ public class GameData {
         copy.gameResult = this.gameResult;
         copy.winnerPlayerId = this.winnerPlayerId;
         copy.globalDamagePreventionShield = this.globalDamagePreventionShield;
-        copy.preventAllCombatDamage = this.preventAllCombatDamage;
-        copy.preventAllCombatDamageByAttackingCreatures = this.preventAllCombatDamageByAttackingCreatures;
-        copy.preventAllCombatDamageToPlayers = this.preventAllCombatDamageToPlayers;
         copy.collectingSimultaneousCreatureEntryTriggers = this.collectingSimultaneousCreatureEntryTriggers;
         this.simultaneousCreatureEntryTriggers.forEach((id, abilities) ->
                 copy.simultaneousCreatureEntryTriggers.put(id, new HashSet<>(abilities)));
-        copy.preventAllDamageToAllCreatures = this.preventAllDamageToAllCreatures;
-        copy.preventAllDamageByCreatures = this.preventAllDamageByCreatures;
-        copy.preventAllDamageFromNonHumanSources = this.preventAllDamageFromNonHumanSources;
         copy.combatDamageExemptPredicate = this.combatDamageExemptPredicate;
-        this.combatDamageExemptPredicatesByController.forEach((controllerId, predicates) ->
-                copy.combatDamageExemptPredicatesByController.put(controllerId, new HashSet<>(predicates)));
         this.pendingAttackingCopyOpponents.forEach((batchId, opponents) ->
                 copy.pendingAttackingCopyOpponents.put(batchId, new ArrayList<>(opponents)));
         copy.pendingAttackingCopyChoices.putAll(this.pendingAttackingCopyChoices);
@@ -9350,13 +8997,10 @@ public class GameData {
             copy.permanentEnterTappedFiltersThisTurn.put(playerId, copiedFilters);
         });
         copy.additionalEnterCountersThisTurn.putAll(this.additionalEnterCountersThisTurn);
-        copy.additionalEnterCountersUntilNextTurn.putAll(this.additionalEnterCountersUntilNextTurn);
         copy.pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn.putAll(
                 this.pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn);
         copy.activeAdditionalCountersForEnchantmentCreatureEntryBatch.putAll(
                 this.activeAdditionalCountersForEnchantmentCreatureEntryBatch);
-        copyDamageBonusGrants(this.colorSourceDamageBonusThisTurn, copy.colorSourceDamageBonusThisTurn);
-        copyDamageBonusGrants(this.controllerDamageBonusThisTurn, copy.controllerDamageBonusThisTurn);
         copy.combatDamageRedirectTarget = this.combatDamageRedirectTarget;
         copy.combatDamageRedirectPlayer = this.combatDamageRedirectPlayer;
         copy.pendingEffectResolutionEntry = this.pendingEffectResolutionEntry != null
@@ -9631,7 +9275,6 @@ public class GameData {
         copy.additionalCombatReturnActivePlayerId = this.additionalCombatReturnActivePlayerId;
         copy.onlyLandCreaturesCanAttackThisCombat = this.onlyLandCreaturesCanAttackThisCombat;
         copy.onlyAggressiveCreaturesCanAttackThisCombat = this.onlyAggressiveCreaturesCanAttackThisCombat;
-        copy.creaturesCantAttackThisCombat = this.creaturesCantAttackThisCombat;
         copy.onlyPermanentCanAttackThisCombatId = this.onlyPermanentCanAttackThisCombatId;
         copy.onlyPermanentsCanAttackThisCombatIds = this.onlyPermanentsCanAttackThisCombatIds == null
                 ? null : new HashSet<>(this.onlyPermanentsCanAttackThisCombatIds);
@@ -9653,8 +9296,6 @@ public class GameData {
         copy.graveyardEntryVersions.putAll(this.graveyardEntryVersions);
         copy.exileEntryVersions.putAll(this.exileEntryVersions);
         copy.handEntryVersions.putAll(this.handEntryVersions);
-        this.permanentsCantAttackUntilNextTurn.forEach((permanentId, controllers) ->
-                copy.permanentsCantAttackUntilNextTurn.put(permanentId, new java.util.HashSet<>(controllers)));
         copy.combatDamageFirstStrikeStepComplete = this.combatDamageFirstStrikeStepComplete;
         copy.combatDamageFirstestStrikeStepComplete = this.combatDamageFirstestStrikeStepComplete;
         copy.creaturesInFirstestStrikeDamageStepThisCombat.addAll(this.creaturesInFirstestStrikeDamageStepThisCombat);
@@ -9690,52 +9331,12 @@ public class GameData {
         copy.playerKeptHand.addAll(this.playerKeptHand);
         copy.priorityPassedBy.addAll(this.priorityPassedBy);
         copy.priorityHolderId = this.priorityHolderId;
-        copy.preventDamageFromColors.addAll(this.preventDamageFromColors);
         copy.playersAttemptedDrawFromEmptyLibrary.addAll(this.playersAttemptedDrawFromEmptyLibrary);
-        copy.playersWithAllDamagePrevented.addAll(this.playersWithAllDamagePrevented);
-        copy.playersWithAllPermanentDamagePrevented.addAll(this.playersWithAllPermanentDamagePrevented);
-        copy.playersWithAllCreatureDamagePrevented.addAll(this.playersWithAllCreatureDamagePrevented);
         copy.playersRedirectingAllCreatureDamage.addAll(this.playersRedirectingAllCreatureDamage);
         copy.resolvingDeclinedAllCreatureDamageRedirect = this.resolvingDeclinedAllCreatureDamageRedirect;
-        copy.playersWithAllPlayerDamagePrevented.addAll(this.playersWithAllPlayerDamagePrevented);
-        copy.playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented
-                .addAll(this.playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented);
-        copy.playersWithAllPlayerDamagePreventedUntilNextTurn
-                .addAll(this.playersWithAllPlayerDamagePreventedUntilNextTurn);
         copy.combatDamagePreventionTokenShields.putAll(this.combatDamagePreventionTokenShields);
-        copy.playersWithColoredManaReplacementThisTurn
-                .addAll(this.playersWithColoredManaReplacementThisTurn);
-        copy.playersWithWhiteManaAsAnyColorThisTurn
-                .addAll(this.playersWithWhiteManaAsAnyColorThisTurn);
-        copy.playersWithProtectionFromEverythingUntilNextTurn
-                .addAll(this.playersWithProtectionFromEverythingUntilNextTurn);
-        copy.playersWithLifeTotalCantChangeUntilNextTurn
-                .addAll(this.playersWithLifeTotalCantChangeUntilNextTurn);
-        copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
-        copy.playersWithDamageFromOpponentCreaturesPrevented.addAll(this.playersWithDamageFromOpponentCreaturesPrevented);
-        copy.playersWithCombatDamageFromTargetOpponentCreaturesPrevented
-                .addAll(this.playersWithCombatDamageFromTargetOpponentCreaturesPrevented);
-        this.playersWithDamageFromMatchingSourcesPrevented.forEach((k, v) ->
-                copy.playersWithDamageFromMatchingSourcesPrevented.put(k, new HashSet<>(v)));
         this.playerNextDamageFromMatchingSourcesPrevented.forEach((k, v) ->
                 copy.playerNextDamageFromMatchingSourcesPrevented.put(k, new CopyOnWriteArrayList<>(v)));
-        this.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented.forEach((k, v) ->
-                copy.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented.put(k, new HashSet<>(v)));
-        this.playersWithDamageFromNamedPlanesPrevented.forEach((k, v) ->
-                copy.playersWithDamageFromNamedPlanesPrevented.put(k, new HashSet<>(v)));
-        copy.playersGatheringSpecimensThisTurn.addAll(this.playersGatheringSpecimensThisTurn);
-        copy.playersGatheringTokensThisTurn.addAll(this.playersGatheringTokensThisTurn);
-        copy.playersExilingUncastEnteringCreaturesThisTurn.addAll(this.playersExilingUncastEnteringCreaturesThisTurn);
-        copy.playersExilingUncastEnteringNontokenCreaturesThisTurn
-                .addAll(this.playersExilingUncastEnteringNontokenCreaturesThisTurn);
-        copy.playersShufflingCreaturesEnteringFromExileThisTurn
-                .addAll(this.playersShufflingCreaturesEnteringFromExileThisTurn);
-        copy.playersExilingCreaturesInsteadOfDyingThisTurn
-                .addAll(this.playersExilingCreaturesInsteadOfDyingThisTurn);
-        copy.playersExilingOpponentCreaturesInsteadOfDyingThisTurn
-                .addAll(this.playersExilingOpponentCreaturesInsteadOfDyingThisTurn);
-        copy.playersExilingControlledPermanentsInsteadOfDyingThisTurn
-                .addAll(this.playersExilingControlledPermanentsInsteadOfDyingThisTurn);
         copy.playersWhoActivatedLoyaltyAbilityThisTurn.addAll(this.playersWhoActivatedLoyaltyAbilityThisTurn);
         copy.playersWhoActivatedSparkAbilityThisTurn.addAll(this.playersWhoActivatedSparkAbilityThisTurn);
         copy.playersWhoPlayedCardFromExileThisTurn.addAll(this.playersWhoPlayedCardFromExileThisTurn);
@@ -9748,8 +9349,6 @@ public class GameData {
         copy.plusOnePlusOneCountersPutOnControlledCreaturesThisTurn
                 .putAll(this.plusOnePlusOneCountersPutOnControlledCreaturesThisTurn);
         copy.permanentsThatAttackedBattlesThisTurn.addAll(this.permanentsThatAttackedBattlesThisTurn);
-        copy.playersWithHexproofThisTurn.addAll(this.playersWithHexproofThisTurn);
-        copy.playersWithShroudThisTurn.addAll(this.playersWithShroudThisTurn);
         copy.playersDealtCombatDamageSinceTheirLastTurn.addAll(this.playersDealtCombatDamageSinceTheirLastTurn);
         copy.playersDealtCombatDamageLastTurn.addAll(this.playersDealtCombatDamageLastTurn);
         copy.playersWhoActivatedExhaustAbilityThisTurn.addAll(this.playersWhoActivatedExhaustAbilityThisTurn);
@@ -9758,35 +9357,12 @@ public class GameData {
         copy.playersWhoActivatedEquipAbilityThisTurn.addAll(this.playersWhoActivatedEquipAbilityThisTurn);
         copy.playersWhoActivatedArtifactAbilityThisTurn.addAll(this.playersWhoActivatedArtifactAbilityThisTurn);
         copy.playersWhoActivatedPowerUpAbilityThisTurn.addAll(this.playersWhoActivatedPowerUpAbilityThisTurn);
-        copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
-        copy.permanentsPreventedFromDealingDamageUntilNextTurn.putAll(this.permanentsPreventedFromDealingDamageUntilNextTurn);
-        copy.permanentsProtectedFromDamageUntilNextTurn.putAll(this.permanentsProtectedFromDamageUntilNextTurn);
-        copy.allDamagePreventionPredicates.addAll(this.allDamagePreventionPredicates);
-        this.allDamagePreventionPredicatesByController.forEach((controllerId, predicates) ->
-                copy.allDamagePreventionPredicatesByController
-                        .computeIfAbsent(controllerId, ignored -> ConcurrentHashMap.newKeySet())
-                        .addAll(predicates));
-        this.combatDamagePreventionPredicatesByController.forEach((controllerId, predicates) ->
-                copy.combatDamagePreventionPredicatesByController
-                        .computeIfAbsent(controllerId, ignored -> ConcurrentHashMap.newKeySet())
-                        .addAll(predicates));
-        copy.creaturesWithCombatDamagePrevented.addAll(this.creaturesWithCombatDamagePrevented);
-        copy.creaturesPreventedFromDealingCombatDamage.addAll(this.creaturesPreventedFromDealingCombatDamage);
         copy.creaturesAssigningNoCombatDamageThisTurn.addAll(this.creaturesAssigningNoCombatDamageThisTurn);
         copy.creaturesAssigningNoCombatDamageThisCombat.addAll(this.creaturesAssigningNoCombatDamageThisCombat);
-        copy.creaturesWithCombatDamagePreventedThisCombat.addAll(
-                this.creaturesWithCombatDamagePreventedThisCombat);
-        copy.creaturesPreventedFromDealingCombatDamageThisCombat.addAll(
-                this.creaturesPreventedFromDealingCombatDamageThisCombat);
         this.colorDamagePreventionUntilEndOfTurn.forEach((targetId, colors) -> {
             Set<CardColor> copied = ConcurrentHashMap.newKeySet();
             copied.addAll(colors);
             copy.colorDamagePreventionUntilEndOfTurn.put(targetId, copied);
-        });
-        this.colorDamagePreventionForControlledCreaturesUntilEndOfTurn.forEach((controllerId, colors) -> {
-            Set<CardColor> copied = ConcurrentHashMap.newKeySet();
-            copied.addAll(colors);
-            copy.colorDamagePreventionForControlledCreaturesUntilEndOfTurn.put(controllerId, copied);
         });
         copy.colorlessDamagePreventionUntilEndOfTurn.addAll(this.colorlessDamagePreventionUntilEndOfTurn);
         this.handsRevealedWhileSourceOnBattlefield.forEach((sourceId, playerIds) -> {
@@ -9808,15 +9384,9 @@ public class GameData {
         copy.damageLifeFloorsUntilEndOfTurn.putAll(this.damageLifeFloorsUntilEndOfTurn);
         copy.damageLifeFloorContributionsUntilEndOfTurn.addAll(this.damageLifeFloorContributionsUntilEndOfTurn);
         copy.damageReplacementsThisTurn.addAll(this.damageReplacementsThisTurn);
-        copy.playersCantGainLifeThisTurn = this.playersCantGainLifeThisTurn;
-        copy.playersCantLoseLifeThisTurn = this.playersCantLoseLifeThisTurn;
         copy.playersCantSearchLibrariesThisTurn = this.playersCantSearchLibrariesThisTurn;
-        copy.creaturesCantAttackThisTurn = this.creaturesCantAttackThisTurn;
         this.playerCreaturesCantAttackThisTurn.forEach((playerId, filters) ->
                 copy.playerCreaturesCantAttackThisTurn.put(playerId, new ArrayList<>(filters)));
-        copy.combatDamageToCreaturesDoublingsThisTurn = this.combatDamageToCreaturesDoublingsThisTurn;
-        copy.controllerDamageDoublingsThisTurn.putAll(this.controllerDamageDoublingsThisTurn);
-        copy.permanentDamageDoublingsThisTurn.putAll(this.permanentDamageDoublingsThisTurn);
         copy.opponentGraveyardLifeLossWatchers.addAll(this.opponentGraveyardLifeLossWatchers);
         copy.lifeGainOpponentLifeLossWatchers.addAll(this.lifeGainOpponentLifeLossWatchers);
         copy.temporaryGlobalTriggeredAbilities.addAll(this.temporaryGlobalTriggeredAbilities);
@@ -9839,7 +9409,6 @@ public class GameData {
         copy.sourceNextCombatDamageToOpponentRedirectShields.addAll(this.sourceNextCombatDamageToOpponentRedirectShields);
         copy.targetSourceDamagePreventionShields.addAll(this.targetSourceDamagePreventionShields);
         copy.damagePreventionLifeGainShields.addAll(this.damagePreventionLifeGainShields);
-        copy.damageByCreaturesPreventionLifeGainPlayers.addAll(this.damageByCreaturesPreventionLifeGainPlayers);
         copy.playerSourceNextDamageShields.addAll(this.playerSourceNextDamageShields);
         copy.sourceNextDamageToAnyTargetShields.addAll(this.sourceNextDamageToAnyTargetShields);
         copy.eyeForAnEyeShields.addAll(this.eyeForAnEyeShields);
@@ -10036,9 +9605,6 @@ public class GameData {
         copy.playersWhoAttackedWithCommanderThisTurn.addAll(this.playersWhoAttackedWithCommanderThisTurn);
         copy.declaredAttackerIdsThisCombat.addAll(this.declaredAttackerIdsThisCombat);
         copy.creaturesThatEnlistedThisCombat.addAll(this.creaturesThatEnlistedThisCombat);
-        this.ragingRiverBlockRestrictionsThisCombat.forEach((attackerId, restrictions) ->
-                copy.ragingRiverBlockRestrictionsThisCombat.put(attackerId,
-                        restrictions.stream().map(restriction -> Set.copyOf(restriction)).toList()));
         copy.playersWhoPutCountersOnCreaturesThisTurn.addAll(this.playersWhoPutCountersOnCreaturesThisTurn);
         this.permanentsWithCountersPutByPlayerThisTurn.forEach((playerId, permanentIds) ->
                 copy.permanentsWithCountersPutByPlayerThisTurn.put(playerId, new HashSet<>(permanentIds)));
@@ -10066,7 +9632,6 @@ public class GameData {
         this.creaturesAttackedCountBySubtypeThisTurn.forEach((playerId, counts) ->
                 copy.creaturesAttackedCountBySubtypeThisTurn.put(playerId, new ConcurrentHashMap<>(counts)));
         copy.playerLifeTotals.putAll(this.playerLifeTotals);
-        copy.playerMaximumLifeTotals.putAll(this.playerMaximumLifeTotals);
         copy.playerPoisonCounters.putAll(this.playerPoisonCounters);
         copy.playerRadCounters.putAll(this.playerRadCounters);
         copy.playersAffectedByMeliraPoisonReplacementThisTurn
@@ -10083,7 +9648,6 @@ public class GameData {
         copy.playerCombatDamagePreventionShields.putAll(this.playerCombatDamagePreventionShields);
         copy.stolenCreatures.putAll(this.stolenCreatures);
         copy.cardOwnerOverrides.putAll(this.cardOwnerOverrides);
-        copy.sacrificeForbiddenThisTurn.putAll(this.sacrificeForbiddenThisTurn);
         this.controlLossUnattachTriggers.forEach((equipmentId, triggers) ->
                 copy.controlLossUnattachTriggers.put(equipmentId,
                         Collections.synchronizedList(new ArrayList<>(triggers))));
@@ -10463,7 +10027,6 @@ public class GameData {
                 copy.sacrificedPermanentSubtypeCountThisTurn.put(k, new HashMap<>(v)));
         this.creatureCardsDamagedThisTurnBySourcePermanent.forEach((k, v) ->
                 copy.creatureCardsDamagedThisTurnBySourcePermanent.put(k, new HashSet<>(v)));
-        copy.damagedCreaturesCantRegenerateSourceIdsThisTurn.addAll(this.damagedCreaturesCantRegenerateSourceIdsThisTurn);
         copy.exileDamagedCreaturesSourceIdsThisTurn.addAll(this.exileDamagedCreaturesSourceIdsThisTurn);
         this.creatureCardsDamagedThisTurnBySource.forEach((k, v) ->
                 copy.creatureCardsDamagedThisTurnBySource.put(k, new HashSet<>(v)));
@@ -10833,7 +10396,8 @@ public class GameData {
         // --- Combat damage assignment state ---
         this.combatSharedDamagePreventionAllocations.forEach((sourceId, preventionSources) -> {
             Map<UUID, Map<UUID, Integer>> copiedSources = new HashMap<>();
-            preventionSources.forEach((preventionId, amounts) -> copiedSources.put(preventionId, new HashMap<>(amounts)));
+            preventionSources.forEach((preventionId, amounts) -> copiedSources.put(preventionId,
+                    new HashMap<>(amounts)));
             copy.combatSharedDamagePreventionAllocations.put(sourceId, copiedSources);
         });
         copy.combatDamageAssignmentModeChoices.putAll(this.combatDamageAssignmentModeChoices);
@@ -10868,93 +10432,31 @@ public class GameData {
                         Collections.synchronizedList(new ArrayList<>(grants))));
 
         // --- Permanent no-max-hand-size grants ---
-        copy.playersWithNoMaximumHandSize.addAll(this.playersWithNoMaximumHandSize);
-        copy.playersWithNoMaximumHandSizeUntilNextTurn.addAll(this.playersWithNoMaximumHandSizeUntilNextTurn);
-        copy.noMaximumHandSizeGrantTimestamps.putAll(this.noMaximumHandSizeGrantTimestamps);
 
         // --- Permanent "can't gain life" grants (Stigma Lasher) ---
-        copy.playersWhoCantGainLifeRestOfGame.addAll(this.playersWhoCantGainLifeRestOfGame);
         copy.playersWithHandRevealed.addAll(this.playersWithHandRevealed);
-        copy.playersWhoCantGainLifeThisTurn.addAll(this.playersWhoCantGainLifeThisTurn);
-        copy.playersWhoGainNoLifeThisTurn.addAll(this.playersWhoGainNoLifeThisTurn);
-        copy.playersWhoCantLoseLifeThisTurn.addAll(this.playersWhoCantLoseLifeThisTurn);
 
         // --- Source-linked animations (Awakener Druid-style) ---
         copy.sourceLinkedAnimations.putAll(this.sourceLinkedAnimations);
 
         // --- Per-player spell/creature color protection (Autumn's Veil style) ---
-        this.playerSpellsCantBeCounteredByColorsThisTurn.forEach((k, v) ->
-                copy.playerSpellsCantBeCounteredByColorsThisTurn.put(k, new HashSet<>(v)));
-        copy.playersSpellsCantBeCounteredThisTurn.addAll(this.playersSpellsCantBeCounteredThisTurn);
-        copy.playersCreatureSpellsCantBeCounteredThisTurn.addAll(this.playersCreatureSpellsCantBeCounteredThisTurn);
-        this.playerCreaturesCantBeTargetedByColorsThisTurn.forEach((k, v) ->
-                copy.playerCreaturesCantBeTargetedByColorsThisTurn.put(k, new HashSet<>(v)));
-        this.playerHexproofFromColorsThisTurn.forEach((k, v) ->
-                copy.playerHexproofFromColorsThisTurn.put(k, new HashSet<>(v)));
-        this.permanentHexproofFromColorsThisTurn.forEach((k, v) ->
-                copy.permanentHexproofFromColorsThisTurn.put(k, new HashSet<>(v)));
         copy.spellsMadeUncounterable.addAll(this.spellsMadeUncounterable);
         this.spellTextReplacements.forEach((k, v) -> copy.spellTextReplacements.put(k, new ArrayList<>(v)));
         this.spellColorOverrides.forEach((k, v) -> copy.spellColorOverrides.put(k, new HashSet<>(v)));
         this.spellColorOverridesUntilEndOfTurn.forEach((k, v) ->
                 copy.spellColorOverridesUntilEndOfTurn.put(k, new HashSet<>(v)));
-        this.playerProtectionFromColorsUntilEndOfTurn.forEach((k, v) ->
-                copy.playerProtectionFromColorsUntilEndOfTurn.put(k, new HashSet<>(v)));
-        this.playerProtectionFromPlayerIdsUntilEndOfTurn.forEach((k, v) ->
-                copy.playerProtectionFromPlayerIdsUntilEndOfTurn.put(k, new HashSet<>(v)));
-        this.playerProtectionFromPlayerIdsUntilNextTurn.forEach((k, v) ->
-                copy.playerProtectionFromPlayerIdsUntilNextTurn.put(k, new HashSet<>(v)));
-        this.playerKeywordsUntilEndOfTurn.forEach((k, v) ->
-                copy.playerKeywordsUntilEndOfTurn.put(k, new HashSet<>(v)));
-        this.playerKeywordsUntilNextTurn.forEach((k, v) ->
-                copy.playerKeywordsUntilNextTurn.put(k, new HashSet<>(v)));
-        this.playerStaticEffectsUntilEndOfTurn.forEach((k, v) ->
-                copy.playerStaticEffectsUntilEndOfTurn.put(k, new ArrayList<>(v)));
 
         // --- Silence-style "opponents can't cast" flag ---
-        copy.playersSilencedThisTurn.addAll(this.playersSilencedThisTurn);
-        copy.playersMaxSpellsThisTurn.putAll(this.playersMaxSpellsThisTurn);
-        copy.playersMaxSpellsContributionsThisTurn.addAll(this.playersMaxSpellsContributionsThisTurn);
-        copy.playersCantCastSpellsForRestOfGame.addAll(this.playersCantCastSpellsForRestOfGame);
-        this.opponentsCantCastNamedSpellsUntilControllerNextTurn.forEach((k, v) ->
-                copy.opponentsCantCastNamedSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
-        this.opponentsCantCastSpellsWithManaValueUntilControllerNextTurn.forEach((k, v) ->
-                copy.opponentsCantCastSpellsWithManaValueUntilControllerNextTurn.put(k, new HashSet<>(v)));
-        this.playersCantCastNamedSpellsUntilControllerNextTurn.forEach((controllerId, restrictions) -> {
-            Map<UUID, Set<String>> copiedRestrictions = new ConcurrentHashMap<>();
-            restrictions.forEach((playerId, names) -> copiedRestrictions.put(playerId, new HashSet<>(names)));
-            copy.playersCantCastNamedSpellsUntilControllerNextTurn.put(controllerId, copiedRestrictions);
-        });
         this.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.forEach((k, v) ->
                 copy.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.put(k, new HashSet<>(v)));
-        this.playersCantCastNoncreatureSpellsUntilControllerNextTurn.forEach((k, v) ->
-                copy.playersCantCastNoncreatureSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
-        this.playersCantCastSpellsFromOutsideHandUntilControllerNextTurn.forEach((k, v) ->
-                copy.playersCantCastSpellsFromOutsideHandUntilControllerNextTurn.put(k, new HashSet<>(v)));
-        this.playersCantPlayCardsFromHandUntilControllerNextTurn.forEach((k, v) ->
-                copy.playersCantPlayCardsFromHandUntilControllerNextTurn.put(k, new HashSet<>(v)));
-        this.playersCantCastSpellTypesUntilEndOfControllerNextTurn.forEach((k, v) ->
-                copy.playersCantCastSpellTypesUntilEndOfControllerNextTurn.put(k, new HashMap<>(v)));
         copy.cardsRevealedInHandUntilOwnerNextTurn.putAll(this.cardsRevealedInHandUntilOwnerNextTurn);
         copy.cardsRevealedInHandUntilUpkeepEnd.putAll(this.cardsRevealedInHandUntilUpkeepEnd);
         copy.cardsCantBePlayedInHandUntilOwnerNextTurn.putAll(this.cardsCantBePlayedInHandUntilOwnerNextTurn);
         this.extraManaOnLandSubtypeTapThisTurn.forEach((subtype, bonuses) ->
                 copy.extraManaOnLandSubtypeTapThisTurn.put(subtype, new ArrayList<>(bonuses)));
-        copy.landSubtypeFixedManaColorThisTurn.putAll(this.landSubtypeFixedManaColorThisTurn);
-        copy.nonbasicLandsFixedManaColorThisTurn = this.nonbasicLandsFixedManaColorThisTurn;
-        copy.allLandsFixedManaColorThisTurn = this.allLandsFixedManaColorThisTurn;
-        copy.playersWithLandManaChoiceReplacementThisTurn.addAll(this.playersWithLandManaChoiceReplacementThisTurn);
-        copy.landManaFixedColorThisTurn.putAll(this.landManaFixedColorThisTurn);
         copy.playersWhoTappedLandForManaThisTurn.addAll(this.playersWhoTappedLandForManaThisTurn);
-        copy.playersCantPlayLandsThisTurn.addAll(this.playersCantPlayLandsThisTurn);
-        copy.playersCantCastSpellTypesThisTurn.putAll(this.playersCantCastSpellTypesThisTurn);
         this.playersCantCastSpellTypesNextTurn.forEach((k, v) ->
                 copy.playersCantCastSpellTypesNextTurn.put(k, new HashSet<>(v)));
-        copy.playersCantCastNoncreatureSpellsThisTurn.addAll(this.playersCantCastNoncreatureSpellsThisTurn);
-        copy.playersCantActivateAbilitiesThisTurn.addAll(this.playersCantActivateAbilitiesThisTurn);
-        copy.playersCantActivateNonManaAbilitiesThisTurn.addAll(this.playersCantActivateNonManaAbilitiesThisTurn);
-        copy.playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn.addAll(
-                this.playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn);
         copy.playerExtraLoyaltyActivationsThisTurn.putAll(this.playerExtraLoyaltyActivationsThisTurn);
         copy.playersAllowedTwiceLoyaltyActivationsThisTurn.addAll(this.playersAllowedTwiceLoyaltyActivationsThisTurn);
         copy.counteredSpellManaCosts.putAll(this.counteredSpellManaCosts);
@@ -10975,17 +10477,12 @@ public class GameData {
         copy.pendingNextInstantSorceryUncounterableThisTurnCount.putAll(
                 this.pendingNextInstantSorceryUncounterableThisTurnCount);
 
-        copy.libraryTopCardFreePlayPermissionsUntilEndOfTurn.putAll(this.libraryTopCardFreePlayPermissionsUntilEndOfTurn);
-        copy.libraryTopCardPermissionsUntilEndOfTurn.addAll(this.libraryTopCardPermissionsUntilEndOfTurn);
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.exileLookPermissions.putAll(this.exileLookPermissions);
         this.additionalExileLookPermissions.forEach((cardId, viewers) ->
                 copy.additionalExileLookPermissions.put(cardId, new HashSet<>(viewers)));
         copy.outsideGamePlayPermissions.copyFrom(this.outsideGamePlayPermissions);
         copy.outsideGameAdditionalModalModePermissions.addAll(this.outsideGameAdditionalModalModePermissions);
-        copy.playersAllowedToPlayFromLibraryTopUntilEndOfTurn
-                .addAll(this.playersAllowedToPlayFromLibraryTopUntilEndOfTurn);
-        copy.libraryTopCardLifePlayPermissionsUntilEndOfTurn.addAll(this.libraryTopCardLifePlayPermissionsUntilEndOfTurn);
         copy.exilePlayPermissionGroups.putAll(this.exilePlayPermissionGroups);
         this.exileSpellTypePermissionHistory.forEach((groupId, history) ->
                 copy.exileSpellTypePermissionHistory.put(groupId, history.stream()
@@ -11017,14 +10514,11 @@ public class GameData {
         copy.graveyardPlayPermissionsExpireEndOfTurn.addAll(this.graveyardPlayPermissionsExpireEndOfTurn);
         copy.graveyardCardsEnterTapped.addAll(this.graveyardCardsEnterTapped);
         copy.graveyardCastFilterPermissionsThisTurn.addAll(this.graveyardCastFilterPermissionsThisTurn);
-        copy.playersCantPlayFromGraveyardsThisTurn.addAll(this.playersCantPlayFromGraveyardsThisTurn);
         copy.graveyardPlayFilterPermissionsThisTurn.addAll(this.graveyardPlayFilterPermissionsThisTurn);
         copy.exileCastPermissionsUntilEndOfTurn.addAll(this.exileCastPermissionsUntilEndOfTurn);
         copy.exileCastWildcardPermissionsUntilEndOfTurn.addAll(this.exileCastWildcardPermissionsUntilEndOfTurn);
         copy.foretoldCardCastPermissionsThisTurn.addAll(this.foretoldCardCastPermissionsThisTurn);
         copy.playersWhoForetoldThisTurn.addAll(this.playersWhoForetoldThisTurn);
-        copy.playersExilingCardsInsteadOfGraveyardThisTurn.addAll(this.playersExilingCardsInsteadOfGraveyardThisTurn);
-        copy.playersMayPlayFaceUpCardsFromExileThisTurn.addAll(this.playersMayPlayFaceUpCardsFromExileThisTurn);
         copy.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn
                 .addAll(this.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn);
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
@@ -11086,7 +10580,6 @@ public class GameData {
         this.creaturesAbleToAttackAtDeclareAttackersThisTurn.forEach((playerId, ids) ->
                 copy.creaturesAbleToAttackAtDeclareAttackersThisTurn.put(playerId, Set.copyOf(ids)));
         this.blockableCreaturesThisTurn.forEach((playerId, ids) -> copy.blockableCreaturesThisTurn.put(playerId, Set.copyOf(ids)));
-        copy.otherCreaturesCantAttackExemptCreatureIds.addAll(this.otherCreaturesCantAttackExemptCreatureIds);
         copy.peaceTalksTurnsRemaining = this.peaceTalksTurnsRemaining;
         copy.currentlyResolvingControllerId = this.currentlyResolvingControllerId;
         copy.currentlyResolvingTriggeredAbilityControllerId = this.currentlyResolvingTriggeredAbilityControllerId;
@@ -11129,8 +10622,6 @@ public class GameData {
         copy.skipCombatPhasesNextTurn.addAll(this.skipCombatPhasesNextTurn);
         this.matchingCreatureBlockRestrictionsThisTurn.forEach((id, restrictions) ->
                 copy.matchingCreatureBlockRestrictionsThisTurn.put(id, new ArrayList<>(restrictions)));
-        this.counterHolderMustBlockRequirementsThisTurn.forEach((id, counterTypes) ->
-                copy.counterHolderMustBlockRequirementsThisTurn.put(id, new HashSet<>(counterTypes)));
         this.matchingPermanentUntapRestrictions.forEach((id, restrictions) ->
                 copy.matchingPermanentUntapRestrictions.put(id, new ArrayList<>(restrictions)));
         copy.skipNextDrawStepCount.putAll(this.skipNextDrawStepCount);
@@ -11195,18 +10686,8 @@ public class GameData {
         copy.cardsGrantedEmbalmUntilEndOfTurn.addAll(this.cardsGrantedEmbalmUntilEndOfTurn);
         copy.cardsGrantedUnearthUntilEndOfTurn.putAll(this.cardsGrantedUnearthUntilEndOfTurn);
         copy.cardsGrantedUnearthGraveyardVersions.putAll(this.cardsGrantedUnearthGraveyardVersions);
-        copy.playersWithFlashUntilEndOfTurn.addAll(this.playersWithFlashUntilEndOfTurn);
-        copy.playersWithFreeHandCastUntilEndOfTurn.addAll(this.playersWithFreeHandCastUntilEndOfTurn);
         copy.playersWhoMayLookAtFaceDownCreaturesThisTurn
                 .addAll(this.playersWhoMayLookAtFaceDownCreaturesThisTurn);
-        this.cardTypeFlashGrantsThisTurn.forEach((k, v) ->
-                copy.cardTypeFlashGrantsThisTurn.put(k, ConcurrentHashMap.newKeySet()));
-        this.cardTypeFlashGrantsThisTurn.forEach((k, v) ->
-                copy.cardTypeFlashGrantsThisTurn.get(k).addAll(v));
-        this.cardTypeFlashGrantsUntilNextTurn.forEach((k, v) ->
-                copy.cardTypeFlashGrantsUntilNextTurn.put(k, ConcurrentHashMap.newKeySet()));
-        this.cardTypeFlashGrantsUntilNextTurn.forEach((k, v) ->
-                copy.cardTypeFlashGrantsUntilNextTurn.get(k).addAll(v));
         this.nextSpellFlashGrantsThisTurn.forEach((k, v) ->
                 copy.nextSpellFlashGrantsThisTurn.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         this.nextSpellChosenSubtypeFlashGrantsThisTurn.forEach((k, v) ->
@@ -11235,8 +10716,6 @@ public class GameData {
         copy.spellsGrantedPermanentHasteOnEntry.addAll(this.spellsGrantedPermanentHasteOnEntry);
         copy.spellsGrantedSuspendHasteOnEntry.addAll(this.spellsGrantedSuspendHasteOnEntry);
         copy.spellsGrantedRiotOnEntry.addAll(this.spellsGrantedRiotOnEntry);
-        copy.mayTapLandsForSpellsUntilEndOfTurn.addAll(this.mayTapLandsForSpellsUntilEndOfTurn);
-        copy.mayPayLifeForColorlessManaUntilEndOfTurn.addAll(this.mayPayLifeForColorlessManaUntilEndOfTurn);
         this.guardianAngelTargetsUntilEndOfTurn.forEach((controllerId, targetIds) -> {
             Set<UUID> copied = ConcurrentHashMap.newKeySet();
             copied.addAll(targetIds);
@@ -11250,7 +10729,6 @@ public class GameData {
         copy.graveyardAdventureCastPermissions.putAll(this.graveyardAdventureCastPermissions);
 
         // --- Damage prevention / redirection still pending ---
-        copy.permanentsPreventedFromDealingDamage.addAll(this.permanentsPreventedFromDealingDamage);
         copy.creaturesProtectedFromTargetingDamage.addAll(this.creaturesProtectedFromTargetingDamage);
         copy.targetSpellDamagePreventionShields.addAll(this.targetSpellDamagePreventionShields);
         copy.targetSorceryDamageRedirectShields.addAll(this.targetSorceryDamageRedirectShields);
@@ -11288,7 +10766,6 @@ public class GameData {
         // --- Game log (share reference for simulation — not read during MCTS) ---
         copy.gameLog.addAll(this.gameLog);
 
-        copyDamageBonusGrants(this.controllerNoncombatDamageBonusThisTurn, copy.controllerNoncombatDamageBonusThisTurn);
         this.crimeCandidatesThisTurn.forEach((key, entries) ->
                 copy.crimeCandidatesThisTurn.put(key,
                         Collections.synchronizedList(new ArrayList<>(entries))));
@@ -11365,7 +10842,7 @@ public class GameData {
         }
     }
 
-    /** Records one damage bonus grant under {@code key} in a grant map such as {@link #controllerDamageBonusThisTurn}. */
+    /** Records one damage bonus grant under {@code key} in a grant map such as {@link #perpetualNoncombatDamageBonuses}. */
     public static void addDamageBonusGrant(Map<UUID, List<DamageBonusGrant>> grants, UUID key, DamageBonusGrant grant) {
         grants.computeIfAbsent(key, k -> new CopyOnWriteArrayList<>()).add(grant);
     }

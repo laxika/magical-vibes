@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageThisTurnEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +37,8 @@ class InsultInjuryTest extends BaseCardTest {
 
         assertThat(gd.damageCantBePreventedThisTurn).isTrue();
         assertThat(gqs.isDamagePreventable(gd)).isFalse();
-        assertThat(gd.controllerDamageDoublingsThisTurn.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), DoubleControllerDamageThisTurnEffect.class))
+                .hasSize(1);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();

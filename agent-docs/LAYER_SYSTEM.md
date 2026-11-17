@@ -458,6 +458,19 @@ Only `GameData`'s methods change `floatingEffects`: `addFloatingEffect` (stamps 
 `endFloatingEffect` and `replaceFloatingEffect`. Each reports the effect beginning or ending to the game's
 `RulesObserver`, which the trigger ledger writes.
 
+**Rules-modifying effects.** An effect a resolution makes that changes the rules rather than characteristics
+("you can't lose life this turn", "creatures can't attack this turn", "prevent all damage that would be dealt to it this
+turn", "you may cast spells as though they had flash") is a floating effect too (CR 611.2a). The layers skip it; it
+applies after them, in timestamp order (CR 613.10 for players, 613.11 for game rules). Its payload is the resolving
+effect record (with a field for what the resolution chose: a colour, a name, a card), on a player through
+`FloatingContinuousEffect.onPlayer` (a `null` player is every player) or on one permanent through `onPermanent`, with
+the `Duration` the card states. Readers ask `GameData.hasFloatingEffectOnPlayer` / `floatingEffectsOnPlayer` /
+`floatingPlayerEffects`, `hasFloatingEffectOnPermanent` / `floatingEffectsOnPermanent`, `floatingEffectsOfTypes`
+(whatever it applies to), and for damage prevention (CR 615) `hasPrevention…` / `preventionEffects…` by
+`PreventionScope`. No `GameData` field, cleanup reset or `EndOfTurnStateField` holds such an effect, and the clock ends
+it (Runed Terror's per-player cleanup included). Several of one kind combine as the rule says: any of a set, the
+newest (maximum life, fixed land colour), the strictest (a spell limit), a sum (damage bonuses).
+
 **The clock.** Nothing calls an expiry for a duration that ends at an event: `DurationClock` (`service/duration`) ends
 those effects as `RulesEventPipeline` hands it each rules event batch, before the batch's abilities trigger, and undoes
 what the effect kept on its permanent (a copy's card, a tap restriction, mirrored keywords). The events:

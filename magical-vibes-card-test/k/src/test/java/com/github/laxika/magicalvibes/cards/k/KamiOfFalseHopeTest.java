@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.f.FirstVolley;
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,7 +29,7 @@ class KamiOfFalseHopeTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Kami of False Hope");
         harness.assertInGraveyard(player1, "Kami of False Hope");
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
     }
 
     @Test
@@ -80,11 +82,11 @@ class KamiOfFalseHopeTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Kami of False Hope");
         harness.assertInGraveyard(player1, "Kami of False Hope");
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.preventAllCombatDamage).isFalse();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
     }
 
     @Test

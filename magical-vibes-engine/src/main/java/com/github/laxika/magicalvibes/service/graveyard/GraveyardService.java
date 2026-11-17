@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.graveyard;
 
+import com.github.laxika.magicalvibes.model.effect.ExileOwnCardsInsteadOfGraveyardUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffect;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -747,7 +749,8 @@ public class GraveyardService {
                 return false;
             }
 
-            if (!isToken(gameData, card) && gameData.playersExilingCardsInsteadOfGraveyardThisTurn.contains(ownerId)) {
+            if (!isToken(gameData, card) && gameData.hasFloatingEffectOnPlayer(
+                    ownerId, ExileOwnCardsInsteadOfGraveyardUntilEndOfTurnEffect.class)) {
                 exileService.exileCard(gameData, ownerId, card);
                 gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
                 log.info("Game {} - {} replacement effect: exiled instead of graveyard (turn effect)",
@@ -1279,9 +1282,10 @@ public class GraveyardService {
                 }
             }
         }
-        return gameData.damagedCreaturesCantRegenerateSourceIdsThisTurn.stream()
-                .anyMatch(sourceId -> gameData.creatureCardsDamagedThisTurnBySourcePermanent
-                        .getOrDefault(sourceId, Set.of()).contains(cardId));
+        // Runesword's effect names the creature whose damage it watches, and outlives it leaving.
+        return gameData.floatingEffectsOfTypes(PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffect.class).stream()
+                .anyMatch(floating -> gameData.creatureCardsDamagedThisTurnBySourcePermanent
+                        .getOrDefault(floating.affectedPermanentId(), Set.of()).contains(cardId));
     }
 
     /**
@@ -1523,7 +1527,7 @@ public class GraveyardService {
             return true;
         }
         boolean token = isToken(gameData, card);
-        if (!token && gameData.playersExilingCardsInsteadOfGraveyardThisTurn.contains(ownerId)) {
+        if (!token && gameData.hasFloatingEffectOnPlayer(ownerId, ExileOwnCardsInsteadOfGraveyardUntilEndOfTurnEffect.class)) {
             return true;
         }
         if (globalColorGraveyardExileApplies(gameData, card, Zone.BATTLEFIELD, battlefieldSnapshot)) {

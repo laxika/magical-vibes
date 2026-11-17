@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.service.effect.normalfx.PreventionSupport;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.Card;
@@ -1534,7 +1535,8 @@ public class MultiPermanentChoiceHandlerService {
                         duration.isSourceLinked() ? sourcePermId : null,
                         source != null ? source.getCard().getName() : stolen.getCard().getName());
                 if (source != null) {
-                    gameData.creaturesPreventedFromDealingCombatDamage.add(sourcePermId);
+                    PreventionSupport.preventCombatDamageDealtBy(gameData, source.getCard().getName(), sourcePermId,
+                            playerId, sourcePermId, Duration.UNTIL_END_OF_TURN);
                     gameLogService.append(gameData,
                             GameLog.cardThen(source.getCard(), " assigns no combat damage this turn."));
                 }
@@ -1568,7 +1570,9 @@ public class MultiPermanentChoiceHandlerService {
             // combat damage this turn once a permanent was chosen.
             Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
             if (source != null) {
-                gameData.creaturesPreventedFromDealingCombatDamage.add(context.sourcePermanentId());
+                PreventionSupport.preventCombatDamageDealtBy(gameData, source.getCard().getName(),
+                        context.sourcePermanentId(), playerId, context.sourcePermanentId(),
+                        Duration.UNTIL_END_OF_TURN);
                 gameLogService.append(gameData,
                         GameLog.cardThen(source.getCard(), " assigns no combat damage this turn."));
             }

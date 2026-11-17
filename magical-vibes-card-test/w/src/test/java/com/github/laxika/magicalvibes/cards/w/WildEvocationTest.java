@@ -236,7 +236,7 @@ class WildEvocationTest extends BaseCardTest {
 
         harness.castFromHand(player2, new Silence(), "{W}");
         harness.passBothPriorities();
-        assertThat(gd.playersSilencedThisTurn).contains(player1.getId());
+        assertThat(silencedPlayers()).contains(player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(bear);

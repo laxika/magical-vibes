@@ -941,9 +941,10 @@ public class PlayerInputService {
      * Hall of Gemstone: {@code playerId} chooses the color every land produces for the rest of the
      * turn.
      */
-    public void beginAllLandsProduceChosenColorChoice(GameData gameData, UUID playerId) {
-        ChoiceContext.AllLandsProduceChosenColorChoice ctx =
-                new ChoiceContext.AllLandsProduceChosenColorChoice(playerId);
+    public void beginAllLandsProduceChosenColorChoice(GameData gameData, UUID playerId, String sourceCardName,
+                                                      UUID sourcePermanentId, UUID controllerId) {
+        ChoiceContext.AllLandsProduceChosenColorChoice ctx = new ChoiceContext.AllLandsProduceChosenColorChoice(
+                playerId, sourceCardName, sourcePermanentId, controllerId);
 
         List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -1054,8 +1055,9 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a color", gameData.id, playerName);
     }
 
-    public void beginMassProtectionColorChoice(GameData gameData, UUID controllerId) {
-        ChoiceContext.MassProtectionColorChoice ctx = new ChoiceContext.MassProtectionColorChoice(controllerId);
+    public void beginMassProtectionColorChoice(GameData gameData, UUID controllerId, String sourceCardName) {
+        ChoiceContext.MassProtectionColorChoice ctx =
+                new ChoiceContext.MassProtectionColorChoice(controllerId, sourceCardName);
 
         List<String> options = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -1065,9 +1067,9 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose protection (you and your permanents)", gameData.id, playerName);
     }
 
-    public void beginControllerProtectionColorChoice(GameData gameData, UUID controllerId) {
+    public void beginControllerProtectionColorChoice(GameData gameData, UUID controllerId, String sourceCardName) {
         ChoiceContext.ControllerProtectionColorChoice ctx =
-                new ChoiceContext.ControllerProtectionColorChoice(controllerId);
+                new ChoiceContext.ControllerProtectionColorChoice(controllerId, sourceCardName);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 controllerId, null, null, ctx,
                 List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN"), "Choose a color."));

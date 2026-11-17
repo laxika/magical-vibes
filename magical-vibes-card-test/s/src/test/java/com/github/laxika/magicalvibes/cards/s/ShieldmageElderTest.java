@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.d.DaruHealer;
 import com.github.laxika.magicalvibes.cards.g.GoblinSharpshooter;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
@@ -39,7 +40,7 @@ class ShieldmageElderTest extends BaseCardTest {
         attacker.setAttackTarget(player1.getId());
         resolveCombat(player2);
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(attacker.getId());
         harness.assertLife(player1, 20);
     }
 

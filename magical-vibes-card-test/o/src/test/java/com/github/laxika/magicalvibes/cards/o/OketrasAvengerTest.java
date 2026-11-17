@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LayClaim;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
@@ -92,7 +93,7 @@ class OketrasAvengerTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
 
             assertThat(avenger.getSkipUntapCount()).isPositive();
-            assertThat(gd.creaturesWithCombatDamagePrevented).doesNotContain(avenger.getId());
+            assertThat(Prevention.combatDamagePrevented(gd)).doesNotContain(avenger.getId());
         });
     }
 

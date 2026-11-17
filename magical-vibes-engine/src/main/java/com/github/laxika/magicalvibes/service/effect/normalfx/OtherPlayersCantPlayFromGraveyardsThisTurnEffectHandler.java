@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -27,9 +29,12 @@ public class OtherPlayersCantPlayFromGraveyardsThisTurnEffectHandler implements 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        gameData.playersCantPlayFromGraveyardsThisTurn.addAll(gameData.orderedPlayerIds.stream()
-                .filter(playerId -> !playerId.equals(controllerId))
-                .toList());
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(controllerId)) {
+                gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                        entry.getSourcePermanentId(), controllerId, effect, playerId, Duration.UNTIL_END_OF_TURN));
+            }
+        }
 
         gameLogService.append(gameData, GameLog.text("Players other than "
                 + gameData.playerIdToName.get(controllerId)

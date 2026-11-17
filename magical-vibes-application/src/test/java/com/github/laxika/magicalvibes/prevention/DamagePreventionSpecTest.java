@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.prevention;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -76,7 +78,7 @@ class DamagePreventionSpecTest extends BaseCardTest {
         @Test
         @DisplayName("Full player prevention does not consume the player's amount shield")
         void fullPlayerPreventionDoesNotConsumeAmountShield() {
-            gd.playersWithAllDamagePrevented.add(player2.getId());
+            Prevention.addOnPlayer(gd, PreventDamageEffect.allToControllerAndCreatures(), player2.getId());
             gd.playerDamagePreventionShields.put(player2.getId(), 3);
             harness.setLife(player2, 20);
 
@@ -95,7 +97,7 @@ class DamagePreventionSpecTest extends BaseCardTest {
         @DisplayName("A combat-only creature flag does not stop noncombat damage")
         void combatOnlyCreatureFlagDoesNotStopNoncombat() {
             Permanent bears = addCreature(player2);
-            gd.creaturesWithCombatDamagePrevented.add(bears.getId());
+            Prevention.addOnPermanent(gd, PreventDamageEffect.allCombatToTargetCreatures(), bears.getId());
 
             shockPermanent(bears.getId());
 
@@ -106,7 +108,7 @@ class DamagePreventionSpecTest extends BaseCardTest {
         @Test
         @DisplayName("Fog's combat-only flag does not stop noncombat damage to a player")
         void fogFlagDoesNotStopNoncombatPlayerDamage() {
-            gd.preventAllCombatDamage = true;
+            Prevention.add(gd, PreventDamageEffect.allCombat());
             harness.setLife(player2, 20);
 
             shockPlayer2();
@@ -117,7 +119,7 @@ class DamagePreventionSpecTest extends BaseCardTest {
         @Test
         @DisplayName("Prevent-all-to-creatures does not protect players")
         void allCreaturesFlagDoesNotProtectPlayers() {
-            gd.preventAllDamageToAllCreatures = true;
+            Prevention.add(gd, PreventDamageEffect.allToCreatures());
             harness.setLife(player2, 20);
 
             shockPlayer2();
@@ -128,7 +130,7 @@ class DamagePreventionSpecTest extends BaseCardTest {
         @Test
         @DisplayName("Damage-from-attackers player flag prevents unblocked combat damage")
         void attackersFlagPreventsCombatDamage() {
-            gd.playersWithDamageFromAttackersPrevented.add(player2.getId());
+            Prevention.addOnPlayer(gd, PreventDamageEffect.allToControllerFromAttackers(), player2.getId());
             harness.setLife(player2, 20);
 
             Permanent attacker = new Permanent(new GrizzlyBears());
@@ -166,7 +168,7 @@ class DamagePreventionSpecTest extends BaseCardTest {
             attackerToPlaneswalker.setAttackTarget(planeswalker.getId());
             gd.playerBattlefields.get(player1.getId()).add(attackerToPlaneswalker);
 
-            gd.playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented.add(player2.getId());
+            Prevention.addOnPlayer(gd, PreventDamageEffect.allCombatToControllerAndPlaneswalkers(), player2.getId());
             harness.setLife(player2, 20);
             harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.DECLARE_BLOCKERS);

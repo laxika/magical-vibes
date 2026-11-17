@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
 import com.github.laxika.magicalvibes.cards.c.CrawGiant;
 import com.github.laxika.magicalvibes.cards.d.DAvenantArcher;
@@ -62,11 +63,11 @@ class KryShieldTest extends BaseCardTest {
         Permanent target = addReadyCrawGiant(player2);
 
         activateShield(archer);
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(archer.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(archer.getId());
 
         declareAttackersAndPrepareBlockers(List.of(2));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 2)));
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(archer.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(archer.getId());
 
         harness.activateAbility(player1, 1, null, target.getId());
         harness.passBothPriorities();

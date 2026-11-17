@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.cards.r.RazorfootGriffin;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,7 +24,7 @@ class TangleTest extends BaseCardTest {
 
         castAndResolve();
 
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
         assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
         assertThat(nonAttacker.getSkipUntapCount()).isZero();
 

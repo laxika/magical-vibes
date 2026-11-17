@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
@@ -29,7 +30,7 @@ class CarrionRatsTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(card);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(rats.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(rats.getId());
         resolveCombat();
         harness.assertLife(player2, 20);
     }
@@ -51,7 +52,7 @@ class CarrionRatsTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(second);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(rats.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(rats.getId());
     }
 
     @Test
@@ -71,7 +72,7 @@ class CarrionRatsTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(ownCard);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(rats.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(rats.getId());
     }
 
     @Test
@@ -86,7 +87,7 @@ class CarrionRatsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(rats.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(rats.getId());
         resolveCombat();
         harness.assertLife(player2, 18);
     }
@@ -120,7 +121,7 @@ class CarrionRatsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(card);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(rats.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(rats.getId());
     }
 
     @Test

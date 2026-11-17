@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.d.DefenderEnVec;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.cards.s.SealOfRemoval;
@@ -38,7 +39,7 @@ class LaccolithRigTest extends BaseCardTest {
 
         assertThat(victim.getMarkedDamage()).isEqualTo(2);
         assertThat(blocker.getMarkedDamage()).isZero();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
     }
 
     @Test
@@ -80,8 +81,8 @@ class LaccolithRigTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(victim.getMarkedDamage()).isEqualTo(2);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(newEnchantedCreature.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(newEnchantedCreature.getId());
     }
 
     @Test
@@ -102,7 +103,7 @@ class LaccolithRigTest extends BaseCardTest {
 
         assertThat(victim.getMarkedDamage()).isZero();
         assertThat(blocker.getMarkedDamage()).isEqualTo(2);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
     }
 
     @Test
@@ -122,7 +123,7 @@ class LaccolithRigTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(victim.getMarkedDamage()).isEqualTo(1);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
     }
 
     @Test
@@ -144,7 +145,7 @@ class LaccolithRigTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(victim.getMarkedDamage()).isEqualTo(2);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).containsExactly(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).containsExactly(attacker.getId());
     }
 
     @Test
@@ -159,7 +160,7 @@ class LaccolithRigTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
     }
 
     @Test
@@ -224,7 +225,7 @@ class LaccolithRigTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(victim.getMarkedDamage()).isZero();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
     }
 
     @Test
@@ -248,7 +249,7 @@ class LaccolithRigTest extends BaseCardTest {
         harness.assertInHand(player2, "Defender en-Vec");
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(blocker.getMarkedDamage()).isEqualTo(2);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
     }
 
     @Test

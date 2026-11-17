@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -28,7 +29,9 @@ public class ControlledCreaturesEnterWithAdditionalCountersThisTurnEffectHandler
         int count = counters.count();
 
         if (Duration.UNTIL_YOUR_NEXT_TURN.equals(counters.duration())) {
-            gameData.additionalEnterCountersUntilNextTurn.merge(entry.getControllerId(), count, Integer::sum);
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), effect, entry.getControllerId(),
+                    Duration.UNTIL_YOUR_NEXT_TURN));
         } else {
             gameData.additionalEnterCountersThisTurn.merge(entry.getControllerId(), count, Integer::sum);
         }

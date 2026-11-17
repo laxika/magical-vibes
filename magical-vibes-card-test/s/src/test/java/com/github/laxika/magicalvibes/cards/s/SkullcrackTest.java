@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -34,7 +38,7 @@ class SkullcrackTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 17);
-        assertThat(gd.playersCantGainLifeThisTurn).isTrue();
+        assertThat(gd.hasFloatingEffectOnPlayer(null, PlayersCantGainLifeThisTurnEffect.class)).isTrue();
         assertThat(gqs.canPlayerGainLife(gd, player1.getId())).isFalse();
         assertThat(gqs.canPlayerGainLife(gd, player2.getId())).isFalse();
         assertThat(gd.damageCantBePreventedThisTurn).isTrue();
@@ -61,11 +65,12 @@ class SkullcrackTest extends BaseCardTest {
     @Test
     @DisplayName("The life gain lock wears off at end of turn")
     void lockClearedAtEndOfTurn() {
-        gd.playersCantGainLifeThisTurn = true;
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
+                new PlayersCantGainLifeThisTurnEffect(), null, Duration.UNTIL_END_OF_TURN));
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
-        assertThat(gd.playersCantGainLifeThisTurn).isFalse();
+        assertThat(gd.hasFloatingEffectOnPlayer(null, PlayersCantGainLifeThisTurnEffect.class)).isFalse();
         assertThat(gqs.canPlayerGainLife(gd, player1.getId())).isTrue();
     }
 
@@ -152,6 +157,7 @@ class SkullcrackTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         assertThat(gqs.isDamagePreventable(gd)).isTrue();
         assertThat(gqs.canPlayerGainLife(gd, player2.getId())).isTrue();

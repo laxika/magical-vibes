@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.planar;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerSpellsCantBeCounteredByColorsEffect;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -216,7 +219,8 @@ class PlanechaseServiceTest extends BaseCardTest {
         gd.stack.add(TestStackDoor.triggered(null, player1.getId(),
                 "Planeswalk", List.of(new PlaneswalkEffect())));
         var id = gd.stack.getLast().getTargetableId();
-        gd.playerSpellsCantBeCounteredByColorsThisTurn.put(player1.getId(), Set.of(CardColor.BLUE));
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
+                new GrantControllerSpellsCantBeCounteredByColorsEffect(Set.of(CardColor.BLUE)), player1.getId(), Duration.UNTIL_END_OF_TURN));
         harness.setHand(player2, List.of(new Voidslime()));
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.BLUE, 2);

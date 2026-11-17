@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -121,11 +123,9 @@ public class RagingRiverEffectHandler implements NormalEffectHandlerBean {
                 ? state.pile1IdsByDefendingPlayer()
                 : state.pile2IdsByDefendingPlayer())
                 .getOrDefault(defendingPlayerId, List.of());
-        gameData.ragingRiverBlockRestrictionsThisCombat.compute(attackerId, (ignored, restrictions) -> {
-            List<Set<UUID>> updated = restrictions == null ? new ArrayList<>() : new ArrayList<>(restrictions);
-            updated.add(Set.copyOf(chosenPile));
-            return List.copyOf(updated);
-        });
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent("Raging River", null,
+                state.controllerId(), new RagingRiverEffect(Set.copyOf(chosenPile)), attackerId,
+                Duration.UNTIL_END_OF_COMBAT));
 
         Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
         String attackerName = attacker == null ? "attacker" : attacker.getCard().getName();

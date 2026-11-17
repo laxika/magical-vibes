@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.model.Card;
@@ -107,7 +109,7 @@ class MalignusTest extends BaseCardTest {
     @DisplayName("Blanket prevention of all damage to a player does not stop Malignus")
     void blanketPlayerPreventionCantStopMalignus() {
         addMalignus(player1);
-        gd.playersWithAllDamagePrevented.add(player2.getId());
+        Prevention.addOnPlayer(gd, PreventDamageEffect.allToControllerAndCreatures(), player2.getId());
 
         declareAttackers(List.of(0));
         resolveCombat();
@@ -121,7 +123,7 @@ class MalignusTest extends BaseCardTest {
         addMalignus(player1);
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         blocker.setSummoningSick(false);
-        gd.preventAllDamageToAllCreatures = true;
+        Prevention.add(gd, PreventDamageEffect.allToCreatures());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

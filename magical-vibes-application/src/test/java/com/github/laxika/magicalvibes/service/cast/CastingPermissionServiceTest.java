@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LimitControllerToOneMoreSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantPlayCardsFromHandUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -224,8 +230,9 @@ class CastingPermissionServiceTest {
         Card spell = new Card();
         spell.setType(CardType.CREATURE);
         CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
-        gd.playerStaticEffectsUntilEndOfTurn.put(player1Id, new ArrayList<>(List.of(
-                new GrantEscapeToGraveyardCardsEffect(filter, "{3}{B}", 4))));
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
+                new GrantEscapeToGraveyardCardsEffect(filter, "{3}{B}", 4), player1Id,
+                Duration.UNTIL_END_OF_TURN));
         when(predicateEvaluationService.matchesCardPredicate(spell, filter, null, gd, player1Id)).thenReturn(true);
 
         var permission = svc.findFilteredGraveyardPermission(gd, player1Id, spell).orElseThrow();
@@ -419,7 +426,8 @@ class CastingPermissionServiceTest {
         @Test
         @DisplayName("turn-scoped top-library permission allows spells and lands")
         void allowsSpellsAndLandsFromTopOfLibrary() {
-            gd.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.add(player1Id);
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
+                new AllowPlayFromTopOfLibraryUntilEndOfTurnEffect(), player1Id, Duration.UNTIL_END_OF_TURN));
 
             Card instant = new Card();
             instant.setType(CardType.INSTANT);
@@ -670,7 +678,8 @@ class CastingPermissionServiceTest {
         @Test
         @DisplayName("Rejects spell when a resolution-time spell cap is reached")
         void rejectsWhenResolutionTimeSpellCapReached() {
-            gd.limitSpellsThisTurn(player1Id, 1);
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
+                new LimitControllerToOneMoreSpellThisTurnEffect(1), player1Id, Duration.UNTIL_END_OF_TURN));
 
             Card dummy = new Card();
             dummy.setName("Dummy");
@@ -881,7 +890,8 @@ class CastingPermissionServiceTest {
         @Test
         @DisplayName("Rejects spell when player is silenced this turn")
         void rejectsWhenSilenced() {
-            gd.playersSilencedThisTurn.add(player1Id);
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2Id,
+                new OpponentsCantCastSpellsThisTurnEffect(), player1Id, Duration.UNTIL_END_OF_TURN));
 
             Card bolt = new Card();
             bolt.setName("Lightning Bolt");
@@ -1118,8 +1128,8 @@ class CastingPermissionServiceTest {
     @Test
     @DisplayName("A hand-wide restriction covers both land plays and spell casts")
     void handWideRestrictionCoversLandsAndSpells() {
-        gd.playersCantPlayCardsFromHandUntilControllerNextTurn.put(
-                player1Id, Set.of(player1Id, player2Id));
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
+                new PlayersCantPlayCardsFromHandUntilNextTurnEffect(), null, Duration.UNTIL_YOUR_NEXT_TURN));
 
         assertThat(svc.isLandPlayFromHandRestricted(gd, player1Id)).isTrue();
         assertThat(svc.isSpellCastingFromHandRestricted(gd, player2Id)).isTrue();

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
 import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.j.JungleBasin;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
@@ -59,7 +62,7 @@ class SenTripletsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.senControlledPlayerId).isNull();
-        assertThat(gd.playersSilencedThisTurn).isEmpty();
+        assertThat(silencedPlayers()).isEmpty();
     }
 
     @Test
@@ -67,8 +70,8 @@ class SenTripletsTest extends BaseCardTest {
     void resolvingLocksTargetOpponent() {
         lockOpponent(player2);
 
-        assertThat(gd.playersSilencedThisTurn).contains(player2.getId()).doesNotContain(player1.getId());
-        assertThat(gd.playersCantActivateAbilitiesThisTurn).contains(player2.getId());
+        assertThat(silencedPlayers()).contains(player2.getId()).doesNotContain(player1.getId());
+        assertThat(playersAffectedBy(SenTripletsUpkeepEffect.class)).contains(player2.getId());
         assertThat(gd.senControllerPlayerId).isEqualTo(player1.getId());
         assertThat(gd.senControlledPlayerId).isEqualTo(player2.getId());
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
@@ -116,15 +119,15 @@ class SenTripletsTest extends BaseCardTest {
     @Test
     @DisplayName("The lock and sen window are cleared at end of turn")
     void locksClearedAtEndOfTurn() {
-        gd.playersSilencedThisTurn.add(player2.getId());
-        gd.playersCantActivateAbilitiesThisTurn.add(player2.getId());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
+                new SenTripletsUpkeepEffect(), player2.getId(), Duration.UNTIL_END_OF_TURN));
         gd.senControllerPlayerId = player1.getId();
         gd.senControlledPlayerId = player2.getId();
 
         GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
 
-        assertThat(gd.playersSilencedThisTurn).isEmpty();
-        assertThat(gd.playersCantActivateAbilitiesThisTurn).isEmpty();
+        assertThat(silencedPlayers()).isEmpty();
+        assertThat(playersAffectedBy(SenTripletsUpkeepEffect.class)).isEmpty();
         assertThat(gd.senControllerPlayerId).isNull();
         assertThat(gd.senControlledPlayerId).isNull();
     }

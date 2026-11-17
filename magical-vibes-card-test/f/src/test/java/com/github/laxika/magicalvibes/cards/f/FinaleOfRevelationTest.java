@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -32,7 +35,8 @@ class FinaleOfRevelationTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(9);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardCard);
         assertThat(land.isTapped()).isTrue();
-        assertThat(gd.playersWithNoMaximumHandSize).doesNotContain(player1.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).doesNotContain(Duration.PERMANENT);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(finale);
     }
 
@@ -69,7 +73,8 @@ class FinaleOfRevelationTest extends BaseCardTest {
         List<Card> libraryAndHand = new ArrayList<>(gd.playerDecks.get(player1.getId()));
         libraryAndHand.addAll(gd.playerHands.get(player1.getId()));
         assertThat(libraryAndHand).contains(graveyardCard).hasSize(21);
-        assertThat(gd.playersWithNoMaximumHandSize).contains(player1.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).contains(Duration.PERMANENT);
         assertThat(lands.subList(0, 5)).allMatch(land -> !land.isTapped());
         assertThat(lands.subList(5, 7)).allMatch(Permanent::isTapped);
         assertThat(creature.isTapped()).isTrue();
@@ -86,7 +91,8 @@ class FinaleOfRevelationTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
-        assertThat(gd.playersWithNoMaximumHandSize).doesNotContain(player1.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).doesNotContain(Duration.PERMANENT);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(finale);
     }
 
@@ -103,8 +109,10 @@ class FinaleOfRevelationTest extends BaseCardTest {
 
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(11);
-        assertThat(gd.playersWithNoMaximumHandSize).contains(player1.getId());
-        assertThat(gd.playersWithNoMaximumHandSize).doesNotContain(player2.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).contains(Duration.PERMANENT);
+        assertThat(gd.floatingEffectsOnPlayer(player2.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).doesNotContain(Duration.PERMANENT);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(finale);
     }
 
@@ -124,7 +132,8 @@ class FinaleOfRevelationTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentGraveyardCard);
-        assertThat(gd.playersWithNoMaximumHandSize).contains(player1.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).contains(Duration.PERMANENT);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(finale);
     }
 

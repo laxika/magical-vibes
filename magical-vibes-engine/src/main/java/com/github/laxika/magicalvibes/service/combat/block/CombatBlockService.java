@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.service.combat.block;
 
+import java.util.HashMap;
+import java.util.Map;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterMustBlockTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -1340,11 +1345,18 @@ public class CombatBlockService {
      */
     private Set<UUID> requiredBlockSourceIds(GameData gameData, Permanent blocker) {
         Set<UUID> sources = new HashSet<>(blocker.getRequiredBlockSourceIds());
-        gameData.counterHolderMustBlockRequirementsThisTurn.forEach((attackerId, counterTypes) -> {
+        Map<UUID, Boolean> holdsCounterOf = new HashMap<>();
+        for (FloatingContinuousEffect fe
+                : gameData.floatingEffectsOfTypes(CreaturesWithCounterMustBlockTriggeringAttackerEffect.class)) {
+            UUID attackerId = fe.affectedPermanentId();
             if (attackerId.equals(blocker.getId())) {
-                return;
+                continue;
             }
-            if (counterTypes.stream().anyMatch(type -> blocker.getCounterCount(type) > 0)) {
+            CounterType type = ((CreaturesWithCounterMustBlockTriggeringAttackerEffect) fe.effect()).counterType();
+            holdsCounterOf.merge(attackerId, blocker.getCounterCount(type) > 0, Boolean::logicalOr);
+        }
+        holdsCounterOf.forEach((attackerId, holds) -> {
+            if (holds) {
                 sources.add(attackerId);
             } else {
                 sources.remove(attackerId);
@@ -1943,10 +1955,9 @@ public class CombatBlockService {
      */
     private boolean mustBlockIfAble(GameData gameData, Permanent blocker) {
         UUID blockerController = gameQueryService.findPermanentController(gameData, blocker.getId());
-        boolean opponentRequirement = gameData.playerStaticEffectsUntilEndOfTurn.entrySet().stream()
-                .filter(entry -> !entry.getKey().equals(blockerController))
-                .flatMap(entry -> entry.getValue().stream())
-                .anyMatch(EachOpponentCreatureBlocksThisTurnIfAbleEffect.class::isInstance);
+        boolean opponentRequirement = gameData
+                .floatingEffectsOnNamedPlayers(EachOpponentCreatureBlocksThisTurnIfAbleEffect.class).stream()
+                .anyMatch(floating -> !floating.affectedPlayerId().equals(blockerController));
         return opponentRequirement || blocker.isMustBlockThisTurnIfAble()
                 || gameQueryService.hasActiveStaticEffectIncludingGranted(gameData, blocker,
                         MustBlockEachCombatEffect.class)

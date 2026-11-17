@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -44,7 +45,7 @@ class FleetingFlightTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
-        assertThat(gd.creaturesWithCombatDamagePrevented).doesNotContain(target.getId());
+        assertThat(Prevention.combatDamagePrevented(gd)).doesNotContain(target.getId());
     }
 
     @Test
@@ -91,7 +92,7 @@ class FleetingFlightTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Fleeting Flight");
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.creaturesWithCombatDamagePrevented).doesNotContain(target.getId());
+        assertThat(Prevention.combatDamagePrevented(gd)).doesNotContain(target.getId());
     }
 
     @Test

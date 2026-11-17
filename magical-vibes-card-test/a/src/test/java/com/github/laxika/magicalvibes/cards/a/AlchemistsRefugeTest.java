@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.GrantFlashToSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.f.FavorableWinds;
 import com.github.laxika.magicalvibes.cards.w.WanderingWolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -98,12 +99,12 @@ class AlchemistsRefugeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        assertThat(gd.playersWithFlashUntilEndOfTurn).contains(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), GrantFlashToSpellsThisTurnEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(gd.playersWithFlashUntilEndOfTurn).doesNotContain(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), GrantFlashToSpellsThisTurnEffect.class)).isFalse();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

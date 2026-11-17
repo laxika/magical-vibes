@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
@@ -465,16 +467,14 @@ class TurnCleanupServiceTest {
         }
 
         @Test
-        @DisplayName("Clears global damage prevention flags")
+        @DisplayName("Clears global damage prevention shield")
         void clearsGlobalDamagePreventionFlags() {
             gd.globalDamagePreventionShield = 10;
-            gd.preventAllCombatDamage = true;
             gd.allPermanentsEnterTappedThisTurn = true;
 
             sut.resetEndOfTurnModifiers(gd);
 
             assertThat(gd.globalDamagePreventionShield).isZero();
-            assertThat(gd.preventAllCombatDamage).isFalse();
             assertThat(gd.allPermanentsEnterTappedThisTurn).isFalse();
         }
 
@@ -556,16 +556,6 @@ class TurnCleanupServiceTest {
         }
 
         @Test
-        @DisplayName("Clears preventDamageFromColors")
-        void clearsPreventDamageFromColors() {
-            gd.preventDamageFromColors.add(CardColor.RED);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.preventDamageFromColors).isEmpty();
-        }
-
-        @Test
         @DisplayName("Clears combatDamageRedirectTarget")
         void clearsCombatDamageRedirectTarget() {
             gd.combatDamageRedirectTarget = player2Id;
@@ -586,38 +576,6 @@ class TurnCleanupServiceTest {
         }
 
         @Test
-        @DisplayName("Clears allDamagePreventionPredicates")
-        void clearsAllDamagePreventionPredicates() {
-            gd.allDamagePreventionPredicates.add(new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate());
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.allDamagePreventionPredicates).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears allDamagePreventionPredicatesByController")
-        void clearsAllDamagePreventionPredicatesByController() {
-            gd.allDamagePreventionPredicatesByController.put(player1Id,
-                    java.util.Set.of(new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate()));
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.allDamagePreventionPredicatesByController).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears combatDamagePreventionPredicatesByController")
-        void clearsCombatDamagePreventionPredicatesByController() {
-            gd.combatDamagePreventionPredicatesByController.put(player1Id,
-                    java.util.Set.of(new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate()));
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.combatDamagePreventionPredicatesByController).isEmpty();
-        }
-
-        @Test
         @DisplayName("Clears playerColorDamagePreventionCount")
         void clearsPlayerColorDamagePreventionCount() {
             gd.playerColorDamagePreventionCount.put(player1Id,
@@ -626,17 +584,6 @@ class TurnCleanupServiceTest {
             sut.resetEndOfTurnModifiers(gd);
 
             assertThat(gd.playerColorDamagePreventionCount).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears playerProtectionFromColorsUntilEndOfTurn")
-        void clearsPlayerProtectionFromColors() {
-            gd.playerProtectionFromColorsUntilEndOfTurn.put(player1Id,
-                    new java.util.HashSet<>(Set.of(CardColor.RED)));
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.playerProtectionFromColorsUntilEndOfTurn).isEmpty();
         }
 
         @Test
@@ -650,36 +597,6 @@ class TurnCleanupServiceTest {
         }
 
         @Test
-        @DisplayName("Clears permanentsPreventedFromDealingDamage")
-        void clearsPermanentsPreventedFromDealingDamage() {
-            gd.permanentsPreventedFromDealingDamage.add(UUID.randomUUID());
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.permanentsPreventedFromDealingDamage).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears playersWithAllDamagePrevented")
-        void clearsPlayersWithAllDamagePrevented() {
-            gd.playersWithAllDamagePrevented.add(player1Id);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.playersWithAllDamagePrevented).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears playersWithAllCreatureDamagePrevented")
-        void clearsPlayersWithAllCreatureDamagePrevented() {
-            gd.playersWithAllCreatureDamagePrevented.add(player1Id);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.playersWithAllCreatureDamagePrevented).isEmpty();
-        }
-
-        @Test
         @DisplayName("Clears drawReplacementTargetToController")
         void clearsDrawReplacementTargetToController() {
             gd.drawReplacementTargetToController.put(player1Id, player2Id);
@@ -687,56 +604,6 @@ class TurnCleanupServiceTest {
             sut.resetEndOfTurnModifiers(gd);
 
             assertThat(gd.drawReplacementTargetToController).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears playerSpellsCantBeCounteredByColorsThisTurn")
-        void clearsSpellsCantBeCountered() {
-            gd.playerSpellsCantBeCounteredByColorsThisTurn.put(player1Id, Set.of(CardColor.GREEN));
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.playerSpellsCantBeCounteredByColorsThisTurn).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears playersCreatureSpellsCantBeCounteredThisTurn")
-        void clearsCreatureSpellCounterProtection() {
-            gd.playersCreatureSpellsCantBeCounteredThisTurn.add(player1Id);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.playersCreatureSpellsCantBeCounteredThisTurn).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears playerCreaturesCantBeTargetedByColorsThisTurn")
-        void clearsCreaturesCantBeTargeted() {
-            gd.playerCreaturesCantBeTargetedByColorsThisTurn.put(player1Id, Set.of(CardColor.BLACK));
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.playerCreaturesCantBeTargetedByColorsThisTurn).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears playersSilencedThisTurn")
-        void clearsPlayersSilencedThisTurn() {
-            gd.playersSilencedThisTurn.add(player1Id);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.playersSilencedThisTurn).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears the global creature attack restriction")
-        void clearsCreaturesCantAttackThisTurn() {
-            gd.creaturesCantAttackThisTurn = true;
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.creaturesCantAttackThisTurn).isFalse();
         }
 
         @Test
@@ -1038,9 +905,11 @@ class TurnCleanupServiceTest {
         }
 
         @Test
-        @DisplayName("Returns true when player is in playersWithNoMaximumHandSize set")
+        @DisplayName("Returns true when the player has a rest-of-game no-maximum-hand-size grant")
         void returnsTrueWhenInGlobalSet() {
-            gd.playersWithNoMaximumHandSize.add(player1Id);
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1Id,
+                    new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.REST_OF_GAME), player1Id,
+                    Duration.PERMANENT));
 
             assertThat(sut.hasNoMaximumHandSize(gd, player1Id)).isTrue();
         }

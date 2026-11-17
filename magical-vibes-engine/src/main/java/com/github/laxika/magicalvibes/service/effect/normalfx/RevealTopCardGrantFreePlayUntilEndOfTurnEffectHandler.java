@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -34,7 +36,12 @@ public class RevealTopCardGrantFreePlayUntilEndOfTurnEffectHandler implements No
         }
 
         Card topCard = deck.getFirst();
-        gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.put(controllerId, topCard.getId());
+        gameData.floatingEffectsOnPlayer(controllerId, RevealTopCardGrantFreePlayUntilEndOfTurnEffect.class)
+                .forEach(gameData::endFloatingEffect);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), controllerId,
+                new RevealTopCardGrantFreePlayUntilEndOfTurnEffect(topCard.getId()), controllerId,
+                Duration.UNTIL_END_OF_TURN));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData,

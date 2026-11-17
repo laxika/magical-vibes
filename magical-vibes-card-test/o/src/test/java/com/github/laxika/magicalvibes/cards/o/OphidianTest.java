@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
@@ -50,7 +51,7 @@ class OphidianTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
 
         harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.assertLife(player2, 20);
@@ -70,7 +71,7 @@ class OphidianTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
 
         harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.assertLife(player2, 19);
@@ -90,7 +91,7 @@ class OphidianTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(ophidian.getId())
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(ophidian.getId())
                 .doesNotContain(otherAttacker.getId());
 
         harness.passUntil(TurnStep.END_OF_COMBAT);

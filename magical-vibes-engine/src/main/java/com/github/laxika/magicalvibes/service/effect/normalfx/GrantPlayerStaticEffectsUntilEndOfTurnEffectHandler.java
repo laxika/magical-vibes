@@ -15,6 +15,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 @Component
 @RequiredArgsConstructor
@@ -36,9 +38,10 @@ public class GrantPlayerStaticEffectsUntilEndOfTurnEffectHandler implements Norm
                         ? snapshotEscapeGrant(gameData, controllerId, entry, escape)
                         : grant)
                 .toList();
-        gameData.playerStaticEffectsUntilEndOfTurn
-                .computeIfAbsent(controllerId, ignored -> new java.util.ArrayList<>())
-                .addAll(granted);
+        for (CardEffect grant : granted) {
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), controllerId, grant, controllerId, Duration.UNTIL_END_OF_TURN));
+        }
     }
 
     /**

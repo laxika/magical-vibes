@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BitterTriumph;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -28,7 +29,7 @@ class TheBelligerentTest extends BaseCardTest {
         attackWithBelligerent(shock);
 
         assertThat(findPermanent(player1, "Treasure")).isNotNull();
-        assertThat(gd.playersAllowedToPlayFromLibraryTopUntilEndOfTurn).contains(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), AllowPlayFromTopOfLibraryUntilEndOfTurnEffect.class)).isTrue();
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveFromLibraryTop(player1, player2.getId());
@@ -67,7 +68,7 @@ class TheBelligerentTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(gd.playersAllowedToPlayFromLibraryTopUntilEndOfTurn).doesNotContain(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), AllowPlayFromTopOfLibraryUntilEndOfTurnEffect.class)).isFalse();
         assertThatThrownBy(() -> harness.castFromLibraryTop(player1, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }

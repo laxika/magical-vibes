@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
+import com.github.laxika.magicalvibes.model.effect.OtherCreaturesCantAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayForArtifactsOrCreaturesCantAttackThisCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.AttackDirection;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
@@ -92,7 +96,9 @@ public class AttackLegalityService {
      */
     public boolean canAttack(GameData gameData, Permanent creature, UUID controllerId) {
         if (!gameQueryService.isCreature(gameData, creature)) return false;
-        if (gameData.creaturesCantAttackThisCombat) return false;
+        if (gameData.hasFloatingEffectOnPlayer(null, MayPayForArtifactsOrCreaturesCantAttackThisCombatEffect.class)) {
+            return false;
+        }
         if (gameData.onlyLandCreaturesCanAttackThisCombat && !gameQueryService.isLand(gameData, creature)) {
             return false;
         }
@@ -111,8 +117,8 @@ public class AttackLegalityService {
         if (creature.isTapped()) return false;
         if (creature.isCantAttackThisTurn()) return false;
         if (isCantAttackByPlayerCreaturesRestriction(gameData, creature)) return false;
-        if (!gameData.permanentsCantAttackUntilNextTurn.getOrDefault(creature.getId(), java.util.Set.of()).isEmpty()) return false;
-        if (gameData.creaturesCantAttackThisTurn) return false;
+        if (gameData.hasFloatingEffectOnPermanent(creature.getId(), CantAttackThisTurnEffect.class)) return false;
+        if (gameData.hasFloatingEffectOnPlayer(null, CreaturesCantAttackThisTurnEffect.class)) return false;
         if (gameQueryService.isLockedFromAttacking(gameData, creature.getId())) return false;
         if (gameQueryService.isPeaceTalksActive(gameData)) return false;
         if (isRestrictedByOtherCreaturesCantAttack(gameData, creature)) return false;
@@ -229,7 +235,8 @@ public class AttackLegalityService {
         // Until-end-of-turn grants to a player's matching creatures (Wakestone Gargoyle). Such a grant only
         // modifies the rules of the game, so it also reaches creatures that enter later (CR 611.2c).
         FilterContext controllerContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
-        for (CardEffect effect : gameData.playerStaticEffectsUntilEndOfTurn.getOrDefault(controllerId, List.of())) {
+        for (CardEffect effect : gameData.floatingPlayerEffects(controllerId,
+                NoDefenderAttackPermissionEffect.class)) {
             if (effect instanceof NoDefenderAttackPermissionEffect grant
                     && grant.noDefenderAttackMatcher() != null
                     && predicateEvaluationService.matchesPermanentPredicate(
@@ -626,21 +633,16 @@ public class AttackLegalityService {
 
     /**
      * Intimidation Bolt lock ("Other creatures can't attack this turn"). While
-     * {@code gameData.otherCreaturesCantAttackExemptCreatureIds} holds any exemptions, a creature may
+     * a resolved Intimidation Bolt names an exemption, a creature may
      * attack only if its ID equals every one of them — i.e. it is the creature every Intimidation Bolt
      * resolved this turn targeted. Evaluated at declaration time, so it also bars creatures that entered
      * after the spell resolved. Empty list = no restriction.
      */
     private boolean isRestrictedByOtherCreaturesCantAttack(GameData gameData, Permanent creature) {
-        List<UUID> exemptions = gameData.otherCreaturesCantAttackExemptCreatureIds;
-        if (exemptions.isEmpty()) {
-            return false;
-        }
-        synchronized (exemptions) {
-            for (UUID exemptId : exemptions) {
-                if (!creature.getId().equals(exemptId)) {
-                    return true;
-                }
+        for (FloatingContinuousEffect lock
+                : gameData.floatingEffectsOfTypes(OtherCreaturesCantAttackThisTurnEffect.class)) {
+            if (!creature.getId().equals(((OtherCreaturesCantAttackThisTurnEffect) lock.effect()).exemptCreatureId())) {
+                return true;
             }
         }
         return false;
@@ -920,16 +922,6 @@ public class AttackLegalityService {
                     .map(CombatAttackRequirementEffect.class::cast)
                     .filter(e -> isCombatAttackRequirementApplicable(
                             gameData, creature, permanent, e, matcherContext))
-                    .count();
-        });
-
-        gameData.playerStaticEffectsUntilEndOfTurn.forEach((effectControllerId, effects) -> {
-            FilterContext context = FilterContext.of(gameData).withSourceControllerId(effectControllerId);
-            count[0] += (int) effects.stream()
-                    .filter(com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect.class::isInstance)
-                    .map(com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect.class::cast)
-                    .filter(requirement -> predicateEvaluationService.matchesPermanentPredicate(
-                            creature, requirement.matcher(), context))
                     .count();
         });
 

@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -29,7 +31,8 @@ public class OpponentsCantGainLifeThisTurnEffectHandler implements NormalEffectH
 
         for (UUID playerId : gameData.playerIds) {
             if (!playerId.equals(controllerId)) {
-                gameData.playersWhoCantGainLifeThisTurn.add(playerId);
+                gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                        entry.getSourcePermanentId(), controllerId, effect, playerId, Duration.UNTIL_END_OF_TURN));
             }
         }
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), ": opponents can't gain life this turn."));

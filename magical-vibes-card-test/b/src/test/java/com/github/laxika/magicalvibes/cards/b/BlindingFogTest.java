@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.l.LegionConquistador;
 import com.github.laxika.magicalvibes.cards.l.LightningStrike;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -42,13 +44,13 @@ class BlindingFogTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Resolving Blinding Fog sets preventAllDamageToAllCreatures flag")
+    @DisplayName("Resolving Blinding Fog prevents all damage to creatures")
     void resolvingSetsPreventionFlag() {
         harness.castFromHand(player1, new BlindingFog(), "{2}{G}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.preventAllDamageToAllCreatures).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_TO_CREATURES)).isTrue();
     }
 
     @Test
@@ -193,7 +195,7 @@ class BlindingFogTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.preventAllDamageToAllCreatures).isFalse();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_TO_CREATURES)).isFalse();
     }
 
     @Test

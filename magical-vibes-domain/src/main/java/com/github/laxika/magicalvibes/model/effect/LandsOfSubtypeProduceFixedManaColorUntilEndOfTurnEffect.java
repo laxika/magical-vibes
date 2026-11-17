@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
  * other type (Chaos Moon's even branch, "that Mountain produces colorless mana instead of any other
  * type"). The amount produced is unchanged; only the type is replaced.
  *
- * <p>Recorded in {@code GameData.landSubtypeFixedManaColorThisTurn} and read by
- * {@code GameQueryService.fixedLandManaColor}; cleared by {@code TurnCleanupService}. For the
+ * <p>A floating effect on every player that lasts until end of turn, read by
+ * {@code GameQueryService.fixedLandManaColor}. For the
  * permanent, all-lands version use {@link ReplaceLandManaWithColorEffect}.
  */
 public record LandsOfSubtypeProduceFixedManaColorUntilEndOfTurnEffect(CardSubtype subtype, ManaColor color)

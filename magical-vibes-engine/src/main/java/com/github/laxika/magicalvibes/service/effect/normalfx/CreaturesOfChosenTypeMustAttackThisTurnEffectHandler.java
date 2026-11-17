@@ -14,8 +14,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 /**
  * Resolves {@link CreaturesOfChosenTypeMustAttackThisTurnEffect} by prompting for a creature type
@@ -50,9 +51,10 @@ public class CreaturesOfChosenTypeMustAttackThisTurnEffectHandler implements Nor
 
         // Not a characteristic or control change, so it modifies the game rules and also binds creatures
         // of that type that enter or gain the type later this turn (CR 611.2c).
-        gameData.playerStaticEffectsUntilEndOfTurn
-                .computeIfAbsent(controllerId, ignored -> new ArrayList<>())
-                .add(new MatchingCreaturesMustAttackEffect(new PermanentHasSubtypePredicate(chosenSubtype)));
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), controllerId,
+                new MatchingCreaturesMustAttackEffect(new PermanentHasSubtypePredicate(chosenSubtype)),
+                controllerId, Duration.UNTIL_END_OF_TURN));
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " forces " + chosenSubtype.getDisplayName() + " creatures to attack this turn if able."));

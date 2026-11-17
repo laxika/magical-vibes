@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.LimitControllerToOneMoreSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,11 +26,11 @@ class IrencragFeatTest extends BaseCardTest {
         addFeatMana();
 
         harness.castSorcery(player1, 0, 0);
-        assertThat(gd.playersMaxSpellsThisTurn).isEmpty();
+        assertThat(gd.spellLimitThisTurn(player1.getId())).isEqualTo(Integer.MAX_VALUE);
 
         harness.passBothPriorities();
 
-        assertThat(gd.playersMaxSpellsThisTurn).containsEntry(player1.getId(), 2);
+        assertThat(gd.spellLimitThisTurn(player1.getId())).isEqualTo(2);
     }
 
     @Test
@@ -60,11 +62,12 @@ class IrencragFeatTest extends BaseCardTest {
     @Test
     @DisplayName("Restriction is cleared at end of turn")
     void restrictionIsClearedAtEndOfTurn() {
-        gd.playersMaxSpellsThisTurn.put(player1.getId(), 2);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
+                new LimitControllerToOneMoreSpellThisTurnEffect(2), player1.getId(), Duration.UNTIL_END_OF_TURN));
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
-        assertThat(gd.playersMaxSpellsThisTurn).isEmpty();
+        assertThat(gd.spellLimitThisTurn(player1.getId())).isEqualTo(Integer.MAX_VALUE);
     }
 
     @Test

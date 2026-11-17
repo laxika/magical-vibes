@@ -68,7 +68,7 @@ class TheStasisCoffinTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playersWithProtectionFromEverythingUntilNextTurn).doesNotContain(player1.getId());
+        assertThat(gqs.playerHasProtectionFromEverything(gd, player1.getId())).isFalse();
     }
 
     @Test

@@ -37,7 +37,7 @@ class MandateOfPeaceTest extends BaseCardTest {
         assertThat(attacker.isAttacking()).isFalse();
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playersSilencedThisTurn).containsOnly(player2.getId());
+        assertThat(silencedPlayers()).containsOnly(player2.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Mandate of Peace"));
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -74,7 +74,7 @@ class MandateOfPeaceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.playersSilencedThisTurn).containsOnly(player2.getId());
+        assertThat(silencedPlayers()).containsOnly(player2.getId());
         harness.castFromHand(player1, new Silence(), "{W}");
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Silence");
@@ -93,7 +93,7 @@ class MandateOfPeaceTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, harness::passBothPriorities);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
-        assertThat(gd.playersSilencedThisTurn).containsOnly(player2.getId());
+        assertThat(silencedPlayers()).containsOnly(player2.getId());
     }
 
     @Test
@@ -112,6 +112,6 @@ class MandateOfPeaceTest extends BaseCardTest {
         assertThat(attacker.isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.playersSilencedThisTurn).containsOnly(player1.getId());
+        assertThat(silencedPlayers()).containsOnly(player1.getId());
     }
 }

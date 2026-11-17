@@ -36,8 +36,7 @@ class GuardianArchonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(archon.getProtectionFromPlayerIdsUntilEndOfTurn()).contains(player2.getId());
-        assertThat(gd.playerProtectionFromPlayerIdsUntilEndOfTurn.get(player1.getId()))
-                .contains(player2.getId());
+        assertThat(gqs.playerHasProtectionFromOpponents(gd, player1.getId(), player2.getId())).isTrue();
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -114,8 +113,7 @@ class GuardianArchonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getProtectionFromPlayerIdsUntilEndOfTurn()).isEmpty();
-        assertThat(gd.playerProtectionFromPlayerIdsUntilEndOfTurn.getOrDefault(player1.getId(), java.util.Set.of()))
-                .isEmpty();
+        assertThat(gqs.playerHasProtectionFromOpponents(gd, player1.getId(), player2.getId())).isFalse();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, archon.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once");
@@ -136,8 +134,7 @@ class GuardianArchonTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(archon);
         assertThat(target.getProtectionFromPlayerIdsUntilEndOfTurn()).contains(player2.getId());
-        assertThat(gd.playerProtectionFromPlayerIdsUntilEndOfTurn.get(player1.getId()))
-                .contains(player2.getId());
+        assertThat(gqs.playerHasProtectionFromOpponents(gd, player1.getId(), player2.getId())).isTrue();
     }
 
     @Test
@@ -157,8 +154,7 @@ class GuardianArchonTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(archon.getProtectionFromPlayerIdsUntilEndOfTurn()).isEmpty();
-        assertThat(gd.playerProtectionFromPlayerIdsUntilEndOfTurn.getOrDefault(player1.getId(), java.util.Set.of()))
-                .isEmpty();
+        assertThat(gqs.playerHasProtectionFromOpponents(gd, player1.getId(), player2.getId())).isFalse();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castAndResolveInstant(player2, 0, archon.getId());

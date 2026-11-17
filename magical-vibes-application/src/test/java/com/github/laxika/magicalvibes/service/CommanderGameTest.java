@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.model.*;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.Test;
@@ -138,7 +140,7 @@ class CommanderGameTest extends BaseCardTest {
         Card card = commander(); gd.playerCommandZones.get(player1.getId()).clear();
         Permanent permanent = harness.addToBattlefieldAndReturn(player1, card);
         permanent.setAttacking(true); permanent.setSummoningSick(false);
-        gd.preventAllCombatDamageToPlayers = true;
+        Prevention.add(gd, PreventDamageEffect.allCombatToPlayers());
         harness.resolveCombatDamage();
         assertThat(gd.commanderDamageReceived.getOrDefault(player2.getId(), Map.of()).getOrDefault(card.getId(), 0)).isZero();
     }

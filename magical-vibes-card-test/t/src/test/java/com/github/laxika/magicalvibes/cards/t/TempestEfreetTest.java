@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.effect.ControllerCantLoseLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -98,7 +101,8 @@ class TempestEfreetTest extends BaseCardTest {
     void cannotPayLifeWhenLifeLossIsProhibited() {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new GrizzlyBears()));
-        gd.playersWhoCantLoseLifeThisTurn.add(player2.getId());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                new ControllerCantLoseLifeThisTurnEffect(), player2.getId(), Duration.UNTIL_END_OF_TURN));
         addCreatureReady(player1, new TempestEfreet());
 
         harness.activateAbility(player1, 0, null, player2.getId());

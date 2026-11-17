@@ -46,8 +46,8 @@ class SilenceTest extends BaseCardTest {
             harness.castFromHand(player1, new Silence(), "{W}");
             harness.passBothPriorities();
 
-            assertThat(gd.playersSilencedThisTurn).contains(player2.getId());
-            assertThat(gd.playersSilencedThisTurn).doesNotContain(player1.getId());
+            assertThat(silencedPlayers()).contains(player2.getId());
+            assertThat(silencedPlayers()).doesNotContain(player1.getId());
         }
 
         @Test
@@ -194,7 +194,7 @@ class SilenceTest extends BaseCardTest {
         TurnCleanupService svc = GameTestEngineContext.get().getBean(TurnCleanupService.class);
         svc.resetEndOfTurnModifiers(gd);
 
-        assertThat(gd.playersSilencedThisTurn).isEmpty();
+        assertThat(silencedPlayers()).isEmpty();
     }
 
     @Test
@@ -208,10 +208,10 @@ class SilenceTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player1, 17);
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.playersSilencedThisTurn).doesNotContain(player2.getId());
+        assertThat(silencedPlayers()).doesNotContain(player2.getId());
 
         harness.passBothPriorities();
-        assertThat(gd.playersSilencedThisTurn).contains(player2.getId());
+        assertThat(silencedPlayers()).contains(player2.getId());
     }
 
     @Test

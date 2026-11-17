@@ -4,6 +4,9 @@ import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.g.GraspOfDarkness;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -146,7 +149,8 @@ class CliffhavenVampireTest extends BaseCardTest {
     @DisplayName("An attempted life gain does not trigger when life gain is prohibited")
     void prohibitedLifeGainDoesNotTrigger() {
         harness.addToBattlefield(player1, new CliffhavenVampire());
-        gd.playersCantGainLifeThisTurn = true;
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
+                new PlayersCantGainLifeThisTurnEffect(), null, Duration.UNTIL_END_OF_TURN));
         harness.setHand(player1, List.of(new AngelOfMercy()));
         harness.addMana(player1, ManaColor.WHITE, 5);
 

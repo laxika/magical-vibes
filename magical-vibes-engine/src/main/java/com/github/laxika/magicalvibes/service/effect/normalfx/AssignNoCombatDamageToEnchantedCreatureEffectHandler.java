@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -38,7 +39,8 @@ public class AssignNoCombatDamageToEnchantedCreatureEffectHandler implements Nor
             return;
         }
 
-        gameData.creaturesPreventedFromDealingCombatDamage.add(creature.getId());
+        PreventionSupport.preventCombatDamageDealtBy(gameData, entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), creature.getId(), Duration.UNTIL_END_OF_TURN);
         gameData.creaturesAssigningNoCombatDamageThisTurn.add(creature.getId());
         gameLogService.append(gameData,
                 GameLog.text(creature.getCard().getName() + " assigns no combat damage this turn."));

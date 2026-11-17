@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+import com.github.laxika.magicalvibes.model.effect.MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.ThaliaGuardianOfThraben;
@@ -65,10 +67,11 @@ class GwenomRemorselessTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.libraryTopCardLifePlayPermissionsUntilEndOfTurn).contains(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect.class)).isTrue();
         GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
-        assertThat(gd.libraryTopCardLifePlayPermissionsUntilEndOfTurn).doesNotContain(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect.class)).isFalse();
         assertThatThrownBy(() -> harness.castFromLibraryTop(player1, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }

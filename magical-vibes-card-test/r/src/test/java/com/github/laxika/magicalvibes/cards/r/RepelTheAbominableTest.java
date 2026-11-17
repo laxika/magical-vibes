@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.cards.f.FieldCreeper;
 import com.github.laxika.magicalvibes.cards.g.GalvanicBombardment;
 import com.github.laxika.magicalvibes.cards.h.HamletCaptain;
@@ -73,7 +74,7 @@ class RepelTheAbominableTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.preventAllDamageFromNonHumanSources).isFalse();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_FROM_NON_HUMAN_SOURCES)).isFalse();
     }
 
     @Test

@@ -59,7 +59,7 @@ class PerchProtectionTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.extraTurns).containsExactly(player2.getId());
         assertThat(gqs.canPlayerLifeChange(gd, player1.getId())).isFalse();
-        assertThat(gd.playersWithProtectionFromEverythingUntilNextTurn).contains(player1.getId());
+        assertThat(gqs.playerHasProtectionFromEverything(gd, player1.getId())).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(perchProtection.getId()));
     }

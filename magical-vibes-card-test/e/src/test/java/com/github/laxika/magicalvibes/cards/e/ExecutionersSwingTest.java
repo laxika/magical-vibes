@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.b.BorosReckoner;
 import com.github.laxika.magicalvibes.cards.g.GiantAdephage;
 import com.github.laxika.magicalvibes.cards.g.GreensideWatcher;
@@ -147,7 +149,7 @@ class ExecutionersSwingTest extends BaseCardTest {
         Permanent watcher = harness.addToBattlefieldAndReturn(player2, new GreensideWatcher());
         watcher.setAttacking(true);
         watcher.setSummoningSick(false);
-        gd.preventAllCombatDamage = true;
+        Prevention.add(gd, PreventDamageEffect.allCombat());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();

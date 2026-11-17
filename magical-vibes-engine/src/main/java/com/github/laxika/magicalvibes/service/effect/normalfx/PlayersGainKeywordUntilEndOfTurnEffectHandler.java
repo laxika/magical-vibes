@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.PlayersGainKeywordUntilEndOfT
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 @Component
 public class PlayersGainKeywordUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
@@ -21,9 +22,9 @@ public class PlayersGainKeywordUntilEndOfTurnEffectHandler implements NormalEffe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var grant = (PlayersGainKeywordUntilEndOfTurnEffect) effect;
         for (UUID playerId : gameData.playerIds) {
-            gameData.playerKeywordsUntilEndOfTurn
-                    .computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet())
-                    .add(grant.keyword());
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), grant, playerId,
+                    Duration.UNTIL_END_OF_TURN));
         }
     }
 }

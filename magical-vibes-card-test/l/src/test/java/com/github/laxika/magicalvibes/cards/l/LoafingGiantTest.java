@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.k.KavuAggressor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,7 +30,7 @@ class LoafingGiantTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(giant.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(giant.getId());
     }
 
     @Test
@@ -59,7 +60,7 @@ class LoafingGiantTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(giant.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(giant.getId());
     }
 
     @Test
@@ -76,7 +77,7 @@ class LoafingGiantTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(giant.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(giant.getId());
         harness.assertInGraveyard(player1, "Kavu Aggressor");
     }
 

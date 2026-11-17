@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SewnEyeDrake;
@@ -183,6 +184,7 @@ class IntimidationBoltTest extends BaseCardTest {
 
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         harness.passBothPriorities();
     }
 }

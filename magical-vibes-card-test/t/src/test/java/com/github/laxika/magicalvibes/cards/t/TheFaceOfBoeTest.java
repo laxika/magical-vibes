@@ -188,7 +188,7 @@ class TheFaceOfBoeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.castFromHand(player2, new Silence(), "{W}");
         harness.passBothPriorities();
-        assertThat(gd.playersSilencedThisTurn).contains(player1.getId());
+        assertThat(silencedPlayers()).contains(player1.getId());
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(enforcers));
         harness.addMana(player1, ManaColor.RED, 1);

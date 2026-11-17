@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.cards.c.ChandraNovicePyromancer;
@@ -105,7 +107,7 @@ class AgonizingSyphonTest extends BaseCardTest {
     @Test
     void gainsFullLifeEvenWhenAllDamageIsPrevented() {
         Permanent sentinel = harness.addToBattlefieldAndReturn(player2, new GreenwoodSentinel());
-        gd.preventAllDamageToAllCreatures = true;
+        Prevention.add(gd, PreventDamageEffect.allToCreatures());
         harness.setLife(player1, 15);
         harness.setHand(player1, List.of(new AgonizingSyphon()));
         harness.addMana(player1, ManaColor.BLACK, 4);

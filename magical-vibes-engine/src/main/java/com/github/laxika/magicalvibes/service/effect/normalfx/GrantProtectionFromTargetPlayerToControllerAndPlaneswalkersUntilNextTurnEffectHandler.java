@@ -14,7 +14,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 @Slf4j
 @Component
@@ -37,9 +38,10 @@ public class GrantProtectionFromTargetPlayerToControllerAndPlaneswalkersUntilNex
             return;
         }
 
-        gameData.playerProtectionFromPlayerIdsUntilNextTurn
-                .computeIfAbsent(entry.getControllerId(), ignored -> ConcurrentHashMap.newKeySet())
-                .add(targetPlayerId);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(),
+                new GrantProtectionFromTargetPlayerToControllerAndPlaneswalkersUntilNextTurnEffect(targetPlayerId),
+                entry.getControllerId(), Duration.UNTIL_YOUR_NEXT_TURN));
         // Only the planeswalkers controlled as this resolves gain protection (CR 611.2c); it stays on
         // each of them if control changes and does not reach planeswalkers that enter later.
         List<Permanent> controlled = gameData.playerBattlefields.get(entry.getControllerId());

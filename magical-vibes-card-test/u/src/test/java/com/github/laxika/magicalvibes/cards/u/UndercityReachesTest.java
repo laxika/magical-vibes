@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.cards.n.NullProfusion;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
@@ -78,8 +81,10 @@ class UndercityReachesTest extends BaseCardTest {
         harness.inMutationScope(() -> planar.chaos(gd));
         harness.passBothPriorities();
 
-        assertThat(gd.playersWithNoMaximumHandSize).contains(player1.getId());
-        assertThat(gd.playersWithNoMaximumHandSize).doesNotContain(player2.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).contains(Duration.PERMANENT);
+        assertThat(gd.floatingEffectsOnPlayer(player2.getId(), GrantNoMaximumHandSizeEffect.class))
+                .extracting(FloatingContinuousEffect::duration).doesNotContain(Duration.PERMANENT);
     }
 
     @Test

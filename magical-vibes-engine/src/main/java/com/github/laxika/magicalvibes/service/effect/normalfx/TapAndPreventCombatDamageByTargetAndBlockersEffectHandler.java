@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -55,7 +56,10 @@ public class TapAndPreventCombatDamageByTargetAndBlockersEffectHandler implement
             }
         });
 
-        gameData.creaturesPreventedFromDealingCombatDamage.addAll(preventedCreatureIds);
+        for (UUID preventedId : preventedCreatureIds) {
+            PreventionSupport.preventCombatDamageDealtBy(gameData, entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), preventedId, Duration.UNTIL_END_OF_TURN);
+        }
         for (Permanent blocker : blockers) {
             tapUntapSupport.tapPermanent(gameData, blocker);
         }

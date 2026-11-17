@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,8 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link AssignNoCombatDamageEffect}: adds the stack entry's {@code sourcePermanentId} to
- * {@code creaturesPreventedFromDealingCombatDamage} and {@code creaturesAssigningNoCombatDamageThisTurn} (which unpreventable
+ * Resolves {@link AssignNoCombatDamageEffect}: prevents the combat damage of the stack entry's {@code sourcePermanentId}
+ * with a floating effect and adds it to {@code creaturesAssigningNoCombatDamageThisTurn} (which unpreventable
  * damage can't override) so that creature deals no combat damage this
  * turn (cleared at turn cleanup).
  */
@@ -43,10 +44,12 @@ public class AssignNoCombatDamageEffectHandler implements NormalEffectHandlerBea
 
         boolean thisCombatOnly = ((AssignNoCombatDamageEffect) effect).thisCombatOnly();
         if (thisCombatOnly) {
-            gameData.creaturesPreventedFromDealingCombatDamageThisCombat.add(attackerId);
+            PreventionSupport.preventCombatDamageDealtBy(gameData, entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), attackerId, Duration.UNTIL_END_OF_COMBAT);
             gameData.creaturesAssigningNoCombatDamageThisCombat.add(attackerId);
         } else {
-            gameData.creaturesPreventedFromDealingCombatDamage.add(attackerId);
+            PreventionSupport.preventCombatDamageDealtBy(gameData, entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), attackerId, Duration.UNTIL_END_OF_TURN);
             gameData.creaturesAssigningNoCombatDamageThisTurn.add(attackerId);
         }
         Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);

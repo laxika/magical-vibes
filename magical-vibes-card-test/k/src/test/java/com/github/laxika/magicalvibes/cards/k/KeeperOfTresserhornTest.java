@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.s.SoldeviSentry;
 import com.github.laxika.magicalvibes.cards.l.LeylineOfPunishment;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -40,7 +41,7 @@ class KeeperOfTresserhornTest extends BaseCardTest {
         declareBlockers(List.of());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife - 2);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
 
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
@@ -60,7 +61,7 @@ class KeeperOfTresserhornTest extends BaseCardTest {
         declareBlockers(List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
 
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 

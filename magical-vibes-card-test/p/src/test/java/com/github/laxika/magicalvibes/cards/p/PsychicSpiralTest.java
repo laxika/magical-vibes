@@ -10,9 +10,11 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PlayersGainKeywordUntilEndOfTurnEffect;
 
 @CardUsed({PsychicSpiral.class, Island.class, CentaurHealer.class})
 class PsychicSpiralTest extends BaseCardTest {
@@ -120,8 +122,9 @@ class PsychicSpiralTest extends BaseCardTest {
         harness.setHand(player1, List.of(spiral));
         harness.addMana(player1, ManaColor.BLUE, 5);
         harness.castInstant(player1, 0, player2.getId());
-        gd.playerKeywordsUntilEndOfTurn.computeIfAbsent(player2.getId(), id -> ConcurrentHashMap.newKeySet())
-                .add(Keyword.SHROUD);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                new PlayersGainKeywordUntilEndOfTurnEffect(Keyword.SHROUD), player2.getId(),
+                Duration.UNTIL_END_OF_TURN));
 
         harness.passBothPriorities();
 

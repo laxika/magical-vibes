@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardGrantFreePlayUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.Gamble;
@@ -53,8 +55,8 @@ class TemporalApertureTest extends BaseCardTest {
         activate();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.libraryTopCardFreePlayPermissionsUntilEndOfTurn)
-                .containsEntry(player1.getId(), darkRitual.getId());
+        assertThat(gd.floatingEffectsOnPlayer(player1.getId(), RevealTopCardGrantFreePlayUntilEndOfTurnEffect.class))
+                .extracting(fe -> ((RevealTopCardGrantFreePlayUntilEndOfTurnEffect) fe.effect()).cardId()).containsExactly(darkRitual.getId());
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(darkRitual);
     }
 
@@ -89,8 +91,7 @@ class TemporalApertureTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
         harness.assertInGraveyard(player1, "Dark Ritual");
-        assertThat(gd.libraryTopCardFreePlayPermissionsUntilEndOfTurn)
-                .doesNotContainKey(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), RevealTopCardGrantFreePlayUntilEndOfTurnEffect.class)).isFalse();
     }
 
     @Test
@@ -169,9 +170,9 @@ class TemporalApertureTest extends BaseCardTest {
         activate();
 
         GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
-        assertThat(gd.libraryTopCardFreePlayPermissionsUntilEndOfTurn)
-                .doesNotContainKey(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), RevealTopCardGrantFreePlayUntilEndOfTurnEffect.class)).isFalse();
     }
 
     @Test
@@ -183,8 +184,7 @@ class TemporalApertureTest extends BaseCardTest {
 
         assertThat(temporalAperture.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(gd.libraryTopCardFreePlayPermissionsUntilEndOfTurn)
-                .doesNotContainKey(player1.getId());
+        assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(), RevealTopCardGrantFreePlayUntilEndOfTurnEffect.class)).isFalse();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

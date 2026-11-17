@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashSet;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -75,9 +77,9 @@ class CacklingImpTest extends BaseCardTest {
     @DisplayName("Cannot target a player with protection from black")
     void cannotTargetPlayerWithProtectionFromBlack() {
         addReadyImp(player1);
-        gd.playerProtectionFromColorsUntilEndOfTurn
-                .computeIfAbsent(player2.getId(), ignored -> new HashSet<>())
-                .add(CardColor.BLACK);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.BLACK), player2.getId(),
+                Duration.UNTIL_END_OF_TURN));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -137,9 +139,9 @@ class CacklingImpTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        gd.playerProtectionFromColorsUntilEndOfTurn
-                .computeIfAbsent(player2.getId(), ignored -> new HashSet<>())
-                .add(CardColor.BLACK);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
+                new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.BLACK), player2.getId(),
+                Duration.UNTIL_END_OF_TURN));
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

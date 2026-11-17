@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.cards.r.RiverMerfolk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -35,7 +36,7 @@ class SporeCloudTest extends BaseCardTest {
         assertThat(attacker.getSkipUntapCount()).isEqualTo(1);
         assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
         assertThat(uninvolved.getSkipUntapCount()).isZero();
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
     }
 
     @Test
@@ -93,7 +94,7 @@ class SporeCloudTest extends BaseCardTest {
         assertThat(attacker.getSkipUntapCount()).isZero();
 
         advanceToNextUpkeep(player2);
-        assertThat(gd.preventAllCombatDamage).isFalse();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isFalse();
         advanceToNextUpkeep(player1);
         assertThat(attacker.isTapped()).isFalse();
     }

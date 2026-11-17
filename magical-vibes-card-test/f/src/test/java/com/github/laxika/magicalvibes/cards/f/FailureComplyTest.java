@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOpponentsCantCastUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -56,7 +57,7 @@ class FailureComplyTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "Shock");
 
-        assertThat(gd.opponentsCantCastNamedSpellsUntilControllerNextTurn.get(player1.getId()))
+        assertThat(lockedNames(player2))
                 .contains("Shock");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Failure // Comply"));
@@ -102,7 +103,7 @@ class FailureComplyTest extends BaseCardTest {
         harness.castAndResolveFlashback(player1, 0, null);
         harness.handleListChoice(player1, "Shock");
 
-        assertThat(gd.opponentsCantCastNamedSpellsUntilControllerNextTurn.get(player1.getId()))
+        assertThat(lockedNames(player2))
                 .contains("Shock");
 
         // Advance through player1's cleanup into player2's turn — lock still active.
@@ -115,7 +116,7 @@ class FailureComplyTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.opponentsCantCastNamedSpellsUntilControllerNextTurn.get(player1.getId()))
+        assertThat(lockedNames(player2))
                 .contains("Shock");
 
         // Advance through player2's turn into player1's next turn — lock clears.
@@ -128,8 +129,7 @@ class FailureComplyTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.opponentsCantCastNamedSpellsUntilControllerNextTurn.containsKey(player1.getId()))
-                .isFalse();
+        assertThat(lockedNames(player2)).isEmpty();
     }
 
     @Test
@@ -161,7 +161,7 @@ class FailureComplyTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(aftermath);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(aftermath);
-        assertThat(gd.opponentsCantCastNamedSpellsUntilControllerNextTurn).isEmpty();
+        assertThat(playersAffectedBy(ChooseCardNameOpponentsCantCastUntilNextTurnEffect.class)).isEmpty();
     }
 
     @Test
@@ -198,7 +198,14 @@ class FailureComplyTest extends BaseCardTest {
 
         harness.castAndResolveFlashback(player2, 0, null);
         harness.handleListChoice(player2, "Shock");
-        assertThat(gd.opponentsCantCastNamedSpellsUntilControllerNextTurn.get(player2.getId()))
+        assertThat(lockedNames(player1))
                 .contains("Shock");
+    }
+
+    private List<String> lockedNames(com.github.laxika.magicalvibes.model.Player opponent) {
+        return gd.floatingEffectsOnPlayer(opponent.getId(), ChooseCardNameOpponentsCantCastUntilNextTurnEffect.class)
+                .stream()
+                .map(fe -> ((ChooseCardNameOpponentsCantCastUntilNextTurnEffect) fe.effect()).cardName())
+                .toList();
     }
 }

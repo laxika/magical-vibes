@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.cards.i.IcatianJavelineers;
 import com.github.laxika.magicalvibes.cards.i.IcatianPriest;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -49,7 +50,7 @@ class SporeFlowerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(flower.getCounterCount(CounterType.FUNGUS)).isZero();
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
     }
 
     @Test
@@ -106,14 +107,14 @@ class SporeFlowerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(flower.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
-        assertThat(gd.preventAllCombatDamage).isFalse();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isFalse();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.passBothPriorities();
 
         assertThat(flower.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
     }
 
     @Test
@@ -128,7 +129,7 @@ class SporeFlowerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(flower.getCounterCount(CounterType.FUNGUS)).isZero();
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
     }
 
     @Test

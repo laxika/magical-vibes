@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.effect.AllowCastSpellsFromHandWithoutPayingManaCostUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.AdventureCast;
@@ -1898,7 +1899,8 @@ public class CastingCostService {
             return cardSelfSource;
         }
 
-        if (sourceZone == Zone.HAND && gameData.playersWithFreeHandCastUntilEndOfTurn.contains(playerId)) {
+        if (sourceZone == Zone.HAND && gameData.hasFloatingEffectOnPlayer(playerId,
+                AllowCastSpellsFromHandWithoutPayingManaCostUntilEndOfTurnEffect.class)) {
             return new FreeCastSource(null, null, null);
         }
         List<CardPredicate> nextSpellPermissions = gameData.nextSpellFreeCastPermissionsThisTurn.get(playerId);

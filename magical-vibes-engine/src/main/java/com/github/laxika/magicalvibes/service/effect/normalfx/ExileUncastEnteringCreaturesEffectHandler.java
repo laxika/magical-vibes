@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileUncastEnteringCreaturesEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,13 +24,14 @@ public class ExileUncastEnteringCreaturesEffectHandler implements NormalEffectHa
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), effect, entry.getControllerId(),
+                Duration.UNTIL_END_OF_TURN));
         if (((ExileUncastEnteringCreaturesEffect) effect).nontokenOnly()) {
-            gameData.playersExilingUncastEnteringNontokenCreaturesThisTurn.add(entry.getControllerId());
             gameLogService.append(gameData, GameLog.text(
                     "Nontoken creatures that would enter without having been cast are exiled instead this turn."));
             return;
         }
-        gameData.playersExilingUncastEnteringCreaturesThisTurn.add(entry.getControllerId());
         gameLogService.append(gameData, GameLog.text(
                 "Creatures that would enter without having been cast are exiled instead this turn."));
     }

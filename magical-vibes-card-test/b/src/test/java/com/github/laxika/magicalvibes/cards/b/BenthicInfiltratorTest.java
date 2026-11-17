@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.e.ExpeditionEnvoy;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -110,7 +112,7 @@ class BenthicInfiltratorTest extends BaseCardTest {
         ExpeditionEnvoy topCard = new ExpeditionEnvoy();
         harness.setLibrary(player2, List.of(topCard));
         harness.forceActivePlayer(player1);
-        gd.preventAllCombatDamage = true;
+        Prevention.add(gd, PreventDamageEffect.allCombat());
 
         harness.resolveCombatDamage();
 

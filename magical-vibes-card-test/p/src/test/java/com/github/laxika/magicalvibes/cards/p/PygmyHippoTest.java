@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -61,7 +62,7 @@ class PygmyHippoTest extends BaseCardTest {
         assertThat(island.isTapped()).isTrue();
         assertThat(bears.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
         harness.assertLife(player2, 20);
 
         // Auto-pass through the rest of combat drains the delayed mana onto the stack at
@@ -137,7 +138,7 @@ class PygmyHippoTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(forest.isTapped()).isFalse();
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
 
         harness.passBothPriorities();
         harness.passBothPriorities();

@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MayTapLandsYouDontControlForSpellsUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,9 +29,8 @@ public class MayTapLandsYouDontControlForSpellsUntilEndOfTurnEffectHandler imple
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        gameData.mayTapLandsForSpellsUntilEndOfTurn.add(controllerId);
-
-        
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), controllerId, effect, controllerId, Duration.UNTIL_END_OF_TURN));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), ": you may tap lands you don't control for mana until end of turn (spend only to cast spells)."));
         log.info("Game {} - {} may tap foreign lands for spells until end of turn", gameData.id, controllerId);
     }

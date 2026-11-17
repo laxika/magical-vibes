@@ -1478,7 +1478,7 @@ public class MayCastHandlerService {
         stackEntry.setPhyrexianManaPaidWithLife(phyrexianManaPaidWithLife);
         gameData.stack.add(stackEntry);
         gameData.recordSpellCast(player.getId(), cardToCast);
-        gameData.preventAdditionalSpellCastsThisTurn(player.getId());
+        gameData.preventAdditionalSpellCastsThisTurn(cardToCast.getName(), player.getId());
         gameData.priorityPassedBy.clear();
 
         gameLogService.append(gameData, GameLog.builder().text(playerName + " casts ").card(cardToCast)

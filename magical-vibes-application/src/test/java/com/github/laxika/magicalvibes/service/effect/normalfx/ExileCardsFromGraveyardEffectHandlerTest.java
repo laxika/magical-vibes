@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -206,7 +207,7 @@ class ExileCardsFromGraveyardEffectHandlerTest {
                 exileCardsFromGraveyardHandler.resolve(gd, entry, effect);
 
                 verify(lifeSupport).applyGainLife(gd, player1Id, 2);
-                assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attackerId);
+                assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attackerId);
             }
 
             @Test
@@ -226,7 +227,7 @@ class ExileCardsFromGraveyardEffectHandlerTest {
                 exileCardsFromGraveyardHandler.resolve(gd, entry, effect);
 
                 verify(lifeSupport, never()).applyGainLife(any(), any(), anyInt());
-                assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
+                assertThat(Prevention.preventedFromDealingCombat(gd)).isEmpty();
             }
 
             @Test

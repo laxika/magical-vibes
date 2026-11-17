@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import com.github.laxika.magicalvibes.model.effect.PlayersGainKeywordUntilEndOfTurnEffect;
 
 @Component
 @RequiredArgsConstructor
@@ -40,9 +40,10 @@ public class GrantFlyingToTargetCreatureOrPlayerEffectHandler implements NormalE
         }
 
         if (gameData.playerIds.contains(targetId)) {
-            gameData.playerKeywordsUntilEndOfTurn
-                    .computeIfAbsent(targetId, ignored -> ConcurrentHashMap.newKeySet())
-                    .add(Keyword.FLYING);
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(),
+                    new PlayersGainKeywordUntilEndOfTurnEffect(Keyword.FLYING), targetId,
+                    Duration.UNTIL_END_OF_TURN));
             gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(targetId)
                     + " gains flying until end of turn."));
             return;

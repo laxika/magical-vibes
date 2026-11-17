@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -77,7 +79,8 @@ class MorningtidesLightTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.playersWithAllPlayerDamagePreventedUntilNextTurn).doesNotContain(player1.getId());
+        assertThat(Prevention.players(gd,
+                PreventionScope.ALL_TO_CONTROLLER_UNTIL_NEXT_TURN)).doesNotContain(player1.getId());
         castShock(player2, player1.getId());
         harness.assertLife(player1, 18);
     }

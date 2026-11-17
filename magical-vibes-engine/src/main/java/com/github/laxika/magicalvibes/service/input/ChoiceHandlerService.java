@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.effect.AllLandsProduceChosenColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOpponentsCantCastUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
@@ -131,6 +133,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import com.github.laxika.magicalvibes.model.effect.GrantControllerAndPermanentsHexproofFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
 
 @Slf4j
 @Service
@@ -4848,9 +4852,9 @@ public class ChoiceHandlerService {
 
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null) {
-            gameData.permanentHexproofFromColorsThisTurn
-                    .computeIfAbsent(target.getId(), ignored -> ConcurrentHashMap.newKeySet())
-                    .add(chosenColor);
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(ctx.sourceCardName(), null,
+                    ctx.controllerId(), new GrantControllerAndPermanentsHexproofFromColorsEffect(Set.of(chosenColor)),
+                    target.getId(), Duration.UNTIL_END_OF_TURN));
 
             String colorName = chosenColor.name().toLowerCase();
             target.getBlockRestrictionsUntilEndOfTurn().add(new CanBeBlockedOnlyByFilterEffect(
@@ -4882,9 +4886,9 @@ public class ChoiceHandlerService {
                     UUID.randomUUID(), ctx.sourceCardName(), null, ctx.controllerId(),
                     new GrantColorUntilEndOfTurnEffect(chosenColor), target.getId(), null, null,
                     Duration.UNTIL_END_OF_TURN, 0));
-            gameData.permanentHexproofFromColorsThisTurn
-                    .computeIfAbsent(target.getId(), ignored -> ConcurrentHashMap.newKeySet())
-                    .add(chosenColor);
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(ctx.sourceCardName(), null,
+                    ctx.controllerId(), new GrantControllerAndPermanentsHexproofFromColorsEffect(Set.of(chosenColor)),
+                    target.getId(), Duration.UNTIL_END_OF_TURN));
 
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                     " becomes " + colorName.toLowerCase() + " and gains hexproof from "
@@ -4908,9 +4912,9 @@ public class ChoiceHandlerService {
         String colorName = color.name().charAt(0) + color.name().substring(1).toLowerCase();
 
         // The controller gains protection from the chosen color until end of turn.
-        gameData.playerProtectionFromColorsUntilEndOfTurn
-                .computeIfAbsent(ctx.controllerId(), k -> new java.util.HashSet<>())
-                .add(color);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(ctx.sourceCardName(), null,
+                ctx.controllerId(), new GrantProtectionFromColorUntilEndOfTurnEffect(color), ctx.controllerId(),
+                Duration.UNTIL_END_OF_TURN));
 
         // Each permanent the controller controls gains protection from the chosen color.
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
@@ -4939,9 +4943,9 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
-        gameData.playerProtectionFromColorsUntilEndOfTurn
-                .computeIfAbsent(ctx.controllerId(), ignored -> new java.util.HashSet<>())
-                .add(color);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(ctx.sourceCardName(), null,
+                ctx.controllerId(), new GrantProtectionFromColorUntilEndOfTurnEffect(color), ctx.controllerId(),
+                Duration.UNTIL_END_OF_TURN));
 
         String colorName = color.name().toLowerCase();
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
@@ -5278,7 +5282,7 @@ public class ChoiceHandlerService {
 
     /**
      * Hall of Gemstone: record the chosen color as the color every land produces for the rest of the
-     * turn. Cleared by {@code TurnCleanupService}.
+     * turn, a floating effect on every player.
      */
     private void handleAllLandsProduceChosenColorChoice(GameData gameData, String chosenValue,
             ChoiceContext.AllLandsProduceChosenColorChoice ctx) {
@@ -5286,7 +5290,9 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
-        gameData.allLandsFixedManaColorThisTurn = color;
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(ctx.sourceCardName(), ctx.sourcePermanentId(),
+                ctx.controllerId(), new AllLandsProduceChosenColorUntilEndOfTurnEffect(color), null,
+                Duration.UNTIL_END_OF_TURN));
 
         String playerName = gameData.playerIdToName.get(ctx.playerId());
         gameLogService.append(gameData, GameLog.text(playerName + " chooses "
@@ -7525,9 +7531,13 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
 
         UUID controllerId = ctx.controllerId();
-        gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn
-                .computeIfAbsent(controllerId, k -> ConcurrentHashMap.newKeySet())
-                .add(cardName);
+        for (UUID opponentId : gameData.orderedPlayerIds) {
+            if (!opponentId.equals(controllerId)) {
+                gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer("Named spell lock", null, controllerId,
+                        new ChooseCardNameOpponentsCantCastUntilNextTurnEffect(ctx.excludedTypes(), cardName),
+                        opponentId, Duration.UNTIL_YOUR_NEXT_TURN));
+            }
+        }
 
         gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " chooses \"" + cardName + "\". Opponents can't cast spells named "

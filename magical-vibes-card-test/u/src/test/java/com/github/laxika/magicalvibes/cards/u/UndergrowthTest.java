@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.cards.s.SoldierOfFortune;
 import com.github.laxika.magicalvibes.cards.s.StormCrow;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -23,7 +24,7 @@ class UndergrowthTest extends BaseCardTest {
     void unkickedPreventsAllCombatDamage() {
         castUndergrowth(false);
 
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
         assertThat(gd.combatDamageExemptPredicate).isNull();
         harness.assertInGraveyard(player1, "Undergrowth");
     }
@@ -97,7 +98,7 @@ class UndergrowthTest extends BaseCardTest {
     @DisplayName("Combat damage prevention ends at cleanup")
     void combatDamagePreventionEndsAtCleanup() {
         castUndergrowth(false);
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
 
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
@@ -108,7 +109,7 @@ class UndergrowthTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.preventAllCombatDamage).isFalse();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isFalse();
         assertThat(gd.combatDamageExemptPredicate).isNull();
     }
 

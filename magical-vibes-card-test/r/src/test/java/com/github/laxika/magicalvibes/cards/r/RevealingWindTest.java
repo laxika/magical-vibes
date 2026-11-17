@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.cards.g.GuardianShieldBearer;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -32,7 +33,7 @@ class RevealingWindTest extends BaseCardTest {
         harness.castFromHand(player1, new RevealingWind(), "{2}{G}");
         harness.passBothPriorities();
 
-        assertThat(gd.preventAllCombatDamage).isTrue();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
         assertThat(harness.getConn1().getMessagesContaining("REVEAL_PERMANENT")).hasSize(2);
         assertThat(harness.getConn2().getMessagesContaining("REVEAL_PERMANENT")).isEmpty();
     }

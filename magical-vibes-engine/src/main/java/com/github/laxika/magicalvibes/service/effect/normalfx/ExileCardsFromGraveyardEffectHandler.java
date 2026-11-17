@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -110,7 +111,9 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
         // "If you do, this creature assigns no combat damage this turn" — only when something was
         // actually exiled, and only for the ability's source permanent (the unblocked attacker).
         if (e.assignNoCombatDamage() && exiledCount > 0 && entry.getSourcePermanentId() != null) {
-            gameData.creaturesPreventedFromDealingCombatDamage.add(entry.getSourcePermanentId());
+            PreventionSupport.preventCombatDamageDealtBy(gameData, entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), entry.getSourcePermanentId(),
+                    Duration.UNTIL_END_OF_TURN);
             gameData.creaturesAssigningNoCombatDamageThisTurn.add(entry.getSourcePermanentId());
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     " assigns no combat damage this turn."));

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -37,9 +39,13 @@ public class OpponentsCantCastSpellsWithManaValueUntilNextTurnEffectHandler
                 AmountContext.forStackEntry(entry, null));
 
         UUID controllerId = entry.getControllerId();
-        Set<Integer> restrictedValues = gameData.opponentsCantCastSpellsWithManaValueUntilControllerNextTurn
-                .computeIfAbsent(controllerId, ignored -> ConcurrentHashMap.newKeySet());
-        restrictedValues.add(manaValue);
+        for (UUID opponentId : gameData.orderedPlayerIds) {
+            if (!opponentId.equals(controllerId)) {
+                gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                        entry.getSourcePermanentId(), controllerId, new OpponentsCantCastSpellsWithManaValueUntilNextTurnEffect(manaValue), opponentId,
+                        Duration.UNTIL_YOUR_NEXT_TURN));
+            }
+        }
         gameLogService.append(gameData, GameLog.text(
                 "Opponents can't cast spells with mana value " + manaValue + " until your next turn."));
     }

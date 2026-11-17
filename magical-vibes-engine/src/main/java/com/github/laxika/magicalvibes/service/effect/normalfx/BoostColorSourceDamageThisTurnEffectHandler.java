@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.DamageBonusGrant;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostColorSourceDamageThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -29,8 +30,8 @@ public class BoostColorSourceDamageThisTurnEffectHandler implements NormalEffect
         var e = (BoostColorSourceDamageThisTurnEffect) effect;
 
         UUID controllerId = entry.getControllerId();
-        GameData.addDamageBonusGrant(gameData.colorSourceDamageBonusThisTurn, controllerId,
-                new DamageBonusGrant(entry.getCard().getName(), e.color(), e.bonus()));
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), controllerId, e, controllerId, Duration.UNTIL_END_OF_TURN));
         String playerName = gameData.playerIdToName.get(controllerId);
         String colorName = e.color().name().toLowerCase();
         

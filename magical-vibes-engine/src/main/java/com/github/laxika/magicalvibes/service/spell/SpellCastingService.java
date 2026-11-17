@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.spell;
 
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardGrantFreePlayUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
@@ -13688,7 +13690,8 @@ public class SpellCastingService {
                 castingPermissionService.markOncePerTurnTopLibraryLandPermissionUsed(gameData, playerId, card);
             }
             if (freeTopPlay) {
-                gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.remove(playerId);
+                gameData.floatingEffectsOnPlayer(playerId, RevealTopCardGrantFreePlayUntilEndOfTurnEffect.class)
+                .forEach(gameData::endFloatingEffect);
             }
             Card landFace = selectedModalDoubleFacedLandFace(card, effectiveXValue);
             Permanent permanent = new Permanent(card);
@@ -13784,7 +13787,7 @@ public class SpellCastingService {
         }
         boolean usesNormalTopLibraryPermission = !freeTopPlay
                 && !useManaValueLifeAlternative
-                && !gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(playerId)
+                && !gameData.hasFloatingEffectOnPlayer(playerId, AllowPlayFromTopOfLibraryUntilEndOfTurnEffect.class)
                 && canCastNormallyFromLibraryTop;
 
         effectiveXValue = freeTopPlay || useManaValueLifeAlternative
@@ -13945,7 +13948,8 @@ public class SpellCastingService {
         payExileCounterCost(gameData, player, card, additionalCounterCost, counterCostPermanentIds);
         deck.remove(physicalCard);
         if (freeTopPlay) {
-            gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.remove(playerId);
+            gameData.floatingEffectsOnPlayer(playerId, RevealTopCardGrantFreePlayUntilEndOfTurnEffect.class)
+                .forEach(gameData::endFloatingEffect);
         }
 
         StackEntryType entryType = cardTypeToStackEntryType(card.getType());

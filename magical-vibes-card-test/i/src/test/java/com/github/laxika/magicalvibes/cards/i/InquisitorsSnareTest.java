@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.a.AshenmoorCohort;
 import com.github.laxika.magicalvibes.cards.b.BoggartRamGang;
 import com.github.laxika.magicalvibes.cards.b.BriarberryCohort;
@@ -32,7 +33,7 @@ class InquisitorsSnareTest extends BaseCardTest {
         Permanent attacker = addAttacker(player2, new BriarberryCohort());
         castSnare(attacker);
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(attacker.getId());
     }
 
     @Test
@@ -55,7 +56,7 @@ class InquisitorsSnareTest extends BaseCardTest {
         Permanent attacker = addAttacker(player2, new BoggartRamGang()); // red/green 3/3
         castSnare(attacker);
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(attacker.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
         harness.assertInGraveyard(player2, "Boggart Ram-Gang");
     }
@@ -66,7 +67,7 @@ class InquisitorsSnareTest extends BaseCardTest {
         Permanent attacker = addAttacker(player2, new AshenmoorCohort());
         castSnare(attacker);
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(attacker.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
         harness.assertInGraveyard(player2, "Ashenmoor Cohort");
     }
@@ -77,7 +78,7 @@ class InquisitorsSnareTest extends BaseCardTest {
         Permanent attacker = addAttacker(player2, new BriarberryCohort()); // blue
         castSnare(attacker);
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(attacker.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
         harness.assertNotInGraveyard(player2, "Briarberry Cohort");
     }
@@ -92,7 +93,7 @@ class InquisitorsSnareTest extends BaseCardTest {
 
         castSnare(blocker);
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(blocker.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(blocker.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(blocker);
         assertThat(attacker.isAttacking()).isTrue();
     }
@@ -123,18 +124,18 @@ class InquisitorsSnareTest extends BaseCardTest {
         Permanent attacker = addAttacker(player2, new BriarberryCohort());
         castSnare(attacker);
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(attacker.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.END_STEP);
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(attacker.getId());
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).isEmpty();
+        assertThat(Prevention.preventedFromDealing(gd)).isEmpty();
     }
 
     // ===== Target restrictions =====
@@ -165,7 +166,7 @@ class InquisitorsSnareTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Ashenmoor Cohort");
-        assertThat(gd.permanentsPreventedFromDealingDamage).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).doesNotContain(attacker.getId());
         harness.assertInGraveyard(player1, "Inquisitor's Snare");
     }
 
@@ -182,7 +183,7 @@ class InquisitorsSnareTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Boggart Ram-Gang");
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealing(gd)).contains(attacker.getId());
     }
 
     @Test

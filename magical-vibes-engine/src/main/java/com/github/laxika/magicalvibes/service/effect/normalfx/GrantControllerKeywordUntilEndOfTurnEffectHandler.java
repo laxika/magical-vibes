@@ -10,7 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 @Component
 @RequiredArgsConstructor
@@ -27,9 +28,8 @@ public class GrantControllerKeywordUntilEndOfTurnEffectHandler implements Normal
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var grant = (GrantControllerKeywordUntilEndOfTurnEffect) effect;
         UUID controllerId = entry.getControllerId();
-        gameData.playerKeywordsUntilEndOfTurn
-                .computeIfAbsent(controllerId, ignored -> ConcurrentHashMap.newKeySet())
-                .add(grant.keyword());
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), controllerId, grant, controllerId, Duration.UNTIL_END_OF_TURN));
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId)
                 + " gains " + grant.keyword().name().toLowerCase() + " until end of turn."));
     }

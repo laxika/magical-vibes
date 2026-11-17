@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,7 +31,9 @@ public class MayPayForArtifactsOrCreaturesCantAttackThisCombatEffectHandler impl
             boolean accepted = gameData.resolvedMayAccepted;
             gameData.resolvedMayAccepted = null;
             if (!accepted) {
-                gameData.creaturesCantAttackThisCombat = true;
+                gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                        entry.getSourcePermanentId(), entry.getControllerId(), effect, null,
+                        Duration.UNTIL_END_OF_COMBAT));
             }
             return;
         }

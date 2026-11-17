@@ -84,7 +84,7 @@ Owner: `EndOfTurnStateField`, `TurnCleanupService`.
 Why: an untracked store ends at another player's cleanup step.
 
 ### A partly used shield reports its replacement
-Replacing a `LIST` shield record by a reduced copy calls `replaceGameEndOfTurnElement`; keep-the-strongest stores are written through `addDamageLifeFloorUntilEndOfTurn` / `limitSpellsThisTurn`.
+Replacing a `LIST` shield record by a reduced copy calls `replaceGameEndOfTurnElement`; keep-the-strongest stores are written through `addDamageLifeFloorUntilEndOfTurn`.
 Owner: `GameData`.
 Why: the copy stays credited to its player; a weaker value outlives the stronger one's cleanup.
 

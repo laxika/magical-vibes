@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantSacrificeTargetThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import org.springframework.stereotype.Component;
 
 /** Records that the effect's controller can't sacrifice the target permanent this turn. */
@@ -18,7 +20,9 @@ public class ControllerCantSacrificeTargetThisTurnEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         if (entry.getTargetId() != null) {
-            gameData.sacrificeForbiddenThisTurn.put(entry.getTargetId(), entry.getControllerId());
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), effect, entry.getTargetId(),
+                    Duration.UNTIL_END_OF_TURN));
         }
     }
 }

@@ -143,7 +143,6 @@ public class CombatService {
         }));
         gameData.declaredAttackerIdsThisCombat.clear();
         gameData.creaturesThatEnlistedThisCombat.clear();
-        gameData.ragingRiverBlockRestrictionsThisCombat.clear();
         gameData.combatDamagePlayerAssignments.clear();
         gameData.combatSharedDamagePreventionAllocations.clear();
         gameData.combatDamageAssignmentModeChoices.clear();

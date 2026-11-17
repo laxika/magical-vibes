@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -26,7 +28,9 @@ public class OpponentsCantActivatePlaneswalkerLoyaltyAbilitiesThisTurnEffectHand
         UUID controllerId = entry.getControllerId();
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(controllerId)) {
-                gameData.playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn.add(playerId);
+                gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                        entry.getSourcePermanentId(), entry.getControllerId(), effect, playerId,
+                        Duration.UNTIL_END_OF_TURN));
             }
         }
 

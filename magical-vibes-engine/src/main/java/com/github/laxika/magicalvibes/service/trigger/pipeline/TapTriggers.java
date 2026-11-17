@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.effect.ReplaceColoredManaWithWhiteUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -369,7 +370,8 @@ public class TapTriggers {
             }
             for (var bonus : entry.getValue()) {
                 ManaColor color = bonus.color() != ManaColor.COLORLESS
-                        && gameData.playersWithColoredManaReplacementThisTurn.contains(bonus.controllerId())
+                        && gameData.hasFloatingEffectOnPlayer(bonus.controllerId(),
+                        ReplaceColoredManaWithWhiteUntilEndOfTurnEffect.class)
                         ? ManaColor.WHITE : bonus.color();
                 pool.add(color);
                 gameLogService.append(gameData, GameLog.builder()

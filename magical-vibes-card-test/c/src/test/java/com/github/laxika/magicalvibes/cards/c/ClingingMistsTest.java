@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.cards.d.DawntreaderElk;
 import com.github.laxika.magicalvibes.cards.f.FiresOfUndeath;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -97,7 +98,7 @@ class ClingingMistsTest extends BaseCardTest {
 
             harness.castAndResolveInstant(player1, 0);
 
-            assertThat(gd.preventAllCombatDamage).isTrue();
+            assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
         }
 
         @Test
@@ -177,7 +178,7 @@ class ClingingMistsTest extends BaseCardTest {
 
             assertThat(attacker.isTapped()).isFalse();
             assertThat(attacker.getSkipUntapCount()).isZero();
-            assertThat(gd.preventAllCombatDamage).isTrue();
+            assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
         }
 
         @Test
@@ -351,7 +352,7 @@ class ClingingMistsTest extends BaseCardTest {
 
             harness.castAndResolveInstant(player1, 0);
 
-            assertThat(gd.preventAllCombatDamage).isTrue();
+            assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isTrue();
         }
     }
 

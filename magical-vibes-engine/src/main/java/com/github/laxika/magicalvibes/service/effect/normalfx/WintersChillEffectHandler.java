@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -136,8 +137,10 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
                 scheduleDestroy(gameData, entry, target);
                 return;
             }
-            gameData.creaturesWithCombatDamagePreventedThisCombat.add(targetId);
-            gameData.creaturesPreventedFromDealingCombatDamageThisCombat.add(targetId);
+            PreventionSupport.preventCombatDamageDealtTo(gameData, entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), targetId, Duration.UNTIL_END_OF_COMBAT);
+            PreventionSupport.preventCombatDamageDealtBy(gameData, entry.getCard().getName(),
+                    entry.getSourcePermanentId(), entry.getControllerId(), targetId, Duration.UNTIL_END_OF_COMBAT);
             gameLogService.append(gameData, GameLog.textCardText(
                     "Pays {1} for ", target.getCard(),
                     " — all combat damage to and by it this combat is prevented (" + sourceName + ")."));

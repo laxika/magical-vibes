@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOpponentsCantCastUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -36,7 +37,7 @@ class AcademicProbationTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Shock");
 
-        assertThat(gd.opponentsCantCastNamedSpellsUntilControllerNextTurn.get(player1.getId()))
+        assertThat(lockedNames(player2))
                 .contains("Shock");
 
         harness.setHand(player2, List.of(new Shock()));
@@ -210,5 +211,12 @@ class AcademicProbationTest extends BaseCardTest {
     private void declareAttack(Permanent creature) {
         creature.setSummoningSick(false);
         declareAttackers(player2, List.of(indexOf(player2, creature)));
+    }
+
+    private List<String> lockedNames(com.github.laxika.magicalvibes.model.Player opponent) {
+        return gd.floatingEffectsOnPlayer(opponent.getId(), ChooseCardNameOpponentsCantCastUntilNextTurnEffect.class)
+                .stream()
+                .map(fe -> ((ChooseCardNameOpponentsCantCastUntilNextTurnEffect) fe.effect()).cardName())
+                .toList();
     }
 }

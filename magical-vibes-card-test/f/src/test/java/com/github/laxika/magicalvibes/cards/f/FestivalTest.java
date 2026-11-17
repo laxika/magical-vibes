@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.cards.b.BogRats;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -49,6 +50,7 @@ class FestivalTest extends BaseCardTest {
         castFestivalDuringOpponentUpkeep();
 
         harness.forceStep(TurnStep.CLEANUP);
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

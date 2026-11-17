@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.s.SakuraTribeElder;
 import com.github.laxika.magicalvibes.cards.w.WallOfOmens;
@@ -100,7 +102,7 @@ class AcornCatapultTest extends BaseCardTest {
     void preventedDamageStillCreatesSquirrel() {
         addReadyCatapult(player1);
         Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfOmens());
-        gd.preventAllDamageToAllCreatures = true;
+        Prevention.add(gd, PreventDamageEffect.allToCreatures());
         addMana(player1);
 
         harness.activateAbility(player1, 0, null, wall.getId());

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.f.FinalReward;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
@@ -88,7 +89,7 @@ class ProwlingSerpopardTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Cancel");
         harness.assertOnBattlefield(player1, "Prowling Serpopard");
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.preventAllCombatDamage).isFalse();
+        assertThat(gd.hasPrevention(PreventionScope.ALL_COMBAT)).isFalse();
     }
 
     @Test

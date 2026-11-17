@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredIsland;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -62,8 +63,8 @@ class WintersChillTest extends BaseCardTest {
         stopAtDeclareBlockers();
         harness.handleListChoice(player2, ChoiceContext.WintersChillPaymentChoice.PAY_ONE);
 
-        assertThat(gd.creaturesWithCombatDamagePreventedThisCombat).contains(attacker.getId());
-        assertThat(gd.creaturesPreventedFromDealingCombatDamageThisCombat).contains(attacker.getId());
+        assertThat(Prevention.combatDamagePrevented(gd)).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
         assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
     }
@@ -102,14 +103,14 @@ class WintersChillTest extends BaseCardTest {
         harness.passBothPriorities();
         stopAtDeclareBlockers();
         harness.handleListChoice(player2, ChoiceContext.WintersChillPaymentChoice.PAY_ONE);
-        assertThat(gd.creaturesWithCombatDamagePreventedThisCombat).contains(attacker.getId());
-        assertThat(gd.creaturesPreventedFromDealingCombatDamageThisCombat).contains(attacker.getId());
+        assertThat(Prevention.combatDamagePrevented(gd)).contains(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
 
         harness.forceStep(TurnStep.END_OF_COMBAT);
         gs.advanceStep(gd);
 
-        assertThat(gd.creaturesWithCombatDamagePreventedThisCombat).doesNotContain(attacker.getId());
-        assertThat(gd.creaturesPreventedFromDealingCombatDamageThisCombat).doesNotContain(attacker.getId());
+        assertThat(Prevention.combatDamagePrevented(gd)).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
     }
 
     @Test
@@ -123,8 +124,8 @@ class WintersChillTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player2, ChoiceContext.WintersChillPaymentChoice.PAY_TWO);
 
-        assertThat(gd.creaturesWithCombatDamagePreventedThisCombat).doesNotContain(attacker.getId());
-        assertThat(gd.creaturesPreventedFromDealingCombatDamageThisCombat).doesNotContain(attacker.getId());
+        assertThat(Prevention.combatDamagePrevented(gd)).doesNotContain(attacker.getId());
+        assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(attacker.getId());
         assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
     }
 
@@ -144,9 +145,9 @@ class WintersChillTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleListChoice(player2, ChoiceContext.WintersChillPaymentChoice.PAY_TWO);
 
-        assertThat(gd.creaturesWithCombatDamagePreventedThisCombat).contains(firstAttacker.getId())
+        assertThat(Prevention.combatDamagePrevented(gd)).contains(firstAttacker.getId())
                 .doesNotContain(secondAttacker.getId());
-        assertThat(gd.creaturesPreventedFromDealingCombatDamageThisCombat).contains(firstAttacker.getId())
+        assertThat(Prevention.preventedFromDealingCombat(gd)).contains(firstAttacker.getId())
                 .doesNotContain(secondAttacker.getId());
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
     }

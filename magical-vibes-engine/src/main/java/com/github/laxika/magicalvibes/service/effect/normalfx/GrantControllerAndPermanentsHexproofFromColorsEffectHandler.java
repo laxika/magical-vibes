@@ -11,7 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 @Component
 @RequiredArgsConstructor
@@ -28,14 +29,13 @@ public class GrantControllerAndPermanentsHexproofFromColorsEffectHandler impleme
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantControllerAndPermanentsHexproofFromColorsEffect) effect;
         UUID controllerId = entry.getControllerId();
-        gameData.playerHexproofFromColorsThisTurn
-                .computeIfAbsent(controllerId, ignored -> ConcurrentHashMap.newKeySet())
-                .addAll(e.colors());
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), controllerId, e, controllerId, Duration.UNTIL_END_OF_TURN));
 
+        // Only the permanents controlled as this resolves gain it (CR 611.2c).
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, java.util.List.of())) {
-            gameData.permanentHexproofFromColorsThisTurn
-                    .computeIfAbsent(permanent.getId(), ignored -> ConcurrentHashMap.newKeySet())
-                    .addAll(e.colors());
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(entry.getCard().getName(),
+                    entry.getSourcePermanentId(), controllerId, e, permanent.getId(), Duration.UNTIL_END_OF_TURN));
         }
 
         String colorNames = e.colors().stream()

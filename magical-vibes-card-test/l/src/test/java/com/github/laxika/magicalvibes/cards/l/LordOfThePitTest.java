@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
@@ -211,7 +213,7 @@ class LordOfThePitTest extends BaseCardTest {
     @DisplayName("Damage is prevented when color-based damage prevention is active")
     void damagePreventedByColorPrevention() {
         harness.addToBattlefield(player1, new LordOfThePit());
-        gd.preventDamageFromColors.add(CardColor.BLACK);
+        Prevention.add(gd, PreventDamageEffect.fromColors(java.util.Set.of(CardColor.BLACK)));
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);

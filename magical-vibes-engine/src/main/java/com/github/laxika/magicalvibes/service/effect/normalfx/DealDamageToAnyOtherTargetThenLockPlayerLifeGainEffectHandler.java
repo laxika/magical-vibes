@@ -39,7 +39,7 @@ public class DealDamageToAnyOtherTargetThenLockPlayerLifeGainEffectHandler
         // response to it (Eye for an Eye's copy to the source's controller) is not "dealt this way".
         int damageAfter = gameData.damageDealtToPlayersThisTurn.getOrDefault(targetPlayerId, 0);
         if (damageAfter > damageBefore.getOrDefault(targetPlayerId, 0)) {
-            lifeGainLockHandler.resolveForPlayer(gameData, targetPlayerId);
+            lifeGainLockHandler.resolveForPlayer(gameData, entry, targetPlayerId);
         }
     }
 }

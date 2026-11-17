@@ -18,9 +18,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -196,8 +198,9 @@ class KedissEmberclawFamiliarTest extends BaseCardTest {
         gd.makeCommander(player1.getId(), commanderCard);
         addCreatureReady(player1, new KedissEmberclawFamiliar());
         addCreatureReady(player1, commanderCard);
-        gd.playerProtectionFromColorsUntilEndOfTurn
-                .computeIfAbsent(otherOpponent.getId(), k -> new HashSet<>()).add(CardColor.GREEN);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, otherOpponent.getId(),
+                new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.GREEN), otherOpponent.getId(),
+                Duration.UNTIL_END_OF_TURN));
 
         harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
             declareAttackers(List.of(1));

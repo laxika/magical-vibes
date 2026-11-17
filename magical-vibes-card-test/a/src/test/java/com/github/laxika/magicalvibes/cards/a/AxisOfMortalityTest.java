@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.cards.t.TaintedRemedy;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantLoseLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -175,7 +178,8 @@ class AxisOfMortalityTest extends BaseCardTest {
         harness.setLife(player2, 20);
         advanceToUpkeep(player1);
         harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId(), player2.getId()));
-        gd.playersCantLoseLifeThisTurn = true;
+        gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
+                new PlayersCantLoseLifeThisTurnEffect(), null, Duration.UNTIL_END_OF_TURN));
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

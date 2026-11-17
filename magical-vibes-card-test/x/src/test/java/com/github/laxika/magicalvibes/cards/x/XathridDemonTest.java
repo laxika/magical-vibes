@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.x;
 
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
@@ -237,7 +239,8 @@ class XathridDemonTest extends BaseCardTest {
     @DisplayName("Life loss is not damage — cannot be prevented by color-based damage prevention")
     void lifeLossNotPreventedByColorPrevention() {
         harness.addToBattlefield(player1, new XathridDemon());
-        gd.preventDamageFromColors.add(com.github.laxika.magicalvibes.model.CardColor.BLACK);
+        Prevention.add(gd,
+                PreventDamageEffect.fromColors(java.util.Set.of(com.github.laxika.magicalvibes.model.CardColor.BLACK)));
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);

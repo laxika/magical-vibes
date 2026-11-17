@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -286,7 +287,7 @@ public class GameService {
      * points (mana taps, sacrifice, graveyard/hand abilities) that bypass that check.
      */
     private void requireCanActivateAbilities(GameData gameData, Player player) {
-        if (gameData.playersCantActivateAbilitiesThisTurn.contains(player.getId())) {
+        if (gameData.hasFloatingEffectOnPlayer(player.getId(), SenTripletsUpkeepEffect.class)) {
             throw new IllegalStateException("You can't activate abilities this turn");
         }
         if (gameQueryService.isLockedOutByOwnTurnOnlyRestriction(gameData, player.getId())) {
