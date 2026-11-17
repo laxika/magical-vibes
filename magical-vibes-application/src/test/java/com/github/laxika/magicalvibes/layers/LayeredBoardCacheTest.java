@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService.LayeredBoardState;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -164,7 +165,7 @@ class LayeredBoardCacheTest extends BaseCardTest {
                 bear.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
     }
 

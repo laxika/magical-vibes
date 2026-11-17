@@ -25,6 +25,17 @@ public sealed interface ActionEvent extends RulesEvent {
         }
     }
 
+    /**
+     * {@code playerId}, the planar controller, planeswalked (CR 701.31): the effects that last until a player
+     * planeswalks end.
+     */
+    record Planeswalked(UUID playerId) implements ActionEvent {
+        @Override
+        public Planeswalked deepCopy() {
+            return this;
+        }
+    }
+
     /** {@code playerId} gave a gift. */
     record GiftGiven(UUID playerId) implements ActionEvent {
         @Override

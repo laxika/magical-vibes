@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiantHerdgorger;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -69,7 +70,7 @@ class BlueDragonTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat((gqs.getEffectivePower(gd, target) - target.getCard().getPower())).isEqualTo(-3);
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
         assertThat((gqs.getEffectivePower(gd, target) - target.getCard().getPower())).isZero();
     }
 

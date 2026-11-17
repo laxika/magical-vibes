@@ -11,9 +11,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellCostEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
@@ -83,8 +80,8 @@ public class SpellEvents {
     /**
      * {@code spellCard} became cast (CR 601.2i) by {@code castingPlayerId} from {@code castZone} ({@code
      * exiledSourcePermanentId} the permanent it was exiled with, if any), face down when {@code castFaceDown}. The cast
-     * is recorded first (the turn's casts by zone, effects that last until a matching spell is cast end), so the
-     * abilities the event triggers see it among the turn's spells; the records of its payment are cleared once they
+     * is recorded first (the turn's casts by zone), so the abilities the event triggers see it among the turn's
+     * spells, and the effects that last until such a spell is cast end as the event is matched; the records of its payment are cleared once they
      * have triggered.
      */
     public void cast(GameData gameData, Card spellCard, UUID castingPlayerId, Zone castZone,
@@ -114,24 +111,6 @@ public class SpellEvents {
         } else {
             gameData.recordSpellCastFromOutsideHand(castingPlayerId);
             gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.add(castingPlayerId);
-        }
-
-        if (castZone == Zone.EXILE) {
-            gameData.expireFloatingEffects(fe ->
-                    Duration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE.equals(fe.duration())
-                            && fe.effect() instanceof GrantActivatedAbilityEffect grant
-                            && spellCard.getId().equals(grant.expirationCardId()));
-        }
-        gameData.expireFloatingEffects(fe ->
-                (Duration.UNTIL_MATCHING_SPELL_CAST.equals(fe.duration())
-                        || Duration.UNTIL_TARGET_PLAYER_MATCHING_SPELL_CAST.equals(fe.duration()))
-                        && fe.effect() instanceof NextMatchingSpellCostEffect next
-                        && next.appliesToPlayer(castingPlayerId, fe.controllerId())
-                        && next.appliesToFaceDownCast(castFaceDown)
-                        && predicateEvaluationService.matchesCardPredicate(
-                                spellCard, next.predicate(), null, gameData, castingPlayerId));
-        if (spellCard.hasType(CardType.CREATURE)) {
-            gameData.expireFloatingEffectsOnCreatureSpellCast();
         }
 
         boolean firstSpellOfGame = !gameData.openingHandRevealTriggers.isEmpty()

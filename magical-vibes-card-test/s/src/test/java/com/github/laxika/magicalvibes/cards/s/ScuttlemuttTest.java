@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -65,7 +66,7 @@ class ScuttlemuttTest extends BaseCardTest {
         assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.BLUE);
 
         bears.resetModifiers();
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.GREEN);
     }

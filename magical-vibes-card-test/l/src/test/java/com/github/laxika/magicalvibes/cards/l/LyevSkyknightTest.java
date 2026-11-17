@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -80,7 +81,7 @@ class LyevSkyknightTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent bears = detain("Grizzly Bears");
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
         assertThatCode(() -> declareAttack(bears)).doesNotThrowAnyException();
     }
@@ -125,7 +126,7 @@ class LyevSkyknightTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent bears = detain("Grizzly Bears");
 
-        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player2.getId()));
 
         assertThatThrownBy(() -> declareAttack(bears))
                 .isInstanceOf(IllegalStateException.class)

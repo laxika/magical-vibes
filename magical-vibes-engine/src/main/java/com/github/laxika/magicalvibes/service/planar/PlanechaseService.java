@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.*;
 import com.github.laxika.magicalvibes.model.effect.*;
 import com.github.laxika.magicalvibes.model.planar.*;
+import com.github.laxika.magicalvibes.model.rules.ActionEvent;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -284,7 +285,7 @@ public class PlanechaseService {
             state.deck.add(object.getCard());
             trigger(game, object, Triggers.planeswalkAwayFromThis(), state.controllerId);
         }
-        game.expireFloatingEffects(effect -> Duration.UNTIL_PLANESWALK.equals(effect.duration()));
+        game.rulesEvents.occur(new ActionEvent.Planeswalked(state.controllerId));
         reveal(game, true);
     }
 
@@ -308,7 +309,7 @@ public class PlanechaseService {
             trigger(game, object, Triggers.planeswalkAwayFromThis(), controllerId);
         }
         state.deck.addAll(cardsToBottom);
-        game.expireFloatingEffects(effect -> Duration.UNTIL_PLANESWALK.equals(effect.duration()));
+        game.rulesEvents.occur(new ActionEvent.Planeswalked(controllerId));
 
         for (Card card : arrivingPlanes) {
             state.faceUp.add(new PlanarObject(card, game.nextTimestamp()));
@@ -337,7 +338,7 @@ public class PlanechaseService {
         state.planeswalkedToTurn = game.turnNumber;
         if (arrivingPlane.hasType(CardType.PLANE)) state.planeswalkedToNamesThisTurn.add(arrivingPlane.getName());
         if (phasingService != null) phasingService.phaseInUntilPlaneswalk(game);
-        game.expireFloatingEffects(effect -> Duration.UNTIL_PLANESWALK.equals(effect.duration()));
+        game.rulesEvents.occur(new ActionEvent.Planeswalked(controllerId));
         logs.append(game, GameLogEntry.text("The planar card is " + arrivingPlane.getName() + "."));
         if (ascendEffectHandler != null) {
             ascendEffectHandler.checkPlanarAscend(game);

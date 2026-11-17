@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -48,7 +49,7 @@ class QuirionDruidTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, land.getId());
         harness.passBothPriorities();
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         land.resetModifiers();
 
         assertThat(gqs.isCreature(gd, land)).isTrue();

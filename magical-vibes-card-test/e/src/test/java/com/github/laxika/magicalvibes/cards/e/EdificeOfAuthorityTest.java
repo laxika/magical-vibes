@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -49,7 +50,7 @@ class EdificeOfAuthorityTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         assertThatCode(() -> declareBearsAttack(bears)).doesNotThrowAnyException();
     }
@@ -134,7 +135,7 @@ class EdificeOfAuthorityTest extends BaseCardTest {
     void detainWearsOffAtControllersNextTurn() {
         Permanent bears = detainOwnCreature(new GrizzlyBears());
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
         assertThatCode(() -> declareBearsAttack(bears)).doesNotThrowAnyException();
     }
@@ -221,8 +222,8 @@ class EdificeOfAuthorityTest extends BaseCardTest {
     @DisplayName("Second ability persists through cleanup and the opponent's turn start")
     void secondAbilityPersistsUntilControllersTurn() {
         Permanent bears = detainOwnCreature(new GrizzlyBears());
-        gd.expireEndOfTurnFloatingEffects();
-        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
+        gd.rulesEvents.occur(new TurnEvent.Began(player2.getId()));
 
         assertThatThrownBy(() -> declareBearsAttack(bears))
                 .isInstanceOf(IllegalStateException.class)

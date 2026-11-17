@@ -68,7 +68,7 @@ class GameDataFloatingEffectObserverTest {
         gd.addFloatingEffect(floating("Jade Statue", Duration.UNTIL_END_OF_COMBAT));
         reported.clear();
 
-        gd.expireEndOfCombatFloatingEffects();
+        gd.expireFloatingEffects(fe -> Duration.UNTIL_END_OF_COMBAT.equals(fe.duration()));
 
         assertThat(reported).containsExactly("ended Jade Statue");
         assertThat(gd.floatingEffects).extracting(FloatingContinuousEffect::sourceCardName)
@@ -108,7 +108,7 @@ class GameDataFloatingEffectObserverTest {
         gd.rulesEvents.suppress();
 
         gd.addFloatingEffect(floating("Giant Growth", Duration.UNTIL_END_OF_TURN));
-        gd.expireEndOfTurnFloatingEffects();
+        gd.expireFloatingEffects(fe -> Duration.UNTIL_END_OF_TURN.equals(fe.duration()));
 
         assertThat(reported).isEmpty();
     }

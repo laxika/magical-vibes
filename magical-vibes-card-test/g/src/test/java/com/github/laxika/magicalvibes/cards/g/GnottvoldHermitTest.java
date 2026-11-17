@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,7 @@ class GnottvoldHermitTest extends BaseCardTest {
         assertThat(target.getEffectivePower()).isEqualTo(5);
         assertThat(target.getEffectiveToughness()).isEqualTo(5);
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         target.resetModifiers();
         assertThat(target.getEffectivePower()).isEqualTo(2);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
@@ -160,7 +161,7 @@ class GnottvoldHermitTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(7);
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         other.resetModifiers();
         assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(6);

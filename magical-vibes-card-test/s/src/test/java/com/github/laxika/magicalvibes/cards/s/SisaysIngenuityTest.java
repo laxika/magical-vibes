@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -68,7 +69,7 @@ class SisaysIngenuityTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
 
         target.resetModifiers();
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.RED);
     }

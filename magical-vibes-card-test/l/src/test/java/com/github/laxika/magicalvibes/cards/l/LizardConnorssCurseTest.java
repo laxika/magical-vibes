@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -38,7 +39,7 @@ class LizardConnorssCurseTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         target.resetModifiers();
 
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.GREEN);
@@ -97,7 +98,7 @@ class LizardConnorssCurseTest extends BaseCardTest {
         Permanent source = gd.playerBattlefields.get(player1.getId()).getFirst();
 
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source);
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         target.resetModifiers();
 
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.GREEN);

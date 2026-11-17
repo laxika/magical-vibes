@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -49,7 +50,7 @@ class OrzhovAdvokistTest extends BaseCardTest {
         assertThatThrownBy(() -> declareAttackers(player2, List.of(1)))
                 .isInstanceOf(IllegalStateException.class);
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
         assertThat(gd.floatingEffects)
                 .noneMatch(floating -> floating.effect() instanceof CreaturesCantAttackControllerUnlessPredicateEffect);
     }
@@ -142,9 +143,9 @@ class OrzhovAdvokistTest extends BaseCardTest {
 
         assertThat(als.canAttackDefender(gd, newCreature, player1.getId())).isFalse();
         assertThat(als.canAttackDefender(gd, newCreature, planeswalker.getId())).isFalse();
-        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player2.getId()));
         assertThat(als.canAttackDefender(gd, newCreature, player1.getId())).isFalse();
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
         assertThat(als.canAttackDefender(gd, newCreature, player1.getId())).isTrue();
         assertThat(als.canAttackDefender(gd, newCreature, planeswalker.getId())).isTrue();
     }

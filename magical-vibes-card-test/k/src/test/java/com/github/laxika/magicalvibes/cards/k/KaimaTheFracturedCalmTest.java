@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.h.Hobble;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -39,7 +40,7 @@ class KaimaTheFracturedCalmTest extends BaseCardTest {
         addAura(player1, enchantedOpponent);
 
         resolveControllerEndStep();
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
         assertThat(als.getMustAttackRequirementCount(gd, enchantedOpponent)).isZero();
     }
@@ -72,7 +73,7 @@ class KaimaTheFracturedCalmTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
         assertThat(als.getMustAttackRequirementCount(gd, creature)).isEqualTo(1);
-        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player2.getId()));
         assertThat(als.getMustAttackRequirementCount(gd, creature)).isEqualTo(1);
     }
 

@@ -400,12 +400,10 @@ P/T-defining CDAs), Phyrexian Metamorph's added ARTIFACT type, Evil Twin's added
 of a Quicksilver Gargantuan copy is a 7/7 (`QuicksilverGargantuanTest`). The DURATION copies
 — `BecomeCopyOfTargetCreatureUntilEndOfTurnEffect` (Tilonalli's Skinshifter) and
 `MakeTargetCopyOfTargetCreatureUntilNextTurnEffect` (Shapesharer) — register a floating
-`L1_COPY` effect alongside the card swap, and the revert is driven by the step-2 lifecycle:
-`TurnCleanupService.resetEndOfTurnModifiers` reverts permanents whose expired floating effect
-wraps the become-copy effect (`Permanent.revertEndOfTurnCopy()`, extracted out of
-`resetModifiers()`), and `TurnProgressionService.advanceTurn` reverts until-next-turn copies off
-the `expireFloatingEffectsAtTurnStart` result, guarded on `copyUntilNextTurnControllerId` so an
-OLDER effect expiring cannot revert a NEWER still-active copy. A third duration, WHILE ATTACHED
+`L1_COPY` effect alongside the card swap, and the duration clock (`DurationClock`) reverts the
+permanent as the effect ends: `Permanent.revertEndOfTurnCopy()` for the become-copy effect, and the
+until-next-turn copy guarded on `copyUntilNextTurnControllerId` so an OLDER effect expiring cannot
+revert a NEWER still-active copy. A third duration, WHILE ATTACHED
 (`EnchantedCreatureIsCopyOfChosenCreatureEffect` — Metamorphic Alteration), follows the same shape
 via `AuraCopyService`: the swap stores `Permanent.whileAttachedPreCopyCard`, a `WHILE_ATTACHED`
 floating effect is keyed to the Aura, and `PermanentRemovalService` reverts off its expiry
@@ -459,6 +457,19 @@ Only `GameData`'s methods change `floatingEffects`: `addFloatingEffect` (stamps 
 (keeps the effect's own, CR 613.7a), `expireFloatingEffects` and the `expire…` methods built on it,
 `endFloatingEffect` and `replaceFloatingEffect`. Each reports the effect beginning or ending to the game's
 `RulesObserver`, which the trigger ledger writes.
+
+**The clock.** Nothing calls an expiry for a duration that ends at an event: `DurationClock` (`service/duration`) ends
+those effects as `RulesEventPipeline` hands it each rules event batch, before the batch's abilities trigger, and undoes
+what the effect kept on its permanent (a copy's card, a tap restriction, mirrored keywords). The events:
+`TurnEvent.Began` (`UNTIL_YOUR_NEXT_TURN`), `TurnEvent.StepEnded` (`UNTIL_END_OF_COMBAT` as the combat phase ends,
+`UNTIL_END_OF_CONTROLLERS_NEXT_UPKEEP`, CR 500.5), `TurnEvent.Cleanup` (`UNTIL_END_OF_TURN`,
+`UNTIL_END_OF_YOUR_NEXT_TURN` control effects included, CR 514.2; Runed Terror's per-player share), `StepEvent`
+(`UNTIL_CONTROLLERS_NEXT_UPKEEP`, `UNTIL_NEXT_END_STEP`), `TapEvent.UntappedDuringUntapStep`
+(`UNTIL_CONTROLLERS_NEXT_UNTAP_STEP`), `SpellEvent.Cast` (the spell-cast ends) and `ActionEvent.Planeswalked`
+(`UNTIL_PLANESWALK`). A test ends a duration the same way: `gd.rulesEvents.occur(new TurnEvent.Cleanup(...))`.
+"For as long as" durations still end at their state changes (`expireFloatingEffectsForDepartedSource`,
+`…ForUnattachedSource`, `expireTappedSourceFloatingEffects`, the control reconciliation). The migration notes below
+name the expiry helpers the clock replaced.
 
 ## 7. Classification notes
 

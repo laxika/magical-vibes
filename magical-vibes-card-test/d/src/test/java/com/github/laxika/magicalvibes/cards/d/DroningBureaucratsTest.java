@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.s.SkarrganPitSkulk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -62,7 +63,7 @@ class DroningBureaucratsTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new DryadSophisticate());
 
         activate(bureaucrats, 2);
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         assertThatCode(() -> declareAttack(creature)).doesNotThrowAnyException();
     }

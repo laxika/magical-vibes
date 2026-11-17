@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -117,7 +118,7 @@ class FloatingEffectLifecycleTest extends BaseCardTest {
     class TurnStartExpiry {
 
         @Test
-        @DisplayName("expireFloatingEffectsAtTurnStart removes only the given player's UNTIL_YOUR_NEXT_TURN effects")
+        @DisplayName("A turn beginning removes only that player's UNTIL_YOUR_NEXT_TURN effects")
         void turnStartExpiryIsPerController() {
             gd.addFloatingEffect(floating(null, player1.getId(), Duration.UNTIL_YOUR_NEXT_TURN));
             FloatingContinuousEffect opponents = gd.addFloatingEffect(
@@ -125,9 +126,8 @@ class FloatingEffectLifecycleTest extends BaseCardTest {
             FloatingContinuousEffect permanent = gd.addFloatingEffect(
                     floating(null, player1.getId(), Duration.PERMANENT));
 
-            List<FloatingContinuousEffect> removed = gd.expireFloatingEffectsAtTurnStart(player1.getId());
+            gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
-            assertThat(removed).hasSize(1);
             assertThat(gd.floatingEffects).containsExactly(opponents, permanent);
         }
     }

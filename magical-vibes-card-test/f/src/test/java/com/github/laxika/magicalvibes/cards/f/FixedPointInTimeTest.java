@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.planar.PlanarDieResult;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -64,7 +65,7 @@ class FixedPointInTimeTest extends BaseCardTest {
         harness.inMutationScope(() -> planar.trigger(gd, source, Triggers.encounterThis(), player1.getId()));
         harness.passBothPriorities();
         gd.turnNumber++;
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
         Card nextPlane = new Card();
         nextPlane.setName("Next plane");

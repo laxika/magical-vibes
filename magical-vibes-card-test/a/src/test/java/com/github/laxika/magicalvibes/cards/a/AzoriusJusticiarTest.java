@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.Brushstrider;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -61,7 +62,7 @@ class AzoriusJusticiarTest extends BaseCardTest {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new Brushstrider());
         castJusticiar(List.of(bear.getId()));
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
         assertThatCode(() -> declareAttack(bear)).doesNotThrowAnyException();
     }
@@ -108,7 +109,7 @@ class AzoriusJusticiarTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new Brushstrider());
         castJusticiar(List.of(creature.getId()));
 
-        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player2.getId()));
 
         assertThatThrownBy(() -> declareAttack(creature))
                 .isInstanceOf(IllegalStateException.class)

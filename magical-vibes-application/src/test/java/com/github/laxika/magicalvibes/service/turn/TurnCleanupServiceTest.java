@@ -32,6 +32,8 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -738,37 +740,14 @@ class TurnCleanupServiceTest {
         }
 
         @Test
-        @DisplayName("Expiring layer-1 copy floating effect reverts the permanent to its pre-copy card")
-        void revertsEndOfTurnCopyWhenFloatingEffectExpires() {
-            Permanent perm = new Permanent(createCardWithName("Tilonalli's Skinshifter"));
-            perm.setPreCopyCard(perm.getCard());
-            perm.setCard(createCardWithName("Grizzly Bears"));
-            perm.setCopyUntilEndOfTurn(true);
-            gd.playerBattlefields.get(player1Id).add(perm);
-            gd.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), "Tilonalli's Skinshifter", perm.getId(), player1Id,
-                    new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(), perm.getId(), null, null,
-                    Duration.UNTIL_END_OF_TURN, 0));
+        @DisplayName("The cleanup step's damage removal is the rules event at which \"until end of turn\" effects end")
+        void emitsTheCleanupEvent() {
+            gd.activePlayerId = player1Id;
 
             sut.resetEndOfTurnModifiers(gd);
 
-            assertThat(perm.getCard().getName()).isEqualTo("Tilonalli's Skinshifter");
-            assertThat(perm.isCopyUntilEndOfTurn()).isFalse();
-            assertThat(perm.getPreCopyCard()).isNull();
-            assertThat(gd.floatingEffects).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Expired copy effect whose permanent has left the battlefield is a no-op")
-        void expiredCopyEffectForDepartedPermanentIsNoOp() {
-            gd.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), "Tilonalli's Skinshifter", UUID.randomUUID(), player1Id,
-                    new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(), UUID.randomUUID(), null, null,
-                    Duration.UNTIL_END_OF_TURN, 0));
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(gd.floatingEffects).isEmpty();
+            assertThat(gd.drainRulesEvents()).flatExtracting(RulesEventBatch::events)
+                    .contains(new TurnEvent.Cleanup(player1Id));
         }
 
         @Test

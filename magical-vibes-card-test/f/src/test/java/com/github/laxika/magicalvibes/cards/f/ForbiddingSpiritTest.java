@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.DovinGrandArbiter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -57,13 +58,13 @@ class ForbiddingSpiritTest extends BaseCardTest {
         Permanent bear = addCreatureReady(player2, new GrizzlyBears());
         castSpirit();
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         assertThatThrownBy(() -> declareAttackers(player2, List.of(
                 gd.playerBattlefields.get(player2.getId()).indexOf(bear))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana to pay attack tax");
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
         assertThatCode(() -> declareAttackers(player2, List.of(
                 gd.playerBattlefields.get(player2.getId()).indexOf(bear))))
                 .doesNotThrowAnyException();

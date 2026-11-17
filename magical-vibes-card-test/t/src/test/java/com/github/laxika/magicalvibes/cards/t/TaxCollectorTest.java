@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -39,7 +40,7 @@ class TaxCollectorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
         harness.castCreature(player2, 0);
 
         assertThat(gd.stack).hasSize(1);
@@ -61,7 +62,7 @@ class TaxCollectorTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
         assertThat(gqs.isLockedFromAttacking(gd, bears.getId())).isFalse();
     }
 
@@ -152,12 +153,12 @@ class TaxCollectorTest extends BaseCardTest {
         elves.setSummoningSick(false);
         castArrestMode(elves);
 
-        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player2.getId()));
         assertThatThrownBy(() -> harness.tapPermanent(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
         harness.tapPermanent(player2, 0);
 
         assertThat(elves.isTapped()).isTrue();

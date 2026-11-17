@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BorosMastiff;
 import com.github.laxika.magicalvibes.cards.z.ZhurTaaDruid;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -46,7 +47,7 @@ class LyevDecreeTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new BorosMastiff());
         cast(List.of(bears.getId()));
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
         assertThatCode(() -> declareAttack(List.of(bears))).doesNotThrowAnyException();
     }
@@ -109,8 +110,8 @@ class LyevDecreeTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new BorosMastiff());
         cast(List.of(creature.getId()));
 
-        gd.expireEndOfTurnFloatingEffects();
-        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
+        gd.rulesEvents.occur(new TurnEvent.Began(player2.getId()));
 
         assertThatThrownBy(() -> declareAttack(List.of(creature)))
                 .isInstanceOf(IllegalStateException.class)

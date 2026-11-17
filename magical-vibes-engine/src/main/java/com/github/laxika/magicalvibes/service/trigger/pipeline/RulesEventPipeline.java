@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -176,6 +177,10 @@ public class RulesEventPipeline {
     @Autowired
     @Lazy
     private LibraryTriggers libraryTriggers;
+
+    @Autowired
+    @Lazy
+    private DurationClock durationClock;
 
     public RulesEventPipeline(TriggerIndex triggerIndex, TriggeredAbilityStackService stackService,
                               @Lazy PredicateEvaluationService predicateEvaluationService,
@@ -503,8 +508,15 @@ public class RulesEventPipeline {
      * the turn's damage history (which static conditions read) as they detect, a life event checks for a win, an
      * action can make a player lose, an attachment applies "as this becomes attached" choices, and a tap event resolves
      * triggered mana abilities as they trigger (CR 605.4a); library, counter, tap and target detection open their own.
+     *
+     * <p>The durations the batch's events end end first ({@link DurationClock}), so an ability the same event
+     * triggers sees the game without those effects: "until your next upkeep" has ended as the upkeep's abilities
+     * trigger.
      */
     public void process(GameData gameData, RulesEventBatch batch) {
+        if (durationClock != null) {
+            durationClock.advance(gameData, batch);
+        }
         List<ZoneChangeEvent> events = new ArrayList<>();
         List<PermanentChangeEvent> permanentChanges = new ArrayList<>();
         for (RulesEvent event : batch.events()) {

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.n.NettleSentinel;
 import com.github.laxika.magicalvibes.cards.r.RuggedPrairie;
 import com.github.laxika.magicalvibes.cards.s.StigmaLasher;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -106,7 +107,7 @@ class WildernessHypnotistTest extends BaseCardTest {
         Permanent target = findPermanent(player2, "Stigma Lasher");
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(0);
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         target.resetModifiers();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +28,7 @@ class ShyftTest extends BaseCardTest {
 
         // Survives end-of-turn cleanup (indefinite).
         shyft.resetModifiers();
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         assertThat(gqs.getEffectiveColors(gd, shyft)).containsExactly(CardColor.RED);
     }

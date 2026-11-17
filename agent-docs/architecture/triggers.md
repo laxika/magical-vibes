@@ -131,8 +131,13 @@ or wording you are changing and read that section.
 | `ControlChangeEvent`, `AttachmentEvent`, `CrewEvent`, `DayNightEvent`, `RoomEvent` | `CreatureControlService` and where they happen | the matching `…Triggers` |
 | `SagaEvent` | `SagaChapterService` (final chapter triggers), `StackResolutionService` (it resolves) | `SagaTriggers` |
 | `EntryCausedTriggerEvent` | `EtbTriggerService` | `EntryCausedTriggerTriggers` |
+| `TurnEvent` (turn began, step or phase ended, cleanup's damage removal) | `TurnProgressionService`, `TurnSupport` (an effect ends combat), `TurnCleanupService.resetEndOfTurnModifiers` | no ability; `DurationClock` |
 
 Saga chapters and state triggers are not rules events.
+
+`RulesEventPipeline.process` first hands each batch to `DurationClock` (`service/duration`), which ends the floating
+effects whose `Duration.End` the batch's events are (CR 611.2a; turn, step, cleanup, untap-step, cast and planeswalk
+events), so an ability the same event triggers sees them ended.
 
 ## The pipeline
 

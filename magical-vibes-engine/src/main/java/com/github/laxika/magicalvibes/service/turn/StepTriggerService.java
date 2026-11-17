@@ -41,7 +41,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
-import com.github.laxika.magicalvibes.model.effect.TemporaryCopyEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
@@ -196,9 +195,6 @@ public class StepTriggerService {
     }
 
     public void handleUpkeepTriggers(GameData gameData) {
-        // "… until your next upkeep" (Cycle of Life): the floating layer-7b effect ends as the
-        // upkeep begins, before the delayed trigger below puts its counter on the creature.
-        gameData.expireFloatingEffectsAtUpkeep(gameData.activePlayerId);
         gameData.forEachPermanent((playerId, permanent) -> permanent.markUpkeepStarted(gameData.activePlayerId));
         // Echo's "came under your control since the beginning of your last upkeep" (CR 702.30a) counts this upkeep
         // for the active player's permanents, phased out ones too: phasing changes neither control nor history.
@@ -1150,7 +1146,6 @@ public class StepTriggerService {
                         entry.setNonTargeting(true);
                     });
         }
-        expireNextEndStepTemporaryCopies(gameData);
         handleBedtimeStoryLoreCounters(gameData);
         UUID activePlayerId = gameData.activePlayerId;
 
@@ -1192,18 +1187,6 @@ public class StepTriggerService {
                 .toList()
                 .forEach(saga -> sagaChapterService.addLoreCounterAndTriggerChapter(
                         gameData, saga, saga.getCard(), activePlayerId));
-    }
-
-    private void expireNextEndStepTemporaryCopies(GameData gameData) {
-        for (FloatingContinuousEffect expired : gameData.expireFloatingEffectsAtNextEndStep()) {
-            if (expired.effect() instanceof TemporaryCopyEffect
-                    && expired.affectedPermanentId() != null) {
-                Permanent copy = gameQueryService.findPermanentById(gameData, expired.affectedPermanentId());
-                if (copy != null) {
-                    copy.revertEndOfTurnCopy();
-                }
-            }
-        }
     }
 
     /** Begins the declare attackers step for the delayed abilities that wait for it. */

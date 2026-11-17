@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -60,7 +61,7 @@ class NeurokTransmuterTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, target)).isTrue();
         assertThat(gqs.isArtifact(gd, target)).isTrue();
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         target.resetModifiers();
 
         assertThat(gqs.isArtifact(gd, target)).isFalse();
@@ -92,7 +93,7 @@ class NeurokTransmuterTest extends BaseCardTest {
         assertThat(gqs.isArtifact(gd, target)).isFalse();
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLUE);
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         target.resetModifiers();
 
         assertThat(gqs.isArtifact(gd, target)).isTrue();
@@ -129,7 +130,7 @@ class NeurokTransmuterTest extends BaseCardTest {
         assertThat(gqs.isArtifact(gd, target)).isFalse();
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLUE);
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         target.resetModifiers();
 
         assertThat(gqs.isArtifact(gd, target)).isFalse();

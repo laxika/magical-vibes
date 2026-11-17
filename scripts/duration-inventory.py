@@ -53,7 +53,7 @@ FAMILIES = collections.OrderedDict([
 
 def main_sources():
     files = subprocess.run(["git", "ls-files", "*.java"], capture_output=True, text=True, check=True).stdout.split()
-    return [ROOT / f for f in files]
+    return [ROOT / f for f in files if (ROOT / f).exists()]
 
 
 def classify(name):

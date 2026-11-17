@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -78,7 +79,7 @@ class ArchonOfTheTriumvirateTest extends BaseCardTest {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         attackAndDetain(List.of(bear.getId()), archon);
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
         assertThatCode(() -> declareAttack(bear)).doesNotThrowAnyException();
     }

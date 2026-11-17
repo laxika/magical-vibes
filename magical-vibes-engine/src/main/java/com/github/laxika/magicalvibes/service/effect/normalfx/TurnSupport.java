@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
@@ -82,7 +83,7 @@ public class TurnSupport {
     }
 
     public void clearCombatState(GameData gameData) {
-        gameData.expireEndOfCombatFloatingEffects();
+        gameData.rulesEvents.occur(new TurnEvent.StepEnded(TurnStep.END_OF_COMBAT, gameData.activePlayerId));
         combatService.clearCombatState(gameData);
     }
 

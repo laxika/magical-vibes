@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -59,7 +60,7 @@ class ChampionsOfMinasTirithTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
 
-        gd.expireEndOfCombatFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.StepEnded(TurnStep.END_OF_COMBAT, gd.activePlayerId));
         declareAttackers(player2, List.of(0));
     }
 

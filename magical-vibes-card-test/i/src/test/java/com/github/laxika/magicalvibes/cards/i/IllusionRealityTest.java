@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,7 @@ class IllusionRealityTest extends BaseCardTest {
 
         assertThat(gqs.getEffectiveColors(gd, elf)).containsExactly(CardColor.RED);
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         elf.resetModifiers();
         assertThat(gqs.getEffectiveColors(gd, elf)).containsExactly(CardColor.GREEN);
     }
@@ -129,7 +130,7 @@ class IllusionRealityTest extends BaseCardTest {
         Permanent mask = findPermanent(player1, "Mask of Intolerance");
         assertThat(gqs.getEffectiveColors(gd, mask)).containsExactly(CardColor.RED);
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         mask.resetModifiers();
         assertThat(gqs.getEffectiveColors(gd, mask)).isEmpty();
     }

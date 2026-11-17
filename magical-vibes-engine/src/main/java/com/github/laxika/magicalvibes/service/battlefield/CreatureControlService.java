@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.RingState;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -134,13 +133,9 @@ public class CreatureControlService {
                 && gameQueryService.cantBeControlledByOtherPlayers(gameData, target)) {
             return false;
         }
-        FloatingContinuousEffect stamped = gameData.addFloatingEffect(new FloatingContinuousEffect(
+        gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), sourceCardName, sourcePermanentId, newControllerId,
                 wrappedEffect, target.getId(), affectedPlayerId, null, duration, 0));
-        if (Duration.UNTIL_END_OF_YOUR_NEXT_TURN.equals(duration)) {
-            gameData.queueDelayedAction(new ExpireControlAtEndOfNextTurn(
-                    stamped.id(), newControllerId, gameData.turnNumber));
-        }
         recomputeControl(gameData, target);
         return true;
     }
@@ -161,13 +156,9 @@ public class CreatureControlService {
                     && gameQueryService.cantBeControlledByOtherPlayers(gameData, target)) {
                 continue;
             }
-            FloatingContinuousEffect effect = gameData.addFloatingEffect(new FloatingContinuousEffect(
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), sourceCardName, null, newControllerId,
                     wrappedEffect, target.getId(), null, null, duration, 0));
-            if (Duration.UNTIL_END_OF_YOUR_NEXT_TURN.equals(duration)) {
-                gameData.queueDelayedAction(new ExpireControlAtEndOfNextTurn(
-                        effect.id(), newControllerId, gameData.turnNumber));
-            }
             stamped.add(target);
         }
         recomputeControls(gameData, stamped);

@@ -77,6 +77,8 @@ public class ActionTriggers {
     /** Triggers the abilities {@code event} triggers. */
     public void trigger(GameData gameData, ActionEvent event) {
         switch (event) {
+            case ActionEvent.Planeswalked ignored -> {
+            }
             case ActionEvent.SchemeSetInMotion scheme -> playerAction(gameData, PlayerAction.SETS_SCHEME_IN_MOTION,
                     scheme.playerId(), Facts.of(entry -> {
                         entry.setTriggeringCardId(scheme.scheme().getCard().getId());

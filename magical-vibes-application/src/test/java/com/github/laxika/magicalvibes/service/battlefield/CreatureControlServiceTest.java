@@ -273,7 +273,7 @@ class CreatureControlServiceTest {
             Permanent bear = addCreature(player2Id, "Grizzly Bears");
             applySteal(player1Id, bear, Duration.UNTIL_END_OF_TURN, null);
 
-            gd.expireEndOfTurnFloatingEffects();
+            gd.expireFloatingEffects(fe -> Duration.UNTIL_END_OF_TURN.equals(fe.duration()));
             creatureControlService.reconcileControl(gd);
 
             assertThat(gd.playerBattlefields.get(player2Id)).contains(bear);
@@ -308,7 +308,7 @@ class CreatureControlServiceTest {
             applySteal(player2Id, bear, Duration.UNTIL_END_OF_TURN, null);
             assertThat(gd.playerBattlefields.get(player2Id)).contains(bear);
 
-            gd.expireEndOfTurnFloatingEffects();
+            gd.expireFloatingEffects(fe -> Duration.UNTIL_END_OF_TURN.equals(fe.duration()));
             creatureControlService.reconcileControl(gd);
 
             assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
@@ -331,7 +331,7 @@ class CreatureControlServiceTest {
             when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player1Id);
 
             applySteal(player1Id, equipment, Duration.UNTIL_END_OF_TURN, null);
-            gd.expireEndOfTurnFloatingEffects();
+            gd.expireFloatingEffects(fe -> Duration.UNTIL_END_OF_TURN.equals(fe.duration()));
             creatureControlService.reconcileControl(gd);
 
             assertThat(gd.playerBattlefields.get(player2Id)).contains(equipment);

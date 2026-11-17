@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AxebaneGuardian;
 import com.github.laxika.magicalvibes.cards.d.DrudgeBeetle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -63,7 +64,7 @@ class SoulswornSpiritTest extends BaseCardTest {
         harness.addToBattlefield(player2, new DrudgeBeetle());
         Permanent beetle = detain("Drudge Beetle");
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
         assertThatCode(() -> declareAttack(beetle)).doesNotThrowAnyException();
     }
@@ -100,7 +101,7 @@ class SoulswornSpiritTest extends BaseCardTest {
         harness.addToBattlefield(player2, new DrudgeBeetle());
         Permanent beetle = detain("Drudge Beetle");
 
-        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player2.getId()));
 
         assertThatThrownBy(() -> declareAttack(beetle))
                 .isInstanceOf(IllegalStateException.class)

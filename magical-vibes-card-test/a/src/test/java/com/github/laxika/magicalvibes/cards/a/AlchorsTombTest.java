@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -29,7 +30,7 @@ class AlchorsTombTest extends BaseCardTest {
 
         assertThat(gqs.getEffectiveColors(gd, apes)).containsExactly(CardColor.RED);
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         apes.resetModifiers();
 
         assertThat(gqs.getEffectiveColors(gd, apes)).containsExactly(CardColor.RED);
@@ -73,7 +74,7 @@ class AlchorsTombTest extends BaseCardTest {
         harness.handleListChoice(player1, "WHITE");
 
         assertThat(gqs.getEffectiveColors(gd, apes)).containsExactly(CardColor.WHITE);
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         apes.resetModifiers();
         assertThat(gqs.getEffectiveColors(gd, apes)).containsExactly(CardColor.WHITE);
     }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -36,13 +37,13 @@ class ChronomanticEscapeTest extends BaseCardTest {
     void restrictionExpiresOnControllerNextTurn() {
         castNormally();
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         addCreatureReady(player2, new BlindPhantasm());
         assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
         assertThatCode(() -> declareAttackers(player2, List.of(0)))
                 .doesNotThrowAnyException();
     }

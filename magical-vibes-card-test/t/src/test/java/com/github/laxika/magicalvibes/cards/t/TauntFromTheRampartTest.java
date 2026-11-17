@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -60,7 +61,7 @@ class TauntFromTheRampartTest extends BaseCardTest {
     void restrictionsExpireAtControllersNextTurn() {
         addCreatureReady(player2, new GrizzlyBears());
         castTaunt();
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
         assertThatCode(() -> declareAttackers(player2, List.of()))
                 .doesNotThrowAnyException();
@@ -112,7 +113,7 @@ class TauntFromTheRampartTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         castTaunt();
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
         attacker.setAttacking(true);
         prepareDeclareBlockers(player1);
 
@@ -127,7 +128,7 @@ class TauntFromTheRampartTest extends BaseCardTest {
     void opponentsTurnDoesNotExpireGoad() {
         addCreatureReady(player2, new GrizzlyBears());
         castTaunt();
-        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player2.getId()));
 
         assertThatThrownBy(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)

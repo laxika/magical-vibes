@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AxebaneGuardian;
 import com.github.laxika.magicalvibes.cards.t.ToweringIndrik;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -62,7 +63,7 @@ class IsperiasSkywatchTest extends BaseCardTest {
         harness.addToBattlefield(player2, new ToweringIndrik());
         Permanent bears = detain("Towering Indrik");
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
         assertThatCode(() -> declareAttack(bears)).doesNotThrowAnyException();
     }
@@ -94,7 +95,7 @@ class IsperiasSkywatchTest extends BaseCardTest {
         harness.addToBattlefield(player2, new ToweringIndrik());
         Permanent creature = detain("Towering Indrik");
 
-        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player2.getId()));
 
         assertThatThrownBy(() -> declareAttack(creature))
                 .isInstanceOf(IllegalStateException.class)

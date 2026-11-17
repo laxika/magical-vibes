@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.l.LadyOrca;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -31,7 +32,7 @@ class AislingLeprechaunTest extends BaseCardTest {
 
         assertThat(gqs.getEffectiveColors(gd, attacker)).containsExactly(CardColor.GREEN);
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         attacker.resetModifiers();
 
         assertThat(gqs.getEffectiveColors(gd, attacker)).containsExactly(CardColor.GREEN);

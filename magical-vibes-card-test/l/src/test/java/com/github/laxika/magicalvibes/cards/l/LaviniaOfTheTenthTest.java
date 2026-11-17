@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.a.AzoriusCluestone;
 import com.github.laxika.magicalvibes.cards.a.AzoriusGuildgate;
 import com.github.laxika.magicalvibes.cards.r.RubblebeltMaaka;
 import com.github.laxika.magicalvibes.cards.p.PunishTheEnemy;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -79,7 +80,7 @@ class LaviniaOfTheTenthTest extends BaseCardTest {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castLavinia();
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
         assertThatCode(() -> declareAttack(bear)).doesNotThrowAnyException();
     }
@@ -153,7 +154,7 @@ class LaviniaOfTheTenthTest extends BaseCardTest {
     void detainDoesNotExpireAtOpponentsTurnStart() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castLavinia();
-        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player2.getId()));
 
         assertThatThrownBy(() -> declareAttack(bear))
                 .isInstanceOf(IllegalStateException.class)
@@ -175,7 +176,7 @@ class LaviniaOfTheTenthTest extends BaseCardTest {
     void protectionFromRedPreventsBlockingAfterDetainExpires() {
         Permanent maaka = harness.addToBattlefieldAndReturn(player2, new RubblebeltMaaka());
         castLavinia();
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
         Permanent lavinia = gd.playerBattlefields.get(player1.getId()).getFirst();
         lavinia.setAttacking(true);
         harness.forceActivePlayer(player1);
@@ -227,7 +228,7 @@ class LaviniaOfTheTenthTest extends BaseCardTest {
     void nonredCreatureCanBlockAfterDetainExpires() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castLavinia();
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
         Permanent lavinia = gd.playerBattlefields.get(player1.getId()).getFirst();
         lavinia.setAttacking(true);
         harness.forceActivePlayer(player1);

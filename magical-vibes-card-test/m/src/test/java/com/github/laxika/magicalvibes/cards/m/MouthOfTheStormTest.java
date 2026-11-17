@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -34,10 +35,10 @@ class MouthOfTheStormTest extends BaseCardTest {
         Permanent lateOpposingCreature = addCreatureReady(player2, new GrizzlyBears());
         assertThat(gqs.getEffectivePower(gd, lateOpposingCreature)).isEqualTo(2);
 
-        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player2.getId()));
         assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(-1);
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
         assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(2);
     }
 

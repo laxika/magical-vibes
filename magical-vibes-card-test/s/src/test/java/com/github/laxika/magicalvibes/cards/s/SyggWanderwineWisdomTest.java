@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -62,7 +63,7 @@ class SyggWanderwineWisdomTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, target, CardColor.RED)).isTrue();
         assertThat(gqs.hasProtectionFrom(gd, target, CardColor.GREEN)).isTrue();
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
         assertThat(gqs.hasProtectionFrom(gd, target, CardColor.WHITE)).isFalse();
     }
@@ -169,7 +170,7 @@ class SyggWanderwineWisdomTest extends BaseCardTest {
         Permanent sygg = addCreatureReady(player1, new SyggWanderwineWisdom());
         Permanent target = addCreatureReady(player1, new IronShieldElf());
         transformToBack(target);
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
         advanceToPrecombatMain(player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -216,7 +217,7 @@ class SyggWanderwineWisdomTest extends BaseCardTest {
         addCreatureReady(player1, new SyggWanderwineWisdom());
         Permanent target = addCreatureReady(player1, new IronShieldElf());
         transformToBack(target);
-        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player2.getId()));
 
         for (CardColor color : CardColor.values()) {
             assertThat(gqs.hasProtectionFrom(gd, target, color)).isTrue();

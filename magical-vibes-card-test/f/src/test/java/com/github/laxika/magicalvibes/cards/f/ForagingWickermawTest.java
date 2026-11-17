@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -70,7 +71,7 @@ class ForagingWickermawTest extends BaseCardTest {
         assertThat(gqs.getEffectiveColors(gd, wickermaw)).containsExactly(CardColor.GREEN);
 
         wickermaw.resetModifiers();
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         assertThat(gqs.getEffectiveColors(gd, wickermaw)).isEmpty();
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -21,16 +22,11 @@ import com.github.laxika.magicalvibes.model.effect.IllusionistsGambitAdditionalC
 import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.IllusionistsGambitAdditionalCombatEffectHandler;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnSkipReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantDuration;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RunedTerrorEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
-import com.github.laxika.magicalvibes.model.effect.TapRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TimeVaultReplacementEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
-import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
@@ -111,7 +107,6 @@ public class TurnProgressionService {
 
         if (gameData.currentStep == TurnStep.END_OF_COMBAT) {
             combatService.clearCombatState(gameData);
-            gameData.expireEndOfCombatFloatingEffects();
             gameData.creaturesWithCombatDamagePreventedThisCombat.clear();
             gameData.creaturesPreventedFromDealingCombatDamageThisCombat.clear();
             gameData.creaturesAssigningNoCombatDamageThisCombat.clear();
@@ -134,6 +129,11 @@ public class TurnProgressionService {
                 && !gameData.combatDamagePhase1Complete))) {
             handleCombatResult(combatService.resolveCombatDamage(gameData), gameData);
             return;
+        }
+
+        // The step or phase ends: the effects that last until its end end (CR 500.5).
+        if (gameData.currentStep != null) {
+            gameData.rulesEvents.occur(new TurnEvent.StepEnded(gameData.currentStep, gameData.activePlayerId));
         }
 
         if (runedTerrorActive && advanceRunedTerrorPhase(gameData)) {
@@ -366,7 +366,6 @@ public class TurnProgressionService {
         turnCleanupService.drainManaPools(gameData);
 
         if (gameData.currentStep == TurnStep.UPKEEP) {
-            gameData.expireFloatingEffectsAtUpkeepEnd(gameData.activePlayerId);
             gameData.cardsRevealedInHandUntilUpkeepEnd.clear();
         }
 
@@ -1329,41 +1328,8 @@ public class TurnProgressionService {
                 doubling -> doubling.controllerId().equals(nextActive));
         gameData.clearDelayedActions(DelayedSourceDamageMultiplication.class,
                 multiplication -> multiplication.controllerId().equals(nextActive));
-        // "Until your next turn" floating continuous effects controlled by the player whose turn
-        // is beginning wear off now. An expiring layer-1 copy effect (e.g. Shapesharer) reverts
-        // the copied permanent's card — which may sit on any player's battlefield. A newer copy
-        // effect overwrites {@code copyUntilNextTurnControllerId}, so an older effect expiring
-        // first must not revert the card out from under the still-active newer one.
-        for (FloatingContinuousEffect expired : gameData.expireFloatingEffectsAtTurnStart(nextActive)) {
-            if (expired.effect() instanceof TapRestrictionEffect restriction
-                    && restriction.preventsTappingUnlessAttacking()
-                    && expired.affectedPermanentId() != null) {
-                Permanent affected = findPermanent(gameData, expired.affectedPermanentId());
-                if (affected != null) {
-                    affected.removeTapRestriction(expired.id());
-                }
-            }
-            if (expired.effect() instanceof GrantKeywordEffect keywordGrant
-                    && keywordGrant.duration() == GrantDuration.UNTIL_YOUR_NEXT_TURN
-                    && expired.affectedPermanentId() != null) {
-                // The grant ends at its controller's turn even when the creature changed controllers,
-                // so the mirrored keyword set on the permanent can't wait for its own controller's turn.
-                Permanent affected = findPermanent(gameData, expired.affectedPermanentId());
-                if (affected != null) {
-                    affected.getUntilNextTurnKeywords().removeAll(keywordGrant.keywords());
-                }
-            }
-            if (expired.effect() instanceof MakeTargetCopyOfTargetCreatureUntilNextTurnEffect
-                    && expired.affectedPermanentId() != null) {
-                Permanent copy = findPermanent(gameData, expired.affectedPermanentId());
-                if (copy != null && copy.hasUntilNextTurnCopyLayers()) {
-                    copy.expireUntilNextTurnCopyLayers(nextActive);
-                } else if (copy != null && copy.isCopyUntilControllerNextTurn()
-                        && nextActive.equals(copy.getCopyUntilNextTurnControllerId())) {
-                    copy.revertUntilNextTurnCopy();
-                }
-            }
-        }
+        // The turn begins: the "until your next turn" effects of the player whose turn it is end.
+        gameData.rulesEvents.occur(new TurnEvent.Began(nextActive));
 
         gameData.turnUntapStepSkipped = skipUntapStep;
         gameData.captureTurnStartSnapshot();

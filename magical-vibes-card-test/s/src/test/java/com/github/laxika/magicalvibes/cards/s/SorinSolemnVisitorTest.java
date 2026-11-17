@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +37,7 @@ class SorinSolemnVisitorTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.LIFELINK)).isFalse();
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
         ownCreature.clearUntilNextTurnEffects();
 
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
@@ -123,7 +124,7 @@ class SorinSolemnVisitorTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, lateCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.LIFELINK)).isFalse();
 
-        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player2.getId()));
         assertThat(gqs.getEffectivePower(gd, earlyCreature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, earlyCreature, Keyword.LIFELINK)).isTrue();
     }

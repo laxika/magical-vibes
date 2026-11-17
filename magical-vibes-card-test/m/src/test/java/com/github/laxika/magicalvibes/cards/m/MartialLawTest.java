@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -71,7 +72,7 @@ class MartialLawTest extends BaseCardTest {
     void detainWearsOffAtControllersNextTurn() {
         Permanent bears = detainOpponentCreature(new GrizzlyBears());
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
         assertThatCode(() -> declareAttack(bears)).doesNotThrowAnyException();
     }
@@ -105,7 +106,7 @@ class MartialLawTest extends BaseCardTest {
     void detainSurvivesOpponentTurnStart() {
         Permanent bears = detainOpponentCreature(new GrizzlyBears());
 
-        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player2.getId()));
 
         assertThatThrownBy(() -> declareAttack(bears))
                 .isInstanceOf(IllegalStateException.class)

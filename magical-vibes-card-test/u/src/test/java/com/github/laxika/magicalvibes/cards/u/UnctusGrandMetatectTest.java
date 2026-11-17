@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -80,7 +81,7 @@ class UnctusGrandMetatectTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         target.resetModifiers();
 
         assertThat(gqs.isArtifact(gd, target)).isFalse();

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -46,7 +47,7 @@ class AgitatorAntTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         resolveAgitatorAbilities();
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
         assertThat(als.getMustAttackRequirementCount(gd, player1Creature)).isZero();
         assertThat(als.getMustAttackRequirementCount(gd, player2Creature)).isZero();

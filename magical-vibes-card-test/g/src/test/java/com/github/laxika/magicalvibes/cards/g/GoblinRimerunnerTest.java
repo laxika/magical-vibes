@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.s.SnowCoveredMountain;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -55,7 +56,7 @@ class GoblinRimerunnerTest extends BaseCardTest {
         assertThat(rimerunner.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         rimerunner.resetModifiers();
         assertThat(gqs.hasKeyword(gd, rimerunner, Keyword.HASTE)).isFalse();
     }
@@ -156,7 +157,7 @@ class GoblinRimerunnerTest extends BaseCardTest {
 
         assertThat(rimerunner.isCantBlockThisTurn()).isTrue();
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         rimerunner.resetModifiers();
 
         assertThat(rimerunner.isCantBlockThisTurn()).isFalse();

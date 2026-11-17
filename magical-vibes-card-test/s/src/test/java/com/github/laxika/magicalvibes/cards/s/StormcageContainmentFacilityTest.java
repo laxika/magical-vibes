@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -77,7 +78,7 @@ class StormcageContainmentFacilityTest extends BaseCardTest {
         assertThat(gqs.isLockedFromActivatingAbilities(gd, opponentCreature.getId())).isTrue();
         assertThat(gqs.isLockedFromAttacking(gd, ownCreature.getId())).isFalse();
 
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
         assertThat(gqs.isLockedFromAttacking(gd, opponentCreature.getId())).isFalse();
     }

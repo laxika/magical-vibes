@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -50,7 +51,7 @@ class ChooseYourChampionTest extends BaseCardTest {
     void restrictionEndsAtControllersNextTurn() {
         resolveScheme();
         harness.handlePermanentChosen(player2, player1.getId());
-        gd.expireFloatingEffectsAtTurnStart(player1.getId());
+        gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
 
         assertThat(harness.getCastingPermissionService()
                 .isPlayerPreventedFromCasting(gd, player2.getId())).isFalse();

@@ -26,7 +26,6 @@ public sealed interface DelayedAction permits
         DelayedCamouflage,
         GrantExilePlayPermissionAtNextTurn,
         RevokeExilePlayPermissionAtNextUpkeep,
-        ExpireControlAtEndOfNextTurn,
         PhasedOutUntilEndOfNextTurn,
         DelayedDamageDoubling,
         DelayedControllerDamageMultiplication,

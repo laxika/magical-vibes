@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.EndOfTurnStateField;
 import com.github.laxika.magicalvibes.model.EndOfTurnStateShare;
 import com.github.laxika.magicalvibes.model.action.DelayedAction;
-import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.action.PhasedOutUntilEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.effect.ReplaceManaDrainWithColorless
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.TemporaryCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -45,7 +44,6 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,7 +103,6 @@ public class TurnCleanupService {
         clearSpellTypeRestrictionsEndingThisTurn(gameData);
         gameData.restoreBombardmentCards();
         resetEndOfTurnModifiers(gameData);
-        expireControlAtEndOfNextTurn(gameData);
         expirePhasingRestrictionsAtEndOfNextTurn(gameData);
         creatureControlService.reconcileControl(gameData);
         gameData.skipCombatPhaseExpirationsThisTurn.forEach((playerId, count) ->
@@ -113,27 +110,6 @@ public class TurnCleanupService {
                         (id, total) -> total > count ? total - count : null));
         gameData.skipCombatPhaseExpirationsThisTurn.clear();
         gameData.retainControlLossUnattachTriggers();
-    }
-
-    /** Expires control effects whose controller has just finished their next turn. */
-    private void expireControlAtEndOfNextTurn(GameData gameData) {
-        UUID activePlayerId = gameData.activePlayerId;
-        if (activePlayerId == null) {
-            return;
-        }
-        List<ExpireControlAtEndOfNextTurn> expirations = gameData.drainDelayedActions(
-                ExpireControlAtEndOfNextTurn.class,
-                action -> activePlayerId.equals(action.controllerId())
-                        && gameData.turnNumber > action.registeredTurnNumber());
-        for (ExpireControlAtEndOfNextTurn expiration : expirations) {
-            gameData.expireFloatingEffects(effect -> expiration.controlEffectId().equals(effect.id()));
-        }
-        gameData.expireFloatingEffects(effect ->
-                effect.duration() == com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_YOUR_NEXT_TURN
-                        && !effect.isControlEffect()
-                        && activePlayerId.equals(effect.controllerId())
-                        && gameData.turnStartTimestamp > 0
-                        && effect.timestamp() < gameData.turnStartTimestamp);
     }
 
     /** Releases Teferi's mass phase-out restriction after the controller's next turn ends. */
@@ -240,47 +216,19 @@ public class TurnCleanupService {
      * @param gameData the current game state to modify
      */
     public void resetEndOfTurnModifiers(GameData gameData) {
-        // CR 613 layer engine: "until end of turn" floating continuous effects wear off here,
-        // before the legacy per-permanent modifier reset below. An expiring layer-1 copy effect
-        // (Tilonalli's Skinshifter) reverts the permanent's card to the pre-copy card — the
-        // official ruling pins this to the same moment damage is removed (the cleanup step).
+        // The "until end of turn" floating continuous effects end here (CR 514.2), before the per-permanent
+        // modifier reset below; the duration clock reverts an expiring layer-1 copy (Tilonalli's Skinshifter).
         // Runed Terror ruling (CR 514.2): while players take their phases sequentially, an "until end
         // of turn" effect ends only at the cleanup step of the player who was active when it began.
         boolean phaseSequence = gameData.runedTerrorPhaseSequenceActive && gameData.activePlayerId != null;
         Map<UUID, EndOfTurnStateShare> retainedState = phaseSequence
                 ? releaseActivePlayerEndOfTurnState(gameData)
                 : Map.of();
-        List<FloatingContinuousEffect> expiredFloatingEffects;
-        if (phaseSequence) {
-            expiredFloatingEffects = gameData.expireEndOfTurnFloatingEffectsCreatedDuring(gameData.activePlayerId);
-        } else {
+        if (!phaseSequence) {
             gameData.phaseSequenceEndOfTurnShares.clear();
             gameData.phaseSequenceAttributedEndOfTurnState.clear();
-            expiredFloatingEffects = gameData.expireEndOfTurnFloatingEffects();
-            Set<UUID> liveFloatingEffectIds = new HashSet<>();
-            synchronized (gameData.floatingEffects) {
-                gameData.floatingEffects.forEach(fe -> liveFloatingEffectIds.add(fe.id()));
-            }
-            gameData.floatingEffectCreatingActivePlayerIds.keySet().retainAll(liveFloatingEffectIds);
         }
-        for (FloatingContinuousEffect expired : expiredFloatingEffects) {
-            if (expired.effect() instanceof TemporaryCopyEffect
-                    && expired.affectedPermanentId() != null) {
-                Permanent copy = findPermanent(gameData, expired.affectedPermanentId());
-                if (copy == null) {
-                    // A phased-out copy still reverts: the effect ends at cleanup whether or not the
-                    // permanent is currently phased in (CR 514.2).
-                    copy = gameData.phasedOutPermanents.values().stream()
-                            .flatMap(List::stream)
-                            .filter(phased -> phased.getId().equals(expired.affectedPermanentId()))
-                            .findFirst()
-                            .orElse(null);
-                }
-                if (copy != null) {
-                    copy.revertEndOfTurnCopy();
-                }
-            }
-        }
+        gameData.rulesEvents.occur(new TurnEvent.Cleanup(gameData.activePlayerId));
         gameData.temporaryGraveyardCardAnimationsUntilEndOfTurn.clear();
 
         List<UUID> controllersWithOpponentDamagePersistence = new ArrayList<>();

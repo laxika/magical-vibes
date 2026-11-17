@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersWithChosenPlanarModePlayAdditionalLandEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -4711,13 +4710,10 @@ public class GameData {
     }
 
     /** Continuous effects created by resolved spells/abilities (CR 611.2), for the CR 613 layer
-     *  engine (see {@code agent-docs/LAYER_SYSTEM.md}). Stamped via {@link #addFloatingEffect}
-     *  and expired by duration: {@code UNTIL_END_OF_TURN} at the cleanup step,
-     *  {@code UNTIL_END_OF_COMBAT} when combat state is cleared,
-     *  {@code WHILE_SOURCE_ON_BATTLEFIELD}/{@code WHILE_ATTACHED} when the source permanent
-     *  leaves the battlefield or becomes unattached, {@code UNTIL_YOUR_NEXT_TURN} at the start
-     *  of the controller's next turn; next-turn cleanup and next-upkeep durations expire
-     *  at their respective cleanup step and end of upkeep. */
+     *  engine (see {@code agent-docs/LAYER_SYSTEM.md}). Stamped via {@link #addFloatingEffect}.
+     *  A duration that ends at an event ends at the rules event (the engine's duration clock); a
+     *  "for as long as" duration ends where its condition stops holding: the source leaving the
+     *  battlefield, becoming unattached or untapped, or changing controllers (CR 611.2b). */
     public final List<FloatingContinuousEffect> floatingEffects = Collections.synchronizedList(new ArrayList<>());
 
     /** Active player at the moment each floating effect was created, keyed by the effect's id. Under
@@ -4908,31 +4904,7 @@ public class GameData {
         }
     }
 
-    /** Removes and returns all floating effects with end-of-turn duration (cleanup step). */
-    public List<FloatingContinuousEffect> expireEndOfTurnFloatingEffects() {
-        return expireFloatingEffects(this::endsAtCleanup);
-    }
-
-    /**
-     * Removes and returns the floating effects with end-of-turn duration that were created while
-     * the given player was the active player, plus any whose creating active player is unknown.
-     * Used at a cleanup step under Runed Terror's sequential phases, where such an effect ends at
-     * the cleanup step of the player who was active when it began (Runed Terror ruling, CR 514.2).
-     */
-    public List<FloatingContinuousEffect> expireEndOfTurnFloatingEffectsCreatedDuring(UUID playerId) {
-        return expireFloatingEffects(fe -> endsAtCleanup(fe)
-                && (fe.id() == null || playerId.equals(
-                floatingEffectCreatingActivePlayerIds.getOrDefault(fe.id(), playerId))));
-    }
-
-    private boolean endsAtCleanup(FloatingContinuousEffect fe) {
-        return Duration.UNTIL_END_OF_TURN.equals(fe.duration())
-                || (Duration.UNTIL_MATCHING_SPELL_CAST.equals(fe.duration())
-                && !(fe.effect() instanceof ReduceCastCostForNextMatchingSpellEffect reduction
-                && !reduction.expiresAtCleanup()));
-    }
-
-    /** The id under which {@link #phaseSequenceEndOfTurnShares} tracks the game-wide {@code GAME_} stores; it is
+        /** The id under which {@link #phaseSequenceEndOfTurnShares} tracks the game-wide {@code GAME_} stores; it is
      *  the nil UUID, which no player or permanent has. */
     public static final UUID GAME_END_OF_TURN_STATE_ID = new UUID(0L, 0L);
 
@@ -5694,22 +5666,8 @@ public class GameData {
                 map.computeIfAbsent(entry.getKey(), key -> new CopyOnWriteArrayList<>()).add(entry.getValue()));
     }
 
-    /** Removes and returns all floating effects that expire at the beginning of the next end step. */
-    public List<FloatingContinuousEffect> expireFloatingEffectsAtNextEndStep() {
-        return expireFloatingEffects(fe -> Duration.UNTIL_NEXT_END_STEP.equals(fe.duration()));
-    }
-
     /** Removes and returns all floating effects with {@code UNTIL_END_OF_COMBAT} duration. */
-    public List<FloatingContinuousEffect> expireEndOfCombatFloatingEffects() {
-        return expireFloatingEffects(fe -> Duration.UNTIL_END_OF_COMBAT.equals(fe.duration()));
-    }
-
-    /** Removes floating effects that last until any player casts a creature spell. */
-    public List<FloatingContinuousEffect> expireFloatingEffectsOnCreatureSpellCast() {
-        return expireFloatingEffects(fe -> Duration.UNTIL_CREATURE_SPELL_CAST.equals(fe.duration()));
-    }
-
-    /**
+        /**
      * Removes and returns all floating effects that depended on the given source permanent still
      * being on the battlefield ({@code WHILE_SOURCE_ON_BATTLEFIELD}, {@code WHILE_SOURCE_TAPPED},
      * {@code WHILE_SOURCE_REMAINS_TAPPED}, and {@code WHILE_ATTACHED}).
@@ -5752,40 +5710,13 @@ public class GameData {
      * Removes and returns all {@code UNTIL_YOUR_NEXT_TURN} floating effects controlled by the
      * given player. Called when that player's turn begins.
      */
-    public List<FloatingContinuousEffect> expireFloatingEffectsAtTurnStart(UUID playerId) {
-        return expireFloatingEffects(fe -> Duration.UNTIL_YOUR_NEXT_TURN.equals(fe.duration())
-                && playerId.equals(fe.controllerId()));
-    }
-
-    /** Removes floating effects controlled by the given player after that player's next turn. */
-    public List<FloatingContinuousEffect> expireFloatingEffectsAtTurnEnd(UUID playerId) {
-        return expireFloatingEffects(fe -> Duration.UNTIL_END_OF_YOUR_NEXT_TURN.equals(fe.duration())
-                && playerId != null
-                && playerId.equals(fe.controllerId())
-                && turnStartTimestamp > 0
-                && fe.timestamp() < turnStartTimestamp);
-    }
-
-    /**
+        /**
      * Removes and returns all {@code UNTIL_CONTROLLERS_NEXT_UPKEEP} floating effects controlled by
      * the given player. Called at the beginning of that player's upkeep step (Cycle of Life).
      */
-    public List<FloatingContinuousEffect> expireFloatingEffectsAtUpkeep(UUID playerId) {
-        return expireFloatingEffects(fe -> Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(fe.duration())
-                && playerId.equals(fe.controllerId()));
-    }
-
-    /** Marks the beginning of an upkeep for effects that last through the end of that upkeep. */
+        /** Marks the beginning of an upkeep for effects that last through the end of that upkeep. */
     public void markUpkeepStart() {
         upkeepStartTimestamp = timestampCounter + 1;
-    }
-
-    /** Removes effects that lasted through the end of the current upkeep. */
-    public List<FloatingContinuousEffect> expireFloatingEffectsAtUpkeepEnd(UUID playerId) {
-        return expireFloatingEffects(fe -> Duration.UNTIL_END_OF_CONTROLLERS_NEXT_UPKEEP.equals(fe.duration())
-                && playerId.equals(fe.controllerId())
-                && upkeepStartTimestamp > 0
-                && fe.timestamp() < upkeepStartTimestamp);
     }
 
     public List<FloatingContinuousEffect> expireFloatingEffects(Predicate<FloatingContinuousEffect> expired) {

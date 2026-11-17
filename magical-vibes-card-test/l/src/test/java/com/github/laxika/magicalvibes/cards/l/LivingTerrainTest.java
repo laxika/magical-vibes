@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -182,7 +183,7 @@ class LivingTerrainTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(6);
 
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         assertThat(gqs.getEffectiveColors(gd, forest)).containsExactly(CardColor.GREEN);
     }

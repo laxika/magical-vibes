@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.p.PalaceGuard;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -79,7 +80,7 @@ class WarCadenceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, 2, null);
         harness.passBothPriorities();
-        gd.expireEndOfTurnFloatingEffects();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of(
