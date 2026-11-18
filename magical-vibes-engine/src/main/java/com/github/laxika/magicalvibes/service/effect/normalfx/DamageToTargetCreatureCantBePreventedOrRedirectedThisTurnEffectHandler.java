@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.DamageToTargetCreatureCantBePreventedOrRedirectedThisTurnEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,6 @@ public class DamageToTargetCreatureCantBePreventedOrRedirectedThisTurnEffectHand
         if (target == null || !gameQueryService.isCreature(gameData, target)) {
             return;
         }
-        target.setDamageCantBePreventedOrRedirectedThisTurn(true);
+        gameData.addEffectOnPermanent(entry, effect, target.getId(), Duration.UNTIL_END_OF_TURN);
     }
 }

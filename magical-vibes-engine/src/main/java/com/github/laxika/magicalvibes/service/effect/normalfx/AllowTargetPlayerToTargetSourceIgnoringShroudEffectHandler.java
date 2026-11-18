@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AllowTargetPlayerToTargetSourceIgnoringShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,8 @@ public class AllowTargetPlayerToTargetSourceIgnoringShroudEffectHandler implemen
         if (source == null) {
             return;
         }
-        source.allowShroudIgnoredBy(entry.getTargetId());
+        gameData.addEffectOnPermanent(entry, new AllowTargetPlayerToTargetSourceIgnoringShroudEffect(entry.getTargetId()),
+                source.getId(), Duration.UNTIL_END_OF_TURN);
         log.info("Game {} - {} can be targeted by {} this turn as though it didn't have shroud",
                 gameData.id, source.getCard().getName(), gameData.playerIdToName.get(entry.getTargetId()));
     }

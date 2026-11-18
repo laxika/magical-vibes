@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCast
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackCountRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -76,7 +77,7 @@ public final class CombatHelper {
         final boolean[] result = {false};
         gameData.forEachPermanent((playerId, source) -> {
             if (result[0] || !source.isAttached() || !attacker.getId().equals(source.getAttachedTo())
-                    || source.isAuraEffectsIgnoredFor(gameQueryService.findPermanentController(gameData, attacker.getId()))) {
+                    || gameData.ignoresEffectOf(source.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class, gameQueryService.findPermanentController(gameData, attacker.getId()))) {
                 return;
             }
             for (CardEffect effect : source.getCard().getStaticEffects()) {

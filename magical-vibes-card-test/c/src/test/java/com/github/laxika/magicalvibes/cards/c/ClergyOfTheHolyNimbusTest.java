@@ -51,7 +51,7 @@ class ClergyOfTheHolyNimbusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent clergy = findPermanent(player1, "Clergy of the Holy Nimbus");
-        assertThat(clergy.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(clergy.getId())).isTrue();
     }
 
     @Test
@@ -63,14 +63,14 @@ class ClergyOfTheHolyNimbusTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(clergy.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(clergy.getId())).isTrue();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(clergy.isCantRegenerateThisTurn()).isFalse();
+        assertThat(gd.cantBeRegenerated(clergy.getId())).isFalse();
     }
 
     @Test

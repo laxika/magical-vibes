@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * "Target creature can't be regenerated this turn." Marks the target creature so that
- * {@code GraveyardService.tryRegenerate} refuses to regenerate it for the rest of the turn,
- * regardless of any regeneration shields it already has or later gains. The flag is cleared
- * during turn cleanup. Harmful (protection from the source is honoured). Hurr Jackal.
+ * "Target creature can't be regenerated this turn." Resolving it makes a floating effect on the target until end of
+ * turn, so {@code GraveyardService.tryRegenerate} refuses to regenerate it for the rest of the turn, regardless of
+ * any regeneration shields it already has or later gains. Damage riders ("it can't be regenerated this turn") make
+ * the same effect. Harmful (protection from the source is honoured). Hurr Jackal.
  * <p>
  * On a {@code Triggers.blocks()} / {@code Triggers.becomesBlocked()} ({@code EACH_BLOCKER}) ability whose card declares
  * no target for it, the target is "that creature", which the collector records as the entry's non-targeting target

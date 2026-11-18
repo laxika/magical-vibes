@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtFaceDownCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyCombatDamageFromTargetCreatureToOpponentsUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyControllerDamageToOpponentsAndTheirPermanentsThisTurnEffect;
@@ -4851,7 +4852,7 @@ public class GameQueryService {
         UUID permanentControllerId = findPermanentController(gameData, permanent.getId());
         gameData.forEachPermanent((controllerId, source) -> {
             if (!source.isAttached() || !permanent.getId().equals(source.getAttachedTo())
-                    || source.isAuraEffectsIgnoredFor(permanentControllerId)
+                    || gameData.ignoresEffectOf(source.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class, permanentControllerId)
                     || hasLostPrintedAbilities(gameData, source)) {
                 return;
             }
@@ -10983,8 +10984,7 @@ public class GameQueryService {
 
     private int countAdditionalCreatureDeathEffects(Permanent staticSource, Permanent triggeringPermanent,
                                                      FilterContext filterContext) {
-        if (staticSource.isLosesAllAbilitiesUntilEndOfTurn()
-                || staticSource.isAuraEffectsIgnoredThisTurn()) return 0;
+        if (staticSource.isLosesAllAbilitiesUntilEndOfTurn()) return 0;
 
         int count = 0;
         for (CardEffect effect : staticSource.getCard().getStaticEffects()) {
@@ -11000,7 +11000,6 @@ public class GameQueryService {
     private int countAdditionalEmblemCreatureDeathEffects(GameData gameData, UUID controllerId,
                                                             Permanent staticSource) {
         if (staticSource.isLosesAllAbilitiesUntilEndOfTurn()
-                || staticSource.isAuraEffectsIgnoredThisTurn()
                 || !staticSource.isAttached()) {
             return 0;
         }
@@ -11198,7 +11197,7 @@ public class GameQueryService {
     public boolean hasAuraWithEffect(GameData gameData, Permanent creature, Predicate<CardEffect> effectMatcher) {
         return gameData.anyPermanentMatches(p ->
                 p.isAttached() && p.getAttachedTo().equals(creature.getId())
-                        && !p.isAuraEffectsIgnoredFor(findPermanentController(gameData, creature.getId()))
+                        && !gameData.ignoresEffectOf(p.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class, findPermanentController(gameData, creature.getId()))
                         && p.getCard().getStaticEffects().stream()
                         .anyMatch(e -> isActiveEffect(gameData, p, creature, e, effectMatcher)));
     }
@@ -11216,7 +11215,7 @@ public class GameQueryService {
         UUID enchantedControllerId = findPermanentController(gameData, creature.getId());
         gameData.forEachPermanent((id, permanent) -> {
             if (!permanent.isAttached() || !creature.getId().equals(permanent.getAttachedTo())
-                    || permanent.isAuraEffectsIgnoredFor(enchantedControllerId)) {
+                    || gameData.ignoresEffectOf(permanent.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class, enchantedControllerId)) {
                 return;
             }
             for (CardEffect effect : permanent.getCard().getStaticEffects()) {

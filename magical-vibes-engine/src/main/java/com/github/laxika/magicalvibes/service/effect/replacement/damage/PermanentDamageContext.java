@@ -41,6 +41,6 @@ public record PermanentDamageContext(GameData gameData, DamageEvent event, Perma
 
     /** "Damage can't be prevented or redirected" applies to the damaged permanent this turn. */
     public boolean targetProtectedFromPrevention() {
-        return target.isDamageCantBePreventedOrRedirectedThisTurn();
+        return gameData.damageCantBePreventedOrRedirected(target.getId());
     }
 }

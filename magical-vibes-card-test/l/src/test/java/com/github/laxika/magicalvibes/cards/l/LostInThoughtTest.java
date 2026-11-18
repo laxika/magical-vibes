@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
+
 import com.github.laxika.magicalvibes.cards.c.CabalTrainee;
 import com.github.laxika.magicalvibes.cards.h.HarvesterDruid;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
@@ -69,7 +71,7 @@ class LostInThoughtTest extends BaseCardTest {
         harness.activateAbility(player1, 2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(aura.isAuraEffectsIgnoredThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(aura.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -89,7 +91,7 @@ class LostInThoughtTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough matching cards in graveyard");
-        assertThat(aura.isAuraEffectsIgnoredThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(aura.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class)).isFalse();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
@@ -124,7 +126,7 @@ class LostInThoughtTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(aura.isAuraEffectsIgnoredThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(aura.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class)).isFalse();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
@@ -169,7 +171,7 @@ class LostInThoughtTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(aura.isAuraEffectsIgnoredThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(aura.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class)).isFalse();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
@@ -191,7 +193,7 @@ class LostInThoughtTest extends BaseCardTest {
                 List.of(graveyard.get(0).getId(), graveyard.get(1).getId(), graveyard.get(2).getId()));
         harness.passBothPriorities();
 
-        assertThat(aura.isAuraEffectsIgnoredThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(aura.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactlyInAnyOrder(graveyard.get(0), graveyard.get(1), graveyard.get(2));
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyard.get(3));

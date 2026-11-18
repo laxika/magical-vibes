@@ -4846,6 +4846,57 @@ public class GameData {
     }
 
     /**
+     * Whether damage that would be dealt to the permanent {@code permanentId} this turn can't be prevented or dealt
+     * instead to another permanent or player, by a resolved effect on it (Whippoorwill).
+     */
+    public boolean damageCantBePreventedOrRedirected(UUID permanentId) {
+        return hasFloatingEffectOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.DamageToTargetCreatureCantBePreventedOrRedirectedThisTurnEffect.class);
+    }
+
+    /** Whether the permanent {@code permanentId} can't be regenerated this turn, by a resolved effect on it. */
+    public boolean cantBeRegenerated(UUID permanentId) {
+        return hasFloatingEffectOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.PreventTargetCreatureRegenerationThisTurnEffect.class);
+    }
+
+    /**
+     * Whether {@code playerId} ignores the effect of the permanent {@code permanentId}, by a resolved "that player
+     * ignores this effect until end of turn" effect of {@code type} on it (Volrath's Curse, Damping Engine). Each is
+     * made for the player who paid, its controller; another player is still bound by the permanent's effect.
+     */
+    public boolean ignoresEffectOf(UUID permanentId, Class<? extends CardEffect> type, UUID playerId) {
+        return playerId != null && floatingEffectsOnPermanent(permanentId, type).stream()
+                .anyMatch(fe -> playerId.equals(fe.controllerId()));
+    }
+
+    /**
+     * Whether spells and abilities {@code playerId} controls can target the permanent {@code permanentId} as though
+     * it didn't have shroud, by the resolved effects on it that name that player (Autumn Willow).
+     */
+    public boolean mayTargetIgnoringShroud(UUID permanentId, UUID playerId) {
+        return playerId != null && floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.AllowTargetPlayerToTargetSourceIgnoringShroudEffect.class)
+                .stream()
+                .anyMatch(fe -> playerId.equals(((com.github.laxika.magicalvibes.model.effect
+                        .AllowTargetPlayerToTargetSourceIgnoringShroudEffect) fe.effect()).playerId()));
+    }
+
+    /**
+     * Uses up the oldest "the next time it adapts this turn, it adapts as though it had no +1/+1 counters on it"
+     * effect on the permanent {@code permanentId} (Biomancer's Familiar), returning whether there was one.
+     */
+    public boolean useAdaptOverride(UUID permanentId) {
+        List<FloatingContinuousEffect> overrides = floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.AllowTargetCreatureToAdaptEffect.class);
+        if (overrides.isEmpty()) {
+            return false;
+        }
+        endFloatingEffect(overrides.getFirst());
+        return true;
+    }
+
+    /**
      * Makes {@code controllerId} control {@code controlledId} for {@code duration} (CR 724): a floating
      * {@link com.github.laxika.magicalvibes.model.effect.ControlPlayerEffect} on the controlled player. Of the effects on one player the last one created is
      * the one that works (CR 724.1a), so this ends the older ones, begun or not; an older one that promises an extra

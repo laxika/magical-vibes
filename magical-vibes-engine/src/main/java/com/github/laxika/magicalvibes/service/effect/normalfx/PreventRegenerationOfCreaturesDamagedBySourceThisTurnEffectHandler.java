@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffect;
-import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -39,14 +40,10 @@ public class PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffectHandler 
             return;
         }
 
-        source.setDamagedCreaturesCantRegenerateThisTurn(true);
-        if (entry.getTargetId() != null) {
-            // A targeted ability's effect (Runesword) belongs to the ability, not to the creature, so it keeps
-            // applying after that creature leaves; a self-granted ability (Bone Shaman) does not.
-            gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(entry.getCard().getName(),
-                    entry.getSourcePermanentId(), entry.getControllerId(), effect, source.getId(),
-                    Duration.UNTIL_END_OF_TURN));
-        }
+        // A targeted ability's effect (Runesword) belongs to the ability, not to the creature, so it keeps applying
+        // after that creature leaves; without a target the creature gains it as an ability (Bone Shaman, CR 613.1f).
+        gameData.addEffectOnPermanent(entry, entry.getTargetId() != null ? effect
+                : new GrantEffectEffect(effect, GrantScope.TARGET), source.getId(), Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                 ": creatures it dealt damage to this turn can't be regenerated this turn."));

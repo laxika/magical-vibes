@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.ability;
 import com.github.laxika.magicalvibes.model.effect.GrantExtraLoyaltyActivationToPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowTwiceLoyaltyActivationsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GuardianAngelPermissionEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantActivatePlaneswalkerLoyaltyAbilitiesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
@@ -10719,10 +10720,10 @@ public class AbilityActivationService {
         int currentCount = perAbilityCounts != null
                 ? perAbilityCounts.getOrDefault(perTurnUseKey(gameData, permanent, ability, abilityIndex), 0) : 0;
         if (ability.getEffects().stream().anyMatch(
-                com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class::isInstance)) {
+                IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class::isInstance)) {
             // "Ignore this effect" is granted per player (Volrath's Curse), so a new controller of the
             // enchanted creature isn't limited by what the previous controller already did this turn.
-            currentCount = permanent.isAuraEffectsIgnoredFor(playerId) ? currentCount : 0;
+            currentCount = gameData.ignoresEffectOf(permanent.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class, playerId) ? currentCount : 0;
         }
 
         if (ability.getMaxActivationsPerTurnAmount() != null) {

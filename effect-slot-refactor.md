@@ -753,6 +753,16 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Open: `CombatAttackService.validateMaximumAttackRequirements` sums requirements over every attackable creature, ignoring an attacker-count limit: under Silent Arbiter with "attacks if able" on two creatures no declaration is legal (CR 508.1d's own example), at HEAD too.
 - Left: `Permanent`'s other end-of-turn fields (layered P/T, keywords, colours, types, protection, abilities, shields), part 3's phasing item; then step 6.
 
+**D (part 10: `Permanent`'s rules-modifying flags).**
+- `onPermanent` floating effects now: "can't be regenerated this turn", from the ability and from damage riders (`PreventTargetCreatureRegenerationThisTurnEffect`, `GameData.cantBeRegenerated`); Whippoorwill's "can't be prevented or redirected" (`damageCantBePreventedOrRedirected`); the paid "ignore this effect until end of turn" of Volrath's Curse, Lost in Thought and Damping Engine (`ignoresEffectOf`: the effect's controller is the payer); Autumn Willow's shroud permission (`mayTargetIgnoringShroud`; the payload names the player); Biomancer's Familiar's Adapt override (`useAdaptOverride`; the next Adapt uses up every waiting one). Gone: seven `Permanent` fields with their accessors, copy and reset lines, and seven `EndOfTurnStateField`s.
+- Bone Shaman's "gains …" is a layer-6 grant (`GrantEffectEffect`, CR 613.1f), read through `currentStaticEffectsOfType`. Runesword's is still the ability's own effect on its target.
+- `countAdditional…CreatureDeathEffects` no longer skips a source whose Aura effect a player ignores: the payment ignores only that Aura's restriction.
+- Moments: every effect ends at cleanup, as its field did; an Adapt override ends when an Adapt uses it.
+- Ledger (1,097 card test classes, route tests): only `floating began|ended` lines are added. Trigger lines differ only by random drafts, draws, coin flips, modes and dice.
+- Kept, not effects: `blockedWithoutBlockers` (a combat status, CR 509.1h), `saddled` (a designation, CR 702.171b), the turn-history records.
+- For the types and colours: most writers already add a floating effect too. These set only the field: the animation paths in `AnimationSupport`, the non-replacing basic land type, `AddCardTypeToOwnPermanentsUntilEndOfTurn` and `LoseSubtypesUntilEndOfTurn`. `LayerSystemService` seeds these fields, or applies them after layer 4, outside timestamp order.
+- Left: `Permanent`'s layered fields (P/T, keywords, colours, types, protection, abilities), the shields, part 3's phasing item; then step 6.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

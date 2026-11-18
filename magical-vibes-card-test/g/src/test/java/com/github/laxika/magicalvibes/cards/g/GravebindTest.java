@@ -35,7 +35,7 @@ class GravebindTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, healer.getId());
 
-        assertThat(healer.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(healer.getId())).isTrue();
         assertThat(healer.getRegenerationShield()).isEqualTo(1);
 
         List<TemporaryGlobalTriggeredAbility> scheduled = gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP);
@@ -54,7 +54,7 @@ class GravebindTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(healer);
         harness.passBothPriorities();
 
-        assertThat(healer.isCantRegenerateThisTurn()).isFalse();
+        assertThat(gd.cantBeRegenerated(healer.getId())).isFalse();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
@@ -105,13 +105,13 @@ class GravebindTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castAndResolveInstant(player1, 0, healer.getId());
-        assertThat(healer.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(healer.getId())).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(healer.isCantRegenerateThisTurn()).isFalse();
+        assertThat(gd.cantBeRegenerated(healer.getId())).isFalse();
     }
 
     @Test

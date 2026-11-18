@@ -40,8 +40,8 @@ class WhippoorwillTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isDamageCantBePreventedOrRedirectedThisTurn()).isTrue();
-        assertThat(target.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.damageCantBePreventedOrRedirected(target.getId())).isTrue();
+        assertThat(gd.cantBeRegenerated(target.getId())).isTrue();
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, target.getId());
@@ -113,8 +113,8 @@ class WhippoorwillTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isDamageCantBePreventedOrRedirectedThisTurn()).isFalse();
-        assertThat(target.isCantRegenerateThisTurn()).isFalse();
+        assertThat(gd.damageCantBePreventedOrRedirected(target.getId())).isFalse();
+        assertThat(gd.cantBeRegenerated(target.getId())).isFalse();
         target.setMarkedDamage(2);
         harness.runStateBasedActions();
         resolveAllTriggers();
@@ -153,8 +153,8 @@ class WhippoorwillTest extends BaseCardTest {
         harness.castFromHand(player2, new ShallowGrave(), "{1}{B}");
         harness.passBothPriorities();
         Permanent returned = findPermanent(player2, "Grizzly Bears");
-        assertThat(returned.isCantRegenerateThisTurn()).isFalse();
-        assertThat(returned.isDamageCantBePreventedOrRedirectedThisTurn()).isFalse();
+        assertThat(gd.cantBeRegenerated(returned.getId())).isFalse();
+        assertThat(gd.damageCantBePreventedOrRedirected(returned.getId())).isFalse();
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);

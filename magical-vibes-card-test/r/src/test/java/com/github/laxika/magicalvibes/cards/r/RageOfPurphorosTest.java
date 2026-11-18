@@ -30,7 +30,7 @@ class RageOfPurphorosTest extends BaseCardTest {
 
         castRage(target);
 
-        assertThat(target.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(target.getId())).isTrue();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
@@ -74,7 +74,7 @@ class RageOfPurphorosTest extends BaseCardTest {
         castRage(target);
 
         assertThat(target.getMarkedDamage()).isEqualTo(4);
-        assertThat(target.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(target.getId())).isTrue();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, second);
@@ -109,7 +109,7 @@ class RageOfPurphorosTest extends BaseCardTest {
         castRage(target);
 
         assertThat(target.getMarkedDamage()).isEqualTo(4);
-        assertThat(target.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(target.getId())).isTrue();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
         harness.assertInGraveyard(player1, "Rage of Purphoros");
     }

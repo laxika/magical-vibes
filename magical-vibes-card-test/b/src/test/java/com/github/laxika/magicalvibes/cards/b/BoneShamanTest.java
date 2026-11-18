@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffect;
+
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.o.OrcishCannoneers;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
@@ -149,13 +151,15 @@ class BoneShamanTest extends BaseCardTest {
     void abilityWearsOffAtEndOfTurn() {
         Permanent shaman = addCreatureReady(player1, new BoneShaman());
         activateAbility();
-        assertThat(shaman.isDamagedCreaturesCantRegenerateThisTurn()).isTrue();
+        assertThat(gqs.currentStaticEffectsOfType(gd, shaman,
+                PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffect.class)).isNotEmpty();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shaman.isDamagedCreaturesCantRegenerateThisTurn()).isFalse();
+        assertThat(gqs.currentStaticEffectsOfType(gd, shaman,
+                PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffect.class)).isEmpty();
     }
 
     private void activateAbility() {

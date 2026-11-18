@@ -49,6 +49,8 @@ import com.github.laxika.magicalvibes.model.effect.CrumblingSanctuaryDamageRepla
 import com.github.laxika.magicalvibes.model.effect.DralnuDamageReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NefariousLichDamageReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PreventTargetCreatureRegenerationThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectChosenColorSpellDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectAllCreatureDamageToControllerEffect;
@@ -167,7 +169,7 @@ public class DamageSupport {
 
     private int dealCreatureDamage(GameData gameData, StackEntry entry, Permanent target, int rawDamage,
                                    Permanent damageSource, boolean cantBeRedirected) {
-        boolean targetProtected = target.isDamageCantBePreventedOrRedirectedThisTurn();
+        boolean targetProtected = gameData.damageCantBePreventedOrRedirected(target.getId());
         boolean unpreventable = targetProtected
                 || gameData.damageCantBePreventedThisTurn() || gameData.unpreventableDamageInProgress
                 || damageSource != null && gameQueryService.damageCantBePreventedFromSource(gameData, damageSource);
@@ -423,7 +425,7 @@ public class DamageSupport {
     public int dealCreatureDamageUnpreventable(GameData gameData, StackEntry entry, Permanent target, int rawDamage) {
         return processDamageEvent(gameData, DamageEvent.toPermanent(entry,
                 gameQueryService.findPermanentController(gameData, target.getId()), target.getId(), null,
-                Math.max(0, rawDamage), true, target.isDamageCantBePreventedOrRedirectedThisTurn()));
+                Math.max(0, rawDamage), true, gameData.damageCantBePreventedOrRedirected(target.getId())));
     }
 
     private void recordDamageToPermanent(GameData gameData, UUID targetId, int amount,
@@ -827,7 +829,7 @@ public class DamageSupport {
 
     public boolean isDamagePreventedForCreature(GameData gameData, StackEntry entry, Permanent target) {
         Card source = entry.getEffectiveDamageSourceCard();
-        if (!target.isDamageCantBePreventedOrRedirectedThisTurn()
+        if (!gameData.damageCantBePreventedOrRedirected(target.getId())
                 && gameQueryService.isDamagePreventable(gameData)
                 && (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)
                     || gameQueryService.hasProtectionFromDamageSource(gameData, target, source,
@@ -949,13 +951,13 @@ public class DamageSupport {
             // dealDamageToPlayer handles per-permanent prevention (floating prevention effects on the source)
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
             if (cantRegenerate) {
-                markCreaturesDamagedSinceAsUnregenerable(gameData, damageBefore);
+                markCreaturesDamagedSinceAsUnregenerable(gameData, entry, damageBefore);
             }
             return 0;
         } else {
-            if (!targetPermanent.isDamageCantBePreventedOrRedirectedThisTurn()
+            if (!gameData.damageCantBePreventedOrRedirected(targetPermanent.getId())
                     && isDamageSourcePreventedWithLog(gameData, entry)) return 0;
-            if (!targetPermanent.isDamageCantBePreventedOrRedirectedThisTurn()
+            if (!gameData.damageCantBePreventedOrRedirected(targetPermanent.getId())
                     && gameQueryService.isDamagePreventable(gameData)
                     && (isGlobalCreaturePreventionForEntry(gameData, entry)
                         || isSourcePermanentPreventedFromDealingDamage(gameData, entry)
@@ -975,18 +977,25 @@ public class DamageSupport {
             int damageDealt = dealCreatureDamage(gameData, entry, targetPermanent, rawDamage,
                     cantBeRedirected);
             if (cantRegenerate) {
-                markCreaturesDamagedSinceAsUnregenerable(gameData, damageBefore);
+                markCreaturesDamagedSinceAsUnregenerable(gameData, entry, damageBefore);
             }
             return damageDealt;
         }
     }
 
-    private void markCreaturesDamagedSinceAsUnregenerable(GameData gameData, Map<UUID, Integer> damageBefore) {
+    /** "It can't be regenerated this turn": the damage's rider, an effect on the creature until end of turn. */
+    private static void cantBeRegeneratedThisTurn(GameData gameData, StackEntry entry, Permanent creature) {
+        gameData.addEffectOnPermanent(entry, new PreventTargetCreatureRegenerationThisTurnEffect(), creature.getId(),
+                Duration.UNTIL_END_OF_TURN);
+    }
+
+    private void markCreaturesDamagedSinceAsUnregenerable(GameData gameData, StackEntry entry,
+                                                           Map<UUID, Integer> damageBefore) {
         gameData.damageDealtToPermanentsThisTurn.forEach((permanentId, totalDamage) -> {
             if (totalDamage > damageBefore.getOrDefault(permanentId, 0)) {
                 Permanent damagedPermanent = gameQueryService.findPermanentById(gameData, permanentId);
                 if (damagedPermanent != null && gameQueryService.isCreature(gameData, damagedPermanent)) {
-                    damagedPermanent.setCantRegenerateThisTurn(true);
+                    cantBeRegeneratedThisTurn(gameData, entry, damagedPermanent);
                 }
             }
         });
@@ -1102,7 +1111,7 @@ public class DamageSupport {
                 gameData.exileInsteadOfDying(entry, p.getId());
             }
             if (cantRegenerate && damageDealt > 0) {
-                p.setCantRegenerateThisTurn(true);
+                cantBeRegeneratedThisTurn(gameData, entry, p);
             }
             if (tapDamagedCreatures && damageDealt > 0) {
                 tapUntapSupport.tapPermanent(gameData, p);
@@ -1119,7 +1128,7 @@ public class DamageSupport {
                             gameData.exileInsteadOfDying(entry, permanent.getId());
                         }
                         if (cantRegenerate) {
-                            permanent.setCantRegenerateThisTurn(true);
+                            cantBeRegeneratedThisTurn(gameData, entry, permanent);
                         }
                     }
                 }

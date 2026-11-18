@@ -51,8 +51,8 @@ class FurnaceBroodTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, brood.getId());
         harness.passBothPriorities();
 
-        assertThat(troll.isCantRegenerateThisTurn()).isTrue();
-        assertThat(brood.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(troll.getId())).isTrue();
+        assertThat(gd.cantBeRegenerated(brood.getId())).isTrue();
         assertThat(brood.isTapped()).isTrue();
     }
 
@@ -67,7 +67,7 @@ class FurnaceBroodTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, troll.getId());
         harness.passBothPriorities();
 
-        assertThat(troll.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(troll.getId())).isTrue();
         assertThat(troll.getRegenerationShield()).isEqualTo(1);
     }
 
@@ -80,13 +80,13 @@ class FurnaceBroodTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, troll.getId());
         harness.passBothPriorities();
-        assertThat(troll.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(troll.getId())).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(troll.isCantRegenerateThisTurn()).isFalse();
+        assertThat(gd.cantBeRegenerated(troll.getId())).isFalse();
     }
 
     @Test

@@ -2386,7 +2386,7 @@ public class ValidTargetService {
 
         // Shroud (Autumn Willow can hand out a per-player exemption for the turn)
         if (gameQueryService.hasKeyword(gameData, perm, Keyword.SHROUD)
-                && !perm.ignoresShroudFor(controllerId)) {
+                && !gameData.mayTargetIgnoringShroud(perm.getId(), controllerId)) {
             return true;
         }
 

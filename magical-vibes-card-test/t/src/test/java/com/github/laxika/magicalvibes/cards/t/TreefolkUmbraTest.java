@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
+import com.github.laxika.magicalvibes.model.effect.PreventTargetCreatureRegenerationThisTurnEffect;
+
 import com.github.laxika.magicalvibes.cards.b.BallLightning;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
@@ -114,7 +120,7 @@ class TreefolkUmbraTest extends BaseCardTest {
         attachAura(creature);
         creature.setMarkedDamage(4);
         creature.setDamagedByDeathtouch(true);
-        creature.setCantRegenerateThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null, new PreventTargetCreatureRegenerationThisTurnEffect(), creature.getId(), Duration.UNTIL_END_OF_TURN));
         creature.setAttacking(true);
 
         harness.runStateBasedActions();

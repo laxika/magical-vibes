@@ -28,14 +28,14 @@ class LimDLsCohortTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        assertThat(attacker.isCantRegenerateThisTurn()).isFalse();
+        assertThat(gd.cantBeRegenerated(attacker.getId())).isFalse();
 
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, cohort);
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Lim-Dûl's Cohort");
-        assertThat(attacker.isCantRegenerateThisTurn()).isTrue();
-        assertThat(unrelatedCreature.isCantRegenerateThisTurn()).isFalse();
+        assertThat(gd.cantBeRegenerated(attacker.getId())).isTrue();
+        assertThat(gd.cantBeRegenerated(unrelatedCreature.getId())).isFalse();
     }
 
     @Test
@@ -49,7 +49,7 @@ class LimDLsCohortTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(attacker.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(attacker.getId())).isTrue();
     }
 
     @Test
@@ -63,7 +63,7 @@ class LimDLsCohortTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(blocker.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(blocker.getId())).isTrue();
     }
 
     @Test
@@ -80,8 +80,8 @@ class LimDLsCohortTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(firstBlocker.isCantRegenerateThisTurn()).isTrue();
-        assertThat(secondBlocker.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(firstBlocker.getId())).isTrue();
+        assertThat(gd.cantBeRegenerated(secondBlocker.getId())).isTrue();
     }
 
     @Test
@@ -120,8 +120,8 @@ class LimDLsCohortTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         resolveAllTriggers();
 
-        assertThat(otherBandMember.isCantRegenerateThisTurn()).isTrue();
-        assertThat(bandedCreature.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(otherBandMember.getId())).isTrue();
+        assertThat(gd.cantBeRegenerated(bandedCreature.getId())).isTrue();
         assertThat(cohort.getBlockingTargetIds()).containsExactlyInAnyOrder(
                 otherBandMember.getId(), bandedCreature.getId());
     }
@@ -143,7 +143,7 @@ class LimDLsCohortTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         resolveAllTriggers();
 
-        assertThat(blocker.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(blocker.getId())).isTrue();
         assertThat(blocker.getBlockingTargetIds()).containsExactlyInAnyOrder(
                 cohort.getId(), bandedCreature.getId());
     }
@@ -158,12 +158,12 @@ class LimDLsCohortTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
-        assertThat(attacker.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(attacker.getId())).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances END -> CLEANUP
 
-        assertThat(attacker.isCantRegenerateThisTurn()).isFalse();
+        assertThat(gd.cantBeRegenerated(attacker.getId())).isFalse();
     }
 }

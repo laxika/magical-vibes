@@ -27,7 +27,7 @@ class OrcishHealerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(healer.isTapped()).isTrue();
-        assertThat(specter.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(specter.getId())).isTrue();
     }
 
     @Test
@@ -40,7 +40,7 @@ class OrcishHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, barbarians.getId());
         harness.passBothPriorities();
 
-        assertThat(barbarians.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(barbarians.getId())).isTrue();
     }
 
     @Test
@@ -58,7 +58,7 @@ class OrcishHealerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gnats.getRegenerationShield()).isEqualTo(1);
-        assertThat(gnats.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(gnats.getId())).isTrue();
 
         gnats.setMarkedDamage(1);
         harness.runStateBasedActions();

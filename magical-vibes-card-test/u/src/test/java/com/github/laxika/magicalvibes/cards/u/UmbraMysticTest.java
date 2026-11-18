@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
+import com.github.laxika.magicalvibes.model.effect.PreventTargetCreatureRegenerationThisTurnEffect;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
@@ -68,7 +74,7 @@ class UmbraMysticTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player2, new Pacifism());
         aura.setAttachedTo(mystic.getId());
         mystic.setMarkedDamage(1);
-        mystic.setCantRegenerateThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null, new PreventTargetCreatureRegenerationThisTurnEffect(), mystic.getId(), Duration.UNTIL_END_OF_TURN));
 
         destroyWithDoomBlade(player2, mystic);
 

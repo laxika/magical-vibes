@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PreventTargetCreatureRegenerationThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayExileOneAndPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -56,7 +58,8 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
         if (e.preventRegenerationWithoutDamage()) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target != null && gameQueryService.isCreature(gameData, target)) {
-                target.setCantRegenerateThisTurn(true);
+                gameData.addEffectOnPermanent(entry, new PreventTargetCreatureRegenerationThisTurnEffect(), target.getId(),
+                        Duration.UNTIL_END_OF_TURN);
                 if (e.exileInsteadOfDie()) {
                     gameData.exileInsteadOfDying(entry, target.getId());
                 }

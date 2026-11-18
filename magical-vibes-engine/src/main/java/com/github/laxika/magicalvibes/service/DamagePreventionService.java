@@ -478,7 +478,7 @@ public class DamagePreventionService {
     }
 
     private boolean isDamageUnpreventable(GameData gameData, CreatureDamageStep.Context context) {
-        return context.permanent().isDamageCantBePreventedOrRedirectedThisTurn()
+        return gameData.damageCantBePreventedOrRedirected(context.permanent().getId())
                 || !gameQueryService.isDamagePreventable(gameData)
                 || (context.damageSource() != null && gameQueryService.damageCantBePreventedFromSource(
                 gameData, context.damageSource(), context.combatDamage()));
@@ -897,7 +897,7 @@ public class DamagePreventionService {
     }
 
     private int applySelfDamagePreventionAmount(GameData gameData, Permanent permanent, int damage) {
-        if (damage <= 0 || permanent.isDamageCantBePreventedOrRedirectedThisTurn()
+        if (damage <= 0 || gameData.damageCantBePreventedOrRedirected(permanent.getId())
                 || !gameQueryService.isDamagePreventable(gameData)) {
             return 0;
         }
@@ -955,7 +955,7 @@ public class DamagePreventionService {
     }
 
     public int applySelfDamagePreventionShield(GameData gameData, Permanent permanent, int damage) {
-        if (damage <= 0 || permanent.isDamageCantBePreventedOrRedirectedThisTurn()
+        if (damage <= 0 || gameData.damageCantBePreventedOrRedirected(permanent.getId())
                 || !gameQueryService.isDamagePreventable(gameData)) {
             return damage;
         }
@@ -1106,7 +1106,7 @@ public class DamagePreventionService {
         }
 
         if (gameQueryService.isDamagePreventable(gameData, true)
-                && !permanent.isDamageCantBePreventedOrRedirectedThisTurn()
+                && !gameData.damageCantBePreventedOrRedirected(permanent.getId())
                 && !gameQueryService.damageCantBePreventedFromSource(gameData, damageSource, true)) {
             return 0;
         }

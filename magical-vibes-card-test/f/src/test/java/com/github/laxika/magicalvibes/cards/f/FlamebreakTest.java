@@ -67,7 +67,7 @@ class FlamebreakTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Auriok Glaivemaster");
         assertThat(creature.getMarkedDamage()).isZero();
-        assertThat(creature.isCantRegenerateThisTurn()).isFalse();
+        assertThat(gd.cantBeRegenerated(creature.getId())).isFalse();
         assertThat(creature.getRegenerationShield()).isEqualTo(1);
     }
 

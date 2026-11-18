@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageToDefendingCreatureWhenUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentToDefendingPlayerAndCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageResolutionEffect;
@@ -342,7 +343,7 @@ public class CombatDamageService {
                 if (amount > 0 && (recipientId.equals(controllerId)
                         || recipient != null && gameQueryService.isCreature(gameData, recipient)
                         && controllerId.equals(gameQueryService.findPermanentController(gameData, recipientId))
-                        && !recipient.isDamageCantBePreventedOrRedirectedThisTurn())) {
+                        && !gameData.damageCantBePreventedOrRedirected(recipient.getId()))) {
                     eligible.put(recipientId, amount);
                 }
             });
@@ -2061,7 +2062,7 @@ public class CombatDamageService {
         boolean deathtouch = originPortion != null ? originPortion.deathtouch()
                 : gameQueryService.hasKeyword(gameData, source, Keyword.DEATHTOUCH);
         boolean unpreventable = gameQueryService.damageCantBePreventedFromSource(gameData, source, true)
-                || target != null && target.isDamageCantBePreventedOrRedirectedThisTurn();
+                || target != null && gameData.damageCantBePreventedOrRedirected(target.getId());
         if (target != null && !unpreventable && gameQueryService.isDamagePreventable(gameData, true)
                 && gameQueryService.hasProtectionFromDamageSource(gameData, target, source)) {
             // CR 702.16e: protection prevents the redirected damage, but the redirection still happened.
@@ -2234,7 +2235,7 @@ public class CombatDamageService {
             if (pw == null) return;
             if (gameQueryService.isDamagePreventable(gameData, true)
                     && !gameQueryService.damageCantBePreventedFromSource(gameData, atk, true)
-                    && !pw.isDamageCantBePreventedOrRedirectedThisTurn()
+                    && !gameData.damageCantBePreventedOrRedirected(pw.getId())
                     && gameQueryService.hasProtectionFromDamageSource(gameData, pw, atk)) {
                 return;
             }
@@ -2333,7 +2334,7 @@ public class CombatDamageService {
     private boolean applyCombatCreatureDamage(GameData gameData, CombatDamageState state,
                                            Permanent source, CombatantStats sourceStats,
                                            Permanent target, int damage) {
-        if (!target.isDamageCantBePreventedOrRedirectedThisTurn()
+        if (!gameData.damageCantBePreventedOrRedirected(target.getId())
                 && isGlobalCreaturePreventionLifeGain(gameData, source)) {
             damagePreventionService.applyAllByCreaturesPreventionLifeGain(gameData,
                     gameQueryService.applyDamageReplacementEffects(gameData, damage),
@@ -2414,7 +2415,7 @@ public class CombatDamageService {
         boolean counterDamage = recipient == null ? sourceStats.infect()
                 : gameQueryService.dealsCounterDamageToCreatures(gameData, source);
         boolean unpreventable = gameQueryService.damageCantBePreventedFromSource(gameData, source, true)
-                || (recipient != null && recipient.isDamageCantBePreventedOrRedirectedThisTurn());
+                || (recipient != null && gameData.damageCantBePreventedOrRedirected(recipient.getId()));
         List<DamagePortion> portions = state.collectedPortions.computeIfAbsent(recipientId, ignored -> new ArrayList<>());
         for (int i = 0; i < portions.size(); i++) {
             DamagePortion existing = portions.get(i);
@@ -2466,7 +2467,7 @@ public class CombatDamageService {
         UUID chooserId = playerRecipient ? recipientId : controllerOnBattlefield(gameData, recipientId);
         return DamageEvent.combat(entry, chooserId, playerRecipient ? null : recipientId,
                 portions.stream().allMatch(DamagePortion::unpreventable),
-                recipient != null && recipient.isDamageCantBePreventedOrRedirectedThisTurn(), portions);
+                recipient != null && gameData.damageCantBePreventedOrRedirected(recipient.getId()), portions);
     }
 
     /** Runs the step's waiting damage events until one of them waits for a choice. */
@@ -2892,7 +2893,7 @@ public class CombatDamageService {
         List<CardEffect> effects = new ArrayList<>();
         gameData.forEachPermanent((controllerId, attachment) -> {
             if (!attachment.isAttached() || !attacker.getId().equals(attachment.getAttachedTo())
-                    || attachment.isAuraEffectsIgnoredFor(attackerControllerId)
+                    || gameData.ignoresEffectOf(attachment.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class, attackerControllerId)
                     || gameQueryService.hasLostPrintedAbilities(gameData, attachment)) {
                 return;
             }

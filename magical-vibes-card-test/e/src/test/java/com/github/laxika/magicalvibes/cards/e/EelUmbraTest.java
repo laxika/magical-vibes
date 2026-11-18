@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
+import com.github.laxika.magicalvibes.model.effect.PreventTargetCreatureRegenerationThisTurnEffect;
+
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -109,7 +115,7 @@ class EelUmbraTest extends BaseCardTest {
         aura.setAttachedTo(bears.getId());
         bears.setAttacking(true);
         bears.setMarkedDamage(3);
-        bears.setCantRegenerateThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null, new PreventTargetCreatureRegenerationThisTurnEffect(), bears.getId(), Duration.UNTIL_END_OF_TURN));
 
         harness.runStateBasedActions();
 

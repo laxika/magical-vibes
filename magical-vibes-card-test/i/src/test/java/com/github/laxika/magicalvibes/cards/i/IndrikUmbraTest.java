@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
+import com.github.laxika.magicalvibes.model.effect.PreventTargetCreatureRegenerationThisTurnEffect;
+
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -155,7 +161,7 @@ class IndrikUmbraTest extends BaseCardTest {
         creature.setAttacking(true);
         creature.setMarkedDamage(1);
         creature.setDamagedByDeathtouch(true);
-        creature.setCantRegenerateThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null, new PreventTargetCreatureRegenerationThisTurnEffect(), creature.getId(), Duration.UNTIL_END_OF_TURN));
 
         harness.runStateBasedActions();
         harness.runStateBasedActions();

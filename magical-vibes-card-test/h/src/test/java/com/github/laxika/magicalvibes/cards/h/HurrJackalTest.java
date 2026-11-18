@@ -53,7 +53,7 @@ class HurrJackalTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, skele.getId());
         harness.passBothPriorities();
 
-        assertThat(skele.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(skele.getId())).isTrue();
         // The mark does not touch the shield — it blocks regeneration outright.
         assertThat(skele.getRegenerationShield()).isEqualTo(1);
     }
@@ -124,13 +124,13 @@ class HurrJackalTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, skele.getId());
         harness.passBothPriorities();
-        assertThat(skele.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(skele.getId())).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances END -> CLEANUP
 
-        assertThat(skele.isCantRegenerateThisTurn()).isFalse();
+        assertThat(gd.cantBeRegenerated(skele.getId())).isFalse();
     }
 
     // ===== Illegal targets =====
@@ -156,7 +156,7 @@ class HurrJackalTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, jackal.getId());
         harness.passBothPriorities();
 
-        assertThat(jackal.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(jackal.getId())).isTrue();
         harness.assertOnBattlefield(player1, "Hurr Jackal");
     }
 
@@ -173,7 +173,7 @@ class HurrJackalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Hurr Jackal");
-        assertThat(skeleton.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(skeleton.getId())).isTrue();
         assertThat(skeleton.getRegenerationShield()).isEqualTo(1);
     }
 

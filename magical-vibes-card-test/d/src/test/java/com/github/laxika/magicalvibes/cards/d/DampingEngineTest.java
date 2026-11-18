@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect;
+
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
@@ -42,7 +44,7 @@ class DampingEngineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handlePermanentChosen(player1, land.getId());
 
-        assertThat(engine.isDampingEngineEffectIgnoredThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(engine.getId(), IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect.class)).isTrue();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         assertThat(bloodbriar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -60,7 +62,7 @@ class DampingEngineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handlePermanentChosen(player1, land.getId());
 
-        assertThat(engine.isDampingEngineEffectIgnoredThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(engine.getId(), IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect.class)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 

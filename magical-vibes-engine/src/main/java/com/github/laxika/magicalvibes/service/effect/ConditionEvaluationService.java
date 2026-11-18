@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreCardsInHandThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreLifeThanEachOtherPlayer;
+import com.github.laxika.magicalvibes.model.effect.IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostLifeGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.FirstUpkeepThisTurn;
@@ -1132,7 +1133,7 @@ public class ConditionEvaluationService {
                     controllerControlsMorePermanentsThanEachOtherPlayer(gameData, ctx.controllerId())
                             && (!c.requireDampingRestrictionActive()
                             || ctx.sourcePermanent() != null
-                            && !ctx.sourcePermanent().isDampingEngineEffectIgnoredThisTurn(ctx.controllerId()));
+                            && !gameData.ignoresEffectOf(ctx.sourcePermanent().getId(), IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect.class, ctx.controllerId()));
             case ActivePlayerHandAtLeast c ->
                     countCardsInHand(gameData, gameData.activePlayerId) >= c.threshold();
             case ActivePlayerHandAtMost c ->

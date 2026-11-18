@@ -1020,7 +1020,7 @@ public class GraveyardService {
             log.info("Game {} - {} loses a shield counter instead of being destroyed", gameData.id, perm.getCard().getName());
             return true;
         }
-        if (!allowRegeneration || perm.isCantRegenerateThisTurn()
+        if (!allowRegeneration || gameData.cantBeRegenerated(perm.getId())
                 || damagedByRegenerationDenyingSource(gameData, perm)) {
             return false;
         }
@@ -1086,7 +1086,7 @@ public class GraveyardService {
         if (allowShieldCounter && perm.getCounterCount(CounterType.SHIELD) > 0) {
             options.put("Remove a shield counter", "SHIELD");
         }
-        if (allowRegeneration && !perm.isCantRegenerateThisTurn()
+        if (allowRegeneration && !gameData.cantBeRegenerated(perm.getId())
                 && !damagedByRegenerationDenyingSource(gameData, perm)) {
             if (findDestructionReplacementSource(gameData, perm, DestructionReplacement.REGENERATE) != null) {
                 options.put("Regenerate using its ability", "INTRINSIC");
@@ -1269,16 +1269,16 @@ public class GraveyardService {
 
     /**
      * True when some permanent on the battlefield currently has "creatures dealt damage by this creature
-     * this turn can't be regenerated this turn" (Bone Shaman) and damaged this creature this turn.
+     * this turn can't be regenerated this turn" (Bone Shaman's grant) and damaged this creature this turn.
      */
     private boolean damagedByRegenerationDenyingSource(GameData gameData, Permanent perm) {
         UUID cardId = perm.getCard().getId();
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent source : battlefield) {
-                if (source.isDamagedCreaturesCantRegenerateThisTurn()
-                        && !gameQueryService.hasLostAllAbilities(gameData, source)
-                        && gameData.creatureCardsDamagedThisTurnBySourcePermanent
-                        .getOrDefault(source.getId(), Set.of()).contains(cardId)) {
+                if (gameData.creatureCardsDamagedThisTurnBySourcePermanent
+                        .getOrDefault(source.getId(), Set.of()).contains(cardId)
+                        && !gameQueryService.currentStaticEffectsOfType(gameData, source,
+                        PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffect.class).isEmpty()) {
                     return true;
                 }
             }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ public class IgnoreSourceDampingEngineEffectUntilEndOfTurnEffectHandler implemen
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source != null) {
-            source.getDampingEngineIgnoredByPlayersThisTurn().add(entry.getControllerId());
+            gameData.addEffectOnPermanent(entry, effect, source.getId(), Duration.UNTIL_END_OF_TURN);
         }
     }
 }

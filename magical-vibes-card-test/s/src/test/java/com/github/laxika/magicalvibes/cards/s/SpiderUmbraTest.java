@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
+import com.github.laxika.magicalvibes.model.effect.PreventTargetCreatureRegenerationThisTurnEffect;
+
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -110,7 +116,7 @@ class SpiderUmbraTest extends BaseCardTest {
     void clearsDeathtouchAndPreservesCombatStatus() {
         Permanent creature = addReadyCreature(player1);
         attachUmbra(creature);
-        creature.setCantRegenerateThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null, new PreventTargetCreatureRegenerationThisTurnEffect(), creature.getId(), Duration.UNTIL_END_OF_TURN));
         creature.setAttacking(true);
         creature.setMarkedDamage(3);
         creature.setDamagedByDeathtouch(true);

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
 import com.github.laxika.magicalvibes.model.effect.CantAttackNextTurnCombatOpponentEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -404,7 +405,7 @@ public class AttackLegalityService {
                     && (targetIsPlayer || !(effect instanceof EnchantedCreatureCantAttackPlayerEffect)
                     && targetPermanent != null
                     && gameQueryService.isPlaneswalker(gameData, targetPermanent))
-                    && !source.isAuraEffectsIgnoredFor(
+                    && !gameData.ignoresEffectOf(source.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class, 
                             gameQueryService.findPermanentController(gameData, attacker.getId()))
                     && source.isAttached()
                     && attacker.getId().equals(source.getAttachedTo())) {

@@ -342,13 +342,6 @@ public class Permanent {
      *  (Dazzling Beauty). CR 509.1h — it deals no combat damage, since a blocked creature with no
      *  blockers to assign damage to assigns none. Cleared at end of turn. */
     @Setter private boolean blockedWithoutBlockers;
-    /** Players who paid this Aura's "ignore this effect" cost this turn (Volrath's Curse, Lost in Thought;
-     *  {@code IgnoreSourceAuraEffectsUntilEndOfTurnEffect}). The Aura's effects are ignored only for the
-     *  player who paid, so a later controller of the enchanted creature is still restricted. Read by
-     *  {@code GameQueryService.hasAuraWithEffect}. Cleared at end of turn. */
-    private final Set<UUID> auraEffectsIgnoredByPlayersThisTurn = new HashSet<>();
-    /** Players who have paid to ignore this Damping Engine's restriction this turn. */
-    private final Set<UUID> dampingEngineIgnoredByPlayersThisTurn = new HashSet<>();
     /**
      * The position of the first digit Duelists' Convocation International wrote down that equals {@code digit} and
      * isn't crossed out, or -1 when there is none.
@@ -362,20 +355,6 @@ public class Permanent {
         return -1;
     }
 
-    public boolean isDampingEngineEffectIgnoredThisTurn() {
-        return !dampingEngineIgnoredByPlayersThisTurn.isEmpty();
-    }
-
-    public boolean isDampingEngineEffectIgnoredThisTurn(UUID playerId) {
-        return dampingEngineIgnoredByPlayersThisTurn.contains(playerId);
-    }
-
-    @Setter private boolean cantRegenerateThisTurn;
-    /** If true, damage that would be dealt to this creature can't be prevented or redirected this turn. */
-    @Setter private boolean damageCantBePreventedOrRedirectedThisTurn;
-    /** When true, creatures this permanent dealt damage to this turn can't be regenerated this turn
-     *  (Bone Shaman's activated ability). Cleared at end of turn. */
-    @Setter private boolean damagedCreaturesCantRegenerateThisTurn;
     /** If true, this permanent's controller sacrifices it at the beginning of the next cleanup step —
      *  the Mirage flash clause ({@code FlashCastWithCleanupSacrificeEffect}) when the spell was cast
      *  any time a sorcery couldn't have been cast. The cleanup sweep sacrifices it before
@@ -587,10 +566,6 @@ public class Permanent {
     @Setter private boolean protectionFromOpponentCreaturesUntilEndOfTurn;
     /** Whether all protection abilities have been removed from this permanent until end of turn. */
     @Setter private boolean protectionRemovedUntilEndOfTurn;
-    /** Players who may target this permanent this turn as though it didn't have shroud (Autumn
-     *  Willow). Read by the shroud checks in {@code TargetLegalityService}/{@code ValidTargetService};
-     *  cleared by {@link #resetModifiers()}. */
-    private final Set<UUID> shroudIgnoredByPlayersUntilEndOfTurn = new HashSet<>();
     /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield (CR 614.6). */
     @Setter private boolean exileIfLeavesBattlefield;
     /** If true, this permanent is exiled instead of being put into a graveyard from the battlefield. */
@@ -816,8 +791,6 @@ public class Permanent {
      *  (e.g. Navigator's Compass adding a basic land mana ability to a land).
      *  Cleared every turn by {@link #resetModifiers()}. */
     private final List<ActivatedAbility> temporaryActivatedAbilities = new ArrayList<>();
-    /** One-shot permissions for this permanent's next Adapt to ignore existing counters this turn. */
-    private int adaptOverridesUntilEndOfTurn;
     /** Activated abilities granted for as long as this permanent remains on the battlefield
      *  (e.g. Aquitect's Will making a land an Island in addition to its other types — the
      *  granted "{T}: Add {U}" has no duration). Stored on the permanent rather than mutating
@@ -1092,10 +1065,6 @@ public class Permanent {
         this.suspected = source.suspected;
         this.commander = source.commander;
         this.blockedWithoutBlockers = source.blockedWithoutBlockers;
-        this.dampingEngineIgnoredByPlayersThisTurn.addAll(source.dampingEngineIgnoredByPlayersThisTurn);
-        this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
-        this.damageCantBePreventedOrRedirectedThisTurn = source.damageCantBePreventedOrRedirectedThisTurn;
-        this.damagedCreaturesCantRegenerateThisTurn = source.damagedCreaturesCantRegenerateThisTurn;
         this.prepared = source.prepared;
         this.phasedOutIndirectly = source.phasedOutIndirectly;
         this.preparedSpellCardId = source.preparedSpellCardId;
@@ -1181,7 +1150,6 @@ public class Permanent {
         this.lastKnownAuraCount = source.lastKnownAuraCount;
         this.lastKnownEquipmentCount = source.lastKnownEquipmentCount;
         this.enteredViaUnearth = source.enteredViaUnearth;
-        this.shroudIgnoredByPlayersUntilEndOfTurn.addAll(source.shroudIgnoredByPlayersUntilEndOfTurn);
         this.untapPreventedByPermanentIds.addAll(source.untapPreventedByPermanentIds);
         this.untapPreventedWhileSourceOnBattlefieldIds.addAll(source.untapPreventedWhileSourceOnBattlefieldIds);
         this.mireCounterLandIds.addAll(source.mireCounterLandIds);
@@ -1254,7 +1222,6 @@ public class Permanent {
         this.meldComponentCards.addAll(source.meldComponentCards);
         this.mutatedComponentCards.addAll(source.mutatedComponentCards);
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
-        this.adaptOverridesUntilEndOfTurn = source.adaptOverridesUntilEndOfTurn;
         this.persistentGrantedActivatedAbilities.addAll(source.persistentGrantedActivatedAbilities);
         this.lostPrintedActivatedAbilities.addAll(source.lostPrintedActivatedAbilities);
         this.copyUntilEndOfTurn = source.copyUntilEndOfTurn;
@@ -1618,22 +1585,6 @@ public class Permanent {
         this.transientSubtypes.clear();
         this.grantedCardTypes.clear();
     }
-
-    /**
-     * Lets the given player target this permanent for the rest of the turn as though it didn't have
-     * shroud (Autumn Willow). Other players are unaffected.
-     */
-    public void allowShroudIgnoredBy(UUID playerId) {
-        if (playerId != null) {
-            this.shroudIgnoredByPlayersUntilEndOfTurn.add(playerId);
-        }
-    }
-
-    /** Whether the given player may currently target this permanent as though it had no shroud. */
-    public boolean ignoresShroudFor(UUID playerId) {
-        return playerId != null && shroudIgnoredByPlayersUntilEndOfTurn.contains(playerId);
-    }
-
     public void setAttackedThisTurn(boolean attackedThisTurn) {
         this.attackedThisTurn = attackedThisTurn;
     }
@@ -2220,18 +2171,6 @@ public class Permanent {
                 || suppressedStaticEffectInstancesUntilEndOfTurn.contains(effect);
     }
 
-    public void addAdaptOverrideUntilEndOfTurn() {
-        adaptOverridesUntilEndOfTurn++;
-    }
-
-    public boolean consumeAdaptOverrideUntilEndOfTurn() {
-        if (adaptOverridesUntilEndOfTurn == 0) {
-            return false;
-        }
-        adaptOverridesUntilEndOfTurn--;
-        return true;
-    }
-
     public void resetModifiers() {
         this.powerModifier = 0;
         this.toughnessModifier = 0;
@@ -2240,11 +2179,6 @@ public class Permanent {
         this.baseToughnessOverride = 0;
         this.blockedWithoutBlockers = false;
         this.creaturesThatCrewedThisTurn.clear();
-        this.auraEffectsIgnoredByPlayersThisTurn.clear();
-        this.dampingEngineIgnoredByPlayersThisTurn.clear();
-        this.cantRegenerateThisTurn = false;
-        this.damageCantBePreventedOrRedirectedThisTurn = false;
-        this.damagedCreaturesCantRegenerateThisTurn = false;
         this.temporaryAbilities.clear();
         this.saddled = false;
         this.animatedUntilEndOfTurn = false;
@@ -2268,14 +2202,12 @@ public class Permanent {
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.clear();
         this.protectionFromOpponentCreaturesUntilEndOfTurn = false;
         this.protectionRemovedUntilEndOfTurn = false;
-        this.shroudIgnoredByPlayersUntilEndOfTurn.clear();
         this.losesAllAbilitiesUntilEndOfTurn = false;
         this.suppressedStaticEffectsUntilEndOfTurn.clear();
         this.suppressedStaticEffectInstancesUntilEndOfTurn.clear();
         this.losesAllCreatureTypesUntilEndOfTurn = false;
         this.transientRemovedSubtypes.clear();
         this.temporaryActivatedAbilities.clear();
-        this.adaptOverridesUntilEndOfTurn = 0;
         expireTemporaryTextReplacements();
     }
 
@@ -2312,11 +2244,6 @@ public class Permanent {
             case BASE_POWER_OVERRIDE -> basePowerOverride;
             case BASE_TOUGHNESS_OVERRIDE -> baseToughnessOverride;
             case BLOCKED_WITHOUT_BLOCKERS -> blockedWithoutBlockers;
-            case AURA_EFFECTS_IGNORED_BY_PLAYERS -> auraEffectsIgnoredByPlayersThisTurn;
-            case DAMPING_ENGINE_IGNORED_BY_PLAYERS -> dampingEngineIgnoredByPlayersThisTurn;
-            case CANT_REGENERATE_THIS_TURN -> cantRegenerateThisTurn;
-            case DAMAGE_CANT_BE_PREVENTED_OR_REDIRECTED -> damageCantBePreventedOrRedirectedThisTurn;
-            case DAMAGED_CREATURES_CANT_REGENERATE -> damagedCreaturesCantRegenerateThisTurn;
             case TEMPORARY_ABILITIES -> temporaryAbilities;
             case SADDLED -> saddled;
             case ANIMATED_UNTIL_END_OF_TURN -> animatedUntilEndOfTurn;
@@ -2339,14 +2266,12 @@ public class Permanent {
             case PROTECTION_FROM_NON_SUBTYPE_CREATURES -> protectionFromNonSubtypeCreaturesUntilEndOfTurn;
             case PROTECTION_FROM_OPPONENT_CREATURES -> protectionFromOpponentCreaturesUntilEndOfTurn;
             case PROTECTION_REMOVED -> protectionRemovedUntilEndOfTurn;
-            case SHROUD_IGNORED_BY_PLAYERS -> shroudIgnoredByPlayersUntilEndOfTurn;
             case LOSES_ALL_ABILITIES -> losesAllAbilitiesUntilEndOfTurn;
             case SUPPRESSED_STATIC_EFFECT_TYPES -> suppressedStaticEffectsUntilEndOfTurn;
             case SUPPRESSED_STATIC_EFFECT_INSTANCES -> new ArrayList<>(suppressedStaticEffectInstancesUntilEndOfTurn);
             case LOSES_ALL_CREATURE_TYPES -> losesAllCreatureTypesUntilEndOfTurn;
             case TRANSIENT_REMOVED_SUBTYPES -> transientRemovedSubtypes;
             case TEMPORARY_ACTIVATED_ABILITIES -> temporaryActivatedAbilities;
-            case ADAPT_OVERRIDES -> adaptOverridesUntilEndOfTurn;
             case TEXT_REPLACEMENTS -> textReplacements.stream().filter(TextReplacement::untilEndOfTurn).toList();
             case DAMAGE_PREVENTION_SHIELD -> damagePreventionShield;
             case DAMAGE_TO_COUNTER_PREVENTION_SHIELD -> damageToCounterPreventionShield;
@@ -2380,11 +2305,6 @@ public class Permanent {
             case BASE_POWER_OVERRIDE -> basePowerOverride = (Integer) value;
             case BASE_TOUGHNESS_OVERRIDE -> baseToughnessOverride = (Integer) value;
             case BLOCKED_WITHOUT_BLOCKERS -> blockedWithoutBlockers = true;
-            case AURA_EFFECTS_IGNORED_BY_PLAYERS -> auraEffectsIgnoredByPlayersThisTurn.addAll((Set<UUID>) value);
-            case DAMPING_ENGINE_IGNORED_BY_PLAYERS -> dampingEngineIgnoredByPlayersThisTurn.addAll((Set<UUID>) value);
-            case CANT_REGENERATE_THIS_TURN -> cantRegenerateThisTurn = true;
-            case DAMAGE_CANT_BE_PREVENTED_OR_REDIRECTED -> damageCantBePreventedOrRedirectedThisTurn = true;
-            case DAMAGED_CREATURES_CANT_REGENERATE -> damagedCreaturesCantRegenerateThisTurn = true;
             case TEMPORARY_ABILITIES -> temporaryAbilities.addAll((List<Ability>) value);
             case SADDLED -> saddled = true;
             case ANIMATED_UNTIL_END_OF_TURN -> animatedUntilEndOfTurn = true;
@@ -2408,7 +2328,6 @@ public class Permanent {
                     protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll((Set<CardSubtype>) value);
             case PROTECTION_FROM_OPPONENT_CREATURES -> protectionFromOpponentCreaturesUntilEndOfTurn = true;
             case PROTECTION_REMOVED -> protectionRemovedUntilEndOfTurn = true;
-            case SHROUD_IGNORED_BY_PLAYERS -> shroudIgnoredByPlayersUntilEndOfTurn.addAll((Set<UUID>) value);
             case LOSES_ALL_ABILITIES -> losesAllAbilitiesUntilEndOfTurn = true;
             case SUPPRESSED_STATIC_EFFECT_TYPES -> suppressedStaticEffectsUntilEndOfTurn.addAll((Set) value);
             case SUPPRESSED_STATIC_EFFECT_INSTANCES ->
@@ -2416,7 +2335,6 @@ public class Permanent {
             case LOSES_ALL_CREATURE_TYPES -> losesAllCreatureTypesUntilEndOfTurn = true;
             case TRANSIENT_REMOVED_SUBTYPES -> transientRemovedSubtypes.addAll((Set<CardSubtype>) value);
             case TEMPORARY_ACTIVATED_ABILITIES -> temporaryActivatedAbilities.addAll((List<ActivatedAbility>) value);
-            case ADAPT_OVERRIDES -> adaptOverridesUntilEndOfTurn += (Integer) value;
             case TEXT_REPLACEMENTS -> textReplacements.addAll((List<TextReplacement>) value);
             case DAMAGE_PREVENTION_SHIELD -> damagePreventionShield += (Integer) value;
             case DAMAGE_TO_COUNTER_PREVENTION_SHIELD -> damageToCounterPreventionShield += (Integer) value;
@@ -2628,18 +2546,6 @@ public class Permanent {
 
     public boolean hasUntilNextTurnCopyLayers() {
         return !untilNextTurnCopyLayers.isEmpty();
-    }
-
-    public void ignoreAuraEffectsThisTurnFor(UUID playerId) {
-        auraEffectsIgnoredByPlayersThisTurn.add(playerId);
-    }
-
-    public boolean isAuraEffectsIgnoredThisTurn() {
-        return !auraEffectsIgnoredByPlayersThisTurn.isEmpty();
-    }
-
-    public boolean isAuraEffectsIgnoredFor(UUID playerId) {
-        return auraEffectsIgnoredByPlayersThisTurn.contains(playerId);
     }
 
     /** The mana of {@code color} spent to cast the spell that produced this permanent ({@link #manaSpentByColorToCast}). */

@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Until end of turn, the source permanent, or the targeted permanent when this effect is part of a
- * targeted ability, gains "Creatures dealt damage by this creature this turn can't be regenerated
- * this turn." Sets {@code damagedCreaturesCantRegenerateThisTurn} on that permanent;
- * {@code GraveyardService.tryRegenerate} then refuses to regenerate any creature recorded
- * in {@code GameData.creatureCardsDamagedThisTurnBySourcePermanent} for a flagged source. Because the
- * damage record covers the whole turn, creatures damaged before the ability was activated are also
- * covered. The flag ends at cleanup. A targeted ability (Runesword) also makes a floating effect naming the source,
- * which lasts until end of turn and keeps the effect going if the source leaves the battlefield, while a
- * self-granted ability (Bone Shaman) stops applying with it.
+ * "Creatures dealt damage by this creature this turn can't be regenerated this turn."
+ * {@code GraveyardService.tryRegenerate} refuses to regenerate a creature recorded in
+ * {@code GameData.creatureCardsDamagedThisTurnBySourcePermanent} for a creature with this effect. Because the damage
+ * record covers the whole turn, creatures damaged before the ability was activated are also covered. Without a
+ * target the source gains it as an ability until end of turn (Bone Shaman; a layer-6 grant, CR 613.1f, gone with
+ * the creature or its abilities); as part of a targeted ability it is that ability's effect on the target until end
+ * of turn (Runesword), which keeps applying if the target leaves the battlefield.
  */
 public record PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffect() implements CardEffect {
 }

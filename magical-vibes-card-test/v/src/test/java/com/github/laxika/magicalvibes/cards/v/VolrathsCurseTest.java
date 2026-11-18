@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
+
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.l.LegacysAllure;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -79,7 +81,7 @@ class VolrathsCurseTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, sacrificeTarget.getId());
         harness.passBothPriorities();
 
-        assertThat(curse.isAuraEffectsIgnoredThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(curse.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card == sacrificeTarget.getCard());
 
@@ -100,13 +102,13 @@ class VolrathsCurseTest extends BaseCardTest {
 
         harness.activateAbility(player1, 2, 0, null, null);
         harness.handlePermanentChosen(player1, sacrificeTarget.getId());
-        assertThat(curse.isAuraEffectsIgnoredThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(curse.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(curse.isAuraEffectsIgnoredThisTurn()).isFalse();
+        assertThat(gd.hasFloatingEffectOnPermanent(curse.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class)).isFalse();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
@@ -145,7 +147,7 @@ class VolrathsCurseTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, sacrificeTarget.getId());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(curse.isAuraEffectsIgnoredThisTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(curse.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class)).isTrue();
     }
 
     @Test

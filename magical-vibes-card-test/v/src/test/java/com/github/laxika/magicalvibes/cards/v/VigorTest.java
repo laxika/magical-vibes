@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+
+import com.github.laxika.magicalvibes.model.effect.Duration;
+
+import com.github.laxika.magicalvibes.model.effect.DamageToTargetCreatureCantBePreventedOrRedirectedThisTurnEffect;
+
 import com.github.laxika.magicalvibes.cards.d.DrownerOfSecrets;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -151,7 +157,7 @@ class VigorTest extends BaseCardTest {
     void unpreventableDamageDoesNotAddCounters() {
         harness.addToBattlefield(player2, new Vigor());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        creature.setDamageCantBePreventedOrRedirectedThisTurn(true);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null, new DamageToTargetCreatureCantBePreventedOrRedirectedThisTurnEffect(), creature.getId(), Duration.UNTIL_END_OF_TURN));
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 

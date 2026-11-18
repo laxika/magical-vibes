@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AllowTargetCreatureToAdaptEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -28,7 +29,7 @@ public class AllowTargetCreatureToAdaptEffectHandler implements NormalEffectHand
 
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target != null) {
-            target.addAdaptOverrideUntilEndOfTurn();
+            gameData.addEffectOnPermanent(entry, effect, target.getId(), Duration.UNTIL_END_OF_TURN);
         }
     }
 }

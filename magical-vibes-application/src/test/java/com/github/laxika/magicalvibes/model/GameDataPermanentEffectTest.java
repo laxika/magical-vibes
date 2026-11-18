@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.AllowTargetCreatureToAdaptEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowTargetPlayerToTargetSourceIgnoringShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -17,7 +21,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class GameDataPermanentCombatEffectTest {
+class GameDataPermanentEffectTest {
 
     private GameData gd;
     private final UUID creatureId = UUID.randomUUID();
@@ -95,5 +99,39 @@ class GameDataPermanentCombatEffectTest {
 
         assertThat(gd.cantBlockSourceIds(creatureId)).containsExactly(attacker);
         assertThat(gd.cantBlockSourceIds(otherCreatureId)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the player who paid ignores the permanent's effect")
+    void onlyThePayingPlayerIgnoresTheEffect() {
+        UUID payer = UUID.randomUUID();
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("Test", null, payer,
+                new IgnoreSourceAuraEffectsUntilEndOfTurnEffect(), creatureId, Duration.UNTIL_END_OF_TURN));
+
+        assertThat(gd.ignoresEffectOf(creatureId, IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class, payer)).isTrue();
+        assertThat(gd.ignoresEffectOf(creatureId, IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class,
+                UUID.randomUUID())).isFalse();
+        assertThat(gd.ignoresEffectOf(creatureId, IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect.class, payer))
+                .isFalse();
+    }
+
+    @Test
+    @DisplayName("Only the named player may target the permanent as though it didn't have shroud")
+    void shroudIsIgnoredOnlyForTheNamedPlayer() {
+        UUID named = UUID.randomUUID();
+        on(creatureId, new AllowTargetPlayerToTargetSourceIgnoringShroudEffect(named), Duration.UNTIL_END_OF_TURN);
+
+        assertThat(gd.mayTargetIgnoringShroud(creatureId, named)).isTrue();
+        assertThat(gd.mayTargetIgnoringShroud(creatureId, UUID.randomUUID())).isFalse();
+        assertThat(gd.mayTargetIgnoringShroud(otherCreatureId, named)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each Adapt override is used up once")
+    void adaptOverrideIsUsedUp() {
+        on(creatureId, new AllowTargetCreatureToAdaptEffect(), Duration.UNTIL_END_OF_TURN);
+
+        assertThat(gd.useAdaptOverride(creatureId)).isTrue();
+        assertThat(gd.useAdaptOverride(creatureId)).isFalse();
     }
 }

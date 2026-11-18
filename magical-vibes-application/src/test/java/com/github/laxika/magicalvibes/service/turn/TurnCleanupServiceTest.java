@@ -258,19 +258,6 @@ class TurnCleanupServiceTest {
         }
 
         @Test
-        @DisplayName("Clears cantRegenerateThisTurn flag on permanents")
-        void clearsCantRegenerateThisTurn() {
-            Card card = createCardWithName("Grizzly Bears");
-            Permanent perm = new Permanent(card);
-            perm.setCantRegenerateThisTurn(true);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.isCantRegenerateThisTurn()).isFalse();
-        }
-
-        @Test
         @DisplayName("Clears granted card types on permanents")
         void clearsGrantedCardTypes() {
             Card card = createCardWithName("Mutavault");

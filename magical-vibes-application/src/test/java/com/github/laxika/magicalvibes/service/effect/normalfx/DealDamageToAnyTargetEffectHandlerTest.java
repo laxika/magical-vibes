@@ -71,10 +71,10 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
         DealDamageToAnyTargetEffect damage = new DealDamageToAnyTargetEffect(0, true);
 
         dealDamageToAnyTargetHandler.resolve(gd, entry, damage);
-        assertThat(creature.isCantRegenerateThisTurn()).isFalse();
+        assertThat(gd.cantBeRegenerated(creature.getId())).isFalse();
 
         dealDamageToAnyTargetHandler.resolve(gd, entry, damage.withUnconditionalRegenerationPrevention());
-        assertThat(creature.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(creature.getId())).isTrue();
         assertThat(creature.getMarkedDamage()).isZero();
     }
 

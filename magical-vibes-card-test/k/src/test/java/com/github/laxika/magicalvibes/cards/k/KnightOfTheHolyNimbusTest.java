@@ -81,7 +81,7 @@ class KnightOfTheHolyNimbusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent knight = findPermanent(player1, "Knight of the Holy Nimbus");
-        assertThat(knight.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(knight.getId())).isTrue();
     }
 
     @Test
@@ -93,14 +93,14 @@ class KnightOfTheHolyNimbusTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(knight.isCantRegenerateThisTurn()).isTrue();
+        assertThat(gd.cantBeRegenerated(knight.getId())).isTrue();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(knight.isCantRegenerateThisTurn()).isFalse();
+        assertThat(gd.cantBeRegenerated(knight.getId())).isFalse();
     }
 
     @Test
@@ -176,8 +176,8 @@ class KnightOfTheHolyNimbusTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(knight.isCantRegenerateThisTurn()).isTrue();
-        assertThat(otherKnight.isCantRegenerateThisTurn()).isFalse();
+        assertThat(gd.cantBeRegenerated(knight.getId())).isTrue();
+        assertThat(gd.cantBeRegenerated(otherKnight.getId())).isFalse();
     }
     private void addStranglingSootMana() {
         harness.addMana(player2, ManaColor.BLACK, 1);

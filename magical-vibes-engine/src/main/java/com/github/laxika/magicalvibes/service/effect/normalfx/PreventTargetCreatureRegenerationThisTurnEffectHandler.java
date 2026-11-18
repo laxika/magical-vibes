@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PreventTargetCreatureRegenerationThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -32,7 +33,8 @@ public class PreventTargetCreatureRegenerationThisTurnEffectHandler implements N
             return;
         }
 
-        target.setCantRegenerateThisTurn(true);
+        gameData.addEffectOnPermanent(entry, new PreventTargetCreatureRegenerationThisTurnEffect(), target.getId(),
+                Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " can't be regenerated this turn."));
         log.info("Game {} - {} can't be regenerated this turn", gameData.id, target.getCard().getName());

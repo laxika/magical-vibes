@@ -34,7 +34,7 @@ public class AdaptEffectHandler implements NormalEffectHandlerBean {
         }
 
         boolean adaptsDespiteCounters = false;
-        while (source.consumeAdaptOverrideUntilEndOfTurn()) {
+        while (gameData.useAdaptOverride(source.getId())) {
             adaptsDespiteCounters = true;
         }
         if (!adaptsDespiteCounters

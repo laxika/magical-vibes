@@ -4941,7 +4941,7 @@ public class TargetLegalityService {
                     + " can't be the target of spells or abilities opponents control";
         }
         if (gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)
-                && !target.ignoresShroudFor(sourcePlayerId)) {
+                && !gameData.mayTargetIgnoringShroud(target.getId(), sourcePlayerId)) {
             return target.getCard().getName() + " has shroud and can't be targeted";
         }
         UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
