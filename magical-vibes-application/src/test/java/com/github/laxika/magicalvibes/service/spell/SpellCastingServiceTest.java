@@ -1805,7 +1805,7 @@ class SpellCastingServiceTest {
         @DisplayName("Outside-game permission still requires the card to exist in the sideboard")
         void rejectsMissingSideboardCardWithOutsideGamePermission() {
             UUID missingCardId = UUID.randomUUID();
-            gd.outsideGamePlayPermissions.add(missingCardId);
+            gd.permitPlayFromOutsideGame("Wish", null, player1.getId(), List.of(missingCardId), false, false);
 
             assertThatThrownBy(() -> svc.playCardFromExile(gd, player1, missingCardId, 0, null))
                     .isInstanceOf(IllegalStateException.class)

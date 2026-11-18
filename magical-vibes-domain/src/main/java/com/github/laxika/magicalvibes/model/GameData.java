@@ -996,11 +996,6 @@ public class GameData {
      * creature that has such a counter whenever blockers are declared (CR 611.2c), not just to those that had
      * one when the ability resolved.
      */
-    /** Restrictions evaluated against the player's permanents during upcoming untap steps. */
-    public final Map<UUID, List<SkipNextUntapEffect>>
-            matchingPermanentUntapRestrictions = new ConcurrentHashMap<>();
-    /** Player IDs → turn number whose draw step is skipped by a current-turn effect. */
-    public final Map<UUID, Integer> skipDrawStepThisTurn = new ConcurrentHashMap<>();
     /** When true, all damage to all creatures (both players') is prevented this turn (Blinding Fog). */
     /**
      * The "one or more" abilities, by source, already put on the stack for the current simultaneous creature-entry
@@ -2245,22 +2240,11 @@ public class GameData {
     public final Map<UUID, Integer> exilePlayPermissionGroupUsesRemaining = new ConcurrentHashMap<>();
     /** Spell type choices already used by permissions allowing one spell of each card type. */
     public final Map<UUID, List<Set<CardType>>> exileSpellTypePermissionHistory = new ConcurrentHashMap<>();
-    /** Card UUIDs the controller may play from their outside-the-game card pool this turn. Under Runed Terror's
-     *  sequential phases each grant (single-play group or lone card) ends at the cleanup step of the player active
-     *  when it was granted ({@code GAME_OUTSIDE_GAME_PLAY_PERMISSIONS}). */
-    public final OutsideGamePlayPermissionSet outsideGamePlayPermissions = new OutsideGamePlayPermissionSet();
-    /** One-shot permission for the additional modal mode granted by Your Wish Is My Command. */
-    public final Set<UUID> outsideGameAdditionalModalModePermissions = ConcurrentHashMap.newKeySet();
     public final Set<UUID> plottedCardIds = ConcurrentHashMap.newKeySet();
     /** Maps a Discord-created exiled copy to the Discord permanent whose ability created it. */
     public final Map<UUID, UUID> discordCopySourcePermanents = new ConcurrentHashMap<>();
     /** Exiled card UUIDs that have stash counters. */
     public final Set<UUID> stashCounterCardIds = ConcurrentHashMap.newKeySet();
-    /** Card UUIDs that are exiled instead of being put into a graveyard (e.g. a spell cast via
-     *  Nita, Forum Conciliator: "If that spell would be put into a graveyard, exile it instead").
-     *  Cleared during cleanup step; under Runed Terror's sequential phases each rider is kept until the cleanup
-     *  step of the player active when it was granted ({@code GAME_EXILE_INSTEAD_OF_GRAVEYARD}). */
-    public final Set<UUID> exileInsteadOfGraveyard = ConcurrentHashMap.newKeySet();
     /** Depth counter for batching "cards leave graveyard" triggers (one trigger per batch). */
     public int graveyardLeaveNotificationDepth = 0;
     /** Depth counter for tap events that are paid or performed as one batch. */
@@ -4439,9 +4423,6 @@ public class GameData {
 
     private Object gameEndOfTurnStateValue(EndOfTurnStateField field) {
         return switch (field) {
-            case GAME_EXILE_INSTEAD_OF_GRAVEYARD -> exileInsteadOfGraveyard;
-            case GAME_OUTSIDE_GAME_PLAY_PERMISSIONS -> outsideGamePlayPermissions.grants();
-            case GAME_OUTSIDE_GAME_ADDITIONAL_MODAL_MODE_PERMISSIONS -> outsideGameAdditionalModalModePermissions;
             case GAME_OPPONENT_GRAVEYARD_LIFE_LOSS_WATCHERS -> synchronizedCopy(opponentGraveyardLifeLossWatchers);
             case GAME_LIFE_GAIN_OPPONENT_LIFE_LOSS_WATCHERS -> synchronizedCopy(lifeGainOpponentLifeLossWatchers);
             case GAME_ALLY_CREATURE_ENTERS_TRIGGER_WATCHERS -> synchronizedCopy(allyCreatureEntersTriggerWatchers);
@@ -4467,10 +4448,6 @@ public class GameData {
     @SuppressWarnings("unchecked")
     private void addGameEndOfTurnStateValue(EndOfTurnStateField field, Object value) {
         switch (field) {
-            case GAME_EXILE_INSTEAD_OF_GRAVEYARD -> exileInsteadOfGraveyard.addAll((Set<UUID>) value);
-            case GAME_OUTSIDE_GAME_PLAY_PERMISSIONS -> outsideGamePlayPermissions.addGrants((List<?>) value);
-            case GAME_OUTSIDE_GAME_ADDITIONAL_MODAL_MODE_PERMISSIONS ->
-                    outsideGameAdditionalModalModePermissions.addAll((Set<UUID>) value);
             case GAME_OPPONENT_GRAVEYARD_LIFE_LOSS_WATCHERS ->
                     opponentGraveyardLifeLossWatchers.addAll((List<OpponentGraveyardLifeLossWatcher>) value);
             case GAME_LIFE_GAIN_OPPONENT_LIFE_LOSS_WATCHERS ->
@@ -4631,6 +4608,163 @@ public class GameData {
     @SafeVarargs
     public final List<FloatingContinuousEffect> floatingEffectsOnNamedPlayers(Class<? extends CardEffect>... types) {
         return floatingEffectsOfTypes(types).stream().filter(fe -> fe.affectedPlayerId() != null).toList();
+    }
+
+    /**
+     * Permits {@code playerId} to play {@code cardIds} from outside the game until end of turn (CR 611.2a), as a
+     * floating {@link com.github.laxika.magicalvibes.model.effect.OutsideGamePlayPermissionEffect} on that player.
+     * Nothing is added for no cards.
+     */
+    public void permitPlayFromOutsideGame(String sourceCardName, UUID sourcePermanentId, UUID playerId,
+                                          java.util.Collection<UUID> cardIds, boolean singlePlay,
+                                          boolean additionalModalMode) {
+        if (cardIds.isEmpty()) {
+            return;
+        }
+        addFloatingEffect(FloatingContinuousEffect.onPlayer(sourceCardName, sourcePermanentId, playerId,
+                new com.github.laxika.magicalvibes.model.effect.OutsideGamePlayPermissionEffect(
+                        Set.copyOf(cardIds), singlePlay, additionalModalMode),
+                playerId, com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));
+    }
+
+    /** Whether a floating permission lets the card {@code cardId} be played from outside the game. */
+    public boolean mayPlayFromOutsideGame(UUID cardId) {
+        return !outsideGamePermissionsFor(cardId).isEmpty();
+    }
+
+    /** Whether a modal card cast from outside the game with a permission may choose one more mode. */
+    public boolean mayChooseAdditionalModeFromOutsideGame(UUID cardId) {
+        return outsideGamePermissionsFor(cardId).stream().anyMatch(fe ->
+                ((com.github.laxika.magicalvibes.model.effect.OutsideGamePlayPermissionEffect) fe.effect())
+                        .additionalModalMode());
+    }
+
+    /**
+     * Uses up a permission to play {@code cardId} from outside the game as the card is played or leaves outside the game:
+     * the oldest one naming it is spent (a single-play one for every card it named, another only for that card), and the
+     * others stop naming the card, which is a new object once it moves (CR 400.7).
+     */
+    public void spendPlayFromOutsideGame(UUID cardId) {
+        boolean spent = false;
+        for (FloatingContinuousEffect fe : outsideGamePermissionsFor(cardId)) {
+            var permission = (com.github.laxika.magicalvibes.model.effect.OutsideGamePlayPermissionEffect) fe.effect();
+            Set<UUID> rest = new HashSet<>(permission.cardIds());
+            rest.remove(cardId);
+            if ((!spent && permission.singlePlay()) || rest.isEmpty()) {
+                endFloatingEffect(fe);
+            } else {
+                replaceFloatingEffect(fe, fe.withEffect(
+                        new com.github.laxika.magicalvibes.model.effect.OutsideGamePlayPermissionEffect(
+                                rest, permission.singlePlay(), permission.additionalModalMode())));
+            }
+            spent = true;
+        }
+    }
+
+    private List<FloatingContinuousEffect> outsideGamePermissionsFor(UUID cardId) {
+        return floatingEffectsOfTypes(com.github.laxika.magicalvibes.model.effect.OutsideGamePlayPermissionEffect.class)
+                .stream()
+                .filter(fe -> ((com.github.laxika.magicalvibes.model.effect.OutsideGamePlayPermissionEffect) fe.effect())
+                        .cardIds().contains(cardId))
+                .toList();
+    }
+
+    /**
+     * Makes the card {@code cardId} be exiled instead of put into a graveyard this turn, the spell it becomes on the
+     * stack included (CR 614.1a): a floating {@link com.github.laxika.magicalvibes.model.effect.ExileCardInsteadOfGraveyardEffect}
+     * on {@code controllerId}, made by {@code sourceCardName}. A card already under one gets no second.
+     */
+    public void exileInsteadOfGraveyard(String sourceCardName, UUID controllerId, UUID cardId) {
+        if (exilesInsteadOfGraveyard(cardId)) {
+            return;
+        }
+        addFloatingEffect(FloatingContinuousEffect.onPlayer(sourceCardName, null, controllerId,
+                new com.github.laxika.magicalvibes.model.effect.ExileCardInsteadOfGraveyardEffect(cardId), controllerId,
+                com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));
+    }
+
+    /** {@link #exileInsteadOfGraveyard(String, UUID, UUID)} made by the resolving {@code entry}. */
+    public void exileInsteadOfGraveyard(StackEntry entry, UUID cardId) {
+        exileInsteadOfGraveyard(entry.getCard() == null ? null : entry.getCard().getName(), entry.getControllerId(),
+                cardId);
+    }
+
+    /** Whether the card {@code cardId} is to be exiled instead of put into a graveyard. */
+    public boolean exilesInsteadOfGraveyard(UUID cardId) {
+        return !exileInsteadOfGraveyardEffects(cardId).isEmpty();
+    }
+
+    /**
+     * Uses up the "exile it instead" effect on the card {@code cardId}, as the card is cast with it or exiled by it, and
+     * returns whether there was one.
+     */
+    public boolean endExileInsteadOfGraveyard(UUID cardId) {
+        List<FloatingContinuousEffect> effects = exileInsteadOfGraveyardEffects(cardId);
+        effects.forEach(this::endFloatingEffect);
+        return !effects.isEmpty();
+    }
+
+    private List<FloatingContinuousEffect> exileInsteadOfGraveyardEffects(UUID cardId) {
+        return floatingEffectsOfTypes(com.github.laxika.magicalvibes.model.effect.ExileCardInsteadOfGraveyardEffect.class)
+                .stream()
+                .filter(fe -> ((com.github.laxika.magicalvibes.model.effect.ExileCardInsteadOfGraveyardEffect) fe.effect())
+                        .cardId().equals(cardId))
+                .toList();
+    }
+
+    /**
+     * Adds a "permanents [matching it] don't untap during [that player's] next untap step" effect on {@code playerId}
+     * (CR 611.2c: it applies to whatever matches as that untap step begins). It is used up there, or, for a later step
+     * of several, replaced by one for one step fewer.
+     */
+    public void restrictNextUntapStep(StackEntry entry, UUID playerId, SkipNextUntapEffect restriction) {
+        addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard() == null ? null : entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), restriction, playerId,
+                com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT));
+    }
+
+    /** The "don't untap during the next untap step" effects waiting on {@code playerId}'s untap step, oldest first. */
+    public List<FloatingContinuousEffect> nextUntapStepRestrictions(UUID playerId) {
+        return floatingEffectsOnPlayer(playerId, SkipNextUntapEffect.class).stream()
+                .filter(fe -> playerId.equals(fe.affectedPlayerId()))
+                .toList();
+    }
+
+    /**
+     * "If that creature would die this turn, exile it instead" (CR 614.1a) on the permanent {@code permanentId}, made by
+     * the resolving {@code entry}: a floating {@link com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect} until
+     * end of turn. With {@code trackWithSource} the card exiled this way is linked to the entry's source permanent.
+     */
+    public void exileInsteadOfDying(StackEntry entry, UUID permanentId, boolean trackWithSource) {
+        addFloatingEffect(FloatingContinuousEffect.onPermanent(entry.getCard() == null ? null : entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(),
+                new com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect(trackWithSource), permanentId,
+                com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));
+    }
+
+    /** {@link #exileInsteadOfDying(StackEntry, UUID, boolean)} with no link to the source. */
+    public void exileInsteadOfDying(StackEntry entry, UUID permanentId) {
+        exileInsteadOfDying(entry, permanentId, false);
+    }
+
+    /** Whether the permanent {@code permanentId} is to be exiled instead of dying this turn. */
+    public boolean exilesInsteadOfDying(UUID permanentId) {
+        return hasFloatingEffectOnPermanent(permanentId, com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect.class);
+    }
+
+    /**
+     * The source permanent the newest linked "exile it instead of dying" effect on {@code permanentId} links the exiled
+     * card to, or {@code null}.
+     */
+    public UUID exileInsteadOfDyingLinkedSource(UUID permanentId) {
+        UUID linked = null;
+        for (FloatingContinuousEffect fe : floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect.class)) {
+            if (((com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect) fe.effect()).trackWithSource()) {
+                linked = fe.sourcePermanentId();
+            }
+        }
+        return linked;
     }
 
     /** Whether a floating effect of any of {@code types} applies to {@code playerId}. */
@@ -7450,7 +7584,7 @@ public class GameData {
         countersPreservedAcrossZoneChanges.remove(card.getId());
         // Returning from the graveyard makes the card a new object (CR 400.7), so graveyard permissions
         // and the exile-instead-of-graveyard replacement granted to the old object no longer apply.
-        exileInsteadOfGraveyard.remove(card.getId());
+        endExileInsteadOfGraveyard(card.getId());
         handEntryVersions.merge(card.getId(), 1L, Long::sum);
         playerHands.get(playerId).add(card);
     }
@@ -8097,7 +8231,7 @@ public class GameData {
             exiledCardsWithCageCounters.remove(cardId);
             exiledCardRefineCounters.remove(cardId);
             plottedCardIds.remove(cardId);
-            exileInsteadOfGraveyard.remove(cardId);
+            endExileInsteadOfGraveyard(cardId);
             cardsExiledFromGraveyardThisTurn.remove(cardId);
             exiledCardTimeCounters.remove(cardId);
             exiledCardsWithNonSuspendTimeCounters.remove(cardId);
@@ -10314,15 +10448,12 @@ public class GameData {
                 copy.pendingCopyRiderManaChoices.put(sourceId, new ConcurrentHashMap<>(riders)));
         copy.spellsPaidUsingPendingAnyManaTypeThisTurn.addAll(this.spellsPaidUsingPendingAnyManaTypeThisTurn);
 
-        copy.outsideGamePlayPermissions.copyFrom(this.outsideGamePlayPermissions);
-        copy.outsideGameAdditionalModalModePermissions.addAll(this.outsideGameAdditionalModalModePermissions);
         this.exileSpellTypePermissionHistory.forEach((groupId, history) ->
                 copy.exileSpellTypePermissionHistory.put(groupId, history.stream()
                         .map(types -> Set.copyOf(types)).collect(java.util.stream.Collectors.toCollection(ArrayList::new))));
         copy.exilePlayPermissionGroupUsesRemaining.putAll(this.exilePlayPermissionGroupUsesRemaining);
         copy.discordCopySourcePermanents.putAll(this.discordCopySourcePermanents);
         copy.stashCounterCardIds.addAll(this.stashCounterCardIds);
-        copy.exileInsteadOfGraveyard.addAll(this.exileInsteadOfGraveyard);
         copy.playersWhoForetoldThisTurn.addAll(this.playersWhoForetoldThisTurn);
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
         copy.discardCostBatchOpen = this.discardCostBatchOpen;
@@ -10415,9 +10546,6 @@ public class GameData {
         // only reset at cleanup, so a copy taken mid-turn must carry them.
         copy.lifeLostThisTurn.putAll(this.lifeLostThisTurn);
         copy.lifeLostLastTurn.putAll(this.lifeLostLastTurn);
-        this.matchingPermanentUntapRestrictions.forEach((id, restrictions) ->
-                copy.matchingPermanentUntapRestrictions.put(id, new ArrayList<>(restrictions)));
-        copy.skipDrawStepThisTurn.putAll(this.skipDrawStepThisTurn);
         copy.lastClashWonByController.putAll(this.lastClashWonByController);
         copy.playersWhoSearchedLibraryThisTurn.addAll(this.playersWhoSearchedLibraryThisTurn);
         copy.playersWhoInvestigatedThisTurn.addAll(this.playersWhoInvestigatedThisTurn);

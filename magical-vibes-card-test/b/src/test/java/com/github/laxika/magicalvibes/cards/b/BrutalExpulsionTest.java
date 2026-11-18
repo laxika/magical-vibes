@@ -76,7 +76,7 @@ class BrutalExpulsionTest extends BaseCardTest {
 
         harness.assertInHand(player2, "Grizzly Bears");
         assertThat(creatureToDamage.getMarkedDamage()).isEqualTo(2);
-        assertThat(creatureToDamage.isExileInsteadOfDieThisTurn()).isTrue();
+        assertThat(gd.exilesInsteadOfDying(creatureToDamage.getId())).isTrue();
     }
 
     @Test

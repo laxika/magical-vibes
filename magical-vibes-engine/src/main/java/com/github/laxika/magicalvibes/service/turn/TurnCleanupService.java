@@ -300,8 +300,6 @@ public class TurnCleanupService {
         gameData.spellsGrantedRiotOnEntry.clear();
         EndOfTurnStateShare retainedGameState = retainedState.getOrDefault(
                 GameData.GAME_END_OF_TURN_STATE_ID, EndOfTurnStateShare.EMPTY);
-        gameData.outsideGamePlayPermissions.clear();
-        gameData.outsideGameAdditionalModalModePermissions.clear();
         gameData.spellsPaidUsingPendingAnyManaTypeThisTurn.clear();
         gameData.conspiredSpellCopyCounts.clear();
         gameData.casualtySpellCopyCounts.clear();
@@ -317,7 +315,6 @@ public class TurnCleanupService {
         gameData.creatureExileCountThisTurn.clear();
 
         gameData.playersWhoForetoldThisTurn.clear();
-        gameData.exileInsteadOfGraveyard.clear();
 
         int currentTurn = gameData.turnNumber;
         gameData.addGameEndOfTurnState(retainedGameState);

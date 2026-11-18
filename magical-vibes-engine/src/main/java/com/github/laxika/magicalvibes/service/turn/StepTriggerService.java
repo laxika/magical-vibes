@@ -485,21 +485,12 @@ public class StepTriggerService {
             gameData.drawStepSkippedThisStep = true;
             return;
         }
-        Integer currentTurnSkip = gameData.skipDrawStepThisTurn.remove(activePlayerId);
-
-        // A one-shot skip queued earlier (e.g. Ivory Gargoyle's death trigger) consumes one draw step.
+        // A "skip your (next) draw step" effect is used up as it applies: one that lasts only this turn (Elfhame
+        // Sanctuary) before one that waits (Ivory Gargoyle), which then waits for the next draw step (CR 614.10a).
         if (gameData.applySkipNext(activePlayerId, SkipKind.DRAW_STEP)) {
             String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips their draw step.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} skips draw step (queued skip)", gameData.id, gameData.playerIdToName.get(activePlayerId));
-            gameData.drawStepSkippedThisStep = true;
-            return;
-        }
-
-        if (currentTurnSkip != null && currentTurnSkip == gameData.turnNumber) {
-            String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips their draw step.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
-            log.info("Game {} - {} skips draw step (current-turn effect)", gameData.id, gameData.playerIdToName.get(activePlayerId));
             gameData.drawStepSkippedThisStep = true;
             return;
         }

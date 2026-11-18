@@ -171,15 +171,16 @@ class UntapStepServiceTest {
     void matchingRestrictionSurvivesSkippedStepAndIncludesLaterPermanents() {
         var restriction = new com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect(
                 com.github.laxika.magicalvibes.model.effect.TapUntapScope.TARGET_PLAYERS_PERMANENTS, null, 1, true);
-        gd.matchingPermanentUntapRestrictions.put(player1Id, new ArrayList<>(List.of(restriction)));
+        gd.addFloatingEffect(com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect.onPlayer("Test", null,
+                player1Id, restriction, player1Id, com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT));
         Permanent permanent = addPermanent(player1Id, createCardWithName("Later permanent"));
         permanent.tap();
 
         sut.untapPermanents(gd, player1Id, null, true);
-        assertThat(gd.matchingPermanentUntapRestrictions.get(player1Id)).containsExactly(restriction);
+        assertThat(gd.nextUntapStepRestrictions(player1Id)).extracting(fe -> fe.effect()).containsExactly(restriction);
         sut.untapPermanents(gd, player1Id);
         assertThat(permanent.isTapped()).isTrue();
-        assertThat(gd.matchingPermanentUntapRestrictions).isEmpty();
+        assertThat(gd.nextUntapStepRestrictions(player1Id)).isEmpty();
         sut.untapPermanents(gd, player1Id);
         assertThat(permanent.isTapped()).isFalse();
     }

@@ -24,7 +24,7 @@ class CombustionTechniqueTest extends BaseCardTest {
         cast(target);
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
-        assertThat(target.isExileInsteadOfDieThisTurn()).isTrue();
+        assertThat(gd.exilesInsteadOfDying(target.getId())).isTrue();
     }
 
     @Test

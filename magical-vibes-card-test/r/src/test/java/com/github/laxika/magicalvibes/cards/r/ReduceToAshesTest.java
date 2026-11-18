@@ -46,7 +46,7 @@ class ReduceToAshesTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, targetId);
 
         assertThat(creature.getMarkedDamage()).isEqualTo(5);
-        assertThat(creature.isExileInsteadOfDieThisTurn()).isTrue();
+        assertThat(gd.exilesInsteadOfDying(creature.getId())).isTrue();
     }
 
     @Test

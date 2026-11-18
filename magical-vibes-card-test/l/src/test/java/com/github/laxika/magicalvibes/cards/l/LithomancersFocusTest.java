@@ -91,7 +91,7 @@ class LithomancersFocusTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.isExileInsteadOfDieThisTurn()).isFalse();
+        assertThat(gd.exilesInsteadOfDying(target.getId())).isFalse();
         harness.assertLife(player2, 20);
     }
 

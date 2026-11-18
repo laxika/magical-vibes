@@ -741,7 +741,7 @@ public class GraveyardService {
 
             // Per-card "if that spell would be put into a graveyard, exile it instead" replacement
             // (e.g. a spell cast via Nita, Forum Conciliator). Tracked for the specific card until cleanup.
-            if (gameData.exileInsteadOfGraveyard.remove(card.getId())) {
+            if (gameData.endExileInsteadOfGraveyard(card.getId())) {
                 exileService.exileCard(gameData, ownerId, card);
             
                 gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));

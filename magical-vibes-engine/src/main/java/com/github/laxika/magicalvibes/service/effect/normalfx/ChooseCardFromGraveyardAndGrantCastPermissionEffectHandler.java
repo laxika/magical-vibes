@@ -117,7 +117,7 @@ public class ChooseCardFromGraveyardAndGrantCastPermissionEffectHandler implemen
             gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, false),
                     cardId, Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN);
             if (effect.exileInsteadOfGraveyard()) {
-                gameData.exileInsteadOfGraveyard.add(cardId);
+                gameData.exileInsteadOfGraveyard(entry, cardId);
             }
         }
 

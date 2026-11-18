@@ -104,20 +104,23 @@ public class OutsideGameNormalCostCastSupport {
             return;
         }
 
-        gameData.outsideGamePlayPermissions.add(cardId);
         ChooseOneEffect modal = card.getSpellEffects().stream()
                 .filter(ChooseOneEffect.class::isInstance)
                 .map(ChooseOneEffect.class::cast)
                 .findFirst()
                 .orElse(null);
+        if (!gameData.mayPlayFromOutsideGame(cardId)) {
+            // The resolving effect lets this card be cast now, a modal one with one more mode.
+            gameData.permitPlayFromOutsideGame(card.getName(), null, player.getId(), List.of(cardId), true,
+                    modal != null);
+        }
         if (modal != null) {
             int maximumChoices = Math.min(modal.options().size(), modal.choicesMax() + 1);
             if (modal.choicesRequired() > maximumChoices) {
-                gameData.outsideGamePlayPermissions.remove(cardId);
+                gameData.spendPlayFromOutsideGame(cardId);
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
             }
-            gameData.outsideGameAdditionalModalModePermissions.add(cardId);
             Card runtimeCard = card.createRuntimeCopy();
             List<Integer> offeredModes = java.util.stream.IntStream.range(0, modal.options().size())
                     .boxed()
@@ -139,7 +142,7 @@ public class OutsideGameNormalCostCastSupport {
                     ? exileCastTargetSupport.hasLegalTargetSet(gameData, card, player.getId())
                     : !candidates.isEmpty();
             if (!legalTargets) {
-                gameData.outsideGamePlayPermissions.remove(cardId);
+                gameData.spendPlayFromOutsideGame(cardId);
                 gameLogService.append(gameData, GameLog.cardThen(card,
                         " has no valid targets and stays outside the game."));
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -160,7 +163,7 @@ public class OutsideGameNormalCostCastSupport {
         try {
             spellCastingService.playCardFromExileAsResolutionCast(gameData, player, cardId, xValue, (UUID) null);
         } catch (IllegalStateException ex) {
-            gameData.outsideGamePlayPermissions.remove(cardId);
+            gameData.spendPlayFromOutsideGame(cardId);
             log.info("Game {} - {} could not pay the normal cost for {} from outside the game",
                     gameData.id, player.getUsername(), card.getName());
         }
@@ -210,8 +213,7 @@ public class OutsideGameNormalCostCastSupport {
                     ? exileCastTargetSupport.hasLegalTargetSet(gameData, card, player.getId())
                     : !candidates.isEmpty();
             if (!legalTargets) {
-                gameData.outsideGamePlayPermissions.remove(card.getId());
-                gameData.outsideGameAdditionalModalModePermissions.remove(card.getId());
+                gameData.spendPlayFromOutsideGame(card.getId());
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
             }
@@ -228,8 +230,7 @@ public class OutsideGameNormalCostCastSupport {
             spellCastingService.playCardFromExileAsResolutionCast(
                     gameData, player, card.getId(), modeEncoding, (UUID) null);
         } catch (IllegalStateException ex) {
-            gameData.outsideGamePlayPermissions.remove(card.getId());
-            gameData.outsideGameAdditionalModalModePermissions.remove(card.getId());
+            gameData.spendPlayFromOutsideGame(card.getId());
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

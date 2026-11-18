@@ -48,7 +48,7 @@ class ElspethsSmiteTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
-        assertThat(target.isExileInsteadOfDieThisTurn()).isTrue();
+        assertThat(gd.exilesInsteadOfDying(target.getId())).isTrue();
     }
 
     @Test
@@ -102,7 +102,7 @@ class ElspethsSmiteTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Phyrexian Archivist");
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.isExileInsteadOfDieThisTurn()).isFalse();
+        assertThat(gd.exilesInsteadOfDying(target.getId())).isFalse();
     }
 
     @Test

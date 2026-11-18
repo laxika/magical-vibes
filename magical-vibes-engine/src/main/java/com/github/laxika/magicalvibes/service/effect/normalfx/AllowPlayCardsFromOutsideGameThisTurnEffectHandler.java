@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,28 +35,30 @@ public class AllowPlayCardsFromOutsideGameThisTurnEffectHandler implements Norma
         List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, controllerId);
         if (sideboard != null && permissionEffect.maxCards() == Integer.MAX_VALUE) {
             // "You may play a card ... from outside the game": one play in total, of any matching card.
-            gameData.outsideGamePlayPermissions.addSinglePlayGroup(sideboard.stream()
-                    .filter(card -> permissionEffect.filter() == null
-                            || predicateEvaluationService.matchesCardPredicate(
-                            card, permissionEffect.filter(), null, gameData, controllerId))
-                    .map(Card::getId)
-                    .toList());
+            gameData.permitPlayFromOutsideGame(entry.getCard().getName(), entry.getSourcePermanentId(), controllerId,
+                    sideboard.stream()
+                            .filter(card -> permissionEffect.filter() == null
+                                    || predicateEvaluationService.matchesCardPredicate(
+                                    card, permissionEffect.filter(), null, gameData, controllerId))
+                            .map(Card::getId)
+                            .toList(), true, false);
         } else if (sideboard != null) {
-            int granted = 0;
+            List<UUID> permitted = new ArrayList<>();
             for (Card card : List.copyOf(sideboard)) {
-                if (granted >= permissionEffect.maxCards()) {
+                if (permitted.size() >= permissionEffect.maxCards()) {
                     break;
                 }
-                if (gameData.outsideGamePlayPermissions.contains(card.getId())) {
+                if (gameData.mayPlayFromOutsideGame(card.getId())) {
                     continue;
                 }
                 if (permissionEffect.filter() == null
                         || predicateEvaluationService.matchesCardPredicate(
                         card, permissionEffect.filter(), null, gameData, controllerId)) {
-                    gameData.outsideGamePlayPermissions.add(card.getId());
-                    granted++;
+                    permitted.add(card.getId());
                 }
             }
+            gameData.permitPlayFromOutsideGame(entry.getCard().getName(), entry.getSourcePermanentId(), controllerId,
+                    permitted, false, false);
         }
 
         String description = permissionEffect.filter() == null ? "cards" : "matching cards";

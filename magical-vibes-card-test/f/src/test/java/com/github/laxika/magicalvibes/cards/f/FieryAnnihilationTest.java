@@ -48,7 +48,7 @@ class FieryAnnihilationTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Avatar of Might");
         assertThat(creature.getMarkedDamage()).isEqualTo(5);
-        assertThat(creature.isExileInsteadOfDieThisTurn()).isTrue();
+        assertThat(gd.exilesInsteadOfDying(creature.getId())).isTrue();
     }
 
     @Test

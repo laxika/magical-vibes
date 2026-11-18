@@ -86,7 +86,7 @@ class NitaForumConciliatorTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissionHolder(target.getId())).isEqualTo(player1.getId());
         assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(target.getId());
         assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(target.getId());
-        assertThat(gd.exileInsteadOfGraveyard).contains(target.getId());
+        assertThat(gd.exilesInsteadOfGraveyard(target.getId())).isTrue();
         // The other creature was sacrificed to pay the cost.
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
@@ -142,7 +142,7 @@ class NitaForumConciliatorTest extends BaseCardTest {
 
         assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(target.getId());
         assertThat(gd.exilePlayAnyManaTypeCardIds()).doesNotContain(target.getId());
-        assertThat(gd.exileInsteadOfGraveyard).doesNotContain(target.getId());
+        assertThat(gd.exilesInsteadOfGraveyard(target.getId())).isFalse();
     }
 
 

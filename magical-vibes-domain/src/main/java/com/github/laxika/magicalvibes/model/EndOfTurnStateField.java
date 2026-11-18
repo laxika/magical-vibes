@@ -9,9 +9,7 @@ package com.github.laxika.magicalvibes.model;
  *
  * <p>An effect a resolution makes is not kept here: it is a floating effect with a {@code Duration}, and the
  * duration clock ends it (Runed Terror's per-player cleanup included). What is left of the game-wide stores:
- * the "exile it instead" riders that travel with a card onto the stack and the outside-the-game play permissions
- * (Wish; a {@link Kind#LIST} of the grants {@link OutsideGamePlayPermissionSet#grants()} returns, so a spent group is
- * not restored); the "this turn" delayed-trigger watchers and "until end of turn" global triggered abilities
+ * the "this turn" delayed-trigger watchers and "until end of turn" global triggered abilities
  * ({@link Kind#LIST}s of their records, so one used in between is not restored); Stolen Uniform's "when you lose
  * control of that Equipment this turn" triggers, a {@link Kind#LIST} of {@code (equipment, trigger)} entries that
  * the cleanup step drops only after control is recomputed, so they can still fire as the control effect ends; and
@@ -58,9 +56,6 @@ public enum EndOfTurnStateField {
     CANT_REGENERATE_THIS_TURN(Kind.FLAG),
     DAMAGE_CANT_BE_PREVENTED_OR_REDIRECTED(Kind.FLAG),
     DAMAGED_CREATURES_CANT_REGENERATE(Kind.FLAG),
-    EXILE_DAMAGED_CREATURES_INSTEAD_OF_DYING(Kind.FLAG),
-    EXILE_INSTEAD_OF_DIE(Kind.FLAG),
-    EXILE_INSTEAD_OF_DIE_SOURCE_PERMANENT_ID(Kind.VALUE),
     TEMPORARY_ABILITIES(Kind.LIST),
     SADDLED(Kind.FLAG),
     ANIMATED_UNTIL_END_OF_TURN(Kind.FLAG),
@@ -85,7 +80,6 @@ public enum EndOfTurnStateField {
     PROTECTION_REMOVED(Kind.FLAG),
     BLOCK_RESTRICTIONS(Kind.LIST),
     UNBLOCKABLE_IF_DEFENDER_CONTROLS(Kind.LIST),
-    EXILE_IF_LEAVES_BATTLEFIELD(Kind.FLAG),
     SHROUD_IGNORED_BY_PLAYERS(Kind.SET),
     CANT_BLOCK_IDS(Kind.SET),
     MUST_BLOCK_IDS(Kind.SET),
@@ -114,9 +108,6 @@ public enum EndOfTurnStateField {
     TIMES_REGENERATED(Kind.ADDITIVE),
     TAPPED_PERMANENTS_FOR_ABILITY(Kind.LIST),
     CREATURES_THAT_CREWED(Kind.SET),
-    GAME_EXILE_INSTEAD_OF_GRAVEYARD(Kind.SET),
-    GAME_OUTSIDE_GAME_PLAY_PERMISSIONS(Kind.LIST),
-    GAME_OUTSIDE_GAME_ADDITIONAL_MODAL_MODE_PERMISSIONS(Kind.SET),
     GAME_OPPONENT_GRAVEYARD_LIFE_LOSS_WATCHERS(Kind.LIST),
     GAME_LIFE_GAIN_OPPONENT_LIFE_LOSS_WATCHERS(Kind.LIST),
     GAME_ALLY_CREATURE_ENTERS_TRIGGER_WATCHERS(Kind.LIST),

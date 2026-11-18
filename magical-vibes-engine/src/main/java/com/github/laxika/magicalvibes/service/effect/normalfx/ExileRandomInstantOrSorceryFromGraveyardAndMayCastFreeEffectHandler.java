@@ -51,7 +51,7 @@ public class ExileRandomInstantOrSorceryFromGraveyardAndMayCastFreeEffectHandler
         Card exiled = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, exiled.getId());
         exileService.exileCard(gameData, controllerId, exiled);
-        gameData.exileInsteadOfGraveyard.add(exiled.getId());
+        gameData.exileInsteadOfGraveyard(entry, exiled.getId());
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
                 controllerId,

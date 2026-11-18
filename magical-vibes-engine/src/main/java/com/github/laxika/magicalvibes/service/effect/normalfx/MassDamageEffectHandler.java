@@ -98,7 +98,7 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
             damageSupport.damageAllCreaturesOnBattlefield(gameData, entry, damage, creatureFilter,
                     e.exileInsteadOfDie(), e.cantRegenerate(), e.tapDamagedCreatures());
             if (e.exileInsteadOfDie() && e.damagesPlaneswalkers()) {
-                markDamagedPlaneswalkersForExile(gameData, damageBefore);
+                markDamagedPlaneswalkersForExile(gameData, entry, damageBefore);
             }
 
             if (e.damagesPlayers()) {
@@ -113,13 +113,14 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
     }
 
     /** Marks each planeswalker this effect dealt damage to so it is exiled instead of dying this turn. */
-    private void markDamagedPlaneswalkersForExile(GameData gameData, Map<UUID, Integer> damageBefore) {
+    private void markDamagedPlaneswalkersForExile(GameData gameData, StackEntry entry,
+                                                  Map<UUID, Integer> damageBefore) {
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : battlefield) {
                 if (permanent.getCard().hasType(CardType.PLANESWALKER)
                         && gameData.damageDealtToPermanentsThisTurn.getOrDefault(permanent.getId(), 0)
                         > damageBefore.getOrDefault(permanent.getId(), 0)) {
-                    permanent.setExileInsteadOfDieThisTurn(true);
+                    gameData.exileInsteadOfDying(entry, permanent.getId());
                 }
             }
         }

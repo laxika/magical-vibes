@@ -44,7 +44,7 @@ public class ReboundCastFromExileEffectHandler implements NormalEffectHandlerBea
             return;
         }
         if (((ReboundCastFromExileEffect) effect).exileInsteadOfGraveyard()) {
-            gameData.exileInsteadOfGraveyard.add(entry.getCard().getId());
+            gameData.exileInsteadOfGraveyard(entry, entry.getCard().getId());
         }
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),

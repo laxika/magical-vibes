@@ -12446,7 +12446,7 @@ public class SpellCastingService {
         // (cards exiled by AllowCastFromCardsExiledWithSourceEffect may belong to other players)
         ExiledCardEntry exiledEntry = gameData.findExiledCard(exileCardId);
         boolean fromOutsideGame = exiledEntry == null
-                && (gameData.outsideGamePlayPermissions.contains(exileCardId)
+                && (gameData.mayPlayFromOutsideGame(exileCardId)
                 || com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId).stream()
                         .anyMatch(sideboardCard -> sideboardCard.getId().equals(exileCardId)));
         if (exiledEntry == null && !fromOutsideGame) {
@@ -12460,7 +12460,7 @@ public class SpellCastingService {
                     .filter(sideboardCard -> sideboardCard.getId().equals(exileCardId))
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("Card not found outside the game"));
-            if (!gameData.outsideGamePlayPermissions.contains(exileCardId)) {
+            if (!gameData.mayPlayFromOutsideGame(exileCardId)) {
                 throw new IllegalStateException("No permission to play this card from outside the game");
             }
         } else {
@@ -12752,7 +12752,7 @@ public class SpellCastingService {
                 && card.getParsedManaCost().hasX() && effectiveXValue != 0) {
             throw new IllegalStateException("X must be zero when paying life instead of the mana cost");
         }
-        boolean exileInsteadOfGraveyard = gameData.exileInsteadOfGraveyard.contains(exileCardId);
+        boolean exileInsteadOfGraveyard = gameData.exilesInsteadOfGraveyard(exileCardId);
         boolean putOnBottomOfOwnersLibrary =
                 castingPermissionService.putsExileCastOnBottomOfOwnersLibrary(
                         gameData, playerId, exileCardId);
@@ -12964,7 +12964,7 @@ public class SpellCastingService {
             effectsToResolve = new ArrayList<>(card.getCastingCostsAndSpellEffects());
             additionalSpellCostService.extractAndRemove(effectsToResolve);
             if (fromOutsideGame
-                    && gameData.outsideGameAdditionalModalModePermissions.contains(exileCardId)) {
+                    && gameData.mayChooseAdditionalModeFromOutsideGame(exileCardId)) {
                 expandOutsideGameModalModeSelection(effectsToResolve);
             }
             effectiveXValue = unwrapChooseOneEffect(gameData, playerId, card, effectsToResolve, effectiveXValue);
@@ -13298,8 +13298,7 @@ public class SpellCastingService {
             if (!removed) {
                 throw new IllegalStateException("Outside-game play permission is no longer available");
             }
-            gameData.outsideGamePlayPermissions.remove(exileCardId);
-            gameData.outsideGameAdditionalModalModePermissions.remove(exileCardId);
+            gameData.spendPlayFromOutsideGame(exileCardId);
             return;
         }
         if (directExilePlayPermission && !copy

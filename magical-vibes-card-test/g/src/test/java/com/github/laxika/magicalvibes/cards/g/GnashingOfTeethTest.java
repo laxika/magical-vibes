@@ -30,7 +30,7 @@ class GnashingOfTeethTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(3);
         assertThat(target.getEffectiveToughness()).isEqualTo(3);
-        assertThat(target.isExileInsteadOfDieThisTurn()).isTrue();
+        assertThat(gd.exilesInsteadOfDying(target.getId())).isTrue();
     }
 
     @Test
@@ -92,7 +92,7 @@ class GnashingOfTeethTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(8);
         assertThat(target.getEffectiveToughness()).isEqualTo(8);
-        assertThat(target.isExileInsteadOfDieThisTurn()).isFalse();
+        assertThat(gd.exilesInsteadOfDying(target.getId())).isFalse();
     }
 
     @Test

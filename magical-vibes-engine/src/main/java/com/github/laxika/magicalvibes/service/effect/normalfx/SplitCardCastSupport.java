@@ -195,7 +195,7 @@ public class SplitCardCastSupport {
                         gameData, controllerId, cardId));
         SplitCardCast cast = new SplitCardCast(controllerId, card, Zone.EXILE, 0,
                 exiledEntry == null ? controllerId : exiledEntry.ownerId(),
-                gameData.exileInsteadOfGraveyard.contains(cardId), maxManaValue,
+                gameData.exilesInsteadOfGraveyard(cardId), maxManaValue,
                 afterSuccessfulCastEffect, sourcePermanentId, payManaCost,
                 castingPermissionService.hasAnyManaTypePermission(gameData, controllerId, cardId),
                 0, false, null, exileCast, null);
@@ -732,8 +732,7 @@ public class SplitCardCastSupport {
             returnToSourceZone(gameData, cast);
             permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
         } else if (cast.sourceZone() == Zone.OUTSIDE_GAME) {
-            gameData.outsideGamePlayPermissions.remove(cardId);
-            gameData.outsideGameAdditionalModalModePermissions.remove(cardId);
+            gameData.spendPlayFromOutsideGame(cardId);
         } else if (cast.sourceZone() == Zone.EXILE) {
             clearExileCastCostChanges(gameData, cardId);
             if (gameData.removeFromExile(cardId) && (cast.exileCast() == null || !cast.exileCast().copy())) {

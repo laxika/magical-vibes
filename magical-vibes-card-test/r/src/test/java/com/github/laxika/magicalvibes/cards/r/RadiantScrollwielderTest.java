@@ -52,7 +52,7 @@ class RadiantScrollwielderTest extends BaseCardTest {
         assertThat(gd.findExiledCard(shock.getId())).isNotNull();
         assertThat(gd.exilePlayPermissionHolder(shock.getId())).isEqualTo(player1.getId());
         assertThat(gd.exilePlayCardsWithDuration(Duration.UNTIL_END_OF_TURN)).contains(shock.getId());
-        assertThat(gd.exileInsteadOfGraveyard).contains(shock.getId());
+        assertThat(gd.exilesInsteadOfGraveyard(shock.getId())).isTrue();
     }
 
     @Test

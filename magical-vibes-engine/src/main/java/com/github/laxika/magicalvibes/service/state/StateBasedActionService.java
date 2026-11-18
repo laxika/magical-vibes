@@ -314,7 +314,7 @@ public class StateBasedActionService {
             gameData.exiledCardsWithCageCounters.remove(cardId);
             gameData.endFloatingEffectsOnCard(cardId);
             gameData.stashCounterCardIds.remove(cardId);
-            gameData.exileInsteadOfGraveyard.remove(cardId);
+            gameData.endExileInsteadOfGraveyard(cardId);
             gameData.foretoldCardIds.remove(cardId);
             gameData.endFloatingEffectsOnCard(cardId);
         }

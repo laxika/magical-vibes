@@ -193,34 +193,34 @@ public class UntapStepService {
         }
         dayNightService.checkAtUntap(gameData, activePlayerId);
 
-        var untapRestrictions = gameData.matchingPermanentUntapRestrictions.remove(activePlayerId);
         Set<UUID> restrictedPermanentIds = new java.util.HashSet<>();
-        if (untapRestrictions != null) {
-            for (var restriction : untapRestrictions) {
-                if (restriction.allPlayersAtUntap()) {
-                    gameData.forEachPermanent((playerId, permanent) -> {
-                        if (restriction.filter() == null
-                                || predicateEvaluationService.matchesPermanentPredicate(
-                                gameData, permanent, restriction.filter())) {
-                            restrictedPermanentIds.add(permanent.getId());
-                        }
-                    });
-                } else {
-                    for (Permanent permanent : gameData.playerBattlefields.getOrDefault(activePlayerId, List.of())) {
-                        if (restriction.filter() == null
-                                || predicateEvaluationService.matchesPermanentPredicate(
-                                gameData, permanent, restriction.filter())) {
-                            restrictedPermanentIds.add(permanent.getId());
-                        }
+        for (var restrictionEffect : gameData.nextUntapStepRestrictions(activePlayerId)) {
+            var restriction = (SkipNextUntapEffect) restrictionEffect.effect();
+            if (restriction.allPlayersAtUntap()) {
+                gameData.forEachPermanent((playerId, permanent) -> {
+                    if (restriction.filter() == null
+                            || predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, permanent, restriction.filter())) {
+                        restrictedPermanentIds.add(permanent.getId());
+                    }
+                });
+            } else {
+                for (Permanent permanent : gameData.playerBattlefields.getOrDefault(activePlayerId, List.of())) {
+                    if (restriction.filter() == null
+                            || predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, permanent, restriction.filter())) {
+                        restrictedPermanentIds.add(permanent.getId());
                     }
                 }
-                if (restriction.untapSteps() > 1) {
-                    gameData.matchingPermanentUntapRestrictions.computeIfAbsent(
-                            activePlayerId, id -> new ArrayList<>()).add(
-                            new SkipNextUntapEffect(
-                                    restriction.scope(), restriction.filter(), restriction.untapSteps() - 1,
-                                    true, restriction.allPlayersAtUntap()));
-                }
+            }
+            if (restriction.untapSteps() > 1) {
+                gameData.replaceFloatingEffect(restrictionEffect, restrictionEffect.withEffect(
+                        new SkipNextUntapEffect(restriction.scope(), restriction.filter(),
+                                restriction.untapSteps() - 1, restriction.matchAtUntap(),
+                                restriction.allPlayersAtUntap(), restriction.controllerStepOnly(),
+                                restriction.activationCost())));
+            } else {
+                gameData.endFloatingEffect(restrictionEffect);
             }
         }
 

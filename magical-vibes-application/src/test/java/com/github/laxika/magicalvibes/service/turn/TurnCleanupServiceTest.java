@@ -61,11 +61,12 @@ class TurnCleanupServiceTest {
     void cleanupPreservesUpcomingUntapRestrictions() {
         var untapping = new com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect(
                 com.github.laxika.magicalvibes.model.effect.TapUntapScope.TARGET_PLAYERS_PERMANENTS, null, 1, true);
-        gd.matchingPermanentUntapRestrictions.put(player1Id, new ArrayList<>(List.of(untapping)));
+        gd.addFloatingEffect(com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect.onPlayer("Test", null,
+                player1Id, untapping, player1Id, com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT));
 
         sut.resetEndOfTurnModifiers(gd);
 
-        assertThat(gd.matchingPermanentUntapRestrictions.get(player1Id)).containsExactly(untapping);
+        assertThat(gd.nextUntapStepRestrictions(player1Id)).extracting(fe -> fe.effect()).containsExactly(untapping);
     }
 
     @Mock
@@ -325,19 +326,6 @@ class TurnCleanupServiceTest {
             sut.resetEndOfTurnModifiers(gd);
 
             assertThat(perm.isCantRegenerateThisTurn()).isFalse();
-        }
-
-        @Test
-        @DisplayName("Clears exileInsteadOfDieThisTurn flag on permanents")
-        void clearsExileInsteadOfDieThisTurn() {
-            Card card = createCardWithName("Grizzly Bears");
-            Permanent perm = new Permanent(card);
-            perm.setExileInsteadOfDieThisTurn(true);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.isExileInsteadOfDieThisTurn()).isFalse();
         }
 
         @Test

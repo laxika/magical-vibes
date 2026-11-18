@@ -52,7 +52,7 @@ class UnnaturalAggressionTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(ownCreature.getId(), opposingCreature.getId()));
 
         assertThat(opposingCreature.getMarkedDamage()).isEqualTo(2);
-        assertThat(opposingCreature.isExileInsteadOfDieThisTurn()).isTrue();
+        assertThat(gd.exilesInsteadOfDying(opposingCreature.getId())).isTrue();
 
         harness.castAndResolveInstant(player1, 0, opposingCreature.getId());
 

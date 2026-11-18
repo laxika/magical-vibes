@@ -56,7 +56,7 @@ class YourWishIsMyCommandTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerSideboards.get(player1.getId())).isEmpty();
-        assertThat(gd.outsideGamePlayPermissions).doesNotContain(instant.getId());
+        assertThat(gd.mayPlayFromOutsideGame(instant.getId())).isFalse();
         assertThat(gd.stack.getLast().getCard()).isSameAs(instant);
         assertThat(gd.stack.getLast().getSourceZone()).isEqualTo(Zone.OUTSIDE_GAME);
     }
@@ -70,7 +70,7 @@ class YourWishIsMyCommandTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(instant);
-        assertThat(gd.outsideGamePlayPermissions).doesNotContain(instant.getId());
+        assertThat(gd.mayPlayFromOutsideGame(instant.getId())).isFalse();
     }
 
     @Test
@@ -83,7 +83,7 @@ class YourWishIsMyCommandTest extends BaseCardTest {
 
         assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(instant);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.outsideGamePlayPermissions).doesNotContain(instant.getId());
+        assertThat(gd.mayPlayFromOutsideGame(instant.getId())).isFalse();
     }
 
     @Test
@@ -146,7 +146,7 @@ class YourWishIsMyCommandTest extends BaseCardTest {
 
         assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(spell);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.outsideGamePlayPermissions).doesNotContain(spell.getId());
+        assertThat(gd.mayPlayFromOutsideGame(spell.getId())).isFalse();
     }
 
     @Test
@@ -226,7 +226,7 @@ class YourWishIsMyCommandTest extends BaseCardTest {
 
         assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(spell);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.outsideGamePlayPermissions).doesNotContain(spell.getId());
+        assertThat(gd.mayPlayFromOutsideGame(spell.getId())).isFalse();
     }
 
     private void castWish() {

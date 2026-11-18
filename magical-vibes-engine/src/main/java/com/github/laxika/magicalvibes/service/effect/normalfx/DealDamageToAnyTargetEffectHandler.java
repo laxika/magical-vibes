@@ -58,7 +58,7 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
             if (target != null && gameQueryService.isCreature(gameData, target)) {
                 target.setCantRegenerateThisTurn(true);
                 if (e.exileInsteadOfDie()) {
-                    target.setExileInsteadOfDieThisTurn(true);
+                    gameData.exileInsteadOfDying(entry, target.getId());
                 }
             }
         }

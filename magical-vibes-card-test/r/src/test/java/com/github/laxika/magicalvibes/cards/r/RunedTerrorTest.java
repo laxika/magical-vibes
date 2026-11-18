@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.OutsideGamePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipChosenStepOrPhaseEffect;
 import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.model.effect.MultiplyControllerDamageToOpponentsThisTurnEffect;
@@ -1346,11 +1347,11 @@ class RunedTerrorTest extends BaseCardTest {
         harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(vohar), 1, null,
                 fog.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
-        assertThat(gd.exileInsteadOfGraveyard).containsExactly(fog.getId());
+        assertThat(gd.exilesInsteadOfGraveyard(fog.getId())).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
         assertThat(graveyardPlayPermissionsByCard()).containsEntry(fog.getId(), player2.getId());
-        assertThat(gd.exileInsteadOfGraveyard).containsExactly(fog.getId());
+        assertThat(gd.exilesInsteadOfGraveyard(fog.getId())).isTrue();
 
         harness.passUntil(player2, TurnStep.END_STEP);
         harness.addMana(player2, ManaColor.GREEN, 1);
@@ -1358,7 +1359,7 @@ class RunedTerrorTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(fog);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(fog);
-        assertThat(gd.exileInsteadOfGraveyard).isEmpty();
+        assertThat(gd.exilesInsteadOfGraveyard(fog.getId())).isFalse();
     }
 
     @Test
@@ -1373,11 +1374,11 @@ class RunedTerrorTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(vohar), 1, null,
                 fog.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
-        assertThat(gd.exileInsteadOfGraveyard).containsExactly(fog.getId());
+        assertThat(gd.exilesInsteadOfGraveyard(fog.getId())).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
         assertThat(graveyardPlayPermissionsByCard()).doesNotContainKey(fog.getId());
-        assertThat(gd.exileInsteadOfGraveyard).isEmpty();
+        assertThat(gd.exilesInsteadOfGraveyard(fog.getId())).isFalse();
     }
 
     @Test
@@ -1396,15 +1397,16 @@ class RunedTerrorTest extends BaseCardTest {
         gd.playerSideboards.put(player2.getId(), new ArrayList<>(List.of(bears, forest)));
         harness.castFromHand(player2, new Wish(), "{2}{R}");
         harness.passBothPriorities();
-        assertThat(gd.outsideGamePlayPermissions)
-                .containsExactlyInAnyOrder(firstSideboardCard.getId(), bears.getId(), forest.getId());
+        assertThat(List.of(firstSideboardCard, bears, forest))
+                .allMatch(card -> gd.mayPlayFromOutsideGame(card.getId()));
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.outsideGamePlayPermissions).containsExactlyInAnyOrder(bears.getId(), forest.getId());
-        assertThat(gd.outsideGamePlayPermissions.grants()).containsExactly(Set.of(bears.getId(), forest.getId()));
+        assertThat(gd.mayPlayFromOutsideGame(firstSideboardCard.getId())).isFalse();
+        assertThat(gd.floatingPlayerEffects(player2.getId(), OutsideGamePlayPermissionEffect.class))
+                .containsExactly(new OutsideGamePlayPermissionEffect(Set.of(bears.getId(), forest.getId()), true, false));
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.outsideGamePlayPermissions).isEmpty();
+        assertThat(List.of(bears, forest)).noneMatch(card -> gd.mayPlayFromOutsideGame(card.getId()));
     }
 
     @Test

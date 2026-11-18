@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -117,7 +118,7 @@ class ElfhameSanctuaryTest extends BaseCardTest {
         int deckBeforeDraw = gd.playerDecks.get(player1.getId()).size();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.skipDrawStepThisTurn).doesNotContainKey(player1.getId());
+        assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isZero();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBeforeDraw + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBeforeDraw - 1);
@@ -142,7 +143,8 @@ class ElfhameSanctuaryTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBeforeDraw);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBeforeDraw);
-        assertThat(gd.skipDrawStepThisTurn).doesNotContainKey(player1.getId());
+        // The second Sanctuary's skip lasts only this turn: it ends unused at cleanup.
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         assertThat(gd.skipNextCount(player1.getId(), SkipKind.DRAW_STEP)).isZero();
     }
 

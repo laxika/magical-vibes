@@ -67,7 +67,7 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
                 ? new HashMap<>(gameData.damageDealtToPermanentsThisTurn) : Map.of();
         if (effectTargets != null && !effectTargets.isEmpty()
                 && (effectTargets.size() > 1 || entry.getTargetId() == null)) {
-            markTargetsForExile(gameData, e, effectTargets);
+            markTargetsForExile(gameData, entry, e, effectTargets);
             for (UUID targetId : effectTargets) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) continue;
@@ -75,14 +75,14 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
                     damageSupport.dealCreatureDamage(gameData, entry, target, damage);
                 }
             }
-            markDamagedPermanentsForExile(gameData, e, damageBefore);
+            markDamagedPermanentsForExile(gameData, entry, e, damageBefore);
             return;
         }
 
-        markTargetsForExile(gameData, e,
+        markTargetsForExile(gameData, entry, e,
                 singleTarget == null ? List.of() : List.of(singleTarget.getId()));
         int damageDealt = damageSupport.resolveCreatureTargetDamage(gameData, entry, damage);
-        markDamagedPermanentsForExile(gameData, e, damageBefore);
+        markDamagedPermanentsForExile(gameData, entry, e, damageBefore);
         if (tracksExcess) {
             entry.setEventValue(singleTarget == null
                     ? 0
@@ -103,13 +103,13 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
      * The mark does not depend on damage being dealt: a target whose damage was prevented or was zero is marked too,
      * since the effect says "if that creature would die this turn", which applies to any later death this turn.
      */
-    private void markTargetsForExile(GameData gameData,
+    private void markTargetsForExile(GameData gameData, StackEntry entry,
             DealDamageToTargetCreatureOrPlaneswalkerEffect effect, List<UUID> targetIds) {
         if (!effect.exileInsteadOfDie() || effect.exileOnlyIfDealtDamage()) return;
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target != null) {
-                target.setExileInsteadOfDieThisTurn(true);
+                gameData.exileInsteadOfDying(entry, target.getId());
             }
         }
     }
@@ -118,14 +118,14 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
      * Marks each permanent this effect actually dealt damage to so it is exiled instead of dying this turn
      * ("a permanent dealt damage this way"); a target whose damage was prevented or was zero is not marked.
      */
-    private void markDamagedPermanentsForExile(GameData gameData,
+    private void markDamagedPermanentsForExile(GameData gameData, StackEntry entry,
             DealDamageToTargetCreatureOrPlaneswalkerEffect effect, Map<UUID, Integer> damageBefore) {
         if (!effect.exileInsteadOfDie() || !effect.exileOnlyIfDealtDamage()) return;
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : battlefield) {
                 if (gameData.damageDealtToPermanentsThisTurn.getOrDefault(permanent.getId(), 0)
                         > damageBefore.getOrDefault(permanent.getId(), 0)) {
-                    permanent.setExileInsteadOfDieThisTurn(true);
+                    gameData.exileInsteadOfDying(entry, permanent.getId());
                 }
             }
         }

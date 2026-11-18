@@ -75,7 +75,7 @@ public class SearchOutsideGameOrExileCardChoiceInteractionHandler
             boolean fromSideboard = sideboard != null && sideboard.removeIf(
                     card -> card.getId().equals(chosenCard.getId()));
             if (fromSideboard) {
-                gameData.outsideGamePlayPermissions.remove(chosenCard.getId());
+                gameData.spendPlayFromOutsideGame(chosenCard.getId());
             }
             if (!fromSideboard && !gameData.removeFromExile(chosenCard.getId())) {
                 throw new IllegalStateException("Chosen card is no longer available");

@@ -441,10 +441,12 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
-        @DisplayName("Permanent with exileInsteadOfDieThisTurn is exiled instead of going to graveyard")
+        @DisplayName("A permanent under an exile-instead-of-dying effect is exiled instead of going to graveyard")
         void exileReplacementExileInsteadOfDie() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            bears.setExileInsteadOfDieThisTurn(true);
+            gd.addFloatingEffect(com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect.onPermanent("Test",
+                    null, player1Id, new com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect(),
+                    bears.getId(), com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));
 
             boolean result = prs.removePermanentToGraveyard(gd, bears);
 
@@ -695,10 +697,12 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
-        @DisplayName("exileInsteadOfDieThisTurn does NOT redirect bounce to exile")
+        @DisplayName("An exile-instead-of-dying effect does NOT redirect bounce to exile")
         void exileInsteadOfDieDoesNotAffectBounce() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            bears.setExileInsteadOfDieThisTurn(true);
+            gd.addFloatingEffect(com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect.onPermanent("Test",
+                    null, player1Id, new com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect(),
+                    bears.getId(), com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));
 
             prs.removePermanentToHand(gd, bears);
 

@@ -32,8 +32,8 @@ class FrontierExplorerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.outsideGamePlayPermissions).contains(plains.getId());
-        assertThat(gd.outsideGamePlayPermissions).doesNotContain(forest.getId());
+        assertThat(gd.mayPlayFromOutsideGame(plains.getId())).isTrue();
+        assertThat(gd.mayPlayFromOutsideGame(forest.getId())).isFalse();
 
         prepareMainPhase();
         harness.castFromExile(player1, plains.getId());
@@ -56,13 +56,13 @@ class FrontierExplorerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(gd.outsideGamePlayPermissions).contains(plains.getId());
+        assertThat(gd.mayPlayFromOutsideGame(plains.getId())).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.outsideGamePlayPermissions).doesNotContain(plains.getId());
+        assertThat(gd.mayPlayFromOutsideGame(plains.getId())).isFalse();
     }
 
     @Test

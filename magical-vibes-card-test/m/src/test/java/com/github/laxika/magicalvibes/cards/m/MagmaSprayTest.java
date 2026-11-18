@@ -50,7 +50,7 @@ class MagmaSprayTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         assertThat(avatar.getMarkedDamage()).isEqualTo(2);
-        assertThat(avatar.isExileInsteadOfDieThisTurn()).isTrue();
+        assertThat(gd.exilesInsteadOfDying(avatar.getId())).isTrue();
     }
 
     @Test

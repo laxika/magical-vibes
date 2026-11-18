@@ -53,10 +53,10 @@ public class ExchangeOutsideGameHandChoiceInteractionHandler
         if (!outside.removeIf(card -> card.getId().equals(interaction.outsideCard().getId()))) {
             throw new IllegalStateException("Chosen card is no longer available outside the game");
         }
-        gameData.outsideGamePlayPermissions.remove(interaction.outsideCard().getId());
+        gameData.spendPlayFromOutsideGame(interaction.outsideCard().getId());
         Card handCard = hand.remove(cardIndex);
         gameData.playerSideboards.computeIfAbsent(playerId, ignored -> new ArrayList<>()).add(handCard);
-        gameData.outsideGamePlayPermissions.remove(handCard.getId());
+        gameData.spendPlayFromOutsideGame(handCard.getId());
         gameData.addCardToHand(playerId, interaction.outsideCard());
         gameData.interaction.clearAwaitingInput();
 

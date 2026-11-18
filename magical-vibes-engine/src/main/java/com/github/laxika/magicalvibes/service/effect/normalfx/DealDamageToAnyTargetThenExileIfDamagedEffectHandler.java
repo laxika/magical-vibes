@@ -58,7 +58,7 @@ public class DealDamageToAnyTargetThenExileIfDamagedEffectHandler implements Nor
             }
             Permanent damaged = gameQueryService.findPermanentById(gameData, dealtDamage.getKey());
             if (damaged != null) {
-                damaged.setExileInsteadOfDieThisTurn(true);
+                gameData.exileInsteadOfDying(entry, damaged.getId());
             }
         }
 

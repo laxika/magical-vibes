@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -32,7 +34,9 @@ public class ExileCreaturesDamagedBySourceInsteadOfDyingEffectHandler implements
             return;
         }
 
-        source.setExileDamagedCreaturesInsteadOfDyingThisTurn(true);
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), effect, source.getId(),
+                Duration.UNTIL_END_OF_TURN));
         if (entry.getTargetId() != null) {
             gameData.exileDamagedCreaturesSourceIdsThisTurn.add(source.getId());
         }

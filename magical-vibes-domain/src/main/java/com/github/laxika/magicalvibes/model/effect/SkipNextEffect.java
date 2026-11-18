@@ -11,6 +11,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param kind      what is skipped
  * @param recipient whose occurrence is skipped
  * @param allCombatPhasesOfNextTurn whether to skip every combat of the affected player's next turn
+ * @param thisTurnOnly whether the skip lasts only this turn ("skip your draw step this turn", "skip your next combat
+ *                     phase this turn"); it applies before a skip that waits, and ends unused at cleanup
  */
 public record SkipNextEffect(SkipKind kind, SkipRecipient recipient, boolean allCombatPhasesOfNextTurn,
                              boolean thisTurnOnly)
@@ -25,8 +27,8 @@ public record SkipNextEffect(SkipKind kind, SkipRecipient recipient, boolean all
     }
 
     public SkipNextEffect {
-        if (thisTurnOnly && (kind != SkipKind.COMBAT_PHASE || allCombatPhasesOfNextTurn)) {
-            throw new IllegalArgumentException("This-turn duration requires a single combat phase");
+        if (thisTurnOnly && (kind == SkipKind.TURN || kind == SkipKind.UNTAP_STEP || allCombatPhasesOfNextTurn)) {
+            throw new IllegalArgumentException("This-turn duration requires a single draw step or combat phase");
         }
         if (allCombatPhasesOfNextTurn && kind != SkipKind.COMBAT_PHASE) {
             throw new IllegalArgumentException("All-combat duration requires combat phases");

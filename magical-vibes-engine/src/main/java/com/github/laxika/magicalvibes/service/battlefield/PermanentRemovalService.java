@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.DyingCreatureReturnToHandRepl
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedByControlledSourceInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedBySourceInsteadOfDyingEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantExileIfLeavesBattlefieldUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesInsteadOfDyingWithLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNontokenCreaturesInsteadOfDyingWithBloodCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnCreaturesOfSubtypeInsteadOfDyingEffect;
@@ -633,8 +634,7 @@ public class PermanentRemovalService {
         List<DeathExileReplacement> riders = new ArrayList<>();
 
         if (exileReplacementApplies(gameData, target, true)) {
-            UUID trackingSourceId = target.isExileInsteadOfDieThisTurn()
-                    ? target.getExileInsteadOfDieSourcePermanentId() : null;
+            UUID trackingSourceId = gameData.exileInsteadOfDyingLinkedSource(target.getId());
             if (trackingSourceId == null) {
                 plain = true;
             } else {
@@ -2136,8 +2136,8 @@ public class PermanentRemovalService {
         if (!exileReplacementApplies(gameData, target, checkExileInsteadOfDie)) {
             return false;
         }
-        UUID sourcePermanentId = checkExileInsteadOfDie && target.isExileInsteadOfDieThisTurn()
-                ? target.getExileInsteadOfDieSourcePermanentId() : null;
+        UUID sourcePermanentId = checkExileInsteadOfDie
+                ? gameData.exileInsteadOfDyingLinkedSource(target.getId()) : null;
         boolean exiled = removePermanentToExile(gameData, target, sourcePermanentId, false);
         if (exiled) {
             gameLogService.append(gameData,
@@ -2165,13 +2165,14 @@ public class PermanentRemovalService {
                 && target.getOriginalCard() != null
                 && gameData.perpetualExileInsteadOfDyingCardIds.contains(target.getOriginalCard().getId());
         return (target.isExileIfLeavesBattlefield() && !gameQueryService.hasLostAllAbilities(gameData, target))
-                || (target.isExileIfLeavesBattlefieldUntilEndOfTurn()
-                        && gameQueryService.grantedAbilitySurvivesRemoval(
-                                gameData, target, target.getExileIfLeavesBattlefieldUntilEndOfTurnTimestamp()))
+                || gameData.floatingEffectsOnPermanent(target.getId(),
+                                GrantExileIfLeavesBattlefieldUntilEndOfTurnEffect.class).stream()
+                        .anyMatch(grant -> gameQueryService.grantedAbilitySurvivesRemoval(
+                                gameData, target, grant.timestamp()))
                 || (checkExileInsteadOfDie && target.isExileIfDying()
                         && gameQueryService.grantedAbilitySurvivesRemoval(
                                 gameData, target, target.getExileIfDyingTimestamp()))
-                || (checkExileInsteadOfDie && target.isExileInsteadOfDieThisTurn())
+                || (checkExileInsteadOfDie && gameData.exilesInsteadOfDying(target.getId()))
                 || (checkExileInsteadOfDie && target.getCounterCount(CounterType.FINALITY) > 0)
                 || permanentGraveyardReplacement
                 || perpetualGraveyardReplacement;
@@ -2869,7 +2870,8 @@ public class PermanentRemovalService {
     }
 
     private boolean hasExileDamagedCreaturesInsteadOfDying(GameData gameData, Permanent permanent) {
-        return permanent.isExileDamagedCreaturesInsteadOfDyingThisTurn()
+        return gameData.hasFloatingEffectOnPermanent(permanent.getId(),
+                ExileCreaturesDamagedBySourceInsteadOfDyingEffect.class)
                 || (LayerSystemService.currentCard(gameData, permanent).getStaticEffects().stream()
                         .anyMatch(ExileCreaturesDamagedBySourceInsteadOfDyingEffect.class::isInstance)
                 && !gameQueryService.hasLostAllAbilities(gameData, permanent));

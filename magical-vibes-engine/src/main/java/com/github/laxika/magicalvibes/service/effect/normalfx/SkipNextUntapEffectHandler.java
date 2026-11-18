@@ -132,8 +132,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
     private void resolveControlled(GameData gameData, StackEntry entry, SkipNextUntapEffect e) {
         UUID controllerId = entry.getControllerId();
         if (e.matchAtUntap()) {
-            gameData.matchingPermanentUntapRestrictions.computeIfAbsent(
-                    controllerId, id -> new ArrayList<>()).add(e);
+            gameData.restrictNextUntapStep(entry, controllerId, e);
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return;
@@ -165,8 +164,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (e.matchAtUntap()) {
-            gameData.matchingPermanentUntapRestrictions.computeIfAbsent(
-                    targetPlayerId, id -> new ArrayList<>()).add(e);
+            gameData.restrictNextUntapStep(entry, targetPlayerId, e);
         }
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
@@ -201,8 +199,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
         for (UUID playerId : gameData.playerIds) {
             if (playerId.equals(entry.getControllerId())) continue;
             if (e.matchAtUntap()) {
-                gameData.matchingPermanentUntapRestrictions.computeIfAbsent(
-                        playerId, id -> new ArrayList<>()).add(e);
+                gameData.restrictNextUntapStep(entry, playerId, e);
             }
             for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
                 if (e.filter() != null

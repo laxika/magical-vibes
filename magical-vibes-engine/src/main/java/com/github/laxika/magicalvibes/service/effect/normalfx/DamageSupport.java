@@ -462,7 +462,7 @@ public class DamageSupport {
         if (target != null && gameQueryService.isCreature(gameData, target)) {
             gameData.recordDamageDealtToCreatureBySource(sourceId, targetId);
             if (amount > 0 && entry != null && entry.isExilesCreaturesDamaged()) {
-                target.setExileInsteadOfDieThisTurn(true);
+                gameData.exileInsteadOfDying(entry, target.getId());
             }
         }
     }
@@ -1099,7 +1099,7 @@ public class DamageSupport {
             if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, p, entry.getEffectiveDamageSourceCard(), entry.getControllerId())) continue;
             int damageDealt = dealCreatureDamage(gameData, entry, p, damage.applyAsInt(p));
             if (exileInsteadOfDie && damageDealt > 0 && gameQueryService.isCreature(gameData, p)) {
-                p.setExileInsteadOfDieThisTurn(true);
+                gameData.exileInsteadOfDying(entry, p.getId());
             }
             if (cantRegenerate && damageDealt > 0) {
                 p.setCantRegenerateThisTurn(true);
@@ -1116,7 +1116,7 @@ public class DamageSupport {
                     if (sourceDamage > damageBefore.getOrDefault(permanent.getId(), 0)
                             && gameQueryService.isCreature(gameData, permanent)) {
                         if (exileInsteadOfDie) {
-                            permanent.setExileInsteadOfDieThisTurn(true);
+                            gameData.exileInsteadOfDying(entry, permanent.getId());
                         }
                         if (cantRegenerate) {
                             permanent.setCantRegenerateThisTurn(true);

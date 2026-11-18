@@ -29,8 +29,8 @@ class WishTest extends BaseCardTest {
 
         castWish();
 
-        assertThat(gd.outsideGamePlayPermissions)
-                .containsExactlyInAnyOrder(creature.getId(), land.getId());
+        assertThat(gd.mayPlayFromOutsideGame(creature.getId())).isTrue();
+        assertThat(gd.mayPlayFromOutsideGame(land.getId())).isTrue();
     }
 
     @Test
@@ -46,7 +46,7 @@ class WishTest extends BaseCardTest {
         harness.castFromExile(player1, creature.getId());
 
         assertThat(gd.playerSideboards.get(player1.getId())).isEmpty();
-        assertThat(gd.outsideGamePlayPermissions).doesNotContain(creature.getId());
+        assertThat(gd.mayPlayFromOutsideGame(creature.getId())).isFalse();
         assertThat(gd.stack.getFirst().getSourceZone()).isEqualTo(Zone.OUTSIDE_GAME);
 
         harness.passBothPriorities();
@@ -64,7 +64,7 @@ class WishTest extends BaseCardTest {
         harness.castFromExile(player1, land.getId());
 
         assertThat(gd.playerSideboards.get(player1.getId())).isEmpty();
-        assertThat(gd.outsideGamePlayPermissions).doesNotContain(land.getId());
+        assertThat(gd.mayPlayFromOutsideGame(land.getId())).isFalse();
         assertThat(gd.landsPlayedThisTurn).containsEntry(player1.getId(), 1);
         harness.assertOnBattlefield(player1, "Forest");
     }
@@ -80,7 +80,7 @@ class WishTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.outsideGamePlayPermissions).doesNotContain(creature.getId());
+        assertThat(gd.mayPlayFromOutsideGame(creature.getId())).isFalse();
         harness.forceActivePlayer(player1);
         prepareMainPhase();
         assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))

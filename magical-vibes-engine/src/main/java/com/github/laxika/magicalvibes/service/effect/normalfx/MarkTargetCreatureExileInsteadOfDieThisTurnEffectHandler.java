@@ -26,10 +26,7 @@ public class MarkTargetCreatureExileInsteadOfDieThisTurnEffectHandler implements
         if (target == null || !gameQueryService.isCreature(gameData, target)) {
             return;
         }
-        target.setExileInsteadOfDieThisTurn(true);
-        var mark = (MarkTargetCreatureExileInsteadOfDieThisTurnEffect) effect;
-        if (mark.trackWithSource()) {
-            target.setExileInsteadOfDieSourcePermanentId(entry.getSourcePermanentId());
-        }
+        gameData.exileInsteadOfDying(entry, target.getId(),
+                ((MarkTargetCreatureExileInsteadOfDieThisTurnEffect) effect).trackWithSource());
     }
 }

@@ -44,7 +44,7 @@ class NineRingedBoTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(kami.getMarkedDamage()).isEqualTo(1);
-        assertThat(kami.isExileInsteadOfDieThisTurn()).isTrue();
+        assertThat(gd.exilesInsteadOfDying(kami.getId())).isTrue();
     }
 
     @Test

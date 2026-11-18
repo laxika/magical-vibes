@@ -225,7 +225,7 @@ public class ExileFreeCastSupport {
             chosenEffects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
             spellCastingService.prepareModalSpellCast(gameData, playerId, card, chosenEffects, face - 2);
         }
-        boolean exileInsteadOfGraveyard = gameData.exileInsteadOfGraveyard.contains(exileCardId);
+        boolean exileInsteadOfGraveyard = gameData.exilesInsteadOfGraveyard(exileCardId);
         if (!castingPermissionService.canCastDuringResolution(gameData, playerId)) {
             if (returnToHandIfUnable) returnExiledCardToHand(gameData, exileCardId);
             if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -306,7 +306,8 @@ public class ExileFreeCastSupport {
             gameData.freeCastKickerDecidedIds.remove(exileCardId);
             gameData.removeFromExile(exileCardId);
             if (exileInsteadOfGraveyard) {
-                gameData.exileInsteadOfGraveyard.add(exileCardId);
+                // Leaving exile ended it (CR 400.7); it follows the card onto the stack as the spell it becomes.
+                gameData.exileInsteadOfGraveyard(card.getName(), playerId, exileCardId);
             }
             if (grantHaste && card.hasType(CardType.CREATURE)) {
                 gameData.spellsGrantedHasteOnEntry.add(exileCardId);

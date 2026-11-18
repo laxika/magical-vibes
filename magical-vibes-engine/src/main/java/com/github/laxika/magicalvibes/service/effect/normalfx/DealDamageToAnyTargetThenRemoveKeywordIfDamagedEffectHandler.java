@@ -69,7 +69,7 @@ public class DealDamageToAnyTargetThenRemoveKeywordIfDamagedEffectHandler
                             .getOrDefault(damageSourceId, 0) - damageBefore.getOrDefault(recipient.getId(), 0);
                     if (actualDamage <= 0 || !gameQueryService.isCreature(gameData, recipient)) return;
                     if (damageEffect.exileInsteadOfDie()) {
-                        recipient.setExileInsteadOfDieThisTurn(true);
+                        gameData.exileInsteadOfDying(entry, recipient.getId());
                     }
                     StackEntry recipientEntry = StackEntry.derivedFrom(entry, entry.getCard(),
                             entry.getControllerId(), entry.getDescription(), java.util.List.of(),

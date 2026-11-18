@@ -57,7 +57,7 @@ public class ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffectHandle
         // type; and exile it instead of putting it into a graveyard. All expire during cleanup.
         gameData.grantExilePlayPermission(targetCard.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
         gameData.grantExileAnyManaType(targetCard.getId(), Duration.UNTIL_END_OF_TURN);
-        gameData.exileInsteadOfGraveyard.add(targetCard.getId());
+        gameData.exileInsteadOfGraveyard(entry, targetCard.getId());
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, " from an opponent's graveyard (may cast it this turn)."));

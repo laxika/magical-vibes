@@ -2371,7 +2371,7 @@ public class MayCastHandlerService {
                         pma.effects().stream().anyMatch(pendingEffectType::isInstance));
             }
             sideboard.remove(cardIndex);
-            gameData.outsideGamePlayPermissions.remove(cardToCast.getId());
+            gameData.spendPlayFromOutsideGame(cardToCast.getId());
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.LibraryCastSpellTarget(
                             cardToCast, player.getId(), spellEffects, spellType, null, null,
@@ -2389,7 +2389,7 @@ public class MayCastHandlerService {
                     pma.effects().stream().anyMatch(pendingEffectType::isInstance));
         }
         sideboard.remove(cardIndex);
-        gameData.outsideGamePlayPermissions.remove(cardToCast.getId());
+        gameData.spendPlayFromOutsideGame(cardToCast.getId());
         StackEntry stackEntry = new StackEntry(
                 spellType, cardToCast, player.getId(), cardToCast.getName(),
                 spellEffects, 0, (UUID) null, null);

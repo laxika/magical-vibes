@@ -412,13 +412,6 @@ public class Permanent {
     /** When true, creatures this permanent dealt damage to this turn can't be regenerated this turn
      *  (Bone Shaman's activated ability). Cleared at end of turn. */
     @Setter private boolean damagedCreaturesCantRegenerateThisTurn;
-    /** When true, creatures dealt damage by this permanent this turn are exiled instead of dying.
-     *  Cleared at end of turn. */
-    @Setter private boolean exileDamagedCreaturesInsteadOfDyingThisTurn;
-    /** If true, this creature is exiled instead of dying this turn (e.g. Red Sun's Zenith). Cleared at end of turn. */
-    @Setter private boolean exileInsteadOfDieThisTurn;
-    /** Source permanent to associate with this turn's exile replacement, when applicable. */
-    @Setter private UUID exileInsteadOfDieSourcePermanentId;
     /** If true, this permanent's controller sacrifices it at the beginning of the next cleanup step —
      *  the Mirage flash clause ({@code FlashCastWithCleanupSacrificeEffect}) when the spell was cast
      *  any time a sorcery couldn't have been cast. The cleanup sweep sacrifices it before
@@ -657,10 +650,6 @@ public class Permanent {
     @Setter private long exileIfDyingTimestamp;
     @Setter private Integer lastKnownAuraCount;
     @Setter private Integer lastKnownEquipmentCount;
-    /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield this turn. */
-    @Setter private boolean exileIfLeavesBattlefieldUntilEndOfTurn;
-    /** Timestamp of the grant of {@link #exileIfLeavesBattlefieldUntilEndOfTurn}, used to tell whether a later loss of abilities removed it. */
-    @Setter private long exileIfLeavesBattlefieldUntilEndOfTurnTimestamp;
     @Setter private boolean enteredViaUnearth;
     /** When this permanent entered the battlefield from a graveyard, the ID of the player whose graveyard
      *  it came from; {@code null} otherwise. Read during the entering creature's ETB processing to fire
@@ -1174,9 +1163,6 @@ public class Permanent {
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
         this.damageCantBePreventedOrRedirectedThisTurn = source.damageCantBePreventedOrRedirectedThisTurn;
         this.damagedCreaturesCantRegenerateThisTurn = source.damagedCreaturesCantRegenerateThisTurn;
-        this.exileDamagedCreaturesInsteadOfDyingThisTurn = source.exileDamagedCreaturesInsteadOfDyingThisTurn;
-        this.exileInsteadOfDieThisTurn = source.exileInsteadOfDieThisTurn;
-        this.exileInsteadOfDieSourcePermanentId = source.exileInsteadOfDieSourcePermanentId;
         this.prepared = source.prepared;
         this.phasedOutIndirectly = source.phasedOutIndirectly;
         this.preparedSpellCardId = source.preparedSpellCardId;
@@ -1263,8 +1249,6 @@ public class Permanent {
         this.exileIfDyingTimestamp = source.exileIfDyingTimestamp;
         this.lastKnownAuraCount = source.lastKnownAuraCount;
         this.lastKnownEquipmentCount = source.lastKnownEquipmentCount;
-        this.exileIfLeavesBattlefieldUntilEndOfTurn = source.exileIfLeavesBattlefieldUntilEndOfTurn;
-        this.exileIfLeavesBattlefieldUntilEndOfTurnTimestamp = source.exileIfLeavesBattlefieldUntilEndOfTurnTimestamp;
         this.enteredViaUnearth = source.enteredViaUnearth;
         this.shroudIgnoredByPlayersUntilEndOfTurn.addAll(source.shroudIgnoredByPlayersUntilEndOfTurn);
         this.cantBlockIds.addAll(source.cantBlockIds);
@@ -2360,9 +2344,6 @@ public class Permanent {
         this.cantRegenerateThisTurn = false;
         this.damageCantBePreventedOrRedirectedThisTurn = false;
         this.damagedCreaturesCantRegenerateThisTurn = false;
-        this.exileDamagedCreaturesInsteadOfDyingThisTurn = false;
-        this.exileInsteadOfDieThisTurn = false;
-        this.exileInsteadOfDieSourcePermanentId = null;
         this.temporaryAbilities.clear();
         this.saddled = false;
         this.animatedUntilEndOfTurn = false;
@@ -2388,7 +2369,6 @@ public class Permanent {
         this.protectionRemovedUntilEndOfTurn = false;
         this.blockRestrictionsUntilEndOfTurn.clear();
         this.unblockableIfDefenderControlsUntilEndOfTurn.clear();
-        this.exileIfLeavesBattlefieldUntilEndOfTurn = false;
         this.shroudIgnoredByPlayersUntilEndOfTurn.clear();
         this.cantBlockIds.clear();
         this.mustBlockIds.clear();
@@ -2453,9 +2433,6 @@ public class Permanent {
             case CANT_REGENERATE_THIS_TURN -> cantRegenerateThisTurn;
             case DAMAGE_CANT_BE_PREVENTED_OR_REDIRECTED -> damageCantBePreventedOrRedirectedThisTurn;
             case DAMAGED_CREATURES_CANT_REGENERATE -> damagedCreaturesCantRegenerateThisTurn;
-            case EXILE_DAMAGED_CREATURES_INSTEAD_OF_DYING -> exileDamagedCreaturesInsteadOfDyingThisTurn;
-            case EXILE_INSTEAD_OF_DIE -> exileInsteadOfDieThisTurn;
-            case EXILE_INSTEAD_OF_DIE_SOURCE_PERMANENT_ID -> exileInsteadOfDieSourcePermanentId;
             case TEMPORARY_ABILITIES -> temporaryAbilities;
             case SADDLED -> saddled;
             case ANIMATED_UNTIL_END_OF_TURN -> animatedUntilEndOfTurn;
@@ -2480,7 +2457,6 @@ public class Permanent {
             case PROTECTION_REMOVED -> protectionRemovedUntilEndOfTurn;
             case BLOCK_RESTRICTIONS -> blockRestrictionsUntilEndOfTurn;
             case UNBLOCKABLE_IF_DEFENDER_CONTROLS -> unblockableIfDefenderControlsUntilEndOfTurn;
-            case EXILE_IF_LEAVES_BATTLEFIELD -> exileIfLeavesBattlefieldUntilEndOfTurn;
             case SHROUD_IGNORED_BY_PLAYERS -> shroudIgnoredByPlayersUntilEndOfTurn;
             case CANT_BLOCK_IDS -> cantBlockIds;
             case MUST_BLOCK_IDS -> mustBlockIds;
@@ -2541,9 +2517,6 @@ public class Permanent {
             case CANT_REGENERATE_THIS_TURN -> cantRegenerateThisTurn = true;
             case DAMAGE_CANT_BE_PREVENTED_OR_REDIRECTED -> damageCantBePreventedOrRedirectedThisTurn = true;
             case DAMAGED_CREATURES_CANT_REGENERATE -> damagedCreaturesCantRegenerateThisTurn = true;
-            case EXILE_DAMAGED_CREATURES_INSTEAD_OF_DYING -> exileDamagedCreaturesInsteadOfDyingThisTurn = true;
-            case EXILE_INSTEAD_OF_DIE -> exileInsteadOfDieThisTurn = true;
-            case EXILE_INSTEAD_OF_DIE_SOURCE_PERMANENT_ID -> exileInsteadOfDieSourcePermanentId = (UUID) value;
             case TEMPORARY_ABILITIES -> temporaryAbilities.addAll((List<Ability>) value);
             case SADDLED -> saddled = true;
             case ANIMATED_UNTIL_END_OF_TURN -> animatedUntilEndOfTurn = true;
@@ -2570,7 +2543,6 @@ public class Permanent {
             case BLOCK_RESTRICTIONS -> blockRestrictionsUntilEndOfTurn.addAll((List<CanBeBlockedOnlyByFilterEffect>) value);
             case UNBLOCKABLE_IF_DEFENDER_CONTROLS ->
                     unblockableIfDefenderControlsUntilEndOfTurn.addAll((List<PermanentPredicate>) value);
-            case EXILE_IF_LEAVES_BATTLEFIELD -> exileIfLeavesBattlefieldUntilEndOfTurn = true;
             case SHROUD_IGNORED_BY_PLAYERS -> shroudIgnoredByPlayersUntilEndOfTurn.addAll((Set<UUID>) value);
             case CANT_BLOCK_IDS -> cantBlockIds.addAll((Set<UUID>) value);
             case MUST_BLOCK_IDS -> mustBlockIds.addAll((Set<UUID>) value);

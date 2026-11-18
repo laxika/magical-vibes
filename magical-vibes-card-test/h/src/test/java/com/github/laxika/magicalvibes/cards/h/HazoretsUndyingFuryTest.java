@@ -276,7 +276,7 @@ class HazoretsUndyingFuryTest extends BaseCardTest {
 
             assertThat(gd.interaction.activeInteraction())
                     .isInstanceOf(PendingInteraction.ImprovisationCapstoneCastChoice.class);
-            assertThat(gd.matchingPermanentUntapRestrictions.get(player1.getId())).hasSize(1);
+            assertThat(gd.nextUntapStepRestrictions(player1.getId())).hasSize(1);
         }
 
         @Test

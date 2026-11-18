@@ -64,7 +64,7 @@ class UnderworldFiresTest extends BaseCardTest {
         castUnderworldFires();
 
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
-        assertThat(bears.isExileInsteadOfDieThisTurn()).isTrue();
+        assertThat(gd.exilesInsteadOfDying(bears.getId())).isTrue();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 

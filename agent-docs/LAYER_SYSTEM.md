@@ -490,6 +490,14 @@ damage", CR 615.7) carries the amount left; using part of it replaces it with a 
 same place and timestamp), and a used-up or "next time" shield ends. When several apply to one event the affected
 player chooses (CR 616.1). The "next spell you cast this turn" grants implement `NextMatchingSpellEffect` and end at
 the matching cast (`Duration.UNTIL_MATCHING_SPELL_CAST`) or at cleanup.
+"Exile it instead" replacements (CR 614.1a) are such effects too: on a permanent ("if that creature would die this
+turn", `GameData.exileInsteadOfDying`, optionally linking the exiled card to its source; "if it would leave the
+battlefield", whose timestamp tells whether a later loss of abilities removed it; "creatures dealt damage by it") and on
+a card a resolution lets be cast (`exileInsteadOfGraveyard`): that one is on its caster, not on the card, because it
+follows the card onto the stack as the spell it becomes, and is used up as the card is cast with it or exiled.
+Permissions to play cards from outside the game (`permitPlayFromOutsideGame`, a single-play group ending for all its cards
+when one is played) and "[matching] permanents don't untap during [that player's] next untap step"
+(`restrictNextUntapStep`, matched as that step begins, CR 611.2c) are on a player.
 
 **The clock.** Nothing calls an expiry for a duration that ends at an event: `DurationClock` (`service/duration`) ends
 those effects as `RulesEventPipeline` hands it each rules event batch, before the batch's abilities trigger, and undoes

@@ -67,7 +67,7 @@ public class AllowCastTargetCardFromGraveyardThisTurnEffectHandler implements No
             gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, permission.entersTapped()),
                     targetCard.getId(), Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN);
             if (permission.exileInsteadOfGraveyard()) {
-                gameData.exileInsteadOfGraveyard.add(targetCard.getId());
+                gameData.exileInsteadOfGraveyard(entry, targetCard.getId());
             }
 
             gameLogService.append(gameData, GameLog.builder()

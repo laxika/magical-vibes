@@ -53,7 +53,7 @@ class WiltInTheHeatTest extends BaseCardTest {
 
         // Avatar (8/8) survives 5 damage but is flagged to be exiled if it dies this turn
         assertThat(avatar.getMarkedDamage()).isEqualTo(5);
-        assertThat(avatar.isExileInsteadOfDieThisTurn()).isTrue();
+        assertThat(gd.exilesInsteadOfDying(avatar.getId())).isTrue();
     }
 
     @Test

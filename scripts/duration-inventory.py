@@ -44,7 +44,7 @@ KEPT = {
     **dict.fromkeys(["pendingDeathReplacementChoiceReplay", "chosenDeathReplacementsForRerun",
                      "deferredDeathReplacementChoices", "pendingLossReplacement", "pokeyReplacementAnswer",
                      "pendingTokenCreationReplacement", "entryAwaitingLifeLossDeparture",
-                     "spellAwaitingEntryLifeLossDepartureId"], "a pending choice or replay"),
+                     "spellAwaitingEntryLifeLossDepartureId", "forbiddenRitual"], "a pending choice or replay"),
     **dict.fromkeys(["firstNonDrawStepDrawReplacementsUsedThisTurn", "tokenCreationReplacementUsedThisTurn",
                      "playersAffectedByMeliraPoisonReplacementThisTurn", "playersWhoUsedMaxSpeedFreeUnearthThisTurn",
                      "oncePerTurnExileCastPermissionsUsedThisTurn", "oncePerTurnGraveyardCastPermissionsUsedThisTurn",

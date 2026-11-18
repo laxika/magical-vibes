@@ -48,7 +48,7 @@ class PuncturingBlowTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, targetId);
 
         assertThat(avatar.getMarkedDamage()).isEqualTo(5);
-        assertThat(avatar.isExileInsteadOfDieThisTurn()).isTrue();
+        assertThat(gd.exilesInsteadOfDying(avatar.getId())).isTrue();
     }
 
     @Test

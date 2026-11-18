@@ -51,7 +51,7 @@ class IncendiaryFlowTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
-        assertThat(target.isExileInsteadOfDieThisTurn()).isTrue();
+        assertThat(gd.exilesInsteadOfDying(target.getId())).isTrue();
     }
 
     @Test

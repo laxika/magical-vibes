@@ -742,7 +742,7 @@ public class GameViewProjectionFactory {
         Set<UUID> alreadyIncluded = new HashSet<>();
         for (Card c : exiledCards) alreadyIncluded.add(c.getId());
         for (Card card : com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId)) {
-            if (gameData.outsideGamePlayPermissions.contains(card.getId())
+            if (gameData.mayPlayFromOutsideGame(card.getId())
                     && alreadyIncluded.add(card.getId())) {
                 exiledCards.add(card);
             }
@@ -817,7 +817,7 @@ public class GameViewProjectionFactory {
             }
             ExiledCardEntry exiledEntry = gameData.findExiledCard(card.getId());
             boolean fromOutsideGame = exiledEntry == null
-                    && gameData.outsideGamePlayPermissions.contains(card.getId());
+                    && gameData.mayPlayFromOutsideGame(card.getId());
             ForetellCast foretellCast = card.getCastingOption(ForetellCast.class).orElse(null);
             ManaCost foretoldCost = gameData.foretoldCardCosts.get(card.getId());
             if (foretoldCost == null && foretellCast != null && foretellCast.manaCostString() != null) {

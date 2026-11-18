@@ -773,7 +773,7 @@ public class LibraryChoiceHandlerService {
                     }
                 }
                 if (librarySearch.sourceSideboard()) {
-                    gameData.outsideGamePlayPermissions.remove(chosenCard.getId());
+                    gameData.spendPlayFromOutsideGame(chosenCard.getId());
                 }
             }
 
@@ -1255,7 +1255,7 @@ public class LibraryChoiceHandlerService {
             graveyardService.notifyCardsLeftGraveyard(gameData, deckOwnerId, chosenCard);
         }
         if (librarySearch.sourceSideboard()) {
-            gameData.outsideGamePlayPermissions.remove(chosenCard.getId());
+            gameData.spendPlayFromOutsideGame(chosenCard.getId());
         }
 
         if (destination == LibrarySearchDestination.EXILE_FACE_DOWN_AND_MAY_CAST_OR_PUT_INTO_HAND) {

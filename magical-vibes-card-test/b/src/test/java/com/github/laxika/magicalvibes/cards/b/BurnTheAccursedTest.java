@@ -53,7 +53,7 @@ class BurnTheAccursedTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         assertThat(target.getMarkedDamage()).isEqualTo(5);
-        assertThat(target.isExileInsteadOfDieThisTurn()).isTrue();
+        assertThat(gd.exilesInsteadOfDying(target.getId())).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 

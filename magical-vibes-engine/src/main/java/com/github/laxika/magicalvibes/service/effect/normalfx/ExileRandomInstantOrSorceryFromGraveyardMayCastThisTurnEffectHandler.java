@@ -56,7 +56,7 @@ public class ExileRandomInstantOrSorceryFromGraveyardMayCastThisTurnEffectHandle
         exileService.exileCard(gameData, controllerId, exiled);
 
         gameData.grantExilePlayPermission(exiled.getId(), controllerId, Duration.UNTIL_END_OF_TURN);
-        gameData.exileInsteadOfGraveyard.add(exiled.getId());
+        gameData.exileInsteadOfGraveyard(entry, exiled.getId());
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.builder()

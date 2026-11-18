@@ -378,9 +378,8 @@ public class PermanentChoiceSpellHandlerService {
                     lifeSupport.loseLifeAsStepOfParkedResolution(gameData,
                             Map.of(ect.controllerId(), ect.lifeLossAfterCast()), ect.cardToCast().getName());
                 } catch (IllegalStateException ex) {
-                    if (gameData.outsideGamePlayPermissions.contains(ect.cardToCast().getId())) {
-                        gameData.outsideGamePlayPermissions.remove(ect.cardToCast().getId());
-                        gameData.outsideGameAdditionalModalModePermissions.remove(ect.cardToCast().getId());
+                    if (gameData.mayPlayFromOutsideGame(ect.cardToCast().getId())) {
+                        gameData.spendPlayFromOutsideGame(ect.cardToCast().getId());
                         log.info("Game {} - outside-game cast of {} could not be completed",
                                 gameData.id, ect.cardToCast().getName());
                     } else if (ect.resolutionCast()) {
@@ -467,7 +466,7 @@ public class PermanentChoiceSpellHandlerService {
                 }
                 entry.setOwnerIdOverride(exiledOwnerId);
             }
-            entry.setExileInsteadOfGraveyard(gameData.exileInsteadOfGraveyard.remove(ect.cardToCast().getId()));
+            entry.setExileInsteadOfGraveyard(gameData.endExileInsteadOfGraveyard(ect.cardToCast().getId()));
             if (gameData.spellsGrantedHasteOnEntry.remove(ect.cardToCast().getId())) {
                 entry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
             }
@@ -652,7 +651,7 @@ public class PermanentChoiceSpellHandlerService {
             entry.setOwnerIdOverride(exiledEntry == null
                     ? entry.getPhysicalCard().getOwnerId() : exiledEntry.ownerId());
         }
-        entry.setExileInsteadOfGraveyard(gameData.exileInsteadOfGraveyard.remove(card.getId()));
+        entry.setExileInsteadOfGraveyard(gameData.endExileInsteadOfGraveyard(card.getId()));
         if (gameData.spellsGrantedHasteOnEntry.remove(card.getId())) {
             entry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
         }
