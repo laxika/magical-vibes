@@ -34,7 +34,7 @@ class WhimOfVolrathTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "GREEN");
 
-        assertThat(perm.getTextReplacements())
+        assertThat(gd.textReplacements(perm.getId()))
                 .containsExactly(new TextReplacement("black", "green", true));
         assertThat(graveyardNames(player1)).containsExactly("Whim of Volrath");
     }
@@ -66,7 +66,7 @@ class WhimOfVolrathTest extends BaseCardTest {
         harness.handleListChoice(player1, "SWAMP");
         harness.handleListChoice(player1, "FOREST");
 
-        assertThat(perm.getTextReplacements())
+        assertThat(gd.textReplacements(perm.getId()))
                 .containsExactly(new TextReplacement("Swamp", "Forest", true));
     }
 
@@ -101,13 +101,13 @@ class WhimOfVolrathTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "GREEN");
 
-        assertThat(perm.getTextReplacements()).hasSize(1);
+        assertThat(gd.textReplacements(perm.getId())).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(perm.getTextReplacements()).isEmpty();
+        assertThat(gd.textReplacements(perm.getId())).isEmpty();
     }
 
     @Test

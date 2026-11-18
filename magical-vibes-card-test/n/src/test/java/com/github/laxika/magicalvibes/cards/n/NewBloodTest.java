@@ -40,7 +40,7 @@ class NewBloodTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(lord);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(lord);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(lord.getTextReplacements()).containsExactly(new TextReplacement("Merfolk", "Vampire"));
+        assertThat(gd.textReplacements(lord.getId())).containsExactly(new TextReplacement("Merfolk", "Vampire"));
         assertThat(gqs.effectiveCreatureSubtypes(gd, lord)).containsExactly(CardSubtype.VAMPIRE);
         assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(3);

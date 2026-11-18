@@ -1623,8 +1623,9 @@ public class CardChoiceHandlerService {
                 if (bf == null) continue;
                 for (Permanent p : bf) {
                     if (p.getId().equals(permanentId)) {
-                        p.untap();
-                        gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " untaps."));
+                        if (tapUntapSupport.untapPermanent(gameData, p)) {
+                            gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " untaps."));
+                        }
                         break;
                     }
                 }
@@ -3362,7 +3363,7 @@ public class CardChoiceHandlerService {
             }
             // Untap
             if (!gameQueryService.cantBecomeUntapped(gameData, source)) {
-                source.untap();
+                tapUntapSupport.untapPermanent(gameData, source);
                 gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " untaps."));
                 log.info("Game {} - {} untaps (creature discarded)", gameData.id, source.getCard().getName());
             }

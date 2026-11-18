@@ -650,10 +650,10 @@ public class GameData {
      * in, and no leave/enter-the-battlefield trigger fires either way.
      */
     public final Map<UUID, List<Permanent>> phasedOutPermanents = new ConcurrentHashMap<>();
-    /** Directly phased-out permanent ids that remain phased out while their source stays controlled. */
-    public final Map<UUID, Map<UUID, Integer>> phasedOutWhileSourceControlled = new ConcurrentHashMap<>();
-    /** Directly phased-out permanent ids that remain phased out while their source stays tapped. */
-    public final Map<UUID, Set<UUID>> phasedOutWhileSourceTapped = new ConcurrentHashMap<>();
+    /** The permanents a source's ability phased out, by source id, that its "when this becomes untapped or leaves the
+     *  battlefield, that permanent phases in" ability refers to (The Pandorica): which objects "that permanent" means,
+     *  not how long they stay out — that hold is a floating {@code PhasedOutHeldEffect} with its own duration. */
+    public final Map<UUID, Set<UUID>> permanentsPhasedOutBySource = new ConcurrentHashMap<>();
     public final Map<UUID, ManaPool> playerManaPools = new ConcurrentHashMap<>();
     public final Map<UUID, Set<TurnStep>> playerAutoStopSteps = new ConcurrentHashMap<>();
     /**
@@ -4036,6 +4036,12 @@ public class GameData {
     public final List<FloatingContinuousEffect> scheduledFloatingEffects =
             Collections.synchronizedList(new ArrayList<>());
 
+    /** The floating effects on permanents that left the battlefield, by the departed permanent's id. They ended as it
+     *  left: the object they affected is gone, and the one that returns is new (CR 400.7). They are kept only as that
+     *  permanent's last-known information (CR 608.2h), which {@link #floatingEffectsOnPermanent} returns for its id,
+     *  and are dropped silently when their own durations would have ended them. */
+    public final Map<UUID, List<FloatingContinuousEffect>> departedPermanentEffects = new ConcurrentHashMap<>();
+
     /** Active player at the moment each floating effect was created, keyed by the effect's id. Under
      *  Runed Terror's sequential phases an "until end of turn" effect ends only at the cleanup step of
      *  the player who was active when it began (Runed Terror ruling, CR 514.2). */
@@ -4542,7 +4548,43 @@ public class GameData {
         }
         removed.forEach(fe -> observeFloatingEffect(fe, false));
         pruneExilePlayPermissionGroups(removed);
+        departedPermanentEffects.values().removeIf(effects -> {
+            effects.removeIf(expired);
+            return effects.isEmpty();
+        });
         return removed;
+    }
+
+    /**
+     * Whether {@code effect} on a permanent is about what that permanent does, so it keeps applying to the permanent
+     * as it last existed after it leaves the battlefield: damage it would deal is still prevented when an ability of
+     * it deals that damage afterwards (Soul Parry), and the creatures it dealt damage to this turn still can't be
+     * regenerated or are still exiled instead of dying (Runesword).
+     */
+    private static boolean appliesToItsLastKnownSelf(CardEffect effect) {
+        return effect instanceof PreventDamageEffect
+                || effect instanceof com.github.laxika.magicalvibes.model.effect
+                        .PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffect
+                || effect instanceof com.github.laxika.magicalvibes.model.effect
+                        .ExileCreaturesDamagedBySourceInsteadOfDyingEffect;
+    }
+
+    /**
+     * Ends the floating effects on the permanent {@code permanentId}, begun or not, as it leaves the battlefield: they
+     * affected that object, and the one that returns is new (CR 400.7). The begun ones are kept as its last-known
+     * information ({@link #departedPermanentEffects}). Its control effects are left to
+     * {@link #expireControlEffectsForDepartedPermanent}. Effects on what it does keep applying to it as it last
+     * existed and go on (see {@link #appliesToItsLastKnownSelf}). Returns the ended effects that had begun.
+     */
+    public List<FloatingContinuousEffect> endFloatingEffectsOnDepartedPermanent(UUID permanentId) {
+        Predicate<FloatingContinuousEffect> onIt = effect -> permanentId.equals(effect.affectedPermanentId())
+                && !effect.isControlEffect() && !appliesToItsLastKnownSelf(effect.effect());
+        scheduledFloatingEffects.removeIf(onIt);
+        List<FloatingContinuousEffect> ended = expireFloatingEffects(onIt);
+        if (!ended.isEmpty()) {
+            departedPermanentEffects.computeIfAbsent(permanentId, id -> new ArrayList<>()).addAll(ended);
+        }
+        return ended;
     }
 
     // ── Derived control state (CR 613.2/613.7 layer 2) ─────────────────────────────────────
@@ -4897,6 +4939,27 @@ public class GameData {
     }
 
     /**
+     * The text changes on the permanent {@code permanentId} (CR 612.1), in timestamp order (CR 613.7): its floating
+     * layer-3 {@link com.github.laxika.magicalvibes.model.effect.TextChangeEffect}s (CR 613.1c), each read as a
+     * {@link TextReplacement} stamped with its effect's timestamp.
+     */
+    public List<TextReplacement> textReplacements(UUID permanentId) {
+        List<FloatingContinuousEffect> changes = new ArrayList<>(floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.TextChangeEffect.class));
+        if (changes.isEmpty()) {
+            return List.of();
+        }
+        changes.sort(Comparator.comparingLong(FloatingContinuousEffect::timestamp));
+        List<TextReplacement> replacements = new ArrayList<>(changes.size());
+        for (FloatingContinuousEffect change : changes) {
+            var text = (com.github.laxika.magicalvibes.model.effect.TextChangeEffect) change.effect();
+            replacements.add(new TextReplacement(text.fromWord(), text.toWord(),
+                    Duration.UNTIL_END_OF_TURN.equals(change.duration()), change.timestamp()));
+        }
+        return replacements;
+    }
+
+    /**
      * "It gets +{@code power}/+{@code toughness} until end of turn", made by the resolving {@code entry}: a layer-7c
      * floating effect on the permanent {@code permanentId} (CR 613.4c, 611.2a) carrying the amounts as the effect
      * begins (CR 608.2h). Returns the effect, or {@code null} when it changes nothing (+0/+0).
@@ -5211,8 +5274,9 @@ public class GameData {
 
     /**
      * The floating effects of any of {@code types} that name the permanent {@code permanentId} as the one they affect,
-     * oldest first. An effect whose affected set is a {@code scope} predicate is not among them: judge those against
-     * the permanent where they are read.
+     * oldest first; for a permanent that left the battlefield, the ones it had as it left (its last-known information,
+     * {@link #departedPermanentEffects}). An effect whose affected set is a {@code scope} predicate is not among them:
+     * judge those against the permanent where they are read.
      */
     @SafeVarargs
     public final List<FloatingContinuousEffect> floatingEffectsOnPermanent(UUID permanentId,
@@ -5221,6 +5285,14 @@ public class GameData {
         synchronized (floatingEffects) {
             for (FloatingContinuousEffect fe : floatingEffects) {
                 if (permanentId.equals(fe.affectedPermanentId()) && isAnyOf(fe.effect(), types)) {
+                    result.add(fe);
+                }
+            }
+        }
+        List<FloatingContinuousEffect> departed = departedPermanentEffects.get(permanentId);
+        if (departed != null) {
+            for (FloatingContinuousEffect fe : departed) {
+                if (isAnyOf(fe.effect(), types)) {
                     result.add(fe);
                 }
             }
@@ -10462,15 +10534,10 @@ public class GameData {
         this.phasedOutPermanents.forEach((k, v) -> copy.phasedOutPermanents.put(k,
                 Collections.synchronizedList(v.stream().map(Permanent::new)
                         .collect(java.util.stream.Collectors.toCollection(ArrayList::new)))));
-        this.phasedOutWhileSourceControlled.forEach((sourceId, targetSequences) -> {
-            Map<UUID, Integer> targetSequenceCopy = new ConcurrentHashMap<>();
-            targetSequenceCopy.putAll(targetSequences);
-            copy.phasedOutWhileSourceControlled.put(sourceId, targetSequenceCopy);
-        });
-        this.phasedOutWhileSourceTapped.forEach((sourceId, targetIds) -> {
+        this.permanentsPhasedOutBySource.forEach((sourceId, targetIds) -> {
             Set<UUID> targetIdCopy = ConcurrentHashMap.newKeySet();
             targetIdCopy.addAll(targetIds);
-            copy.phasedOutWhileSourceTapped.put(sourceId, targetIdCopy);
+            copy.permanentsPhasedOutBySource.put(sourceId, targetIdCopy);
         });
 
         // --- Map<UUID, ManaPool> (deep copy each ManaPool) ---
@@ -10948,6 +11015,8 @@ public class GameData {
         copy.floatingEffects.addAll(this.floatingEffects);
         copy.scheduledFloatingEffects.addAll(this.scheduledFloatingEffects);
         copy.floatingEffectCreatingActivePlayerIds.putAll(this.floatingEffectCreatingActivePlayerIds);
+        this.departedPermanentEffects.forEach((id, effects) ->
+                copy.departedPermanentEffects.put(id, new ArrayList<>(effects)));
         this.phaseSequenceEndOfTurnShares.forEach((objectId, shares) ->
                 copy.phaseSequenceEndOfTurnShares.put(objectId, new LinkedHashMap<>(shares)));
         copy.phaseSequenceAttributedEndOfTurnState.putAll(this.phaseSequenceAttributedEndOfTurnState);

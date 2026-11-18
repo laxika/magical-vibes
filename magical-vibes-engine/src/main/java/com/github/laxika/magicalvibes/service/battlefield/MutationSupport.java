@@ -113,11 +113,9 @@ public class MutationSupport {
                     withTokenStatus(mergeCharacteristics(host.getWhileAttachedPreCopyCard(), entry.getCard(), onTop),
                             host.getMutatedComponentCards().getFirst().isToken()));
         }
-        if (host.getUntilNextTurnPreCopyCard() != null) {
-            host.setUntilNextTurnPreCopyCard(
-                    withTokenStatus(mergeCharacteristics(host.getUntilNextTurnPreCopyCard(), entry.getCard(), onTop),
-                            host.getMutatedComponentCards().getFirst().isToken()));
-        }
+        PermanentCopierService.updateUntilNextTurnCopies(gameData, host, copied -> copied,
+                preCopy -> withTokenStatus(mergeCharacteristics(preCopy, entry.getCard(), onTop),
+                        host.getMutatedComponentCards().getFirst().isToken()));
         if (onTop && host.isFaceDown()) {
             host.turnFaceUp();
         }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.ArrayList;
@@ -26,14 +27,16 @@ public class MultiplePermanentUntapCostHandler implements PermanentChoiceCostHan
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
+    private final TapUntapSupport tapUntapSupport;
     private final UUID sourcePermanentId;
     private final boolean sourceTappedByAbilityCost;
     private final List<UUID> chosenSoFar;
 
     public MultiplePermanentUntapCostHandler(UntapMultiplePermanentsCost cost, PredicateEvaluationService predicateEvaluationService,
                                              GameLogService gameLogService, GameQueryService gameQueryService,
-                                             UUID sourcePermanentId) {
-        this(cost, predicateEvaluationService, gameLogService, gameQueryService, sourcePermanentId, false, List.of());
+                                             TapUntapSupport tapUntapSupport, UUID sourcePermanentId) {
+        this(cost, predicateEvaluationService, gameLogService, gameQueryService, tapUntapSupport, sourcePermanentId,
+                false, List.of());
     }
 
     /**
@@ -45,12 +48,14 @@ public class MultiplePermanentUntapCostHandler implements PermanentChoiceCostHan
      */
     public MultiplePermanentUntapCostHandler(UntapMultiplePermanentsCost cost, PredicateEvaluationService predicateEvaluationService,
                                              GameLogService gameLogService, GameQueryService gameQueryService,
-                                             UUID sourcePermanentId, boolean sourceTappedByAbilityCost,
+                                             TapUntapSupport tapUntapSupport, UUID sourcePermanentId,
+                                             boolean sourceTappedByAbilityCost,
                                              List<UUID> chosenSoFar) {
         this.cost = cost;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameLogService = gameLogService;
         this.gameQueryService = gameQueryService;
+        this.tapUntapSupport = tapUntapSupport;
         this.sourcePermanentId = sourcePermanentId;
         this.sourceTappedByAbilityCost = sourceTappedByAbilityCost && !cost.opponentControlled();
         this.chosenSoFar = chosenSoFar == null ? List.of() : List.copyOf(chosenSoFar);
@@ -154,7 +159,7 @@ public class MultiplePermanentUntapCostHandler implements PermanentChoiceCostHan
         if (sourcePendingTap) {
             chosen.setUntapAfterTapCost(true);
         } else {
-            chosen.untap();
+            tapUntapSupport.untapPermanent(gameData, chosen);
         }
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " untaps " , chosen.getCard(), " as a cost."));
     }

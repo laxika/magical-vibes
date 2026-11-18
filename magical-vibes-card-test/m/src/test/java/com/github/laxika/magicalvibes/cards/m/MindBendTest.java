@@ -173,8 +173,8 @@ class MindBendTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
 
         Permanent perm = findPermanent(player2, "Paladin en-Vec");
-        assertThat(perm.getTextReplacements()).hasSize(1);
-        assertThat(perm.getTextReplacements().getFirst()).isEqualTo(new TextReplacement("black", "green"));
+        assertThat(gd.textReplacements(perm.getId())).hasSize(1);
+        assertThat(gd.textReplacements(perm.getId()).getFirst()).isEqualTo(new TextReplacement("black", "green"));
     }
 
     @Test
@@ -213,8 +213,8 @@ class MindBendTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
 
         Permanent perm = findPermanent(player2, "Grizzly Bears");
-        assertThat(perm.getTextReplacements()).hasSize(1);
-        assertThat(perm.getTextReplacements().getFirst()).isEqualTo(new TextReplacement("Swamp", "Forest"));
+        assertThat(gd.textReplacements(perm.getId())).hasSize(1);
+        assertThat(gd.textReplacements(perm.getId()).getFirst()).isEqualTo(new TextReplacement("Swamp", "Forest"));
     }
 
     @Test
@@ -341,9 +341,9 @@ class MindBendTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
 
         Permanent perm = findPermanent(player2, "Paladin en-Vec");
-        assertThat(perm.getTextReplacements()).hasSize(2);
-        assertThat(perm.getTextReplacements().get(0)).isEqualTo(new TextReplacement("black", "green"));
-        assertThat(perm.getTextReplacements().get(1)).isEqualTo(new TextReplacement("red", "blue"));
+        assertThat(gd.textReplacements(perm.getId())).hasSize(2);
+        assertThat(gd.textReplacements(perm.getId()).get(0)).isEqualTo(new TextReplacement("black", "green"));
+        assertThat(gd.textReplacements(perm.getId()).get(1)).isEqualTo(new TextReplacement("red", "blue"));
     }
 
     @Test
@@ -360,8 +360,8 @@ class MindBendTest extends BaseCardTest {
         harness.handleListChoice(player1, "WHITE");
 
         Permanent perm = findPermanent(player1, "Paladin en-Vec");
-        assertThat(perm.getTextReplacements()).hasSize(1);
-        assertThat(perm.getTextReplacements().getFirst()).isEqualTo(new TextReplacement("red", "white"));
+        assertThat(gd.textReplacements(perm.getId())).hasSize(1);
+        assertThat(gd.textReplacements(perm.getId()).getFirst()).isEqualTo(new TextReplacement("red", "white"));
     }
 
     // ===== Validation =====

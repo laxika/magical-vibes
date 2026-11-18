@@ -47,7 +47,8 @@ public class ChangeColorTextEffectHandler implements NormalEffectHandlerBean {
 
         ChoiceContext.TextChangeFromWord choiceContext = new ChoiceContext.TextChangeFromWord(
                 targetId, untilEndOfTurn, change.excludedReplacementCreatureType(),
-                change.fixedReplacementCreatureType());
+                change.fixedReplacementCreatureType(),
+                entry.getCard() == null ? null : entry.getCard().getName(), entry.getSourcePermanentId());
 
         List<String> options = new ArrayList<>();
         if (colorWordsAllowed) {

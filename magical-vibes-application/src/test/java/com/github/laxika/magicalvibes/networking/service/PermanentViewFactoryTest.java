@@ -46,7 +46,14 @@ class PermanentViewFactoryTest {
     private PermanentView createWithLost(Permanent p, List<ActivatedAbility> granted, List<ActivatedAbility> lost) {
         return factory.create(p, 0, 0, Set.of(), false, granted, Set.of(), List.of(), Set.of(),
                 false, false, false, false, Set.of(), false, false, Set.of(), List.of(), List.of(), 0, null,
-                Set.of(), 0, lost);
+                Set.of(), 0, lost, List.of());
+    }
+
+    /** A projection of a permanent with the text changes {@code textReplacements} on it. */
+    private PermanentView createWithTextChanges(Permanent p, List<TextReplacement> textReplacements) {
+        return factory.create(p, 0, 0, Set.of(), false, List.of(), Set.of(), List.of(), Set.of(),
+                false, false, false, false, Set.of(), false, false, Set.of(), List.of(), List.of(), 0, null,
+                Set.of(), 0, List.of(), textReplacements);
     }
 
     private PermanentView createWithExiled(Permanent p, List<Card> faceUpExiled, int faceDownCount) {
@@ -393,9 +400,8 @@ class PermanentViewFactoryTest {
         Card printed = card("Mountaineer", CardType.CREATURE);
         printed.setCardText("Tap: Add one mana for each Mountain you control.");
         Permanent creature = new Permanent(printed);
-        creature.getTextReplacements().add(new TextReplacement("Mountain", "Island"));
 
-        PermanentView view = create(creature);
+        PermanentView view = createWithTextChanges(creature, List.of(new TextReplacement("Mountain", "Island")));
 
         assertThat(view.card().cardText()).isEqualTo("Tap: Add one mana for each Island you control.");
     }

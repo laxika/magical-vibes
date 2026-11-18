@@ -4415,10 +4415,10 @@ public class TargetLegalityService {
         List<TextReplacement> global = TextChangeTransformer.globalColorWordReplacements(gameData);
         Permanent source = sourcePermanentId == null ? null
                 : gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source == null || source.getTextReplacements().isEmpty()) {
+        if (source == null || gameData.textReplacements(source.getId()).isEmpty()) {
             return global;
         }
-        List<TextReplacement> combined = new ArrayList<>(source.getTextReplacements());
+        List<TextReplacement> combined = new ArrayList<>(gameData.textReplacements(source.getId()));
         combined.addAll(global);
         return combined;
     }

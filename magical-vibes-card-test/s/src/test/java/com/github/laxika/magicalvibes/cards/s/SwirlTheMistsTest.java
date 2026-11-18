@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.TextChangeEffect;
 import com.github.laxika.magicalvibes.cards.b.Befoul;
 import com.github.laxika.magicalvibes.cards.h.Hibernation;
 import com.github.laxika.magicalvibes.cards.m.MindBend;
@@ -93,7 +95,8 @@ class SwirlTheMistsTest extends BaseCardTest {
     @DisplayName("Subsumes an earlier one-shot text change on the same permanent")
     void subsumesRecordedTextReplacement() {
         Permanent paladin = harness.addToBattlefieldAndReturn(player2, new PaladinEnVec());
-        paladin.getTextReplacements().add(new TextReplacement("black", "white"));
+        gd.addEffectOnPermanent(null, null, player2.getId(), new TextChangeEffect("black", "white"),
+                paladin.getId(), Duration.PERMANENT);
         addSwirl(CardColor.GREEN);
 
         assertThat(gqs.hasProtectionFrom(gd, paladin, CardColor.GREEN)).isTrue();

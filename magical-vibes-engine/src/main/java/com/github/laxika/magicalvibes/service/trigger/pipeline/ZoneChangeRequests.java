@@ -407,13 +407,13 @@ public class ZoneChangeRequests {
     /** {@code ability} of {@code perm} read through its text changes (Layer 3, CR 612.1). */
     private static TriggeredAbility textChanged(GameData gameData, Permanent perm, TriggeredAbility ability) {
         List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
-        if (perm.getTextReplacements().isEmpty() && globalWordChange.isEmpty()) {
+        if (gameData.textReplacements(perm.getId()).isEmpty() && globalWordChange.isEmpty()) {
             return ability;
         }
         List<EffectRegistration> transformed = new ArrayList<>(ability.effects().size());
         boolean changed = false;
         for (EffectRegistration registration : ability.effects()) {
-            CardEffect effect = TextChangeTransformer.transform(registration.effect(), perm.getTextReplacements(),
+            CardEffect effect = TextChangeTransformer.transform(registration.effect(), gameData.textReplacements(perm.getId()),
                     globalWordChange);
             changed |= effect != registration.effect();
             transformed.add(new EffectRegistration(effect, registration.simultaneousWithPrevious()));

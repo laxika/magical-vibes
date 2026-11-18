@@ -96,7 +96,7 @@ public class PermanentViewFactory {
                 staticGrantedColors, staticGrantedSubtypes, staticGrantedCardTypes, colorOverriding,
                 subtypeOverriding, landSubtypeOverriding, cardTypeOverriding, staticRemovedKeywords,
                 losesAllAbilities, losesAllNonManaAbilities, staticGrantedSupertypes, modifierLines,
-                faceUpExiledWithCards, faceDownExiledCount, staticName, removedSubtypes, 0, List.of());
+                faceUpExiledWithCards, faceDownExiledCount, staticName, removedSubtypes, 0, List.of(), List.of());
     }
 
     /**
@@ -116,10 +116,11 @@ public class PermanentViewFactory {
     /**
      * Builds the view; {@code removedSubtypes} are the printed subtypes the permanent no longer has after the
      * layered pass (CR 613.1d), hidden from the card face, {@code regenerationShields} is how many regeneration
-     * shields the floating effects on it give it, and {@code lostActivatedAbilities} are the printed activated
-     * abilities effects made it lose ("then this creature loses this ability"), compared by identity.
+     * shields the floating effects on it give it, {@code lostActivatedAbilities} are the printed activated
+     * abilities effects made it lose ("then this creature loses this ability"), compared by identity, and
+     * {@code textReplacements} are the text changes on it in timestamp order (CR 612.1, 613.7).
      */
-    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, boolean losesAllNonManaAbilities, Set<CardSupertype> staticGrantedSupertypes, List<ModifierLine> modifierLines, List<Card> faceUpExiledWithCards, int faceDownExiledCount, String staticName, Set<CardSubtype> removedSubtypes, int regenerationShields, List<ActivatedAbility> lostActivatedAbilities) {
+    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, boolean losesAllNonManaAbilities, Set<CardSupertype> staticGrantedSupertypes, List<ModifierLine> modifierLines, List<Card> faceUpExiledWithCards, int faceDownExiledCount, String staticName, Set<CardSubtype> removedSubtypes, int regenerationShields, List<ActivatedAbility> lostActivatedAbilities, List<TextReplacement> textReplacements) {
         Set<Keyword> allKeywords = new HashSet<>(bonusKeywords);
         Set<Keyword> allRemovedKeywords = new HashSet<>(staticRemovedKeywords);
         // When creature loses all abilities, add card's own keywords to removed set
@@ -134,7 +135,7 @@ public class PermanentViewFactory {
         if (staticName != null) {
             cardView = cardView.toBuilder().name(staticName).build();
         }
-        cardView = applyTextReplacements(cardView, p);
+        cardView = applyTextReplacements(cardView, textReplacements);
         cardView = hideRemovedSubtypes(cardView, removedSubtypes);
         cardView = applyStaticGrantedSubtypes(cardView, staticGrantedSubtypes, subtypeOverriding, landSubtypeOverriding);
         cardView = applyAwakeningCounterSubtype(cardView, p);
@@ -307,12 +308,12 @@ public class PermanentViewFactory {
         return cardView.toBuilder().activatedAbilities(mergedAbilities).build();
     }
 
-    private CardView applyTextReplacements(CardView cardView, Permanent p) {
-        if (p.getTextReplacements().isEmpty() || cardView.cardText() == null) {
+    private CardView applyTextReplacements(CardView cardView, List<TextReplacement> textReplacements) {
+        if (textReplacements.isEmpty() || cardView.cardText() == null) {
             return cardView;
         }
         String modifiedText = cardView.cardText();
-        for (TextReplacement rep : p.getTextReplacements()) {
+        for (TextReplacement rep : textReplacements) {
             modifiedText = modifiedText.replace(rep.fromWord(), rep.toWord());
         }
         return cardView.toBuilder().cardText(modifiedText).build();

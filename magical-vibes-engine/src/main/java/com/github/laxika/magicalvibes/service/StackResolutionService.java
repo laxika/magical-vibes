@@ -528,8 +528,8 @@ public class StackResolutionService {
                     UUID.randomUUID(), entry.getCard().getName(), permanent.getId(), controllerId,
                     new com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect(
                             Keyword.HASTE, com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET,
-                            com.github.laxika.magicalvibes.model.effect.Duration.WHILE_SOURCE_ON_BATTLEFIELD),
-                    permanent.getId(), null, null, Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+                            Duration.UNTIL_CONTROL_LOST),
+                    permanent.getId(), null, null, Duration.UNTIL_CONTROL_LOST, 0));
         }
         if (entry.isDashCostPaid() && entry.getCard().getKeywords().contains(Keyword.DASH)) {
             gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(Triggers.endStep(

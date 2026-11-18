@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TextChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
@@ -3276,13 +3277,15 @@ public class ChoiceHandlerService {
         if (ctx.fixedReplacementCreatureType() != null && isCreatureType) {
             handleTextChangeToWordChosen(gameData, player, ctx.fixedReplacementCreatureType().name(),
                     new ChoiceContext.TextChangeToWord(ctx.targetId(), chosenWord, false, ctx.untilEndOfTurn(),
-                            true, ctx.excludedReplacementCreatureType()));
+                            true, ctx.excludedReplacementCreatureType(), ctx.sourceCardName(),
+                            ctx.sourcePermanentId()));
             return;
         }
 
         ChoiceContext.TextChangeToWord choiceContext =
                 new ChoiceContext.TextChangeToWord(ctx.targetId(), chosenWord, isColor, ctx.untilEndOfTurn(),
-                        isCreatureType, ctx.excludedReplacementCreatureType());
+                        isCreatureType, ctx.excludedReplacementCreatureType(), ctx.sourceCardName(),
+                        ctx.sourcePermanentId());
 
         List<String> remainingOptions;
         String promptType;
@@ -3333,7 +3336,11 @@ public class ChoiceHandlerService {
 
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null) {
-            target.getTextReplacements().add(new TextReplacement(fromText, toText, ctx.untilEndOfTurn(), gameData.nextTimestamp()));
+            // A layer-3 effect (CR 613.1c) for the duration the card states; none means for the rest of the game
+            // (CR 611.2a), which on a permanent ends as it leaves the battlefield (CR 400.7).
+            gameData.addEffectOnPermanent(ctx.sourceCardName(), ctx.sourcePermanentId(), player.getId(),
+                    new TextChangeEffect(fromText, toText), target.getId(),
+                    ctx.untilEndOfTurn() ? Duration.UNTIL_END_OF_TURN : Duration.PERMANENT);
 
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " changes all instances of " + fromText + " to " + toText + " on " , target.getCard(), "."));
             log.info("Game {} - {} changes {} to {} on {}", gameData.id, player.getUsername(), fromText, toText, target.getCard().getName());

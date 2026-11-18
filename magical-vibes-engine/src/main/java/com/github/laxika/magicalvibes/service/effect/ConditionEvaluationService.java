@@ -1518,7 +1518,7 @@ public class ConditionEvaluationService {
             }
             case SourceKeepsPermanentPhasedOut ignored ->
                     ctx.sourcePermanentId() != null
-                            && !gameData.phasedOutWhileSourceTapped
+                            && !gameData.permanentsPhasedOutBySource
                             .getOrDefault(ctx.sourcePermanentId(), Set.of()).isEmpty();
             case SelfWasDealtDamageThisTurn c ->
                     ctx.sourcePermanentId() != null

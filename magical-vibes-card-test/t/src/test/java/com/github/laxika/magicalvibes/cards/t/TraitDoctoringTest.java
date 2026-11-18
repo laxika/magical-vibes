@@ -35,7 +35,7 @@ class TraitDoctoringTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(target.getTextReplacements())
+        assertThat(gd.textReplacements(target.getId()))
                 .containsExactly(new TextReplacement("black", "green", true));
         harness.assertInGraveyard(player1, "Trait Doctoring");
     }
@@ -53,7 +53,7 @@ class TraitDoctoringTest extends BaseCardTest {
         harness.handleListChoice(player1, "FOREST");
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(target.getTextReplacements())
+        assertThat(gd.textReplacements(target.getId()))
                 .containsExactly(new TextReplacement("Swamp", "Forest", true));
     }
 
@@ -68,13 +68,13 @@ class TraitDoctoringTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "GREEN");
         harness.handleMayAbilityChosen(player1, false);
-        assertThat(target.getTextReplacements()).hasSize(1);
+        assertThat(gd.textReplacements(target.getId())).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getTextReplacements()).isEmpty();
+        assertThat(gd.textReplacements(target.getId())).isEmpty();
     }
 
     @Test
@@ -105,7 +105,7 @@ class TraitDoctoringTest extends BaseCardTest {
         harness.handleListChoice(player1, "WHITE");
         harness.handleListChoice(player1, "RED");
 
-        assertThat(target.getTextReplacements())
+        assertThat(gd.textReplacements(target.getId()))
                 .contains(new TextReplacement("white", "red", true));
         assertThat(gd.exiledCards).hasSize(1);
     }

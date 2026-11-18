@@ -2559,6 +2559,8 @@ public class PermanentRemovalService {
         // Its "for as long as" effects end as it leaves (CR 611.2b); a departing Aura's copy reverts with them.
         durationClock.sourceLeft(gameData, target.getId());
         gameData.expireControlEffectsForDepartedPermanent(target.getId());
+        // The effects on it end as it leaves (CR 400.7); its departure, emitted above, still reads them (CR 603.10a).
+        durationClock.affectedLeft(gameData, target.getId());
         creatureControlService.reconcileControl(gameData);
         untapLockReleaseService.releaseUntapLocks(gameData, target);
         handleSourceLinkedAnimationCleanup(gameData, target);

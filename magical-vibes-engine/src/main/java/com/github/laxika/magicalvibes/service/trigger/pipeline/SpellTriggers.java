@@ -1737,7 +1737,7 @@ public class SpellTriggers {
             SpellFilter filter = collectedSpellFilter(ability, watched, Zone.BATTLEFIELD, !printed);
             if (filter != null) {
                 if (printed) {
-                    filter = TextChangeTransformer.transformSpellFilter(filter, perm.getTextReplacements(),
+                    filter = TextChangeTransformer.transformSpellFilter(filter, gameData.textReplacements(perm.getId()),
                             wordChange);
                 }
                 triggered |= collectSpellAbility(gameData, perm, card, controllerId, watched, event, ability,
@@ -1757,7 +1757,7 @@ public class SpellTriggers {
             }
             // Layer 3 (CR 612.1): the trigger condition is read from the permanent's text-changed words.
             triggered |= collectUnfilteredAbility(gameData, perm, card, controllerId, event, ability,
-                    printed ? effect -> TextChangeTransformer.transform(effect, perm.getTextReplacements(), wordChange)
+                    printed ? effect -> TextChangeTransformer.transform(effect, gameData.textReplacements(perm.getId()), wordChange)
                             : UnaryOperator.identity(), null);
         }
         return triggered;

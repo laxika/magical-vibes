@@ -7342,7 +7342,7 @@ public class GameQueryService {
                     }
                     try {
                         handler.apply(context,
-                                TextChangeTransformer.transform(effect, source.getTextReplacements(),
+                                TextChangeTransformer.transform(effect, gameData.textReplacements(source.getId()),
                                         globalWordChange),
                                 accumulator);
                     } finally {
@@ -7476,8 +7476,11 @@ public class GameQueryService {
         // source, so they are read here rather than through a handler: the additive +X/+Y (7c, CR 613.4c) and
         // granted keywords (layer 6) apply while the effect lasts; several stack additively. Each is attributed to
         // the card that made it.
+        // A permanent that left has the boosts it had as it left: its last-known information (CR 608.2h).
+        List<FloatingContinuousEffect> departedEffects = gameData.departedPermanentEffects.get(target.getId());
         synchronized (gameData.floatingEffects) {
-            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : departedEffects == null ? gameData.floatingEffects
+                    : concat(gameData.floatingEffects, departedEffects)) {
                 if (board.isManagedL4(floating.effect())) {
                     board.replayL4Contribution(floating.effect(), target.getId(), accumulator);
                 }
@@ -7571,7 +7574,7 @@ public class GameQueryService {
                     StaticEffectContext selfContext = new StaticEffectContext(
                             target, target, resolvedTargetControllerId, true, gameData);
                     selfHandler.apply(selfContext,
-                            TextChangeTransformer.transform(effect, target.getTextReplacements(),
+                            TextChangeTransformer.transform(effect, gameData.textReplacements(target.getId()),
                                     globalWordChange),
                             accumulator);
                 } finally {
@@ -7886,7 +7889,7 @@ public class GameQueryService {
                 }
                 if (handler != null) {
                     handler.apply(context,
-                            TextChangeTransformer.transform(grant.staticEffect(), source.getTextReplacements(),
+                            TextChangeTransformer.transform(grant.staticEffect(), gameData.textReplacements(source.getId()),
                                     globalWordChange),
                             accumulator);
                 }
@@ -11156,7 +11159,7 @@ public class GameQueryService {
                 && gameData.anyPermanentMatches(source -> !source.isFaceDown()
                 && source.getCard().getStaticEffects().stream()
                         .filter(AllLandsAreCreaturesEffect.class::isInstance)
-                        .map(e -> TextChangeTransformer.transform(e, source.getTextReplacements()))
+                        .map(e -> TextChangeTransformer.transform(e, gameData.textReplacements(source.getId())))
                         .anyMatch(e -> e instanceof AllLandsAreCreaturesEffect animateLands
                                 && (animateLands.scope() == GrantScope.ALL_LANDS
                                         || (animateLands.scope() == GrantScope.OWN_LANDS
@@ -14339,5 +14342,12 @@ public class GameQueryService {
         return override.stream()
                 .map(EnchantedPermanentBecomesTypeEffect::manaColorForLandSubtype)
                 .toList();
+    }
+
+    private static List<FloatingContinuousEffect> concat(List<FloatingContinuousEffect> first,
+                                                         List<FloatingContinuousEffect> second) {
+        List<FloatingContinuousEffect> all = new ArrayList<>(first);
+        all.addAll(second);
+        return all;
     }
 }

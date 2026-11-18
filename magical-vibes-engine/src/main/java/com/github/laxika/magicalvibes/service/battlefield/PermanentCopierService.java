@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
@@ -15,16 +16,20 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryCharacteristicsEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.LicidEndEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import java.util.ArrayList;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Component
 public class PermanentCopierService {
@@ -262,5 +267,50 @@ public class PermanentCopierService {
         exactTypes.remove(primaryType);
         permanent.getCard().setType(primaryType);
         permanent.getCard().setAdditionalTypes(exactTypes);
+    }
+    /**
+     * The card {@code permanent} showed before its active copy effects that last until a player's next turn: the one
+     * they keep, or its current card when it has none (the card a new such copy keeps).
+     */
+    public static Card untilNextTurnPreCopyCard(GameData gameData, Permanent permanent) {
+        List<FloatingContinuousEffect> copies = untilNextTurnCopies(gameData, permanent.getId());
+        return copies.isEmpty() ? permanent.getCard()
+                : ((MakeTargetCopyOfTargetCreatureUntilNextTurnEffect) copies.getFirst().effect()).preCopyCard();
+    }
+
+    /**
+     * Records the copy just applied to {@code permanent} as a layer-1 floating effect (CR 613.1a) that lasts until
+     * {@code controllerId}'s next turn, made by {@code sourceCardName}'s {@code sourcePermanentId}. It keeps the card the
+     * permanent now shows and {@code preCopyCard}, from {@link #untilNextTurnPreCopyCard} before the copy applied.
+     */
+    public static void beginUntilNextTurnCopy(GameData gameData, String sourceCardName, UUID sourcePermanentId,
+                                              UUID controllerId, Permanent permanent, Card preCopyCard) {
+        gameData.addEffectOnPermanent(sourceCardName, sourcePermanentId, controllerId,
+                new MakeTargetCopyOfTargetCreatureUntilNextTurnEffect(permanent.getCard(), preCopyCard),
+                permanent.getId(), Duration.UNTIL_YOUR_NEXT_TURN);
+    }
+
+    /**
+     * Has the active copy effects of {@code permanent} that last until a player's next turn keep {@code copiedCard}
+     * and {@code preCopyCard} instead (a {@code null} keeps what one kept): a newer copy effect of another kind, or a
+     * merge, changed what they apply and what the permanent reverts to.
+     */
+    public static void updateUntilNextTurnCopies(GameData gameData, Permanent permanent,
+                                                 java.util.function.UnaryOperator<Card> copiedCard,
+                                                 java.util.function.UnaryOperator<Card> preCopyCard) {
+        for (FloatingContinuousEffect copy : untilNextTurnCopies(gameData, permanent.getId())) {
+            var kept = (MakeTargetCopyOfTargetCreatureUntilNextTurnEffect) copy.effect();
+            gameData.replaceFloatingEffect(copy, copy.withEffect(new MakeTargetCopyOfTargetCreatureUntilNextTurnEffect(
+                    copiedCard.apply(kept.copiedCard()), preCopyCard.apply(kept.preCopyCard()))));
+        }
+    }
+
+    /** The active copy effects on {@code permanentId} that last until a player's next turn, oldest first. */
+    public static List<FloatingContinuousEffect> untilNextTurnCopies(GameData gameData, UUID permanentId) {
+        return gameData.floatingEffectsOnPermanent(permanentId, MakeTargetCopyOfTargetCreatureUntilNextTurnEffect.class)
+                .stream()
+                .filter(copy -> ((MakeTargetCopyOfTargetCreatureUntilNextTurnEffect) copy.effect()).copiedCard() != null)
+                .sorted(java.util.Comparator.comparingLong(FloatingContinuousEffect::timestamp))
+                .toList();
     }
 }

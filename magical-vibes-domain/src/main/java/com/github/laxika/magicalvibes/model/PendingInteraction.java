@@ -6427,8 +6427,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** The exiled creature card an attached creature becomes a copy of, for {@code duration}. */
     record AssimilationAegisCopyChoice(UUID playerId, UUID equipmentId, UUID attachedCreatureId,
-                                        java.util.List<UUID> validCardIds)
+                                        java.util.List<UUID> validCardIds,
+                                        com.github.laxika.magicalvibes.model.effect.Duration duration)
             implements PendingInteraction {
         public AssimilationAegisCopyChoice {
             validCardIds = java.util.List.copyOf(validCardIds);

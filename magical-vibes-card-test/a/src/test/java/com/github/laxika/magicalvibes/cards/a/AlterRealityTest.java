@@ -35,7 +35,7 @@ class AlterRealityTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "GREEN");
 
-        assertThat(target.getTextReplacements()).containsExactly(new TextReplacement("red", "green"));
+        assertThat(gd.textReplacements(target.getId())).containsExactly(new TextReplacement("red", "green"));
     }
 
     @Test
@@ -80,7 +80,7 @@ class AlterRealityTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Paladin en-Vec").getTextReplacements())
+        assertThat(gd.textReplacements(findPermanent(player1, "Paladin en-Vec").getId()))
                 .containsExactly(new TextReplacement("red", "green"));
     }
 
@@ -97,7 +97,7 @@ class AlterRealityTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "WHITE");
 
-        assertThat(target.getTextReplacements())
+        assertThat(gd.textReplacements(target.getId()))
                 .containsExactly(new TextReplacement("black", "white"));
         harness.assertNotInGraveyard(player1, "Alter Reality");
         assertThat(gd.getPlayerExiledCards(player1.getId()))

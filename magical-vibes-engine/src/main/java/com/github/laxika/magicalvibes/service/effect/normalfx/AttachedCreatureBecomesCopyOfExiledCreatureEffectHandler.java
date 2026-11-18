@@ -52,11 +52,13 @@ public class AttachedCreatureBecomesCopyOfExiledCreatureEffectHandler implements
         if (eligible.size() > 1) {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.AssimilationAegisCopyChoice(
                     entry.getControllerId(), equipment.getId(), attached.getId(),
-                    eligible.stream().map(exiled -> exiled.card().getId()).toList()));
+                    eligible.stream().map(exiled -> exiled.card().getId()).toList(),
+                    ((AttachedCreatureBecomesCopyOfExiledCreatureEffect) effect).duration()));
             return;
         }
 
-        auraCopyService.applyExiledCreatureCopy(gameData, equipment, attached, eligible.getFirst().card());
+        auraCopyService.applyExiledCreatureCopy(gameData, equipment, attached, eligible.getFirst().card(),
+                ((AttachedCreatureBecomesCopyOfExiledCreatureEffect) effect).duration());
     }
 
     public static List<ExiledCardEntry> eligibleCards(GameData gameData, UUID equipmentId,

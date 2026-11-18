@@ -290,6 +290,8 @@ public class AbilityActivationService {
 
     private final ActivatedAbilityExecutionService activatedAbilityExecutionService;
 
+    private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport> tapUntapSupportProvider;
+
     private final PlayerInputService playerInputService;
 
     private final PermanentRemovalService permanentRemovalService;
@@ -819,6 +821,8 @@ public class AbilityActivationService {
                 continue;
             }
 
+            // Taking the activation back undoes its tap cost: the permanent doesn't become untapped as a game
+            // event, so nothing triggers and no duration ends (all of them saw it tapped only by this activation).
             source.untap();
             for (Map.Entry<ManaColor, Integer> e : activation.manaAdded().entrySet()) {
                 for (int n = 0; n < e.getValue(); n++) {
@@ -5954,7 +5958,8 @@ public class AbilityActivationService {
         if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameLogService, sourcePermanentId);
         if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, tapCostSupport.requiredCount(gameData, c, sourcePermanentId, xValue), predicateEvaluationService, gameLogService, sourcePermanentId);
         if (effect instanceof UntapMultiplePermanentsCost c) return new MultiplePermanentUntapCostHandler(
-                c, predicateEvaluationService, gameLogService, gameQueryService, sourcePermanentId,
+                c, predicateEvaluationService, gameLogService, gameQueryService,
+                tapUntapSupportProvider.getObject(), sourcePermanentId,
                 abilityWithCostRequiresTap(gameData, sourcePermanentId, c), chosenSoFar);
         if (effect instanceof SacrificeXPermanentsCost c) return new SacrificeXPermanentsCostHandler(
                 c, xValue, predicateEvaluationService, gameQueryService, sacAction, sourcePermanentId);

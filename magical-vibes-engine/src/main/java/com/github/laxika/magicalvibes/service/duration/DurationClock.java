@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
@@ -60,9 +61,10 @@ import java.util.function.Predicate;
  *
  * <p>A "for as long as" duration (CR 611.2b) ends as soon as its condition stops holding, not at a batch: the
  * engine tells the clock where the state changes, and the clock ends the effects of that source the change ends. Its
- * source leaves the battlefield ({@link #sourceLeft}), untaps ({@link #sourceUntapped}), becomes unattached or attached
- * to another object ({@link #sourceUnattached}), or comes under the control of a player other than the effect's
- * creator ({@link #sourceChangedControl}). {@link #holds} judges the same conditions against the board, for the control
+ * source leaves the battlefield ({@link #sourceLeft}), phases out ({@link #trackedPermanentPhasedOut}, CR 702.26f),
+ * untaps ({@link #sourceUntapped}), becomes unattached or attached to another object ({@link #sourceUnattached}), or
+ * comes under the control of a player other than the effect's creator ({@link #sourceChangedControl}). Whatever their
+ * durations, the effects on a permanent end as it leaves the battlefield ({@link #affectedLeft}, CR 400.7). {@link #holds} judges the same conditions against the board, for the control
  * reconciliation that catches a change made without telling the clock. Whatever ends an effect, the clock undoes what
  * it kept on the permanent it affected; control itself is recomputed by its caller, which may be iterating a
  * battlefield.
@@ -155,6 +157,40 @@ public class DurationClock {
                 && asLongAs(effect) != null && asLongAs(effect).needsSourceOnBattlefield());
     }
 
+    /**
+     * Ends the floating effects on {@code permanentId} as it leaves the battlefield, whatever their durations: the
+     * object they affected is gone, and the one that returns is a new object they don't apply to (CR 400.7). They stay
+     * readable as the departed permanent's last-known information (CR 608.2h), so call this after its departure was
+     * recorded. Its control effects end with its control (see {@code GameData.expireControlEffectsForDepartedPermanent}).
+     * Phasing out is not leaving (CR 702.26d).
+     */
+    public List<FloatingContinuousEffect> affectedLeft(GameData gameData, UUID permanentId) {
+        return gameData.endFloatingEffectsOnDepartedPermanent(permanentId);
+    }
+
+    /**
+     * Ends the "for as long as" effects that track {@code permanentId} as it phases out, because they can no longer see
+     * it (CR 702.26f): the ones whose duration follows it as their source ("for as long as you control this creature",
+     * "for as long as this creature remains tapped", the permanent itself included), and the ones that last for as long
+     * as it, the permanent they affect, remains face down or keeps an Equipment attached. They don't begin again as it
+     * phases in. "Until it leaves the battlefield" and "until you lose control of it" go on, as phasing out is neither
+     * (CR 702.26d), and so do the effects with other durations ("until end of turn", "until end of combat") and an
+     * attachment a rule or a static ability keeps.
+     */
+    public List<FloatingContinuousEffect> trackedPermanentPhasedOut(GameData gameData, UUID permanentId) {
+        return end(gameData, effect -> {
+            Duration.AsLongAs asLongAs = asLongAs(effect);
+            if (asLongAs == null) {
+                return false;
+            }
+            if (asLongAs.endsAsSourcePhasesOut() && permanentId.equals(effect.sourcePermanentId())) {
+                return true;
+            }
+            return (asLongAs == Duration.AsLongAs.AFFECTED_FACE_DOWN || asLongAs == Duration.AsLongAs.REMAINS_ATTACHED)
+                    && permanentId.equals(effect.affectedPermanentId());
+        });
+    }
+
     /** Ends the effects that last for as long as {@code sourcePermanentId} remains tapped, as it untaps. */
     public List<FloatingContinuousEffect> sourceUntapped(GameData gameData, UUID sourcePermanentId) {
         return end(gameData, effect -> sourcePermanentId.equals(effect.sourcePermanentId())
@@ -167,7 +203,7 @@ public class DurationClock {
      */
     public List<FloatingContinuousEffect> sourceUnattached(GameData gameData, UUID sourcePermanentId) {
         return end(gameData, effect -> sourcePermanentId.equals(effect.sourcePermanentId())
-                && asLongAs(effect) == Duration.AsLongAs.ATTACHED);
+                && asLongAs(effect) != null && asLongAs(effect).needsAttachment());
     }
 
     /**
@@ -201,7 +237,7 @@ public class DurationClock {
         if (asLongAs.needsSourceTapped() && !source.isTapped()) {
             return false;
         }
-        return asLongAs != Duration.AsLongAs.ATTACHED
+        return !asLongAs.needsAttachment()
                 || (source.isAttached() && source.getAttachedTo().equals(effect.affectedPermanentId()));
     }
 
@@ -212,7 +248,7 @@ public class DurationClock {
      */
     private static boolean needsCreatorToControlSource(FloatingContinuousEffect effect) {
         Duration.AsLongAs asLongAs = asLongAs(effect);
-        if (asLongAs == Duration.AsLongAs.SOURCE_CONTROLLED) {
+        if (asLongAs == Duration.AsLongAs.SOURCE_CONTROLLED || asLongAs == Duration.AsLongAs.SOURCE_UNTIL_CONTROL_LOST) {
             return true;
         }
         if (asLongAs != Duration.AsLongAs.SOURCE_ON_BATTLEFIELD && asLongAs != Duration.AsLongAs.SOURCE_TAPPED) {
@@ -352,18 +388,29 @@ public class DurationClock {
                     phasingService.phaseInHeld(gameData, affected.getId(), held.tapsOnPhaseIn());
             case TapRestrictionEffect restriction when restriction.preventsTappingUnlessAttacking() ->
                     affected.removeTapRestriction(effect.id());
-            case MakeTargetCopyOfTargetCreatureUntilNextTurnEffect ignored -> {
-                // A newer copy effect overwrites the copy's controller, so an older one ending first must not revert
-                // the card out from under the newer one.
-                if (affected.hasUntilNextTurnCopyLayers()) {
-                    affected.expireUntilNextTurnCopyLayers(effect.controllerId());
-                } else if (affected.isCopyUntilControllerNextTurn()
-                        && effect.controllerId().equals(affected.getCopyUntilNextTurnControllerId())) {
-                    affected.revertUntilNextTurnCopy();
-                }
-            }
+            case MakeTargetCopyOfTargetCreatureUntilNextTurnEffect copy when copy.copiedCard() != null ->
+                    endUntilNextTurnCopy(gameData, affected, effect, copy);
             case null, default -> {
             }
+        }
+    }
+
+    /**
+     * Ends a copy effect that lasted until a player's next turn: when it was the newest of its kind on the permanent,
+     * the newest one left applies again (CR 613.7); with none left, the permanent shows the card it showed before them.
+     * An older one ending leaves the newer copy in place.
+     */
+    private static void endUntilNextTurnCopy(GameData gameData, Permanent affected, FloatingContinuousEffect ended,
+                                             MakeTargetCopyOfTargetCreatureUntilNextTurnEffect copy) {
+        List<FloatingContinuousEffect> remaining = PermanentCopierService.untilNextTurnCopies(gameData,
+                affected.getId());
+        if (remaining.isEmpty()) {
+            affected.setCard(copy.preCopyCard());
+            return;
+        }
+        FloatingContinuousEffect newest = remaining.getLast();
+        if (newest.timestamp() < ended.timestamp()) {
+            affected.setCard(((MakeTargetCopyOfTargetCreatureUntilNextTurnEffect) newest.effect()).copiedCard());
         }
     }
 

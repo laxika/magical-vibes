@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.s.SalvagedManaworker;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,10 +19,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.util.List;
+
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ThePhasingOfZhalfir.class, GrizzlyBears.class, Island.class, MindStone.class,
-        SalvagedManaworker.class})
+        SalvagedManaworker.class, Disenchant.class})
 class ThePhasingOfZhalfirTest extends BaseCardTest {
 
     @Test
@@ -38,8 +44,15 @@ class ThePhasingOfZhalfirTest extends BaseCardTest {
         advanceToUntap(player2);
         assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(target);
 
-        gd.playerBattlefields.get(player1.getId()).removeIf(
-                permanent -> permanent.getCard().getName().equals("The Phasing of Zhalfir"));
+        UUID sagaId = harness.getPermanentId(player1, "The Phasing of Zhalfir");
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, sagaId);
+        harness.assertInGraveyard(player1, "The Phasing of Zhalfir");
         advanceToUntap(player2);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);

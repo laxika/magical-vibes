@@ -170,6 +170,7 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 public class ActivatedAbilityExecutionService {
     private final com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry effectHandlerRegistry;
     private final DurationClock durationClock;
+    private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport> tapUntapSupportProvider;
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.EffectResolutionService> effectResolutionServiceProvider;
 
     /** Performs a paid special action immediately, without activation triggers or a stack entry. */
@@ -700,11 +701,11 @@ public class ActivatedAbilityExecutionService {
             gameData.stack.subList(stackBefore, gameData.stack.size()).clear();
             if (permanent.isUntapAfterTapCost()) {
                 permanent.setUntapAfterTapCost(false);
-                permanent.untap();
+                tapUntapSupportProvider.getObject().untapPermanent(gameData, permanent);
             }
         } else if (ability.isRequiresUntap()) {
             // {Q} untap symbol: paying the cost untaps the source permanent.
-            permanent.untap();
+            tapUntapSupportProvider.getObject().untapPermanent(gameData, permanent);
         }
 
         // "Remove all {type} counters from this permanent" is an additional cost — snapshot the
@@ -1304,7 +1305,7 @@ public class ActivatedAbilityExecutionService {
         List<CardEffect> snapshotEffects = new ArrayList<>();
         for (CardEffect printedEffect : abilityEffects) {
             CardEffect effect = TextChangeTransformer.transform(printedEffect,
-                    permanent.getTextReplacements(), TextChangeTransformer.globalColorWordReplacements(gameData));
+                    gameData.textReplacements(permanent.getId()), TextChangeTransformer.globalColorWordReplacements(gameData));
             if (effect instanceof CostEffect) {
                 continue;
             }

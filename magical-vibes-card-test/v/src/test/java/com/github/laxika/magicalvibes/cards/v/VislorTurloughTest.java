@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.r.RealityRipple;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VislorTurlough.class, Forest.class})
+@CardUsed({VislorTurlough.class, Forest.class, RealityRipple.class})
 class VislorTurloughTest extends BaseCardTest {
 
     @Test
@@ -31,6 +32,26 @@ class VislorTurloughTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Vislor Turlough");
         Permanent vislor = findPermanent(player2, "Vislor Turlough");
         assertThat(als.getMustAttackRequirementCount(gd, vislor)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The goad lasts for as long as they control Vislor, so it ends for good as Vislor phases out")
+    void goadEndsAsVislorPhasesOut() {
+        castVislor();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        Permanent vislor = findPermanent(player2, "Vislor Turlough");
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new RealityRipple()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, vislor.getId());
+        harness.performUntapStep(player2);
+
+        harness.assertOnBattlefield(player2, "Vislor Turlough");
+        assertThat(als.getMustAttackRequirementCount(gd, vislor)).isZero();
     }
 
     @Test

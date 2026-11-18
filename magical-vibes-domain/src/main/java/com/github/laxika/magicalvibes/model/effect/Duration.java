@@ -96,12 +96,35 @@ public record Duration(Start start, End end, AsLongAs asLongAs, int combatPhase)
         SOURCE_CONTROLLED,
         /** Its source stays on the battlefield, whoever controls it ("for as long as this creature remains"). */
         SOURCE_REMAINS,
+        /**
+         * Its source hasn't left the battlefield: "until this enchantment leaves the battlefield" (Oubliette, Gaea's
+         * Liege). Unlike a "for as long as" duration it doesn't end as its source phases out, which isn't leaving
+         * (CR 702.26d).
+         */
+        SOURCE_UNTIL_LEAVES,
+        /**
+         * Its source stays on the battlefield under its creator's control: "until you lose control of" it (suspend's
+         * haste, CR 702.62a). Unlike a "for as long as" duration it doesn't end as its source phases out, which changes
+         * neither zone nor control (CR 702.26d).
+         */
+        SOURCE_UNTIL_CONTROL_LOST,
         /** Its source stays on the battlefield, under its creator's control, and tapped (Seasinger). */
         SOURCE_TAPPED,
         /** Its source stays tapped, whoever controls it (Vedalken Shackles). */
         SOURCE_REMAINS_TAPPED,
-        /** Its source, an Aura or Equipment, stays attached to the affected permanent. */
+        /**
+         * Its source, an Aura or Equipment, stays attached to the affected permanent, as a rule or a static ability
+         * keeps it: reconfigure's "isn't a creature" (CR 702.151b), an Aura's "you control enchanted creature",
+         * "enchanted creature is a copy of" (Metamorphic Alteration). Phasing out doesn't end it: the attachment phases
+         * out and in with the permanent (CR 702.26g).
+         */
         ATTACHED,
+        /**
+         * "For as long as this Equipment remains attached to it" from a resolution (Blade of Shared Souls, Assimilation
+         * Aegis): ends as its source becomes unattached or leaves, and, as a "for as long as" duration that tracks both,
+         * as the source or the affected permanent phases out (CR 702.26f).
+         */
+        REMAINS_ATTACHED,
         /** Its source card stays in exile (teach); it ends as the card leaves exile, cast or not. */
         SOURCE_CARD_EXILED,
         /** The affected permanent stays face down (Roalesk's "for as long as it remains face down"). */
@@ -112,6 +135,20 @@ public record Duration(Start start, End end, AsLongAs asLongAs, int combatPhase)
         /** Whether it holds only while its source permanent is on the battlefield: it ends as the source leaves. */
         public boolean needsSourceOnBattlefield() {
             return this != SOURCE_CARD_EXILED && this != STATIC_ABILITY && this != AFFECTED_FACE_DOWN;
+        }
+
+        /**
+         * Whether it is a "for as long as" duration that tracks its source permanent, so it ends as that source phases
+         * out: it can no longer see it (CR 702.26f).
+         */
+        public boolean endsAsSourcePhasesOut() {
+            return this == SOURCE_ON_BATTLEFIELD || this == SOURCE_CONTROLLED || this == SOURCE_REMAINS
+                    || this == SOURCE_TAPPED || this == SOURCE_REMAINS_TAPPED || this == REMAINS_ATTACHED;
+        }
+
+        /** Whether it lasts only while its source stays attached to the affected permanent. */
+        public boolean needsAttachment() {
+            return this == ATTACHED || this == REMAINS_ATTACHED;
         }
 
         /** Whether it holds only while its source stays tapped: it ends as the source untaps. */
@@ -162,6 +199,10 @@ public record Duration(Start start, End end, AsLongAs asLongAs, int combatPhase)
     public static final Duration WHILE_SOURCE_CONTROLLED = new Duration(End.NEVER, AsLongAs.SOURCE_CONTROLLED);
     /** "For as long as this creature remains on the battlefield" (Infernal Denizen). */
     public static final Duration WHILE_SOURCE_REMAINS = new Duration(End.NEVER, AsLongAs.SOURCE_REMAINS);
+    /** "Until [this permanent] leaves the battlefield": see {@link AsLongAs#SOURCE_UNTIL_LEAVES}. */
+    public static final Duration UNTIL_SOURCE_LEAVES = new Duration(End.NEVER, AsLongAs.SOURCE_UNTIL_LEAVES);
+    /** "Until you lose control of" it: see {@link AsLongAs#SOURCE_UNTIL_CONTROL_LOST}. */
+    public static final Duration UNTIL_CONTROL_LOST = new Duration(End.NEVER, AsLongAs.SOURCE_UNTIL_CONTROL_LOST);
     /** For as long as you control its source and it remains tapped (Seasinger). */
     public static final Duration WHILE_SOURCE_TAPPED = new Duration(End.NEVER, AsLongAs.SOURCE_TAPPED);
     /** For as long as its source remains tapped (Vedalken Shackles). */
@@ -173,6 +214,8 @@ public record Duration(Start start, End end, AsLongAs asLongAs, int combatPhase)
     public static final Duration WHILE_FACE_DOWN = new Duration(End.NEVER, AsLongAs.AFFECTED_FACE_DOWN);
     /** For as long as its source, an Aura or Equipment, stays attached to the affected permanent. */
     public static final Duration WHILE_ATTACHED = new Duration(End.NEVER, AsLongAs.ATTACHED);
+    /** "For as long as this Equipment remains attached to it": see {@link AsLongAs#REMAINS_ATTACHED}. */
+    public static final Duration WHILE_REMAINS_ATTACHED = new Duration(End.NEVER, AsLongAs.REMAINS_ATTACHED);
     /** The effect of a static ability (CR 611.3): Auras, Equipment, Stations. */
     public static final Duration STATIC = new Duration(End.NEVER, AsLongAs.STATIC_ABILITY);
 

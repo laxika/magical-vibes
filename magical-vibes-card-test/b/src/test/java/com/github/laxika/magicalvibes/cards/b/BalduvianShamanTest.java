@@ -37,7 +37,7 @@ class BalduvianShamanTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "BLUE");
 
-        assertThat(cop.getTextReplacements()).containsExactly(new TextReplacement("black", "blue"));
+        assertThat(gd.textReplacements(cop.getId())).containsExactly(new TextReplacement("black", "blue"));
         advanceToUpkeep(player1);
         resolveAllTriggers();
         assertThat(cop.getCounterCount(CounterType.AGE)).isEqualTo(1);
@@ -61,7 +61,7 @@ class BalduvianShamanTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(cop.getTextReplacements()).containsExactly(new TextReplacement("black", "blue"));
+        assertThat(gd.textReplacements(cop.getId())).containsExactly(new TextReplacement("black", "blue"));
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
@@ -125,7 +125,7 @@ class BalduvianShamanTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "BLUE");
 
-        assertThat(cop.getTextReplacements()).containsExactly(new TextReplacement("black", "blue"));
+        assertThat(gd.textReplacements(cop.getId())).containsExactly(new TextReplacement("black", "blue"));
         assertThat(gqs.hasCumulativeUpkeep(gd, cop)).isTrue();
         assertThat(shaman.isTapped()).isTrue();
     }
@@ -252,7 +252,7 @@ class BalduvianShamanTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "BLUE");
 
-        assertThat(renewal.getTextReplacements()).containsExactly(new TextReplacement("black", "blue"));
+        assertThat(gd.textReplacements(renewal.getId())).containsExactly(new TextReplacement("black", "blue"));
         assertThat(gqs.hasCumulativeUpkeep(gd, renewal)).isTrue();
     }
 

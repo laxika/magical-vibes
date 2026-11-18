@@ -655,7 +655,7 @@ class SevenLayerTest extends BaseCardTest {
 
             endTurn();
 
-            assertThat(king.getTextReplacements()).hasSize(1);
+            assertThat(gd.textReplacements(king.getId())).hasSize(1);
             assertThat(hasKeyword(goblin, Keyword.ISLANDWALK)).isTrue();
         }
 

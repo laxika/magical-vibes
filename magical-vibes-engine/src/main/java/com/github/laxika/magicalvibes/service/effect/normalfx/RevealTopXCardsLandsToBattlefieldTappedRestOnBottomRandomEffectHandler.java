@@ -33,6 +33,7 @@ public class RevealTopXCardsLandsToBattlefieldTappedRestOnBottomRandomEffectHand
     private final BattlefieldEntryService battlefieldEntryService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final GameQueryService gameQueryService;
+    private final TapUntapSupport tapUntapSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -85,8 +86,8 @@ public class RevealTopXCardsLandsToBattlefieldTappedRestOnBottomRandomEffectHand
             gameLogService.append(gameData, GameLog.entersBattlefieldUnder(card, playerName));
         }
         for (Permanent permanent : enteredLands) {
-            if (untap && !gameQueryService.cantBecomeUntapped(gameData, permanent)) {
-                permanent.untap();
+            if (untap) {
+                tapUntapSupport.untapPermanent(gameData, permanent);
             }
         }
         for (Permanent permanent : enteredLands) {

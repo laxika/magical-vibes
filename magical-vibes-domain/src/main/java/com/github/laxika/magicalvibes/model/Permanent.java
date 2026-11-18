@@ -388,10 +388,6 @@ public class Permanent {
     @Setter private UUID protectorPlayerId;
     /** Name assigned by a one-shot effect for as long as this permanent stays on the battlefield. */
     @Setter private String persistentName;
-    /** Word substitutions applied by text-changing effects (CR 612). Entries flagged
-     *  {@link TextReplacement#untilEndOfTurn()} (Whim of Volrath) are dropped by
-     *  {@link #resetModifiers()}; the rest survive turn resets (Mind Bend, Magical Hack). */
-    private final List<TextReplacement> textReplacements = new ArrayList<>();
     /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield (CR 614.6). */
     @Setter private boolean exileIfLeavesBattlefield;
     /** If true, this permanent is exiled instead of being put into a graveyard from the battlefield. */
@@ -594,24 +590,6 @@ public class Permanent {
     /** The card to revert to when a "while attached" copy ends.
      *  Only non-null when {@link #copyWhileAttached} is true. */
     @Setter private Card whileAttachedPreCopyCard;
-    /** When true, this permanent is a copy of another creature until {@link #copyUntilNextTurnControllerId}'s
-     *  next turn (e.g. Shapesharer). NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
-     *  Reverts to {@link #untilNextTurnPreCopyCard} via {@link #revertUntilNextTurnCopy()} at the beginning
-     *  of that player's turn. */
-    @Setter private boolean copyUntilControllerNextTurn;
-    /** The card to revert to when an "until your next turn" copy ends.
-     *  Only non-null when {@link #copyUntilControllerNextTurn} is true. */
-    @Setter private Card untilNextTurnPreCopyCard;
-    /** The player whose next turn ends an "until your next turn" copy (the ability's controller). */
-    @Setter private UUID copyUntilNextTurnControllerId;
-    /** The copies currently applied by Shapesharer-style "until your next turn" effects, oldest first.
-     *  The newest one overrides the earlier ones (CR 613.7); when it expires first, the previous
-     *  still-active copy applies again (CR 613.6). */
-    private final List<UntilNextTurnCopyLayer> untilNextTurnCopyLayers = new ArrayList<>();
-
-    /** A copy applied by an effect that lasts until {@code controllerId}'s next turn. */
-    public record UntilNextTurnCopyLayer(UUID controllerId, Card copyCard) {}
-
     /** CR 613.7 timestamp: stamped from {@link GameData#nextTimestamp()} when this permanent
      *  enters a battlefield, and re-stamped each time it becomes attached (CR 613.7e — Auras and
      *  Equipment). Control changes do NOT re-stamp (CR 613.7c). Stays 0 for permanents added to
@@ -824,7 +802,6 @@ public class Permanent {
         this.enteredFromExile = source.enteredFromExile;
         this.returnedWhenSourceLeftId = source.returnedWhenSourceLeftId;
         this.persistentName = source.persistentName;
-        this.textReplacements.addAll(source.textReplacements);
         this.exileIfLeavesBattlefield = source.exileIfLeavesBattlefield;
         this.exileIfDying = source.exileIfDying;
         this.exileIfDyingTimestamp = source.exileIfDyingTimestamp;
@@ -893,10 +870,6 @@ public class Permanent {
         this.nonCopiableKeywords.addAll(source.nonCopiableKeywords);
         this.copyWhileAttached = source.copyWhileAttached;
         this.whileAttachedPreCopyCard = source.whileAttachedPreCopyCard;
-        this.copyUntilControllerNextTurn = source.copyUntilControllerNextTurn;
-        this.untilNextTurnPreCopyCard = source.untilNextTurnPreCopyCard;
-        this.copyUntilNextTurnControllerId = source.copyUntilNextTurnControllerId;
-        this.untilNextTurnCopyLayers.addAll(source.untilNextTurnCopyLayers);
         this.timestamp = source.timestamp;
     }
 
@@ -1552,7 +1525,6 @@ public class Permanent {
         this.blockedWithoutBlockers = false;
         this.creaturesThatCrewedThisTurn.clear();
         this.saddled = false;
-        expireTemporaryTextReplacements();
     }
 
     /**
@@ -1584,7 +1556,6 @@ public class Permanent {
         return switch (field) {
             case BLOCKED_WITHOUT_BLOCKERS -> blockedWithoutBlockers;
             case SADDLED -> saddled;
-            case TEXT_REPLACEMENTS -> textReplacements.stream().filter(TextReplacement::untilEndOfTurn).toList();
             case TIMES_REGENERATED -> timesRegeneratedThisTurn;
             case TAPPED_PERMANENTS_FOR_ABILITY -> List.copyOf(tappedPermanentsForAbilityThisTurn);
             case CREATURES_THAT_CREWED -> Set.copyOf(creaturesThatCrewedThisTurn);
@@ -1597,18 +1568,12 @@ public class Permanent {
         switch (field) {
             case BLOCKED_WITHOUT_BLOCKERS -> blockedWithoutBlockers = true;
             case SADDLED -> saddled = true;
-            case TEXT_REPLACEMENTS -> textReplacements.addAll((List<TextReplacement>) value);
             case TIMES_REGENERATED -> timesRegeneratedThisTurn += (Integer) value;
             case TAPPED_PERMANENTS_FOR_ABILITY -> ((List<UUID>) value).forEach(this::recordTappedPermanentForAbility);
             case CREATURES_THAT_CREWED -> creaturesThatCrewedThisTurn.addAll((Set<UUID>) value);
             default -> {
             }
         }
-    }
-
-    /** Drops the "until end of turn" word substitutions (CR 612). */
-    private void expireTemporaryTextReplacements() {
-        this.textReplacements.removeIf(TextReplacement::untilEndOfTurn);
     }
 
     /**
@@ -1673,48 +1638,6 @@ public class Permanent {
         }
         this.copyWhileAttached = false;
         this.whileAttachedPreCopyCard = null;
-    }
-
-    /**
-     * Reverts an "until your next turn" copy (e.g. Shapesharer) back to the permanent's
-     * pre-copy card. Called at the beginning of the ability controller's next turn.
-     */
-    public void revertUntilNextTurnCopy() {
-        this.untilNextTurnCopyLayers.clear();
-        if (this.copyUntilControllerNextTurn && this.untilNextTurnPreCopyCard != null) {
-            this.card = this.untilNextTurnPreCopyCard;
-        }
-        this.copyUntilControllerNextTurn = false;
-        this.untilNextTurnPreCopyCard = null;
-        this.copyUntilNextTurnControllerId = null;
-    }
-
-    /** Records the copy just applied by an effect that lasts until {@code controllerId}'s next turn. */
-    public void pushUntilNextTurnCopyLayer(UUID controllerId) {
-        this.untilNextTurnCopyLayers.add(new UntilNextTurnCopyLayer(controllerId, this.card));
-    }
-
-    /**
-     * Ends the copies that last until {@code controllerId}'s next turn. If the newest copy ended while an
-     * earlier one is still active, that earlier copy applies again; otherwise the permanent reverts.
-     */
-    public void expireUntilNextTurnCopyLayers(UUID controllerId) {
-        if (untilNextTurnCopyLayers.isEmpty()) {
-            return;
-        }
-        UntilNextTurnCopyLayer newestBefore = untilNextTurnCopyLayers.getLast();
-        untilNextTurnCopyLayers.removeIf(layer -> layer.controllerId().equals(controllerId));
-        if (untilNextTurnCopyLayers.isEmpty()) {
-            revertUntilNextTurnCopy();
-        } else if (!untilNextTurnCopyLayers.getLast().equals(newestBefore)) {
-            UntilNextTurnCopyLayer newest = untilNextTurnCopyLayers.getLast();
-            this.card = newest.copyCard();
-            this.copyUntilNextTurnControllerId = newest.controllerId();
-        }
-    }
-
-    public boolean hasUntilNextTurnCopyLayers() {
-        return !untilNextTurnCopyLayers.isEmpty();
     }
 
     /** The mana of {@code color} spent to cast the spell that produced this permanent ({@link #manaSpentByColorToCast}). */

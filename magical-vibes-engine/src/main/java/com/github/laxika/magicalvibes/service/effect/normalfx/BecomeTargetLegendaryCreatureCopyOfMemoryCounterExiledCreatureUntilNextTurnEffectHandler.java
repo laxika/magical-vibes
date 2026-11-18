@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeTargetLegendaryCreatureCopyOfMemoryCounterExiledCreatureUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -53,16 +51,10 @@ public class BecomeTargetLegendaryCreatureCopyOfMemoryCounterExiledCreatureUntil
         }
 
         String originalName = target.getCard().getName();
-        if (!target.isCopyUntilControllerNextTurn()) {
-            target.setUntilNextTurnPreCopyCard(target.getCard());
-        }
+        Card preCopyCard = PermanentCopierService.untilNextTurnPreCopyCard(gameData, target);
         permanentCopierService.applyCloneCopy(target, exiled.card(), null, null, Set.of());
-        target.setCopyUntilControllerNextTurn(true);
-        target.setCopyUntilNextTurnControllerId(entry.getControllerId());
-        gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
-                entry.getControllerId(), new MakeTargetCopyOfTargetCreatureUntilNextTurnEffect(),
-                target.getId(), null, null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
+        PermanentCopierService.beginUntilNextTurnCopy(gameData, entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), target, preCopyCard);
 
         gameLogService.append(gameData,
                 GameLog.text(originalName + " becomes a copy of " + exiled.card().getName()

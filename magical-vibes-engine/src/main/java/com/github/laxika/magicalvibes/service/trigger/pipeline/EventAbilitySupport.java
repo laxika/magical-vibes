@@ -453,14 +453,14 @@ class EventAbilitySupport {
     /** {@code ability} of {@code permanent} read through its text changes (Layer 3, CR 612.1). */
     private static TriggeredAbility textChanged(GameData gameData, Permanent permanent, TriggeredAbility ability) {
         List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
-        if (permanent.getTextReplacements().isEmpty() && globalWordChange.isEmpty()) {
+        if (gameData.textReplacements(permanent.getId()).isEmpty() && globalWordChange.isEmpty()) {
             return ability;
         }
         List<EffectRegistration> transformed = new ArrayList<>(ability.effects().size());
         boolean changed = false;
         for (EffectRegistration registration : ability.effects()) {
             CardEffect effect = TextChangeTransformer.transform(registration.effect(),
-                    permanent.getTextReplacements(), globalWordChange);
+                    gameData.textReplacements(permanent.getId()), globalWordChange);
             changed |= effect != registration.effect();
             transformed.add(new EffectRegistration(effect, registration.simultaneousWithPrevious()));
         }

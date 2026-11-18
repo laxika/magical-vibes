@@ -74,9 +74,8 @@ public class EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffectHan
             if (permanent.isCopyUntilEndOfTurn()) {
                 permanent.setPreCopyCard(permanent.getCard());
             }
-            if (permanent.isCopyUntilControllerNextTurn()) {
-                permanent.setUntilNextTurnPreCopyCard(permanent.getCard());
-            }
+            PermanentCopierService.updateUntilNextTurnCopies(gameData, permanent,
+                    copied -> permanent.getCard(), preCopy -> permanent.getCard());
             if (permanent.isCopyWhileAttached()) {
                 permanent.setWhileAttachedPreCopyCard(permanent.getCard());
             }

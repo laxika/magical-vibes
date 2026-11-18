@@ -1114,9 +1114,6 @@ public class LayerSystemService {
 
         h = mix(h, p.getPersistentName() == null ? 0 : p.getPersistentName().hashCode());
 
-        for (TextReplacement replacement : p.getTextReplacements()) {
-            h = mix(h, System.identityHashCode(replacement));
-        }
         // A chosen color feeds layer 3 (Swirl the Mists rewrites every color word to it) and
         // layers 5/6 (chosen-color protection, Shifting Sky), so it must invalidate the cache.
         h = mix(h, enumOrdinal(p.getChosenColor()));
@@ -1338,7 +1335,7 @@ public class LayerSystemService {
             // Layer 3 on the object's own type line: a text change replacing a basic land
             // type word (Mind Bend targeting a Forest) rewrites the printed subtype itself,
             // and with it the land's intrinsic mana ability (CR 612, 305.6).
-            applyTextChangesToPrintedLandTypes(permanent, state, board.landTypeOverrides());
+            applyTextChangesToPrintedLandTypes(gameData, permanent, state, board.landTypeOverrides());
             states.put(permanent.getId(), state);
             slotsById.put(permanent.getId(), slot);
         }
@@ -1455,7 +1452,7 @@ public class LayerSystemService {
                 // by the source's text changes; the transform preserves the effect's class, so
                 // the classification of the original stands.
                 CardEffect rewritten = TextChangeTransformer.transform(
-                        effect, slot.permanent().getTextReplacements(), globalWordChange);
+                        effect, gameData.textReplacements(slot.permanent().getId()), globalWordChange);
                 long effectTimestamp = effect instanceof BecomeChosenColorEffect
                         ? Math.max(slot.permanent().getTimestamp(), slot.permanent().getChosenColorTimestamp())
                         : slot.permanent().getTimestamp();
@@ -1488,7 +1485,7 @@ public class LayerSystemService {
                         continue;
                     }
                     CardEffect rewritten = TextChangeTransformer.transform(
-                            effect, sourcePermanent.getTextReplacements(), globalWordChange);
+                            effect, gameData.textReplacements(sourcePermanent.getId()), globalWordChange);
                     instances.add(new EffectInstance(source, rewritten, effect, null,
                             classification.characteristicDefining(), sourcePermanent.getTimestamp(), source.position()));
                 }
@@ -3098,7 +3095,7 @@ public class LayerSystemService {
         if (!permanent.isFaceDown()) {
             Set<Keyword> printedKeywords = permanent.getCard().getKeywords();
             Set<Keyword> rewrittenKeywords = TextChangeTransformer.transformKeywords(
-                    printedKeywords, permanent.getTextReplacements());
+                    printedKeywords, gameData.textReplacements(permanent.getId()));
             for (Keyword keyword : printedKeywords) {
                 if (!rewrittenKeywords.contains(keyword)) {
                     state.removeKeyword(keyword);
@@ -3115,7 +3112,7 @@ public class LayerSystemService {
             for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof ProtectionFromColorsEffect protection && protection.scope() == null) {
                     ProtectionFromColorsEffect rewritten = (ProtectionFromColorsEffect)
-                            TextChangeTransformer.transform(protection, permanent.getTextReplacements(),
+                            TextChangeTransformer.transform(protection, gameData.textReplacements(permanent.getId()),
                                     globalWordChange);
                     state.addProtectionColors(rewritten.colors());
                 }
@@ -3238,9 +3235,9 @@ public class LayerSystemService {
      * application order, like everywhere else. A replacement of one creature type word for
      * another rewrites a printed creature type the same way (CR 612.2), without a land override.
      */
-    private void applyTextChangesToPrintedLandTypes(Permanent permanent, CharacteristicState state,
+    private void applyTextChangesToPrintedLandTypes(GameData gameData, Permanent permanent, CharacteristicState state,
                                                     Map<UUID, List<CardSubtype>> landTypeOverrides) {
-        for (TextReplacement replacement : permanent.getTextReplacements()) {
+        for (TextReplacement replacement : gameData.textReplacements(permanent.getId())) {
             CardSubtype from = TextChangeTransformer.basicLandTypeForWord(replacement.fromWord());
             CardSubtype to = TextChangeTransformer.basicLandTypeForWord(replacement.toWord());
             boolean landTypeReplacement = from != null && to != null;
@@ -3761,7 +3758,7 @@ public class LayerSystemService {
             return;
         }
         CardEffect transformed = TextChangeTransformer.transform(
-                grant.staticEffect(), source.permanent().getTextReplacements(),
+                grant.staticEffect(), gameData.textReplacements(source.permanent().getId()),
                 TextChangeTransformer.globalColorWordReplacements(gameData));
         for (PermanentSlot target : slotsById.values()) {
             applyFloatingStaticGrantToTarget(gameData, instance, source, target, handler, transformed, board);

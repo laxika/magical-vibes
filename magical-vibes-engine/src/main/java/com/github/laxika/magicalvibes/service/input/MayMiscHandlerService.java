@@ -35,16 +35,14 @@ import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.UntapLockReleaseService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
@@ -99,9 +97,7 @@ public class MayMiscHandlerService {
 
     private final AuraAttachmentService auraAttachmentService;
 
-    private final CreatureControlService creatureControlService;
-
-    private final UntapLockReleaseService untapLockReleaseService;
+    private final TapUntapSupport tapUntapSupport;
 
     private final SearchLibraryEffectHandler searchLibraryEffectHandler;
 
@@ -199,18 +195,11 @@ public class MayMiscHandlerService {
             // The untap was replaced (e.g. Freyalise's Winds); the replacement logged what happened.
         } else if (accepted && sourcePermanent != null && !gameQueryService.cantBecomeUntapped(gameData, sourcePermanent)) {
             boolean wasTapped = sourcePermanent.isTapped();
-            sourcePermanent.untap();
-            if (wasTapped) {
-                gameData.rulesEvents.occur(new TapEvent.BecameUntapped(sourcePermanent));
-            }
+            tapUntapSupport.untapPermanent(gameData, sourcePermanent);
             if (wasTapped && gameData.currentStep == TurnStep.UNTAP
                     && controllerId.equals(gameData.untapStepPlayerId)) {
                 gameData.untapStepUntappedPermanentCount++;
             }
-            // A "for as long as this stays tapped" control effect (Seasinger) ends on untap.
-            creatureControlService.onSourceUntapped(gameData, sourcePermanent);
-            // Giant Oyster: the -1/-1 counters its untap lock accrued go away with the lock.
-            untapLockReleaseService.releaseUntapLocks(gameData, sourcePermanent);
             
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " untaps " , sourceCard, "."));
             log.info("Game {} - {} untaps {} (may-not-untap choice)", gameData.id, player.getUsername(), sourceCard.getName());

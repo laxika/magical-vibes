@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.TargetLandBecomesBasicLandTypeUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -28,6 +29,7 @@ public class TideShaper extends Card {
         targetWhenKicked(TargetFilters.land(), 0, 0, 1, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
-                        new TargetLandBecomesBasicLandTypeUntilSourceLeavesEffect(CardSubtype.ISLAND));
+                        new TargetLandBecomesBasicLandTypeUntilSourceLeavesEffect(CardSubtype.ISLAND,
+                                Duration.WHILE_SOURCE_REMAINS));
     }
 }

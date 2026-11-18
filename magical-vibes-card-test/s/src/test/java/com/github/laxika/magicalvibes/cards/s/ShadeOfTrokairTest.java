@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.r.RealityRipple;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShadeOfTrokair.class})
+@CardUsed({ShadeOfTrokair.class, RealityRipple.class})
 class ShadeOfTrokairTest extends BaseCardTest {
 
     @Test
@@ -120,6 +121,29 @@ class ShadeOfTrokairTest extends BaseCardTest {
         assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isEqualTo(2);
         assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Suspend's haste lasts until its controller loses control, so phasing out and in keeps it")
+    void suspendHasteSurvivesPhasing() {
+        suspendCard();
+        for (int i = 0; i < 3; i++) {
+            advanceToUpkeep(player1);
+            resolveAllTriggers();
+        }
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        Permanent permanent = findPermanent(player1, "Shade of Trokair");
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new RealityRipple()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, permanent.getId());
+        harness.performUntapStep(player1);
+
+        harness.assertOnBattlefield(player1, "Shade of Trokair");
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isTrue();
     }
 
     @Test

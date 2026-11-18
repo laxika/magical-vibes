@@ -35,7 +35,7 @@ class CrystalSprayTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "GREEN");
 
-        assertThat(target.getTextReplacements()).containsExactly(new TextReplacement("red", "green", true));
+        assertThat(gd.textReplacements(target.getId())).containsExactly(new TextReplacement("red", "green", true));
         harness.assertInHand(player1, "Plains");
     }
 
@@ -53,7 +53,7 @@ class CrystalSprayTest extends BaseCardTest {
         harness.handleListChoice(player1, "PLAINS");
         harness.handleListChoice(player1, "ISLAND");
 
-        assertThat(findPermanent(player2, "Plains").getTextReplacements())
+        assertThat(gd.textReplacements(findPermanent(player2, "Plains").getId()))
                 .containsExactly(new TextReplacement("Plains", "Island", true));
     }
 
@@ -73,7 +73,7 @@ class CrystalSprayTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Crimson Acolyte").getTextReplacements())
+        assertThat(gd.textReplacements(findPermanent(player1, "Crimson Acolyte").getId()))
                 .containsExactly(new TextReplacement("red", "green", true));
     }
 
@@ -90,13 +90,13 @@ class CrystalSprayTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "GREEN");
 
-        assertThat(target.getTextReplacements()).hasSize(1);
+        assertThat(gd.textReplacements(target.getId())).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getTextReplacements()).isEmpty();
+        assertThat(gd.textReplacements(target.getId())).isEmpty();
     }
 
     @Test

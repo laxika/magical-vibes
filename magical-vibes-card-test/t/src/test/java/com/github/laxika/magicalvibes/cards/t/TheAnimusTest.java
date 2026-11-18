@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.cards.e.EzioBrashNovice;
 import com.github.laxika.magicalvibes.cards.r.RoyalAssassin;
 import com.github.laxika.magicalvibes.model.Card;
@@ -50,7 +51,8 @@ class TheAnimusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(legendaryCreature.getCard().getName()).isEqualTo("Royal Assassin");
-        assertThat(legendaryCreature.isCopyUntilControllerNextTurn()).isTrue();
+        assertThat(gd.hasFloatingEffectOnPermanent(legendaryCreature.getId(),
+                MakeTargetCopyOfTargetCreatureUntilNextTurnEffect.class)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()).get(0).isTapped()).isTrue();
     }
 

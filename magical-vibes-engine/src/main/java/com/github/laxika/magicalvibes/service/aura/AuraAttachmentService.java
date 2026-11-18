@@ -151,6 +151,7 @@ public class AuraAttachmentService {
                         emitSweptDeparture(gameData, p, playerId, auraOwnerId, attachmentIsMissing);
                         it.remove();
                         durationClock.sourceLeft(gameData, p.getId());
+                        durationClock.affectedLeft(gameData, p.getId());
                         if (p.isExileIfLeavesBattlefield() && !gameQueryService.hasLostAllAbilities(gameData, p)) {
                             // "If this would leave the battlefield, exile it instead" (Storm Herald's Auras).
                             gameData.addToExile(auraOwnerId, p.getOriginalCard());
@@ -416,6 +417,7 @@ public class AuraAttachmentService {
                         emitSweptDeparture(gameData, p, playerId, playerId, unattachedFirst);
                         it.remove();
                         durationClock.sourceLeft(gameData, p.getId());
+                        durationClock.affectedLeft(gameData, p.getId());
                         boolean wentToGraveyard = graveyardService.addCardToGraveyard(
                                 gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD, playerId, p);
                         if (wentToGraveyard && hadOilCounter) {

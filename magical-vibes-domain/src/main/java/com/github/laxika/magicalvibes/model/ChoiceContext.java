@@ -500,24 +500,31 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /**
+     * The first word of a text change (CR 612.1) on {@code targetId}; {@code sourceCardName} and
+     * {@code sourcePermanentId} name the spell or ability making it, for the floating effect it becomes.
+     */
     record TextChangeFromWord(UUID targetId, boolean untilEndOfTurn,
                              CardSubtype excludedReplacementCreatureType,
-                             CardSubtype fixedReplacementCreatureType) implements ChoiceContext {
+                             CardSubtype fixedReplacementCreatureType,
+                             String sourceCardName, UUID sourcePermanentId) implements ChoiceContext {
         public TextChangeFromWord(UUID targetId, boolean untilEndOfTurn) {
-            this(targetId, untilEndOfTurn, CardSubtype.WALL, null);
+            this(targetId, untilEndOfTurn, CardSubtype.WALL, null, null, null);
         }
 
         public TextChangeFromWord(UUID targetId, boolean untilEndOfTurn, CardSubtype excludedReplacementCreatureType) {
-            this(targetId, untilEndOfTurn, excludedReplacementCreatureType, null);
+            this(targetId, untilEndOfTurn, excludedReplacementCreatureType, null, null, null);
         }
     }
 
+    /** The replacement word of a text change begun by a {@link TextChangeFromWord}, with its source. */
     record TextChangeToWord(UUID targetId, String fromWord, boolean isColor, boolean untilEndOfTurn,
-                            boolean isCreatureType, CardSubtype excludedReplacementCreatureType) implements ChoiceContext {
+                            boolean isCreatureType, CardSubtype excludedReplacementCreatureType,
+                            String sourceCardName, UUID sourcePermanentId) implements ChoiceContext {
 
         public TextChangeToWord(UUID targetId, String fromWord, boolean isColor, boolean untilEndOfTurn,
                                 boolean isCreatureType) {
-            this(targetId, fromWord, isColor, untilEndOfTurn, isCreatureType, CardSubtype.WALL);
+            this(targetId, fromWord, isColor, untilEndOfTurn, isCreatureType, CardSubtype.WALL, null, null);
         }
 
         public TextChangeToWord(UUID targetId, String fromWord, boolean isColor, boolean untilEndOfTurn) {

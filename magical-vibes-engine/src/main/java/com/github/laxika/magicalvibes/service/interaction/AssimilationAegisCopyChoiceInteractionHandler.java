@@ -54,7 +54,8 @@ public class AssimilationAegisCopyChoiceInteractionHandler
                 && AttachedCreatureBecomesCopyOfExiledCreatureEffectHandler
                         .eligibleCards(gameData, equipment.getId(), equipment.getCard().getId())
                         .stream().anyMatch(entry -> entry.card().getId().equals(chosenIds.getFirst()))) {
-            auraCopyService.applyExiledCreatureCopy(gameData, equipment, attached, chosen.card());
+            auraCopyService.applyExiledCreatureCopy(gameData, equipment, attached, chosen.card(),
+                    interaction.duration());
         }
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }

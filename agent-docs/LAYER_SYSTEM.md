@@ -326,10 +326,11 @@ debt-listed direct readers above.
 
 **Implementation status (step 9 — layer 3 text changes, CR 612/613.1c):** text changes rewrite
 the WORDS of an object's abilities and everything downstream (layers 4–7, protection, mana
-abilities) sees the rewritten text. Storage is unchanged — `Permanent.textReplacements`, written
-by Mind Bend's resolution (`ChoiceHandlerService`), surviving turns (`resetModifiers` does not
-clear it, verified) and NOT copiable (Clone copies the `Card`, never the target's replacements —
-CR 707.2). Application lives in `TextChangeTransformer` (engine `service/effect/`, static
+abilities) sees the rewritten text. Each text change is a floating `TextChangeEffect(fromWord, toWord)` on the
+permanent, made by Mind Bend's resolution (`ChoiceHandlerService`) with the stated duration (until end of
+turn, or none: CR 611.2a, ending as the permanent leaves), read in timestamp order through
+`GameData.textReplacements(permanentId)`, and NOT copiable (Clone copies the `Card`, never the target's
+text changes — CR 707.2). Application lives in `TextChangeTransformer` (engine `service/effect/`, static
 identity-preserving visitor): given a `CardEffect` and the source's replacement list (applied in
 order — they compose, replacement N applies to the output of N�?�1), it rewrites color parameters
 (`ProtectionFromColorsEffect` colors, `GrantColorEffect` color), basic-land-type parameters
@@ -394,9 +395,12 @@ of a Quicksilver Gargantuan copy is a 7/7 (`QuicksilverGargantuanTest`). The DUR
 — `BecomeCopyOfTargetCreatureUntilEndOfTurnEffect` (Tilonalli's Skinshifter) and
 `MakeTargetCopyOfTargetCreatureUntilNextTurnEffect` (Shapesharer) — register a floating
 `L1_COPY` effect alongside the card swap, and the duration clock (`DurationClock`) reverts the
-permanent as the effect ends: `Permanent.revertEndOfTurnCopy()` for the become-copy effect, and the
-until-next-turn copy guarded on `copyUntilNextTurnControllerId` so an OLDER effect expiring cannot
-revert a NEWER still-active copy. A third duration, WHILE ATTACHED
+permanent as the effect ends: `Permanent.revertEndOfTurnCopy()` for the become-copy effect. Every copy that lasts
+until a player's next turn (Shapesharer, The Animus, Absorbing Man, Volrath the Shapestealer, Taskmaster) is one floating
+`MakeTargetCopyOfTargetCreatureUntilNextTurnEffect(copiedCard, preCopyCard)` on the permanent
+(`PermanentCopierService.beginUntilNextTurnCopy`); as one ends, the newest one left applies again (CR 613.7), or with
+none left the permanent shows `preCopyCard`, so an OLDER effect ending cannot revert a NEWER still-active copy. A newer
+permanent copy (Mirrorform) or a merge updates what they keep (`updateUntilNextTurnCopies`). A third duration, WHILE ATTACHED
 (`EnchantedCreatureIsCopyOfChosenCreatureEffect` — Metamorphic Alteration), follows the same shape
 via `AuraCopyService`: the swap stores `Permanent.whileAttachedPreCopyCard`, a `WHILE_ATTACHED`
 floating effect is keyed to the Aura, and `PermanentRemovalService` reverts off its expiry
@@ -441,7 +445,11 @@ A floating effect's **`Duration`** (`model.effect`) is how long it lasts (CR 611
 while and ends for good once it stops holding (CR 611.2b). Every duration is one of its named constants:
 `UNTIL_END_OF_TURN` (CR 514.2), `UNTIL_END_OF_COMBAT`, `UNTIL_YOUR_NEXT_TURN`, `UNTIL_END_OF_YOUR_NEXT_TURN`,
 the upkeep, untap-step, next-end-step, spell-cast and planeswalk ends, `PERMANENT`, the source-linked
-`WHILE_SOURCE_ON_BATTLEFIELD` / `_CONTROLLED` / `_REMAINS` / `_TAPPED` / `_REMAINS_TAPPED`, `WHILE_ATTACHED` for
+`WHILE_SOURCE_ON_BATTLEFIELD` / `_CONTROLLED` / `_REMAINS` / `_TAPPED` / `_REMAINS_TAPPED` (these "for as long as"
+durations also end as their source phases out, CR 702.26f), `UNTIL_SOURCE_LEAVES` for "until ~ leaves the battlefield"
+(Oubliette's hold, Gaea's Liege; phasing out isn't leaving, CR 702.26d), `UNTIL_CONTROL_LOST` for "until you lose
+control of" it (suspend's haste, CR 702.62a), `WHILE_REMAINS_ATTACHED` for a resolution's "for as long as this Equipment
+remains attached to it" (Blade of Shared Souls; ends as the Equipment or the creature phases out), `WHILE_ATTACHED` for
 attachment-backed effects, `WHILE_SOURCE_CARD_EXILED` (teach's and cipher's grants, ended by `GameData.removeFromExile`)
 and `WHILE_FACE_DOWN` (ended by the clock as the permanent is turned face up). Compare durations with `equals`. `STATIC` marks the effect of a static ability (CR 611.3)
 and is not valid for a floating effect.
@@ -574,13 +582,19 @@ what the effect kept on its permanent (a copy's card, a tap restriction, mirrore
 (`UNTIL_PLANESWALK`). A test ends a duration the same way: `gd.rulesEvents.occur(new TurnEvent.Cleanup(...))`.
 A "for as long as" duration (CR 611.2b) ends as its condition stops holding, so it ends where the state changes, not
 at a batch: the engine tells the clock `sourceLeft` (`PermanentRemovalService`, the orphaned-Aura sweep),
-`sourceUntapped` (`TapUntapSupport.untapPermanent` via `CreatureControlService.onSourceUntapped`), `sourceUnattached`
+`trackedPermanentPhasedOut` (`PhasingService`: a "for as long as" duration tracking a permanent that phases out ends,
+its source or the permanent it affects, the permanent itself included, CR 702.26f; "until it leaves the battlefield",
+"until you lose control of it" and an attachment a rule or static ability keeps do not, CR 702.26d, 702.26g),
+`sourceUntapped` (`TapUntapSupport.untapPermanent`, the one path every untap takes — untap costs and choices too —
+via `CreatureControlService.onSourceUntapped`), `sourceUnattached`
 (every site that unattaches or moves an Aura or Equipment, before or after it sets `attachedTo`) and
 `sourceChangedControl` (`CreatureControlService`'s control move). Which effects need their creator to control the
 source is the clock's (`SOURCE_CONTROLLED`, and source-linked control, goad, attack-requirement, lock and grant
 effects). `DurationClock.holds` judges the same conditions on the board for the control reconciliation's safety net.
 Every end, by event or by state, undoes what the effect kept, copies of `AuraCopyService` included; control is
-recomputed by the caller. The migration notes below name the expiry helpers the clock replaced.
+recomputed by the caller. As a permanent leaves the battlefield, `affectedLeft` ends the effects on it whatever their
+durations (CR 400.7); they stay readable as its last-known information through `GameData.floatingEffectsOnPermanent`
+(`departedPermanentEffects`) until their own durations would have ended them. The migration notes below name the expiry helpers the clock replaced.
 
 ## 7. Classification notes
 

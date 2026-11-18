@@ -383,7 +383,7 @@ public class StaticEffectSupport {
                 if (source.isFaceDown()) continue;
                 for (CardEffect printed : source.getCard().getStaticEffects()) {
                     if (!(printed instanceof AllLandsAreCreaturesEffect)) continue;
-                    CardEffect e = TextChangeTransformer.transform(printed, source.getTextReplacements());
+                    CardEffect e = TextChangeTransformer.transform(printed, gameData.textReplacements(source.getId()));
                     if (e instanceof AllLandsAreCreaturesEffect animateLands
                             && (animateLands.scope() == GrantScope.ALL_LANDS
                                     || (animateLands.scope() == GrantScope.OWN_LANDS

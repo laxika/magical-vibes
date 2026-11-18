@@ -42,7 +42,7 @@ class MagicalHackTest extends BaseCardTest {
         harness.handleListChoice(player1, "PLAINS");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(findPermanent(player2, "Grizzly Bears").getTextReplacements())
+        assertThat(gd.textReplacements(findPermanent(player2, "Grizzly Bears").getId()))
                 .containsExactly(new TextReplacement("Swamp", "Plains"));
     }
 
@@ -79,7 +79,7 @@ class MagicalHackTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve the Grizzly Bears spell
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getTextReplacements())
+        assertThat(gd.textReplacements(findPermanent(player1, "Grizzly Bears").getId()))
                 .containsExactly(new TextReplacement("Swamp", "Plains"));
     }
 

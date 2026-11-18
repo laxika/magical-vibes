@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
 import com.github.laxika.magicalvibes.model.effect.RiotEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.TextChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsEnterUntappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
@@ -357,7 +358,7 @@ public class BattlefieldPlacementService {
             if (sacrificeAllPermanentsAsEntersEffectHandler != null) {
                 sacrificeAllPermanentsAsEntersEffectHandler.applyIfPresent(gameData, controllerId, permanent);
             }
-            carrySpellTextReplacements(gameData, permanent);
+            carrySpellTextReplacements(gameData, permanent, controllerId);
             carrySpellColorOverride(gameData, controllerId, permanent);
             applyCreaturesEnterAsCopyReplacementEffect(gameData, controllerId, permanent);
             PerpetualCardBattlefieldEffectSupport.applyStored(gameData, controllerId, permanent);
@@ -1229,12 +1230,20 @@ public class BattlefieldPlacementService {
     /**
      * CR 400.7a: a text change made to a spell (e.g. Glamerdye targeting a permanent spell) carries
      * onto the permanent that spell resolves into. The replacements were recorded keyed by the
-     * spell's card id; the entering permanent shares that card id, so move them onto it.
+     * spell's card id; the entering permanent shares that card id, so each becomes a layer-3 floating
+     * effect on it (CR 613.1c) with the timestamp the change was made with (CR 613.7), lasting until end
+     * of turn or, with no stated duration, for the rest of the game (CR 611.2a).
      */
-    private void carrySpellTextReplacements(GameData gameData, Permanent permanent) {
+    private void carrySpellTextReplacements(GameData gameData, Permanent permanent, UUID controllerId) {
         List<TextReplacement> replacements = gameData.spellTextReplacements.remove(permanent.getCard().getId());
-        if (replacements != null) {
-            permanent.getTextReplacements().addAll(replacements);
+        if (replacements == null) {
+            return;
+        }
+        for (TextReplacement replacement : replacements) {
+            gameData.putFloatingEffect(FloatingContinuousEffect.onPermanent(null, null, controllerId,
+                    new TextChangeEffect(replacement.fromWord(), replacement.toWord()), permanent.getId(),
+                    replacement.untilEndOfTurn() ? Duration.UNTIL_END_OF_TURN : Duration.PERMANENT)
+                    .withTimestamp(replacement.timestamp()));
         }
     }
 
@@ -2537,7 +2546,7 @@ public class BattlefieldPlacementService {
                                                       List<Permanent> simultaneouslyEntered) {
         Set<CardSubtype> subtypes = EnumSet.noneOf(CardSubtype.class);
         subtypes.addAll(entering.getCard().getSubtypes());
-        for (TextReplacement replacement : entering.getTextReplacements()) {
+        for (TextReplacement replacement : gameData.textReplacements(entering.getId())) {
             CardSubtype from = TextChangeTransformer.creatureTypeForWord(replacement.fromWord());
             CardSubtype to = TextChangeTransformer.creatureTypeForWord(replacement.toWord());
             if (from != null && to != null && subtypes.remove(from)) {

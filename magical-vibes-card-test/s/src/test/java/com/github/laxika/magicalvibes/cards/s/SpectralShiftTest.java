@@ -37,7 +37,7 @@ class SpectralShiftTest extends BaseCardTest {
         harness.handleListChoice(player1, "ISLAND");
         harness.handleListChoice(player1, "SWAMP");
 
-        assertThat(target.getTextReplacements())
+        assertThat(gd.textReplacements(target.getId()))
                 .containsExactly(new TextReplacement("Island", "Swamp"));
     }
 
@@ -55,7 +55,7 @@ class SpectralShiftTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "GREEN");
 
-        assertThat(target.getTextReplacements())
+        assertThat(gd.textReplacements(target.getId()))
                 .containsExactly(new TextReplacement("red", "green"));
     }
 
@@ -76,7 +76,7 @@ class SpectralShiftTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = findPermanent(player1, "Vedalken Shackles");
-        assertThat(target.getTextReplacements())
+        assertThat(gd.textReplacements(target.getId()))
                 .containsExactly(new TextReplacement("Island", "Swamp"));
     }
 
@@ -119,7 +119,7 @@ class SpectralShiftTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "GREEN");
 
-        assertThat(target.getTextReplacements()).containsExactly(
+        assertThat(gd.textReplacements(target.getId())).containsExactly(
                 new TextReplacement("Island", "Swamp"),
                 new TextReplacement("red", "green"));
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
@@ -174,8 +174,8 @@ class SpectralShiftTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "GREEN");
 
-        assertThat(shackles.getTextReplacements()).containsExactly(new TextReplacement("Island", "Swamp"));
-        assertThat(champion.getTextReplacements()).containsExactly(new TextReplacement("red", "green"));
+        assertThat(gd.textReplacements(shackles.getId())).containsExactly(new TextReplacement("Island", "Swamp"));
+        assertThat(gd.textReplacements(champion.getId())).containsExactly(new TextReplacement("red", "green"));
         assertThat(gqs.hasProtectionFromSource(gd, champion, greenSource)).isTrue();
     }
 

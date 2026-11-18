@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AphettoAlchemist;
+import com.github.laxika.magicalvibes.cards.g.GhosthelmCourier;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +20,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Crackleburr.class, AirElemental.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({Crackleburr.class, AirElemental.class, GrizzlyBears.class, HillGiant.class, GhosthelmCourier.class,
+        AphettoAlchemist.class})
 class CrackleburrTest extends BaseCardTest {
 
     private static final int DAMAGE_ABILITY = 0;
@@ -226,6 +230,33 @@ class CrackleburrTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, source), BOUNCE_ABILITY,
                 null, source.getId())).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Untapping Ghosthelm Courier to pay the bounce cost ends its \"remains tapped\" boost at once")
+    void untapCostEndsRemainsTappedEffect() {
+        Permanent courier = harness.addToBattlefieldAndReturn(player1, new GhosthelmCourier());
+        courier.setSummoningSick(false);
+        Permanent wizard = harness.addToBattlefieldAndReturn(player1, new AphettoAlchemist());
+        int basePower = gqs.getEffectivePower(gd, wizard);
+        prepareActivation(ManaColor.BLUE);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, indexOf(player1, courier), null, wizard.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, wizard)).isEqualTo(basePower + 2);
+
+        Permanent source = addReadyCrackleburr(player1);
+        source.tap();
+        addTappedBlueCreature(player1);
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        prepareActivation(ManaColor.BLUE);
+
+        // The Courier and the Air Elemental are the only tapped blue creatures, so paying the cost untaps the Courier.
+        harness.activateAbility(player1, indexOf(player1, source), BOUNCE_ABILITY, null, victim.getId());
+
+        assertThat(courier.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, wizard)).isEqualTo(basePower);
+        assertThat(gqs.hasKeyword(gd, wizard, Keyword.SHROUD)).isFalse();
     }
 
     private void prepareActivation(ManaColor color) {

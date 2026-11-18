@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
@@ -136,6 +137,22 @@ class GameDataDeepCopyTest {
 
         assertThat(gd.scheduledFloatingEffects).containsExactly(scheduled);
         assertThat(gd.simulationCopy().scheduledFloatingEffects).containsExactly(scheduled);
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps the effects a departed permanent had as it left, in independent lists")
+    void deepCopyKeepsDepartedPermanentEffectsIndependent() {
+        UUID departedId = UUID.randomUUID();
+        FloatingContinuousEffect boost = gd.addPowerToughnessBoost("Test", null, player1.getId(), departedId, 2, 2,
+                Duration.UNTIL_END_OF_TURN);
+        gd.endFloatingEffectsOnDepartedPermanent(departedId);
+
+        GameData copy = gd.simulationCopy();
+        copy.departedPermanentEffects.get(departedId).clear();
+
+        assertThat(gd.floatingEffectsOnPermanent(departedId, PowerToughnessBoostEffect.class)).containsExactly(boost);
+        assertThat(gd.simulationCopy().floatingEffectsOnPermanent(departedId, PowerToughnessBoostEffect.class))
+                .containsExactly(boost);
     }
 
     @Test

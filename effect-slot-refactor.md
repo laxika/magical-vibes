@@ -830,6 +830,14 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - `TriggeringPermanentHasKeyword` reads the layered last-known keywords (`MilesTailsProwerTest`); the view's summoning-sick mark follows the layered haste.
 - Card tests reading effect-granted keywords, P/T, types or colours through the GameData-less accessors read the layered queries; haste assertions also assert the attack is legal.
 
+**D (part 20: text changes, until-next-turn copies, the clock's last gaps).**
+- Text changes are floating `TextChangeEffect`s on the permanent (layer 3, CR 613.1c), until end of turn or `PERMANENT` (CR 611.2a), read through `GameData.textReplacements`; a spell's carried change keeps its timestamp. Until-next-turn copies are floating `MakeTargetCopyOfTargetCreatureUntilNextTurnEffect(copiedCard, preCopyCard)`; the newest remaining one applies again (CR 613.7). Gone: `textReplacements`, `TEXT_REPLACEMENTS`, `untilNextTurnPreCopyCard`, `untilNextTurnCopyLayers`, `copyUntilControllerNextTurn`, `copyUntilNextTurnControllerId`.
+- Phasing out ends every "for as long as" duration tracking the permanent: `WHILE_SOURCE_*` (self-sourced too), `WHILE_FACE_DOWN`, `WHILE_REMAINS_ATTACHED` (CR 702.26f; `RealityRippleTest`, `BladeOfSharedSoulsTest`, fail before). Not ended by phasing (CR 702.26d): `UNTIL_SOURCE_LEAVES` (Oubliette, Gaea's Liege), `UNTIL_CONTROL_LOST` (suspend's haste, CR 702.62a), `WHILE_ATTACHED` (reconfigure, Aura control, static copies). No-duration self grants are `PERMANENT`.
+- The Phasing of Zhalfir's and The Pandorica's holds are floating `PhasedOutHeldEffect`s; `permanentsPhasedOutBySource` only names Pandorica's "that permanent".
+- Every untap goes through `TapUntapSupport.untapPermanent`, untap costs included (`CrackleburrTest`, fails before); only the mana-undo rollback stays raw.
+- Effects on a permanent end as it leaves (CR 400.7) and stay in `departedPermanentEffects` as last-known information until their own durations end; effects on what it does (damage prevention, Runesword's riders) go on. Ledger (7,791 card test classes, route tests): only `floating` lines added, renamed or ended at departure or phase-out; trigger lines differ only by random draws, drafts, coins and dice.
+- Left: step 6.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

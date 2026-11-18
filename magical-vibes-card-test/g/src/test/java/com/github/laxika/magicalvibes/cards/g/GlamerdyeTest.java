@@ -38,7 +38,7 @@ class GlamerdyeTest extends BaseCardTest {
         harness.handleListChoice(player1, "WHITE");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(findPermanent(player2, "Riverfall Mimic").getTextReplacements())
+        assertThat(gd.textReplacements(findPermanent(player2, "Riverfall Mimic").getId()))
                 .containsExactly(new TextReplacement("blue", "white"));
     }
 
@@ -97,7 +97,7 @@ class GlamerdyeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the Riverfall Mimic spell
 
         Permanent mimic = findPermanent(player1, "Riverfall Mimic");
-        assertThat(mimic.getTextReplacements())
+        assertThat(gd.textReplacements(mimic.getId()))
                 .containsExactly(new TextReplacement("blue", "white"));
 
         harness.setHand(player1, List.of(new DoubleCleave()));
@@ -125,7 +125,7 @@ class GlamerdyeTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
         harness.handleListChoice(player1, "WHITE");
 
-        assertThat(findPermanent(player2, "Riverfall Mimic").getTextReplacements())
+        assertThat(gd.textReplacements(findPermanent(player2, "Riverfall Mimic").getId()))
                 .containsExactly(new TextReplacement("blue", "white"));
         harness.assertInGraveyard(player1, "Cascade Bluffs");
         // Retrace keeps the normal graveyard disposition — not exiled, so it can be retraced again.

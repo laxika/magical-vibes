@@ -40,7 +40,7 @@ class SleightOfMindTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(findPermanent(player2, "Circle of Protection: Red").getTextReplacements())
+        assertThat(gd.textReplacements(findPermanent(player2, "Circle of Protection: Red").getId()))
                 .containsExactly(new TextReplacement("red", "green"));
     }
 
@@ -78,7 +78,7 @@ class SleightOfMindTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve the Circle of Protection: Red spell
 
-        assertThat(findPermanent(player1, "Circle of Protection: Red").getTextReplacements())
+        assertThat(gd.textReplacements(findPermanent(player1, "Circle of Protection: Red").getId()))
                 .containsExactly(new TextReplacement("red", "green"));
     }
 
@@ -123,7 +123,7 @@ class SleightOfMindTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
         advanceToUpkeep(player1);
 
-        assertThat(findPermanent(player2, "Circle of Protection: Red").getTextReplacements())
+        assertThat(gd.textReplacements(findPermanent(player2, "Circle of Protection: Red").getId()))
                 .containsExactly(new TextReplacement("red", "green"));
     }
 

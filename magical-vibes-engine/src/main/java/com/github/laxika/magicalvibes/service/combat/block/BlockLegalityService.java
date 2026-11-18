@@ -124,7 +124,7 @@ public class BlockLegalityService {
                                         .withSourceControllerId(playerId)
                                         .withSourceCardId(source.getOriginalCard().getId()));
                     }
-                    if (TextChangeTransformer.transform(effect, source.getTextReplacements())
+                    if (TextChangeTransformer.transform(effect, gameData.textReplacements(source.getId()))
                             instanceof LandwalkIgnoredForBlockingEffect landwalkEffect) {
                         if (landwalkEffect.ignoresAllLandwalk()) {
                             allLandwalkIgnored[0] = true;

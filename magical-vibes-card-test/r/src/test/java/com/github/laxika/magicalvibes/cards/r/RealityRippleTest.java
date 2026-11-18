@@ -1,6 +1,17 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
+import com.github.laxika.magicalvibes.cards.a.AphettoAlchemist;
+import com.github.laxika.magicalvibes.cards.g.GhosthelmCourier;
+import com.github.laxika.magicalvibes.cards.p.PearlspearCourier;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.cards.s.SowerOfTemptation;
+import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GaeasLiege;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
@@ -20,7 +31,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RealityRipple.class, AngelicChorus.class, GrizzlyBears.class, Island.class, Millstone.class, Pacifism.class})
+@CardUsed({RealityRipple.class, AngelicChorus.class, GrizzlyBears.class, Island.class, Millstone.class, Pacifism.class,
+        SowerOfTemptation.class, GaeasLiege.class, Plains.class, Forest.class, GiantGrowth.class, GhosthelmCourier.class,
+        AphettoAlchemist.class, PearlspearCourier.class})
 class RealityRippleTest extends BaseCardTest {
 
     @Test
@@ -163,6 +176,110 @@ class RealityRippleTest extends BaseCardTest {
                     assertThat(aura.getId()).isEqualTo(auraId);
                     assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
                 });
+    }
+
+    @Test
+    @DisplayName("Phasing out Sower of Temptation ends its \"for as long as\" control effect for good")
+    void phasingOutSowerEndsItsControlEffect() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SowerOfTemptation()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castCreature(player1, 0, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent sower = findPermanent(player1, "Sower of Temptation");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+
+        castRealityRipple(sower.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        harness.performUntapStep(player1);
+        harness.assertOnBattlefield(player1, "Sower of Temptation");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+    }
+
+    @Test
+    @DisplayName("Phasing out Ghosthelm Courier ends its \"remains tapped\" boost, which doesn't return as it phases in")
+    void phasingOutCourierEndsItsBoost() {
+        Permanent courier = harness.addToBattlefieldAndReturn(player1, new GhosthelmCourier());
+        courier.setSummoningSick(false);
+        Permanent wizard = harness.addToBattlefieldAndReturn(player1, new AphettoAlchemist());
+        int basePower = gqs.getEffectivePower(gd, wizard);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(courier), null,
+                wizard.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, wizard)).isEqualTo(basePower + 2);
+
+        castRealityRipple(courier.getId());
+
+        assertThat(gqs.getEffectivePower(gd, wizard)).isEqualTo(basePower);
+        assertThat(gqs.hasKeyword(gd, wizard, Keyword.SHROUD)).isFalse();
+        harness.performUntapStep(player2);
+        harness.performUntapStep(player1);
+        harness.assertOnBattlefield(player1, "Ghosthelm Courier");
+        assertThat(gqs.getEffectivePower(gd, wizard)).isEqualTo(basePower);
+    }
+
+    @Test
+    @DisplayName("Pearlspear Courier's boost on itself, for as long as it remains tapped, ends as it phases out")
+    void phasingOutCourierEndsItsBoostOnItself() {
+        Permanent courier = harness.addToBattlefieldAndReturn(player1, new PearlspearCourier());
+        courier.setSummoningSick(false);
+        int basePower = gqs.getEffectivePower(gd, courier);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(courier), null,
+                courier.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, courier)).isEqualTo(basePower + 2);
+
+        castRealityRipple(courier.getId());
+
+        // Still tapped while phased out, so only the phasing out ends the boost.
+        assertThat(courier.isTapped()).isTrue();
+        assertThat(gd.floatingEffectsOnPermanent(courier.getId(), PowerToughnessBoostEffect.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Phasing out Gaea's Liege doesn't end \"until it leaves the battlefield\": the land stays a Forest")
+    void phasingOutGaeasLiegeKeepsTheForest() {
+        Permanent liege = harness.addToBattlefieldAndReturn(player1, new GaeasLiege());
+        liege.setSummoningSick(false);
+        harness.addToBattlefield(player1, new Forest());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.forceActivePlayer(player1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(liege), null,
+                plains.getId());
+        harness.passBothPriorities();
+
+        castRealityRipple(liege.getId());
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, plains)).containsExactly(CardSubtype.FOREST);
+        harness.performUntapStep(player1);
+        harness.assertOnBattlefield(player1, "Gaea's Liege");
+        assertThat(gqs.effectiveBasicLandTypes(gd, plains)).containsExactly(CardSubtype.FOREST);
+    }
+
+    @Test
+    @DisplayName("An \"until end of turn\" boost on a creature that phases out lasts until the cleanup step")
+    void untilEndOfTurnBoostOutlastsPhasingOut() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        castRealityRipple(bears.getId());
+
+        assertThat(gd.floatingEffectsOnPermanent(bears.getId(), PowerToughnessBoostEffect.class)).hasSize(1);
     }
 
     private void castRealityRipple(UUID targetId) {

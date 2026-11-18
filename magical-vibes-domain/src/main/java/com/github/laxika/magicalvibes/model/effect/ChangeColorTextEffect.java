@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 /**
  * "Change the text of target [spell or] permanent by replacing all instances of one [color/basic land
  * type/creature type] word with another." Resolves by prompting the controller for a from-word and a to-word, then
- * recording a {@code TextReplacement} on the target (CR 612 / 613.1c layer 3 text change).
+ * putting a floating {@link TextChangeEffect} on the target permanent (CR 612.1, a layer-3 effect, CR 613.1c).
  *
  * @param colorWordsAllowed when true the word swap may change color words (Mind Bend, Glamerdye);
  *                          when false color words are not offered (Magical Hack)
@@ -23,9 +23,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  *                         {@code EffectResolution.targetsSpellOnStack(effect)}. Spell targets are
  *                         validated on the stack path ({@code checkSpellTargetOnStack}), never by the
  *                         spec interpreter.
- * @param untilEndOfTurn   when true the recorded {@code TextReplacement} wears off at the cleanup step
- *                         (Whim of Volrath); when false it lasts as long as the permanent remains on
- *                         the battlefield (Mind Bend, Magical Hack, Glamerdye).
+ * @param untilEndOfTurn   when true the text change lasts until end of turn (Whim of Volrath); when false
+ *                         it has no stated duration (CR 611.2a) and lasts as long as the permanent remains
+ *                         on the battlefield (Mind Bend, Magical Hack, Glamerdye).
  */
 public record ChangeColorTextEffect(boolean colorWordsAllowed, boolean landTypesAllowed, boolean canTargetSpell,
                                     boolean untilEndOfTurn, boolean creatureTypesAllowed,

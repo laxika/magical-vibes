@@ -93,7 +93,7 @@ public class GrantedAbilityViewFactory {
             result.add(new GrantedAbilityView(text, attribution.sourceName()));
         }
 
-        Set<CardColor> printedProtection = printedProtectionColors(permanent);
+        Set<CardColor> printedProtection = printedProtectionColors(gameData, permanent);
         Set<CardColor> remainingProtection = EnumSet.noneOf(CardColor.class);
         remainingProtection.addAll(bonus.protectionColors());
         remainingProtection.removeAll(printedProtection);
@@ -127,12 +127,12 @@ public class GrantedAbilityViewFactory {
         return List.copyOf(distinct.values());
     }
 
-    private Set<CardColor> printedProtectionColors(Permanent permanent) {
+    private Set<CardColor> printedProtectionColors(GameData gameData, Permanent permanent) {
         Set<CardColor> colors = EnumSet.noneOf(CardColor.class);
         for (CardEffect effect : permanent.getCard().getStaticEffects()) {
             if (effect instanceof ProtectionFromColorsEffect protection && protection.scope() == null) {
                 ProtectionFromColorsEffect rewritten = (ProtectionFromColorsEffect)
-                        TextChangeTransformer.transform(protection, permanent.getTextReplacements());
+                        TextChangeTransformer.transform(protection, gameData.textReplacements(permanent.getId()));
                 colors.addAll(rewritten.colors());
             }
         }

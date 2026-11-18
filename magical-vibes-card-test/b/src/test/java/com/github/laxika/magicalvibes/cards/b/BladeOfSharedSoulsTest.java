@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.g.GripOfPhyresis;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.r.RealityRipple;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BladeOfSharedSouls.class, GripOfPhyresis.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({BladeOfSharedSouls.class, GripOfPhyresis.class, GrizzlyBears.class, HillGiant.class, RealityRipple.class})
 class BladeOfSharedSoulsTest extends BaseCardTest {
 
     @Test
@@ -181,6 +182,44 @@ class BladeOfSharedSoulsTest extends BaseCardTest {
         assertThat(equipped.getCard().getName())
                 .isEqualTo("Hill Giant");
         assertThat(gqs.getEffectivePower(gd, equipped)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The \"for as long as it remains attached\" copy ends as the equipped creature phases out, for good")
+    void copyEndsAsEquippedCreaturePhasesOut() {
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new BladeOfSharedSouls());
+        Permanent equipped = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new HillGiant());
+        equipAndCopy(0, equipped, target);
+        assertThat(equipped.getCard().getName()).isEqualTo("Hill Giant");
+
+        castRealityRipple(equipped);
+        harness.performUntapStep(player1);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(blade.getAttachedTo()).isEqualTo(equipped.getId());
+        assertThat(equipped.getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The copy ends as Blade of Shared Souls itself phases out")
+    void copyEndsAsBladePhasesOut() {
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new BladeOfSharedSouls());
+        Permanent equipped = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new HillGiant());
+        equipAndCopy(0, equipped, target);
+
+        castRealityRipple(blade);
+
+        assertThat(equipped.getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    private void castRealityRipple(Permanent target) {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new RealityRipple()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void equipAndCopy(int bladeIndex, Permanent equipped, Permanent target) {

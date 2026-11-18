@@ -45,7 +45,7 @@ public class TargetLandBecomesBasicLandTypeUntilSourceLeavesEffectHandler implem
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), source.getCard().getName(), source.getId(), entry.getControllerId(),
                 new GrantSubtypeEffect(e.subtype(), GrantScope.TARGET, true),
-                target.getId(), null, null, Duration.WHILE_SOURCE_REMAINS, 0));
+                target.getId(), null, null, e.duration(), 0));
         gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), " becomes a "
                 + e.subtype().getDisplayName() + " until ", source.getCard(), " leaves the battlefield."));
     }

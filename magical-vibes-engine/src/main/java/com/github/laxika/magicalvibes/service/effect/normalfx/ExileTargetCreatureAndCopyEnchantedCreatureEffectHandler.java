@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndCopyEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -72,6 +73,6 @@ public class ExileTargetCreatureAndCopyEnchantedCreatureEffectHandler implements
         log.info("Game {} - {} exiles {} until it leaves the battlefield",
                 gameData.id, entry.getCard().getName(), exiledCard.getName());
 
-        auraCopyService.applyExiledCreatureCopy(gameData, source, enchanted, copiedCard);
+        auraCopyService.applyExiledCreatureCopy(gameData, source, enchanted, copiedCard, Duration.WHILE_ATTACHED);
     }
 }
