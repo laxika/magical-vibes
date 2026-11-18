@@ -26,3 +26,5 @@ Gradle multi-module CCG (WebSocket real-time multiplayer, Angular frontend). Wha
 ## Testing
 
 Card tests live in the per-letter test module `magical-vibes-card-test/{letter}/src/test/java/.../cards/{letter}/CardNameTest.java` and extend `BaseCardTest` (JUnit 5 + AssertJ; harness in `magical-vibes-engine/src/testFixtures`). Never assert Scryfall-loaded metadata (name, type, mana, color, P/T, subtypes, keywords) — test only engine logic (effects, abilities, targeting, interactions). Do NOT write white-box "wiring" tests (commonly named `hasCorrectProperties`) that inspect a freshly-constructed card's `getSpellEffects()`, `getStaticEffects()`, `getTriggeredAbilities()`, `EffectResolution.needsTarget`, or effect field values by reflection — assert behavior by resolving the card through the engine (`harness`/`gs`/`gd`) instead.
+
+Every unit test method must have a `@DisplayName` describing the behavior it verifies in plain language (e.g. `@DisplayName("Can target only a land you control")`), and every `@Nested` test class must have one too.
