@@ -389,21 +389,21 @@ public class GameService {
      * non-active player), the original player is returned.
      */
     /**
-     * Rejects a decision made directly by a player whose turn another player is controlling (CR 723.1);
+     * Rejects a decision made directly by a player whose turn another player is controlling (CR 724.5);
      * the controlling player's own request is translated to the controlled player by
      * {@link #resolveActingPlayer}.
      */
     private void requireNotControlledByAnotherPlayer(GameData gameData, Player player) {
-        if (gameData.mindControllerPlayerId != null
-                && player.getId().equals(gameData.mindControlledPlayerId)) {
+        if (gameData.mindControllerPlayerId() != null
+                && player.getId().equals(gameData.mindControlledPlayerId())) {
             throw new IllegalStateException("Another player is making your decisions this turn");
         }
     }
 
     private Player resolveActingPlayer(GameData gameData, Player player) {
-        if (gameData.mindControllerPlayerId == null) return player;
-        if (!player.getId().equals(gameData.mindControllerPlayerId)) return player;
-        UUID controlledId = gameData.mindControlledPlayerId;
+        if (gameData.mindControllerPlayerId() == null) return player;
+        if (!player.getId().equals(gameData.mindControllerPlayerId())) return player;
+        UUID controlledId = gameData.mindControlledPlayerId();
         if (controlledId == null) return player;
 
         // Check if the controlled player is the expected respondent for an interaction

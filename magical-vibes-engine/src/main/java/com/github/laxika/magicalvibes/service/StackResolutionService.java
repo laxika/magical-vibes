@@ -212,14 +212,13 @@ public class StackResolutionService {
         if (gameData.wordOfCommandAwaitingCardResolution && entry.getCard() != null
                 && gameData.wordOfCommandCardId != null
                 && gameData.wordOfCommandCardId.equals(entry.getCard().getId())
-                && gameData.mindControllerPlayerId == null
+                && gameData.mindControllerPlayerId() == null
                 && gameData.wordOfCommandControllerPlayerId != null
                 && gameData.wordOfCommandControlledPlayerId != null) {
             // Word of Command: "If the chosen card is cast as a spell, you control the player while
             // that spell is resolving."
-            gameData.mindControllerPlayerId = gameData.wordOfCommandControllerPlayerId;
-            gameData.mindControlledPlayerId = gameData.wordOfCommandControlledPlayerId;
-            gameData.mindControlUntilEndOfCombat = false;
+            gameData.controlPlayer("Word of Command", null, gameData.wordOfCommandControllerPlayerId,
+                    gameData.wordOfCommandControlledPlayerId, Duration.PERMANENT, false);
         }
         // CR 616.1f: Lich's "as this enters, you lose life" asks a Lich's Duel Mastery sacrifice's questions before
         // the permanent enters; the spell stays on the stack and resolves once they are answered.
@@ -361,13 +360,9 @@ public class StackResolutionService {
         gameData.wordOfCommandAwaitingCardResolution = false;
         gameData.wordOfCommandPendingResolutionEntry = null;
         gameData.wordOfCommandCardId = null;
-        if (gameData.wordOfCommandControllerPlayerId != null
-                && gameData.wordOfCommandControllerPlayerId.equals(gameData.mindControllerPlayerId)
-                && gameData.wordOfCommandControlledPlayerId != null
-                && gameData.wordOfCommandControlledPlayerId.equals(gameData.mindControlledPlayerId)) {
-            gameData.mindControllerPlayerId = null;
-            gameData.mindControlledPlayerId = null;
-            gameData.mindControlUntilEndOfCombat = false;
+        if (gameData.wordOfCommandControllerPlayerId != null && gameData.wordOfCommandControlledPlayerId != null) {
+            gameData.endPlayerControl(gameData.wordOfCommandControllerPlayerId,
+                    gameData.wordOfCommandControlledPlayerId);
         }
         gameData.wordOfCommandControllerPlayerId = null;
         gameData.wordOfCommandControlledPlayerId = null;
@@ -1516,7 +1511,7 @@ public class StackResolutionService {
                 return;
             }
 
-            // Rule 723.1b: "End the turn" exiles the resolving spell itself (copies cease to exist per rule 707.10a)
+            // Rule 725.1b: "End the turn" exiles the resolving spell itself (copies cease to exist per rule 707.10a)
             if (gameData.endTurnRequested) {
                 gameData.endTurnRequested = false;
                 gameData.removeResolvingSpellFromStack(entry);

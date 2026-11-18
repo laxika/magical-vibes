@@ -371,8 +371,8 @@ class PlanechaseServiceTest extends BaseCardTest {
         faceUp(new Panopticon());
         harness.forceActivePlayer(player2);
         gd.planechase.controllerId = player2.getId();
-        gd.mindControllerPlayerId = player1.getId();
-        gd.mindControlledPlayerId = player2.getId();
+        gd.controlPlayer("Test", null, player1.getId(), player2.getId(),
+                com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, false);
         var views = GameTestEngineContext.get().getBean(PlanechaseViewService.class);
         assertThat(views.create(gd, player1.getId()).canRoll()).isTrue();
         assertThat(views.create(gd, player2.getId()).canRoll()).isFalse();

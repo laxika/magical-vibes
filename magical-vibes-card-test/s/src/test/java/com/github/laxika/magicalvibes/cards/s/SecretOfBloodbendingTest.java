@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -22,21 +23,21 @@ class SecretOfBloodbendingTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        assertThat(gd.pendingCombatControl).containsEntry(player2.getId(), player1.getId());
+        assertThat(gd.pendingCombatControl()).containsEntry(player2.getId(), player1.getId());
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card() instanceof SecretOfBloodbending);
 
         advanceToPlayer2Combat();
 
-        assertThat(gd.mindControlledPlayerId).isEqualTo(player2.getId());
-        assertThat(gd.mindControllerPlayerId).isEqualTo(player1.getId());
-        assertThat(gd.mindControlUntilEndOfCombat).isTrue();
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.mindControllerPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.playerControl().duration()).isEqualTo(Duration.DURING_AFFECTED_CONTROLLERS_NEXT_COMBAT);
 
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.mindControlledPlayerId).isNull();
-        assertThat(gd.mindControllerPlayerId).isNull();
+        assertThat(gd.mindControlledPlayerId()).isNull();
+        assertThat(gd.mindControllerPlayerId()).isNull();
     }
 
     @Test
@@ -56,16 +57,16 @@ class SecretOfBloodbendingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sources).allMatch(Permanent::isTapped);
-        assertThat(gd.pendingTurnControl).containsEntry(player2.getId(), player1.getId());
-        assertThat(gd.pendingCombatControl).isEmpty();
+        assertThat(gd.pendingTurnControl()).containsEntry(player2.getId(), player1.getId());
+        assertThat(gd.pendingCombatControl()).isEmpty();
 
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.mindControlledPlayerId).isEqualTo(player2.getId());
-        assertThat(gd.mindControllerPlayerId).isEqualTo(player1.getId());
-        assertThat(gd.mindControlUntilEndOfCombat).isFalse();
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.mindControllerPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.playerControl().duration()).isEqualTo(Duration.THROUGH_AFFECTED_PLAYERS_NEXT_TURN);
     }
 
     @Test
@@ -80,20 +81,20 @@ class SecretOfBloodbendingTest extends BaseCardTest {
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.mindControlledPlayerId).isEqualTo(player2.getId());
-        assertThat(gd.mindControllerPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.mindControllerPlayerId()).isEqualTo(player1.getId());
 
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(gd.mindControlledPlayerId).isEqualTo(player2.getId());
-        assertThat(gd.mindControllerPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.mindControllerPlayerId()).isEqualTo(player1.getId());
 
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.mindControlledPlayerId).isNull();
-        assertThat(gd.mindControllerPlayerId).isNull();
+        assertThat(gd.mindControlledPlayerId()).isNull();
+        assertThat(gd.mindControllerPlayerId()).isNull();
     }
 
     @Test
@@ -109,13 +110,13 @@ class SecretOfBloodbendingTest extends BaseCardTest {
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.mindControlledPlayerId).isNull();
-        assertThat(gd.mindControllerPlayerId).isNull();
+        assertThat(gd.mindControlledPlayerId()).isNull();
+        assertThat(gd.mindControllerPlayerId()).isNull();
 
         harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
-        assertThat(gd.mindControlledPlayerId).isEqualTo(player2.getId());
-        assertThat(gd.mindControllerPlayerId).isEqualTo(player1.getId());
-        assertThat(gd.mindControlUntilEndOfCombat).isTrue();
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.mindControllerPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.playerControl().duration()).isEqualTo(Duration.DURING_AFFECTED_CONTROLLERS_NEXT_COMBAT);
     }
 
     @Test
@@ -125,8 +126,8 @@ class SecretOfBloodbendingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.pendingCombatControl).isEmpty();
-        assertThat(gd.pendingTurnControl).isEmpty();
+        assertThat(gd.pendingCombatControl()).isEmpty();
+        assertThat(gd.pendingTurnControl()).isEmpty();
     }
 
     private void castWithWaterbendUsingMana() {

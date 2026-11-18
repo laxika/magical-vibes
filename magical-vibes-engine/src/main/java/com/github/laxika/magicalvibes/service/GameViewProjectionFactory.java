@@ -144,8 +144,8 @@ public class GameViewProjectionFactory {
             int searchTaxCost = getSearchTaxCost(gameData, playerId);
 
             // Mindslaver: controller sees the controlled player's hand and playable indices
-            if (gameData.mindControllerPlayerId != null && playerId.equals(gameData.mindControllerPlayerId)) {
-                    UUID controlledId = gameData.mindControlledPlayerId;
+            if (gameData.mindControllerPlayerId() != null && playerId.equals(gameData.mindControllerPlayerId())) {
+                    UUID controlledId = gameData.mindControlledPlayerId();
                 if (controlledId != null) {
                     List<CardSubtype> controlledGranted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, controlledId);
                     opponentHand = gameData.playerHands.getOrDefault(controlledId, List.of())
@@ -186,7 +186,7 @@ public class GameViewProjectionFactory {
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
                     playableForetellIndices,
                     playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
-                    gameData.mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
+                    gameData.mindControlledPlayerId(), revealedLibraryTopCards, playableFlashbackIndices,
                     playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal,
                     potentialPayableAbilityIndices, speeds, gameData.dayNight,
                     gameData.planechase == null ? null : planarViews.create(gameData, playerId),
@@ -211,7 +211,7 @@ public class GameViewProjectionFactory {
     private List<Integer> getPlayableOpponentHandIndices(GameData gameData, UUID playerId) {
         UUID handOwnerId = gameData.handPlayableBy(playerId);
         if (handOwnerId == null
-                || playerId.equals(gameData.mindControllerPlayerId)
+                || playerId.equals(gameData.mindControllerPlayerId())
                 || !handOwnerId.equals(gameData.orderedPlayerIds.stream()
                         .filter(id -> !id.equals(playerId)).findFirst().orElse(null))) {
             return List.of();
@@ -1305,9 +1305,9 @@ public class GameViewProjectionFactory {
         game.playerCommanders.forEach((id, cards) -> commanders.put(id, cards.stream().map(Card::getId).toList()));
         Map<UUID, Map<UUID, Integer>> damage = new java.util.LinkedHashMap<>();
         game.commanderDamageReceived.forEach((id, amounts) -> damage.put(id, Map.copyOf(amounts)));
-        UUID actingPlayerId = playerId != null && playerId.equals(game.mindControllerPlayerId)
-                ? game.mindControlledPlayerId : playerId;
-        boolean controlledViewer = playerId != null && playerId.equals(game.mindControlledPlayerId);
+        UUID actingPlayerId = playerId != null && playerId.equals(game.mindControllerPlayerId())
+                ? game.mindControlledPlayerId() : playerId;
+        boolean controlledViewer = playerId != null && playerId.equals(game.mindControlledPlayerId());
         return new com.github.laxika.magicalvibes.networking.model.CommanderView(game.format, zones, commanders,
                 Map.copyOf(game.commanderTaxByCardId), damage,
                 actingPlayerId == null || controlledViewer ? List.of()
@@ -1323,9 +1323,9 @@ public class GameViewProjectionFactory {
      * stays offered until each has been paid one request at a time.
      */
     List<DelayedTriggerPaymentView> getDelayedTriggerPayments(GameData gameData, UUID playerId) {
-        if (playerId.equals(gameData.mindControlledPlayerId)) return List.of();
-        UUID actingPlayerId = playerId.equals(gameData.mindControllerPlayerId) && gameData.mindControlledPlayerId != null
-                ? gameData.mindControlledPlayerId : playerId;
+        if (playerId.equals(gameData.mindControlledPlayerId())) return List.of();
+        UUID actingPlayerId = playerId.equals(gameData.mindControllerPlayerId()) && gameData.mindControlledPlayerId() != null
+                ? gameData.mindControlledPlayerId() : playerId;
         return actionAvailabilityService.getAvailableDelayedTriggerPayments(gameData, actingPlayerId).stream()
                 .map(payment -> new DelayedTriggerPaymentView(payment.sourceCard().getId(),
                         payment.sourceCard().getName(), payment.affectedId(),

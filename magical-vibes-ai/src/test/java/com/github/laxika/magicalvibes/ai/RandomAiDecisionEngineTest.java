@@ -2891,8 +2891,8 @@ class RandomAiDecisionEngineTest {
         harness.forceStep(TurnStep.CLEANUP);
         harness.passBothPriorities();
         assertThat(gameData.activePlayerId).isEqualTo(controlled.getId());
-        assertThat(gameData.mindControlledPlayerId).isEqualTo(controlled.getId());
-        assertThat(gameData.mindControllerPlayerId).isEqualTo(aiPlayer.getId());
+        assertThat(gameData.mindControlledPlayerId()).isEqualTo(controlled.getId());
+        assertThat(gameData.mindControllerPlayerId()).isEqualTo(aiPlayer.getId());
 
         Permanent ownBears = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
         ownBears.setSummoningSick(false);

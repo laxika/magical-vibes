@@ -200,9 +200,6 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.firstResolutionTriggerKeysThisTurn.clear();
         gameData.playersWhoSearchedLibraryThisTurn.clear();
         gameData.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn.clear();
-        gameData.pendingTurnControl.clear();
-        gameData.pendingTurnControlExtraTurn.clear();
-        gameData.pendingCombatControl.clear();
         gameData.playersDealtCombatDamageSinceTheirLastTurn.clear();
         gameData.playersDealtCombatDamageLastTurn.clear();
         gameData.playersWhoAttackedPlayersLastTurn.clear();
@@ -274,9 +271,6 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.additionalCombatMainPhasePairs = 0;
         gameData.discardCausedByOpponent = false;
         gameData.cleanupDiscardPending = false;
-        gameData.mindControlledPlayerId = null;
-        gameData.mindControllerPlayerId = null;
-        gameData.mindControlUntilEndOfCombat = false;
         gameData.pendingSearchContext = null;
         gameData.pendingETBDamageAssignments = Map.of();
         gameData.combatDamageFirstStrikeAssignmentPhase = false;

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -39,9 +40,9 @@ public class WordOfCommandEffectHandler implements NormalEffectHandlerBean {
 
         gameData.wordOfCommandControllerPlayerId = controllerId;
         gameData.wordOfCommandControlledPlayerId = targetId;
-        gameData.mindControllerPlayerId = controllerId;
-        gameData.mindControlledPlayerId = targetId;
-        gameData.mindControlUntilEndOfCombat = false;
+        // Word of Command controls the player until its window closes (CR 724.2), where it is ended.
+        gameData.controlPlayer(entry.getCard().getName(), entry.getSourcePermanentId(), controllerId, targetId,
+                Duration.PERMANENT, false);
 
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {

@@ -190,8 +190,8 @@ class PlayerInputServiceTest {
         void keepsAffectedPlayerAsDecisionOwnerWhenMindControlled() {
             UUID controllerId = UUID.randomUUID();
             gd.playerIdToName.put(controllerId, "Controller");
-            gd.mindControlledPlayerId = PLAYER1_ID;
-            gd.mindControllerPlayerId = controllerId;
+            gd.controlPlayer("Test", null, controllerId, PLAYER1_ID,
+                    com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, false);
 
             svc.beginCardChoice(gd, PLAYER1_ID, List.of(0, 1), "Pick a card");
 
@@ -210,8 +210,8 @@ class PlayerInputServiceTest {
         @Test
         @DisplayName("Another mind-controlled player does not change decision ownership")
         void otherMindControlledPlayerDoesNotChangeDecisionOwnership() {
-            gd.mindControlledPlayerId = PLAYER2_ID;
-            gd.mindControllerPlayerId = UUID.randomUUID();
+            gd.controlPlayer("Test", null, UUID.randomUUID(), PLAYER2_ID,
+                    com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, false);
 
             svc.beginCardChoice(gd, PLAYER1_ID, List.of(0), "Pick a card");
 
@@ -1293,8 +1293,8 @@ class PlayerInputServiceTest {
         void keepsAffectedPlayerAsDecisionOwnerWhenMindControlled() {
             UUID controllerId = UUID.randomUUID();
             gd.playerIdToName.put(controllerId, "Controller");
-            gd.mindControlledPlayerId = PLAYER1_ID;
-            gd.mindControllerPlayerId = controllerId;
+            gd.controlPlayer("Test", null, controllerId, PLAYER1_ID,
+                    com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, false);
 
             Card card = createCreature("Source");
             gd.pendingMayAbilities.add(new PendingMayAbility(card, PLAYER1_ID, List.of(), "May do something"));

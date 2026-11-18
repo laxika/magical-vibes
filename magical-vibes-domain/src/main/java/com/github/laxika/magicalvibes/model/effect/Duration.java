@@ -37,7 +37,7 @@ public record Duration(Start start, End end, AsLongAs asLongAs, int combatPhase)
         AFFECTED_PLAYERS_NEXT_TURN,
         /**
          * As the next combat phase of the controller of the permanent it affects begins: "attacks during its
-         * controller's next combat phase if able".
+         * controller's next combat phase if able"; on a player, that player's next combat phase.
          */
         AFFECTED_CONTROLLERS_NEXT_COMBAT,
         /**
@@ -61,6 +61,8 @@ public record Duration(Start start, End end, AsLongAs asLongAs, int combatPhase)
         END_OF_COMBAT,
         /** The beginning of its controller's next turn. */
         YOUR_NEXT_TURN,
+        /** The beginning of the next turn, whoever's it is. */
+        NEXT_TURN,
         /** The cleanup step of its controller's next turn. */
         END_OF_YOUR_NEXT_TURN,
         /** The next untap step of the affected permanent's controller, not the effect's controller. */
@@ -175,7 +177,16 @@ public record Duration(Start start, End end, AsLongAs asLongAs, int combatPhase)
     /** "During target player's next turn": it applies through the next turn of the player it affects (Taunt). */
     public static final Duration DURING_AFFECTED_PLAYERS_NEXT_TURN =
             new Duration(Start.AFFECTED_PLAYERS_NEXT_TURN, End.END_OF_TURN, null);
-    /** "During its controller's next combat phase": it applies from that combat's beginning to its end. */
+    /**
+     * "You control target player during that player's next turn": it applies through the whole next turn of the player
+     * it affects, cleanup steps included, and ends as the turn after it begins (CR 724.1).
+     */
+    public static final Duration THROUGH_AFFECTED_PLAYERS_NEXT_TURN =
+            new Duration(Start.AFFECTED_PLAYERS_NEXT_TURN, End.NEXT_TURN, null);
+    /**
+     * "During its controller's next combat phase" (or, on a player, "during that player's next combat phase"): it
+     * applies from that combat's beginning to its end.
+     */
     public static final Duration DURING_AFFECTED_CONTROLLERS_NEXT_COMBAT =
             new Duration(Start.AFFECTED_CONTROLLERS_NEXT_COMBAT, End.END_OF_COMBAT, null);
     /** "After the current turn has ended": it applies from the next turn on (warp, CR 702.185a). */

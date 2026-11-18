@@ -9,7 +9,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * <ul>
  *   <li>{@link #TURN} — used up by
  *       {@code TurnProgressionService.advanceTurn} when that player's turn would begin. Pending
- *       player-controlling effects wait until a turn is actually taken (CR 723.1b).</li>
+ *       player-controlling effects wait until a turn is actually taken (CR 724.1b).</li>
  *   <li>{@link #UNTAP_STEP} — used up by
  *       {@code TurnProgressionService.advanceTurn} when that player next becomes active. The whole
  *       step is skipped, so the phasing event doesn't happen either (CR 702.26m) and no

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -33,14 +34,8 @@ public class ControlTargetPlayerNextTurnEffectHandler implements NormalEffectHan
         }
 
         UUID controllerId = entry.getControllerId();
-        gameData.pendingCombatControl.remove(targetPlayerId);
-        gameData.pendingTurnControl.put(targetPlayerId, controllerId);
-        if (e.grantExtraTurnAfter()) {
-            gameData.pendingTurnControlExtraTurn.add(targetPlayerId);
-        } else {
-            // Overwriting Mindslaver-style control must not leave a stale Emrakul extra-turn flag.
-            gameData.pendingTurnControlExtraTurn.removeIf(targetPlayerId::equals);
-        }
+        gameData.controlPlayer(entry.getCard().getName(), entry.getSourcePermanentId(), controllerId, targetPlayerId,
+                Duration.THROUGH_AFFECTED_PLAYERS_NEXT_TURN, e.grantExtraTurnAfter());
 
         String controllerName = gameData.playerIdToName.get(controllerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);

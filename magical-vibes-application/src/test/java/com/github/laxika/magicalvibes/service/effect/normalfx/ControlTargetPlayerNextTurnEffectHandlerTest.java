@@ -106,7 +106,7 @@ class ControlTargetPlayerNextTurnEffectHandlerTest {
 
                 controlTargetPlayerNextTurnEffectHandler.resolve(gd, entry, new ControlTargetPlayerNextTurnEffect());
 
-                assertThat(gd.pendingTurnControl).containsEntry(player2Id, player1Id);
+                assertThat(gd.pendingTurnControl()).containsEntry(player2Id, player1Id);
             }
 
             @Test
@@ -130,7 +130,7 @@ class ControlTargetPlayerNextTurnEffectHandlerTest {
 
                 controlTargetPlayerNextTurnEffectHandler.resolve(gd, entry, new ControlTargetPlayerNextTurnEffect());
 
-                assertThat(gd.pendingTurnControl).isEmpty();
+                assertThat(gd.pendingTurnControl()).isEmpty();
                 verify(gameLogService, never()).append(eq(gd), any(GameLogEntry.class));
             }
 
@@ -144,13 +144,14 @@ class ControlTargetPlayerNextTurnEffectHandlerTest {
 
                 controlTargetPlayerNextTurnEffectHandler.resolve(gd, entry, new ControlTargetPlayerNextTurnEffect());
 
-                assertThat(gd.pendingTurnControl).isEmpty();
+                assertThat(gd.pendingTurnControl()).isEmpty();
             }
 
             @Test
             @DisplayName("Overwrites previous turn control for the same target")
             void overwritesPreviousTurnControl() {
-                gd.pendingTurnControl.put(player2Id, player2Id);
+                gd.controlPlayer("Mindslaver", null, player2Id, player2Id,
+                        com.github.laxika.magicalvibes.model.effect.Duration.THROUGH_AFFECTED_PLAYERS_NEXT_TURN, false);
 
                 Card card = createCard("Mindslaver", CardType.ARTIFACT);
                 ControlTargetPlayerNextTurnEffect effect = new ControlTargetPlayerNextTurnEffect();
@@ -158,7 +159,7 @@ class ControlTargetPlayerNextTurnEffectHandlerTest {
 
                 controlTargetPlayerNextTurnEffectHandler.resolve(gd, entry, new ControlTargetPlayerNextTurnEffect());
 
-                assertThat(gd.pendingTurnControl).containsEntry(player2Id, player1Id);
+                assertThat(gd.pendingTurnControl()).containsEntry(player2Id, player1Id);
             }
 
             @Test
@@ -170,8 +171,8 @@ class ControlTargetPlayerNextTurnEffectHandlerTest {
 
                 controlTargetPlayerNextTurnEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.pendingTurnControl).containsEntry(player2Id, player1Id);
-                assertThat(gd.pendingTurnControlExtraTurn).contains(player2Id);
+                assertThat(gd.pendingTurnControl()).containsEntry(player2Id, player1Id);
+                assertThat(gd.pendingTurnControlExtraTurns()).contains(player2Id);
                 verify(gameLogService).append(eq(gd), eq(GameLog.text(
                         "Player1 will control Player2 during their next turn. After that turn, Player2 takes an extra turn.")));
             }
@@ -179,8 +180,8 @@ class ControlTargetPlayerNextTurnEffectHandlerTest {
             @Test
             @DisplayName("Mindslaver overwrite clears a stale Emrakul extra-turn flag")
             void mindslaverOverwriteClearsExtraTurnFlag() {
-                gd.pendingTurnControl.put(player2Id, player1Id);
-                gd.pendingTurnControlExtraTurn.add(player2Id);
+                gd.controlPlayer("Mindslaver", null, player1Id, player2Id,
+                        com.github.laxika.magicalvibes.model.effect.Duration.THROUGH_AFFECTED_PLAYERS_NEXT_TURN, true);
 
                 Card card = createCard("Mindslaver", CardType.ARTIFACT);
                 ControlTargetPlayerNextTurnEffect effect = new ControlTargetPlayerNextTurnEffect();
@@ -188,7 +189,7 @@ class ControlTargetPlayerNextTurnEffectHandlerTest {
 
                 controlTargetPlayerNextTurnEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.pendingTurnControl).containsEntry(player2Id, player1Id);
-                assertThat(gd.pendingTurnControlExtraTurn).doesNotContain(player2Id);
+                assertThat(gd.pendingTurnControl()).containsEntry(player2Id, player1Id);
+                assertThat(gd.pendingTurnControlExtraTurns()).doesNotContain(player2Id);
             }
 }

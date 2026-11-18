@@ -94,9 +94,9 @@ final class InteractionProjectionTestSupport {
     }
 
     private static UUID expectedRecipient(GameData gameData, UUID decidingPlayerId) {
-        if (decidingPlayerId.equals(gameData.mindControlledPlayerId)
-                && gameData.mindControllerPlayerId != null) {
-            return gameData.mindControllerPlayerId;
+        if (decidingPlayerId.equals(gameData.mindControlledPlayerId())
+                && gameData.mindControllerPlayerId() != null) {
+            return gameData.mindControllerPlayerId();
         }
         return decidingPlayerId;
     }

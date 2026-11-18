@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -36,17 +37,15 @@ public class ControlTargetPlayerNextCombatOrTurnEffectHandler implements NormalE
         String controllerName = gameData.playerIdToName.get(controllerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         if (entry.isWaterbendCostPaid()) {
-            gameData.pendingCombatControl.remove(targetPlayerId);
-            gameData.pendingTurnControl.put(targetPlayerId, controllerId);
-            gameData.pendingTurnControlExtraTurn.removeIf(targetPlayerId::equals);
+            gameData.controlPlayer(entry.getCard().getName(), entry.getSourcePermanentId(), controllerId,
+                    targetPlayerId, Duration.THROUGH_AFFECTED_PLAYERS_NEXT_TURN, false);
             gameLogService.append(gameData, GameLog.text(controllerName + " will control " + targetName
                     + " during their next turn."));
             log.info("Game {} - {} will control {} during their next turn", gameData.id,
                     controllerName, targetName);
         } else {
-            gameData.pendingTurnControl.remove(targetPlayerId);
-            gameData.pendingTurnControlExtraTurn.removeIf(targetPlayerId::equals);
-            gameData.pendingCombatControl.put(targetPlayerId, controllerId);
+            gameData.controlPlayer(entry.getCard().getName(), entry.getSourcePermanentId(), controllerId,
+                    targetPlayerId, Duration.DURING_AFFECTED_CONTROLLERS_NEXT_COMBAT, false);
             gameLogService.append(gameData, GameLog.text(controllerName + " will control " + targetName
                     + " during their next combat phase."));
             log.info("Game {} - {} will control {} during their next combat phase", gameData.id,

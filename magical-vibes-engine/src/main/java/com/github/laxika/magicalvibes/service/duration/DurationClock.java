@@ -45,9 +45,9 @@ import java.util.function.Predicate;
  * every floating effect whose {@link Duration.End} is one of the batch's events, without the stack (as CR 514.2), and
  * undoes what the effect kept on the permanent it affected (a permanent a phasing hold kept out phases in).
  *
- * <p>The events that end durations: a turn beginning ({@link TurnEvent.Began}: "until your next turn"), a step or phase
- * ending ({@link TurnEvent.StepEnded}: "until end of combat", "until the end of your next upkeep", CR 500.5), the
- * cleanup step's damage removal ({@link TurnEvent.Cleanup}: "until end of turn", "until the end of your next turn",
+ * <p>The events that end durations: a turn beginning ({@link TurnEvent.Began}: "until your next turn", and control
+ * of a player through their whole turn, CR 724.1), a step or phase ending ({@link TurnEvent.StepEnded}: "until end
+ * of combat", "until the end of your next upkeep", CR 500.5), the cleanup step's damage removal ({@link TurnEvent.Cleanup}: "until end of turn", "until the end of your next turn",
  * CR 514.2), a step beginning ({@link StepEvent}: "until your next upkeep", "until the next end step"), the untap step's
  * untapping ("until its controller's next untap step"), a spell being cast ({@link SpellEvent.Cast}) and a planeswalk
  * ({@link ActionEvent.Planeswalked}). A turn beginning also begins the effects scheduled to begin with it ("during your
@@ -117,8 +117,9 @@ public class DurationClock {
     private boolean startsAtCombat(GameData gameData, StepEvent step, FloatingContinuousEffect effect) {
         return switch (effect.duration().start()) {
             case AFFECTED_CONTROLLERS_NEXT_COMBAT -> effect.affectedPermanentId() != null
-                    && step.activePlayerId().equals(
-                    gameQueryService.findPermanentController(gameData, effect.affectedPermanentId()));
+                    ? step.activePlayerId().equals(
+                    gameQueryService.findPermanentController(gameData, effect.affectedPermanentId()))
+                    : step.activePlayerId().equals(effect.affectedPlayerId());
             case COMBAT_PHASE_OF_THIS_TURN -> effect.duration().combatPhase() == gameData.combatPhasesThisTurn;
             default -> false;
         };
@@ -243,8 +244,9 @@ public class DurationClock {
     /** Which floating effects {@code event} ends, or {@code null} when it ends none. */
     private Predicate<FloatingContinuousEffect> endsAt(GameData gameData, RulesEvent event) {
         return switch (event) {
-            case TurnEvent.Began began -> effect -> ends(effect, Duration.End.YOUR_NEXT_TURN)
-                    && began.activePlayerId().equals(effect.controllerId());
+            case TurnEvent.Began began -> effect -> ends(effect, Duration.End.NEXT_TURN)
+                    || (ends(effect, Duration.End.YOUR_NEXT_TURN)
+                    && began.activePlayerId().equals(effect.controllerId()));
             case TurnEvent.StepEnded ended when ended.step() == TurnStep.END_OF_COMBAT ->
                     effect -> ends(effect, Duration.End.END_OF_COMBAT);
             case TurnEvent.StepEnded ended when ended.step() == TurnStep.UPKEEP ->

@@ -115,8 +115,8 @@ class AiChoiceHandler {
         // strategy self-guards on the interaction's player id, so at most one of the
         // two dispatches answers. The identity check skips this when the first
         // dispatch already answered (a new interaction may have replaced it).
-        UUID controlledId = gameData.mindControlledPlayerId;
-        if (controlledId != null && aiPlayerId.equals(gameData.mindControllerPlayerId)
+        UUID controlledId = gameData.mindControlledPlayerId();
+        if (controlledId != null && aiPlayerId.equals(gameData.mindControllerPlayerId())
                 && gameData.interaction.activeInteraction() == active) {
             send(() -> strategy.answer(active, contextFor(gameData, controlledId)));
         }

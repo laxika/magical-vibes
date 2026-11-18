@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -40,12 +41,10 @@ public class ControlTargetPlayersNextTurnsEffectHandler implements NormalEffectH
             return;
         }
 
-        gameData.pendingCombatControl.remove(firstPlayerId);
-        gameData.pendingCombatControl.remove(secondPlayerId);
-        gameData.pendingTurnControl.put(secondPlayerId, firstPlayerId);
-        gameData.pendingTurnControl.put(firstPlayerId, secondPlayerId);
-        gameData.pendingTurnControlExtraTurn.removeIf(firstPlayerId::equals);
-        gameData.pendingTurnControlExtraTurn.removeIf(secondPlayerId::equals);
+        gameData.controlPlayer(entry.getCard().getName(), entry.getSourcePermanentId(), firstPlayerId, secondPlayerId,
+                Duration.THROUGH_AFFECTED_PLAYERS_NEXT_TURN, false);
+        gameData.controlPlayer(entry.getCard().getName(), entry.getSourcePermanentId(), secondPlayerId, firstPlayerId,
+                Duration.THROUGH_AFFECTED_PLAYERS_NEXT_TURN, false);
 
         String firstName = gameData.playerIdToName.get(firstPlayerId);
         String secondName = gameData.playerIdToName.get(secondPlayerId);

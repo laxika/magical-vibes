@@ -67,7 +67,7 @@ class ConstructACosmicCubeTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Construct a Cosmic Cube");
         harness.assertInGraveyard(player1, "Construct a Cosmic Cube");
-        assertThat(gd.pendingTurnControl).containsEntry(player2.getId(), player1.getId());
+        assertThat(gd.pendingTurnControl()).containsEntry(player2.getId(), player1.getId());
     }
 
     @Test
@@ -88,7 +88,7 @@ class ConstructACosmicCubeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
         resolveTopOfStack();
-        assertThat(gd.pendingTurnControl).containsEntry(player2.getId(), player1.getId());
+        assertThat(gd.pendingTurnControl()).containsEntry(player2.getId(), player1.getId());
     }
 
     @Test
@@ -134,7 +134,7 @@ class ConstructACosmicCubeTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Villain")).hasSize(1);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.pendingTurnControl).isEmpty();
+        assertThat(gd.pendingTurnControl()).isEmpty();
     }
 
     private void draw(Player player) {

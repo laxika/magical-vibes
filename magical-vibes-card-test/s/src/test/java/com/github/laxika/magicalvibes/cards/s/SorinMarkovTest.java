@@ -93,7 +93,7 @@ class SorinMarkovTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.pendingTurnControl).containsEntry(player2.getId(), player1.getId());
+        assertThat(gd.pendingTurnControl()).containsEntry(player2.getId(), player1.getId());
     }
 
     @Test
@@ -208,7 +208,7 @@ class SorinMarkovTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.pendingTurnControl).containsEntry(player1.getId(), player1.getId());
+        assertThat(gd.pendingTurnControl()).containsEntry(player1.getId(), player1.getId());
         harness.assertInGraveyard(player1, "Sorin Markov");
     }
 
@@ -221,14 +221,14 @@ class SorinMarkovTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Sorin Markov");
-        assertThat(gd.mindControlledPlayerId).isNull();
+        assertThat(gd.mindControlledPlayerId()).isNull();
         harness.forceStep(TurnStep.CLEANUP);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.mindControlledPlayerId).isEqualTo(player2.getId());
-        assertThat(gd.mindControllerPlayerId).isEqualTo(player1.getId());
-        assertThat(gd.pendingTurnControl).isEmpty();
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.mindControllerPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.pendingTurnControl()).isEmpty();
 
         harness.setHand(player2, List.of(new RuneclawBear()));
         harness.addMana(player2, ManaColor.GREEN, 1);
@@ -242,8 +242,8 @@ class SorinMarkovTest extends BaseCardTest {
         harness.forceStep(TurnStep.CLEANUP);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.mindControlledPlayerId).isNull();
-        assertThat(gd.mindControllerPlayerId).isNull();
+        assertThat(gd.mindControlledPlayerId()).isNull();
+        assertThat(gd.mindControllerPlayerId()).isNull();
     }
 
     private Permanent addReadySorin(Player player) {

@@ -498,6 +498,13 @@ follows the card onto the stack as the spell it becomes, and is used up as the c
 Permissions to play cards from outside the game (`permitPlayFromOutsideGame`, a single-play group ending for all its cards
 when one is played) and "[matching] permanents don't untap during [that player's] next untap step"
 (`restrictNextUntapStep`, matched as that step begins, CR 611.2c) are on a player.
+Control of a player (CR 724) is a `ControlPlayerEffect` on the controlled player (`GameData.controlPlayer`):
+Mindslaver's is `Duration.THROUGH_AFFECTED_PLAYERS_NEXT_TURN`, begun by the clock as that player's next turn begins and
+ended as the turn after it begins (CR 724.1, so it covers the cleanup steps); Secret of Bloodbending's is
+`DURING_AFFECTED_CONTROLLERS_NEXT_COMBAT`; Word of Command's is ended where its window closes. A new one on a player
+ends the older ones, begun or not, keeping an older promised extra turn when the new one promises one too (CR 724.1a;
+Emrakul, the Promised End). `mindControlledPlayerId()` / `mindControllerPlayerId()` read the newest begun one;
+`pendingTurnControl()` / `pendingCombatControl()` the waiting ones.
 
 **The clock.** Nothing calls an expiry for a duration that ends at an event: `DurationClock` (`service/duration`) ends
 those effects as `RulesEventPipeline` hands it each rules event batch, before the batch's abilities trigger, and undoes

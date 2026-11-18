@@ -24,7 +24,7 @@ class WorstFearsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.pendingTurnControl).containsEntry(player2.getId(), player1.getId());
+        assertThat(gd.pendingTurnControl()).containsEntry(player2.getId(), player1.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(card -> card.getName())
                 .contains("Worst Fears");
@@ -40,7 +40,7 @@ class WorstFearsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.pendingTurnControl).containsEntry(player1.getId(), player1.getId());
+        assertThat(gd.pendingTurnControl()).containsEntry(player1.getId(), player1.getId());
     }
 
     @Test
@@ -51,22 +51,22 @@ class WorstFearsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.mindControlledPlayerId).isNull();
+        assertThat(gd.mindControlledPlayerId()).isNull();
         harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.mindControlledPlayerId).isEqualTo(player2.getId());
-        assertThat(gd.mindControllerPlayerId).isEqualTo(player1.getId());
-        assertThat(gd.pendingTurnControl).isEmpty();
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.mindControllerPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.pendingTurnControl()).isEmpty();
 
         harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
-        assertThat(gd.mindControlledPlayerId).isEqualTo(player2.getId());
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(player2.getId());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.mindControlledPlayerId).isNull();
-        assertThat(gd.mindControllerPlayerId).isNull();
+        assertThat(gd.mindControlledPlayerId()).isNull();
+        assertThat(gd.mindControllerPlayerId()).isNull();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.mindControlledPlayerId).isNull();
+        assertThat(gd.mindControlledPlayerId()).isNull();
     }
 
     @Test
@@ -87,7 +87,7 @@ class WorstFearsTest extends BaseCardTest {
         harness.assertNotInHand(player2, "Worst Fears");
         harness.passBothPriorities();
 
-        assertThat(gd.pendingTurnControl).containsEntry(player1.getId(), player2.getId());
+        assertThat(gd.pendingTurnControl()).containsEntry(player1.getId(), player2.getId());
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(card -> card.getName()).contains("Worst Fears");
     }

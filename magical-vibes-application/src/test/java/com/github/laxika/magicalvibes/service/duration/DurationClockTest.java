@@ -59,6 +59,60 @@ class DurationClockTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Control of a player begins with that player's next turn and ends as the turn after it begins")
+    void playerControlLastsThroughTheControlledTurn() {
+        gd.controlPlayer("Mindslaver", null, player1.getId(), player2.getId(),
+                Duration.THROUGH_AFFECTED_PLAYERS_NEXT_TURN, false);
+
+        advance(new TurnEvent.Began(player1.getId()));
+        assertThat(gd.mindControlledPlayerId()).isNull();
+
+        advance(new TurnEvent.Began(player2.getId()));
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.mindControllerPlayerId()).isEqualTo(player1.getId());
+
+        // The controlled player is controlled through their cleanup steps (CR 724.1).
+        advance(new TurnEvent.Cleanup(player2.getId()));
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(player2.getId());
+
+        advance(new TurnEvent.Began(player1.getId()));
+        assertThat(gd.mindControlledPlayerId()).isNull();
+    }
+
+    @Test
+    @DisplayName("Control of a player during their next combat begins at that player's combat and ends with it")
+    void playerControlDuringTheirNextCombat() {
+        gd.controlPlayer("Secret of Bloodbending", null, player1.getId(), player2.getId(),
+                Duration.DURING_AFFECTED_CONTROLLERS_NEXT_COMBAT, false);
+
+        advance(new StepEvent(StepTrigger.Moment.BEGINNING_OF_COMBAT, player1.getId()));
+        assertThat(gd.mindControlledPlayerId()).isNull();
+
+        advance(new StepEvent(StepTrigger.Moment.BEGINNING_OF_COMBAT, player2.getId()));
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(player2.getId());
+
+        advance(new TurnEvent.StepEnded(TurnStep.END_OF_COMBAT, player2.getId()));
+        assertThat(gd.mindControlledPlayerId()).isNull();
+    }
+
+    @Test
+    @DisplayName("A newer control effect on a player overwrites the older one; an older extra turn stays with a new one")
+    void newerPlayerControlOverwritesTheOlder() {
+        gd.controlPlayer("Emrakul, the Promised End", null, player1.getId(), player2.getId(),
+                Duration.THROUGH_AFFECTED_PLAYERS_NEXT_TURN, true);
+        gd.controlPlayer("Emrakul, the Promised End", null, player1.getId(), player2.getId(),
+                Duration.THROUGH_AFFECTED_PLAYERS_NEXT_TURN, true);
+        assertThat(gd.pendingTurnControlExtraTurns()).containsExactly(player2.getId(), player2.getId());
+
+        gd.controlPlayer("Secret of Bloodbending", null, player1.getId(), player2.getId(),
+                Duration.DURING_AFFECTED_CONTROLLERS_NEXT_COMBAT, false);
+
+        assertThat(gd.pendingTurnControl()).isEmpty();
+        assertThat(gd.pendingTurnControlExtraTurns()).isEmpty();
+        assertThat(gd.pendingCombatControl()).containsEntry(player2.getId(), player1.getId());
+    }
+
+    @Test
     @DisplayName("The combat phase ending ends \"until end of combat\" effects; another step ending ends none")
     void combatEndingEndsEndOfCombatEffects() {
         FloatingContinuousEffect combat = add(player1.getId(), Duration.UNTIL_END_OF_COMBAT);

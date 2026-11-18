@@ -1397,8 +1397,8 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.CLEANUP);
         harness.passBothPriorities();
         assertThat(gd.activePlayerId).isEqualTo(human.getId());
-        assertThat(gd.mindControlledPlayerId).isEqualTo(human.getId());
-        assertThat(gd.mindControllerPlayerId).isEqualTo(aiPlayer.getId());
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(human.getId());
+        assertThat(gd.mindControllerPlayerId()).isEqualTo(aiPlayer.getId());
 
         Permanent ownBears = new Permanent(new GrizzlyBears());
         ownBears.setSummoningSick(false);

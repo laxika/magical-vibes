@@ -270,8 +270,8 @@ class ReconnectionServiceTest {
 
     @Test
     void mindControlledDecisionReplaysOnlyToTheController() {
-        gameData.mindControlledPlayerId = player2Id;
-        gameData.mindControllerPlayerId = player1Id;
+        gameData.controlPlayer("Test", null, player1Id, player2Id,
+                com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, false);
         gameData.interaction.beginInteraction(
                 new PendingInteraction.AttackerDeclaration(player2Id));
 

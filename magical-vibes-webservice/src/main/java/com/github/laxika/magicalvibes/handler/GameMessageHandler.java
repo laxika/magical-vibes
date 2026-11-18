@@ -916,8 +916,8 @@ public class GameMessageHandler implements MessageHandler {
             ValidTargetsResponse response;
             synchronized (gameData) {
                 if (request.commandCardId() != null) {
-                    UUID actorId = player.getId().equals(gameData.mindControllerPlayerId)
-                            ? gameData.mindControlledPlayerId : player.getId();
+                    UUID actorId = player.getId().equals(gameData.mindControllerPlayerId())
+                            ? gameData.mindControlledPlayerId() : player.getId();
                     var card = gameData.playerCommandZones.getOrDefault(actorId, java.util.List.of()).stream()
                             .filter(candidate -> candidate.getId().equals(request.commandCardId())).findFirst()
                             .orElseThrow(() -> new IllegalArgumentException("Commander is not in your command zone"));
@@ -927,9 +927,9 @@ public class GameMessageHandler implements MessageHandler {
                 } else if (request.planarObjectId() != null && request.abilityIndex() != null) {
                     var source = planarAbilities.source(gameData, request.planarObjectId());
                     var ability = planarAbilities.ability(source, request.abilityIndex());
-                    UUID actorId = player.getId().equals(gameData.mindControllerPlayerId)
-                            ? gameData.mindControlledPlayerId : player.getId();
-                    if (player.getId().equals(gameData.mindControlledPlayerId)
+                    UUID actorId = player.getId().equals(gameData.mindControllerPlayerId())
+                            ? gameData.mindControlledPlayerId() : player.getId();
+                    if (player.getId().equals(gameData.mindControlledPlayerId())
                             || !planarAbilities.available(gameData, actorId, source, ability)) {
                         throw new IllegalStateException("You cannot activate that planar ability now");
                     }

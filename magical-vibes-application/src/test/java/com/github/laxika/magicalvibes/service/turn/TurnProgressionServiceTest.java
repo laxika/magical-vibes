@@ -686,13 +686,14 @@ class TurnProgressionServiceTest {
         void pendingMindslaverWaitsPastSkippedTurn() {
             gd.activePlayerId = player1Id;
             FloatingCombatRules.skipNext(gd, player2Id, SkipKind.TURN, 1);
-            gd.pendingTurnControl.put(player2Id, player1Id);
+            gd.controlPlayer("Mindslaver", null, player1Id, player2Id,
+                    com.github.laxika.magicalvibes.model.effect.Duration.THROUGH_AFFECTED_PLAYERS_NEXT_TURN, false);
 
             turnProgressionService.advanceTurn(gd);
 
             assertThat(gd.activePlayerId).isEqualTo(player1Id);
-            assertThat(gd.pendingTurnControl).containsEntry(player2Id, player1Id);
-            assertThat(gd.mindControlledPlayerId).isNull();
+            assertThat(gd.pendingTurnControl()).containsEntry(player2Id, player1Id);
+            assertThat(gd.mindControlledPlayerId()).isNull();
         }
 
         @Test
@@ -863,18 +864,6 @@ class TurnProgressionServiceTest {
         }
 
         @Test
-        @DisplayName("Clears mind control state from the ending turn")
-        void clearsMindControlState() {
-            gd.mindControlledPlayerId = player1Id;
-            gd.mindControllerPlayerId = player2Id;
-
-            turnProgressionService.advanceTurn(gd);
-
-            assertThat(gd.mindControlledPlayerId).isNull();
-            assertThat(gd.mindControllerPlayerId).isNull();
-        }
-
-        @Test
         @DisplayName("Sets permanentsEnteredBattlefieldThisTurn to empty")
         void clearsPermanentsEnteredThisTurn() {
             gd.permanentsEnteredBattlefieldThisTurn.put(player1Id, new ArrayList<>());
@@ -905,16 +894,25 @@ class TurnProgressionServiceTest {
     @DisplayName("advanceTurn — Mindslaver turn control")
     class MindslaverTurnControl {
 
+        /** A control effect the duration clock began as the controlled player's turn began. */
+        private void controlBegunWithTurn(UUID controllerId, UUID controlledId, boolean extraTurnAfter) {
+            gd.putFloatingEffect(com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect.onPlayer(
+                    "Mindslaver", null, controllerId,
+                    new com.github.laxika.magicalvibes.model.effect.ControlPlayerEffect(controllerId, extraTurnAfter),
+                    controlledId,
+                    com.github.laxika.magicalvibes.model.effect.Duration.THROUGH_AFFECTED_PLAYERS_NEXT_TURN));
+        }
+
         @Test
         @DisplayName("Activates Mindslaver control when pending turn control exists")
         void activatesMindslaver() {
             gd.activePlayerId = player1Id;
-            gd.pendingTurnControl.put(player2Id, player1Id);
+            controlBegunWithTurn(player1Id, player2Id, false);
 
             turnProgressionService.advanceTurn(gd);
 
-            assertThat(gd.mindControlledPlayerId).isEqualTo(player2Id);
-            assertThat(gd.mindControllerPlayerId).isEqualTo(player1Id);
+            assertThat(gd.mindControlledPlayerId()).isEqualTo(player2Id);
+            assertThat(gd.mindControllerPlayerId()).isEqualTo(player1Id);
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player1 controls Player2 this turn (Mindslaver).")));
         }
 
@@ -923,38 +921,26 @@ class TurnProgressionServiceTest {
         void doesNotActivateWhenControllerNotInGame() {
             gd.activePlayerId = player1Id;
             UUID unknownPlayer = UUID.randomUUID();
-            gd.pendingTurnControl.put(player2Id, unknownPlayer);
+            controlBegunWithTurn(unknownPlayer, player2Id, false);
 
             turnProgressionService.advanceTurn(gd);
 
-            assertThat(gd.mindControlledPlayerId).isNull();
-            assertThat(gd.mindControllerPlayerId).isNull();
-        }
-
-        @Test
-        @DisplayName("Consumes the pending turn control entry")
-        void consumesPendingTurnControl() {
-            gd.activePlayerId = player1Id;
-            gd.pendingTurnControl.put(player2Id, player1Id);
-
-            turnProgressionService.advanceTurn(gd);
-
-            assertThat(gd.pendingTurnControl).isEmpty();
+            assertThat(gd.mindControlledPlayerId()).isNull();
+            assertThat(gd.mindControllerPlayerId()).isNull();
         }
 
         @Test
         @DisplayName("Emrakul flag schedules an extra turn when control activates")
         void schedulesExtraTurnWhenControlActivates() {
             gd.activePlayerId = player1Id;
-            gd.pendingTurnControl.put(player2Id, player1Id);
-            gd.pendingTurnControlExtraTurn.add(player2Id);
+            controlBegunWithTurn(player1Id, player2Id, true);
 
             turnProgressionService.advanceTurn(gd);
 
-            assertThat(gd.mindControlledPlayerId).isEqualTo(player2Id);
+            assertThat(gd.mindControlledPlayerId()).isEqualTo(player2Id);
             assertThat(gd.extraTurns).containsExactly(player2Id);
             assertThat(gd.extraTurnSkipsUntap).containsExactly(false);
-            assertThat(gd.pendingTurnControlExtraTurn).isEmpty();
+            assertThat(gd.pendingTurnControlExtraTurns()).isEmpty();
         }
 
         @Test
@@ -962,14 +948,13 @@ class TurnProgressionServiceTest {
         void doesNotScheduleExtraTurnWhenControllerGone() {
             gd.activePlayerId = player1Id;
             UUID unknownPlayer = UUID.randomUUID();
-            gd.pendingTurnControl.put(player2Id, unknownPlayer);
-            gd.pendingTurnControlExtraTurn.add(player2Id);
+            controlBegunWithTurn(unknownPlayer, player2Id, true);
 
             turnProgressionService.advanceTurn(gd);
 
-            assertThat(gd.mindControlledPlayerId).isNull();
+            assertThat(gd.mindControlledPlayerId()).isNull();
             assertThat(gd.extraTurns).isEmpty();
-            assertThat(gd.pendingTurnControlExtraTurn).isEmpty();
+            assertThat(gd.pendingTurnControlExtraTurns()).isEmpty();
         }
     }
 

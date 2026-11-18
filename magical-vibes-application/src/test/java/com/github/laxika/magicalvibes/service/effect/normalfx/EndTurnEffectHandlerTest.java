@@ -130,7 +130,7 @@ class EndTurnEffectHandlerTest {
         // =========================================================================
 
     @Test
-            @DisplayName("Clears pending may abilities (rule 723.1a)")
+            @DisplayName("Clears pending may abilities (rule 725.1a)")
             void clearsPendingMayAbilities() {
                 Card sourceCard = createCard("Soul Warden", CardType.CREATURE);
                 gd.pendingMayAbilities.add(new com.github.laxika.magicalvibes.model.PendingMayAbility(
@@ -145,7 +145,7 @@ class EndTurnEffectHandlerTest {
             }
 
             @Test
-            @DisplayName("Exiles spell cards on the stack (rule 723.1b)")
+            @DisplayName("Exiles spell cards on the stack (rule 725.1b)")
             void exilesSpellsOnStack() {
                 Card creatureCard = createCard("Grizzly Bears", CardType.CREATURE);
                 Card sorceryCard = createCard("Divination", CardType.SORCERY);
@@ -212,7 +212,7 @@ class EndTurnEffectHandlerTest {
             }
 
             @Test
-            @DisplayName("Sets current step to CLEANUP (rule 723.1d)")
+            @DisplayName("Sets current step to CLEANUP (rule 725.1d)")
             void setsStepToCleanup() {
                 gd.currentStep = TurnStep.PRECOMBAT_MAIN;
 

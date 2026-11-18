@@ -69,7 +69,7 @@ class ControlTargetPlayersNextTurnsEffectHandlerTest {
 
         handler.resolve(gameData, entry, new ControlTargetPlayersNextTurnsEffect());
 
-        assertThat(gameData.pendingTurnControl)
+        assertThat(gameData.pendingTurnControl())
                 .containsEntry(firstPlayerId, secondPlayerId)
                 .containsEntry(secondPlayerId, firstPlayerId);
     }

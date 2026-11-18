@@ -38,7 +38,7 @@ class MindslaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentId);
         harness.passBothPriorities();
 
-        assertThat(gd.pendingTurnControl).containsEntry(opponentId, player1.getId());
+        assertThat(gd.pendingTurnControl()).containsEntry(opponentId, player1.getId());
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -76,10 +76,10 @@ class MindslaverTest extends BaseCardTest {
         advanceTurn(player2);
 
         assertThat(gd.activePlayerId).isEqualTo(opponentId);
-        assertThat(gd.mindControlledPlayerId).isEqualTo(opponentId);
-        assertThat(gd.mindControllerPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(opponentId);
+        assertThat(gd.mindControllerPlayerId()).isEqualTo(player1.getId());
         // Pending control should be consumed
-        assertThat(gd.pendingTurnControl).isEmpty();
+        assertThat(gd.pendingTurnControl()).isEmpty();
     }
 
     // ===== Controller can act for controlled player =====
@@ -99,7 +99,7 @@ class MindslaverTest extends BaseCardTest {
         advanceTurn(player2);
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.mindControlledPlayerId).isEqualTo(player2.getId());
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(player2.getId());
 
         // Controller (player1) passes priority — acts as controlled player (player2)
         // Since player2 is active player with priority, controller's pass maps to player2
@@ -124,7 +124,7 @@ class MindslaverTest extends BaseCardTest {
         advanceTurn(player2);
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.mindControlledPlayerId).isEqualTo(player2.getId());
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(player2.getId());
 
         // Set player2's hand AFTER turn advancement (draw step adds cards)
         Card testCard = new Ornithopter();
@@ -155,14 +155,14 @@ class MindslaverTest extends BaseCardTest {
 
         // Advance to player2's turn (mind control activates)
         advanceTurn(player2);
-        assertThat(gd.mindControlledPlayerId).isEqualTo(player2.getId());
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(player2.getId());
 
         // Advance past the controlled turn to player1's turn
         advanceTurn(player1);
 
         // Mind control should be cleared
-        assertThat(gd.mindControlledPlayerId).isNull();
-        assertThat(gd.mindControllerPlayerId).isNull();
+        assertThat(gd.mindControlledPlayerId()).isNull();
+        assertThat(gd.mindControllerPlayerId()).isNull();
     }
 
     // ===== Targeting and timing =====
@@ -179,7 +179,7 @@ class MindslaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, selfId);
         harness.passBothPriorities();
 
-        assertThat(gd.pendingTurnControl).containsEntry(selfId, player1.getId());
+        assertThat(gd.pendingTurnControl()).containsEntry(selfId, player1.getId());
     }
 
     @Test
@@ -194,7 +194,7 @@ class MindslaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentId);
         harness.passBothPriorities();
 
-        assertThat(gd.pendingTurnControl).containsEntry(opponentId, player1.getId());
+        assertThat(gd.pendingTurnControl()).containsEntry(opponentId, player1.getId());
     }
 
     @Test
@@ -211,10 +211,10 @@ class MindslaverTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Mindslaver");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.pendingTurnControl).isEmpty();
+        assertThat(gd.pendingTurnControl()).isEmpty();
 
         harness.passBothPriorities();
-        assertThat(gd.pendingTurnControl).containsEntry(player2.getId(), player1.getId());
+        assertThat(gd.pendingTurnControl()).containsEntry(player2.getId(), player1.getId());
     }
 
     @Test
@@ -231,7 +231,7 @@ class MindslaverTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Mindslaver");
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.pendingTurnControl).isEmpty();
+        assertThat(gd.pendingTurnControl()).isEmpty();
     }
 
     @Test
@@ -247,7 +247,7 @@ class MindslaverTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Mindslaver");
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.pendingTurnControl).isEmpty();
+        assertThat(gd.pendingTurnControl()).isEmpty();
     }
 
     @Test
@@ -261,15 +261,15 @@ class MindslaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.mindControlledPlayerId).isNull();
-        assertThat(gd.pendingTurnControl).containsEntry(player2.getId(), player1.getId());
+        assertThat(gd.mindControlledPlayerId()).isNull();
+        assertThat(gd.pendingTurnControl()).containsEntry(player2.getId(), player1.getId());
         advanceTurn(player1);
-        assertThat(gd.mindControlledPlayerId).isNull();
-        assertThat(gd.pendingTurnControl).containsEntry(player2.getId(), player1.getId());
+        assertThat(gd.mindControlledPlayerId()).isNull();
+        assertThat(gd.pendingTurnControl()).containsEntry(player2.getId(), player1.getId());
         advanceTurn(player2);
-        assertThat(gd.mindControlledPlayerId).isEqualTo(player2.getId());
-        assertThat(gd.mindControllerPlayerId).isEqualTo(player1.getId());
-        assertThat(gd.pendingTurnControl).isEmpty();
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.mindControllerPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.pendingTurnControl()).isEmpty();
     }
 
     @Test

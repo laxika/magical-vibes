@@ -42,8 +42,8 @@ class WordOfCommandTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(3);
-        assertThat(gd.mindControllerPlayerId).isNull();
-        assertThat(gd.mindControlledPlayerId).isNull();
+        assertThat(gd.mindControllerPlayerId()).isNull();
+        assertThat(gd.mindControlledPlayerId()).isNull();
         assertThat(gd.pendingEffectResolutionEntry).isNull();
     }
 
@@ -111,8 +111,8 @@ class WordOfCommandTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(ritual.getId()));
-        assertThat(gd.mindControllerPlayerId).isNull();
-        assertThat(gd.mindControlledPlayerId).isNull();
+        assertThat(gd.mindControllerPlayerId()).isNull();
+        assertThat(gd.mindControlledPlayerId()).isNull();
         resolveAllTriggers();
     }
 
@@ -141,8 +141,8 @@ class WordOfCommandTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.mindControllerPlayerId).isNull();
-        assertThat(gd.mindControlledPlayerId).isNull();
+        assertThat(gd.mindControllerPlayerId()).isNull();
+        assertThat(gd.mindControlledPlayerId()).isNull();
         assertThat(gd.pendingEffectResolutionEntry).isNull();
     }
 
@@ -188,6 +188,6 @@ class WordOfCommandTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Fountain of Youth");
         harness.assertOnBattlefield(player1, "Angelic Chorus");
-        assertThat(gd.mindControlledPlayerId).isNull();
+        assertThat(gd.mindControlledPlayerId()).isNull();
     }
 }

@@ -37,7 +37,7 @@ class TheDominionBraceletTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.pendingTurnControl).containsEntry(player2.getId(), player1.getId());
+        assertThat(gd.pendingTurnControl()).containsEntry(player2.getId(), player1.getId());
         assertThat(gd.findExiledCard(bracelet.getCard().getId())).isNotNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
@@ -128,10 +128,10 @@ class TheDominionBraceletTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(bracelet.getCard().getId())).isNotNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bracelet);
-        assertThat(gd.pendingTurnControl).isEmpty();
+        assertThat(gd.pendingTurnControl()).isEmpty();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(22);
         harness.passBothPriorities();
-        assertThat(gd.pendingTurnControl).containsEntry(player2.getId(), player1.getId());
+        assertThat(gd.pendingTurnControl()).containsEntry(player2.getId(), player1.getId());
     }
 
     @Test
@@ -147,7 +147,7 @@ class TheDominionBraceletTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(bracelet.getCard().getId())).isNotNull();
-        assertThat(gd.pendingTurnControl).containsEntry(player2.getId(), player1.getId());
+        assertThat(gd.pendingTurnControl()).containsEntry(player2.getId(), player1.getId());
     }
 
     @Test
@@ -160,18 +160,18 @@ class TheDominionBraceletTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 12);
         harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
-        assertThat(gd.mindControlledPlayerId).isNull();
+        assertThat(gd.mindControlledPlayerId()).isNull();
 
         harness.forceStep(TurnStep.CLEANUP);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.mindControlledPlayerId).isEqualTo(player2.getId());
-        assertThat(gd.mindControllerPlayerId).isEqualTo(player1.getId());
-        assertThat(gd.pendingTurnControl).isEmpty();
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.mindControllerPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.pendingTurnControl()).isEmpty();
 
         harness.forceStep(TurnStep.CLEANUP);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.mindControlledPlayerId).isNull();
-        assertThat(gd.mindControllerPlayerId).isNull();
+        assertThat(gd.mindControlledPlayerId()).isNull();
+        assertThat(gd.mindControllerPlayerId()).isNull();
     }
 
 }

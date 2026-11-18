@@ -73,9 +73,9 @@ public class ReconnectionService {
     }
 
     private static UUID decisionRecipient(GameData gameData, UUID decidingPlayerId) {
-        if (decidingPlayerId.equals(gameData.mindControlledPlayerId)
-                && gameData.mindControllerPlayerId != null) {
-            return gameData.mindControllerPlayerId;
+        if (decidingPlayerId.equals(gameData.mindControlledPlayerId())
+                && gameData.mindControllerPlayerId() != null) {
+            return gameData.mindControllerPlayerId();
         }
         return decidingPlayerId;
     }

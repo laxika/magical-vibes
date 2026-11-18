@@ -3468,23 +3468,6 @@ public class GameData {
     /** Tracks which Leonin Arbiter permanent IDs each player has paid {2} for this turn. */
     public final Map<UUID, Set<UUID>> paidSearchTaxPermanentIds = new ConcurrentHashMap<>();
 
-    // Mindslaver — turn control
-    /** Delayed effect: targetPlayerId -> controllerId, consumed when target player's turn begins. */
-    public final Map<UUID, UUID> pendingTurnControl = new ConcurrentHashMap<>();
-    /**
-     * Players whose pending turn-control effect also grants them an extra turn after the controlled
-     * turn (Emrakul, the Promised End). Consumed with {@link #pendingTurnControl} when that turn begins.
-     */
-    public final List<UUID> pendingTurnControlExtraTurn = new CopyOnWriteArrayList<>();
-    /** Delayed effect: targetPlayerId -> controllerId, consumed when target player's next combat begins. */
-    public final Map<UUID, UUID> pendingCombatControl = new ConcurrentHashMap<>();
-    /** Non-null when a player is being controlled this turn (the controlled player's ID). */
-    public UUID mindControlledPlayerId;
-    /** Non-null when a player is being controlled this turn (the controlling player's ID). */
-    public UUID mindControllerPlayerId;
-    /** Whether the active mind control ends when the current combat phase ends. */
-    public boolean mindControlUntilEndOfCombat;
-
     /** Word of Command's short-lived player-control window and its parked resolution. */
     public UUID wordOfCommandControllerPlayerId;
     public UUID wordOfCommandControlledPlayerId;
@@ -4765,6 +4748,88 @@ public class GameData {
             }
         }
         return linked;
+    }
+
+    /**
+     * Makes {@code controllerId} control {@code controlledId} for {@code duration} (CR 724): a floating
+     * {@link com.github.laxika.magicalvibes.model.effect.ControlPlayerEffect} on the controlled player. Of the effects on one player the last one created is
+     * the one that works (CR 724.1a), so this ends the older ones, begun or not; an older one that promises an extra
+     * turn is kept when this one promises one too, since each such effect makes its own (Emrakul, the Promised End).
+     */
+    public void controlPlayer(String sourceCardName, UUID sourcePermanentId, UUID controllerId, UUID controlledId,
+                              com.github.laxika.magicalvibes.model.effect.Duration duration, boolean extraTurnAfter) {
+        Predicate<FloatingContinuousEffect> overwritten = fe -> controlledId.equals(fe.affectedPlayerId())
+                && fe.effect() instanceof com.github.laxika.magicalvibes.model.effect.ControlPlayerEffect control
+                && !(extraTurnAfter && control.extraTurnAfter());
+        dropScheduledFloatingEffects(overwritten);
+        expireFloatingEffects(overwritten);
+        addFloatingEffect(FloatingContinuousEffect.onPlayer(sourceCardName, sourcePermanentId, controllerId,
+                new com.github.laxika.magicalvibes.model.effect.ControlPlayerEffect(controllerId, extraTurnAfter), controlledId, duration));
+    }
+
+    /** The player-control effect that works now, or {@code null}: the newest one begun (CR 724.1a). */
+    public FloatingContinuousEffect playerControl() {
+        FloatingContinuousEffect working = null;
+        for (FloatingContinuousEffect fe : floatingEffectsOnNamedPlayers(com.github.laxika.magicalvibes.model.effect.ControlPlayerEffect.class)) {
+            if (working == null || fe.timestamp() >= working.timestamp()) {
+                working = fe;
+            }
+        }
+        return working;
+    }
+
+    /**
+     * The control effects waiting for the controlled player's next turn, as controlled player to controller (one per
+     * player, CR 724.1a).
+     */
+    public Map<UUID, UUID> pendingTurnControl() {
+        return pendingPlayerControl(com.github.laxika.magicalvibes.model.effect.Duration.Start.AFFECTED_PLAYERS_NEXT_TURN);
+    }
+
+    /** The control effects waiting for the controlled player's next combat phase, as controlled player to controller. */
+    public Map<UUID, UUID> pendingCombatControl() {
+        return pendingPlayerControl(com.github.laxika.magicalvibes.model.effect.Duration.Start.AFFECTED_CONTROLLERS_NEXT_COMBAT);
+    }
+
+    /** The controlled player of each waiting control effect that promises an extra turn after it (Emrakul). */
+    public List<UUID> pendingTurnControlExtraTurns() {
+        synchronized (scheduledFloatingEffects) {
+            return scheduledFloatingEffects.stream()
+                    .filter(fe -> fe.effect() instanceof com.github.laxika.magicalvibes.model.effect.ControlPlayerEffect control && control.extraTurnAfter())
+                    .map(FloatingContinuousEffect::affectedPlayerId)
+                    .toList();
+        }
+    }
+
+    private Map<UUID, UUID> pendingPlayerControl(com.github.laxika.magicalvibes.model.effect.Duration.Start start) {
+        Map<UUID, UUID> pending = new HashMap<>();
+        synchronized (scheduledFloatingEffects) {
+            for (FloatingContinuousEffect fe : scheduledFloatingEffects) {
+                if (fe.effect() instanceof com.github.laxika.magicalvibes.model.effect.ControlPlayerEffect control && fe.duration().start() == start) {
+                    pending.put(fe.affectedPlayerId(), control.controllerPlayerId());
+                }
+            }
+        }
+        return pending;
+    }
+
+    /** The player being controlled by another player now, or {@code null}. */
+    public UUID mindControlledPlayerId() {
+        FloatingContinuousEffect control = playerControl();
+        return control == null ? null : control.affectedPlayerId();
+    }
+
+    /** The player controlling another player now, or {@code null}. */
+    public UUID mindControllerPlayerId() {
+        FloatingContinuousEffect control = playerControl();
+        return control == null ? null : ((com.github.laxika.magicalvibes.model.effect.ControlPlayerEffect) control.effect()).controllerPlayerId();
+    }
+
+    /** Ends {@code controllerId}'s control of {@code controlledId} (Word of Command's, as its window closes). */
+    public void endPlayerControl(UUID controllerId, UUID controlledId) {
+        expireFloatingEffects(fe -> controlledId.equals(fe.affectedPlayerId())
+                && fe.effect() instanceof com.github.laxika.magicalvibes.model.effect.ControlPlayerEffect control
+                && controllerId.equals(control.controllerPlayerId()));
     }
 
     /** Whether a floating effect of any of {@code types} applies to {@code playerId}. */
@@ -10493,12 +10558,6 @@ public class GameData {
                 ? Map.of() : new HashMap<>(this.pendingETBDamageAssignments);
 
         // --- Mindslaver turn control ---
-        copy.pendingTurnControl.putAll(this.pendingTurnControl);
-        copy.pendingTurnControlExtraTurn.addAll(this.pendingTurnControlExtraTurn);
-        copy.pendingCombatControl.putAll(this.pendingCombatControl);
-        copy.mindControlledPlayerId = this.mindControlledPlayerId;
-        copy.mindControllerPlayerId = this.mindControllerPlayerId;
-        copy.mindControlUntilEndOfCombat = this.mindControlUntilEndOfCombat;
         copy.wordOfCommandControllerPlayerId = this.wordOfCommandControllerPlayerId;
         copy.wordOfCommandControlledPlayerId = this.wordOfCommandControlledPlayerId;
         copy.wordOfCommandCardId = this.wordOfCommandCardId;

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.effect.ControlPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
@@ -92,12 +93,6 @@ public class TurnProgressionService {
         // The mana pool drains at step boundaries, so nothing recorded before this point can
         // still be reverted by the cancel-casting UI.
         gameData.revertableManaActivations.clear();
-
-        if (gameData.currentStep == TurnStep.END_OF_COMBAT && gameData.mindControlUntilEndOfCombat) {
-            gameData.mindControlledPlayerId = null;
-            gameData.mindControllerPlayerId = null;
-            gameData.mindControlUntilEndOfCombat = false;
-        }
 
         if (gameData.currentStep == TurnStep.END_OF_COMBAT) {
             combatService.clearCombatState(gameData);
@@ -397,19 +392,6 @@ public class TurnProgressionService {
             } else if (next == TurnStep.BEGINNING_OF_COMBAT) {
                 gameData.playersAttackedThisCombat.clear();
                 gameData.combatPhasesThisTurn++;
-                UUID combatController = gameData.pendingCombatControl.remove(gameData.activePlayerId);
-                if (combatController != null && gameData.playerIds.contains(combatController)) {
-                    gameData.mindControlledPlayerId = gameData.activePlayerId;
-                    gameData.mindControllerPlayerId = combatController;
-                    gameData.mindControlUntilEndOfCombat = true;
-                    String combatControllerName = gameData.playerIdToName.get(combatController);
-                    String combatPlayerName = gameData.playerIdToName.get(gameData.activePlayerId);
-                    String controlLog = combatControllerName + " controls " + combatPlayerName
-                            + " during their next combat phase.";
-                    gameLogService.append(gameData, GameLog.text(controlLog));
-                    log.info("Game {} - {} controls {} during combat", gameData.id,
-                            combatControllerName, combatPlayerName);
-                }
                 gameData.cardsPutIntoGraveyardThisCombat.clear();
                 gameData.declaredAttackerIdsThisCombat.clear();
                 gameData.creaturesThatEnlistedThisCombat.clear();
@@ -420,6 +402,7 @@ public class TurnProgressionService {
                 gameData.combatBlockOpponentIdsThisCombat.clear();
                 gameData.combatDamageToPlayersThisCombat.clear();
                 stepTriggerService.handleBeginningOfCombatTriggers(gameData);
+                logPlayerControlBegun(gameData, Duration.Start.AFFECTED_CONTROLLERS_NEXT_COMBAT);
             } else if (next == TurnStep.DECLARE_ATTACKERS) {
                 stepTriggerService.handleDeclareAttackersTriggers(gameData);
                 combatService.handleDeclareAttackersStep(gameData);
@@ -536,15 +519,48 @@ public class TurnProgressionService {
         }
     }
 
+    /**
+     * Logs the control of the active player that began just now, with a turn or a combat phase as {@code start} says
+     * (CR 724.1), and returns whether one did. Control by a player who has left the game ends first.
+     */
+    private boolean logPlayerControlBegun(GameData gameData, Duration.Start start) {
+        // A player who has left the game controls no one.
+        gameData.expireFloatingEffects(effect -> effect.effect() instanceof ControlPlayerEffect control
+                && !gameData.playerIds.contains(control.controllerPlayerId()));
+        FloatingContinuousEffect control = gameData.playerControl();
+        if (control == null || control.duration().start() != start
+                || !gameData.activePlayerId.equals(control.affectedPlayerId())) {
+            return false;
+        }
+        String controllerName = gameData.playerIdToName.get(gameData.mindControllerPlayerId());
+        String controlledName = gameData.playerIdToName.get(gameData.activePlayerId);
+        String when = start == Duration.Start.AFFECTED_PLAYERS_NEXT_TURN
+                ? " this turn (Mindslaver)." : " during their next combat phase.";
+        gameLogService.append(gameData, GameLog.text(controllerName + " controls " + controlledName + when));
+        log.info("Game {} - {} controls {}{}", gameData.id, controllerName, controlledName, when);
+        return true;
+    }
+
+    /**
+     * Queues the extra turn each control effect that began with this turn promises after it (Emrakul, the Promised
+     * End): it is created only once control actually begins.
+     */
+    private void queueExtraTurnsAfterControlledTurn(GameData gameData, UUID activePlayerId) {
+        String activeName = gameData.playerIdToName.get(activePlayerId);
+        for (FloatingContinuousEffect control : gameData.floatingEffectsOnNamedPlayers(ControlPlayerEffect.class)) {
+            if (activePlayerId.equals(control.affectedPlayerId())
+                    && control.duration().start() == Duration.Start.AFFECTED_PLAYERS_NEXT_TURN
+                    && ((ControlPlayerEffect) control.effect()).extraTurnAfter()) {
+                gameData.queueExtraTurnFirst(activePlayerId, false);
+                gameLogService.append(gameData, GameLog.text(activeName + " takes an extra turn after this one."));
+                log.info("Game {} - {} granted an extra turn after the controlled turn", gameData.id, activeName);
+            }
+        }
+    }
+
     private void beginSequentialCombatPhase(GameData gameData) {
         gameData.playersAttackedThisCombat.clear();
         gameData.combatPhasesThisTurn++;
-        UUID combatController = gameData.pendingCombatControl.remove(gameData.activePlayerId);
-        if (combatController != null && gameData.playerIds.contains(combatController)) {
-            gameData.mindControlledPlayerId = gameData.activePlayerId;
-            gameData.mindControllerPlayerId = combatController;
-            gameData.mindControlUntilEndOfCombat = true;
-        }
         gameData.cardsPutIntoGraveyardThisCombat.clear();
         gameData.declaredAttackerIdsThisCombat.clear();
         gameData.creaturesThatEnlistedThisCombat.clear();
@@ -555,6 +571,7 @@ public class TurnProgressionService {
         gameData.combatBlockOpponentIdsThisCombat.clear();
         gameData.combatDamageToPlayersThisCombat.clear();
         stepTriggerService.handleBeginningOfCombatTriggers(gameData);
+        logPlayerControlBegun(gameData, Duration.Start.AFFECTED_CONTROLLERS_NEXT_COMBAT);
     }
 
     private void beginRunedTerrorBeginningPhase(GameData gameData) {
@@ -763,10 +780,6 @@ public class TurnProgressionService {
         gameData.forEachPermanent((controllerId, permanent) -> permanent.recordTurnEnded(endingActivePlayerId));
         gameData.phasedOutPermanents.values().forEach(
                 battlefield -> battlefield.forEach(permanent -> permanent.recordTurnEnded(endingActivePlayerId)));
-        // Clear any active mind control from the ending turn
-        gameData.mindControlledPlayerId = null;
-        gameData.mindControllerPlayerId = null;
-        gameData.mindControlUntilEndOfCombat = false;
 
         UUID nextActive;
         Long extraTurnSequence = null;
@@ -810,7 +823,7 @@ public class TurnProgressionService {
             nextActive = nextTurnPlayer;
         }
 
-        // Chronatog: skip the turn entirely (CR 500.11 / 614.10). Pending Mindslaver waits (CR 723.1b).
+        // Chronatog: skip the turn entirely (CR 500.11 / 614.10). Pending Mindslaver waits (CR 724.1b).
         if (gameData.applySkipNext(nextActive, SkipKind.TURN)) {
             String skippedName = gameData.playerIdToName.get(nextActive);
             if (currentTurnIsExtraTurn && extraTurnSequence != null) {
@@ -854,29 +867,6 @@ public class TurnProgressionService {
         gameData.creaturesAbleToAttackAtDeclareAttackersThisTurn.clear();
         gameData.blockableCreaturesThisTurn.clear();
 
-        // Check for pending Mindslaver control on the new active player
-        UUID pendingController = gameData.pendingTurnControl.remove(nextActive);
-        int extraTurnsAfter = 0;
-        while (gameData.pendingTurnControlExtraTurn.remove(nextActive)) {
-            extraTurnsAfter++;
-        }
-        if (pendingController != null && gameData.playerIds.contains(pendingController)) {
-            gameData.mindControlledPlayerId = nextActive;
-            gameData.mindControllerPlayerId = pendingController;
-            gameData.mindControlUntilEndOfCombat = false;
-            String controllerName = gameData.playerIdToName.get(pendingController);
-            String controlLog = controllerName + " controls " + nextActiveName + " this turn (Mindslaver).";
-            gameLogService.append(gameData, GameLog.text(controlLog));
-            log.info("Game {} - {} controls {} this turn (Mindslaver)", gameData.id, controllerName, nextActiveName);
-            // Emrakul: schedule the extra turn only once control actually activates (after that turn).
-            for (int i = 0; i < extraTurnsAfter; i++) {
-                gameData.queueExtraTurnFirst(nextActive, false);
-                String extraLog = nextActiveName + " takes an extra turn after this one.";
-                gameLogService.append(gameData, GameLog.text(extraLog));
-                log.info("Game {} - {} granted an extra turn after the controlled turn",
-                        gameData.id, nextActiveName);
-            }
-        }
         gameData.turnNumber++;
         gameData.mainPhasesBegunThisTurn = 0;
         gameData.postcombatMainPhasesBegunThisTurn = 0;
@@ -1155,6 +1145,9 @@ public class TurnProgressionService {
                 permanent.clearProtectionFromPlayersUntilTurnOf(turnStartPlayerId));
         // The turn begins: the "until your next turn" effects of the player whose turn it is end.
         gameData.rulesEvents.occur(new TurnEvent.Began(nextActive));
+        if (logPlayerControlBegun(gameData, Duration.Start.AFFECTED_PLAYERS_NEXT_TURN)) {
+            queueExtraTurnsAfterControlledTurn(gameData, nextActive);
+        }
 
         gameData.turnUntapStepSkipped = skipUntapStep;
         gameData.captureTurnStartSnapshot();

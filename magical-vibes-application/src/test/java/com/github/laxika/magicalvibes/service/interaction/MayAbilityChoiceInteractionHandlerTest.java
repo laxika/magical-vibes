@@ -94,8 +94,8 @@ class MayAbilityChoiceInteractionHandlerTest {
         void redirectsToMindController() {
             UUID controllerId = UUID.randomUUID();
             gd.playerIdToName.put(controllerId, "Controller");
-            gd.mindControlledPlayerId = PLAYER1_ID;
-            gd.mindControllerPlayerId = controllerId;
+            gd.controlPlayer("Test", null, controllerId, PLAYER1_ID,
+                    com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, false);
 
             projectionSupport.begin(gd, choice());
         }

@@ -96,8 +96,8 @@ class CombatDecisionRetryEventTest {
     @Test
     void rejectedAttackerDeclarationReopensTheSameDecisionForTheMindslaverController() {
         UUID controllerId = defendingPlayerId;
-        gameData.mindControlledPlayerId = activePlayerId;
-        gameData.mindControllerPlayerId = controllerId;
+        gameData.controlPlayer("Test", null, controllerId, activePlayerId,
+                com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, false);
         gameData.interaction.beginInteraction(
                 new PendingInteraction.AttackerDeclaration(activePlayerId));
         UUID decisionId = gameData.interaction.activeDecisionId();

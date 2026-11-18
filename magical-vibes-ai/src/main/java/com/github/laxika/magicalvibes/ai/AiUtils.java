@@ -97,8 +97,8 @@ public final class AiUtils {
         if (aiPlayerId.equals(choicePlayerId)) {
             return true;
         }
-        return aiPlayerId.equals(gameData.mindControllerPlayerId)
+        return aiPlayerId.equals(gameData.mindControllerPlayerId())
                 && choicePlayerId != null
-                && choicePlayerId.equals(gameData.mindControlledPlayerId);
+                && choicePlayerId.equals(gameData.mindControlledPlayerId());
     }
 }

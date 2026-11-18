@@ -170,10 +170,10 @@ public class InteractionHandlerRegistry {
      * to the controlling player instead (mirrors {@code PlayerInputService}).
      */
     private static UUID resolveMessageRecipient(GameData gameData, UUID playerId) {
-        if (gameData.mindControlledPlayerId != null
-                && gameData.mindControlledPlayerId.equals(playerId)
-                && gameData.mindControllerPlayerId != null) {
-            return gameData.mindControllerPlayerId;
+        if (gameData.mindControlledPlayerId() != null
+                && gameData.mindControlledPlayerId().equals(playerId)
+                && gameData.mindControllerPlayerId() != null) {
+            return gameData.mindControllerPlayerId();
         }
         return playerId;
     }

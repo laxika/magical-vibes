@@ -127,8 +127,8 @@ class EmrakulThePromisedEndTest extends BaseCardTest {
             castEmrakulTargetingOpponent();
 
             UUID opponentId = player2.getId();
-            assertThat(gd.pendingTurnControl).containsEntry(opponentId, player1.getId());
-            assertThat(gd.pendingTurnControlExtraTurn).contains(opponentId);
+            assertThat(gd.pendingTurnControl()).containsEntry(opponentId, player1.getId());
+            assertThat(gd.pendingTurnControlExtraTurns()).contains(opponentId);
             harness.assertOnBattlefield(player1, "Emrakul, the Promised End");
         }
 
@@ -143,18 +143,18 @@ class EmrakulThePromisedEndTest extends BaseCardTest {
             advanceTurn();
 
             assertThat(gd.activePlayerId).isEqualTo(opponentId);
-            assertThat(gd.mindControlledPlayerId).isEqualTo(opponentId);
-            assertThat(gd.mindControllerPlayerId).isEqualTo(player1.getId());
+            assertThat(gd.mindControlledPlayerId()).isEqualTo(opponentId);
+            assertThat(gd.mindControllerPlayerId()).isEqualTo(player1.getId());
             assertThat(gd.extraTurns).containsExactly(opponentId);
-            assertThat(gd.pendingTurnControl).isEmpty();
-            assertThat(gd.pendingTurnControlExtraTurn).isEmpty();
+            assertThat(gd.pendingTurnControl()).isEmpty();
+            assertThat(gd.pendingTurnControlExtraTurns()).isEmpty();
 
             advanceTurn();
 
             // Extra turn for the opponent — no longer controlled
             assertThat(gd.activePlayerId).isEqualTo(opponentId);
-            assertThat(gd.mindControlledPlayerId).isNull();
-            assertThat(gd.mindControllerPlayerId).isNull();
+            assertThat(gd.mindControlledPlayerId()).isNull();
+            assertThat(gd.mindControllerPlayerId()).isNull();
         }
 
         @Test
@@ -192,10 +192,10 @@ class EmrakulThePromisedEndTest extends BaseCardTest {
 
             advanceTurn();
             assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-            assertThat(gd.mindControllerPlayerId).isEqualTo(player1.getId());
+            assertThat(gd.mindControllerPlayerId()).isEqualTo(player1.getId());
             advanceTurn();
             assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-            assertThat(gd.mindControllerPlayerId).isNull();
+            assertThat(gd.mindControllerPlayerId()).isNull();
         }
 
         @Test
@@ -207,13 +207,13 @@ class EmrakulThePromisedEndTest extends BaseCardTest {
 
             advanceTurn();
             assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-            assertThat(gd.mindControllerPlayerId).isEqualTo(player1.getId());
+            assertThat(gd.mindControllerPlayerId()).isEqualTo(player1.getId());
             advanceTurn();
             assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-            assertThat(gd.mindControllerPlayerId).isNull();
+            assertThat(gd.mindControllerPlayerId()).isNull();
             advanceTurn();
             assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-            assertThat(gd.mindControllerPlayerId).isNull();
+            assertThat(gd.mindControllerPlayerId()).isNull();
             advanceTurn();
             assertThat(gd.activePlayerId).isEqualTo(player1.getId());
         }
@@ -229,7 +229,7 @@ class EmrakulThePromisedEndTest extends BaseCardTest {
 
             assertThat(gd.stack).isEmpty();
             advanceTurn();
-            assertThat(gd.mindControllerPlayerId).isNull();
+            assertThat(gd.mindControllerPlayerId()).isNull();
             assertThat(gd.extraTurns).isEmpty();
         }
 

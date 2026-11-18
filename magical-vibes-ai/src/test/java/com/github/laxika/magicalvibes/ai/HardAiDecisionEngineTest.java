@@ -1473,8 +1473,8 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         harness.forceStep(TurnStep.CLEANUP);
         harness.passBothPriorities();
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.mindControlledPlayerId).isEqualTo(player1.getId());
-        assertThat(gd.mindControllerPlayerId).isEqualTo(player2.getId());
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.mindControllerPlayerId()).isEqualTo(player2.getId());
 
         Permanent ownBears = new Permanent(new GrizzlyBears());
         ownBears.setSummoningSick(false);

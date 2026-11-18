@@ -23,7 +23,7 @@ class CruelEntertainmentTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(player1.getId(), player2.getId()));
 
-        assertThat(gd.pendingTurnControl)
+        assertThat(gd.pendingTurnControl())
                 .containsEntry(player1.getId(), player2.getId())
                 .containsEntry(player2.getId(), player1.getId());
     }

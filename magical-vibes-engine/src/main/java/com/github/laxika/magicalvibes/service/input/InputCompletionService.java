@@ -330,13 +330,9 @@ public class InputCompletionService {
         gameData.wordOfCommandAwaitingCardResolution = false;
         gameData.wordOfCommandPendingResolutionEntry = null;
         gameData.wordOfCommandCardId = null;
-        if (gameData.wordOfCommandControllerPlayerId != null
-                && gameData.wordOfCommandControllerPlayerId.equals(gameData.mindControllerPlayerId)
-                && gameData.wordOfCommandControlledPlayerId != null
-                && gameData.wordOfCommandControlledPlayerId.equals(gameData.mindControlledPlayerId)) {
-            gameData.mindControllerPlayerId = null;
-            gameData.mindControlledPlayerId = null;
-            gameData.mindControlUntilEndOfCombat = false;
+        if (gameData.wordOfCommandControllerPlayerId != null && gameData.wordOfCommandControlledPlayerId != null) {
+            gameData.endPlayerControl(gameData.wordOfCommandControllerPlayerId,
+                    gameData.wordOfCommandControlledPlayerId);
         }
         gameData.wordOfCommandControllerPlayerId = null;
         gameData.wordOfCommandControlledPlayerId = null;

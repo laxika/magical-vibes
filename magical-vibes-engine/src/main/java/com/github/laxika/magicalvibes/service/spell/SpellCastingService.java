@@ -18552,13 +18552,9 @@ public class SpellCastingService {
             gameData.wordOfCommandAwaitingCardResolution = true;
             // Word of Command finishes resolving once the card is cast, which ends the control; the
             // controller regains it while the cast spell itself resolves (StackResolutionService).
-            if (gameData.wordOfCommandControllerPlayerId != null
-                    && gameData.wordOfCommandControllerPlayerId.equals(gameData.mindControllerPlayerId)
-                    && gameData.wordOfCommandControlledPlayerId != null
-                    && gameData.wordOfCommandControlledPlayerId.equals(gameData.mindControlledPlayerId)) {
-                gameData.mindControllerPlayerId = null;
-                gameData.mindControlledPlayerId = null;
-                gameData.mindControlUntilEndOfCombat = false;
+            if (gameData.wordOfCommandControllerPlayerId != null && gameData.wordOfCommandControlledPlayerId != null) {
+                gameData.endPlayerControl(gameData.wordOfCommandControllerPlayerId,
+                        gameData.wordOfCommandControlledPlayerId);
             }
         }
 

@@ -24,9 +24,9 @@ public class PlanechaseViewService {
     public PlanechaseView create(GameData game, UUID playerId) {
         if (game.planechase == null) return null;
         var state = game.planechase;
-        UUID actorId = playerId != null && playerId.equals(game.mindControllerPlayerId)
-                ? game.mindControlledPlayerId
-                : playerId != null && playerId.equals(game.mindControlledPlayerId) ? null : playerId;
+        UUID actorId = playerId != null && playerId.equals(game.mindControllerPlayerId())
+                ? game.mindControlledPlayerId()
+                : playerId != null && playerId.equals(game.mindControlledPlayerId()) ? null : playerId;
         boolean canRoll = actorId != null && planechase.canOfferRoll(game, actorId);
         return new PlanechaseView(state.faceUp.stream().map(object ->
                 new PlanechaseView.PlanarCardView(object.getId(), cards.create(object.getCard()),

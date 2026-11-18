@@ -193,9 +193,9 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
             GameEventFact.DecisionRequested decision,
             Set<UUID> audienceRecipients) {
         UUID decisionOwner = decision.decidingPlayerId();
-        if (decisionOwner.equals(gameData.mindControlledPlayerId)
-                && gameData.mindControllerPlayerId != null) {
-            decisionOwner = gameData.mindControllerPlayerId;
+        if (decisionOwner.equals(gameData.mindControlledPlayerId())
+                && gameData.mindControllerPlayerId() != null) {
+            decisionOwner = gameData.mindControllerPlayerId();
         }
         return audienceRecipients.contains(decisionOwner) ? Set.of(decisionOwner) : Set.of();
     }

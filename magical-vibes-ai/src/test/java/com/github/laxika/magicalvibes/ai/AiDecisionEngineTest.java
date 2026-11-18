@@ -748,8 +748,8 @@ class AiDecisionEngineTest {
         harness.forceStep(TurnStep.CLEANUP);
         harness.passBothPriorities();
         assertThat(gd.activePlayerId).isEqualTo(human.getId());
-        assertThat(gd.mindControlledPlayerId).isEqualTo(human.getId());
-        assertThat(gd.mindControllerPlayerId).isEqualTo(aiPlayer.getId());
+        assertThat(gd.mindControlledPlayerId()).isEqualTo(human.getId());
+        assertThat(gd.mindControllerPlayerId()).isEqualTo(aiPlayer.getId());
 
         Permanent ownBears = new Permanent(new GrizzlyBears());
         ownBears.setSummoningSick(false);
@@ -864,8 +864,8 @@ class AiDecisionEngineTest {
     @DisplayName("AI controller can declare blockers during the controlled player's turn")
     void controllerCanDeclareBlockersDuringControlledTurn() {
         setupBlockerPhase();
-        gd.mindControlledPlayerId = human.getId();
-        gd.mindControllerPlayerId = aiPlayer.getId();
+        gd.controlPlayer("Test", null, aiPlayer.getId(), human.getId(),
+                com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, false);
 
         Permanent humanBears = new Permanent(new GrizzlyBears());
         humanBears.setSummoningSick(false);
@@ -2118,8 +2118,8 @@ class AiDecisionEngineTest {
         controlledCreature.setSummoningSick(false);
         gd.playerBattlefields.get(human.getId()).add(controlledCreature);
 
-        gd.mindControlledPlayerId = human.getId();
-        gd.mindControllerPlayerId = aiPlayer.getId();
+        gd.controlPlayer("Test", null, aiPlayer.getId(), human.getId(),
+                com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, false);
         harness.forceActivePlayer(human);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
