@@ -180,7 +180,7 @@ class DivineReckoningTest extends BaseCardTest {
         Permanent elves = harness.addToBattlefieldAndReturn(player1, new TyphoidRats());
 
         // Give Typhoid Rats a regeneration shield
-        elves.setRegenerationShield(1);
+        gd.addRegenerationShields(elves.getId(), 1);
 
         harness.setHand(player1, List.of(new DivineReckoning()));
         harness.addMana(player1, ManaColor.WHITE, 4);

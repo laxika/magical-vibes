@@ -85,7 +85,7 @@ class GhostlyVisitTest extends BaseCardTest {
     @DisplayName("Ghostly Visit can be regenerated (no regeneration prevention)")
     void canBeRegenerated() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
 
         harness.setHand(player1, List.of(new GhostlyVisit()));
         harness.addMana(player1, ManaColor.BLACK, 3);

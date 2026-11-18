@@ -84,7 +84,7 @@ class KashiTribeReaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(reaver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(reaver.getId())).isEqualTo(1);
     }
     @Test
     @DisplayName("The damaged creature skips only its controller's next untap")
@@ -127,7 +127,7 @@ class KashiTribeReaverTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(reaver);
         assertThat(reaver.isTapped()).isTrue();
-        assertThat(reaver.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(reaver.getId())).isZero();
         assertThat(reaver.getMarkedDamage()).isZero();
         assertThat(reaver.isAttacking()).isFalse();
         assertThat(mossKami.isTapped()).isTrue();

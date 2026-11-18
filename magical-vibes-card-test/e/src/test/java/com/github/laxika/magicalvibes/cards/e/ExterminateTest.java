@@ -101,7 +101,7 @@ class ExterminateTest extends BaseCardTest {
     @Test
     void controllerStillLosesLifeWhenCreatureRegenerates() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DalekDrone());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setLife(player2, 20);
         castExterminate(target, List.of());
 

@@ -28,7 +28,7 @@ class KeldonMantleTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -107,7 +107,7 @@ class KeldonMantleTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
         harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -168,7 +168,7 @@ class KeldonMantleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();

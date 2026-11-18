@@ -102,7 +102,7 @@ class BoilingSeasTest extends BaseCardTest {
     @DisplayName("An Island can regenerate from Boiling Seas")
     void islandCanRegenerate() {
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
-        island.setRegenerationShield(1);
+        gd.addRegenerationShields(island.getId(), 1);
         harness.addToBattlefield(player2, new Island());
 
         harness.castFromHand(player1, new BoilingSeas(), "{3}{R}");
@@ -110,7 +110,7 @@ class BoilingSeasTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Island");
         harness.assertNotInGraveyard(player1, "Island");
-        assertThat(island.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(island.getId())).isZero();
         assertThat(island.isTapped()).isTrue();
         harness.assertNotOnBattlefield(player2, "Island");
         harness.assertInGraveyard(player2, "Island");

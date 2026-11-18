@@ -35,7 +35,7 @@ class MoltingSnakeskinTest extends BaseCardTest {
         harness.activateAbility(player1, bearsIndex, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -54,7 +54,7 @@ class MoltingSnakeskinTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
         assertThat(bears.getMarkedDamage()).isZero();
     }
 
@@ -107,7 +107,7 @@ class MoltingSnakeskinTest extends BaseCardTest {
         harness.activateAbility(player2, bearsIndex, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -123,7 +123,7 @@ class MoltingSnakeskinTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(aura);
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gs.getEffectiveActivatedAbilities(gd, bears)).isEmpty();
     }
@@ -138,7 +138,7 @@ class MoltingSnakeskinTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, bearsIndex, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

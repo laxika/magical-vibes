@@ -91,7 +91,7 @@ class InfernalGraspTest extends BaseCardTest {
     @DisplayName("Still loses 2 life when the creature regenerates")
     void losesLifeEvenIfRegenerated() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         harness.setHand(player1, List.of(new InfernalGrasp()));
         harness.addMana(player1, ManaColor.BLACK, 1);

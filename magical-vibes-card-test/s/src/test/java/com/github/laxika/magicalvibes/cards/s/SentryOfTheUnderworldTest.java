@@ -28,7 +28,7 @@ class SentryOfTheUnderworldTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(sentry.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(sentry.getId())).isEqualTo(1);
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 3);
     }
 
@@ -78,11 +78,11 @@ class SentryOfTheUnderworldTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         harness.assertLife(player1, 7);
-        assertThat(sentry.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(sentry.getId())).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(sentry.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(sentry.getId())).isEqualTo(1);
         harness.assertLife(player1, 7);
     }
 
@@ -98,7 +98,7 @@ class SentryOfTheUnderworldTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(sentry.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(sentry.getId())).isEqualTo(1);
         assertThat(sentry.isTapped()).isTrue();
     }
 
@@ -119,7 +119,7 @@ class SentryOfTheUnderworldTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Sentry of the Underworld");
         assertThat(sentry.isTapped()).isTrue();
         assertThat(sentry.getMarkedDamage()).isZero();
-        assertThat(sentry.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(sentry.getId())).isZero();
 
         harness.castAndResolveInstant(player2, 0, sentry.getId());
 

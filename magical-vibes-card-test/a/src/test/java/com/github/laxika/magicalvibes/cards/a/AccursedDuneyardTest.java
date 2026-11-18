@@ -33,7 +33,7 @@ class AccursedDuneyardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, skeletons.getId());
         harness.passBothPriorities();
 
-        assertThat(skeletons.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skeletons.getId())).isEqualTo(1);
     }
 
     @Test

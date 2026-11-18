@@ -66,8 +66,8 @@ class RegenerationTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
-        assertThat(regenAura.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(regenAura.getId())).isEqualTo(0);
     }
 
     @Test
@@ -79,7 +79,7 @@ class RegenerationTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(regenAura.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(regenAura.getId())).isEqualTo(0);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("gains a regeneration shield"));
     }
 
@@ -96,7 +96,7 @@ class RegenerationTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
         assertThat(gd.stack).isEmpty();
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
     }
 
     @Test
@@ -151,8 +151,8 @@ class RegenerationTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
-        assertThat(regenAura.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(regenAura.getId())).isZero();
     }
 
     @Test
@@ -170,7 +170,7 @@ class RegenerationTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, bears));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
         assertThat(bears.getMarkedDamage()).isZero();
         assertThat(bears.isTapped()).isTrue();
         assertThat(regenAura.getAttachedTo()).isEqualTo(bears.getId());
@@ -206,13 +206,13 @@ class RegenerationTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
     }
 
     @Test
@@ -233,8 +233,8 @@ class RegenerationTest extends BaseCardTest {
         assertThat(regenAura.getAttachedTo()).isEqualTo(newlyEnchanted.getId());
         harness.passBothPriorities();
 
-        assertThat(originallyEnchanted.getRegenerationShield()).isZero();
-        assertThat(newlyEnchanted.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(originallyEnchanted.getId())).isZero();
+        assertThat(gd.regenerationShieldCount(newlyEnchanted.getId())).isEqualTo(1);
     }
 
     @Test
@@ -259,8 +259,8 @@ class RegenerationTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(regenAura);
         harness.passBothPriorities();
 
-        assertThat(originallyEnchanted.getRegenerationShield()).isZero();
-        assertThat(newlyEnchanted.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(originallyEnchanted.getId())).isZero();
+        assertThat(gd.regenerationShieldCount(newlyEnchanted.getId())).isEqualTo(1);
     }
 
     @Test
@@ -278,11 +278,11 @@ class RegenerationTest extends BaseCardTest {
 
         assertThat(regenAura.isTapped()).isFalse();
         assertThat(bears.isTapped()).isFalse();
-        assertThat(bears.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(2);
         harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, bears));
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
         harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, bears));
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
     }
 
@@ -308,6 +308,6 @@ class RegenerationTest extends BaseCardTest {
         assertThat(bears.isTapped()).isTrue();
         assertThat(bears.isBlocking()).isFalse();
         assertThat(bears.getMarkedDamage()).isZero();
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
     }
 }

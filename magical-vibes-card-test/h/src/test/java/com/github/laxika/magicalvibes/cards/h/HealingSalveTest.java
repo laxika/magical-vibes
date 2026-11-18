@@ -77,7 +77,7 @@ class HealingSalveTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, bears.getId());
             harness.passBothPriorities();
 
-            assertThat(bears.getDamagePreventionShield()).isEqualTo(3);
+            assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(3);
         }
 
         @Test
@@ -110,7 +110,7 @@ class HealingSalveTest extends BaseCardTest {
             gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
             resolveCombat(player2);
 
-            assertThat(blocker.getDamagePreventionShield()).isEqualTo(1);
+            assertThat(gd.permanentDamagePreventionShield(blocker.getId())).isEqualTo(1);
             assertThat(blocker.getMarkedDamage()).isZero();
             assertThat(gd.playerBattlefields.get(player1.getId())).contains(blocker);
         }
@@ -151,7 +151,7 @@ class HealingSalveTest extends BaseCardTest {
             harness.castAndResolveInstant(player1, 0, bears.getId());
 
             assertThat(bears.getMarkedDamage()).isZero();
-            assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
+            assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(1);
         }
 
         @Test
@@ -245,7 +245,7 @@ class HealingSalveTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, creature.getId());
             harness.passBothPriorities();
 
-            assertThat(creature.getDamagePreventionShield()).isEqualTo(3);
+            assertThat(gd.permanentDamagePreventionShield(creature.getId())).isEqualTo(3);
         }
 
         @Test
@@ -299,7 +299,7 @@ class HealingSalveTest extends BaseCardTest {
             gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
             resolveCombat(player2);
 
-            assertThat(blocker.getDamagePreventionShield()).isEqualTo(1);
+            assertThat(gd.permanentDamagePreventionShield(blocker.getId())).isEqualTo(1);
             assertThat(blocker.getMarkedDamage()).isZero();
             assertThat(gd.playerBattlefields.get(player1.getId())).contains(blocker);
         }

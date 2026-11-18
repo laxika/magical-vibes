@@ -97,14 +97,14 @@ class GreyKnightParagonTest extends BaseCardTest {
     @DisplayName("Non-Demon destruction permits regeneration")
     void nonDemonCanRegenerate() {
         Permanent attacker = addAttacker(player2, new GreyKnightParagon());
-        attacker.setRegenerationShield(1);
+        gd.addRegenerationShields(attacker.getId(), 1);
 
         castGreyKnightParagon(attacker);
         resolveEntryTrigger();
 
         harness.assertOnBattlefield(player2, "Grey Knight Paragon");
         harness.assertNotInGraveyard(player2, "Grey Knight Paragon");
-        assertThat(attacker.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(attacker.getId())).isZero();
         assertThat(attacker.isAttacking()).isFalse();
         assertThat(attacker.isTapped()).isTrue();
     }
@@ -113,7 +113,7 @@ class GreyKnightParagonTest extends BaseCardTest {
     @DisplayName("Exiling a Demon bypasses regeneration")
     void demonCannotRegenerateFromExile() {
         Permanent attacker = addAttacker(player2, new PlagueDrone());
-        attacker.setRegenerationShield(1);
+        gd.addRegenerationShields(attacker.getId(), 1);
 
         castGreyKnightParagon(attacker);
         resolveEntryTrigger();

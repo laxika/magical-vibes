@@ -95,7 +95,7 @@ class CarnageGladiatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent gladiator = findPermanent(player1, "Carnage Gladiator");
-        assertThat(gladiator.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gladiator.getId())).isEqualTo(1);
     }
 
     @Test
@@ -165,7 +165,7 @@ class CarnageGladiatorTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(gladiator);
         assertThat(gladiator.isTapped()).isTrue();
         assertThat(gladiator.getMarkedDamage()).isZero();
-        assertThat(gladiator.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(gladiator.getId())).isZero();
 
         gladiator.setMarkedDamage(2);
         harness.runStateBasedActions();

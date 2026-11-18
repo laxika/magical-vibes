@@ -30,7 +30,7 @@ class BoneShamanTest extends BaseCardTest {
         Permanent shaman = addCreatureReady(player1, new BoneShaman());
         shaman.setAttacking(true);
         Permanent gnats = addCreatureReady(player2, new YavimayaGnats());
-        gnats.setRegenerationShield(1);
+        gd.addRegenerationShields(gnats.getId(), 1);
 
         activateAbility();
 
@@ -75,7 +75,7 @@ class BoneShamanTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        wall.setRegenerationShield(1);
+        gd.addRegenerationShields(wall.getId(), 1);
         activateAbility();
         harness.activateAbility(player1, 1, null, wall.getId());
         harness.passBothPriorities();
@@ -91,14 +91,14 @@ class BoneShamanTest extends BaseCardTest {
         Permanent shaman = addCreatureReady(player1, new BoneShaman());
         shaman.setAttacking(true);
         Permanent gnats = addCreatureReady(player2, new YavimayaGnats());
-        gnats.setRegenerationShield(1);
+        gd.addRegenerationShields(gnats.getId(), 1);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Yavimaya Gnats");
-        assertThat(gnats.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(gnats.getId())).isZero();
     }
 
     @Test
@@ -108,7 +108,7 @@ class BoneShamanTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new BalduvianBears());
         bears.setAttacking(true);
         Permanent gnats = addCreatureReady(player2, new YavimayaGnats());
-        gnats.setRegenerationShield(1);
+        gd.addRegenerationShields(gnats.getId(), 1);
 
         activateAbility();
 
@@ -137,12 +137,12 @@ class BoneShamanTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player2, 0, shaman.getId());
 
-        wall.setRegenerationShield(1);
+        gd.addRegenerationShields(wall.getId(), 1);
         harness.activateAbility(player1, 1, null, wall.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Wall of Shields");
-        assertThat(wall.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wall.getId())).isZero();
         assertThat(wall.getMarkedDamage()).isZero();
     }
 

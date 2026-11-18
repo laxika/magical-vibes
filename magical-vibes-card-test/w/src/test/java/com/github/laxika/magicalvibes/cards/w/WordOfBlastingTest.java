@@ -38,7 +38,7 @@ class WordOfBlastingTest extends BaseCardTest {
     @DisplayName("Destroyed Wall cannot be regenerated")
     void wallCannotBeRegenerated() {
         Permanent wall = harness.addToBattlefieldAndReturn(player2, new CrenellatedWall());
-        wall.setRegenerationShield(1);
+        gd.addRegenerationShields(wall.getId(), 1);
         harness.setHand(player1, List.of(new WordOfBlasting()));
         harness.addMana(player1, ManaColor.RED, 2);
 

@@ -25,7 +25,7 @@ class RakaDiscipleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
         assertThat(disciple.isTapped()).isTrue();
     }
 
@@ -74,7 +74,7 @@ class RakaDiscipleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test
@@ -139,12 +139,12 @@ class RakaDiscipleTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test

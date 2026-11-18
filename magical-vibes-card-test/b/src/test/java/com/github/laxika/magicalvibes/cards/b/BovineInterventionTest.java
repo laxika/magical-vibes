@@ -94,14 +94,14 @@ class BovineInterventionTest extends BaseCardTest {
     @DisplayName("Regeneration saves the creature but its controller still gets the Ox")
     void regeneratedTargetStillCreatesOx() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SterlingHound());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castBovineIntervention(target);
 
         harness.assertOnBattlefield(player2, "Sterling Hound");
         harness.assertNotInGraveyard(player2, "Sterling Hound");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertOxCreatedFor(player2);
     }
 

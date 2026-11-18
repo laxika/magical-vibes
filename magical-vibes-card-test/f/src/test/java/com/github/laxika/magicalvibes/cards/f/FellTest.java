@@ -76,7 +76,7 @@ class FellTest extends BaseCardTest {
     @DisplayName("Regeneration replaces destruction and consumes the shield")
     void regenerationPreventsDestruction() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new RavineRaider());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
         harness.setHand(player1, List.of(new Fell()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -85,7 +85,7 @@ class FellTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Ravine Raider");
         harness.assertNotInGraveyard(player2, "Ravine Raider");
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         harness.assertInGraveyard(player1, "Fell");
     }
 }

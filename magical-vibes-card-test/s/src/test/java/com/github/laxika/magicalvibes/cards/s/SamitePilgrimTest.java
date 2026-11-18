@@ -37,7 +37,7 @@ class SamitePilgrimTest extends BaseCardTest {
 
         activate(pilgrim, target);
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(5);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(5);
     }
 
     @Test
@@ -51,7 +51,7 @@ class SamitePilgrimTest extends BaseCardTest {
 
         activate(pilgrim, target);
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(2);
     }
 
     @Test
@@ -67,7 +67,7 @@ class SamitePilgrimTest extends BaseCardTest {
 
         activate(pilgrim, target);
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test
@@ -84,7 +84,7 @@ class SamitePilgrimTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test
@@ -105,7 +105,7 @@ class SamitePilgrimTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(5);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(5);
     }
 
     @Test
@@ -116,13 +116,13 @@ class SamitePilgrimTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         activate(pilgrim, target);
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test
@@ -144,7 +144,7 @@ class SamitePilgrimTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(blocker.getMarkedDamage()).isEqualTo(1);
-        assertThat(blocker.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(blocker.getId())).isZero();
     }
 
     @Test
@@ -184,12 +184,12 @@ class SamitePilgrimTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
 
         harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
 
@@ -208,7 +208,7 @@ class SamitePilgrimTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, pilgrim.getId());
 
         assertThat(pilgrim.getMarkedDamage()).isZero();
-        assertThat(pilgrim.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(pilgrim.getId())).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(pilgrim);
     }
 
@@ -236,7 +236,7 @@ class SamitePilgrimTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, pilgrimIndex, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 

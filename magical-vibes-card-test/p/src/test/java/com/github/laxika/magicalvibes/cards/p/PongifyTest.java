@@ -46,7 +46,7 @@ class PongifyTest extends BaseCardTest {
     @DisplayName("Destroys the target despite a regeneration shield")
     void cannotBeRegenerated() {
         Permanent sphinx = harness.addToBattlefieldAndReturn(player2, new SerraSphinx());
-        sphinx.setRegenerationShield(1);
+        gd.addRegenerationShields(sphinx.getId(), 1);
         harness.setHand(player1, List.of(new Pongify()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 

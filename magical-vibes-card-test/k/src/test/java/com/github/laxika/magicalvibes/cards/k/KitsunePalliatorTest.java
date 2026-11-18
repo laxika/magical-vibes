@@ -29,9 +29,9 @@ class KitsunePalliatorTest extends BaseCardTest {
 
         activatePalliator(palliator);
 
-        assertThat(palliator.getDamagePreventionShield()).isEqualTo(1);
-        assertThat(friendly.getDamagePreventionShield()).isEqualTo(1);
-        assertThat(enemy.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(palliator.getId())).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(friendly.getId())).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(enemy.getId())).isEqualTo(1);
         assertThat(gd.playerDamagePreventionShields().get(player1.getId())).isEqualTo(1);
         assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(1);
     }
@@ -47,7 +47,7 @@ class KitsunePalliatorTest extends BaseCardTest {
         castIre(enemy.getId());
 
         assertThat(enemy.getMarkedDamage()).isEqualTo(1);
-        assertThat(enemy.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(gd.permanentDamagePreventionShield(enemy.getId())).isEqualTo(0);
     }
 
     @Test
@@ -72,7 +72,7 @@ class KitsunePalliatorTest extends BaseCardTest {
 
         Permanent latecomer = addReadyCreature(player2);
 
-        assertThat(latecomer.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(gd.permanentDamagePreventionShield(latecomer.getId())).isEqualTo(0);
     }
 
     @Test
@@ -89,7 +89,7 @@ class KitsunePalliatorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(palliator.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(gd.permanentDamagePreventionShield(palliator.getId())).isEqualTo(0);
         assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isEqualTo(0);
     }
 
@@ -110,7 +110,7 @@ class KitsunePalliatorTest extends BaseCardTest {
 
         assertThat(enemy.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
-        assertThat(palliator.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(palliator.getId())).isEqualTo(1);
     }
 
     @Test

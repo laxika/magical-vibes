@@ -47,7 +47,7 @@ class DarkHatchlingTest extends BaseCardTest {
     @DisplayName("ETB destruction cannot be regenerated")
     void etbDestructionCannotBeRegenerated() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         castAndResolve(bears.getId());
 

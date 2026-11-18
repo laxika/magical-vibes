@@ -61,7 +61,7 @@ class DeadlyTempestTest extends BaseCardTest {
     @DisplayName("Regenerated creatures survive and do not count toward life loss")
     void regeneratedCreaturesDoNotCount() {
         Permanent regenerated = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        regenerated.setRegenerationShield(1);
+        gd.addRegenerationShields(regenerated.getId(), 1);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         castDeadlyTempest();
@@ -69,7 +69,7 @@ class DeadlyTempestTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(regenerated.isTapped()).isTrue();
-        assertThat(regenerated.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(regenerated.getId())).isZero();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertLife(player1, 20);

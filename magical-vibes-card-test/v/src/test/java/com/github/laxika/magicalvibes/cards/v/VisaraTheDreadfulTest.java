@@ -19,7 +19,7 @@ class VisaraTheDreadfulTest extends BaseCardTest {
     void destroysTargetCreatureWithoutRegeneration() {
         addCreatureReady(player1, new VisaraTheDreadful());
         Permanent target = addCreatureReady(player2, new ElvishWarrior());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

@@ -45,7 +45,7 @@ class OxidizeTest extends BaseCardTest {
     @DisplayName("Target artifact cannot be regenerated")
     void cannotBeRegenerated() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SerumPowder());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castOxidize(target.getId());
 

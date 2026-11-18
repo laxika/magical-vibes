@@ -31,7 +31,7 @@ class CaregiverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Watchwolf");
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -119,7 +119,7 @@ class CaregiverTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Watchwolf");
         assertThat(target.getMarkedDamage()).isEqualTo(2);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test
@@ -134,7 +134,7 @@ class CaregiverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         harness.assertOnBattlefield(player1, "Caregiver");
     }
 }

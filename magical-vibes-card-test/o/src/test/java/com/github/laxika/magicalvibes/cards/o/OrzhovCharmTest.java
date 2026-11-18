@@ -208,7 +208,7 @@ class OrzhovCharmTest extends BaseCardTest {
         void losesLifeWhenCreatureRegenerates() {
             harness.setLife(player1, 20);
             Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
-            spider.setRegenerationShield(1);
+            gd.addRegenerationShields(spider.getId(), 1);
             harness.setHand(player1, List.of(new OrzhovCharm()));
             addWB();
 

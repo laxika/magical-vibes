@@ -31,7 +31,7 @@ class TsabosDecreeTest extends BaseCardTest {
     void discardsAndDestroysChosenType() {
         Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent targetBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        targetBear.setRegenerationShield(1);
+        gd.addRegenerationShields(targetBear.getId(), 1);
         harness.addToBattlefield(player2, new HillGiant());
         harness.setHand(player2, new ArrayList<>(List.of(
                 new GrizzlyBears(), new HillGiant(), new Forest(), new GrizzlyBears(), new AvianChangeling())));

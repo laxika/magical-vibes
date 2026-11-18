@@ -50,12 +50,12 @@ class DamagePreventionSpecTest extends BaseCardTest {
         void globalConsumedBeforeCreatureShield() {
             Permanent bears = addCreature(player2);
             gd.addGlobalDamagePreventionShield(1);
-            bears.setDamagePreventionShield(5);
+            gd.addPermanentDamagePreventionShield(bears.getId(), 5);
 
             shockPermanent(bears.getId());
 
             assertThat(gd.globalDamagePreventionShield()).isZero();
-            assertThat(bears.getDamagePreventionShield()).isEqualTo(4);
+            assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(4);
             assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
         }
 
@@ -63,20 +63,20 @@ class DamagePreventionSpecTest extends BaseCardTest {
         @DisplayName("A creature shield persists across damage events until exhausted")
         void creatureShieldPersistsAcrossEvents() {
             Permanent bears = addCreature(player2);
-            bears.setDamagePreventionShield(3);
+            gd.addPermanentDamagePreventionShield(bears.getId(), 3);
 
             harness.setHand(player1, List.of(new Shock(), new Shock()));
             harness.addMana(player1, ManaColor.RED, 2);
 
             harness.castInstant(player1, 0, bears.getId());
             harness.passBothPriorities();
-            assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
+            assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(1);
 
             harness.castInstant(player1, 0, bears.getId());
             harness.passBothPriorities();
 
             // Second Shock: 1 prevented, 1 marked — the 2/2 survives with 1 damage.
-            assertThat(bears.getDamagePreventionShield()).isZero();
+            assertThat(gd.permanentDamagePreventionShield(bears.getId())).isZero();
             assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
         }
 

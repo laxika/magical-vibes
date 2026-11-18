@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.j.JabarisBanner;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.RegenerationShield;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +28,7 @@ class DebtOfLoyaltyTest extends BaseCardTest {
             harness.setHand(player1, List.of(new DebtOfLoyalty()));
             harness.addMana(player1, ManaColor.WHITE, 3);
             harness.castAndResolveInstant(player1, 0, creature.getId());
-            creature.setRegenerationShield(2);
+            gd.addRegenerationShields(creature.getId(), 1);
         }
         harness.forceActivePlayer(player2);
         first.setMarkedDamage(2);
@@ -38,11 +39,11 @@ class DebtOfLoyaltyTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(player2.getId());
         harness.handleListChoice(player2, "Regenerate without an additional effect");
         assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(player1.getId());
-        assertThat(first.getRegenerationShield()).isEqualTo(2);
-        assertThat(second.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(first.getId())).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(second.getId())).isEqualTo(2);
         harness.handleListChoice(player1, "Regenerate without an additional effect");
-        assertThat(first.getRegenerationShield()).isEqualTo(1);
-        assertThat(second.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(first.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(second.getId())).isEqualTo(1);
         assertThat(first.getMarkedDamage()).isZero();
         assertThat(second.getMarkedDamage()).isZero();
         assertThat(gd.pendingDepartureBatch).isNull();
@@ -57,7 +58,7 @@ class DebtOfLoyaltyTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
     }
 
@@ -78,7 +79,7 @@ class DebtOfLoyaltyTest extends BaseCardTest {
         assertThat(stolen.getId()).isEqualTo(bear.getId());
         assertThat(stolen.isTapped()).isTrue();
         assertThat(stolen.getMarkedDamage()).isZero();
-        assertThat(stolen.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(stolen.getId())).isZero();
     }
 
     @Test
@@ -90,13 +91,13 @@ class DebtOfLoyaltyTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        bear.setRegenerationShield(bear.getRegenerationShield() + 1);
+        gd.addRegenerationShields(bear.getId(), 1);
         bear.setMarkedDamage(2);
         harness.passBothPriorities();
         harness.handleListChoice(player2, "Regenerate without an additional effect");
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(bear);
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
     }
 
@@ -109,7 +110,7 @@ class DebtOfLoyaltyTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        bear.setRegenerationShield(bear.getRegenerationShield() + 1);
+        gd.addRegenerationShields(bear.getId(), 1);
         bear.setMarkedDamage(2);
         harness.runStateBasedActions();
 
@@ -118,7 +119,7 @@ class DebtOfLoyaltyTest extends BaseCardTest {
                 .isInstanceOf(PendingInteraction.ColorChoice.class);
         var choice = (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
         assertThat(choice.playerId()).isEqualTo(player2.getId());
-        assertThat(bear.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(2);
         assertThat(bear.getMarkedDamage()).isEqualTo(2);
         String debtShield = choice.options().stream()
                 .filter(option -> option.contains(" control")).findFirst().orElseThrow();
@@ -128,8 +129,10 @@ class DebtOfLoyaltyTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bear);
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
-        assertThat(bear.getGainControlRegenerationShields()).isEmpty();
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShields(bear.getId()))
+                .extracting(shield -> ((RegenerationShield) shield.effect()).rider())
+                .containsExactly(RegenerationShield.Rider.NONE);
         assertThat(bear.getMarkedDamage()).isZero();
     }
 
@@ -180,7 +183,7 @@ class DebtOfLoyaltyTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(knight.getMarkedDamage()).isEqualTo(1);
         assertThat(knight.isTapped()).isFalse();
-        assertThat(knight.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(knight.getId())).isEqualTo(1);
     }
 
     @Test

@@ -26,7 +26,7 @@ class LocustSwarmTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(swarm.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(swarm.getId())).isEqualTo(1);
     }
 
     @Test
@@ -40,7 +40,7 @@ class LocustSwarmTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(swarm.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(swarm.getId())).isEqualTo(2);
     }
 
     @Test
@@ -119,7 +119,7 @@ class LocustSwarmTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Locust Swarm");
         assertThat(swarm.isTapped()).isTrue();
         assertThat(swarm.getMarkedDamage()).isZero();
-        assertThat(swarm.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(swarm.getId())).isZero();
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();

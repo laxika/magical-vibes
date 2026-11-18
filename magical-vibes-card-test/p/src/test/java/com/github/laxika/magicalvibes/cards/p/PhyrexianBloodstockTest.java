@@ -78,7 +78,7 @@ class PhyrexianBloodstockTest extends BaseCardTest {
     @DisplayName("LTB destroys the chosen white creature even with a regeneration shield")
     void leavesBattlefieldDestroysTargetWhiteCreature() {
         Permanent whiteCreature = addCreatureReady(player2, new AuroraGriffin());
-        whiteCreature.setRegenerationShield(1);
+        gd.addRegenerationShields(whiteCreature.getId(), 1);
         Permanent bloodstock = harness.addToBattlefieldAndReturn(player1, new PhyrexianBloodstock());
 
         harness.inMutationScope(

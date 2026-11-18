@@ -50,7 +50,7 @@ class SawInHalfTest extends BaseCardTest {
     @DisplayName("Creates no copies when regeneration prevents the creature from dying")
     void doesNotCreateCopiesWhenTargetRegenerates() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castSawInHalf(target);
 

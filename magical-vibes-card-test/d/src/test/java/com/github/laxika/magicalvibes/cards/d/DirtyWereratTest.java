@@ -31,7 +31,7 @@ class DirtyWereratTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(wererat.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wererat.getId())).isEqualTo(1);
         harness.assertInGraveyard(player1, "Forest");
     }
 
@@ -119,7 +119,7 @@ class DirtyWereratTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, wererat)).isEqualTo(basePower + 2);
         assertThat(gqs.getEffectiveToughness(gd, wererat)).isEqualTo(baseToughness + 2);
         harness.passBothPriorities();
-        assertThat(wererat.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wererat.getId())).isEqualTo(1);
     }
 
     @Test
@@ -139,7 +139,7 @@ class DirtyWereratTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Dirty Wererat");
         harness.assertOnBattlefield(player1, "Halberdier");
-        assertThat(wererat.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wererat.getId())).isZero();
         assertThat(wererat.getMarkedDamage()).isZero();
         assertThat(wererat.isTapped()).isTrue();
         assertThat(wererat.isBlocking()).isFalse();

@@ -157,7 +157,7 @@ class DoomBladeTest extends BaseCardTest {
     @DisplayName("Doom Blade allows regeneration")
     void regenerationPreventsDestruction() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -166,7 +166,7 @@ class DoomBladeTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Runeclaw Bear");
         harness.assertNotInGraveyard(player2, "Runeclaw Bear");
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
         harness.assertInGraveyard(player1, "Doom Blade");
     }
 

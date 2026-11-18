@@ -30,7 +30,7 @@ class PteronGhostTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(artifact.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isEqualTo(1);
     }
 
     @Test
@@ -59,7 +59,7 @@ class PteronGhostTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, artifact.getId());
 
         harness.assertOnBattlefield(player2, "Myr Moonvessel");
-        assertThat(artifact.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isZero();
         assertThat(artifact.isTapped()).isTrue();
     }
 
@@ -76,15 +76,15 @@ class PteronGhostTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, artifact.getId());
         harness.assertInGraveyard(player1, "Pteron Ghost");
         assertThat(gd.stack).hasSize(2);
-        assertThat(artifact.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isZero();
 
         harness.passBothPriorities();
-        assertThat(artifact.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isEqualTo(1);
         assertThat(artifact.isTapped()).isFalse();
 
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Aether Vial");
-        assertThat(artifact.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isZero();
         assertThat(artifact.isTapped()).isTrue();
     }
 

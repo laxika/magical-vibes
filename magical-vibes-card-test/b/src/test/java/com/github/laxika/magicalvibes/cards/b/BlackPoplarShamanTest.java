@@ -42,7 +42,7 @@ class BlackPoplarShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, treefolk.getId());
         harness.passBothPriorities();
 
-        assertThat(treefolk.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(treefolk.getId())).isEqualTo(1);
     }
 
     @Test
@@ -54,7 +54,7 @@ class BlackPoplarShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, shaman.getId());
         harness.passBothPriorities();
 
-        assertThat(shaman.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(shaman.getId())).isEqualTo(1);
     }
 
     @Test
@@ -67,7 +67,7 @@ class BlackPoplarShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, treefolk.getId());
         harness.passBothPriorities();
 
-        assertThat(treefolk.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(treefolk.getId())).isEqualTo(1);
     }
 
     @Test
@@ -102,7 +102,7 @@ class BlackPoplarShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, shaman.getId());
         harness.passBothPriorities();
 
-        assertThat(shaman.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(shaman.getId())).isEqualTo(1);
         assertThat(shaman.isTapped()).isTrue();
     }
 
@@ -116,7 +116,7 @@ class BlackPoplarShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, shaman.getId());
         harness.passBothPriorities();
 
-        assertThat(shaman.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(shaman.getId())).isEqualTo(2);
         assertThat(shaman.isTapped()).isFalse();
     }
 
@@ -139,7 +139,7 @@ class BlackPoplarShamanTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Black Poplar Shaman");
         assertThat(shaman.isTapped()).isTrue();
         assertThat(shaman.getMarkedDamage()).isZero();
-        assertThat(shaman.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(shaman.getId())).isZero();
 
         harness.castAndResolveInstant(player2, 0, shaman.getId());
 
@@ -160,8 +160,8 @@ class BlackPoplarShamanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Black Poplar Shaman");
-        assertThat(target.getRegenerationShield()).isZero();
-        assertThat(source.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
+        assertThat(gd.regenerationShieldCount(source.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

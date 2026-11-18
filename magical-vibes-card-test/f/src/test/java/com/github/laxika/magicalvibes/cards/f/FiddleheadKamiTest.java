@@ -25,7 +25,7 @@ class FiddleheadKamiTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(fiddleheadKami.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(fiddleheadKami.getId())).isEqualTo(1);
     }
 
     @Test
@@ -39,7 +39,7 @@ class FiddleheadKamiTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(fiddleheadKami.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(fiddleheadKami.getId())).isEqualTo(1);
     }
 
     @Test
@@ -53,7 +53,7 @@ class FiddleheadKamiTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(fiddleheadKami.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(fiddleheadKami.getId())).isZero();
     }
 
     @Test
@@ -65,7 +65,7 @@ class FiddleheadKamiTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0);
 
-        assertThat(fiddleheadKami.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(fiddleheadKami.getId())).isZero();
     }
 
     @Test
@@ -77,12 +77,12 @@ class FiddleheadKamiTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
 
-        assertThat(fiddleheadKami.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(fiddleheadKami.getId())).isZero();
         assertThat(gd.stack).hasSize(2);
 
         harness.passBothPriorities();
 
-        assertThat(fiddleheadKami.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(fiddleheadKami.getId())).isEqualTo(1);
         assertThat(fiddleheadKami.isTapped()).isFalse();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
@@ -91,7 +91,7 @@ class FiddleheadKamiTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
-        assertThat(fiddleheadKami.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(fiddleheadKami.getId())).isEqualTo(1);
     }
 
     @Test
@@ -108,9 +108,9 @@ class FiddleheadKamiTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getRegenerationShield()).isEqualTo(1);
-        assertThat(second.getRegenerationShield()).isEqualTo(1);
-        assertThat(opponentsKami.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(first.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(second.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(opponentsKami.getId())).isZero();
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -126,7 +126,7 @@ class FiddleheadKamiTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Fiddlehead Kami");
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(gd.playerBattlefields.get(player1.getId()).getFirst().getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

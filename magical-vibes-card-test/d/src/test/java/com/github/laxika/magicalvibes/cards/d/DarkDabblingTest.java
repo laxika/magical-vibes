@@ -30,7 +30,7 @@ class DarkDabblingTest extends BaseCardTest {
 
         cast(player1, harness.getPermanentId(player1, "Grizzly Bears"));
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Grizzly Bears").getId())).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
@@ -42,7 +42,7 @@ class DarkDabblingTest extends BaseCardTest {
 
         cast(player1, harness.getPermanentId(player2, "Grizzly Bears"));
 
-        assertThat(findPermanent(player2, "Grizzly Bears").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player2, "Grizzly Bears").getId())).isEqualTo(1);
     }
 
     @Test
@@ -55,8 +55,8 @@ class DarkDabblingTest extends BaseCardTest {
 
         cast(player1, harness.getPermanentId(player1, "Grizzly Bears"));
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getRegenerationShield()).isEqualTo(1);
-        assertThat(findPermanent(player1, "Runeclaw Bear").getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Grizzly Bears").getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Runeclaw Bear").getId())).isZero();
     }
 
     @Test
@@ -70,9 +70,9 @@ class DarkDabblingTest extends BaseCardTest {
 
         cast(player1, harness.getPermanentId(player1, "Grizzly Bears"));
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getRegenerationShield()).isEqualTo(1);
-        assertThat(findPermanent(player1, "Runeclaw Bear").getRegenerationShield()).isEqualTo(1);
-        assertThat(findPermanent(player2, "Grizzly Bears").getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Grizzly Bears").getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Runeclaw Bear").getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player2, "Grizzly Bears").getId())).isZero();
     }
 
     @Test
@@ -85,8 +85,8 @@ class DarkDabblingTest extends BaseCardTest {
 
         cast(player1, harness.getPermanentId(player2, "Runeclaw Bear"));
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getRegenerationShield()).isEqualTo(1);
-        assertThat(findPermanent(player2, "Runeclaw Bear").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Grizzly Bears").getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player2, "Runeclaw Bear").getId())).isEqualTo(1);
     }
 
     @Test
@@ -99,7 +99,7 @@ class DarkDabblingTest extends BaseCardTest {
 
         cast(player1, harness.getPermanentId(player1, "Grizzly Bears"));
 
-        assertThat(findPermanent(player1, "Runeclaw Bear").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Runeclaw Bear").getId())).isEqualTo(1);
     }
 
     @Test
@@ -112,7 +112,7 @@ class DarkDabblingTest extends BaseCardTest {
 
         cast(player1, harness.getPermanentId(player1, "Grizzly Bears"));
 
-        assertThat(findPermanent(player1, "Runeclaw Bear").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Runeclaw Bear").getId())).isEqualTo(1);
     }
 
     @Test
@@ -126,7 +126,7 @@ class DarkDabblingTest extends BaseCardTest {
 
         cast(player1, harness.getPermanentId(player1, "Grizzly Bears"));
 
-        assertThat(findPermanent(player1, "Runeclaw Bear").getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Runeclaw Bear").getId())).isZero();
         harness.assertInHand(player1, "Forest");
     }
 
@@ -144,8 +144,8 @@ class DarkDabblingTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new LavaAxe(), new Shock()));
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getRegenerationShield()).isEqualTo(1);
-        assertThat(findPermanent(player1, "Runeclaw Bear").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Grizzly Bears").getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Runeclaw Bear").getId())).isEqualTo(1);
     }
 
     @Test
@@ -167,7 +167,7 @@ class DarkDabblingTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Dark Dabbling");
-        assertThat(findPermanent(player1, "Runeclaw Bear").getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Runeclaw Bear").getId())).isZero();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
@@ -191,7 +191,7 @@ class DarkDabblingTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isTrue();
         assertThat(findPermanent(player1, "Grizzly Bears").getMarkedDamage()).isZero();
-        assertThat(findPermanent(player1, "Grizzly Bears").getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Grizzly Bears").getId())).isZero();
     }
 
     @Test
@@ -205,8 +205,8 @@ class DarkDabblingTest extends BaseCardTest {
 
         cast(player1, harness.getPermanentId(player1, "Grizzly Bears"));
 
-        assertThat(findPermanent(player1, "Gaea's Revenge").getRegenerationShield()).isEqualTo(1);
-        assertThat(findPermanent(player1, "Forest").getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Gaea's Revenge").getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Forest").getId())).isZero();
     }
 
     private void cast(Player player, UUID targetId) {

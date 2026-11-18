@@ -87,14 +87,14 @@ class EmergencyEjectTest extends BaseCardTest {
     @Test
     void createsLanderEvenWhenTargetRegenerates() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         cast(target);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(findPermanents(player2, "Lander")).hasSize(1);
     }
 

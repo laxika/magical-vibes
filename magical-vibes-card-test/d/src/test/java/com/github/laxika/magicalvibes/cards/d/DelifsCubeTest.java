@@ -96,7 +96,7 @@ class DelifsCubeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(cube.getCounterCount(CounterType.CUBE)).isZero();
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -158,7 +158,7 @@ class DelifsCubeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough counters");
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 
     @Test
@@ -173,9 +173,9 @@ class DelifsCubeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
 
         assertThat(cube.getCounterCount(CounterType.CUBE)).isZero();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         harness.passBothPriorities();
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         assertThat(cube.isTapped()).isTrue();
     }
 

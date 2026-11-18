@@ -74,7 +74,7 @@ class SpinalVillainTest extends BaseCardTest {
     void respectsRegenerationShield() {
         Permanent villain = addCreatureReady(player1, new SpinalVillain());
         Permanent target = addCreatureReady(player2, new AirElemental());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();

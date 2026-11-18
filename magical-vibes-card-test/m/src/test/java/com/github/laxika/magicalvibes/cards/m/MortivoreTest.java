@@ -213,7 +213,7 @@ class MortivoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(perm.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(perm.getId())).isEqualTo(1);
     }
 
     @Test
@@ -228,7 +228,7 @@ class MortivoreTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(perm.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(perm.getId())).isEqualTo(2);
     }
 
     @Test
@@ -263,7 +263,7 @@ class MortivoreTest extends BaseCardTest {
     void regenerationSavesFromLethalCombatDamage() {
         Permanent mortPerm = addCreatureReady(player1, new Mortivore());
         harness.setGraveyard(player1, createCreatureCards(2)); // Mortivore is 2/2
-        mortPerm.setRegenerationShield(1);
+        gd.addRegenerationShields(mortPerm.getId(), 1);
         mortPerm.setBlocking(true);
         mortPerm.addBlockingTarget(0);
 
@@ -277,7 +277,7 @@ class MortivoreTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Mortivore");
         Permanent mort = findPermanent(player1, "Mortivore");
         assertThat(mort.isTapped()).isTrue();
-        assertThat(mort.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(mort.getId())).isEqualTo(0);
         // Grizzly Bears also takes 2 lethal damage from Mortivore and dies
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
@@ -336,7 +336,7 @@ class MortivoreTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Mortivore");
         assertThat(mortivore.isTapped()).isTrue();
         assertThat(mortivore.getMarkedDamage()).isZero();
-        assertThat(mortivore.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(mortivore.getId())).isZero();
 
         harness.castAndResolveInstant(player2, 0, mortivore.getId());
         harness.assertNotOnBattlefield(player1, "Mortivore");
@@ -357,7 +357,7 @@ class MortivoreTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Mortivore");
         harness.assertInGraveyard(player1, "Mortivore");
-        assertThat(mortivore.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(mortivore.getId())).isEqualTo(1);
     }
 
     @Test

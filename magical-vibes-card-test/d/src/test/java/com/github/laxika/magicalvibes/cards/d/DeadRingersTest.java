@@ -155,7 +155,7 @@ class DeadRingersTest extends BaseCardTest {
     void cannotBeRegenerated() {
         Permanent shielded = harness.addToBattlefieldAndReturn(player2, new SpectralLynx());
         Permanent other = harness.addToBattlefieldAndReturn(player2, new SpectralLynx());
-        shielded.setRegenerationShield(1);
+        gd.addRegenerationShields(shielded.getId(), 1);
         castDeadRingers(List.of(shielded.getId(), other.getId()));
 
         assertThat(gd.playerGraveyards.get(player2.getId()))

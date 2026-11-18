@@ -100,7 +100,7 @@ class AlabasterPotionTest extends BaseCardTest {
             harness.passBothPriorities();
 
             harness.assertOnBattlefield(player2, "Grizzly Bears");
-            assertThat(bears.getDamagePreventionShield()).isZero();
+            assertThat(gd.permanentDamagePreventionShield(bears.getId())).isZero();
         }
 
         @Test
@@ -145,7 +145,7 @@ class AlabasterPotionTest extends BaseCardTest {
             harness.castModalInstantForX(player1, 0, 1, 2, bears.getId());
             harness.passBothPriorities();
 
-            assertThat(bears.getDamagePreventionShield()).isEqualTo(2);
+            assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(2);
         }
 
         @Test

@@ -68,7 +68,7 @@ class NullChampionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(champion.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(champion.getId())).isEqualTo(1);
     }
 
     @Test
@@ -92,7 +92,7 @@ class NullChampionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(champion.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(champion.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

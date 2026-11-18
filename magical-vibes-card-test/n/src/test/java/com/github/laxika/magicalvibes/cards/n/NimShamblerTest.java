@@ -37,7 +37,7 @@ class NimShamblerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, fodder.getId());
         harness.passBothPriorities();
 
-        assertThat(nim.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(nim.getId())).isEqualTo(1);
         harness.assertInGraveyard(player1, "Dross Prowler");
         harness.assertOnBattlefield(player1, "Nim Shambler");
     }
@@ -54,11 +54,11 @@ class NimShamblerTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Ornithopter");
         assertThat(gqs.getEffectivePower(gd, nim)).isEqualTo(2);
-        assertThat(nim.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(nim.getId())).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(nim.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(nim.getId())).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, nim)).isEqualTo(1);
     }
 
@@ -92,7 +92,7 @@ class NimShamblerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, fodder.getId());
         harness.passBothPriorities();
 
-        assertThat(nim.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(nim.getId())).isEqualTo(1);
         harness.assertInGraveyard(player1, "Dross Prowler");
         harness.assertOnBattlefield(player1, "Nim Shambler");
     }
@@ -101,7 +101,7 @@ class NimShamblerTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Nim Shambler from lethal combat damage")
     void regeneratesFromLethalCombatDamage() {
         Permanent nim = addCreatureReady(player1, new NimShambler());
-        nim.setRegenerationShield(1);
+        gd.addRegenerationShields(nim.getId(), 1);
         nim.setBlocking(true);
         nim.addBlockingTarget(0);
 
@@ -111,6 +111,6 @@ class NimShamblerTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Nim Shambler");
-        assertThat(findPermanent(player1, "Nim Shambler").getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Nim Shambler").getId())).isZero();
     }
 }

@@ -104,7 +104,7 @@ class ApocalypseChimeTest extends BaseCardTest {
     void regenerationCannotSaveThem() {
         chimeReady();
         Permanent gate = harness.addToBattlefieldAndReturn(player2, new CemeteryGate());
-        gate.setRegenerationShield(1);
+        gd.addRegenerationShields(gate.getId(), 1);
 
         ringChime();
 

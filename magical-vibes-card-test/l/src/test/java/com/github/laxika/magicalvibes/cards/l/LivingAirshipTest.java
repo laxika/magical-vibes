@@ -43,7 +43,7 @@ class LivingAirshipTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent airship = findPermanent(player1, "Living Airship");
-        assertThat(airship.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(airship.getId())).isEqualTo(1);
     }
 
     @Test
@@ -71,7 +71,7 @@ class LivingAirshipTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Living Airship from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent airship = addAirshipReady(player1);
-        airship.setRegenerationShield(1);
+        gd.addRegenerationShields(airship.getId(), 1);
         airship.setBlocking(true);
         airship.addBlockingTarget(0);
 
@@ -83,7 +83,7 @@ class LivingAirshipTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Living Airship");
         Permanent survivedAirship = findPermanent(player1, "Living Airship");
         assertThat(survivedAirship.isTapped()).isTrue();
-        assertThat(survivedAirship.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(survivedAirship.getId())).isZero();
     }
 
     private Permanent addAirshipReady(Player player) {
@@ -102,7 +102,7 @@ class LivingAirshipTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(airship.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(airship.getId())).isEqualTo(1);
         assertThat(airship.isTapped()).isTrue();
     }
 
@@ -118,7 +118,7 @@ class LivingAirshipTest extends BaseCardTest {
         }
 
         assertThat(airship.isTapped()).isFalse();
-        assertThat(airship.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(airship.getId())).isEqualTo(2);
 
         for (int shieldsRemaining = 1; shieldsRemaining >= 0; shieldsRemaining--) {
             airship.setMarkedDamage(1);
@@ -128,7 +128,7 @@ class LivingAirshipTest extends BaseCardTest {
             harness.assertOnBattlefield(player1, "Living Airship");
             assertThat(airship.isTapped()).isTrue();
             assertThat(airship.getMarkedDamage()).isZero();
-            assertThat(airship.getRegenerationShield()).isEqualTo(shieldsRemaining);
+            assertThat(gd.regenerationShieldCount(airship.getId())).isEqualTo(shieldsRemaining);
         }
 
         AtomicBoolean finalDestroyed = new AtomicBoolean();

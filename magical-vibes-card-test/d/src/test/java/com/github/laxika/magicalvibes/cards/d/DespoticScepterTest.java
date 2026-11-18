@@ -35,7 +35,7 @@ class DespoticScepterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
-        assertThat(skeletons.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skeletons.getId())).isEqualTo(1);
 
         harness.activateAbility(player1, 0, null, skeletons.getId());
         harness.passBothPriorities();

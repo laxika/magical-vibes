@@ -39,7 +39,7 @@ class CrosissCharmTest extends BaseCardTest {
     @Test
     void destroysTargetNonblackCreatureWithoutRegeneration() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         cast(1, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -99,7 +99,7 @@ class CrosissCharmTest extends BaseCardTest {
     @Test
     void nonblackCreatureModeDestroysColorlessArtifactCreatureWithoutRegeneration() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         cast(1, target.getId());
 
@@ -110,14 +110,14 @@ class CrosissCharmTest extends BaseCardTest {
     @Test
     void artifactModeAllowsRegeneration() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         cast(2, target.getId());
 
         harness.assertOnBattlefield(player2, "Ornithopter");
         harness.assertNotInGraveyard(player2, "Ornithopter");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 
     @Test

@@ -39,7 +39,7 @@ class FogOfGnatsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gnats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gnats.getId())).isEqualTo(1);
         assertThat(gnats.isTapped()).isFalse();
     }
 
@@ -47,7 +47,7 @@ class FogOfGnatsTest extends BaseCardTest {
     @DisplayName("A regeneration shield saves Fog of Gnats from lethal combat damage")
     void regenerationShieldSavesFromLethalCombatDamage() {
         Permanent gnats = addGnatsReady(player1);
-        gnats.setRegenerationShield(1);
+        gd.addRegenerationShields(gnats.getId(), 1);
         gnats.setBlocking(true);
         gnats.addBlockingTarget(0);
 
@@ -60,7 +60,7 @@ class FogOfGnatsTest extends BaseCardTest {
         assertThat(gnats.isTapped()).isTrue();
         assertThat(gnats.isBlocking()).isFalse();
         assertThat(gnats.getMarkedDamage()).isZero();
-        assertThat(gnats.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(gnats.getId())).isZero();
     }
 
     @Test
@@ -88,7 +88,7 @@ class FogOfGnatsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gnats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gnats.getId())).isEqualTo(1);
         assertThat(gnats.isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Fog of Gnats");
     }
@@ -106,8 +106,8 @@ class FogOfGnatsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gnats.getRegenerationShield()).isEqualTo(2);
-        assertThat(otherGnats.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(gnats.getId())).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(otherGnats.getId())).isZero();
         assertThat(gnats.isTapped()).isFalse();
     }
 
@@ -128,7 +128,7 @@ class FogOfGnatsTest extends BaseCardTest {
         assertThat(gnats.isTapped()).isTrue();
         assertThat(gnats.isBlocking()).isFalse();
         assertThat(gnats.getMarkedDamage()).isZero();
-        assertThat(gnats.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(gnats.getId())).isZero();
     }
 
     @Test

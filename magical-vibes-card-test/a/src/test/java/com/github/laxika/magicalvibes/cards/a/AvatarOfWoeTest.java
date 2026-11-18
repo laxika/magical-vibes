@@ -122,7 +122,7 @@ class AvatarOfWoeTest extends BaseCardTest {
     void destroysTargetCreatureWithoutRegeneration() {
         Permanent avatar = addCreatureReady(player1, new AvatarOfWoe());
         Permanent target = addCreatureReady(player2, new Squire());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

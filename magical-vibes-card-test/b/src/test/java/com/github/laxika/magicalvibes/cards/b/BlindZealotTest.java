@@ -174,7 +174,7 @@ class BlindZealotTest extends BaseCardTest {
         Permanent zealot = addCreatureReady(player1, new BlindZealot());
         zealot.setAttacking(true);
         Permanent victim = addCreatureReady(player2, new PhyrexianHulk());
-        victim.setRegenerationShield(1);
+        gd.addRegenerationShields(victim.getId(), 1);
 
         harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, () -> {
             resolveCombat();
@@ -186,7 +186,7 @@ class BlindZealotTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Blind Zealot");
         harness.assertOnBattlefield(player2, "Phyrexian Hulk");
         assertThat(victim.isTapped()).isTrue();
-        assertThat(victim.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(victim.getId())).isZero();
     }
 
     @Test

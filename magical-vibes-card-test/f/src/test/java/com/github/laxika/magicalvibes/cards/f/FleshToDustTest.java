@@ -20,7 +20,7 @@ class FleshToDustTest extends BaseCardTest {
     @DisplayName("Flesh to Dust destroys target creature and ignores regeneration")
     void destroysTargetCreatureAndCannotBeRegenerated() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         harness.setHand(player1, List.of(new FleshToDust()));
         harness.addMana(player1, ManaColor.BLACK, 5);

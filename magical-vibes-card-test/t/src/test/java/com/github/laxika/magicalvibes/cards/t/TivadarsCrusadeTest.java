@@ -51,7 +51,7 @@ class TivadarsCrusadeTest extends BaseCardTest {
     @DisplayName("Goblins can regenerate from the destruction")
     void regenerationSavesGoblin() {
         Permanent protectedGoblin = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
-        protectedGoblin.setRegenerationShield(1);
+        gd.addRegenerationShields(protectedGoblin.getId(), 1);
         harness.addToBattlefield(player2, new GoblinHero());
 
         harness.castFromHand(player1, new TivadarsCrusade(), "{1}{W}{W}");
@@ -60,7 +60,7 @@ class TivadarsCrusadeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Goblin Hero");
         harness.assertNotInGraveyard(player1, "Goblin Hero");
         assertThat(protectedGoblin.isTapped()).isTrue();
-        assertThat(protectedGoblin.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(protectedGoblin.getId())).isZero();
         harness.assertNotOnBattlefield(player2, "Goblin Hero");
         harness.assertInGraveyard(player2, "Goblin Hero");
     }

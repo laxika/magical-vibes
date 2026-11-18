@@ -80,7 +80,7 @@ class SerpentSkinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
     }
 
@@ -112,7 +112,7 @@ class SerpentSkinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(aura.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(aura.getId())).isZero();
     }
 
     @Test
@@ -154,8 +154,8 @@ class SerpentSkinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
-        assertThat(aura.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(aura.getId())).isZero();
         assertThat(creature.isTapped()).isFalse();
     }
 
@@ -175,7 +175,7 @@ class SerpentSkinTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Serpent Skin");
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature).doesNotContain(aura);
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -196,7 +196,7 @@ class SerpentSkinTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature, aura);
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(creature.getMarkedDamage()).isZero();
         assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
         harness.assertNotInGraveyard(player1, "Isamaru, Hound of Konda");

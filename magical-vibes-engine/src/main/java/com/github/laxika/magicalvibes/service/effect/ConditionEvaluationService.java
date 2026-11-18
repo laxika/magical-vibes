@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreCardsInHandThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreLifeThanEachOtherPlayer;
+import com.github.laxika.magicalvibes.model.effect.RemoveDamageFromTargetLandInsteadOfNextDestructionEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostLifeGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerIsMonarch;
@@ -2731,7 +2732,8 @@ public class ConditionEvaluationService {
                     .anyMatch(target -> target != null
                             && gameQueryService.isLand(gameData, target)
                             && !gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)
-                            && target.getLandDestructionShield() == 0
+                            && !gameData.hasFloatingEffectOnPermanent(target.getId(),
+                            RemoveDamageFromTargetLandInsteadOfNextDestructionEffect.class)
                             && controllerId.equals(gameQueryService.findPermanentController(gameData, target.getId()))
                             && (effect.targetSpec().predicate() == null
                             || matchesPermanent(gameData, target, effect.targetSpec().predicate(), targetSpellContext)));
@@ -2758,7 +2760,8 @@ public class ConditionEvaluationService {
         return battlefield != null && battlefield.stream()
                 .filter(permanent -> gameQueryService.isLand(gameData, permanent))
                 .filter(permanent -> !gameQueryService.hasKeyword(gameData, permanent, Keyword.INDESTRUCTIBLE))
-                .filter(permanent -> permanent.getLandDestructionShield() == 0)
+                .filter(permanent -> !gameData.hasFloatingEffectOnPermanent(permanent.getId(),
+                        RemoveDamageFromTargetLandInsteadOfNextDestructionEffect.class))
                 .anyMatch(permanent -> matchesPermanent(gameData, permanent, filter, ctx));
     }
 

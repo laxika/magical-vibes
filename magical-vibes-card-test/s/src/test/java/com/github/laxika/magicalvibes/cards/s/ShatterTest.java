@@ -170,7 +170,7 @@ class ShatterTest extends BaseCardTest {
     @DisplayName("Shatter allows an artifact creature to regenerate")
     void regenerationSavesArtifactCreature() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new PhyrexianHulk());
-        artifact.setRegenerationShield(1);
+        gd.addRegenerationShields(artifact.getId(), 1);
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -179,7 +179,7 @@ class ShatterTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Phyrexian Hulk");
         harness.assertNotInGraveyard(player2, "Phyrexian Hulk");
         assertThat(artifact.isTapped()).isTrue();
-        assertThat(artifact.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isZero();
         harness.assertInGraveyard(player1, "Shatter");
     }
 }

@@ -95,7 +95,7 @@ class ManorSkeletonTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         Permanent skele = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(skele.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skele.getId())).isEqualTo(1);
     }
 
     @Test
@@ -144,7 +144,7 @@ class ManorSkeletonTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Manor Skeleton");
         Permanent skele = findPermanent(player1, "Manor Skeleton");
         assertThat(skele.isTapped()).isTrue();
-        assertThat(skele.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(skele.getId())).isEqualTo(0);
         assertThat(skele.getMarkedDamage()).isZero();
         assertThat(skele.isBlocking()).isFalse();
         assertThat(skele.getBlockingTargets()).isEmpty();
@@ -182,7 +182,7 @@ class ManorSkeletonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(skeleton.isTapped()).isFalse();
-        assertThat(skeleton.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isEqualTo(1);
     }
 
     @Test
@@ -199,7 +199,7 @@ class ManorSkeletonTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Manor Skeleton");
         assertThat(skeleton.isTapped()).isTrue();
-        assertThat(skeleton.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isZero();
 
         harness.castAndResolveInstant(player2, 0, skeleton.getId());
 

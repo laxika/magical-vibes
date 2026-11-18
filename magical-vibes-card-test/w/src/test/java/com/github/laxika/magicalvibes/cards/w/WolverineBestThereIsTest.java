@@ -78,7 +78,7 @@ class WolverineBestThereIsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(wolverine.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wolverine.getId())).isEqualTo(1);
 
         addCreatureReady(player2, new HillGiant());
         declareAttackersAndPrepareBlockers(player2, List.of(0));
@@ -87,7 +87,7 @@ class WolverineBestThereIsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Wolverine, Best There Is");
         assertThat(wolverine.isTapped()).isTrue();
-        assertThat(wolverine.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wolverine.getId())).isZero();
     }
 
     @Test
@@ -125,7 +125,7 @@ class WolverineBestThereIsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Hill Giant");
         harness.assertOnBattlefield(player1, "Wolverine, Best There Is");
         assertThat(wolverine.isTapped()).isTrue();
-        assertThat(wolverine.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wolverine.getId())).isZero();
         assertThat(wolverine.getMarkedDamage()).isZero();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

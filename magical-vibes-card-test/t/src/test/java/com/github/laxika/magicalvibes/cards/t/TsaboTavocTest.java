@@ -25,7 +25,7 @@ class TsaboTavocTest extends BaseCardTest {
     void destroysTargetLegendaryCreature() {
         Permanent tsaboTavoc = addTsaboTavoc();
         Permanent captainSisay = harness.addToBattlefieldAndReturn(player2, new CaptainSisay());
-        captainSisay.setRegenerationShield(1);
+        gd.addRegenerationShields(captainSisay.getId(), 1);
         addBlackMana();
 
         harness.activateAbility(player1, 0, null, captainSisay.getId());

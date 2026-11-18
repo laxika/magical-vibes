@@ -73,7 +73,7 @@ class ReaveSoulTest extends BaseCardTest {
     @DisplayName("Allows regeneration")
     void allowsRegeneration() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new MaritimeGuard());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         prepare();
         harness.castSorcery(player1, 0, bears.getId());

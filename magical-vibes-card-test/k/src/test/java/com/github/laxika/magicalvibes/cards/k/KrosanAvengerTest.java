@@ -29,7 +29,7 @@ class KrosanAvengerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(avenger.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(avenger.getId())).isEqualTo(1);
         assertThat(avenger.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
@@ -87,7 +87,7 @@ class KrosanAvengerTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(avenger);
-        assertThat(avenger.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(avenger.getId())).isZero();
         assertThat(avenger.isTapped()).isTrue();
         assertThat(avenger.getMarkedDamage()).isZero();
     }
@@ -109,7 +109,7 @@ class KrosanAvengerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(avenger);
         assertThat(avenger.isTapped()).isTrue();
         assertThat(avenger.getMarkedDamage()).isZero();
-        assertThat(avenger.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(avenger.getId())).isZero();
     }
 
     @Test
@@ -133,7 +133,7 @@ class KrosanAvengerTest extends BaseCardTest {
             assertThat(gd.playerBattlefields.get(player1.getId())).contains(avenger);
             assertThat(avenger.getMarkedDamage()).isZero();
         }
-        assertThat(avenger.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(avenger.getId())).isZero();
         assertThat(avenger.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }

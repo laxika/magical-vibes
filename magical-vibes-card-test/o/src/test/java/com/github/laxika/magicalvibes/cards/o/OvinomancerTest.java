@@ -175,7 +175,7 @@ class OvinomancerTest extends BaseCardTest {
         harness.addToBattlefield(player2, new FlyingMen());
         Permanent flyingMen = findPermanent(player2, "Flying Men");
         UUID targetId = flyingMen.getId();
-        flyingMen.setRegenerationShield(1);
+        gd.addRegenerationShields(flyingMen.getId(), 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

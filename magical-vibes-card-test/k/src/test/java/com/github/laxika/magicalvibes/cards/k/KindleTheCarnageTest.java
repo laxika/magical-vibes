@@ -177,7 +177,7 @@ class KindleTheCarnageTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertOnBattlefield(player1, "Drudge Skeletons");
-        assertThat(skeletons.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skeletons.getId())).isEqualTo(1);
         assertThat(skeletons.isTapped()).isFalse();
         int firstDamage = gd.playerHands.get(player1.getId()).getFirst() instanceof HillGiant ? 2 : 4;
         assertThat(skeletons.getMarkedDamage()).isEqualTo(firstDamage);
@@ -185,7 +185,7 @@ class KindleTheCarnageTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Drudge Skeletons");
         harness.assertNotInGraveyard(player1, "Drudge Skeletons");
-        assertThat(skeletons.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skeletons.getId())).isZero();
         assertThat(skeletons.getMarkedDamage()).isZero();
         assertThat(skeletons.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Grizzly Bears");

@@ -80,7 +80,7 @@ class StaminaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Stamina");
         harness.assertInGraveyard(player1, "Stamina");
     }
@@ -96,12 +96,12 @@ class StaminaTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Stamina");
         harness.assertInGraveyard(player1, "Stamina");
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(creature.isTapped()).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
         assertThat(creature.isTapped()).isFalse();
     }
 
@@ -115,8 +115,8 @@ class StaminaTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(enchantedCreature.getRegenerationShield()).isEqualTo(1);
-        assertThat(otherCreature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(enchantedCreature.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(otherCreature.getId())).isZero();
         assertThat(gqs.hasKeyword(gd, enchantedCreature, Keyword.VIGILANCE)).isFalse();
         harness.assertInGraveyard(player1, "Stamina");
         assertThat(gd.stack).isEmpty();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,7 +29,7 @@ public class DestroyTargetCreatureInsteadOfNextDamageEffectHandler implements No
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
 
-        target.setDamageDestructionShield(target.getDamageDestructionShield() + 1);
+        gameData.addEffectOnPermanent(entry, effect, target.getId(), Duration.UNTIL_END_OF_TURN);
         gameLogService.append(gameData, GameLog.textCardText(
                 "The next time damage would be dealt to ", target.getCard(),
                 " this turn, destroy it instead."));

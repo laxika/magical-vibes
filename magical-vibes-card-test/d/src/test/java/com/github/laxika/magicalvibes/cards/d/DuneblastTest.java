@@ -117,7 +117,7 @@ class DuneblastTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Kin-Tree Warden");
         harness.assertNotInGraveyard(player1, "Kin-Tree Warden");
         assertThat(warden.isTapped()).isTrue();
-        assertThat(warden.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(warden.getId())).isZero();
         harness.assertNotOnBattlefield(player2, "Wetland Sambar");
         harness.assertInGraveyard(player2, "Wetland Sambar");
     }

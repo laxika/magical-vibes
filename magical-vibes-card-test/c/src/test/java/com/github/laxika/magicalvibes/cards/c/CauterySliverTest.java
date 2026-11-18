@@ -90,7 +90,7 @@ class CauterySliverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -104,7 +104,7 @@ class CauterySliverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
         assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 
@@ -204,7 +204,7 @@ class CauterySliverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
 

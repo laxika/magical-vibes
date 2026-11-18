@@ -31,7 +31,7 @@ class DawnflukeTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(3);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(3);
         harness.assertOnBattlefield(player1, "Dawnfluke");
         harness.assertNotInGraveyard(player1, "Dawnfluke");
     }
@@ -81,7 +81,7 @@ class DawnflukeTest extends BaseCardTest {
         harness.castCreatureWithEvoke(player1, 0, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(3);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 
@@ -144,11 +144,11 @@ class DawnflukeTest extends BaseCardTest {
         harness.castCreatureWithEvoke(player1, 0, player1.getId());
         resolveAllTriggers();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(3);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(3);
         assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isEqualTo(3);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isZero();
     }
 }

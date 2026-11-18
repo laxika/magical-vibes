@@ -62,14 +62,14 @@ class CrimsonMuckwaderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent muckwader = findPermanent(player1, "Crimson Muckwader");
-        assertThat(muckwader.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(muckwader.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves it from lethal combat damage")
     void regenSavesFromLethalCombat() {
         Permanent perm = addMuckwaderReady(player1);
-        perm.setRegenerationShield(1);
+        gd.addRegenerationShields(perm.getId(), 1);
         perm.setBlocking(true);
         perm.addBlockingTarget(0);
 
@@ -85,7 +85,7 @@ class CrimsonMuckwaderTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Crimson Muckwader");
         Permanent muckwader = findPermanent(player1, "Crimson Muckwader");
         assertThat(muckwader.isTapped()).isTrue();
-        assertThat(muckwader.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(muckwader.getId())).isEqualTo(0);
     }
 
     @Test
@@ -154,7 +154,7 @@ class CrimsonMuckwaderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(muckwader.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(muckwader.getId())).isEqualTo(1);
         assertThat(muckwader.isTapped()).isTrue();
     }
 
@@ -169,7 +169,7 @@ class CrimsonMuckwaderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(muckwader.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(muckwader.getId())).isEqualTo(1);
         assertThat(muckwader.isTapped()).isFalse();
         assertThat(muckwader.isAttacking()).isTrue();
     }
@@ -191,13 +191,13 @@ class CrimsonMuckwaderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(muckwader.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(muckwader.getId())).isEqualTo(1);
         assertThat(muckwader.isBlocking()).isTrue();
 
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Crimson Muckwader");
-        assertThat(muckwader.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(muckwader.getId())).isZero();
         assertThat(muckwader.getMarkedDamage()).isZero();
         assertThat(muckwader.isTapped()).isTrue();
         assertThat(muckwader.isBlocking()).isFalse();

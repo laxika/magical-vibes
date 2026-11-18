@@ -95,8 +95,8 @@ class StrandsOfUndeathTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(zephyr.getRegenerationShield()).isEqualTo(1);
-        assertThat(aura.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(zephyr.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(aura.getId())).isZero();
     }
 
     @Test
@@ -149,8 +149,8 @@ class StrandsOfUndeathTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(zephyr.getRegenerationShield()).isEqualTo(1);
-        assertThat(aura.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(zephyr.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(aura.getId())).isZero();
         assertThat(zephyr.isTapped()).isFalse();
     }
 
@@ -167,8 +167,8 @@ class StrandsOfUndeathTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
         harness.passBothPriorities();
 
-        assertThat(zephyr.getRegenerationShield()).isEqualTo(1);
-        assertThat(aura.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(zephyr.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(aura.getId())).isZero();
     }
 
     private void addCastingMana() {

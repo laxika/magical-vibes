@@ -36,7 +36,7 @@ class DaruMenderTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(target.getMarkedDamage()).isZero();
     }
 
@@ -63,7 +63,7 @@ class DaruMenderTest extends BaseCardTest {
         Permanent mender = findPermanent(player1, "Daru Mender");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(mender.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(mender.getId())).isZero();
     }
 
     @Test
@@ -74,7 +74,7 @@ class DaruMenderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, mender.getId());
         harness.passBothPriorities();
 
-        assertThat(mender.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(mender.getId())).isEqualTo(1);
         assertThat(mender.isTapped()).isFalse();
 
         harness.setHand(player1, List.of(new Shock()));
@@ -84,7 +84,7 @@ class DaruMenderTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(mender);
         assertThat(mender.isTapped()).isTrue();
         assertThat(mender.getMarkedDamage()).isZero();
-        assertThat(mender.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(mender.getId())).isZero();
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -109,7 +109,7 @@ class DaruMenderTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
-        assertThat(mender.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(mender.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

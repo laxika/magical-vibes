@@ -163,14 +163,14 @@ class SteamVinesTest extends BaseCardTest {
     void regeneratedLandCanKeepAura() {
         Permanent land = addLand(player1);
         Permanent aura = attachAura(player1, land);
-        land.setRegenerationShield(1);
+        gd.addRegenerationShields(land.getId(), 1);
         harness.setLife(player1, 20);
 
         harness.tapPermanent(player1, 0);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(land, aura);
-        assertThat(land.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(land.getId())).isZero();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(aura.getAttachedTo()).isEqualTo(land.getId());
     }

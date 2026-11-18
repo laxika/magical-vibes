@@ -121,7 +121,7 @@ class AetherStormTest extends BaseCardTest {
     @DisplayName("The destruction cannot be regenerated")
     void destructionCannotBeRegenerated() {
         Permanent storm = harness.addToBattlefieldAndReturn(player1, new AetherStorm());
-        storm.setRegenerationShield(1);
+        gd.addRegenerationShields(storm.getId(), 1);
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, null, null);

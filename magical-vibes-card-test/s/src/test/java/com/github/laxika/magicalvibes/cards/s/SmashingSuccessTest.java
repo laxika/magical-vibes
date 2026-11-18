@@ -71,13 +71,13 @@ class SmashingSuccessTest extends BaseCardTest {
     @DisplayName("Regeneration prevents destruction and Treasure creation")
     void regeneratedArtifactCreatesNoTreasure() {
         Permanent thopter = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
-        thopter.setRegenerationShield(1);
+        gd.addRegenerationShields(thopter.getId(), 1);
 
         castSmashingSuccess(thopter.getId());
 
         harness.assertOnBattlefield(player2, "Ornithopter");
         assertThat(thopter.isTapped()).isTrue();
-        assertThat(thopter.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(thopter.getId())).isZero();
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
     }
 

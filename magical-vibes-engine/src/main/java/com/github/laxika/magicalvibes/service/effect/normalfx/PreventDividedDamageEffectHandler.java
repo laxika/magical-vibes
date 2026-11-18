@@ -67,7 +67,8 @@ public class PreventDividedDamageEffectHandler implements NormalEffectHandlerBea
                 if (prevention.etbAssignments() && !damageSupport.isAnyTargetDamageRecipient(gameData, target)) continue;
                 if (targetLegalityService.checkTriggeredPermanentTargetableReason(
                         gameData, target, entry.getCard(), entry.getControllerId()).isPresent()) continue;
-                target.setDamagePreventionShield(target.getDamagePreventionShield() + amount);
+                gameData.addPermanentDamagePreventionShield(entry.getCard().getName(), entry.getSourcePermanentId(),
+                        entry.getControllerId(), target.getId(), amount, false);
                 gameLogService.append(gameData, GameLog.textCardText("The next " + amount + " damage that would be dealt to ", target.getCard(), " is prevented."));
                 continue;
             }

@@ -234,7 +234,7 @@ class DeathtouchMechanicTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
 
         // Give blocker a prevention shield of 1 (preventing all deathtouch damage)
-        blocker.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(blocker.getId(), 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -281,7 +281,7 @@ class DeathtouchMechanicTest extends BaseCardTest {
         // Damage marked earlier this turn by a non-deathtouch source
         bears.setMarkedDamage(1);
         // Shield prevents the whole deathtouch ping
-        bears.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(bears.getId(), 1);
 
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();

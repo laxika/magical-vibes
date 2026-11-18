@@ -103,7 +103,7 @@ class SmiteTheMonstrousTest extends BaseCardTest {
     @DisplayName("Smite the Monstrous allows regeneration")
     void allowsRegeneration() {
         Permanent wurm = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
-        wurm.setRegenerationShield(1);
+        gd.addRegenerationShields(wurm.getId(), 1);
 
         harness.setHand(player1, List.of(new SmiteTheMonstrous()));
         harness.addMana(player1, ManaColor.WHITE, 1);

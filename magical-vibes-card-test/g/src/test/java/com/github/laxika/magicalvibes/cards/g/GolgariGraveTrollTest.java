@@ -49,7 +49,7 @@ class GolgariGraveTrollTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(troll.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
@@ -164,7 +164,7 @@ class GolgariGraveTrollTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(troll);
         assertThat(troll.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
         assertThat(troll.isTapped()).isTrue();
     }
 

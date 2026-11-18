@@ -106,7 +106,7 @@ class ScorchingDragonfireTest extends BaseCardTest {
     @Test
     void exileReplacementAppliesEvenWhenAllDamageIsPrevented() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        creature.setDamagePreventionShield(3);
+        gd.addPermanentDamagePreventionShield(creature.getId(), 3);
 
         castAt(creature.getId());
         harness.assertOnBattlefield(player2, "Grizzly Bears");

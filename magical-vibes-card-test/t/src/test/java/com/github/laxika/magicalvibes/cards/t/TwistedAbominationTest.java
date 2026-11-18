@@ -25,7 +25,7 @@ class TwistedAbominationTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(abomination.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(abomination.getId())).isEqualTo(1);
     }
 
     @Test
@@ -45,7 +45,7 @@ class TwistedAbominationTest extends BaseCardTest {
         resolveCombat(player2);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(blocker);
-        assertThat(blocker.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(blocker.getId())).isZero();
         assertThat(blocker.isTapped()).isTrue();
         assertThat(blocker.isBlocking()).isFalse();
         assertThat(blocker.getBlockingTargets()).isEmpty();

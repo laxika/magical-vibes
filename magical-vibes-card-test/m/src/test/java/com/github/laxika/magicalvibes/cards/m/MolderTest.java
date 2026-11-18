@@ -39,7 +39,7 @@ class MolderTest extends BaseCardTest {
     void cannotBeRegenerated() {
         harness.setLife(player1, 15);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setHand(player1, List.of(new Molder()));
         addMana(2);
 

@@ -147,7 +147,7 @@ class PyrewoodGearhulkTest extends BaseCardTest {
     @DisplayName("Damage to creatures bypasses prevention shields too")
     void creatureDamageCannotBePrevented() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setDamagePreventionShield(10);
+        gd.addPermanentDamagePreventionShield(bears.getId(), 10);
         castGearhulk();
 
         harness.setHand(player1, List.of(new Shock()));

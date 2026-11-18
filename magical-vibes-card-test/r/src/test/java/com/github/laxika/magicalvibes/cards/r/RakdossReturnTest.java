@@ -185,7 +185,7 @@ class RakdossReturnTest extends BaseCardTest {
     void preventedDamageStillDiscardsXCards() {
         Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceArchitectOfThought());
         jace.setCounterCount(CounterType.LOYALTY, 4);
-        jace.setDamagePreventionShield(3);
+        gd.addPermanentDamagePreventionShield(jace.getId(), 3);
         harness.setHand(player2, List.of(new AxebaneGuardian(), new AzoriusCharm(), new Forest()));
         giveReturn(3);
 

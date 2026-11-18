@@ -77,7 +77,7 @@ class PestilenceTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Pestilence");
         harness.assertOnBattlefield(player2, "Drudge Skeletons");
         harness.assertNotInGraveyard(player2, "Drudge Skeletons");
-        assertThat(skeleton.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isZero();
         assertThat(skeleton.isTapped()).isTrue();
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 19);

@@ -55,7 +55,7 @@ class GoreVassalTest extends BaseCardTest {
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -85,7 +85,7 @@ class GoreVassalTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, "Phyrexian Rager");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -115,7 +115,7 @@ class GoreVassalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         assertThat(target.isTapped()).isFalse();
     }
 
@@ -131,7 +131,7 @@ class GoreVassalTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Gore Vassal");
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -146,7 +146,7 @@ class GoreVassalTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Gore Vassal");
         assertThat(gd.stack).isEmpty();
         assertThat(vassal.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
-        assertThat(vassal.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(vassal.getId())).isZero();
     }
 
     @Test
@@ -165,7 +165,7 @@ class GoreVassalTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Phyrexian Rager");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
@@ -181,7 +181,7 @@ class GoreVassalTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Phyrexian Rager");
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(target.getMarkedDamage()).isZero();
         assertThat(target.isTapped()).isTrue();
     }

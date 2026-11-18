@@ -76,7 +76,7 @@ class TribalGolemTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(golem.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(golem.getId())).isEqualTo(1);
     }
 
     @Test
@@ -144,7 +144,7 @@ class TribalGolemTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Shepherd of Rot");
-        assertThat(golem.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(golem.getId())).isEqualTo(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -162,8 +162,8 @@ class TribalGolemTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(elemental.getRegenerationShield()).isEqualTo(1);
-        assertThat(golem.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(elemental.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(golem.getId())).isZero();
     }
 
     @Test

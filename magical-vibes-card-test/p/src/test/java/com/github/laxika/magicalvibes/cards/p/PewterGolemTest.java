@@ -26,7 +26,7 @@ class PewterGolemTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(golem.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(golem.getId())).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -39,13 +39,13 @@ class PewterGolemTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(golem.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(golem.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(golem.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(golem.getId())).isZero();
     }
 
     @Test
@@ -63,7 +63,7 @@ class PewterGolemTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, golem.getId());
         harness.passBothPriorities();
 
-        assertThat(golem.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(golem.getId())).isZero();
         assertThat(golem.getMarkedDamage()).isZero();
         assertThat(golem.isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Pewter Golem");
@@ -81,7 +81,7 @@ class PewterGolemTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(golem.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(golem.getId())).isEqualTo(1);
         assertThat(golem.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
@@ -97,7 +97,7 @@ class PewterGolemTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(golem.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(golem.getId())).isEqualTo(2);
         assertThat(golem.isTapped()).isFalse();
         harness.setHand(player2, List.of(new Shatter(), new Shatter(), new Shatter()));
         harness.addMana(player2, ManaColor.RED, 3);
@@ -106,13 +106,13 @@ class PewterGolemTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, golem.getId());
 
         harness.assertOnBattlefield(player1, "Pewter Golem");
-        assertThat(golem.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(golem.getId())).isEqualTo(1);
         assertThat(golem.isTapped()).isTrue();
 
         harness.castAndResolveInstant(player2, 0, golem.getId());
 
         harness.assertOnBattlefield(player1, "Pewter Golem");
-        assertThat(golem.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(golem.getId())).isZero();
 
         harness.castAndResolveInstant(player2, 0, golem.getId());
 

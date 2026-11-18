@@ -98,7 +98,7 @@ class OverwhelmingVictoryTest extends BaseCardTest {
     @DisplayName("prevented damage does not count toward excess damage")
     void countsOnlyDamageActuallyDealt() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setDamagePreventionShield(4);
+        gd.addPermanentDamagePreventionShield(target.getId(), 4);
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
 
         castOverwhelmingVictory(target);

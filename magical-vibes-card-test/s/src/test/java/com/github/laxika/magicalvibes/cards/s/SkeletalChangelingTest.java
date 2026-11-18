@@ -45,7 +45,7 @@ class SkeletalChangelingTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         Permanent perm = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(perm.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(perm.getId())).isEqualTo(1);
     }
 
     @Test
@@ -80,7 +80,7 @@ class SkeletalChangelingTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(changeling.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(changeling.getId())).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 
@@ -88,7 +88,7 @@ class SkeletalChangelingTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves the creature from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent perm = addCreatureReady(player1, new SkeletalChangeling());
-        perm.setRegenerationShield(1);
+        gd.addRegenerationShields(perm.getId(), 1);
         perm.setBlocking(true);
         perm.addBlockingTarget(0);
 
@@ -99,7 +99,7 @@ class SkeletalChangelingTest extends BaseCardTest {
 
         Permanent survivor = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isEqualTo(0);
     }
 
     @Test
@@ -139,7 +139,7 @@ class SkeletalChangelingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(changeling.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(changeling.getId())).isEqualTo(1);
         assertThat(changeling.isTapped()).isTrue();
     }
 
@@ -154,7 +154,7 @@ class SkeletalChangelingTest extends BaseCardTest {
 
         assertThat(changeling.isTapped()).isFalse();
         assertThat(changeling.getTimesRegeneratedThisTurn()).isZero();
-        assertThat(changeling.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(changeling.getId())).isEqualTo(1);
     }
 
     @Test
@@ -166,7 +166,7 @@ class SkeletalChangelingTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(changeling.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(changeling.getId())).isEqualTo(2);
 
         changeling.setBlocking(true);
         changeling.addBlockingTarget(0);
@@ -176,7 +176,7 @@ class SkeletalChangelingTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Skeletal Changeling");
-        assertThat(changeling.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(changeling.getId())).isEqualTo(1);
         assertThat(changeling.isTapped()).isTrue();
         assertThat(changeling.isBlocking()).isFalse();
         assertThat(changeling.getBlockingTargets()).isEmpty();

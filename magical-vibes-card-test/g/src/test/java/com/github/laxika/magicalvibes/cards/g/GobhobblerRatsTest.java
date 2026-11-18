@@ -38,7 +38,7 @@ class GobhobblerRatsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(rats.getId())).isEqualTo(1);
     }
 
     @Test
@@ -61,7 +61,7 @@ class GobhobblerRatsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Drekavac()));
         harness.passBothPriorities();
 
-        assertThat(rats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(rats.getId())).isEqualTo(1);
     }
 
     @Test
@@ -75,7 +75,7 @@ class GobhobblerRatsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(rats.getId())).isEqualTo(1);
     }
 
     @Test
@@ -93,7 +93,7 @@ class GobhobblerRatsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, rats)).isEqualTo(3);
-        assertThat(rats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(rats.getId())).isEqualTo(1);
     }
 
     @Test
@@ -111,7 +111,7 @@ class GobhobblerRatsTest extends BaseCardTest {
                 harness.getPermanentRemovalService().tryDestroyPermanent(gd, rats));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(rats);
-        assertThat(rats.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(rats.getId())).isZero();
         assertThat(rats.isTapped()).isTrue();
         assertThat(rats.isAttacking()).isFalse();
         assertThat(rats.getMarkedDamage()).isZero();

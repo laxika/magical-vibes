@@ -75,7 +75,7 @@ class ReignOfTerrorTest extends BaseCardTest {
     @DisplayName("Green creatures can't be regenerated after the green mode destroys them")
     void cannotBeRegenerated() {
         Permanent greenCreature = harness.addToBattlefieldAndReturn(player2, new GibberingHyenas());
-        greenCreature.setRegenerationShield(1);
+        gd.addRegenerationShields(greenCreature.getId(), 1);
 
         castReign(0);
 
@@ -89,7 +89,7 @@ class ReignOfTerrorTest extends BaseCardTest {
     @DisplayName("White creatures cannot regenerate either")
     void whiteModeCannotBeRegenerated() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new IronTuskElephant());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
 
         castReign(1);
 

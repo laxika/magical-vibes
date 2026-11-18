@@ -67,7 +67,7 @@ class NightscapeFamiliarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(familiar.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(familiar.getId())).isEqualTo(1);
     }
 
     @Test
@@ -118,7 +118,7 @@ class NightscapeFamiliarTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Nightscape Familiar");
         assertThat(familiar.isTapped()).isTrue();
         assertThat(familiar.getMarkedDamage()).isZero();
-        assertThat(familiar.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(familiar.getId())).isZero();
 
         harness.castInstant(player2, 0, familiar.getId());
         harness.passBothPriorities();
@@ -135,7 +135,7 @@ class NightscapeFamiliarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(familiar.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(familiar.getId())).isEqualTo(1);
         harness.setHand(player2, List.of(new Terminate()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.RED, 1);

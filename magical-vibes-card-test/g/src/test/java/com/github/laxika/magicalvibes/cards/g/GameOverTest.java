@@ -46,7 +46,7 @@ class GameOverTest extends BaseCardTest {
     @DisplayName("A creature with a regeneration shield survives")
     void regenerationShieldSavesCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
 
         castGameOver("{3}{B}{B}");
 

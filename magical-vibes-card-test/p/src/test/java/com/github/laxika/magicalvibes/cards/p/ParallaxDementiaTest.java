@@ -71,7 +71,7 @@ class ParallaxDementiaTest extends BaseCardTest {
     @DisplayName("When Parallax Dementia leaves, it destroys the enchanted creature without regeneration")
     void destroysEnchantedCreatureWhenAuraLeaves() {
         Permanent thug = addCreatureReady(player2, new SpinelessThug());
-        thug.setRegenerationShield(1);
+        gd.addRegenerationShields(thug.getId(), 1);
         harness.addToBattlefieldAndReturn(player1, new SealOfCleansing());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new ParallaxDementia());
         aura.setAttachedTo(thug.getId());

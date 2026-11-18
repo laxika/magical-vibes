@@ -79,14 +79,14 @@ class LotlethTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Lotleth Troll").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Lotleth Troll").getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("The regeneration shield saves it from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent troll = addCreatureReady(player1, new LotlethTroll());
-        troll.setRegenerationShield(1);
+        gd.addRegenerationShields(troll.getId(), 1);
         troll.setBlocking(true);
         troll.addBlockingTarget(0);
 
@@ -98,7 +98,7 @@ class LotlethTrollTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Lotleth Troll");
         Permanent survivor = findPermanent(player1, "Lotleth Troll");
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isZero();
     }
 
     @Test
@@ -172,7 +172,7 @@ class LotlethTrollTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(2);
         assertThat(troll.isTapped()).isFalse();
         assertThat(troll.getMarkedDamage()).isEqualTo(1);
     }

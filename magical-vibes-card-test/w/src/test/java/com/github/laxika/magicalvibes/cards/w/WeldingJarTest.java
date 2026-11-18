@@ -31,7 +31,7 @@ class WeldingJarTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player2, "Ornithopter").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player2, "Ornithopter").getId())).isEqualTo(1);
     }
 
     @Test
@@ -48,7 +48,7 @@ class WeldingJarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(target.isTapped()).isTrue();
         harness.assertOnBattlefield(player2, "Ornithopter");
         harness.assertNotInGraveyard(player2, "Ornithopter");
@@ -85,7 +85,7 @@ class WeldingJarTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Welding Jar");
         harness.assertNotInGraveyard(player2, "Welding Jar");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 
     @Test

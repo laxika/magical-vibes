@@ -55,20 +55,6 @@ public enum EndOfTurnStateField {
     SUPPRESSED_STATIC_EFFECT_INSTANCES(Kind.IDENTITY_LIST),
     TEMPORARY_ACTIVATED_ABILITIES(Kind.LIST),
     TEXT_REPLACEMENTS(Kind.LIST),
-    DAMAGE_PREVENTION_SHIELD(Kind.SHIELD),
-    DAMAGE_TO_COUNTER_PREVENTION_SHIELD(Kind.SHIELD),
-    DAMAGE_TO_PLUS_ONE_PLUS_ONE_COUNTER_PREVENTION_SHIELD(Kind.SHIELD),
-    ALL_DAMAGE_TO_PLUS_ONE_PLUS_ONE_COUNTER_PREVENTION_SHIELD(Kind.FLAG),
-    DAMAGE_REPLACED_BY_PLUS_ONE_PLUS_ONE_COUNTERS(Kind.FLAG),
-    DAMAGE_DESTRUCTION_SHIELD(Kind.SHIELD),
-    LAND_DESTRUCTION_SHIELD(Kind.SHIELD),
-    REGENERATION_SHIELD(Kind.SHIELD),
-    MINUS_ONE_COUNTER_REGENERATION_SHIELD(Kind.SHIELD),
-    OPPONENT_DRAW_REGENERATION_SHIELD(Kind.SHIELD),
-    OPPONENT_DRAW_REGENERATION_SHIELD_GRANTS(Kind.LIST),
-    PLUS_ONE_PLUS_ONE_COUNTER_REGENERATION_SHIELD(Kind.SHIELD),
-    PLUS_ONE_PLUS_ONE_COUNTER_REGENERATION_SHIELD_CONTROLLERS(Kind.LIST),
-    GAIN_CONTROL_REGENERATION_SHIELDS(Kind.LIST),
     TIMES_REGENERATED(Kind.ADDITIVE),
     TAPPED_PERMANENTS_FOR_ABILITY(Kind.LIST),
     CREATURES_THAT_CREWED(Kind.SET),
@@ -94,9 +80,6 @@ public enum EndOfTurnStateField {
         FLAG,
         /** An {@code int} sum of contributions (P/T modifiers): each player keeps their own delta. */
         ADDITIVE,
-        /** An {@code int} count that is used up (prevention/regeneration shields): each player keeps their
-         *  delta, never more than what is left. */
-        SHIELD,
         /** A single value that the latest effect overwrites (base P/T, chosen type): kept by the player
          *  active when it was last changed. */
         VALUE,

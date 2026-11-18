@@ -46,7 +46,7 @@ class FortitudeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, forestToSacrifice.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(remainingForest);
         harness.assertInGraveyard(player1, "Forest");
 
@@ -54,7 +54,7 @@ class FortitudeTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(creature.getMarkedDamage()).isZero();
         assertThat(creature.isTapped()).isTrue();
     }
@@ -136,7 +136,7 @@ class FortitudeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Fortitude");
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
         creature.setMarkedDamage(gqs.getEffectiveToughness(gd, creature));
         harness.runStateBasedActions();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);

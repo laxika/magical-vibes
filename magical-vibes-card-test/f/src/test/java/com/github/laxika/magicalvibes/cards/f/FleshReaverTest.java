@@ -202,7 +202,7 @@ class FleshReaverTest extends BaseCardTest {
     void reflectsReducedDamageAfterPrevention() {
         Permanent reaver = addCreatureReady(player1, new FleshReaver());
         Permanent wurm = addCreatureReady(player2, new WindingWurm());
-        wurm.setDamagePreventionShield(2);
+        gd.addPermanentDamagePreventionShield(wurm.getId(), 2);
         harness.setLife(player1, 20);
 
         DamageSupport damageSupport = GameTestEngineContext.get().getBean(DamageSupport.class);
@@ -220,7 +220,7 @@ class FleshReaverTest extends BaseCardTest {
     void doesNotTriggerForFullyPreventedDamage() {
         Permanent reaver = addCreatureReady(player1, new FleshReaver());
         Permanent wurm = addCreatureReady(player2, new WindingWurm());
-        wurm.setDamagePreventionShield(3);
+        gd.addPermanentDamagePreventionShield(wurm.getId(), 3);
         harness.setLife(player1, 20);
 
         DamageSupport damageSupport = GameTestEngineContext.get().getBean(DamageSupport.class);

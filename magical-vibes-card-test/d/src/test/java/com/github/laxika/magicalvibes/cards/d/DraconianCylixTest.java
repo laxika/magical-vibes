@@ -31,7 +31,7 @@ class DraconianCylixTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(thallid.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(thallid.getId())).isEqualTo(1);
     }
 
     @Test
@@ -75,7 +75,7 @@ class DraconianCylixTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Thallid");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 
     @Test
@@ -91,11 +91,11 @@ class DraconianCylixTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId()).getFirst().getName())
                 .isIn("Thallid", "Draconian Cylix");
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -111,7 +111,7 @@ class DraconianCylixTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 
     @Test
@@ -127,6 +127,6 @@ class DraconianCylixTest extends BaseCardTest {
         assertThat(cylix.isTapped()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 }

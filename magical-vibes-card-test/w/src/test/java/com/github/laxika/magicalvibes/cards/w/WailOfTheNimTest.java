@@ -25,8 +25,8 @@ class WailOfTheNimTest extends BaseCardTest {
 
         cast(new int[]{0}, 1);
 
-        assertThat(ownCreature.getRegenerationShield()).isEqualTo(1);
-        assertThat(opponentCreature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ownCreature.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(opponentCreature.getId())).isZero();
     }
 
     @Test
@@ -38,9 +38,9 @@ class WailOfTheNimTest extends BaseCardTest {
 
         cast(new int[]{0}, 1);
 
-        assertThat(firstOwnCreature.getRegenerationShield()).isEqualTo(1);
-        assertThat(secondOwnCreature.getRegenerationShield()).isEqualTo(1);
-        assertThat(opponentCreature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(firstOwnCreature.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(secondOwnCreature.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(opponentCreature.getId())).isZero();
     }
 
     @Test
@@ -101,10 +101,10 @@ class WailOfTheNimTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentCreature);
         assertThat(ownCreature.isTapped()).isTrue();
         assertThat(ownCreature.getMarkedDamage()).isZero();
-        assertThat(ownCreature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ownCreature.getId())).isZero();
         assertThat(survivingCreature.isTapped()).isFalse();
         assertThat(survivingCreature.getMarkedDamage()).isEqualTo(1);
-        assertThat(survivingCreature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(survivingCreature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -132,8 +132,8 @@ class WailOfTheNimTest extends BaseCardTest {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getRegenerationShield()).isEqualTo(1);
-        assertThat(opponentCreature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ownCreature.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(opponentCreature.getId())).isZero();
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
     }

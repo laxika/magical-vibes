@@ -97,13 +97,13 @@ class DreadboreTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(target.getId()));
         harness.castInstant(player2, 0, 2, null);
         harness.passBothPriorities();
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         harness.assertInGraveyard(player1, "Dreadbore");
     }
 

@@ -39,7 +39,7 @@ class AnnihilateTest extends BaseCardTest {
     @DisplayName("Annihilate destroys the creature even with a regeneration shield")
     void cannotBeRegenerated() {
         Permanent barbarian = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
-        barbarian.setRegenerationShield(1);
+        gd.addRegenerationShields(barbarian.getId(), 1);
 
         harness.setHand(player1, List.of(new Annihilate()));
         harness.addMana(player1, ManaColor.BLACK, 5);

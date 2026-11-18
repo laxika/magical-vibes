@@ -127,7 +127,7 @@ class UlvenwaldMysticsTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve
 
-        assertThat(mystics.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(mystics.getId())).isEqualTo(1);
     }
 
     @Test
@@ -142,7 +142,7 @@ class UlvenwaldMysticsTest extends BaseCardTest {
         assertThat(mystics.isTransformed()).isTrue();
 
         // Give it a regeneration shield and set up as blocker
-        mystics.setRegenerationShield(1);
+        gd.addRegenerationShields(mystics.getId(), 1);
         mystics.setSummoningSick(false);
         mystics.setBlocking(true);
         mystics.addBlockingTarget(0);
@@ -160,7 +160,7 @@ class UlvenwaldMysticsTest extends BaseCardTest {
         // Ulvenwald Primordials should survive via regeneration
         harness.assertOnBattlefield(player1, "Ulvenwald Primordials");
         assertThat(mystics.isTapped()).isTrue();
-        assertThat(mystics.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(mystics.getId())).isEqualTo(0);
     }
 
     @Test
@@ -208,7 +208,7 @@ class UlvenwaldMysticsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mystics.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(mystics.getId())).isEqualTo(2);
         assertThat(mystics.getMarkedDamage()).isEqualTo(2);
         assertThat(mystics.isTapped()).isTrue();
     }

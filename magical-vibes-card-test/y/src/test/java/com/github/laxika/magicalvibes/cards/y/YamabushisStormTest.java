@@ -113,7 +113,7 @@ class YamabushisStormTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         castStorm();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(target.getMarkedDamage()).isZero();
 
         declareAttackersAndPrepareBlockers(List.of(0));

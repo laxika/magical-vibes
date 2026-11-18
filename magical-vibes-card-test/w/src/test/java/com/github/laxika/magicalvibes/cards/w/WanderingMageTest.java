@@ -40,7 +40,7 @@ class WanderingMageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, defender.getId());
         harness.passBothPriorities();
 
-        assertThat(defender.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(defender.getId())).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
 
@@ -56,7 +56,7 @@ class WanderingMageTest extends BaseCardTest {
         castGuerrillaTactics(player2, defender.getId());
 
         assertThat(defender.getMarkedDamage()).isZero();
-        assertThat(defender.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(defender.getId())).isZero();
     }
 
     @Test
@@ -78,7 +78,7 @@ class WanderingMageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, mage.getId());
         harness.passBothPriorities();
 
-        assertThat(mage.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(mage.getId())).isEqualTo(1);
     }
 
     @Test
@@ -91,7 +91,7 @@ class WanderingMageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, opponentMage.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentMage.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(opponentMage.getId())).isEqualTo(1);
     }
 
     @Test
@@ -105,7 +105,7 @@ class WanderingMageTest extends BaseCardTest {
         castGuerrillaTactics(player2, mage.getId());
 
         assertThat(mage.getMarkedDamage()).isEqualTo(1);
-        assertThat(mage.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(mage.getId())).isZero();
     }
 
     @Test
@@ -159,7 +159,7 @@ class WanderingMageTest extends BaseCardTest {
         castGuerrillaTactics(player2, planeswalker.getId());
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
-        assertThat(planeswalker.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(planeswalker.getId())).isZero();
     }
 
     @Test
@@ -205,10 +205,10 @@ class WanderingMageTest extends BaseCardTest {
 
         castGuerrillaTactics(player2, defender.getId());
         assertThat(defender.getMarkedDamage()).isZero();
-        assertThat(defender.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(defender.getId())).isEqualTo(2);
         castGuerrillaTactics(player2, defender.getId());
         assertThat(defender.getMarkedDamage()).isZero();
-        assertThat(defender.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(defender.getId())).isZero();
         castGuerrillaTactics(player2, defender.getId());
         assertThat(defender.getMarkedDamage()).isEqualTo(2);
     }
@@ -224,7 +224,7 @@ class WanderingMageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, mage.getId());
         harness.passBothPriorities();
 
-        assertThat(mage.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(mage.getId())).isEqualTo(2);
         assertThat(mage.isTapped()).isTrue();
         harness.assertLife(player1, 19);
     }

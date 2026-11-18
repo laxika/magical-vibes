@@ -72,7 +72,7 @@ class ToxinSliverTest extends BaseCardTest {
         Permanent toxin = addCreatureReady(player1, new ToxinSliver());
         toxin.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new EnormousBaloth());
-        blocker.setRegenerationShield(1);
+        gd.addRegenerationShields(blocker.getId(), 1);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

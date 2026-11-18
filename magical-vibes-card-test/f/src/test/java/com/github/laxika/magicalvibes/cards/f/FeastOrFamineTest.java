@@ -100,7 +100,7 @@ class FeastOrFamineTest extends BaseCardTest {
     @DisplayName("Mode 2 destroys a creature even when it has a regeneration shield")
     void cannotBeRegenerated() {
         Permanent chieftain = harness.addToBattlefieldAndReturn(player2, new GorillaChieftain());
-        chieftain.setRegenerationShield(1);
+        gd.addRegenerationShields(chieftain.getId(), 1);
 
         harness.setHand(player1, List.of(new FeastOrFamine()));
         harness.addMana(player1, ManaColor.BLACK, 4);

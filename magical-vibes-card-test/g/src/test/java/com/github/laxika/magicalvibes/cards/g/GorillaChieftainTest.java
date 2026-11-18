@@ -22,7 +22,7 @@ class GorillaChieftainTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(chieftain.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(chieftain.getId())).isEqualTo(1);
     }
 
     @Test
@@ -61,7 +61,7 @@ class GorillaChieftainTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Gorilla Chieftain from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent chieftain = addCreatureReady(player1, new GorillaChieftain());
-        chieftain.setRegenerationShield(1);
+        gd.addRegenerationShields(chieftain.getId(), 1);
         chieftain.setBlocking(true);
         chieftain.addBlockingTarget(0);
 
@@ -72,7 +72,7 @@ class GorillaChieftainTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Gorilla Chieftain");
         assertThat(chieftain.isTapped()).isTrue();
-        assertThat(chieftain.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(chieftain.getId())).isEqualTo(0);
     }
 
     @Test
@@ -103,7 +103,7 @@ class GorillaChieftainTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(chieftain.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(chieftain.getId())).isEqualTo(2);
     }
 
     @Test
@@ -116,10 +116,10 @@ class GorillaChieftainTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(chieftain.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(chieftain.getId())).isZero();
         harness.passBothPriorities();
 
-        assertThat(chieftain.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(chieftain.getId())).isEqualTo(1);
         assertThat(chieftain.isTapped()).isTrue();
     }
 
@@ -145,6 +145,6 @@ class GorillaChieftainTest extends BaseCardTest {
         assertThat(chieftain.isBlocking()).isFalse();
         assertThat(chieftain.getBlockingTargets()).isEmpty();
         assertThat(chieftain.getMarkedDamage()).isZero();
-        assertThat(chieftain.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(chieftain.getId())).isZero();
     }
 }

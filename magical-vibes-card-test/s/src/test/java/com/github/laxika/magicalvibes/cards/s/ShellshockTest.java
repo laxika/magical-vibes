@@ -96,7 +96,7 @@ class ShellshockTest extends BaseCardTest {
     @Test
     void fullyPreventedDamageCreatesNoMutagen() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bear.setDamagePreventionShield(2);
+        gd.addPermanentDamagePreventionShield(bear.getId(), 2);
 
         castShellshock(2, List.of(bear.getId()));
 
@@ -107,7 +107,7 @@ class ShellshockTest extends BaseCardTest {
     @Test
     void partiallyPreventedDamageStillCreatesOneMutagen() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bear.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(bear.getId(), 1);
 
         castShellshock(2, List.of(bear.getId()));
 

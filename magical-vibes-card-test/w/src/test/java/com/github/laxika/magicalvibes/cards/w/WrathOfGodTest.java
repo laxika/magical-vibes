@@ -37,7 +37,7 @@ class WrathOfGodTest extends BaseCardTest {
     @DisplayName("Creatures cannot regenerate from Wrath of God")
     void creaturesCannotRegenerate() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
 
         castWrathOfGod();
 
@@ -76,7 +76,7 @@ class WrathOfGodTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(skeletons.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skeletons.getId())).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Drudge Skeletons");
 
         harness.passBothPriorities();

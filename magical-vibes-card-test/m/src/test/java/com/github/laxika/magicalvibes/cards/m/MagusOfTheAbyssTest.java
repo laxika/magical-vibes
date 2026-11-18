@@ -48,7 +48,7 @@ class MagusOfTheAbyssTest extends BaseCardTest {
     void destructionCannotBeRegenerated() {
         harness.addToBattlefield(player1, new MagusOfTheAbyss());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new NessianCourser());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
 
         advanceToUpkeep(player2);
         harness.handlePermanentChosen(player2, creature.getId());

@@ -21,13 +21,13 @@ class LivingWallTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Living Wall").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Living Wall").getId())).isEqualTo(1);
     }
 
     @Test
     void regenerationShieldSavesLivingWallFromLethalCombatDamage() {
         Permanent wall = addLivingWallReady(player1);
-        wall.setRegenerationShield(1);
+        gd.addRegenerationShields(wall.getId(), 1);
         wall.setBlocking(true);
         wall.addBlockingTarget(0);
         addAttackingCrawWurm(player2);
@@ -37,7 +37,7 @@ class LivingWallTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Living Wall");
         Permanent survivingWall = findPermanent(player1, "Living Wall");
         assertThat(survivingWall.isTapped()).isTrue();
-        assertThat(survivingWall.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(survivingWall.getId())).isZero();
     }
 
     @Test
@@ -61,12 +61,12 @@ class LivingWallTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(wall.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wall.getId())).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(1);
         assertThat(wall.getMarkedDamage()).isEqualTo(3);
         assertThat(wall.isTapped()).isFalse();
     }
@@ -81,7 +81,7 @@ class LivingWallTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(1);
         assertThat(wall.isTapped()).isTrue();
     }
 
@@ -100,7 +100,7 @@ class LivingWallTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Living Wall");
         harness.assertNotInGraveyard(player1, "Living Wall");
         assertThat(wall.isTapped()).isTrue();
-        assertThat(wall.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wall.getId())).isZero();
         assertThat(wall.getMarkedDamage()).isZero();
         assertThat(wall.isBlocking()).isFalse();
         assertThat(wall.getBlockingTargets()).isEmpty();

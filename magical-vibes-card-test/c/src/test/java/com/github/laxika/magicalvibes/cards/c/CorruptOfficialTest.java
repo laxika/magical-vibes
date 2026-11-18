@@ -59,7 +59,7 @@ class CorruptOfficialTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(official.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(official.getId())).isEqualTo(1);
         assertThat(official.isTapped()).isFalse();
     }
 
@@ -83,7 +83,7 @@ class CorruptOfficialTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Corrupt Official");
         assertThat(official.isTapped()).isTrue();
         assertThat(official.getMarkedDamage()).isZero();
-        assertThat(official.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(official.getId())).isZero();
     }
 
     @Test

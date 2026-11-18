@@ -98,7 +98,7 @@ class ThermokarstTest extends BaseCardTest {
     @Test
     void gainsLifeEvenWhenSnowLandRegenerates() {
         Permanent snow = harness.addToBattlefieldAndReturn(player2, new SnowCoveredForest());
-        snow.setRegenerationShield(1);
+        gd.addRegenerationShields(snow.getId(), 1);
 
         castThermokarst(snow.getId());
 

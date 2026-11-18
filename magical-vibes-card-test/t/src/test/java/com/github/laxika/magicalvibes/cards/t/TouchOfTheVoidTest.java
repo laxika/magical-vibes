@@ -89,7 +89,7 @@ class TouchOfTheVoidTest extends BaseCardTest {
     @Test
     void fullyPreventedDamageDoesNotExileCreatureDestroyedLater() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new KozileksChanneler());
-        target.setDamagePreventionShield(3);
+        gd.addPermanentDamagePreventionShield(target.getId(), 3);
         harness.setHand(player1, List.of(new TouchOfTheVoid(), new SmiteTheMonstrous()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

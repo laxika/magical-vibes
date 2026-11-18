@@ -57,7 +57,7 @@ class ExecuteTest extends BaseCardTest {
     @DisplayName("Execute destroys the creature even with a regeneration shield")
     void cannotBeRegenerated() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         harness.setHand(player1, List.of(new Execute()));
         harness.addMana(player1, ManaColor.BLACK, 3);

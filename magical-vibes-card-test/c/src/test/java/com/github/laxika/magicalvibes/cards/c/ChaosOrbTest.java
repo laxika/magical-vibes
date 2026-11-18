@@ -40,7 +40,7 @@ class ChaosOrbTest extends BaseCardTest {
     @DisplayName("The source's destruction respects regeneration")
     void sourceDestructionRespectsRegeneration() {
         Permanent orb = harness.addToBattlefieldAndReturn(player1, new ChaosOrb());
-        orb.setRegenerationShield(1);
+        gd.addRegenerationShields(orb.getId(), 1);
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, null);

@@ -96,7 +96,7 @@ class LegionsJudgmentTest extends BaseCardTest {
     @DisplayName("Legion's Judgment allows regeneration")
     void allowsRegeneration() {
         Permanent wurm = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
-        wurm.setRegenerationShield(1);
+        gd.addRegenerationShields(wurm.getId(), 1);
 
         harness.setHand(player1, List.of(new LegionsJudgment()));
         harness.addMana(player1, ManaColor.WHITE, 1);

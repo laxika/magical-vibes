@@ -28,7 +28,7 @@ class ButchersGleeTest extends BaseCardTest {
         assertThat(bear.getPowerModifier()).isEqualTo(3);
         assertThat(bear.getToughnessModifier()).isZero();
         assertThat(bear.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
     }
 
     @Test
@@ -42,7 +42,7 @@ class ButchersGleeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
-        assertThat(bear.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
     }
 
     @Test
@@ -56,7 +56,7 @@ class ButchersGleeTest extends BaseCardTest {
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
         assertThat(bear.hasKeyword(Keyword.LIFELINK)).isFalse();
-        assertThat(bear.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
     }
 
     @Test
@@ -104,7 +104,7 @@ class ButchersGleeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
         assertThat(bear.isTapped()).isTrue();
         assertThat(bear.getMarkedDamage()).isZero();
-        assertThat(bear.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
         assertThat(bear.getPowerModifier()).isEqualTo(3);
         assertThat(bear.hasKeyword(Keyword.LIFELINK)).isTrue();
 
@@ -135,7 +135,7 @@ class ButchersGleeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Butcher's Glee");
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.hasKeyword(Keyword.LIFELINK)).isFalse();
-        assertThat(bear.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
     }
 
     private void castResolve(Permanent target) {

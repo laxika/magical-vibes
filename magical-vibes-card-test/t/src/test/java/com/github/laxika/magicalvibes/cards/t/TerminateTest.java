@@ -75,7 +75,7 @@ class TerminateTest extends BaseCardTest {
     @DisplayName("Terminate ignores regeneration shield because it cannot be regenerated")
     void ignoresRegenerationShield() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new ThornscapeFamiliar());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
 
         harness.setHand(player1, List.of(new Terminate()));
         harness.addMana(player1, ManaColor.BLACK, 1);

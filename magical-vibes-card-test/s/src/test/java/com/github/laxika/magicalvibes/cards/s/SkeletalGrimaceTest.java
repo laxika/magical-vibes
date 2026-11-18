@@ -77,7 +77,7 @@ class SkeletalGrimaceTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bearsPerm.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bearsPerm.getId())).isEqualTo(1);
     }
 
     @Test
@@ -97,7 +97,7 @@ class SkeletalGrimaceTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bearsPerm.getRegenerationShield()).isEqualTo(3);
+        assertThat(gd.regenerationShieldCount(bearsPerm.getId())).isEqualTo(3);
     }
 
     @Test
@@ -210,7 +210,7 @@ class SkeletalGrimaceTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature, aura);
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(creature.getMarkedDamage()).isZero();
         assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
     }
@@ -230,7 +230,7 @@ class SkeletalGrimaceTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -244,7 +244,7 @@ class SkeletalGrimaceTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(aura);
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
         assertThat(creature.isTapped()).isFalse();
     }
 }

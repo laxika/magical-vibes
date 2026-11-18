@@ -79,14 +79,14 @@ class SpinedFlukeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(perm.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(perm.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("A regeneration shield saves Spined Fluke from lethal combat damage")
     void regenerationSavesFromLethalCombat() {
         Permanent perm = addCreatureReady(player1, new SpinedFluke());
-        perm.setRegenerationShield(1);
+        gd.addRegenerationShields(perm.getId(), 1);
         perm.setBlocking(true);
         perm.addBlockingTarget(0);
 
@@ -101,7 +101,7 @@ class SpinedFlukeTest extends BaseCardTest {
 
         Permanent survivor = findPermanent(player1, "Spined Fluke");
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isZero();
     }
 
     @Test
@@ -115,7 +115,7 @@ class SpinedFlukeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Spined Fluke").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Spined Fluke").getId())).isEqualTo(1);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Spined Fluke");
@@ -136,7 +136,7 @@ class SpinedFlukeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(fluke.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(fluke.getId())).isEqualTo(2);
         assertThat(fluke.isTapped()).isTrue();
         harness.assertNotInGraveyard(player1, "Spined Fluke");
     }

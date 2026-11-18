@@ -67,14 +67,14 @@ class ClayStatueTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         Permanent statue = findPermanent(player1, "Clay Statue");
-        assertThat(statue.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(statue.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Clay Statue from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent statuePerm = addCreatureReady(player1, new ClayStatue());
-        statuePerm.setRegenerationShield(1);
+        gd.addRegenerationShields(statuePerm.getId(), 1);
 
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
@@ -86,7 +86,7 @@ class ClayStatueTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Clay Statue");
         Permanent statue = findPermanent(player1, "Clay Statue");
         assertThat(statue.isTapped()).isTrue();
-        assertThat(statue.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(statue.getId())).isEqualTo(0);
     }
 
     @Test
@@ -115,7 +115,7 @@ class ClayStatueTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(statue.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(statue.getId())).isEqualTo(1);
         assertThat(statue.isTapped()).isTrue();
     }
 
@@ -128,7 +128,7 @@ class ClayStatueTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(statue.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(statue.getId())).isEqualTo(1);
         assertThat(statue.isTapped()).isFalse();
         assertThat(statue.isBlocking()).isTrue();
     }
@@ -141,7 +141,7 @@ class ClayStatueTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
         }
-        assertThat(statue.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(statue.getId())).isEqualTo(2);
 
         for (int remaining = 1; remaining >= 0; remaining--) {
             harness.setHand(player2, List.of(new Shatter()));
@@ -149,7 +149,7 @@ class ClayStatueTest extends BaseCardTest {
             harness.castAndResolveInstant(player2, 0, statue.getId());
 
             harness.assertOnBattlefield(player1, "Clay Statue");
-            assertThat(statue.getRegenerationShield()).isEqualTo(remaining);
+            assertThat(gd.regenerationShieldCount(statue.getId())).isEqualTo(remaining);
             assertThat(statue.isTapped()).isTrue();
         }
 

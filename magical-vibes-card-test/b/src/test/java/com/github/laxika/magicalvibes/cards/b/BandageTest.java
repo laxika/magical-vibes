@@ -83,12 +83,12 @@ class BandageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test
@@ -104,7 +104,7 @@ class BandageTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -129,14 +129,14 @@ class BandageTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(defender.getMarkedDamage()).isEqualTo(1);
-        assertThat(defender.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(defender.getId())).isZero();
     }
 
     @Test
     @DisplayName("Prevention shield is consumed after preventing damage")
     void preventionShieldIsConsumed() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(target.getId(), 1);
         target.setBlocking(true);
         target.addBlockingTarget(0);
 
@@ -148,7 +148,7 @@ class BandageTest extends BaseCardTest {
 
         Permanent surviving = findPermanent(player2, "Grizzly Bears");
         assertThat(surviving.getMarkedDamage()).isEqualTo(1);
-        assertThat(surviving.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(gd.permanentDamagePreventionShield(surviving.getId())).isEqualTo(0);
     }
 
     @Test
@@ -242,7 +242,7 @@ class BandageTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test
@@ -287,7 +287,7 @@ class BandageTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         Permanent afterCleanup = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(afterCleanup.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(gd.permanentDamagePreventionShield(afterCleanup.getId())).isEqualTo(0);
         assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(0);
     }
 
@@ -323,7 +323,7 @@ class BandageTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 }

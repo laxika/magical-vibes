@@ -90,7 +90,7 @@ class BetrayersBargainTest extends BaseCardTest {
     void exilesTargetSacrificedLaterEvenWhenAllDamageWasPrevented() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent otherTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setDamagePreventionShield(5);
+        gd.addPermanentDamagePreventionShield(target.getId(), 5);
         harness.setHand(player1, List.of(new BetrayersBargain(), new BetrayersBargain()));
         harness.addMana(player1, ManaColor.RED, 6);
 
@@ -112,7 +112,7 @@ class BetrayersBargainTest extends BaseCardTest {
     void exilesTargetSacrificedLaterAfterSurvivingDamage() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent otherTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setDamagePreventionShield(4);
+        gd.addPermanentDamagePreventionShield(target.getId(), 4);
         harness.setHand(player1, List.of(new BetrayersBargain(), new BetrayersBargain()));
         harness.addMana(player1, ManaColor.RED, 6);
 

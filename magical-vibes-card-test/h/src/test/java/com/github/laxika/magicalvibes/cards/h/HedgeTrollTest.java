@@ -78,7 +78,7 @@ class HedgeTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(2);
         assertThat(troll.isTapped()).isFalse();
     }
 
@@ -101,7 +101,7 @@ class HedgeTrollTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Hedge Troll");
         assertThat(troll.isTapped()).isTrue();
         assertThat(troll.isBlocking()).isFalse();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
     }
 
     @Test
@@ -113,7 +113,7 @@ class HedgeTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
@@ -127,14 +127,14 @@ class HedgeTrollTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Hedge Troll from lethal combat damage")
     void regenerationShieldSavesFromLethalCombatDamage() {
         Permanent troll = addCreatureReady(player1, new HedgeTroll());
-        troll.setRegenerationShield(1);
+        gd.addRegenerationShields(troll.getId(), 1);
         troll.setBlocking(true);
         troll.addBlockingTarget(0);
 
@@ -145,6 +145,6 @@ class HedgeTrollTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Hedge Troll");
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
     }
 }

@@ -30,7 +30,7 @@ class CentaurVeteranTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(veteran.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(veteran.getId())).isEqualTo(1);
         harness.assertInGraveyard(player1, "Centaur Veteran");
     }
 
@@ -74,10 +74,10 @@ class CentaurVeteranTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Centaur Veteran");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(veteran.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(veteran.getId())).isZero();
 
         harness.passBothPriorities();
-        assertThat(veteran.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(veteran.getId())).isEqualTo(1);
     }
 
     @Test
@@ -98,7 +98,7 @@ class CentaurVeteranTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(veteran.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(veteran.getId())).isEqualTo(2);
         assertThat(veteran.isTapped()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
@@ -143,7 +143,7 @@ class CentaurVeteranTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Centaur Veteran");
         assertThat(veteran.isTapped()).isTrue();
-        assertThat(veteran.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(veteran.getId())).isZero();
         assertThat(veteran.getMarkedDamage()).isZero();
     }
 }

@@ -26,7 +26,7 @@ class LimDLsHighGuardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gd.playerBattlefields.get(player1.getId()).getFirst().getId())).isEqualTo(1);
     }
 
     @Test
@@ -55,7 +55,7 @@ class LimDLsHighGuardTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves it from lethal combat damage")
     void shieldSavesFromCombatDamage() {
         Permanent guard = addCreatureReady(player1, new LimDLsHighGuard());
-        guard.setRegenerationShield(1);
+        gd.addRegenerationShields(guard.getId(), 1);
         guard.setBlocking(true);
         guard.addBlockingTarget(0);
 
@@ -67,7 +67,7 @@ class LimDLsHighGuardTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Lim-Dûl's High Guard");
         Permanent survivor = findPermanent(player1, "Lim-Dûl's High Guard");
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isEqualTo(0);
     }
 
     @Test
@@ -117,7 +117,7 @@ class LimDLsHighGuardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(guard.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(guard.getId())).isEqualTo(2);
         assertThat(guard.isTapped()).isTrue();
     }
 
@@ -138,7 +138,7 @@ class LimDLsHighGuardTest extends BaseCardTest {
         resolveCombat(player2);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(guard);
-        assertThat(guard.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(guard.getId())).isZero();
         assertThat(guard.isTapped()).isTrue();
         assertThat(guard.isBlocking()).isFalse();
         assertThat(guard.getBlockingTargets()).isEmpty();

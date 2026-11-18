@@ -155,7 +155,7 @@ class AjaniVengeantTest extends BaseCardTest {
     void minusTwoGainsThreeLifeEvenWhenAllDamageIsPrevented() {
         addReadyAjani(player1);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setDamagePreventionShield(3);
+        gd.addPermanentDamagePreventionShield(target.getId(), 3);
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, 1, null, target.getId());

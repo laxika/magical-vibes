@@ -24,7 +24,7 @@ class SkeletalWurmTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wurm.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wurm.getId())).isEqualTo(1);
     }
 
     @Test
@@ -43,7 +43,7 @@ class SkeletalWurmTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, wurm.getId());
 
         harness.assertOnBattlefield(player1, "Skeletal Wurm");
-        assertThat(wurm.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wurm.getId())).isZero();
     }
 
     @Test
@@ -54,10 +54,10 @@ class SkeletalWurmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(wurm.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wurm.getId())).isZero();
         harness.passBothPriorities();
 
-        assertThat(wurm.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wurm.getId())).isEqualTo(1);
         assertThat(wurm.isTapped()).isTrue();
     }
 
@@ -71,7 +71,7 @@ class SkeletalWurmTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wurm.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wurm.getId())).isEqualTo(1);
         assertThat(wurm.isTapped()).isFalse();
         assertThat(wurm.getMarkedDamage()).isEqualTo(1);
         assertThat(wurm.isAttacking()).isTrue();
@@ -90,7 +90,7 @@ class SkeletalWurmTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Skeletal Wurm");
         harness.assertNotInGraveyard(player1, "Skeletal Wurm");
-        assertThat(wurm.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wurm.getId())).isZero();
         assertThat(wurm.isTapped()).isTrue();
         assertThat(wurm.getMarkedDamage()).isZero();
         assertThat(wurm.isAttacking()).isFalse();
@@ -125,11 +125,11 @@ class SkeletalWurmTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 6);
 
         harness.castAndResolveInstant(player2, 0, wurm.getId());
-        assertThat(wurm.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wurm.getId())).isEqualTo(1);
         harness.castAndResolveInstant(player2, 0, wurm.getId());
 
         harness.assertOnBattlefield(player1, "Skeletal Wurm");
-        assertThat(wurm.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wurm.getId())).isZero();
     }
     private Permanent addWurmReady(Player player) {
         Permanent wurm = harness.addToBattlefieldAndReturn(player, new SkeletalWurm());

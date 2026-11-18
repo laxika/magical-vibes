@@ -151,7 +151,7 @@ class MarchOfWretchedSorrowTest extends BaseCardTest {
     @Test
     void gainsChosenXLifeEvenWhenAllDamageIsPrevented() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        target.setDamagePreventionShield(3);
+        gd.addPermanentDamagePreventionShield(target.getId(), 3);
         harness.setHand(player1, List.of(new MarchOfWretchedSorrow()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -160,7 +160,7 @@ class MarchOfWretchedSorrowTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         harness.assertLife(player1, 23);
     }
 

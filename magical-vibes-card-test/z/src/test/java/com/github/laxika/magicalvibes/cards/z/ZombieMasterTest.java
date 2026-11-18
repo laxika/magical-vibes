@@ -81,8 +81,8 @@ class ZombieMasterTest extends BaseCardTest {
         harness.activateAbility(player1, secondIndex, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getRegenerationShield()).isEqualTo(1);
-        assertThat(second.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(first.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(second.getId())).isEqualTo(1);
     }
 
     @Test
@@ -139,7 +139,7 @@ class ZombieMasterTest extends BaseCardTest {
         harness.activateAbility(player1, index, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(zombie.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(zombie.getId())).isEqualTo(1);
     }
 
     @Test
@@ -165,7 +165,7 @@ class ZombieMasterTest extends BaseCardTest {
                 gd.playerBattlefields.get(player2.getId()).indexOf(zombie), 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(zombie.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(zombie.getId())).isEqualTo(1);
     }
 
     @Test
@@ -210,7 +210,7 @@ class ZombieMasterTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Gravedigger");
         assertThat(zombie.isTapped()).isTrue();
         assertThat(zombie.getMarkedDamage()).isZero();
-        assertThat(zombie.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(zombie.getId())).isZero();
     }
 
     @Test
@@ -226,11 +226,11 @@ class ZombieMasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gs.getEffectiveActivatedAbilities(gd, zombie)).isEmpty();
-        assertThat(zombie.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(zombie.getId())).isEqualTo(1);
         zombie.setMarkedDamage(2);
         harness.runStateBasedActions();
         harness.assertOnBattlefield(player1, "Gravedigger");
-        assertThat(zombie.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(zombie.getId())).isZero();
     }
 
     private void declareBlock(Permanent blocker, Permanent attacker) {

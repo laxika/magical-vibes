@@ -82,7 +82,7 @@ class DarkPrivilegeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(fodder.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
@@ -106,7 +106,7 @@ class DarkPrivilegeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(creature.getMarkedDamage()).isZero();
     }
 
@@ -153,7 +153,7 @@ class DarkPrivilegeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Longbow Archer");
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Longbow Archer");
         harness.assertOnBattlefield(player1, "Dark Privilege");
     }
@@ -191,7 +191,7 @@ class DarkPrivilegeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, secondFodder.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(2);
         assertThat(creature.isTapped()).isFalse();
         harness.setHand(player1, List.of(new Fireblast()));
         harness.addMana(player1, ManaColor.RED, 6);
@@ -199,7 +199,7 @@ class DarkPrivilegeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Longbow Archer");
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
         assertThat(creature.isTapped()).isTrue();
         assertThat(creature.getMarkedDamage()).isZero();
     }

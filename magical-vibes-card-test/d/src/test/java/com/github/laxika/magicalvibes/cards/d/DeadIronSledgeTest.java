@@ -157,7 +157,7 @@ class DeadIronSledgeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
         harness.assertNotInGraveyard(player2, "Troll Ascetic");
         assertThat(blocker.isTapped()).isTrue();
-        assertThat(blocker.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(blocker.getId())).isZero();
     }
 
     private void declareBlock(Permanent attacker, Permanent blocker) {

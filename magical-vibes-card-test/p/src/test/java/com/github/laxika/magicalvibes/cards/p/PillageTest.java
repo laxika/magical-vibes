@@ -23,7 +23,7 @@ class PillageTest extends BaseCardTest {
     @DisplayName("Resolving Pillage destroys a target artifact and it can't be regenerated")
     void destroysTargetArtifact() {
         Permanent millstone = harness.addToBattlefieldAndReturn(player2, new Millstone());
-        millstone.setRegenerationShield(1);
+        gd.addRegenerationShields(millstone.getId(), 1);
 
         harness.setHand(player1, List.of(new Pillage()));
         harness.addMana(player1, ManaColor.RED, 3);

@@ -141,7 +141,7 @@ class FelidarUmbraTest extends BaseCardTest {
     void umbraArmorAndRegenerationRequireCreatureControllersChoice() {
         Permanent creature = readyCreature(player1);
         Permanent aura = attachAura(player1, creature);
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
         creature.setMarkedDamage(2);
 
         harness.runStateBasedActions();

@@ -29,7 +29,7 @@ class PoulticeSliverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -42,7 +42,7 @@ class PoulticeSliverTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(target.getCard());
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 
     @Test
@@ -68,7 +68,7 @@ class PoulticeSliverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, poulticeSliver.getId());
         harness.passBothPriorities();
 
-        assertThat(poulticeSliver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(poulticeSliver.getId())).isEqualTo(1);
         assertThat(poulticeSliver.isTapped()).isTrue();
     }
 
@@ -93,9 +93,9 @@ class PoulticeSliverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(source.isTapped()).isTrue();
-        assertThat(source.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(source.getId())).isZero();
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -109,7 +109,7 @@ class PoulticeSliverTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, source.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(source.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(source.getId())).isZero();
     }
 
     @Test
@@ -123,7 +123,7 @@ class PoulticeSliverTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, source.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(source.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(source.getId())).isZero();
     }
 
     @Test
@@ -136,7 +136,7 @@ class PoulticeSliverTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, source.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(source.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(source.getId())).isZero();
     }
 
     @Test
@@ -157,7 +157,7 @@ class PoulticeSliverTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Poultice Sliver");
         harness.passBothPriorities();
 
-        assertThat(source.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(source.getId())).isEqualTo(1);
         source.untap();
         harness.ensurePriority(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

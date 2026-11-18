@@ -21,7 +21,7 @@ class SpinyStarfishTest extends BaseCardTest {
     @DisplayName("Regenerating once creates one Starfish token at the end step")
     void oneRegenerationCreatesOneToken() {
         Permanent starfish = addReadyStarfish(player1);
-        starfish.setRegenerationShield(1);
+        gd.addRegenerationShields(starfish.getId(), 1);
 
         damageStarfish(starfish);
 
@@ -36,7 +36,7 @@ class SpinyStarfishTest extends BaseCardTest {
     @DisplayName("Regenerating twice creates two Starfish tokens at the end step")
     void twoRegenerationsCreateTwoTokens() {
         Permanent starfish = addReadyStarfish(player1);
-        starfish.setRegenerationShield(2);
+        gd.addRegenerationShields(starfish.getId(), 2);
 
         damageStarfish(starfish);
         damageStarfish(starfish);
@@ -76,14 +76,14 @@ class SpinyStarfishTest extends BaseCardTest {
         activateRegeneration(starfish);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(starfish.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(starfish.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("The ability triggers at the beginning of an opponent's end step")
     void triggersAtOpponentEndStep() {
         Permanent starfish = addReadyStarfish(player1);
-        starfish.setRegenerationShield(1);
+        gd.addRegenerationShields(starfish.getId(), 1);
         damageStarfish(starfish);
 
         advanceToEndStepAndResolve(player2);
@@ -95,7 +95,7 @@ class SpinyStarfishTest extends BaseCardTest {
     @DisplayName("The end-step trigger uses the regeneration count if Starfish leaves before resolution")
     void usesLastKnownRegenerationCountAfterLeavingBattlefield() {
         Permanent starfish = addReadyStarfish(player1);
-        starfish.setRegenerationShield(1);
+        gd.addRegenerationShields(starfish.getId(), 1);
         damageStarfish(starfish);
 
         queueEndStepTrigger(player1);
@@ -124,7 +124,7 @@ class SpinyStarfishTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Spiny Starfish");
         assertThat(starfish.isTapped()).isTrue();
         assertThat(starfish.getMarkedDamage()).isZero();
-        assertThat(starfish.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(starfish.getId())).isZero();
         advanceToEndStepAndResolve();
 
         assertThat(countStarfishTokens()).isEqualTo(1);
@@ -134,7 +134,7 @@ class SpinyStarfishTest extends BaseCardTest {
     @DisplayName("Regeneration while the end-step trigger is pending increases the token count")
     void regenerationCountIsEvaluatedAtResolution() {
         Permanent starfish = addReadyStarfish(player1);
-        starfish.setRegenerationShield(2);
+        gd.addRegenerationShields(starfish.getId(), 2);
         damageStarfish(starfish);
         queueEndStepTrigger(player1);
         assertThat(gd.stack).hasSize(1);
@@ -151,7 +151,7 @@ class SpinyStarfishTest extends BaseCardTest {
     @DisplayName("First regeneration after the end step begins does not create a token that end step")
     void firstRegenerationDuringEndStepDoesNotTrigger() {
         Permanent starfish = addReadyStarfish(player1);
-        starfish.setRegenerationShield(1);
+        gd.addRegenerationShields(starfish.getId(), 1);
         queueEndStepTrigger(player1);
         assertThat(gd.stack).isEmpty();
 
@@ -171,7 +171,7 @@ class SpinyStarfishTest extends BaseCardTest {
     @DisplayName("Regeneration from a previous turn does not create more tokens")
     void regenerationCountResetsBetweenTurns() {
         Permanent starfish = addReadyStarfish(player1);
-        starfish.setRegenerationShield(1);
+        gd.addRegenerationShields(starfish.getId(), 1);
         damageStarfish(starfish);
         advanceToEndStepAndResolve();
         assertThat(countStarfishTokens()).isEqualTo(1);

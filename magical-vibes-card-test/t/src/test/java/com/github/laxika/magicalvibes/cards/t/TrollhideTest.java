@@ -47,8 +47,8 @@ class TrollhideTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
-        assertThat(aura.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(aura.getId())).isEqualTo(0);
     }
 
     @Test
@@ -97,7 +97,7 @@ class TrollhideTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
         assertThat(bear.isTapped()).isFalse();
         harness.setHand(player1, List.of(new DoomBlade(), new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -106,7 +106,7 @@ class TrollhideTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
         assertThat(bear.isTapped()).isTrue();
-        assertThat(bear.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard() instanceof Trollhide);
 
@@ -135,7 +135,7 @@ class TrollhideTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
         harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.castInstant(player2, 0, bear.getId());
@@ -143,6 +143,6 @@ class TrollhideTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
         assertThat(bear.isTapped()).isTrue();
-        assertThat(bear.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
     }
 }

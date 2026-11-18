@@ -52,7 +52,7 @@ class LayWasteTest extends BaseCardTest {
     @DisplayName("Allows a regeneration shield to save the target land")
     void allowsRegeneration() {
         Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        mountain.setRegenerationShield(1);
+        gd.addRegenerationShields(mountain.getId(), 1);
         harness.setHand(player1, List.of(new LayWaste()));
         harness.addMana(player1, ManaColor.RED, 4);
 
@@ -60,7 +60,7 @@ class LayWasteTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Mountain");
         harness.assertNotInGraveyard(player2, "Mountain");
-        assertThat(mountain.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(mountain.getId())).isZero();
     }
 
     @Test

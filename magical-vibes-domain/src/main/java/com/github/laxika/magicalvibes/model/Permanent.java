@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryChara
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -21,7 +20,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -151,55 +149,7 @@ public class Permanent {
     @Setter private int classLevel = 1;
     @Setter private int powerModifier;
     @Setter private int toughnessModifier;
-    @Setter private int damagePreventionShield;
-    /** Sacred Boon-style shield: damage prevented by this shield is converted into +0/+1 counters on
-     *  this permanent at the beginning of the next end step. Consumed alongside {@link #damagePreventionShield}
-     *  in {@code DamagePreventionService.applyCreaturePreventionShield}; reset at turn cleanup. */
-    @Setter private int damageToCounterPreventionShield;
-    /** Temper-style shield: damage prevented by this shield is converted into +1/+1 counters on this
-     *  permanent as the damage is prevented. Reset at turn cleanup. */
-    @Setter private int damageToPlusOnePlusOneCounterPreventionShield;
-    /** Brace for Impact-style shield: prevent all damage to this permanent and convert it into +1/+1
-     *  counters as the damage is prevented. Reset at turn cleanup. */
-    @Setter private boolean allDamageToPlusOnePlusOneCounterPreventionShield;
-    /** Gatta and Luzzu-style replacement: on top of the all-damage shield, the counters are put even when the
-     *  damage can't be prevented. Reset at turn cleanup. */
-    @Setter private boolean damageReplacedByPlusOnePlusOneCounters;
-    /** Kill-Suit Cultist-style shield: destroy this creature instead of dealing the next damage to it.
-     *  Reset at turn cleanup. */
-    @Setter private int damageDestructionShield;
-    /** Pyramids-style shield: remove all damage instead of destroying this permanent the next time it
-     *  would be destroyed. Reset at turn cleanup. */
-    @Setter private int landDestructionShield;
-    @Setter private int regenerationShield;
-    /** How many of this permanent's {@link #regenerationShield}s carry Soldevi Sentry's rider — when
-     *  such a shield is actually used, the controller's opponent may draw a card. Plain shields are
-     *  consumed first, so a rider shield is only spent once it is all that is left. Reset at turn
-     *  cleanup alongside {@link #regenerationShield}. */
-    @Setter private int opponentDrawRegenerationShield;
-    /** The opponent chosen for each Soldevi Sentry regeneration shield, in grant order. */
-    private final List<UUID> opponentDrawRegenerationShieldRecipients = new ArrayList<>();
-    /** The player who activated the ability granting each Soldevi Sentry regeneration shield (the
-     *  controller of the resulting draw trigger), aligned with {@link #opponentDrawRegenerationShieldRecipients}. */
-    private final List<UUID> opponentDrawRegenerationShieldControllers = new ArrayList<>();
-    /** How many of this permanent's {@link #regenerationShield}s carry Matopi Golem's rider — when
-     *  such a shield is actually used, put a -1/-1 counter on this permanent. Plain shields are
-     *  consumed first. Reset at turn cleanup alongside {@link #regenerationShield}. */
-    @Setter private int minusOneCounterRegenerationShield;
-    /** How many of this permanent's {@link #regenerationShield}s carry Skeleton Scavengers' rider —
-     *  when such a shield is actually used, put a +1/+1 counter on this permanent. Plain shields are
-     *  consumed first. Reset at turn cleanup alongside {@link #regenerationShield}. */
-    @Setter private int plusOnePlusOneCounterRegenerationShield;
-    /** Controllers of the abilities that granted the +1/+1-counter regeneration shields, in grant order. The
-     *  rider is that ability's delayed trigger, so its controller is the one who activated it (CR 603.7d).
-     *  Cleared at turn cleanup alongside {@link #plusOnePlusOneCounterRegenerationShield}. */
-    private final List<UUID> plusOnePlusOneCounterRegenerationShieldControllers = new ArrayList<>();
-    /** Controller ids of this permanent's {@link #regenerationShield}s that carry Debt of Loyalty's
-     *  rider — when such a shield is actually used, that player gains control of this permanent.
-     *  Plain shields are consumed first, so a rider shield is only spent once it is all that is left.
-     *  Cleared at turn cleanup alongside {@link #regenerationShield}. */
-    private final List<UUID> gainControlRegenerationShields = new ArrayList<>();
-    /** How many times this permanent has regenerated this turn (CR 701.15). Incremented every time a
+    /** How many times this permanent has regenerated this turn (CR 701.19). Incremented every time a
      *  regeneration shield is actually applied; reset at turn cleanup. Read by
      *  {@code TimesSourceRegeneratedThisTurn} for Spiny Starfish. */
     @Setter private int timesRegeneratedThisTurn;
@@ -893,24 +843,6 @@ public class Permanent {
         this.classLevel = source.classLevel;
         this.powerModifier = source.powerModifier;
         this.toughnessModifier = source.toughnessModifier;
-        this.damagePreventionShield = source.damagePreventionShield;
-        this.damageToCounterPreventionShield = source.damageToCounterPreventionShield;
-        this.damageToPlusOnePlusOneCounterPreventionShield = source.damageToPlusOnePlusOneCounterPreventionShield;
-        this.allDamageToPlusOnePlusOneCounterPreventionShield = source.allDamageToPlusOnePlusOneCounterPreventionShield;
-        this.damageReplacedByPlusOnePlusOneCounters = source.damageReplacedByPlusOnePlusOneCounters;
-        this.damageDestructionShield = source.damageDestructionShield;
-        this.landDestructionShield = source.landDestructionShield;
-        this.regenerationShield = source.regenerationShield;
-        this.opponentDrawRegenerationShield = source.opponentDrawRegenerationShield;
-        this.opponentDrawRegenerationShieldRecipients.addAll(
-                source.opponentDrawRegenerationShieldRecipients);
-        this.opponentDrawRegenerationShieldControllers.addAll(
-                source.opponentDrawRegenerationShieldControllers);
-        this.minusOneCounterRegenerationShield = source.minusOneCounterRegenerationShield;
-        this.plusOnePlusOneCounterRegenerationShield = source.plusOnePlusOneCounterRegenerationShield;
-        this.plusOnePlusOneCounterRegenerationShieldControllers.addAll(
-                source.plusOnePlusOneCounterRegenerationShieldControllers);
-        this.gainControlRegenerationShields.addAll(source.gainControlRegenerationShields);
         this.timesRegeneratedThisTurn = source.timesRegeneratedThisTurn;
         this.attachedTo = source.attachedTo;
         this.lastAttachedTo = source.lastAttachedTo;
@@ -2014,7 +1946,7 @@ public class Permanent {
 
     /**
      * Captures every "until end of turn" / "this turn" store that {@link #resetModifiers()} or the
-     * cleanup step's shield reset clears (CR 514.2), except the combat-only ones, including the turn-history
+     * cleanup step clears (CR 514.2), except the combat-only ones, including the turn-history
      * records (times regenerated, permanents tapped for its abilities, creatures that crewed it).
      * Used to split that state between the players active when it was created under Runed Terror's
      * sequential phases.
@@ -2061,22 +1993,6 @@ public class Permanent {
             case SUPPRESSED_STATIC_EFFECT_INSTANCES -> new ArrayList<>(suppressedStaticEffectInstancesUntilEndOfTurn);
             case TEMPORARY_ACTIVATED_ABILITIES -> temporaryActivatedAbilities;
             case TEXT_REPLACEMENTS -> textReplacements.stream().filter(TextReplacement::untilEndOfTurn).toList();
-            case DAMAGE_PREVENTION_SHIELD -> damagePreventionShield;
-            case DAMAGE_TO_COUNTER_PREVENTION_SHIELD -> damageToCounterPreventionShield;
-            case DAMAGE_TO_PLUS_ONE_PLUS_ONE_COUNTER_PREVENTION_SHIELD -> damageToPlusOnePlusOneCounterPreventionShield;
-            case ALL_DAMAGE_TO_PLUS_ONE_PLUS_ONE_COUNTER_PREVENTION_SHIELD -> allDamageToPlusOnePlusOneCounterPreventionShield;
-            case DAMAGE_REPLACED_BY_PLUS_ONE_PLUS_ONE_COUNTERS -> damageReplacedByPlusOnePlusOneCounters;
-            case DAMAGE_DESTRUCTION_SHIELD -> damageDestructionShield;
-            case LAND_DESTRUCTION_SHIELD -> landDestructionShield;
-            case REGENERATION_SHIELD -> regenerationShield;
-            case MINUS_ONE_COUNTER_REGENERATION_SHIELD -> minusOneCounterRegenerationShield;
-            case OPPONENT_DRAW_REGENERATION_SHIELD -> opponentDrawRegenerationShield;
-            case OPPONENT_DRAW_REGENERATION_SHIELD_GRANTS -> opponentDrawRegenerationShieldGrants();
-            case PLUS_ONE_PLUS_ONE_COUNTER_REGENERATION_SHIELD -> plusOnePlusOneCounterRegenerationShield;
-            case PLUS_ONE_PLUS_ONE_COUNTER_REGENERATION_SHIELD_CONTROLLERS ->
-                    plusOnePlusOneCounterRegenerationShieldControllers.stream().filter(Objects::nonNull).toList();
-            case GAIN_CONTROL_REGENERATION_SHIELDS ->
-                    gainControlRegenerationShields.stream().filter(Objects::nonNull).toList();
             case TIMES_REGENERATED -> timesRegeneratedThisTurn;
             case TAPPED_PERMANENTS_FOR_ABILITY -> List.copyOf(tappedPermanentsForAbilityThisTurn);
             case CREATURES_THAT_CREWED -> Set.copyOf(creaturesThatCrewedThisTurn);
@@ -2111,43 +2027,12 @@ public class Permanent {
                     suppressedStaticEffectInstancesUntilEndOfTurn.addAll((List<CardEffect>) value);
             case TEMPORARY_ACTIVATED_ABILITIES -> temporaryActivatedAbilities.addAll((List<ActivatedAbility>) value);
             case TEXT_REPLACEMENTS -> textReplacements.addAll((List<TextReplacement>) value);
-            case DAMAGE_PREVENTION_SHIELD -> damagePreventionShield += (Integer) value;
-            case DAMAGE_TO_COUNTER_PREVENTION_SHIELD -> damageToCounterPreventionShield += (Integer) value;
-            case DAMAGE_TO_PLUS_ONE_PLUS_ONE_COUNTER_PREVENTION_SHIELD ->
-                    damageToPlusOnePlusOneCounterPreventionShield += (Integer) value;
-            case ALL_DAMAGE_TO_PLUS_ONE_PLUS_ONE_COUNTER_PREVENTION_SHIELD -> allDamageToPlusOnePlusOneCounterPreventionShield = true;
-            case DAMAGE_REPLACED_BY_PLUS_ONE_PLUS_ONE_COUNTERS -> damageReplacedByPlusOnePlusOneCounters = true;
-            case DAMAGE_DESTRUCTION_SHIELD -> damageDestructionShield += (Integer) value;
-            case LAND_DESTRUCTION_SHIELD -> landDestructionShield += (Integer) value;
-            case REGENERATION_SHIELD -> regenerationShield += (Integer) value;
-            case MINUS_ONE_COUNTER_REGENERATION_SHIELD -> minusOneCounterRegenerationShield += (Integer) value;
-            case OPPONENT_DRAW_REGENERATION_SHIELD -> opponentDrawRegenerationShield += (Integer) value;
-            case OPPONENT_DRAW_REGENERATION_SHIELD_GRANTS -> ((List<Map.Entry<UUID, UUID>>) value).forEach(grant -> {
-                opponentDrawRegenerationShieldRecipients.add(grant.getKey());
-                opponentDrawRegenerationShieldControllers.add(grant.getValue());
-            });
-            case PLUS_ONE_PLUS_ONE_COUNTER_REGENERATION_SHIELD -> plusOnePlusOneCounterRegenerationShield += (Integer) value;
-            case PLUS_ONE_PLUS_ONE_COUNTER_REGENERATION_SHIELD_CONTROLLERS ->
-                    plusOnePlusOneCounterRegenerationShieldControllers.addAll((List<UUID>) value);
-            case GAIN_CONTROL_REGENERATION_SHIELDS -> gainControlRegenerationShields.addAll((List<UUID>) value);
             case TIMES_REGENERATED -> timesRegeneratedThisTurn += (Integer) value;
             case TAPPED_PERMANENTS_FOR_ABILITY -> ((List<UUID>) value).forEach(this::recordTappedPermanentForAbility);
             case CREATURES_THAT_CREWED -> creaturesThatCrewedThisTurn.addAll((Set<UUID>) value);
             default -> {
             }
         }
-    }
-
-    /** Soldevi Sentry's shield recipients paired with the controllers of their draw triggers, in grant order. */
-    private List<Map.Entry<UUID, UUID>> opponentDrawRegenerationShieldGrants() {
-        List<Map.Entry<UUID, UUID>> grants = new ArrayList<>();
-        int pairs = Math.min(opponentDrawRegenerationShieldRecipients.size(),
-                opponentDrawRegenerationShieldControllers.size());
-        for (int i = 0; i < pairs; i++) {
-            grants.add(new AbstractMap.SimpleImmutableEntry<>(opponentDrawRegenerationShieldRecipients.get(i),
-                    opponentDrawRegenerationShieldControllers.get(i)));
-        }
-        return grants;
     }
 
     /** Drops the "until end of turn" word substitutions (CR 612). */

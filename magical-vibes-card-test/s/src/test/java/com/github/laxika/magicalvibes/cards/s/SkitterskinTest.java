@@ -55,7 +55,7 @@ class SkitterskinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(skitterskin.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skitterskin.getId())).isEqualTo(1);
     }
 
     @Test
@@ -106,9 +106,9 @@ class SkitterskinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Sludge Crawler");
-        assertThat(skitterskin.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skitterskin.getId())).isZero();
         harness.passBothPriorities();
-        assertThat(skitterskin.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skitterskin.getId())).isEqualTo(1);
         addManaForAbility();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -133,7 +133,7 @@ class SkitterskinTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Skitterskin");
         harness.assertNotInGraveyard(player1, "Skitterskin");
         assertThat(skitterskin.isTapped()).isTrue();
-        assertThat(skitterskin.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skitterskin.getId())).isZero();
     }
 
     private void addManaForAbility() {

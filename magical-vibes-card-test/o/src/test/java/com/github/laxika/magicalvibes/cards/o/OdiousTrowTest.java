@@ -25,7 +25,7 @@ class OdiousTrowTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(trow.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(trow.getId())).isEqualTo(1);
     }
 
     @Test
@@ -37,7 +37,7 @@ class OdiousTrowTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(trow.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(trow.getId())).isEqualTo(1);
     }
 
     @Test
@@ -55,7 +55,7 @@ class OdiousTrowTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Odious Trow from lethal combat damage when blocking")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent trow = addOdiousTrowReady(player1);
-        trow.setRegenerationShield(1);
+        gd.addRegenerationShields(trow.getId(), 1);
         trow.setBlocking(true);
         trow.addBlockingTarget(0);
 
@@ -72,7 +72,7 @@ class OdiousTrowTest extends BaseCardTest {
 
         Permanent survivor = findPermanent(player1, "Odious Trow");
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isEqualTo(0);
         assertThat(survivor.isBlocking()).isFalse();
     }
 
@@ -106,10 +106,10 @@ class OdiousTrowTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(trow.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(trow.getId())).isZero();
         harness.passBothPriorities();
 
-        assertThat(trow.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(trow.getId())).isEqualTo(1);
         assertThat(trow.isTapped()).isFalse();
         assertThat(trow.isBlocking()).isTrue();
     }
@@ -125,7 +125,7 @@ class OdiousTrowTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(trow.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(trow.getId())).isEqualTo(1);
         assertThat(trow.isTapped()).isTrue();
     }
 
@@ -141,7 +141,7 @@ class OdiousTrowTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(trow.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(trow.getId())).isEqualTo(2);
     }
 
     @Test
@@ -168,7 +168,7 @@ class OdiousTrowTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Odious Trow");
         assertThat(trow.getMarkedDamage()).isZero();
-        assertThat(trow.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(trow.getId())).isZero();
         assertThat(trow.isTapped()).isTrue();
 
         trow.setMarkedDamage(1);

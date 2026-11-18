@@ -121,14 +121,14 @@ class PowerWordKillTest extends BaseCardTest {
     @Test
     void allowsRegeneration() {
         Permanent ghoul = harness.addToBattlefieldAndReturn(player2, new SepulcherGhoul());
-        ghoul.setRegenerationShield(1);
+        gd.addRegenerationShields(ghoul.getId(), 1);
 
         cast(ghoul);
 
         harness.assertOnBattlefield(player2, "Sepulcher Ghoul");
         harness.assertNotInGraveyard(player2, "Sepulcher Ghoul");
         assertThat(ghoul.isTapped()).isTrue();
-        assertThat(ghoul.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ghoul.getId())).isZero();
         harness.assertInGraveyard(player1, "Power Word Kill");
     }
 

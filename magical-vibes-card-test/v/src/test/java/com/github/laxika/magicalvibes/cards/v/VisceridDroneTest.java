@@ -131,7 +131,7 @@ class VisceridDroneTest extends BaseCardTest {
         UUID fodderId = addCreatureReady(player1, new GrizzlyBears()).getId();
         harness.addToBattlefield(player1, new Swamp());
         Permanent victim = addCreatureReady(player2, new GrizzlyBears());
-        victim.setRegenerationShield(1);
+        gd.addRegenerationShields(victim.getId(), 1);
 
         harness.activateAbility(player1, 0, 0, null, victim.getId());
         harness.handlePermanentChosen(player1, fodderId);
@@ -158,7 +158,7 @@ class VisceridDroneTest extends BaseCardTest {
         UUID fodderId = addCreatureReady(player1, new GrizzlyBears()).getId();
         harness.addToBattlefield(player1, new SnowCoveredSwamp());
         Permanent victim = addCreatureReady(player2, new Ornithopter());
-        victim.setRegenerationShield(1);
+        gd.addRegenerationShields(victim.getId(), 1);
 
         harness.activateAbility(player1, 0, 1, null, victim.getId());
         harness.handlePermanentChosen(player1, fodderId);

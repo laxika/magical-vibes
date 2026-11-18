@@ -83,7 +83,7 @@ class RhoxTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(rhox.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(rhox.getId())).isEqualTo(1);
     }
 
     @Test
@@ -97,7 +97,7 @@ class RhoxTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rhox.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(rhox.getId())).isEqualTo(1);
 
         declareBlockers(rhox, blocker);
 
@@ -109,7 +109,7 @@ class RhoxTest extends BaseCardTest {
         harness.assertLife(player2, 15);
         harness.assertOnBattlefield(player1, "Rhox");
         Permanent survivingRhox = findPermanent(player1, "Rhox");
-        assertThat(survivingRhox.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(survivingRhox.getId())).isZero();
         assertThat(survivingRhox.isTapped()).isTrue();
         assertThat(survivingRhox.isAttacking()).isFalse();
         assertThat(survivingRhox.getMarkedDamage()).isZero();
@@ -162,7 +162,7 @@ class RhoxTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rhox.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(rhox.getId())).isEqualTo(1);
         assertThat(rhox.getMarkedDamage()).isEqualTo(2);
         assertThat(rhox.isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Rhox");

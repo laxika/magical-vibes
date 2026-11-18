@@ -43,14 +43,14 @@ class DrudgeReaversTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(reavers.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(reavers.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("A regeneration shield saves Drudge Reavers from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent reavers = addCreatureReady(player1, new DrudgeReavers());
-        reavers.setRegenerationShield(1);
+        gd.addRegenerationShields(reavers.getId(), 1);
         reavers.setBlocking(true);
         reavers.addBlockingTarget(0);
 
@@ -61,7 +61,7 @@ class DrudgeReaversTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Drudge Reavers");
         assertThat(reavers.isTapped()).isTrue();
-        assertThat(reavers.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(reavers.getId())).isZero();
     }
 
     @Test
@@ -77,7 +77,7 @@ class DrudgeReaversTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(reavers.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(reavers.getId())).isEqualTo(2);
         assertThat(reavers.isTapped()).isTrue();
     }
 
@@ -103,6 +103,6 @@ class DrudgeReaversTest extends BaseCardTest {
         assertThat(reavers.getMarkedDamage()).isZero();
         assertThat(reavers.isBlocking()).isFalse();
         assertThat(reavers.getBlockingTargets()).isEmpty();
-        assertThat(reavers.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(reavers.getId())).isZero();
     }
 }

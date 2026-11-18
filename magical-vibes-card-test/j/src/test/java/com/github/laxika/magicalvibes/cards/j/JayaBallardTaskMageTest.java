@@ -55,7 +55,7 @@ class JayaBallardTaskMageTest extends BaseCardTest {
     void dealsDamageAndPreventsRegeneration() {
         addCreatureReady(player1, new JayaBallardTaskMage());
         Permanent reavers = addCreatureReady(player2, new DrudgeReavers());
-        reavers.setRegenerationShield(1);
+        gd.addRegenerationShields(reavers.getId(), 1);
         harness.setHand(player1, List.of(new BenalishCavalry()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -65,7 +65,7 @@ class JayaBallardTaskMageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Drudge Reavers");
-        assertThat(reavers.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(reavers.getId())).isEqualTo(1);
     }
 
     @Test
@@ -126,7 +126,7 @@ class JayaBallardTaskMageTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Drudge Reavers");
         harness.assertNotInGraveyard(player2, "Drudge Reavers");
-        assertThat(reavers.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(reavers.getId())).isZero();
         assertThat(reavers.getMarkedDamage()).isZero();
         assertThat(reavers.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Jaya Ballard, Task Mage");

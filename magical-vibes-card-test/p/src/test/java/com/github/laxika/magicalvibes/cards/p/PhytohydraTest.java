@@ -155,7 +155,7 @@ class PhytohydraTest extends BaseCardTest {
     @DisplayName("Applying a Temper shield first leaves the rest of the damage to become counters")
     void temperShieldFirstThenPhytohydra() {
         Permanent phytohydra = harness.addToBattlefieldAndReturn(player2, new Phytohydra());
-        phytohydra.setDamageToPlusOnePlusOneCounterPreventionShield(1);
+        gd.addPermanentDamagePreventionShield("", null, null, phytohydra.getId(), 1, true);
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -163,7 +163,7 @@ class PhytohydraTest extends BaseCardTest {
         chooseReplacement("Prevent damage and put +1/+1 counters on it (Temper)");
 
         assertThat(phytohydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(phytohydra.getDamageToPlusOnePlusOneCounterPreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(phytohydra.getId(), true)).isZero();
         assertThat(phytohydra.getMarkedDamage()).isZero();
     }
 
@@ -171,7 +171,7 @@ class PhytohydraTest extends BaseCardTest {
     @DisplayName("Applying Phytohydra first replaces all the damage and leaves the Temper shield unused")
     void phytohydraFirstLeavesTemperShield() {
         Permanent phytohydra = harness.addToBattlefieldAndReturn(player2, new Phytohydra());
-        phytohydra.setDamageToPlusOnePlusOneCounterPreventionShield(1);
+        gd.addPermanentDamagePreventionShield("", null, null, phytohydra.getId(), 1, true);
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -179,7 +179,7 @@ class PhytohydraTest extends BaseCardTest {
         chooseReplacement("Put +1/+1 counters on it instead");
 
         assertThat(phytohydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(phytohydra.getDamageToPlusOnePlusOneCounterPreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(phytohydra.getId(), true)).isEqualTo(1);
         assertThat(phytohydra.getMarkedDamage()).isZero();
     }
 

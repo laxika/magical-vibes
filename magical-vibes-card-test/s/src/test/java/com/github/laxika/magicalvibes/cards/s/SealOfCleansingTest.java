@@ -81,7 +81,7 @@ class SealOfCleansingTest extends BaseCardTest {
     void respectsRegenerationShield() {
         harness.addToBattlefield(player1, new SealOfCleansing());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BottleGnomes());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();

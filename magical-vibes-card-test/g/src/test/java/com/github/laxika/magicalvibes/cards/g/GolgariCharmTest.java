@@ -155,8 +155,8 @@ class GolgariCharmTest extends BaseCardTest {
 
             Permanent own = findPermanent(player1, "Drudge Beetle");
             Permanent opp = findPermanent(player2, "Drudge Beetle");
-            assertThat(own.getRegenerationShield()).isGreaterThan(0);
-            assertThat(opp.getRegenerationShield()).isEqualTo(0);
+            assertThat(gd.regenerationShieldCount(own.getId())).isGreaterThan(0);
+            assertThat(gd.regenerationShieldCount(opp.getId())).isEqualTo(0);
         }
 
         @Test
@@ -177,7 +177,7 @@ class GolgariCharmTest extends BaseCardTest {
             harness.assertOnBattlefield(player1, "Drudge Beetle");
             harness.assertNotInGraveyard(player1, "Drudge Beetle");
             assertThat(beetle.isTapped()).isTrue();
-            assertThat(beetle.getRegenerationShield()).isZero();
+            assertThat(gd.regenerationShieldCount(beetle.getId())).isZero();
 
             harness.castAndResolveInstant(player2, 0, targetId);
             harness.assertNotOnBattlefield(player1, "Drudge Beetle");
@@ -194,8 +194,8 @@ class GolgariCharmTest extends BaseCardTest {
 
             harness.addToBattlefield(player1, new DrudgeBeetle());
 
-            assertThat(findPermanent(player1, "Growing Ranks").getRegenerationShield()).isZero();
-            assertThat(findPermanent(player1, "Drudge Beetle").getRegenerationShield()).isZero();
+            assertThat(gd.regenerationShieldCount(findPermanent(player1, "Growing Ranks").getId())).isZero();
+            assertThat(gd.regenerationShieldCount(findPermanent(player1, "Drudge Beetle").getId())).isZero();
             harness.assertInGraveyard(player1, "Golgari Charm");
         }
 
@@ -206,13 +206,13 @@ class GolgariCharmTest extends BaseCardTest {
             addBG();
             harness.castInstant(player1, 0, 2, null);
             harness.passBothPriorities();
-            assertThat(findPermanent(player1, "Drudge Beetle").getRegenerationShield()).isEqualTo(1);
+            assertThat(gd.regenerationShieldCount(findPermanent(player1, "Drudge Beetle").getId())).isEqualTo(1);
 
             harness.forceStep(TurnStep.END_STEP);
             harness.clearPriorityPassed();
             harness.passBothPriorities();
 
-            assertThat(findPermanent(player1, "Drudge Beetle").getRegenerationShield()).isZero();
+            assertThat(gd.regenerationShieldCount(findPermanent(player1, "Drudge Beetle").getId())).isZero();
         }
     }
 }

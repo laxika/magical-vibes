@@ -203,7 +203,7 @@ class CreepingMoldTest extends BaseCardTest {
     @DisplayName("Regeneration prevents Creeping Mold from destroying the target")
     void regenerationPreventsDestruction() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new PhyrexianHulk());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setHand(player1, List.of(new CreepingMold()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
@@ -211,7 +211,7 @@ class CreepingMoldTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Phyrexian Hulk");
         harness.assertNotInGraveyard(player2, "Phyrexian Hulk");
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(target.isTapped()).isTrue();
     }
 

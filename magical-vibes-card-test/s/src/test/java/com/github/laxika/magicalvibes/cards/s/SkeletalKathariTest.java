@@ -38,7 +38,7 @@ class SkeletalKathariTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
         // Skeletal Kathari has a regeneration shield
-        assertThat(kathari.getRegenerationShield()).isGreaterThan(0);
+        assertThat(gd.regenerationShieldCount(kathari.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -65,10 +65,10 @@ class SkeletalKathariTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Dregscape Zombie");
         harness.assertInGraveyard(player1, "Dregscape Zombie");
-        assertThat(kathari.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(kathari.getId())).isZero();
         harness.passBothPriorities();
 
-        assertThat(kathari.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(kathari.getId())).isEqualTo(1);
         assertThat(kathari.isTapped()).isTrue();
     }
 
@@ -91,7 +91,7 @@ class SkeletalKathariTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Skeletal Kathari");
         assertThat(kathari.isTapped()).isTrue();
         assertThat(kathari.getMarkedDamage()).isZero();
-        assertThat(kathari.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(kathari.getId())).isZero();
 
         harness.castAndResolveInstant(player2, 0, kathari.getId());
 
@@ -108,7 +108,7 @@ class SkeletalKathariTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, zombie.getId());
         harness.passBothPriorities();
-        assertThat(kathari.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(kathari.getId())).isEqualTo(1);
 
         harness.activateAbility(player1, 0, null, null);
 

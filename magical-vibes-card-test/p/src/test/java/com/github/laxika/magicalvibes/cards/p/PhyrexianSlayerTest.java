@@ -22,7 +22,7 @@ class PhyrexianSlayerTest extends BaseCardTest {
     void destroysWhiteBlocker() {
         Permanent slayer = addReadySlayer();
         Permanent blocker = addCreatureReady(player2, new GlimmeringAngel());
-        blocker.setRegenerationShield(1);
+        gd.addRegenerationShields(blocker.getId(), 1);
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(slayer)));
         block(blocker);
@@ -117,13 +117,13 @@ class PhyrexianSlayerTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Glimmering Angel");
 
         blocker.getGrantedKeywords().remove(Keyword.INDESTRUCTIBLE);
-        blocker.setRegenerationShield(1);
+        gd.addRegenerationShields(blocker.getId(), 1);
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .tryDestroyPermanent(gd, blocker));
 
         harness.assertOnBattlefield(player2, "Glimmering Angel");
         harness.assertNotInGraveyard(player2, "Glimmering Angel");
-        assertThat(blocker.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(blocker.getId())).isZero();
     }
 
     private Permanent addReadySlayer() {

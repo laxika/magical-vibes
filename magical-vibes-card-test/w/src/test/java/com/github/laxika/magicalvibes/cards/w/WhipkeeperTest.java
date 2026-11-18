@@ -55,7 +55,7 @@ class WhipkeeperTest extends BaseCardTest {
     void countsDamageRemovedByRegeneration() {
         addCreatureReady(player1, new Whipkeeper());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DwarvenGrunt());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setHand(player1, List.of(new Firebolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -75,7 +75,7 @@ class WhipkeeperTest extends BaseCardTest {
     void doesNotCountPreventedDamage() {
         addCreatureReady(player1, new Whipkeeper());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DwarvenGrunt());
-        target.setDamagePreventionShield(2);
+        gd.addPermanentDamagePreventionShield(target.getId(), 2);
         harness.setHand(player1, List.of(new Firebolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 

@@ -163,7 +163,7 @@ class RainOfTearsTest extends BaseCardTest {
     @DisplayName("A regeneration shield saves the targeted land")
     void landCanRegenerate() {
         var mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        mountain.setRegenerationShield(1);
+        gd.addRegenerationShields(mountain.getId(), 1);
         harness.setHand(player1, List.of(new RainOfTears()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -172,7 +172,7 @@ class RainOfTearsTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Mountain");
         harness.assertNotInGraveyard(player2, "Mountain");
         assertThat(mountain.isTapped()).isTrue();
-        assertThat(mountain.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(mountain.getId())).isZero();
         harness.assertInGraveyard(player1, "Rain of Tears");
     }
 

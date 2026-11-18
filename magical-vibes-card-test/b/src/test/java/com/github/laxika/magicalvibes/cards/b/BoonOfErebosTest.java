@@ -28,7 +28,7 @@ class BoonOfErebosTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         harness.assertLife(player1, 18);
     }
 
@@ -45,7 +45,7 @@ class BoonOfErebosTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(target.isTapped()).isTrue();
         assertThat(target.getMarkedDamage()).isZero();
     }
@@ -61,7 +61,7 @@ class BoonOfErebosTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         assertThat(target.isTapped()).isFalse();
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 20);
@@ -100,7 +100,7 @@ class BoonOfErebosTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         harness.assertLife(player1, 18);
     }
 }

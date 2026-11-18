@@ -166,14 +166,14 @@ class ElandUmbraTest extends BaseCardTest {
     void offersChoiceBetweenRegenerationAndUmbraArmor() {
         Permanent creature = addReadyCreature(player1);
         Permanent aura = attachUmbra(creature);
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
         creature.setMarkedDamage(6);
 
         harness.runStateBasedActions();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature, aura);
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player) {

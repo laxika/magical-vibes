@@ -30,7 +30,7 @@ class SkyshroudTrollTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent troll = findPermanent(player1, "Skyshroud Troll");
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
@@ -44,14 +44,14 @@ class SkyshroudTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Skyshroud Troll from lethal combat damage")
     void regenSavesFromLethalCombat() {
         Permanent perm = addCreatureReady(player1, new SkyshroudTroll());
-        perm.setRegenerationShield(1);
+        gd.addRegenerationShields(perm.getId(), 1);
         perm.setBlocking(true);
         perm.addBlockingTarget(0);
 
@@ -65,7 +65,7 @@ class SkyshroudTrollTest extends BaseCardTest {
         assertThat(troll.isTapped()).isTrue();
         assertThat(troll.isBlocking()).isFalse();
         assertThat(troll.getMarkedDamage()).isZero();
-        assertThat(troll.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(0);
     }
 
     @Test
@@ -97,13 +97,13 @@ class SkyshroudTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
         assertThat(troll.isTapped()).isFalse();
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Skyshroud Troll");
         harness.assertNotInGraveyard(player1, "Skyshroud Troll");
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
         assertThat(troll.getMarkedDamage()).isZero();
         assertThat(troll.isTapped()).isTrue();
     }
@@ -120,7 +120,7 @@ class SkyshroudTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(2);
         assertThat(troll.isTapped()).isFalse();
     }
 
@@ -134,7 +134,7 @@ class SkyshroudTrollTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
     }
 
     private Permanent addCreatureReady(Player player, int power, int toughness) {

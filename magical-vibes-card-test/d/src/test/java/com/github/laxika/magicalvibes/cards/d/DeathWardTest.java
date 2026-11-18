@@ -32,7 +32,7 @@ class DeathWardTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
     }
 
     @Test
@@ -60,7 +60,7 @@ class DeathWardTest extends BaseCardTest {
 
         Permanent survivedBear = findPermanent(player1, "Grizzly Bears");
         assertThat(survivedBear.isTapped()).isTrue();
-        assertThat(survivedBear.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(survivedBear.getId())).isEqualTo(0);
         assertThat(survivedBear.getMarkedDamage()).isZero();
         assertThat(survivedBear.isBlocking()).isFalse();
     }
@@ -76,7 +76,7 @@ class DeathWardTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
     }
 
     @Test
@@ -106,7 +106,7 @@ class DeathWardTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
         bear.setToughnessModifier(-2);
 
         harness.runStateBasedActions();
@@ -130,7 +130,7 @@ class DeathWardTest extends BaseCardTest {
         assertThat(bear.getMarkedDamage()).isEqualTo(1);
         assertThat(bear.isAttacking()).isTrue();
         assertThat(bear.getTimesRegeneratedThisTurn()).isZero();
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
     }
 
     @Test
@@ -150,7 +150,7 @@ class DeathWardTest extends BaseCardTest {
             harness.assertOnBattlefield(player1, "Grizzly Bears");
             assertThat(bear.isTapped()).isTrue();
             assertThat(bear.getMarkedDamage()).isZero();
-            assertThat(bear.getRegenerationShield()).isEqualTo(shieldsRemaining);
+            assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(shieldsRemaining);
         }
 
         bear.setMarkedDamage(2);

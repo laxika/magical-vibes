@@ -41,7 +41,7 @@ class CrumbleTest extends BaseCardTest {
     @DisplayName("Crumble destroys an artifact despite a regeneration shield")
     void cannotBeRegenerated() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setHand(player1, List.of(new Crumble()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 

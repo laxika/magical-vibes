@@ -109,7 +109,7 @@ class DoggedHunterTest extends BaseCardTest {
     void creatureTokenCanRegenerate() {
         addHunter(player1);
         Permanent token = addCreature(player2, true);
-        token.setRegenerationShield(1);
+        gd.addRegenerationShields(token.getId(), 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -117,7 +117,7 @@ class DoggedHunterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Woodland Druid");
-        assertThat(token.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(token.getId())).isZero();
         assertThat(token.isTapped()).isTrue();
     }
 

@@ -40,7 +40,7 @@ class ToxicStenchTest extends BaseCardTest {
     @DisplayName("Destroys the target without regeneration with threshold")
     void destroysTargetWithoutRegenerationWithThreshold() {
         Permanent target = addCreatureReady(player2, new GiantWarthog());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         setGraveyardSize(7);
 
         prepareCast();

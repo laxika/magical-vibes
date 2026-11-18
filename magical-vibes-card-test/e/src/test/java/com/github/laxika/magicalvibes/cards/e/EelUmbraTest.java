@@ -174,7 +174,7 @@ class EelUmbraTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new EelUmbra());
         aura.setAttachedTo(bears.getId());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
         bears.setMarkedDamage(3);
 
         harness.runStateBasedActions();

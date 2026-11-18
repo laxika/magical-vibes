@@ -69,7 +69,7 @@ class BoilTest extends BaseCardTest {
     @DisplayName("Regeneration shields save Islands from Boil")
     void regenerationShieldsSaveIslands() {
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
-        island.setRegenerationShield(1);
+        gd.addRegenerationShields(island.getId(), 1);
         harness.castFromHand(player1, new Boil(), "{3}{R}");
         harness.passBothPriorities();
 
@@ -109,7 +109,7 @@ class BoilTest extends BaseCardTest {
     @DisplayName("Saving one Island with regeneration does not save other Islands")
     void regenerationOnlySavesShieldedIsland() {
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
-        island.setRegenerationShield(1);
+        gd.addRegenerationShields(island.getId(), 1);
         harness.addToBattlefield(player2, new Island());
 
         castBoilAndResolve();

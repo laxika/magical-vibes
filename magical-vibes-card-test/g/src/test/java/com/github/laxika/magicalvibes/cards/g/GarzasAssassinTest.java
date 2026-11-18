@@ -67,12 +67,12 @@ class GarzasAssassinTest extends BaseCardTest {
     void destructionRespectsRegenerationShield() {
         addReadyAssassin();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BorealDruid());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(target.isTapped()).isTrue();
         harness.assertOnBattlefield(player2, "Boreal Druid");
         harness.assertNotInGraveyard(player2, "Boreal Druid");

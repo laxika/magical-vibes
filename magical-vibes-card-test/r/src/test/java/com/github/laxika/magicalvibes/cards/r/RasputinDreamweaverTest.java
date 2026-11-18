@@ -56,7 +56,7 @@ class RasputinDreamweaverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(rasputin.getCounterCount(CounterType.DREAM)).isZero();
-        assertThat(rasputin.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(rasputin.getId())).isEqualTo(1);
     }
 
     @Test
@@ -159,7 +159,7 @@ class RasputinDreamweaverTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         assertThat(rasputin.getCounterCount(CounterType.DREAM)).isEqualTo(1);
-        assertThat(rasputin.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(rasputin.getId())).isZero();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, 1, null, null);
@@ -172,7 +172,7 @@ class RasputinDreamweaverTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(rasputin);
         assertThat(rasputin.getMarkedDamage()).isZero();
-        assertThat(rasputin.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(rasputin.getId())).isZero();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 

@@ -27,7 +27,7 @@ class WoodwraithStranglerTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(strangler.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(strangler.getId())).isEqualTo(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(card -> card.getName())
                 .containsExactly("Watchwolf");
@@ -73,7 +73,7 @@ class WoodwraithStranglerTest extends BaseCardTest {
 
         Permanent strangler = findPermanent(player1, "Woodwraith Strangler");
         assertThat(strangler).isNotNull();
-        assertThat(strangler.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(strangler.getId())).isZero();
     }
     @Test
     @DisplayName("Exiling the creature is a cost paid before regeneration resolves")
@@ -88,11 +88,11 @@ class WoodwraithStranglerTest extends BaseCardTest {
                 .containsExactly("Char");
         assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(card -> card.getName())
                 .containsExactly("Watchwolf");
-        assertThat(strangler.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(strangler.getId())).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(strangler.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(strangler.getId())).isEqualTo(1);
         assertThat(strangler.isTapped()).isFalse();
     }
 
@@ -122,7 +122,7 @@ class WoodwraithStranglerTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(strangler.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(strangler.getId())).isEqualTo(2);
         assertThat(strangler.isTapped()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);

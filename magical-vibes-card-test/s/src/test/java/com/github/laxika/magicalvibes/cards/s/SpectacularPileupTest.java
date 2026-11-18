@@ -98,7 +98,7 @@ class SpectacularPileupTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Drudge Skeletons");
         harness.assertNotInGraveyard(player1, "Drudge Skeletons");
         assertThat(skeletons.isTapped()).isTrue();
-        assertThat(skeletons.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skeletons.getId())).isZero();
     }
 
     @Test

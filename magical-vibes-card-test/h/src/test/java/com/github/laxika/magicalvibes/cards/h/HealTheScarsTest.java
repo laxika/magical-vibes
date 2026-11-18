@@ -50,7 +50,7 @@ class HealTheScarsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
         GameData gd = harness.getGameData();
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
         // Grizzly Bears is 2/2 -> gain 2 life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
     }
@@ -86,7 +86,7 @@ class HealTheScarsTest extends BaseCardTest {
 
         harness.assertLife(player1, 22);
         harness.assertLife(player2, 20);
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
         assertThat(bears.isTapped()).isFalse();
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
     }
@@ -104,7 +104,7 @@ class HealTheScarsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 24);
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -121,7 +121,7 @@ class HealTheScarsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
         harness.assertInGraveyard(player1, "Heal the Scars");
     }
 
@@ -137,7 +137,7 @@ class HealTheScarsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HealTheScars()));
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castAndResolveInstant(player1, 0, bears.getId());
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
 
         Permanent attacker = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         attacker.setSummoningSick(false);
@@ -149,7 +149,7 @@ class HealTheScarsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(bears.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(0);
         assertThat(bears.isTapped()).isTrue();
         assertThat(bears.isBlocking()).isFalse();
     }

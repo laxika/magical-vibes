@@ -105,7 +105,7 @@ class ChandlerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Clockwork Gnomes");
         harness.assertNotInGraveyard(player2, "Clockwork Gnomes");
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(target.isTapped()).isTrue();
     }
 

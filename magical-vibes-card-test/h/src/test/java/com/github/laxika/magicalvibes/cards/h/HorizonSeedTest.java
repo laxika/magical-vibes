@@ -32,7 +32,7 @@ class HorizonSeedTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -45,7 +45,7 @@ class HorizonSeedTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -57,7 +57,7 @@ class HorizonSeedTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         harness.assertOnBattlefield(player1, "Sakura-Tribe Elder");
     }
 
@@ -73,7 +73,7 @@ class HorizonSeedTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -88,7 +88,7 @@ class HorizonSeedTest extends BaseCardTest {
         harness.castFromHand(player2, new HarshDeceiver(), "{3}{W}");
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         harness.assertOnBattlefield(player2, "Harsh Deceiver");
     }
 
@@ -101,7 +101,7 @@ class HorizonSeedTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, source.getId());
         harness.passBothPriorities();
 
-        assertThat(source.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(source.getId())).isEqualTo(1);
         assertThat(source.isTapped()).isFalse();
     }
 
@@ -118,11 +118,11 @@ class HorizonSeedTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Isamaru, Hound of Konda");
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(target.isTapped()).isTrue();
     }
 
@@ -134,6 +134,6 @@ class HorizonSeedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Horizon Seed");
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 }

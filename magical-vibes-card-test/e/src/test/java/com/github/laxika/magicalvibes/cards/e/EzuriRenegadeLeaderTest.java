@@ -36,7 +36,7 @@ class EzuriRenegadeLeaderTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(elf.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(elf.getId())).isEqualTo(1);
     }
 
     @Test
@@ -70,7 +70,7 @@ class EzuriRenegadeLeaderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentElf.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentElf.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(opponentElf.getId())).isEqualTo(1);
     }
 
     @Test
@@ -207,14 +207,14 @@ class EzuriRenegadeLeaderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, elf.getId());
         harness.passBothPriorities();
 
-        assertThat(elf.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(elf.getId())).isEqualTo(2);
         assertThat(elf.isTapped()).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(elf.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(elf.getId())).isZero();
     }
 
     @Test
@@ -233,7 +233,7 @@ class EzuriRenegadeLeaderTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(elf);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(elf.getCard());
-        assertThat(elf.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(elf.getId())).isZero();
         assertThat(elf.isTapped()).isTrue();
         assertThat(elf.isAttacking()).isFalse();
     }

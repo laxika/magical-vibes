@@ -24,7 +24,7 @@ class RimeboundDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dead.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(dead.getId())).isEqualTo(1);
         assertThat(dead.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
     }
@@ -38,16 +38,16 @@ class RimeboundDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.activateAbility(player1, 0, 0, null, null);
 
-        assertThat(dead.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(dead.getId())).isZero();
         assertThat(dead.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
 
         harness.passBothPriorities();
-        assertThat(dead.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(dead.getId())).isEqualTo(1);
         assertThat(dead.isTapped()).isFalse();
 
         harness.passBothPriorities();
-        assertThat(dead.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(dead.getId())).isEqualTo(2);
         assertThat(dead.isTapped()).isFalse();
     }
 
@@ -60,7 +60,7 @@ class RimeboundDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dead.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(dead.getId())).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
     }
 
@@ -82,7 +82,7 @@ class RimeboundDeadTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Rimebound Dead");
-        assertThat(dead.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(dead.getId())).isEqualTo(1);
         assertThat(dead.getMarkedDamage()).isZero();
         assertThat(dead.isTapped()).isTrue();
         assertThat(dead.isBlocking()).isFalse();
@@ -119,6 +119,6 @@ class RimeboundDeadTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Rimebound Dead");
         assertThat(dead.isTapped()).isTrue();
-        assertThat(dead.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(dead.getId())).isZero();
     }
 }

@@ -128,7 +128,7 @@ class ReprisalTest extends BaseCardTest {
     @DisplayName("Reprisal does not allow the destroyed creature to regenerate")
     void cannotRegenerate() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         harness.setHand(player1, List.of(new Reprisal()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -144,7 +144,7 @@ class ReprisalTest extends BaseCardTest {
     @DisplayName("Reprisal does not allow the destroyed creature to regenerate")
     void cannotRegenerateUpstreamReview() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         harness.setHand(player1, List.of(new Reprisal()));
         harness.addMana(player1, ManaColor.WHITE, 1);

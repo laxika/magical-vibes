@@ -34,7 +34,7 @@ class SamiteAlchemistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent trader = findPermanent(player1, "Dwarven Trader");
-        assertThat(trader.getDamagePreventionShield()).isEqualTo(4);
+        assertThat(gd.permanentDamagePreventionShield(trader.getId())).isEqualTo(4);
         assertThat(trader.isTapped()).isTrue();
         assertThat(trader.getSkipUntapCount()).isEqualTo(1);
     }
@@ -55,7 +55,7 @@ class SamiteAlchemistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(alchemist.getMarkedDamage()).isZero();
-        assertThat(alchemist.getDamagePreventionShield()).isEqualTo(3);
+        assertThat(gd.permanentDamagePreventionShield(alchemist.getId())).isEqualTo(3);
     }
 
     @Test
@@ -203,6 +203,6 @@ class SamiteAlchemistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(alchemist.getMarkedDamage()).isEqualTo(1);
-        assertThat(alchemist.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(alchemist.getId())).isZero();
     }
 }

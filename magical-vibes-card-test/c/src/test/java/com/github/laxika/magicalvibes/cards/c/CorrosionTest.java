@@ -146,7 +146,7 @@ class CorrosionTest extends BaseCardTest {
     void rustDestructionCannotBeRegenerated() {
         harness.addToBattlefield(player1, new Corrosion());
         Permanent mine = harness.addToBattlefieldAndReturn(player2, new MagmaMine());
-        mine.setRegenerationShield(1);
+        gd.addRegenerationShields(mine.getId(), 1);
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());

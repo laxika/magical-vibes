@@ -82,7 +82,7 @@ class WitchsMistTest extends BaseCardTest {
     void regenerationShieldSavesTheCreature() {
         harness.addToBattlefield(player1, new WitchsMist());
         Permanent imperiosaur = harness.addToBattlefieldAndReturn(player2, new Imperiosaur());
-        imperiosaur.setRegenerationShield(1);
+        gd.addRegenerationShields(imperiosaur.getId(), 1);
         gd.permanentsDealtDamageThisTurn.add(imperiosaur.getId());
         addActivationMana();
 
@@ -162,7 +162,7 @@ class WitchsMistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castAndResolveInstant(player1, 0, imperiosaur.getId());
-        imperiosaur.setRegenerationShield(1);
+        gd.addRegenerationShields(imperiosaur.getId(), 1);
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, imperiosaur.getId());

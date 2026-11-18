@@ -143,7 +143,7 @@ class PlanarCleansingTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Drudge Skeletons");
         assertThat(skeletons.isTapped()).isTrue();
-        assertThat(skeletons.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skeletons.getId())).isZero();
         harness.assertNotOnBattlefield(player2, "Runeclaw Bear");
         harness.assertInGraveyard(player2, "Runeclaw Bear");
     }

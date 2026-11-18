@@ -51,7 +51,7 @@ class SoldeviSentryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent sentry = findPermanent(player1, "Soldevi Sentry");
-        assertThat(sentry.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(sentry.getId())).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
@@ -69,7 +69,7 @@ class SoldeviSentryTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Soldevi Sentry");
         Permanent regenerated = findPermanent(player1, "Soldevi Sentry");
         assertThat(regenerated.isTapped()).isTrue();
-        assertThat(regenerated.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(regenerated.getId())).isZero();
         assertThat(regenerated.getMarkedDamage()).isZero();
 
         harness.passBothPriorities();
@@ -105,7 +105,7 @@ class SoldeviSentryTest extends BaseCardTest {
     @DisplayName("A shield from another source regenerates without offering a draw")
     void foreignShieldOffersNoDraw() {
         Permanent sentry = addSentryReady();
-        sentry.setRegenerationShield(1);
+        gd.addRegenerationShields(sentry.getId(), 1);
         harness.setLibrary(player2, List.of(new Forest()));
 
         blockGrizzlyBears(findPermanent(player1, "Soldevi Sentry"));

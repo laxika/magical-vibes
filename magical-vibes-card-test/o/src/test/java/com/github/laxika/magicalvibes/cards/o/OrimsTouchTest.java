@@ -88,7 +88,7 @@ class OrimsTouchTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(2);
     }
 
     @Test
@@ -124,7 +124,7 @@ class OrimsTouchTest extends BaseCardTest {
         harness.castKickedInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(4);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(4);
     }
 
     @Test
@@ -143,6 +143,6 @@ class OrimsTouchTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Raging Kavu");
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 }

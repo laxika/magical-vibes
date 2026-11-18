@@ -54,7 +54,7 @@ class WindsOfRathTest extends BaseCardTest {
     @DisplayName("Destroyed creatures can't be regenerated")
     void cannotBeRegenerated() {
         Permanent troll = harness.addToBattlefieldAndReturn(player2, new SkyshroudTroll());
-        troll.setRegenerationShield(1);
+        gd.addRegenerationShields(troll.getId(), 1);
 
         castWinds();
 

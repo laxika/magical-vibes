@@ -96,7 +96,7 @@ class FullMoonsRiseTest extends BaseCardTest {
         // Both werewolves should have a regeneration shield
         gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Daybreak Ranger"))
-                .forEach(p -> assertThat(p.getRegenerationShield()).isEqualTo(1));
+                .forEach(p -> assertThat(gd.regenerationShieldCount(p.getId())).isEqualTo(1));
     }
 
     @Test
@@ -110,10 +110,10 @@ class FullMoonsRiseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Walking Corpse");
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
 
         Permanent ranger = findPermanent(player1, "Daybreak Ranger");
-        assertThat(ranger.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ranger.getId())).isEqualTo(1);
     }
 
     @Test
@@ -127,10 +127,10 @@ class FullMoonsRiseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent ownRanger = findPermanent(player1, "Daybreak Ranger");
-        assertThat(ownRanger.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ownRanger.getId())).isEqualTo(1);
 
         Permanent opponentRanger = findPermanent(player2, "Daybreak Ranger");
-        assertThat(opponentRanger.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(opponentRanger.getId())).isZero();
     }
 
     @Test
@@ -156,7 +156,7 @@ class FullMoonsRiseTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Walking Corpse");
         assertThat(ranger.isTapped()).isTrue();
         assertThat(ranger.getMarkedDamage()).isZero();
-        assertThat(ranger.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ranger.getId())).isZero();
     }
 
     @Test
@@ -166,12 +166,12 @@ class FullMoonsRiseTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new DaybreakRanger());
-        assertThat(beforeResolution.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(beforeResolution.getId())).isZero();
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new DaybreakRanger());
 
-        assertThat(beforeResolution.getRegenerationShield()).isEqualTo(1);
-        assertThat(afterResolution.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(beforeResolution.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(afterResolution.getId())).isZero();
     }
 
     @Test
@@ -192,7 +192,7 @@ class FullMoonsRiseTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ranger.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ranger.getId())).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, ranger)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ranger, Keyword.TRAMPLE)).isFalse();
     }

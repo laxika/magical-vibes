@@ -30,7 +30,7 @@ class ArgivianBlacksmithTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(2);
     }
 
     @Test
@@ -46,7 +46,7 @@ class ArgivianBlacksmithTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(target.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
@@ -114,7 +114,7 @@ class ArgivianBlacksmithTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0, target.getId());
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.assertInGraveyard(player1, "Ornithopter");
         harness.assertNotOnBattlefield(player1, "Ornithopter");
@@ -128,7 +128,7 @@ class ArgivianBlacksmithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         harness.setHand(player2, List.of(new LightningBolt()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castAndResolveInstant(player2, 0, target.getId());

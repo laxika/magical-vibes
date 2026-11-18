@@ -32,7 +32,7 @@ class DeathStrokeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Skeleton Scavengers");
         harness.assertNotInGraveyard(player2, "Skeleton Scavengers");
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(creature.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Death Stroke");
     }

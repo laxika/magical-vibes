@@ -48,7 +48,7 @@ class ArtifactMutationTest extends BaseCardTest {
     @DisplayName("Cannot be regenerated when destroying the artifact")
     void cannotBeRegenerated() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AlloyGolem());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setHand(player1, List.of(new ArtifactMutation()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);

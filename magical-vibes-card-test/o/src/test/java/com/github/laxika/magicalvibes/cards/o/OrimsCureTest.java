@@ -42,7 +42,7 @@ class OrimsCureTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(4);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(4);
     }
 
     @Test
@@ -141,7 +141,7 @@ class OrimsCureTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.assertOnBattlefield(player2, "Fresh Volunteers");
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.assertInGraveyard(player2, "Fresh Volunteers");
@@ -160,7 +160,7 @@ class OrimsCureTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }
 

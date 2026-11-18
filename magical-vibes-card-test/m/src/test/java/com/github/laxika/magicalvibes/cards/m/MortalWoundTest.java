@@ -76,7 +76,7 @@ class MortalWoundTest extends BaseCardTest {
     @DisplayName("Fully prevented damage does not trigger Mortal Wound")
     void preventedDamageDoesNotTrigger() {
         Permanent creature = addCreatureReady(player2, new PantherWarriors());
-        creature.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(creature.getId(), 1);
         harness.setHand(player1, List.of(new MortalWound()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castEnchantment(player1, 0, creature.getId());

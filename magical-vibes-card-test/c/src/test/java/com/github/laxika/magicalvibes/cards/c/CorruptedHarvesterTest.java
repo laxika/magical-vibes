@@ -63,14 +63,14 @@ class CorruptedHarvesterTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         Permanent harvester = findPermanent(player1, "Corrupted Harvester");
-        assertThat(harvester.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(harvester.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Corrupted Harvester from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent harvesterPerm = addHarvesterReady(player1);
-        harvesterPerm.setRegenerationShield(1);
+        gd.addRegenerationShields(harvesterPerm.getId(), 1);
         harvesterPerm.setBlocking(true);
         harvesterPerm.addBlockingTarget(0);
 
@@ -88,7 +88,7 @@ class CorruptedHarvesterTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Corrupted Harvester");
         Permanent harvester = findPermanent(player1, "Corrupted Harvester");
         assertThat(harvester.isTapped()).isTrue();
-        assertThat(harvester.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(harvester.getId())).isEqualTo(0);
     }
 
     @Test
@@ -234,7 +234,7 @@ class CorruptedHarvesterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Moriok Reaver");
-        assertThat(harvester.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(harvester.getId())).isEqualTo(1);
         assertThat(harvester.isTapped()).isFalse();
     }
 
@@ -249,7 +249,7 @@ class CorruptedHarvesterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, sacrificeId);
         harness.passBothPriorities();
-        assertThat(harvester.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(harvester.getId())).isEqualTo(1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.assertNotOnBattlefield(player1, "Corrupted Harvester");

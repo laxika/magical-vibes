@@ -73,7 +73,7 @@ class VindicateTest extends BaseCardTest {
     @Test
     void destructionAllowsRegeneration() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GerrardCapashen());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castVindicate(target);
 

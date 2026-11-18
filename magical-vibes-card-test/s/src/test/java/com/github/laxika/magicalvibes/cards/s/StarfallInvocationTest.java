@@ -102,7 +102,7 @@ class StarfallInvocationTest extends BaseCardTest {
     @Test
     void regeneratedCreatureIsNotEligibleToReturn() {
         Permanent survivor = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        survivor.setRegenerationShield(1);
+        gd.addRegenerationShields(survivor.getId(), 1);
         Card destroyedCreature = new GrizzlyBears();
         harness.addToBattlefield(player1, destroyedCreature);
 
@@ -113,7 +113,7 @@ class StarfallInvocationTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.validIndices()).containsExactly(0);
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isZero();
 
         harness.handleGraveyardCardChosen(player1, 0);
 

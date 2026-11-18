@@ -74,13 +74,13 @@ class HelldozerTest extends BaseCardTest {
     void untapsWhenNonbasicLandRegenerates() {
         Permanent helldozer = addReadyHelldozer();
         Permanent land = harness.addToBattlefieldAndReturn(player2, new VituGhaziTheCityTree());
-        land.setRegenerationShield(1);
+        gd.addRegenerationShields(land.getId(), 1);
 
         activateAgainst(helldozer, land);
 
         assertThat(helldozer.isTapped()).isFalse();
         assertThat(land.isTapped()).isTrue();
-        assertThat(land.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(land.getId())).isZero();
         harness.assertOnBattlefield(player2, "Vitu-Ghazi, the City-Tree");
         harness.assertNotInGraveyard(player2, "Vitu-Ghazi, the City-Tree");
     }
@@ -90,13 +90,13 @@ class HelldozerTest extends BaseCardTest {
     void untapsAfterRegeneratingItselfAsNonbasicLand() {
         Permanent helldozer = addReadyHelldozer();
         harness.addToBattlefield(player1, new AshayaSoulOfTheWild());
-        helldozer.setRegenerationShield(1);
+        gd.addRegenerationShields(helldozer.getId(), 1);
 
         activateAgainst(helldozer, helldozer);
 
         harness.assertOnBattlefield(player1, "Helldozer");
         harness.assertNotInGraveyard(player1, "Helldozer");
-        assertThat(helldozer.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(helldozer.getId())).isZero();
         assertThat(helldozer.isTapped()).isFalse();
     }
 

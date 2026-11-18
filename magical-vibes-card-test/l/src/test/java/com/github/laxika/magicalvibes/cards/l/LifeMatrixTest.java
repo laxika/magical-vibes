@@ -55,7 +55,7 @@ class LifeMatrixTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.MATRIX)).isZero();
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -75,7 +75,7 @@ class LifeMatrixTest extends BaseCardTest {
 
         Permanent creature = findPermanent(player2, "Psionic Entity");
         assertThat(creature.getCounterCount(CounterType.MATRIX)).isZero();
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -96,7 +96,7 @@ class LifeMatrixTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent creature = findPermanent(player1, "Psionic Entity");
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(creature.isTapped()).isTrue();
         assertThat(creature.getMarkedDamage()).isZero();
     }
@@ -158,12 +158,12 @@ class LifeMatrixTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 1, null, null);
 
         assertThat(creature.getCounterCount(CounterType.MATRIX)).isZero();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough counters");
         harness.passBothPriorities();
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -185,7 +185,7 @@ class LifeMatrixTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Life Matrix");
         assertThat(creature.getCounterCount(CounterType.MATRIX)).isZero();
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -210,10 +210,10 @@ class LifeMatrixTest extends BaseCardTest {
         harness.activateAbility(player1, 2, 1, null, null);
         harness.passBothPriorities();
         assertThat(creature.getCounterCount(CounterType.MATRIX)).isEqualTo(1);
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
         harness.activateAbility(player1, 2, 1, null, null);
         harness.passBothPriorities();
         assertThat(creature.getCounterCount(CounterType.MATRIX)).isZero();
-        assertThat(creature.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(2);
     }
 }

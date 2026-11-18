@@ -44,7 +44,7 @@ class GenerousGiftTest extends BaseCardTest {
     @DisplayName("Creates the Elephant even when the destruction is regenerated")
     void createsElephantWhenDestructionIsRegenerated() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         castGenerousGift(target);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");

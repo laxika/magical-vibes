@@ -52,7 +52,7 @@ class WallOfBramblesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent wall = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(1);
     }
 
     @Test
@@ -91,7 +91,7 @@ class WallOfBramblesTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(wall);
         assertThat(wall.isTapped()).isTrue();
-        assertThat(wall.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wall.getId())).isZero();
         assertThat(wall.getMarkedDamage()).isZero();
     }
 
@@ -106,7 +106,7 @@ class WallOfBramblesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(1);
         assertThat(wall.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
@@ -121,7 +121,7 @@ class WallOfBramblesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(1);
         assertThat(wall.isTapped()).isFalse();
         assertThat(wall.getMarkedDamage()).isEqualTo(1);
     }
@@ -138,8 +138,8 @@ class WallOfBramblesTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(wall.getRegenerationShield()).isEqualTo(2);
-        assertThat(otherWall.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(otherWall.getId())).isZero();
         assertThat(wall.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }

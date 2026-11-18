@@ -96,14 +96,14 @@ class SwiftDemiseTest extends BaseCardTest {
     @DisplayName("Prevented damage does not qualify an undamaged target for destruction")
     void preventedDamageDoesNotDestroyUndamagedTarget() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(target.getId(), 1);
         Permanent previouslyDamaged = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         gd.permanentsDealtDamageThisTurn.add(previouslyDamaged.getId());
 
         cast(target);
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .contains(target).doesNotContain(previouslyDamaged);
     }
@@ -112,7 +112,7 @@ class SwiftDemiseTest extends BaseCardTest {
     @DisplayName("Preventing the new damage does not spare a creature damaged earlier this turn")
     void preventedDamageStillDestroysPreviouslyDamagedTarget() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(target.getId(), 1);
         gd.permanentsDealtDamageThisTurn.add(target.getId());
 
         cast(target);

@@ -74,7 +74,7 @@ class PerishTest extends BaseCardTest {
     @DisplayName("Green creatures with regeneration shields are destroyed")
     void destroysGreenCreaturesDespiteRegenerationShield() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         harness.castFromHand(player1, new Perish(), "{2}{B}");
         harness.passBothPriorities();
@@ -102,7 +102,7 @@ class PerishTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player2, "Skyshroud Troll").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player2, "Skyshroud Troll").getId())).isEqualTo(1);
         harness.castFromHand(player1, new Perish(), "{2}{B}");
         harness.passBothPriorities();
 

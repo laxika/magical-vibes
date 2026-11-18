@@ -25,7 +25,7 @@ class TunnelerWurmTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(wurm.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wurm.getId())).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Tunneler Wurm");
     }
@@ -50,7 +50,7 @@ class TunnelerWurmTest extends BaseCardTest {
         assertThat(wurm.isTapped()).isTrue();
         assertThat(wurm.isBlocking()).isFalse();
         assertThat(wurm.getMarkedDamage()).isZero();
-        assertThat(wurm.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wurm.getId())).isZero();
     }
 
     @Test
@@ -65,12 +65,12 @@ class TunnelerWurmTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCard);
         assertThat(gd.stack).hasSize(1);
-        assertThat(wurm.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wurm.getId())).isZero();
         assertThat(wurm.isTapped()).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(wurm.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wurm.getId())).isEqualTo(1);
         assertThat(wurm.isTapped()).isFalse();
     }
 
@@ -88,7 +88,7 @@ class TunnelerWurmTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(wurm.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(wurm.getId())).isEqualTo(2);
         assertThat(wurm.isTapped()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);

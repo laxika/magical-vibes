@@ -57,7 +57,7 @@ class PitTrapTest extends BaseCardTest {
     void cannotBeRegenerated() {
         Permanent trap = addReadyTrap(player1);
         Permanent attacker = addAttacker(player2, new GoblinSpelunkers());
-        attacker.setRegenerationShield(1);
+        gd.addRegenerationShields(attacker.getId(), 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, idxOf(player1, trap), 0, null, attacker.getId());

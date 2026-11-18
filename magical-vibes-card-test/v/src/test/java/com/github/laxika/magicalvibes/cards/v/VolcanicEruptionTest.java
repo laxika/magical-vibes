@@ -112,7 +112,7 @@ class VolcanicEruptionTest extends BaseCardTest {
     @Test
     void regeneratedMountainDoesNotIncreaseDamage() {
         Permanent protectedMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
-        protectedMountain.setRegenerationShield(1);
+        gd.addRegenerationShields(protectedMountain.getId(), 1);
         Permanent otherMountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
         harness.setHand(player1, List.of(new VolcanicEruption()));
         harness.addMana(player1, ManaColor.BLUE, 5);

@@ -82,7 +82,7 @@ class PlanewideDisasterTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Drudge Skeletons");
         harness.assertNotInGraveyard(player1, "Drudge Skeletons");
         assertThat(skeletons.isTapped()).isTrue();
-        assertThat(skeletons.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skeletons.getId())).isZero();
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.planechase.faceUp).singleElement().extracting(object -> object.getCard())
                 .isInstanceOf(Panopticon.class);

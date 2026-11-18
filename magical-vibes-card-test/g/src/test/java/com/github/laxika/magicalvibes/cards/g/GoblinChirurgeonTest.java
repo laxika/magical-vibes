@@ -27,7 +27,7 @@ class GoblinChirurgeonTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -61,7 +61,7 @@ class GoblinChirurgeonTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .contains(source, nonGoblin)
                 .doesNotContain(otherGoblin);
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -77,7 +77,7 @@ class GoblinChirurgeonTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .contains(source)
                 .doesNotContain(sacrificedGoblin);
-        assertThat(source.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(source.getId())).isEqualTo(1);
     }
 
     @Test
@@ -92,7 +92,7 @@ class GoblinChirurgeonTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Boggart Shenanigans");
         harness.assertOnBattlefield(player1, "Goblin Chirurgeon");
-        assertThat(source.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(source.getId())).isEqualTo(1);
     }
 
     @Test
@@ -114,7 +114,7 @@ class GoblinChirurgeonTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Goblin Chirurgeon");
         assertThat(source.isTapped()).isTrue();
         assertThat(source.getMarkedDamage()).isZero();
-        assertThat(source.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(source.getId())).isZero();
     }
 
     @Test
@@ -133,7 +133,7 @@ class GoblinChirurgeonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -147,7 +147,7 @@ class GoblinChirurgeonTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Goblin Chirurgeon");
         assertThat(gd.stack).isEmpty();
-        assertThat(source.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(source.getId())).isZero();
     }
 
     @Test
@@ -165,7 +165,7 @@ class GoblinChirurgeonTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, secondGoblin.getId());
         harness.passBothPriorities();
 
-        assertThat(source.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(source.getId())).isEqualTo(2);
         assertThat(source.isTapped()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
@@ -186,6 +186,6 @@ class GoblinChirurgeonTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Goblin Chirurgeon");
         harness.assertNotInGraveyard(player2, "Goblin Chirurgeon");
-        assertThat(source.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(source.getId())).isEqualTo(1);
     }
 }

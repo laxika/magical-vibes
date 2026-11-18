@@ -202,7 +202,7 @@ class LeaveBattlefieldVisualCueTest extends BaseCardTest {
     @DisplayName("A regenerated creature emits no destroy cue")
     void regeneratedEmitsNothing() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 

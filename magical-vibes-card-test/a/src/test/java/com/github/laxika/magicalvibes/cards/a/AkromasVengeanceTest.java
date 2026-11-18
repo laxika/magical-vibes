@@ -43,7 +43,7 @@ class AkromasVengeanceTest extends BaseCardTest {
     @DisplayName("Regeneration can save a destroyed permanent")
     void regenerationCanSaveAPermanent() {
         Permanent glorySeeker = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
-        glorySeeker.setRegenerationShield(1);
+        gd.addRegenerationShields(glorySeeker.getId(), 1);
 
         harness.castFromHand(player1, new AkromasVengeance(), "{4}{W}{W}");
         harness.passBothPriorities();

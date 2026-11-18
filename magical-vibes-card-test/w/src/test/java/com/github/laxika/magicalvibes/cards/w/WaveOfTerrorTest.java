@@ -76,7 +76,7 @@ class WaveOfTerrorTest extends BaseCardTest {
         Permanent wave = addWave(player1);
         wave.setCounterCount(CounterType.AGE, 2);
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         advanceToDraw(player1);
         harness.passBothPriorities();

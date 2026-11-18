@@ -53,7 +53,7 @@ class PurgeTest extends BaseCardTest {
     @DisplayName("Purge destroys a target black creature and ignores regeneration")
     void destroysBlackCreatureWithoutRegeneration() {
         Permanent abomination = harness.addToBattlefieldAndReturn(player2, new NimAbomination());
-        abomination.setRegenerationShield(1);
+        gd.addRegenerationShields(abomination.getId(), 1);
         harness.setHand(player1, List.of(new Purge()));
         addPurgeMana();
 
@@ -104,7 +104,7 @@ class PurgeTest extends BaseCardTest {
     @DisplayName("Purge also prevents regeneration of a nonblack artifact creature")
     void destroysArtifactCreatureWithoutRegeneration() {
         Permanent worker = harness.enterBattlefieldAndReturn(player2, new ArcboundWorker());
-        worker.setRegenerationShield(1);
+        gd.addRegenerationShields(worker.getId(), 1);
         harness.setHand(player1, List.of(new Purge()));
         addPurgeMana();
 

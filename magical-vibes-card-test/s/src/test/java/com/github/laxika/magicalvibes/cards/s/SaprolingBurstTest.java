@@ -192,7 +192,7 @@ class SaprolingBurstTest extends BaseCardTest {
         harness.activateAbility(player1, 2, null, protectedToken.getId());
         harness.handlePermanentChosen(player1, fodder.getId());
         harness.passBothPriorities();
-        assertThat(protectedToken.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(protectedToken.getId())).isEqualTo(1);
 
         harness.activateAbility(player1, 1, null, burst.getId());
         resolveAllTriggers();

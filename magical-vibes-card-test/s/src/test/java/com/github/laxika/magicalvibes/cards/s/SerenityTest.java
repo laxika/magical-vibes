@@ -46,7 +46,7 @@ class SerenityTest extends BaseCardTest {
     void cannotBeRegenerated() {
         harness.addToBattlefield(player1, new Serenity());
         var scimitar = harness.addToBattlefieldAndReturn(player2, new DancingScimitar());
-        scimitar.setRegenerationShield(1);
+        gd.addRegenerationShields(scimitar.getId(), 1);
 
         advanceToUpkeepAndResolveTrigger(player1);
 

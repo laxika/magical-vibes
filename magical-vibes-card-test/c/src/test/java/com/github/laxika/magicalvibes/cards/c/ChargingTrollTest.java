@@ -39,7 +39,7 @@ class ChargingTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
         assertThat(troll.isTapped()).isFalse();
     }
 
@@ -54,7 +54,7 @@ class ChargingTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(2);
         assertThat(troll.isTapped()).isFalse();
     }
 
@@ -79,7 +79,7 @@ class ChargingTrollTest extends BaseCardTest {
         assertThat(troll.isTapped()).isTrue();
         assertThat(troll.isBlocking()).isFalse();
         assertThat(troll.getMarkedDamage()).isZero();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
     }
 
     @Test
@@ -92,7 +92,7 @@ class ChargingTrollTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent troll = findPermanent(player1, "Charging Troll");
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
@@ -106,14 +106,14 @@ class ChargingTrollTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Charging Troll from lethal combat damage")
     void regenerationSavesFromLethalCombat() {
         Permanent troll = addChargingTrollReady(player1);
-        troll.setRegenerationShield(1);
+        gd.addRegenerationShields(troll.getId(), 1);
         troll.setBlocking(true);
         troll.addBlockingTarget(0);
 
@@ -124,7 +124,7 @@ class ChargingTrollTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Charging Troll");
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
     }
 
     @Test

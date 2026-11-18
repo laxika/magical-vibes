@@ -157,7 +157,7 @@ class DarkNourishmentTest extends BaseCardTest {
     @DisplayName("Preventing all damage does not prevent the fixed three life gain")
     void gainsThreeLifeEvenWhenAllDamageIsPrevented() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new NestRobber());
-        target.setDamagePreventionShield(3);
+        gd.addPermanentDamagePreventionShield(target.getId(), 3);
         harness.setHand(player1, List.of(new DarkNourishment()));
         harness.addMana(player1, ManaColor.BLACK, 5);
         harness.setLife(player1, 15);
@@ -166,7 +166,7 @@ class DarkNourishmentTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Nest Robber");
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         harness.assertLife(player1, 18);
     }
 

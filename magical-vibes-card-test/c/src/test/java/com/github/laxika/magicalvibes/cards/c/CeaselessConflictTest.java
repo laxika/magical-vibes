@@ -42,7 +42,7 @@ class CeaselessConflictTest extends BaseCardTest {
         Permanent indestructible = addCreatureReady(player1, new GrizzlyBears());
         indestructible.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
         Permanent regenerating = addCreatureReady(player2, new GrizzlyBears());
-        regenerating.setRegenerationShield(1);
+        gd.addRegenerationShields(regenerating.getId(), 1);
 
         castCeaselessConflict();
 
@@ -79,7 +79,7 @@ class CeaselessConflictTest extends BaseCardTest {
     @DisplayName("A regenerated creature controlled by the caster does not contribute to the Spirit count")
     void casterRegenerationDoesNotCountAsDestruction() {
         Permanent regenerating = addCreatureReady(player1, new GrizzlyBears());
-        regenerating.setRegenerationShield(1);
+        gd.addRegenerationShields(regenerating.getId(), 1);
         addCreatureReady(player1, new GrizzlyBears());
 
         castCeaselessConflict();

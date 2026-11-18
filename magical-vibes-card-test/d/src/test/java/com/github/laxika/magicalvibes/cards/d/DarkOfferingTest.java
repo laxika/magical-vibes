@@ -76,7 +76,7 @@ class DarkOfferingTest extends BaseCardTest {
     @DisplayName("A creature with a regeneration shield is regenerated instead of destroyed")
     void regenerationShieldSavesCreature() {
         Permanent griffin = harness.addToBattlefieldAndReturn(player2, new ArmoredGriffin());
-        griffin.setRegenerationShield(1);
+        gd.addRegenerationShields(griffin.getId(), 1);
         harness.setHand(player1, List.of(new DarkOffering()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 

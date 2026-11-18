@@ -71,7 +71,7 @@ class UktabiWildcatsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(wildcats.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wildcats.getId())).isZero();
     }
 
     @Test
@@ -92,7 +92,7 @@ class UktabiWildcatsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(wildcats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wildcats.getId())).isEqualTo(1);
         // One Forest left → still on the battlefield as a 1/1
         assertThat(gqs.getEffectivePower(gd, wildcats)).isEqualTo(1);
     }
@@ -113,7 +113,7 @@ class UktabiWildcatsTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(wildcats);
-        assertThat(wildcats.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wildcats.getId())).isZero();
         assertThat(wildcats.getMarkedDamage()).isZero();
         assertThat(wildcats.isTapped()).isTrue();
     }
@@ -183,7 +183,7 @@ class UktabiWildcatsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, forest.getId());
         harness.passBothPriorities();
 
-        assertThat(wildcats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wildcats.getId())).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Uktabi Wildcats");
         harness.assertInGraveyard(player1, "Forest");
     }
@@ -206,6 +206,6 @@ class UktabiWildcatsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, forest.getId());
         harness.passBothPriorities();
 
-        assertThat(wildcats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wildcats.getId())).isEqualTo(1);
     }
 }

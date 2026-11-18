@@ -67,7 +67,7 @@ class EssenceVortexTest extends BaseCardTest {
     @DisplayName("A creature destroyed this way can't be regenerated")
     void destroyedCreatureCannotRegenerate() {
         Permanent target = addCreatureReady(player2, new BalduvianBears());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setLife(player2, 20);
         castVortexOn(target);
 
@@ -179,7 +179,7 @@ class EssenceVortexTest extends BaseCardTest {
     @DisplayName("Paying life leaves the creature's regeneration shield intact")
     void payingLifePreservesRegenerationShield() {
         Permanent target = addCreatureReady(player2, new BalduvianBears());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setLife(player2, 20);
         castVortexOn(target);
 
@@ -187,7 +187,7 @@ class EssenceVortexTest extends BaseCardTest {
 
         harness.assertLife(player2, 18);
         harness.assertOnBattlefield(player2, "Balduvian Bears");
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test

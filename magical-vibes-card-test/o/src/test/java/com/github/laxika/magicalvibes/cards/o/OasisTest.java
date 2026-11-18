@@ -31,7 +31,7 @@ class OasisTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(1);
         assertThat(oasis.isTapped()).isTrue();
     }
 
@@ -70,7 +70,7 @@ class OasisTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, elemental.getId());
 
         assertThat(elemental.getMarkedDamage()).isEqualTo(2);
-        assertThat(elemental.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(elemental.getId())).isZero();
     }
 
     @Test
@@ -82,13 +82,13 @@ class OasisTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isZero();
     }
 
     @Test
@@ -108,7 +108,7 @@ class OasisTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
-        assertThat(bears.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isZero();
 
         harness.castAndResolveInstant(player1, 0, bears.getId());
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -123,7 +123,7 @@ class OasisTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -144,7 +144,7 @@ class OasisTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(blocker.getMarkedDamage()).isEqualTo(1);
-        assertThat(blocker.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(blocker.getId())).isZero();
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }

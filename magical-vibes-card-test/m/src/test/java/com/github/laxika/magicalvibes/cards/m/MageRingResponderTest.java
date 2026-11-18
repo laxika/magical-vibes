@@ -149,7 +149,7 @@ class MageRingResponderTest extends BaseCardTest {
     void attackDamageRespectsPrevention() {
         addResponderReady(player1);
         Permanent target = addResponderReady(player2);
-        target.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(target.getId(), 1);
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, target.getId());

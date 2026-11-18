@@ -231,7 +231,7 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the regeneration ability
 
         // Masticore should have a regeneration shield
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gd.playerBattlefields.get(player1.getId()).getFirst().getId())).isEqualTo(1);
     }
 
     @Test
@@ -281,7 +281,7 @@ class MoltenTailMasticoreTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        assertThat(findPermanent(player1, "Molten-Tail Masticore").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Molten-Tail Masticore").getId())).isEqualTo(1);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Molten-Tail Masticore");
@@ -304,7 +304,7 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Molten-Tail Masticore");
         harness.assertNotInGraveyard(player1, "Molten-Tail Masticore");
         assertThat(findPermanent(player1, "Molten-Tail Masticore").isTapped()).isTrue();
-        assertThat(findPermanent(player1, "Molten-Tail Masticore").getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Molten-Tail Masticore").getId())).isZero();
     }
 
     @Test

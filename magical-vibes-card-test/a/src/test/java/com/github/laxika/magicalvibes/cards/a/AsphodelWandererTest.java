@@ -36,7 +36,7 @@ class AsphodelWandererTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Asphodel Wanderer").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Asphodel Wanderer").getId())).isEqualTo(1);
         assertThat(wanderer.isTapped()).isFalse();
     }
 
@@ -64,7 +64,7 @@ class AsphodelWandererTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Asphodel Wanderer")).isNotNull();
-        assertThat(findPermanent(player1, "Asphodel Wanderer").getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Asphodel Wanderer").getId())).isZero();
         assertThat(wanderer.isTapped()).isTrue();
         assertThat(wanderer.isBlocking()).isFalse();
         assertThat(wanderer.getMarkedDamage()).isZero();
@@ -88,7 +88,7 @@ class AsphodelWandererTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wanderer.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wanderer.getId())).isEqualTo(1);
         assertThat(wanderer.isTapped()).isTrue();
     }
 
@@ -107,13 +107,13 @@ class AsphodelWandererTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wanderer.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wanderer.getId())).isEqualTo(1);
         assertThat(wanderer.isTapped()).isFalse();
 
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Asphodel Wanderer");
-        assertThat(wanderer.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wanderer.getId())).isZero();
         assertThat(wanderer.isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }

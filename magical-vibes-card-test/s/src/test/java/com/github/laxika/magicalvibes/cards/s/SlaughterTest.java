@@ -22,7 +22,7 @@ class SlaughterTest extends BaseCardTest {
     @DisplayName("Destroys a target nonblack creature and cannot be regenerated")
     void destroysNonblackCreatureWithoutRegeneration() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         prepareCast();
 
         harness.castAndResolveInstant(player1, 0, target.getId());

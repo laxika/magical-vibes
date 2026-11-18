@@ -62,7 +62,7 @@ class FylgjaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(aura.getCounterCount(CounterType.HEALING)).isEqualTo(3);
-        assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -79,7 +79,7 @@ class FylgjaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getMarkedDamage()).isEqualTo(0);
-        assertThat(bears.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(0);
     }
 
     @Test
@@ -97,7 +97,7 @@ class FylgjaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
-        assertThat(bears.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(0);
     }
 
     @Test
@@ -114,7 +114,7 @@ class FylgjaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(opponentBears.getMarkedDamage()).isZero();
-        assertThat(opponentBears.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(opponentBears.getId())).isZero();
     }
 
     @Test
@@ -149,13 +149,13 @@ class FylgjaTest extends BaseCardTest {
 
         harness.activateAbility(player1, indexOf(aura), 0, null, null);
         harness.passBothPriorities();
-        assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(0);
     }
 
     @Test

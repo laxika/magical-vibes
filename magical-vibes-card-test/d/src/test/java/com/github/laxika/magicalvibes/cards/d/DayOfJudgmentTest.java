@@ -91,7 +91,7 @@ class DayOfJudgmentTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RuneclawBear());
 
         Permanent bears = findPermanent(player1, "Runeclaw Bear");
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         harness.setHand(player1, List.of(new DayOfJudgment()));
         harness.addMana(player1, ManaColor.WHITE, 4);

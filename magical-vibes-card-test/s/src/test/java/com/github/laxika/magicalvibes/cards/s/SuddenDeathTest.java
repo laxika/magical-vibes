@@ -126,7 +126,7 @@ class SuddenDeathTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("split second");
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 
     @Test
@@ -136,7 +136,7 @@ class SuddenDeathTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         harness.setHand(player1, List.of(new SuddenDeath()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

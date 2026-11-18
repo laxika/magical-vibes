@@ -29,7 +29,7 @@ class AtalyaSamiteMasterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, 3, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getDamagePreventionShield()).isEqualTo(3);
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(3);
         assertThat(atalya.isTapped()).isTrue();
     }
 
@@ -48,14 +48,14 @@ class AtalyaSamiteMasterTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(bears.getMarkedDamage()).isZero();
-        assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(1);
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
-        assertThat(bears.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isZero();
     }
 
     @Test

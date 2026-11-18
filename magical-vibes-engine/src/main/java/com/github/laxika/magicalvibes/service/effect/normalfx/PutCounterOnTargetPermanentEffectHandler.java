@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.RegenerationShield;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -164,7 +166,7 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
         if (e.regenerateIfSurvives()) {
             int effectiveToughness = gameQueryService.getEffectiveToughness(gameData, target);
             if (effectiveToughness >= 1) {
-                target.setRegenerationShield(target.getRegenerationShield() + 1);
+                gameData.addEffectOnPermanent(entry, RegenerationShield.PLAIN, target.getId(), Duration.UNTIL_END_OF_TURN);
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gains a regeneration shield."));
                 log.info("Game {} - {} gains a regeneration shield (toughness {})",
                         gameData.id, target.getCard().getName(), effectiveToughness);

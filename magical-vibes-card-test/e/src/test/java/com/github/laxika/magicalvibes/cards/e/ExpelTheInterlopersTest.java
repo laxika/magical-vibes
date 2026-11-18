@@ -120,7 +120,7 @@ class ExpelTheInterlopersTest extends BaseCardTest {
     @DisplayName("Creatures can regenerate from the destruction")
     void allowsRegeneration() {
         var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
         harness.addToBattlefield(player2, new HillGiant());
 
         castExpelTheInterlopers();
@@ -129,7 +129,7 @@ class ExpelTheInterlopersTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
         harness.assertInGraveyard(player2, "Hill Giant");
     }
 

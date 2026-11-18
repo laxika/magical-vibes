@@ -39,7 +39,7 @@ class UthdenTrollTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
@@ -60,7 +60,7 @@ class UthdenTrollTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Uthden Troll");
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
         assertThat(troll.getMarkedDamage()).isZero();
     }
 
@@ -100,7 +100,7 @@ class UthdenTrollTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Uthden Troll from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent troll = addCreatureReady(player1, new UthdenTroll());
-        troll.setRegenerationShield(1);
+        gd.addRegenerationShields(troll.getId(), 1);
         troll.setBlocking(true);
         troll.addBlockingTarget(0);
 
@@ -111,7 +111,7 @@ class UthdenTrollTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Uthden Troll");
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(0);
     }
 
     @Test
@@ -141,7 +141,7 @@ class UthdenTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
         assertThat(troll.isTapped()).isTrue();
     }
 
@@ -155,7 +155,7 @@ class UthdenTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
         assertThat(troll.getMarkedDamage()).isEqualTo(1);
         assertThat(troll.isTapped()).isFalse();
     }
@@ -169,7 +169,7 @@ class UthdenTrollTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(troll.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(2);
 
         troll.setBlocking(true);
         troll.addBlockingTarget(0);
@@ -178,7 +178,7 @@ class UthdenTrollTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Uthden Troll");
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
         assertThat(troll.getMarkedDamage()).isZero();
         assertThat(troll.isTapped()).isTrue();
         assertThat(troll.isBlocking()).isFalse();

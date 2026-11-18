@@ -41,7 +41,7 @@ class YavimayaHollowTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(land.isTapped()).isTrue();
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -55,7 +55,7 @@ class YavimayaHollowTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(land.isTapped()).isTrue();
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -69,7 +69,7 @@ class YavimayaHollowTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(land.isTapped()).isTrue();
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -96,7 +96,7 @@ class YavimayaHollowTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
         assertThat(land.isTapped()).isFalse();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -111,7 +111,7 @@ class YavimayaHollowTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(land.isTapped()).isTrue();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
     }
 
     @Test
@@ -124,7 +124,7 @@ class YavimayaHollowTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, shroudedCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(land.isTapped()).isFalse();
-        assertThat(shroudedCreature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(shroudedCreature.getId())).isZero();
     }
 
     @Test
@@ -149,7 +149,7 @@ class YavimayaHollowTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Hulking Ogre");
         assertThat(creature.isTapped()).isTrue();
         assertThat(creature.getMarkedDamage()).isZero();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(creature.getTimesRegeneratedThisTurn()).isEqualTo(1);
 
         Permanent secondSacrifice = harness.addToBattlefieldAndReturn(player1, new ElvishLookout());

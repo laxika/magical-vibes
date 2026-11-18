@@ -143,14 +143,14 @@ class GraveDefilerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(defiler.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(defiler.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Grave Defiler from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent defiler = addCreatureReady(player1, new GraveDefiler());
-        defiler.setRegenerationShield(1);
+        gd.addRegenerationShields(defiler.getId(), 1);
         defiler.setBlocking(true);
         defiler.addBlockingTarget(0);
 
@@ -161,6 +161,6 @@ class GraveDefilerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grave Defiler");
         assertThat(defiler.isTapped()).isTrue();
-        assertThat(defiler.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(defiler.getId())).isZero();
     }
 }

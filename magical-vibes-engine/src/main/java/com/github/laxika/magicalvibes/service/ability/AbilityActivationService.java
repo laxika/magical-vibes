@@ -1111,7 +1111,7 @@ public class AbilityActivationService {
         cost.payForSpecialAction(pool);
 
         if (target != null) {
-            target.setDamagePreventionShield(target.getDamagePreventionShield() + 1);
+            gameData.addPermanentDamagePreventionShield("Guardian Angel", null, playerId, target.getId(), 1, false);
         } else if (gameData.playerIds.contains(targetId)) {
             gameData.addPlayerDamagePreventionShield("Guardian Angel", playerId, targetId, 1, false);
         }

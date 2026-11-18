@@ -49,7 +49,7 @@ class MatopiGolemTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(golem.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(golem.getId())).isEqualTo(1);
         assertThat(golem.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 
@@ -67,7 +67,7 @@ class MatopiGolemTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Matopi Golem");
         Permanent regenerated = findPermanent(player1, "Matopi Golem");
         assertThat(regenerated.isTapped()).isTrue();
-        assertThat(regenerated.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(regenerated.getId())).isZero();
         assertThat(regenerated.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
@@ -98,7 +98,7 @@ class MatopiGolemTest extends BaseCardTest {
         harness.handleListChoice(player1, "Regenerate and put a -1/-1 counter on it");
         resolveAllTriggers();
         Permanent regenerated = findPermanent(player1, "Matopi Golem");
-        assertThat(regenerated.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(regenerated.getId())).isEqualTo(1);
         assertThat(regenerated.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
@@ -115,7 +115,7 @@ class MatopiGolemTest extends BaseCardTest {
         assertThat(golem.isTapped()).isTrue();
         assertThat(golem.isBlocking()).isFalse();
         assertThat(golem.getMarkedDamage()).isZero();
-        assertThat(golem.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(golem.getId())).isZero();
         assertThat(golem.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         assertThat(gd.stack).hasSize(1);
 
@@ -137,7 +137,7 @@ class MatopiGolemTest extends BaseCardTest {
         harness.handleListChoice(player1, "Regenerate without an additional effect");
 
         harness.assertOnBattlefield(player1, "Matopi Golem");
-        assertThat(golem.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(golem.getId())).isEqualTo(1);
         assertThat(golem.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
     }
@@ -155,7 +155,7 @@ class MatopiGolemTest extends BaseCardTest {
         blockPantherWarriors(golem);
         resolveAllTriggers();
 
-        assertThat(golem.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(golem.getId())).isEqualTo(1);
         assertThat(golem.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 

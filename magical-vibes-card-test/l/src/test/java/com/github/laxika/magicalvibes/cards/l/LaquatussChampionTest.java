@@ -55,7 +55,7 @@ class LaquatussChampionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(champion.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(champion.getId())).isEqualTo(1);
     }
 
     @Test
@@ -68,7 +68,7 @@ class LaquatussChampionTest extends BaseCardTest {
         damageChampion();
 
         harness.assertOnBattlefield(player1, "Laquatus's Champion");
-        assertThat(champion.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(champion.getId())).isZero();
         assertThat(champion.isTapped()).isTrue();
     }
 

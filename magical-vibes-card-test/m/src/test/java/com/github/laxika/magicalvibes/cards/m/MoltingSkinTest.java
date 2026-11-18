@@ -24,12 +24,12 @@ class MoltingSkinTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Molting Skin");
         harness.assertNotOnBattlefield(player1, "Molting Skin");
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         assertThat(target.isTapped()).isFalse();
     }
 
@@ -47,7 +47,7 @@ class MoltingSkinTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Araba Mothrider");
         harness.assertNotInGraveyard(player2, "Araba Mothrider");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
 
         harness.inMutationScope(() ->
                 assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, target)).isTrue());
@@ -66,7 +66,7 @@ class MoltingSkinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Molting Skin");
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -93,7 +93,7 @@ class MoltingSkinTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Molting Skin");
         harness.assertNotInHand(player2, "Molting Skin");
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -107,6 +107,6 @@ class MoltingSkinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Molting Skin");
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 }

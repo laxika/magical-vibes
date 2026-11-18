@@ -62,7 +62,7 @@ class BeholdThePowerOfDestructionTest extends BaseCardTest {
     @DisplayName("Allows regeneration to replace destruction")
     void regenerationSavesCreature() {
         Permanent protectedCreature = harness.addToBattlefieldAndReturn(player2, new BurnishedHart());
-        protectedCreature.setRegenerationShield(1);
+        gd.addRegenerationShields(protectedCreature.getId(), 1);
         Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new BurnishedHart());
 
         putSchemeAbilityOnStack();
@@ -70,7 +70,7 @@ class BeholdThePowerOfDestructionTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(protectedCreature);
         assertThat(protectedCreature.isTapped()).isTrue();
-        assertThat(protectedCreature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(protectedCreature.getId())).isZero();
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(otherCreature.getCard());
         assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(protectedCreature.getCard());
     }

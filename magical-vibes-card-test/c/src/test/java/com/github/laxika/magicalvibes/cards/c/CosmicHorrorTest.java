@@ -124,7 +124,7 @@ class CosmicHorrorTest extends BaseCardTest {
     @DisplayName("A regenerated Cosmic Horror survives and deals no damage (only 'destroyed this way' triggers it)")
     void regeneratedSurvivesWithoutDamage() {
         Permanent horror = harness.addToBattlefieldAndReturn(player1, new CosmicHorror());
-        horror.setRegenerationShield(1);
+        gd.addRegenerationShields(horror.getId(), 1);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);

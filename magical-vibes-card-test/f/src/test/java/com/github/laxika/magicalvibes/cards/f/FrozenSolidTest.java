@@ -102,7 +102,7 @@ class FrozenSolidTest extends BaseCardTest {
     @DisplayName("Fully prevented damage does not trigger Frozen Solid")
     void fullyPreventedDamageDoesNotTrigger() {
         Permanent enchanted = addCreatureReady(player2, new TitanicBulvox());
-        enchanted.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(enchanted.getId(), 1);
         Permanent aura = attachFrozenSolid(enchanted);
 
         harness.setHand(player1, List.of(new SparkSpray()));

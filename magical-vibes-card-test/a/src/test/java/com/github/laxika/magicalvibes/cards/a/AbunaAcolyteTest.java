@@ -40,7 +40,7 @@ class AbunaAcolyteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent myrsmith = findPermanent(player2, "Myrsmith");
-        assertThat(myrsmith.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(myrsmith.getId())).isEqualTo(1);
     }
 
     @Test
@@ -60,7 +60,7 @@ class AbunaAcolyteTest extends BaseCardTest {
         // Set up defender (1/1) with 1 prevention shield, blocking a 1/1 attacker
         Permanent defender = harness.addToBattlefieldAndReturn(player2, new AbunaAcolyte());
         defender.setSummoningSick(false);
-        defender.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(defender.getId(), 1);
         defender.setBlocking(true);
         defender.addBlockingTarget(0);
 
@@ -86,7 +86,7 @@ class AbunaAcolyteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent myr = findPermanent(player1, "Leaden Myr");
-        assertThat(myr.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(myr.getId())).isEqualTo(2);
     }
 
     @Test
@@ -182,7 +182,7 @@ class AbunaAcolyteTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, myr.getId());
         harness.assertOnBattlefield(player2, "Leaden Myr");
-        assertThat(myr.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(myr.getId())).isZero();
 
         harness.castAndResolveInstant(player1, 0, myr.getId());
         harness.assertInGraveyard(player2, "Leaden Myr");

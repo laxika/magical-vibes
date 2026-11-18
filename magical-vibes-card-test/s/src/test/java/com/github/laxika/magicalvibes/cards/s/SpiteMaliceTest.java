@@ -69,7 +69,7 @@ class SpiteMaliceTest extends BaseCardTest {
     @DisplayName("Malice destroys a nonblack creature without allowing regeneration")
     void maliceDestroysNonblackCreatureWithoutRegeneration() {
         Permanent kavu = harness.addToBattlefieldAndReturn(player2, new KavuRunner());
-        kavu.setRegenerationShield(1);
+        gd.addRegenerationShields(kavu.getId(), 1);
 
         harness.setHand(player1, List.of(new SpiteMalice()));
         harness.addMana(player1, ManaColor.BLACK, 1);

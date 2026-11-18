@@ -134,7 +134,7 @@ class BuildersBaneTest extends BaseCardTest {
     void regeneratedArtifactDoesNotCauseDamage() {
         Permanent regenerating = harness.addToBattlefieldAndReturn(player2, new SkyDiamond());
         Permanent destroyed = harness.addToBattlefieldAndReturn(player2, new SkyDiamond());
-        regenerating.setRegenerationShield(1);
+        gd.addRegenerationShields(regenerating.getId(), 1);
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new BuildersBane()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -143,7 +143,7 @@ class BuildersBaneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(regenerating).doesNotContain(destroyed);
-        assertThat(regenerating.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(regenerating.getId())).isZero();
         harness.assertInGraveyard(player2, "Sky Diamond");
         harness.assertLife(player2, 19);
     }

@@ -128,7 +128,7 @@ class RileTest extends BaseCardTest {
     @DisplayName("Rile still grants trample and draws when its damage is prevented")
     void preventedDamageStillGrantsTrampleAndDraws() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new JungleDelver());
-        creature.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(creature.getId(), 1);
         harness.setHand(player1, List.of(new Rile()));
         harness.setLibrary(player1, List.of(new DeeprootWarrior()));
         harness.addMana(player1, ManaColor.RED, 1);

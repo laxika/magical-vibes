@@ -187,7 +187,7 @@ class ReignOfChaosTest extends BaseCardTest {
         giveMana();
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
         Permanent knight = harness.addToBattlefieldAndReturn(player2, new ZhalfirinKnight());
-        knight.setRegenerationShield(1);
+        gd.addRegenerationShields(knight.getId(), 1);
 
         harness.castModalSorcery(player1, 0, 0, List.of(plains.getId(), knight.getId()));
         harness.passBothPriorities();
@@ -195,7 +195,7 @@ class ReignOfChaosTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Plains");
         harness.assertOnBattlefield(player2, "Zhalfirin Knight");
         assertThat(knight.isTapped()).isTrue();
-        assertThat(knight.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(knight.getId())).isZero();
     }
 
     @Test

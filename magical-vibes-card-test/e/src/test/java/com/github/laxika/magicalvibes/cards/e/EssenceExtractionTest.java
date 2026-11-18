@@ -84,7 +84,7 @@ class EssenceExtractionTest extends BaseCardTest {
     @Test
     void gainsThreeLifeEvenWhenAllDamageIsPrevented() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new PrakhataPillarBug());
-        creature.setDamagePreventionShield(3);
+        gd.addPermanentDamagePreventionShield(creature.getId(), 3);
         harness.setHand(player1, List.of(new EssenceExtraction()));
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.setLife(player1, 15);

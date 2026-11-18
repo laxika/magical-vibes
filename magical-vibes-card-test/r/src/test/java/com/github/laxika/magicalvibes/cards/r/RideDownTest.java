@@ -110,7 +110,7 @@ class RideDownTest extends BaseCardTest {
     void regeneratedBlockerStillGrantsTrample() {
         Permanent attacker = addCreatureReady(player1, new AlpineGrizzly());
         Permanent blocker = addCreatureReady(player2, new AlpineGrizzly());
-        blocker.setRegenerationShield(1);
+        gd.addRegenerationShields(blocker.getId(), 1);
         declareBlock(attacker, blocker);
 
         castRideDown(blocker);
@@ -118,7 +118,7 @@ class RideDownTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
         assertThat(blocker.isTapped()).isTrue();
         assertThat(blocker.isBlocking()).isFalse();
-        assertThat(blocker.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(blocker.getId())).isZero();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 

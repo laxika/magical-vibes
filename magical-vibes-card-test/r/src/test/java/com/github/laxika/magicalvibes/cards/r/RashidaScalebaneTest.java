@@ -172,7 +172,7 @@ class RashidaScalebaneTest extends BaseCardTest {
         addCreatureReady(player1, new RashidaScalebane());
         Permanent dragon = addCreatureReady(player2, new ShivanDragon());
         dragon.setAttacking(true);
-        dragon.setRegenerationShield(1);
+        gd.addRegenerationShields(dragon.getId(), 1);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);

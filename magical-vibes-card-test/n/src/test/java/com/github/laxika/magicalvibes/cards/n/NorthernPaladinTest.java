@@ -144,7 +144,7 @@ class NorthernPaladinTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Drudge Skeletons");
         harness.assertNotInGraveyard(player2, "Drudge Skeletons");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(findPermanent(player1, "Northern Paladin").isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
     }

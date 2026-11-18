@@ -96,7 +96,7 @@ class TheBlackArrowTest extends BaseCardTest {
     @DisplayName("A Dragon is not destroyed when all Arrow damage is prevented")
     void preventedDamageDoesNotDestroyDragon() {
         Permanent dragon = harness.addToBattlefieldAndReturn(player2, new HerdchaserDragon());
-        dragon.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(dragon.getId(), 1);
 
         castArrowTargeting(dragon.getId());
 

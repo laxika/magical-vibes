@@ -54,7 +54,7 @@ class DimirHouseGuardTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, fodder.getId());
         harness.passBothPriorities();
 
-        assertThat(houseGuard.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(houseGuard.getId())).isEqualTo(1);
         harness.assertInGraveyard(player1, "Boros Recruit");
     }
 
@@ -68,7 +68,7 @@ class DimirHouseGuardTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Boros Recruit");
         harness.assertNotOnBattlefield(player1, "Boros Recruit");
-        assertThat(houseGuard.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(houseGuard.getId())).isZero();
 
         harness.passBothPriorities();
 
@@ -78,7 +78,7 @@ class DimirHouseGuardTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Dimir House Guard");
         assertThat(houseGuard.isTapped()).isTrue();
         assertThat(houseGuard.getMarkedDamage()).isZero();
-        assertThat(houseGuard.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(houseGuard.getId())).isZero();
     }
 
     @Test

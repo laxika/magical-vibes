@@ -67,7 +67,7 @@ class WillOTheWispTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent wisp = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(wisp.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wisp.getId())).isEqualTo(1);
     }
 
     @Test
@@ -82,7 +82,7 @@ class WillOTheWispTest extends BaseCardTest {
     @Test
     @DisplayName("Regeneration shield saves Will-o'-the-Wisp from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
-        addCreatureReady(player1, new WillOTheWisp()).setRegenerationShield(1);
+        gd.addRegenerationShields(addCreatureReady(player1, new WillOTheWisp()).getId(), 1);
         addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
@@ -91,7 +91,7 @@ class WillOTheWispTest extends BaseCardTest {
 
         Permanent survivor = findPermanent(player1, "Will-o'-the-Wisp");
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isEqualTo(0);
         assertThat(survivor.getMarkedDamage()).isZero();
     }
 
@@ -119,7 +119,7 @@ class WillOTheWispTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wisp.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wisp.getId())).isEqualTo(1);
         assertThat(wisp.isTapped()).isTrue();
     }
 
@@ -134,14 +134,14 @@ class WillOTheWispTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wisp.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wisp.getId())).isEqualTo(1);
         assertThat(wisp.isTapped()).isFalse();
         assertThat(wisp.isBlocking()).isTrue();
 
         resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Will-o'-the-Wisp");
-        assertThat(wisp.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wisp.getId())).isZero();
         assertThat(wisp.isTapped()).isTrue();
         assertThat(wisp.isBlocking()).isFalse();
         assertThat(wisp.getMarkedDamage()).isZero();
@@ -157,7 +157,7 @@ class WillOTheWispTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wisp.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(wisp.getId())).isEqualTo(2);
         assertThat(wisp.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }

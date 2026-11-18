@@ -74,7 +74,7 @@ class TheBruteTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -101,7 +101,7 @@ class TheBruteTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
     }
 
     @Test
@@ -115,7 +115,7 @@ class TheBruteTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
     }
 
     @Test
@@ -131,10 +131,10 @@ class TheBruteTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(2);
         assertThat(bears.isTapped()).isFalse();
         assertThat(aura.isTapped()).isFalse();
-        assertThat(aura.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(aura.getId())).isZero();
     }
 
     @Test
@@ -155,7 +155,7 @@ class TheBruteTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "The Brute");
         resolveAllTriggers();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(bears.isTapped()).isFalse();
     }
@@ -172,7 +172,7 @@ class TheBruteTest extends BaseCardTest {
                 player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
     }
 
     @Test
@@ -184,7 +184,7 @@ class TheBruteTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(aura.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(aura.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

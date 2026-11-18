@@ -141,7 +141,7 @@ class HourOfReckoningTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(votary);
         assertThat(votary.isTapped()).isTrue();
-        assertThat(votary.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(votary.getId())).isZero();
         harness.assertInGraveyard(player1, "Grayscaled Gharial");
         harness.assertNotInGraveyard(player1, "Votary of the Conclave");
     }

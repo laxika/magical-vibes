@@ -27,7 +27,7 @@ class AugurOfSkullsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(augur.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(augur.getId())).isEqualTo(1);
     }
 
     @Test
@@ -44,7 +44,7 @@ class AugurOfSkullsTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(augur);
-        assertThat(augur.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(augur.getId())).isZero();
         assertThat(augur.getMarkedDamage()).isZero();
         assertThat(augur.isTapped()).isTrue();
     }
@@ -191,7 +191,7 @@ class AugurOfSkullsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(augur.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(augur.getId())).isEqualTo(1);
         assertThat(augur.isTapped()).isTrue();
     }
 

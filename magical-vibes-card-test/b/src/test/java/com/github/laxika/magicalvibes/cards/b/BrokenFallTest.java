@@ -25,12 +25,12 @@ class BrokenFallTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Broken Fall");
         harness.assertInHand(player1, "Broken Fall");
         assertThat(gd.stack).hasSize(1);
-        assertThat(giant.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(giant.getId())).isZero();
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(giant.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(giant.getId())).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Broken Fall");
         harness.assertInHand(player1, "Broken Fall");
     }
@@ -50,7 +50,7 @@ class BrokenFallTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Lowland Giant");
         assertThat(giant.isTapped()).isTrue();
         assertThat(giant.getMarkedDamage()).isZero();
-        assertThat(giant.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(giant.getId())).isZero();
     }
 
     @Test
@@ -83,7 +83,7 @@ class BrokenFallTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(giant.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(giant.getId())).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 

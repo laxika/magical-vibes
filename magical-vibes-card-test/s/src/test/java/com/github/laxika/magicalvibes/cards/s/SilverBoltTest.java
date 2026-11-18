@@ -65,7 +65,7 @@ class SilverBoltTest extends BaseCardTest {
     void fullyPreventedDamageDoesNotDestroyWerewolf() {
         addReadyBolt();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new BurlyBreaker());
-        target.setDamagePreventionShield(3);
+        gd.addPermanentDamagePreventionShield(target.getId(), 3);
         addMana();
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
@@ -80,7 +80,7 @@ class SilverBoltTest extends BaseCardTest {
     void partiallyPreventedDamageDestroysWerewolf() {
         addReadyBolt();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new BurlyBreaker());
-        target.setDamagePreventionShield(2);
+        gd.addPermanentDamagePreventionShield(target.getId(), 2);
         addMana();
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
@@ -138,8 +138,8 @@ class SilverBoltTest extends BaseCardTest {
     void werewolfIsDestroyedWhenDamageRemainsAfterChosenOrder() {
         addReadyBolt();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new BurlyBreaker());
-        target.setDamagePreventionShield(1);
-        target.setDamageToPlusOnePlusOneCounterPreventionShield(1);
+        gd.addPermanentDamagePreventionShield(target.getId(), 1);
+        gd.addPermanentDamagePreventionShield("", null, null, target.getId(), 1, true);
         addMana();
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
@@ -157,8 +157,8 @@ class SilverBoltTest extends BaseCardTest {
     void werewolfSurvivesWhenChosenShieldsPreventEverything() {
         addReadyBolt();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new BurlyBreaker());
-        target.setDamagePreventionShield(2);
-        target.setDamageToPlusOnePlusOneCounterPreventionShield(1);
+        gd.addPermanentDamagePreventionShield(target.getId(), 2);
+        gd.addPermanentDamagePreventionShield("", null, null, target.getId(), 1, true);
         addMana();
 
         harness.activateAbility(player1, 0, 0, null, target.getId());

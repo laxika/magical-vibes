@@ -84,7 +84,7 @@ class ScavengingGhoulTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(ghoul.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ghoul.getId())).isEqualTo(1);
         assertThat(ghoul.getCounterCount(CounterType.CORPSE)).isEqualTo(1);
     }
 
@@ -103,7 +103,7 @@ class ScavengingGhoulTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, ghoul.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ghoul);
-        assertThat(ghoul.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ghoul.getId())).isZero();
         assertThat(ghoul.getCounterCount(CounterType.CORPSE)).isZero();
     }
 
@@ -162,10 +162,10 @@ class ScavengingGhoulTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(ghoul.getCounterCount(CounterType.CORPSE)).isZero();
-        assertThat(ghoul.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ghoul.getId())).isZero();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(ghoul.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ghoul.getId())).isEqualTo(1);
     }
 
     @Test
@@ -183,7 +183,7 @@ class ScavengingGhoulTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ghoul);
         assertThat(ghoul.isTapped()).isTrue();
         assertThat(ghoul.getMarkedDamage()).isZero();
-        assertThat(ghoul.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ghoul.getId())).isZero();
 
         advanceToEndStepAndResolve();
 

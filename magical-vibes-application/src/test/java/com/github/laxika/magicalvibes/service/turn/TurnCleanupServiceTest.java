@@ -190,21 +190,6 @@ class TurnCleanupServiceTest {
         }
 
         @Test
-        @DisplayName("Clears damage prevention and regeneration shields on permanents")
-        void clearsDamagePreventionAndRegenerationShields() {
-            Card card = createCardWithName("Grizzly Bears");
-            Permanent perm = new Permanent(card);
-            perm.setDamagePreventionShield(5);
-            perm.setRegenerationShield(2);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.getDamagePreventionShield()).isZero();
-            assertThat(perm.getRegenerationShield()).isZero();
-        }
-
-        @Test
         @DisplayName("Clears marked damage on all permanents (CR 514.2)")
         void clearsMarkedDamage() {
             Card card = createCardWithName("Grizzly Bears");

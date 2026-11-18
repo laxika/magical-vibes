@@ -23,7 +23,7 @@ class TatteredDrakeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(drake.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(drake.getId())).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 
@@ -49,7 +49,7 @@ class TatteredDrakeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(drake.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(drake.getId())).isEqualTo(1);
         assertThat(drake.isTapped()).isTrue();
     }
 
@@ -57,7 +57,7 @@ class TatteredDrakeTest extends BaseCardTest {
     @DisplayName("A regeneration shield saves Tattered Drake from lethal combat damage")
     void regenerationShieldSavesFromLethalCombatDamage() {
         Permanent drake = addCreatureReady(player1, new TatteredDrake());
-        drake.setRegenerationShield(1);
+        gd.addRegenerationShields(drake.getId(), 1);
         drake.setBlocking(true);
         drake.addBlockingTarget(0);
 
@@ -68,7 +68,7 @@ class TatteredDrakeTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Tattered Drake")).isNotNull();
         assertThat(drake.isTapped()).isTrue();
-        assertThat(drake.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(drake.getId())).isZero();
     }
 
     @Test
@@ -85,7 +85,7 @@ class TatteredDrakeTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(drake.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(drake.getId())).isEqualTo(2);
         assertThat(drake.isTapped()).isFalse();
         assertThat(drake.isAttacking()).isTrue();
     }
@@ -100,7 +100,7 @@ class TatteredDrakeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(drake.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(drake.getId())).isEqualTo(1);
         assertThat(drake.isTapped()).isFalse();
     }
 
@@ -125,6 +125,6 @@ class TatteredDrakeTest extends BaseCardTest {
         assertThat(drake.isBlocking()).isFalse();
         assertThat(drake.getBlockingTargets()).isEmpty();
         assertThat(drake.getMarkedDamage()).isZero();
-        assertThat(drake.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(drake.getId())).isZero();
     }
 }

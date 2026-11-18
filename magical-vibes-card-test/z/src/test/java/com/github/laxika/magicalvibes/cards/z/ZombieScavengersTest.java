@@ -32,7 +32,7 @@ class ZombieScavengersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Zombie Scavengers").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Zombie Scavengers").getId())).isEqualTo(1);
         assertThat(graveyardNames()).isEmpty();
         assertThat(gd.exiledCards).extracting(e -> e.card().getName()).contains("Grizzly Bears");
     }
@@ -47,7 +47,7 @@ class ZombieScavengersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(graveyardNames()).containsExactly("Giant Growth");
-        assertThat(findPermanent(player1, "Zombie Scavengers").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Zombie Scavengers").getId())).isEqualTo(1);
         assertThat(gd.exiledCards).extracting(e -> e.card().getName()).containsExactly("Grizzly Bears");
     }
 
@@ -74,7 +74,7 @@ class ZombieScavengersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Zombie Scavengers").getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Zombie Scavengers").getId())).isEqualTo(2);
         assertThat(graveyardNames()).isEmpty();
         assertThat(gd.exiledCards).extracting(e -> e.card().getName())
                 .containsExactly("Grizzly Bears", "Grizzly Bears");
@@ -108,7 +108,7 @@ class ZombieScavengersTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, scavengersId);
 
         Permanent scavengers = findPermanent(player1, "Zombie Scavengers");
-        assertThat(scavengers.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(scavengers.getId())).isZero();
         assertThat(scavengers.isTapped()).isTrue();
         assertThat(scavengers.getMarkedDamage()).isZero();
     }
@@ -126,7 +126,7 @@ class ZombieScavengersTest extends BaseCardTest {
         assertThat(graveyardNames()).containsExactly("Grizzly Bears", "Giant Growth");
         assertThat(gd.exiledCards).extracting(e -> e.card().getName())
                 .containsExactly("Zombie Scavengers");
-        assertThat(findPermanent(player1, "Zombie Scavengers").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Zombie Scavengers").getId())).isEqualTo(1);
     }
 
     @Test
@@ -139,11 +139,11 @@ class ZombieScavengersTest extends BaseCardTest {
 
         assertThat(graveyardNames()).isEmpty();
         assertThat(gd.exiledCards).extracting(e -> e.card().getName()).containsExactly("Grizzly Bears");
-        assertThat(findPermanent(player1, "Zombie Scavengers").getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Zombie Scavengers").getId())).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Zombie Scavengers").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Zombie Scavengers").getId())).isEqualTo(1);
     }
 
     @Test
@@ -158,7 +158,7 @@ class ZombieScavengersTest extends BaseCardTest {
 
         Permanent scavengers = findPermanent(player1, "Zombie Scavengers");
         assertThat(scavengers.isTapped()).isTrue();
-        assertThat(scavengers.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(scavengers.getId())).isEqualTo(1);
         assertThat(graveyardNames()).isEmpty();
     }
 }

@@ -37,7 +37,7 @@ class DeathbellowRaiderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Deathbellow Raider").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Deathbellow Raider").getId())).isEqualTo(1);
     }
 
     @Test
@@ -58,7 +58,7 @@ class DeathbellowRaiderTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Deathbellow Raider");
-        assertThat(findPermanent(player1, "Deathbellow Raider").getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Deathbellow Raider").getId())).isZero();
     }
 
     private Permanent addReadyRaider(Player player) {
@@ -89,7 +89,7 @@ class DeathbellowRaiderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(raider.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(raider.getId())).isEqualTo(1);
     }
 
     @Test
@@ -103,7 +103,7 @@ class DeathbellowRaiderTest extends BaseCardTest {
 
         assertThat(raider.isTapped()).isFalse();
         assertThat(raider.getMarkedDamage()).isEqualTo(1);
-        assertThat(raider.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(raider.getId())).isEqualTo(1);
     }
 
     private void addRegenerationMana(Player player) {

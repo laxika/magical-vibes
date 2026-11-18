@@ -168,17 +168,17 @@ class BoarUmbraTest extends BaseCardTest {
     void controllerChoosesBetweenRegenerationAndUmbraArmor() {
         Permanent creature = addReadyCreature(player1);
         Permanent aura = attachUmbra(creature);
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
         creature.setMarkedDamage(5);
 
         harness.runStateBasedActions();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature, aura);
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
         harness.handleListChoice(player1, "Regenerate without an additional effect");
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature, aura);
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(creature.getMarkedDamage()).isZero();
         assertThat(creature.isTapped()).isTrue();
     }

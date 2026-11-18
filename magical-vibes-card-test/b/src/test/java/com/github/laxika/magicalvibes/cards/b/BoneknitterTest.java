@@ -29,7 +29,7 @@ class BoneknitterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, zombie.getId());
         harness.passBothPriorities();
 
-        assertThat(zombie.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(zombie.getId())).isEqualTo(1);
     }
 
     @Test
@@ -48,7 +48,7 @@ class BoneknitterTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, zombie.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(zombie);
-        assertThat(zombie.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(zombie.getId())).isZero();
     }
 
     @Test
@@ -77,7 +77,7 @@ class BoneknitterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, boneknitter.getId());
         harness.passBothPriorities();
 
-        assertThat(boneknitter.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(boneknitter.getId())).isEqualTo(2);
         assertThat(boneknitter.isTapped()).isTrue();
     }
 
@@ -97,7 +97,7 @@ class BoneknitterTest extends BaseCardTest {
         harness.activateAbility(player1, index, 0, null, boneknitter.getId());
         harness.passBothPriorities();
 
-        assertThat(boneknitter.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(boneknitter.getId())).isEqualTo(1);
     }
 
     @Test

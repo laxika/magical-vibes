@@ -125,7 +125,7 @@ class FloralSpuzzemTest extends BaseCardTest {
     @DisplayName("Regeneration replaces destruction but the accepted choice still stops combat damage")
     void regeneratedArtifactStillStopsCombatDamage() {
         Permanent artifact = addDefenderArtifact();
-        artifact.setRegenerationShield(1);
+        gd.addRegenerationShields(artifact.getId(), 1);
         addAttacker();
         int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -134,7 +134,7 @@ class FloralSpuzzemTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
-        assertThat(artifact.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isZero();
         assertThat(artifact.isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore);
     }

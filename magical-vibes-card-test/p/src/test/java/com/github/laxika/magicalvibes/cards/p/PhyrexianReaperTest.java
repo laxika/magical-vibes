@@ -24,7 +24,7 @@ class PhyrexianReaperTest extends BaseCardTest {
         Permanent reaper = addCreatureReady(player1, new PhyrexianReaper());
         reaper.setAttacking(true);
         Permanent spider = addCreatureReady(player2, new GiantSpider());
-        spider.setRegenerationShield(1);
+        gd.addRegenerationShields(spider.getId(), 1);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -38,7 +38,7 @@ class PhyrexianReaperTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Giant Spider");
         harness.assertInGraveyard(player2, "Giant Spider");
-        assertThat(spider.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(spider.getId())).isEqualTo(1);
     }
 
     @Test
@@ -66,9 +66,9 @@ class PhyrexianReaperTest extends BaseCardTest {
         Permanent reaper = addCreatureReady(player1, new PhyrexianReaper());
         reaper.setAttacking(true);
         Permanent firstGreenBlocker = addCreatureReady(player2, new PincerSpider());
-        firstGreenBlocker.setRegenerationShield(1);
+        gd.addRegenerationShields(firstGreenBlocker.getId(), 1);
         Permanent secondGreenBlocker = addCreatureReady(player2, new PincerSpider());
-        secondGreenBlocker.setRegenerationShield(1);
+        gd.addRegenerationShields(secondGreenBlocker.getId(), 1);
         Permanent nonGreenBlocker = addCreatureReady(player2, new ZanamDjinn());
 
         prepareDeclareBlockers();
@@ -90,8 +90,8 @@ class PhyrexianReaperTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .filteredOn(card -> card.getName().equals("Pincer Spider"))
                 .hasSize(2);
-        assertThat(firstGreenBlocker.getRegenerationShield()).isEqualTo(1);
-        assertThat(secondGreenBlocker.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(firstGreenBlocker.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(secondGreenBlocker.getId())).isEqualTo(1);
     }
 
     @Test

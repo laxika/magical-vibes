@@ -79,7 +79,7 @@ class ObliterateTest extends BaseCardTest {
     @DisplayName("Destroyed creatures cannot be regenerated")
     void destroyedCreaturesCannotBeRegenerated() {
         var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         harness.castFromHand(player1, new Obliterate(), "{6}{R}{R}");
         harness.passBothPriorities();
@@ -126,7 +126,7 @@ class ObliterateTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player2, "Urborg Skeleton").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player2, "Urborg Skeleton").getId())).isEqualTo(1);
 
         harness.castFromHand(player1, new Obliterate(), "{6}{R}{R}");
         harness.passBothPriorities();

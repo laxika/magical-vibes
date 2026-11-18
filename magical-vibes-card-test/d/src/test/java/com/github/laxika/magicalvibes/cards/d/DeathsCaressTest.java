@@ -112,7 +112,7 @@ class DeathsCaressTest extends BaseCardTest {
     @Test
     void regeneratingHumanStillGrantsLife() {
         Permanent human = harness.addToBattlefieldAndReturn(player2, new GavonyIronwright());
-        human.setRegenerationShield(1);
+        gd.addRegenerationShields(human.getId(), 1);
         harness.setHand(player1, List.of(new DeathsCaress()));
         harness.addMana(player1, ManaColor.BLACK, 5);
         harness.setLife(player1, 20);
@@ -121,7 +121,7 @@ class DeathsCaressTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Gavony Ironwright");
         assertThat(human.isTapped()).isTrue();
-        assertThat(human.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(human.getId())).isZero();
         harness.assertLife(player1, 24);
     }
 

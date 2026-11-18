@@ -94,7 +94,7 @@ class GoForTheThroatTest extends BaseCardTest {
     @DisplayName("Go for the Throat allows regeneration")
     void allowsRegeneration() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new RotWolf());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         harness.setHand(player1, List.of(new GoForTheThroat()));
         harness.addMana(player1, ManaColor.BLACK, 2);

@@ -23,7 +23,7 @@ class MetathranZombieTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(zombie.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(zombie.getId())).isEqualTo(1);
         assertThat(zombie.isTapped()).isFalse();
     }
 
@@ -37,14 +37,14 @@ class MetathranZombieTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
 
-        assertThat(zombie.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(zombie.getId())).isZero();
     }
 
     @Test
     @DisplayName("A regeneration shield saves Metathran Zombie from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent zombie = addCreatureReady(player1, new MetathranZombie());
-        zombie.setRegenerationShield(1);
+        gd.addRegenerationShields(zombie.getId(), 1);
         zombie.setBlocking(true);
         zombie.addBlockingTarget(0);
 
@@ -54,7 +54,7 @@ class MetathranZombieTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Metathran Zombie");
-        assertThat(findPermanent(player1, "Metathran Zombie").getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Metathran Zombie").getId())).isZero();
     }
 
     @Test
@@ -84,7 +84,7 @@ class MetathranZombieTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(zombie.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(zombie.getId())).isEqualTo(1);
         assertThat(zombie.isTapped()).isTrue();
     }
 
@@ -99,7 +99,7 @@ class MetathranZombieTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(zombie.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(zombie.getId())).isEqualTo(2);
         assertThat(zombie.isTapped()).isFalse();
     }
 
@@ -120,7 +120,7 @@ class MetathranZombieTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Metathran Zombie");
         harness.assertNotInGraveyard(player1, "Metathran Zombie");
-        assertThat(zombie.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(zombie.getId())).isZero();
         assertThat(zombie.isTapped()).isTrue();
         assertThat(zombie.getMarkedDamage()).isZero();
         assertThat(zombie.isBlocking()).isFalse();

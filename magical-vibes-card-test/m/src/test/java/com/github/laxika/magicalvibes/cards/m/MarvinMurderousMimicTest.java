@@ -29,7 +29,7 @@ class MarvinMurderousMimicTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(marvin.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(marvin.getId())).isEqualTo(1);
     }
 
     @Test
@@ -64,7 +64,7 @@ class MarvinMurderousMimicTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, donor);
         harness.passBothPriorities();
 
-        assertThat(marvin.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(marvin.getId())).isEqualTo(1);
     }
 
     @Test

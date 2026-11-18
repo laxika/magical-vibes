@@ -29,7 +29,7 @@ class PanaceaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(2);
         assertThat(findPermanent(player1, "Panacea").isTapped()).isTrue();
     }
 
@@ -148,7 +148,7 @@ class PanaceaTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(bears.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isZero();
     }
 
     @Test

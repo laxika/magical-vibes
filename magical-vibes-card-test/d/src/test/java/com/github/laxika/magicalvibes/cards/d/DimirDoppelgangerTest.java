@@ -39,7 +39,7 @@ class DimirDoppelgangerTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(doppelganger), 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(doppelganger.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(doppelganger.getId())).isEqualTo(1);
     }
 
     @Test
@@ -130,7 +130,7 @@ class DimirDoppelgangerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(doppelganger),
                 0, null, null)).isInstanceOf(IllegalStateException.class);
-        assertThat(doppelganger.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(doppelganger.getId())).isZero();
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(firstTarget, secondTarget);
     }
 

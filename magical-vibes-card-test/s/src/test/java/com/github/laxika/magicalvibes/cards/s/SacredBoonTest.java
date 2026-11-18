@@ -47,7 +47,7 @@ class SacredBoonTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent bears = bears(player1);
-        assertThat(bears.getDamageToCounterPreventionShield()).isEqualTo(3);
+        assertThat(gd.sacredBoonShield(bears.getId())).isEqualTo(3);
     }
 
     @Test
@@ -67,7 +67,7 @@ class SacredBoonTest extends BaseCardTest {
 
         Permanent bears = bears(player1);
         // Prevented, so still alive; 1 of the 3 shield remains; no counters until end step.
-        assertThat(bears.getDamageToCounterPreventionShield()).isEqualTo(1);
+        assertThat(gd.sacredBoonShield(bears.getId())).isEqualTo(1);
         assertThat(bears.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isZero();
 
         advanceToEndStep(player1);
@@ -99,7 +99,7 @@ class SacredBoonTest extends BaseCardTest {
 
         // Defender took 2 prevented combat damage → survives, 1 shield remaining.
         Permanent survivor = bears(player2);
-        assertThat(survivor.getDamageToCounterPreventionShield()).isEqualTo(1);
+        assertThat(gd.sacredBoonShield(survivor.getId())).isEqualTo(1);
 
         advanceToEndStep(player1);
         resolveAllTriggers();
@@ -138,7 +138,7 @@ class SacredBoonTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, bear.getId());
         harness.castAndResolveInstant(player2, 0, bear.getId());
 
-        assertThat(bear.getDamageToCounterPreventionShield()).isZero();
+        assertThat(gd.sacredBoonShield(bear.getId())).isZero();
         assertThat(bear.getMarkedDamage()).isEqualTo(1);
 
         advanceToEndStep(player1);
@@ -162,7 +162,7 @@ class SacredBoonTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castAndResolveInstant(player2, 0, bear.getId());
 
-        assertThat(bear.getDamageToCounterPreventionShield()).isEqualTo(1);
+        assertThat(gd.sacredBoonShield(bear.getId())).isEqualTo(1);
 
         harness.setHand(player2, List.of(new ControlMagic()));
         harness.addMana(player2, ManaColor.BLUE, 4);
@@ -209,14 +209,14 @@ class SacredBoonTest extends BaseCardTest {
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castAndResolveInstant(player1, 0, targetId);
-        assertThat(bears(player1).getDamageToCounterPreventionShield()).isEqualTo(3);
+        assertThat(gd.sacredBoonShield(bears(player1).getId())).isEqualTo(3);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears(player1).getDamageToCounterPreventionShield()).isZero();
+        assertThat(gd.sacredBoonShield(bears(player1).getId())).isZero();
     }
 
     @Test
@@ -244,7 +244,7 @@ class SacredBoonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, bears)).isFalse();
-        assertThat(bears.getDamageToCounterPreventionShield()).isZero();
+        assertThat(gd.sacredBoonShield(bears.getId())).isZero();
     }
 
     @Test
@@ -323,7 +323,7 @@ class SacredBoonTest extends BaseCardTest {
 
         harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(bear.getDamageToCounterPreventionShield()).isZero();
+        assertThat(gd.sacredBoonShield(bear.getId())).isZero();
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 

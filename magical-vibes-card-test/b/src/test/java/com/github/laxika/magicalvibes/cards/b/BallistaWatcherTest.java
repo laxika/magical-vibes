@@ -117,7 +117,7 @@ class BallistaWatcherTest extends BaseCardTest {
     void preventedDamageDoesNotStopCreatureFromBlocking() {
         addTransformedWatcher(player1);
         Permanent target = addCreatureReady(player2, new DawnhartDisciple());
-        target.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(target.getId(), 1);
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, target.getId());

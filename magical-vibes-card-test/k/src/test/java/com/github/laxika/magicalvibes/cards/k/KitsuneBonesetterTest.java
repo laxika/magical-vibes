@@ -31,14 +31,14 @@ class KitsuneBonesetterTest extends BaseCardTest {
         harness.setHand(player2, List.of(new JiwariTheEarthAflame()));
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(3);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(3);
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.activateAbility(player2, 0, 3, target.getId());
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
 
@@ -60,7 +60,7 @@ class KitsuneBonesetterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
 
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
@@ -68,7 +68,7 @@ class KitsuneBonesetterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
 
@@ -90,7 +90,7 @@ class KitsuneBonesetterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test
@@ -106,7 +106,7 @@ class KitsuneBonesetterTest extends BaseCardTest {
                 null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(3);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(3);
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -114,7 +114,7 @@ class KitsuneBonesetterTest extends BaseCardTest {
                 3, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(target.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
@@ -138,7 +138,7 @@ class KitsuneBonesetterTest extends BaseCardTest {
                 4, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(target.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
@@ -159,7 +159,7 @@ class KitsuneBonesetterTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test

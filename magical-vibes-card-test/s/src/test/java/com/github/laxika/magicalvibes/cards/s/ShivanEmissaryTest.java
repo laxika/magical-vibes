@@ -54,7 +54,7 @@ class ShivanEmissaryTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
 
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         chooseTarget(target);
         harness.passBothPriorities();
 

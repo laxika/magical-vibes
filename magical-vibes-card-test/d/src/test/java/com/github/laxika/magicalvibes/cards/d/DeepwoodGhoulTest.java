@@ -22,13 +22,13 @@ class DeepwoodGhoulTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         harness.assertLife(player1, 18);
-        assertThat(ghoul.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ghoul.getId())).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
         harness.assertLife(player1, 18);
-        assertThat(ghoul.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ghoul.getId())).isEqualTo(1);
     }
 
     @Test
@@ -44,7 +44,7 @@ class DeepwoodGhoulTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 16);
-        assertThat(ghoul.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(ghoul.getId())).isEqualTo(2);
         assertThat(ghoul.isTapped()).isTrue();
     }
 
@@ -68,7 +68,7 @@ class DeepwoodGhoulTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Deepwood Ghoul");
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(ghoul.isTapped()).isTrue();
-        assertThat(ghoul.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ghoul.getId())).isZero();
         assertThat(ghoul.getMarkedDamage()).isZero();
         assertThat(ghoul.isBlocking()).isFalse();
         assertThat(ghoul.getBlockingTargets()).isEmpty();
@@ -84,7 +84,7 @@ class DeepwoodGhoulTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(ghoul.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ghoul.getId())).isEqualTo(1);
         assertThat(ghoul.isTapped()).isFalse();
     }
 
@@ -109,7 +109,7 @@ class DeepwoodGhoulTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(ghoul.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ghoul.getId())).isEqualTo(1);
         assertThat(ghoul.isTapped()).isFalse();
     }
 
@@ -118,7 +118,7 @@ class DeepwoodGhoulTest extends BaseCardTest {
     void regenerationSavesFromLethalCombatDamage() {
         // Deepwood Ghoul (2/1) with a regen shield blocks Grizzly Bears (2/2)
         Permanent ghoul = addCreatureReady(player1, new DeepwoodGhoul());
-        ghoul.setRegenerationShield(1);
+        gd.addRegenerationShields(ghoul.getId(), 1);
         ghoul.setBlocking(true);
         ghoul.addBlockingTarget(0);
 
@@ -130,7 +130,7 @@ class DeepwoodGhoulTest extends BaseCardTest {
         // Ghoul survives via regeneration, tapped, shield consumed
         harness.assertOnBattlefield(player1, "Deepwood Ghoul");
         assertThat(ghoul.isTapped()).isTrue();
-        assertThat(ghoul.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(ghoul.getId())).isEqualTo(0);
     }
 
     @Test

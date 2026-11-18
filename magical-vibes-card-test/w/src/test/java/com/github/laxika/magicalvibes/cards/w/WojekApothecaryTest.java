@@ -27,9 +27,9 @@ class WojekApothecaryTest extends BaseCardTest {
 
         activate(apothecary, target);
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
-        assertThat(matchingCreature.getDamagePreventionShield()).isEqualTo(1);
-        assertThat(differentColorCreature.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(matchingCreature.getId())).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(differentColorCreature.getId())).isZero();
     }
 
     @Test
@@ -60,9 +60,9 @@ class WojekApothecaryTest extends BaseCardTest {
 
         activate(apothecary, target);
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
-        assertThat(otherColorlessCreature.getDamagePreventionShield()).isZero();
-        assertThat(coloredCreature.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(otherColorlessCreature.getId())).isZero();
+        assertThat(gd.permanentDamagePreventionShield(coloredCreature.getId())).isZero();
     }
 
     @Test

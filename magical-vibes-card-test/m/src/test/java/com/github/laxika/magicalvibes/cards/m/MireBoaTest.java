@@ -58,7 +58,7 @@ class MireBoaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(boa.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(boa.getId())).isEqualTo(1);
     }
 
     @Test
@@ -81,7 +81,7 @@ class MireBoaTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(boa);
         assertThat(boa.isTapped()).isTrue();
         assertThat(boa.isAttacking()).isFalse();
-        assertThat(boa.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(boa.getId())).isZero();
         assertThat(boa.getMarkedDamage()).isZero();
     }
 
@@ -94,7 +94,7 @@ class MireBoaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(boa.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(boa.getId())).isEqualTo(1);
         assertThat(boa.isTapped()).isFalse();
         assertThat(boa.isAttacking()).isTrue();
     }
@@ -111,7 +111,7 @@ class MireBoaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(boa.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(boa.getId())).isEqualTo(1);
         assertThat(boa.isTapped()).isTrue();
     }
 
@@ -133,7 +133,7 @@ class MireBoaTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(boa);
-        assertThat(boa.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(boa.getId())).isEqualTo(1);
         assertThat(boa.getMarkedDamage()).isZero();
         assertThat(boa.isTapped()).isTrue();
         assertThat(boa.isAttacking()).isFalse();

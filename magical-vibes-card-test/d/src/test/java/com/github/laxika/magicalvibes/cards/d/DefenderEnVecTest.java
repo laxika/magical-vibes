@@ -62,7 +62,7 @@ class DefenderEnVecTest extends BaseCardTest {
         assertThat(defender.getCounterCount(CounterType.FADE)).isZero();
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(2);
 
         harness.activateAbility(player1, 1, null, target.getId());
         harness.passBothPriorities();

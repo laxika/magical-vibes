@@ -47,7 +47,7 @@ class BirthingHulkTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(hulk), 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(hulk.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(hulk.getId())).isEqualTo(1);
     }
 
     private void castAndResolve() {
@@ -70,7 +70,7 @@ class BirthingHulkTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(hulk), 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(hulk.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(hulk.getId())).isZero();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
     }
@@ -91,11 +91,11 @@ class BirthingHulkTest extends BaseCardTest {
 
         harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(hulk), 0, null, null);
-        assertThat(hulk.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(hulk.getId())).isZero();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(hulk.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(hulk.getId())).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
@@ -116,7 +116,7 @@ class BirthingHulkTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Birthing Hulk")).isSameAs(hulk);
         assertThat(hulk.isTapped()).isTrue();
         assertThat(hulk.getMarkedDamage()).isZero();
-        assertThat(hulk.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(hulk.getId())).isZero();
 
         hulk.setMarkedDamage(4);
         harness.runStateBasedActions();

@@ -25,14 +25,14 @@ class WolfirAvengerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(avenger.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(avenger.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Wolfir Avenger from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent avenger = addCreatureReady(player1, new WolfirAvenger());
-        avenger.setRegenerationShield(1);
+        gd.addRegenerationShields(avenger.getId(), 1);
         avenger.setBlocking(true);
         avenger.addBlockingTarget(0);
 
@@ -43,7 +43,7 @@ class WolfirAvengerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Wolfir Avenger");
         assertThat(avenger.isTapped()).isTrue();
-        assertThat(avenger.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(avenger.getId())).isEqualTo(0);
     }
 
     @Test
@@ -90,7 +90,7 @@ class WolfirAvengerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(avenger.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(avenger.getId())).isEqualTo(1);
     }
 
     @Test
@@ -116,7 +116,7 @@ class WolfirAvengerTest extends BaseCardTest {
         assertThat(avenger.isBlocking()).isFalse();
         assertThat(avenger.getBlockingTargets()).isEmpty();
         assertThat(avenger.getMarkedDamage()).isZero();
-        assertThat(avenger.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(avenger.getId())).isZero();
     }
 
     @Test
@@ -130,7 +130,7 @@ class WolfirAvengerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(avenger.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(avenger.getId())).isEqualTo(1);
         assertThat(avenger.isTapped()).isFalse();
         assertThat(avenger.getMarkedDamage()).isEqualTo(1);
     }

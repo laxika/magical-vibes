@@ -49,7 +49,7 @@ class SunfireBalmTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(creature.getMarkedDamage()).isZero();
-        assertThat(creature.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isZero();
     }
 
     @Test
@@ -69,7 +69,7 @@ class SunfireBalmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
-        assertThat(creature.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isZero();
         harness.assertInGraveyard(player1, "Sunfire Balm");
         harness.assertInHand(player1, "Glory Seeker");
     }

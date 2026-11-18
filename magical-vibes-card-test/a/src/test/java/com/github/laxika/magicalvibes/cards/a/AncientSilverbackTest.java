@@ -41,7 +41,7 @@ class AncientSilverbackTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent ape = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(ape.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ape.getId())).isEqualTo(1);
     }
 
     @Test
@@ -58,7 +58,7 @@ class AncientSilverbackTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves it from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent apePerm = addCreatureReady(player1, new AncientSilverback());
-        apePerm.setRegenerationShield(1);
+        gd.addRegenerationShields(apePerm.getId(), 1);
         apePerm.setBlocking(true);
         apePerm.addBlockingTarget(0);
 
@@ -69,7 +69,7 @@ class AncientSilverbackTest extends BaseCardTest {
 
         Permanent ape = findPermanent(player1, "Ancient Silverback");
         assertThat(ape.isTapped()).isTrue();
-        assertThat(ape.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(ape.getId())).isEqualTo(0);
         assertThat(ape.isBlocking()).isFalse();
     }
 
@@ -77,7 +77,7 @@ class AncientSilverbackTest extends BaseCardTest {
     @DisplayName("Nonlethal combat damage does not consume a regeneration shield")
     void nonlethalDamageDoesNotConsumeRegenerationShield() {
         Permanent apePerm = addCreatureReady(player1, new AncientSilverback());
-        apePerm.setRegenerationShield(1);
+        gd.addRegenerationShields(apePerm.getId(), 1);
         apePerm.setBlocking(true);
         apePerm.addBlockingTarget(0);
 
@@ -87,7 +87,7 @@ class AncientSilverbackTest extends BaseCardTest {
         resolveCombat(player2);
 
         Permanent ape = findPermanent(player1, "Ancient Silverback");
-        assertThat(ape.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ape.getId())).isEqualTo(1);
         assertThat(ape.getMarkedDamage()).isEqualTo(2);
     }
 
@@ -112,7 +112,7 @@ class AncientSilverbackTest extends BaseCardTest {
     void regenerationClearsMarkedDamage() {
         Permanent apePerm = addCreatureReady(player1, new AncientSilverback());
         apePerm.setMarkedDamage(4);
-        apePerm.setRegenerationShield(1);
+        gd.addRegenerationShields(apePerm.getId(), 1);
         apePerm.setBlocking(true);
         apePerm.addBlockingTarget(0);
 
@@ -150,7 +150,7 @@ class AncientSilverbackTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ape.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ape.getId())).isEqualTo(1);
         assertThat(ape.isTapped()).isTrue();
     }
 
@@ -164,7 +164,7 @@ class AncientSilverbackTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ape.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ape.getId())).isEqualTo(1);
         assertThat(ape.isTapped()).isFalse();
         assertThat(ape.getMarkedDamage()).isEqualTo(2);
     }
@@ -178,13 +178,13 @@ class AncientSilverbackTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(ape.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(ape.getId())).isEqualTo(2);
 
         ape.setMarkedDamage(5);
         harness.runStateBasedActions();
 
         harness.assertOnBattlefield(player1, "Ancient Silverback");
-        assertThat(ape.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ape.getId())).isEqualTo(1);
         assertThat(ape.getMarkedDamage()).isZero();
         assertThat(ape.isTapped()).isTrue();
 
@@ -192,7 +192,7 @@ class AncientSilverbackTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         harness.assertOnBattlefield(player1, "Ancient Silverback");
-        assertThat(ape.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ape.getId())).isZero();
         assertThat(ape.getMarkedDamage()).isZero();
 
         ape.setMarkedDamage(5);

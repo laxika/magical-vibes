@@ -103,7 +103,7 @@ class SnuffOutTest extends BaseCardTest {
     void cannotBeRegenerated() {
         harness.addToBattlefield(player1, new Swamp());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setHand(player1, List.of(new SnuffOut()));
         harness.setLife(player1, 20);
 

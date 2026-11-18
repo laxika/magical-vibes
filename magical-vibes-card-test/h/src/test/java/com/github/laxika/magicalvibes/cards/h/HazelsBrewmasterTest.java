@@ -44,7 +44,7 @@ class HazelsBrewmasterTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(food), 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(food.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(food.getId())).isEqualTo(1);
     }
 
     @Test

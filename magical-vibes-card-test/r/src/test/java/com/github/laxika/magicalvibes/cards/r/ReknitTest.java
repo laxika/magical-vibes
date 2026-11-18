@@ -30,7 +30,7 @@ class ReknitTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
     }
 
     @Test
@@ -44,7 +44,7 @@ class ReknitTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, fountainId);
 
         Permanent fountain = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(fountain.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(fountain.getId())).isEqualTo(1);
     }
 
     @Test
@@ -58,7 +58,7 @@ class ReknitTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
     }
     @Test
     @DisplayName("Reknit protects an opponent's artifact only from the next destruction")
@@ -71,14 +71,14 @@ class ReknitTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, flask.getId());
 
         assertThat(flask.isTapped()).isFalse();
-        assertThat(flask.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(flask.getId())).isEqualTo(1);
 
         harness.castAndResolveInstant(player1, 0, flask.getId());
 
         harness.assertOnBattlefield(player2, "Elsewhere Flask");
         harness.assertNotInGraveyard(player2, "Elsewhere Flask");
         assertThat(flask.isTapped()).isTrue();
-        assertThat(flask.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(flask.getId())).isZero();
         harness.assertLife(player2, 17);
 
         harness.castAndResolveInstant(player1, 0, flask.getId());

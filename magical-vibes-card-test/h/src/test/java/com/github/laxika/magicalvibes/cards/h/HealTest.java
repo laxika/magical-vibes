@@ -31,7 +31,7 @@ class HealTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -88,7 +88,7 @@ class HealTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
-        assertThat(bears.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isZero();
     }
 
     @Test
@@ -122,7 +122,7 @@ class HealTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.ensurePriority(player2);
-        assertThat(findPermanent(player2, "Grizzly Bears").getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(findPermanent(player2, "Grizzly Bears").getId())).isZero();
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 

@@ -62,7 +62,7 @@ class PorphyryNodesTest extends BaseCardTest {
     @DisplayName("The destroyed creature cannot be regenerated")
     void destroyedCreatureCannotBeRegenerated() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new SaltfieldRecluse());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
         harness.addToBattlefield(player1, new PorphyryNodes());
 
         advanceToUpkeep(player1);

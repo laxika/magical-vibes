@@ -60,7 +60,7 @@ class NaturesClaimTest extends BaseCardTest {
         harness.setLife(player2, 15);
         harness.setHand(player1, List.of(new NaturesClaim()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.getGameData().playerBattlefields.get(player2.getId()).getFirst().setRegenerationShield(1);
+        gd.addRegenerationShields(harness.getGameData().playerBattlefields.get(player2.getId()).getFirst().getId(), 1);
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Everflowing Chalice"));
 

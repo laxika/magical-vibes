@@ -136,7 +136,7 @@ class ClosingStatementTest extends BaseCardTest {
     @Test
     void omittedCounterTargetDoesNotReceiveCounterAfterRegeneration() {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        opponentCreature.setRegenerationShield(1);
+        gd.addRegenerationShields(opponentCreature.getId(), 1);
         prepareForReducedCast();
 
         harness.castInstant(player1, 0, opponentCreature.getId());

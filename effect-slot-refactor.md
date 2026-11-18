@@ -788,6 +788,13 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Open: Primal Clay's chosen form is copiable (ruling 2021-03-19) and still isn't; "except it has haste" token copies (CR 707.9b) likewise.
 - Left: P/T modifiers and base P/T overrides; until-end-of-turn keywords; protection; abilities and text changes; shields; part 3's phasing item; then step 6.
 
+**D (part 14: a permanent's shields).**
+- `onPermanent` floating effects, one per grant, until end of turn: "prevent the next N" and Temper (`DamagePreventionShield`, renamed from the player payload, `plusOneCounters`; player and global queries skip permanent shields), Brace for Impact and Gatta and Luzzu (the `PreventDamageEffect` with its scope), Kill-Suit Cultist and Pyramids (the resolving effect is the shield, `GameData.useOldestEffectOnPermanent`), regeneration (`RegenerationShield` with its rider; a rider's delayed ability is the effect controller's, CR 603.7e). Sacred Boon reads its `PreventedDamageCounterShield`. Gone: 14 `Permanent` fields, their `EndOfTurnStateField`s, `Kind.SHIELD`, the cleanup resets.
+- Moments: used up where damage or destruction uses them, else at cleanup (CR 514.2), as the fields were. A shield on a permanent that left ends at cleanup, not as it leaves; it applies to no object (CR 400.7).
+- Ledger (787 card test classes, route tests): only `floating began|ended` lines added; trigger lines differ only by the route fixture's random draws.
+- Open: the choice among a permanent's prevention steps and regeneration riders is still a fixed order (CR 616.1: its controller chooses); Matopi Golem's -1/-1 trigger is the permanent's current controller's, not the activator's (CR 603.7e); `onPermanent` effects don't end as their permanent leaves.
+- Left: P/T modifiers and base P/T overrides; until-end-of-turn keywords; protection; abilities and text changes; part 3's phasing item; then step 6.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

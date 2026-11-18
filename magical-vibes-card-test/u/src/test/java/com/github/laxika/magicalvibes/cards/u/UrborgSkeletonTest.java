@@ -60,7 +60,7 @@ class UrborgSkeletonTest extends BaseCardTest {
 
         Permanent skeleton = findPermanent(player1, "Urborg Skeleton");
         assertThat(skeleton).isNotNull();
-        assertThat(skeleton.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isZero();
     }
 
     @Test
@@ -72,7 +72,7 @@ class UrborgSkeletonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(skeleton.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isEqualTo(1);
         assertThat(skeleton.isTapped()).isFalse();
     }
 
@@ -118,7 +118,7 @@ class UrborgSkeletonTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, skeleton.getId());
 
         assertThat(skeleton.getMarkedDamage()).isEqualTo(1);
-        assertThat(skeleton.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isEqualTo(1);
         assertThat(skeleton.isTapped()).isFalse();
 
         harness.castAndResolveInstant(player1, 0, skeleton.getId());
@@ -126,7 +126,7 @@ class UrborgSkeletonTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Urborg Skeleton");
         assertThat(skeleton.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(skeleton.getMarkedDamage()).isZero();
-        assertThat(skeleton.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isZero();
         assertThat(skeleton.isTapped()).isTrue();
     }
 }

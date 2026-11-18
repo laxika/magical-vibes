@@ -98,7 +98,7 @@ class VarolzTheScarStripedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(varolz.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(varolz.getId())).isEqualTo(1);
     }
 
     @Test
@@ -110,14 +110,14 @@ class VarolzTheScarStripedTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.assertOnBattlefield(player1, "Varolz, the Scar-Striped");
-        assertThat(varolz.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(varolz.getId())).isEqualTo(0);
     }
 
     @Test
     @DisplayName("The regeneration shield saves Varolz from lethal combat damage")
     void regenerationSavesFromLethalDamage() {
         Permanent varolz = addVarolz();
-        varolz.setRegenerationShield(1);
+        gd.addRegenerationShields(varolz.getId(), 1);
         varolz.setBlocking(true);
         varolz.addBlockingTarget(0);
 
@@ -128,7 +128,7 @@ class VarolzTheScarStripedTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Varolz, the Scar-Striped");
         assertThat(varolz.isTapped()).isTrue();
-        assertThat(varolz.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(varolz.getId())).isEqualTo(0);
     }
 
     @Test

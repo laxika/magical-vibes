@@ -37,8 +37,6 @@ public class PreventNextDamageToTargetAndAddToughnessCountersEffectHandler imple
         UUID targetId = entry.getTargetId();
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target != null) {
-            target.setDamageToCounterPreventionShield(
-                    target.getDamageToCounterPreventionShield() + prevent.amount());
             boolean creature = gameQueryService.isCreature(gameData, target);
             UUID shieldId = gameData.registerSacredBoonShield(entry.getCard().getName(), entry.getControllerId(),
                     target.getId(), prevent.amount(), creature);

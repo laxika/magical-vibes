@@ -43,7 +43,7 @@ class RageOfPurphorosTest extends BaseCardTest {
     @DisplayName("Lethal damage cannot be stopped by regeneration")
     void lethalDamageCannotBeRegenerated() {
         Permanent target = addCreatureReady(player2, new AirElemental());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castRage(target);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));

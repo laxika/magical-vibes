@@ -38,7 +38,7 @@ class AscendedLawmageTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, lawmage.getId());
 
-        assertThat(lawmage.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(lawmage.getId())).isEqualTo(1);
     }
 
     @Test

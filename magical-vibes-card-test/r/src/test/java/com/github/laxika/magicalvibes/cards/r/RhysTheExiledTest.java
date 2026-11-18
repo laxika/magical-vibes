@@ -72,7 +72,7 @@ class RhysTheExiledTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Elvish Warrior");
-        assertThat(rhys.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(rhys.getId())).isEqualTo(1);
     }
 
     @Test
@@ -155,7 +155,7 @@ class RhysTheExiledTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Prowess of the Fair");
-        assertThat(rhys.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(rhys.getId())).isEqualTo(1);
     }
 
     @Test

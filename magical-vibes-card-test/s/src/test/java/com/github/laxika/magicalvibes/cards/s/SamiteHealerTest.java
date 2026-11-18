@@ -97,7 +97,7 @@ class SamiteHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
         assertThat(gd.globalDamagePreventionShield()).isZero();
     }
 
@@ -131,7 +131,7 @@ class SamiteHealerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
-        assertThat(blocker.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(blocker.getId())).isZero();
     }
 
     @Test
@@ -188,7 +188,7 @@ class SamiteHealerTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test
@@ -331,13 +331,13 @@ class SamiteHealerTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test

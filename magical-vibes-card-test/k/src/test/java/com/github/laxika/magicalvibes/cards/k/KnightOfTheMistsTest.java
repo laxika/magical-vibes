@@ -125,7 +125,7 @@ class KnightOfTheMistsTest extends BaseCardTest {
     void destructionCannotBeRegenerated() {
         harness.addToBattlefield(player2, new KnightOfValor());
         Permanent target = findPermanent(player2, "Knight of Valor");
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castKnightOfTheMists();
         harness.handlePermanentChosen(player1, target.getId());

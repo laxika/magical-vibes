@@ -141,7 +141,7 @@ class ExtinctionTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(troll);
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         harness.assertNotInGraveyard(player1, "Skyshroud Troll");
         harness.assertInGraveyard(player2, "Skyshroud Troll");

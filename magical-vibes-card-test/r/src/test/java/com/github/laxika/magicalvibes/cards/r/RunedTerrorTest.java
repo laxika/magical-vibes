@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.RegenerationShield;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 import com.github.laxika.magicalvibes.model.effect.OutsideGamePlayPermissionEffect;
@@ -112,6 +113,7 @@ import java.util.UUID;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
 
+import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextMatchingSpellEffect;
@@ -285,13 +287,13 @@ class RunedTerrorTest extends BaseCardTest {
         gs.advanceStep(gd);
         harness.activateAbility(player2, 0, null, terror.getId());
         harness.passBothPriorities();
-        assertThat(terror.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(terror.getId())).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(terror.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(terror.getId())).isEqualTo(1);
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(terror.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(terror.getId())).isZero();
     }
 
     @Test
@@ -303,11 +305,11 @@ class RunedTerrorTest extends BaseCardTest {
         gs.advanceStep(gd);
         harness.activateAbility(player2, 0, null, terror.getId());
         harness.passBothPriorities();
-        terror.setDamagePreventionShield(0);
+        gd.usePermanentDamagePreventionShields(terror.getId(), false, 1);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(terror.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(terror.getId())).isZero();
     }
 
     @Test
@@ -502,8 +504,10 @@ class RunedTerrorTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, terror.getId());
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(terror.getRegenerationShield()).isEqualTo(1);
-        assertThat(terror.getGainControlRegenerationShields()).containsExactly(player2.getId());
+        assertThat(gd.regenerationShieldCount(terror.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShields(terror.getId()))
+                .extracting(shield -> ((RegenerationShield) shield.effect()).rider(), FloatingContinuousEffect::controllerId)
+                .containsExactly(tuple(RegenerationShield.Rider.GAIN_CONTROL, player2.getId()));
 
         terror.setMarkedDamage(100);
         harness.runStateBasedActions();
@@ -523,8 +527,8 @@ class RunedTerrorTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
         harness.passUntil(player2, TurnStep.CLEANUP);
 
-        assertThat(terror.getRegenerationShield()).isZero();
-        assertThat(terror.getGainControlRegenerationShields()).isEmpty();
+        assertThat(gd.regenerationShieldCount(terror.getId())).isZero();
+        assertThat(gd.regenerationShields(terror.getId())).isEmpty();
     }
 
     @Test
@@ -538,18 +542,18 @@ class RunedTerrorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
-        assertThat(scavengers.getPlusOnePlusOneCounterRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShields(scavengers.getId()))
+                .extracting(shield -> ((RegenerationShield) shield.effect()).rider())
+                .containsExactly(RegenerationShield.Rider.PLUS_ONE_COUNTER);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(scavengers.getRegenerationShield()).isEqualTo(1);
-        assertThat(scavengers.getPlusOnePlusOneCounterRegenerationShield()).isEqualTo(1);
-        assertThat(scavengers.getPlusOnePlusOneCounterRegenerationShieldControllers())
-                .containsExactly(player2.getId());
+        assertThat(gd.regenerationShieldCount(scavengers.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShields(scavengers.getId()))
+                .extracting(shield -> ((RegenerationShield) shield.effect()).rider(), FloatingContinuousEffect::controllerId)
+                .containsExactly(tuple(RegenerationShield.Rider.PLUS_ONE_COUNTER, player2.getId()));
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(scavengers.getRegenerationShield()).isZero();
-        assertThat(scavengers.getPlusOnePlusOneCounterRegenerationShield()).isZero();
-        assertThat(scavengers.getPlusOnePlusOneCounterRegenerationShieldControllers()).isEmpty();
+        assertThat(gd.regenerationShieldCount(scavengers.getId())).isZero();
     }
 
     @Test
@@ -562,18 +566,18 @@ class RunedTerrorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.activateAbility(player2, 0, null, player1.getId());
         harness.passBothPriorities();
-        assertThat(sentry.getOpponentDrawRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShields(sentry.getId()))
+                .extracting(shield -> ((RegenerationShield) shield.effect()).rider())
+                .containsExactly(RegenerationShield.Rider.OPPONENT_DRAW);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(sentry.getRegenerationShield()).isEqualTo(1);
-        assertThat(sentry.getOpponentDrawRegenerationShield()).isEqualTo(1);
-        assertThat(sentry.getOpponentDrawRegenerationShieldRecipients()).containsExactly(player1.getId());
-        assertThat(sentry.getOpponentDrawRegenerationShieldControllers()).containsExactly(player2.getId());
+        assertThat(gd.regenerationShieldCount(sentry.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShields(sentry.getId()))
+                .extracting(shield -> ((RegenerationShield) shield.effect()).playerId(), FloatingContinuousEffect::controllerId)
+                .containsExactly(tuple(player1.getId(), player2.getId()));
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(sentry.getOpponentDrawRegenerationShield()).isZero();
-        assertThat(sentry.getOpponentDrawRegenerationShieldRecipients()).isEmpty();
-        assertThat(sentry.getOpponentDrawRegenerationShieldControllers()).isEmpty();
+        assertThat(gd.regenerationShields(sentry.getId())).isEmpty();
     }
 
     @Test

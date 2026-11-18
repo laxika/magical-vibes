@@ -58,7 +58,7 @@ class ShatterstormTest extends BaseCardTest {
     @DisplayName("Artifacts destroyed by Shatterstorm cannot be regenerated")
     void ignoresRegenerationShields() {
         Permanent ornithopter = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
-        ornithopter.setRegenerationShield(2);
+        gd.addRegenerationShields(ornithopter.getId(), 2);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

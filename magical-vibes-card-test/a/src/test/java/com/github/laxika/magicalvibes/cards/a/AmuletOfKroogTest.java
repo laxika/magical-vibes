@@ -34,7 +34,7 @@ class AmuletOfKroogTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -81,7 +81,7 @@ class AmuletOfKroogTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(wurm);
         assertThat(wurm.getMarkedDamage()).isEqualTo(2);
-        assertThat(wurm.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(wurm.getId())).isZero();
     }
 
     @Test

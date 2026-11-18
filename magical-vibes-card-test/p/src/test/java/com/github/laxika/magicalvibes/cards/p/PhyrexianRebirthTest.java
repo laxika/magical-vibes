@@ -137,7 +137,7 @@ class PhyrexianRebirthTest extends BaseCardTest {
     void regeneratedCreaturesNotCounted() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent regenerated = gd.playerBattlefields.get(player1.getId()).getFirst();
-        regenerated.setRegenerationShield(1);
+        gd.addRegenerationShields(regenerated.getId(), 1);
         harness.addToBattlefield(player2, new SerraAngel());
         harness.setHand(player1, List.of(new PhyrexianRebirth()));
         harness.addMana(player1, ManaColor.WHITE, 6);

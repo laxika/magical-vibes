@@ -72,8 +72,8 @@ class CarbonizeTest extends BaseCardTest {
     @DisplayName("Prevents regeneration even when Carbonize damage is prevented")
     void preventsRegenerationWhenDamageIsPrevented() {
         Permanent skeleton = addCreatureReady(player2, new DrudgeSkeletons());
-        skeleton.setRegenerationShield(1);
-        skeleton.setDamagePreventionShield(3);
+        gd.addRegenerationShields(skeleton.getId(), 1);
+        gd.addPermanentDamagePreventionShield(skeleton.getId(), 3);
 
         harness.setHand(player1, List.of(new Carbonize()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -116,7 +116,7 @@ class CarbonizeTest extends BaseCardTest {
     void redirectedDamageDoesNotPreventRecipientRegeneration() {
         Permanent shaman = harness.addToBattlefieldAndReturn(player2, new ShamanEnKor());
         Permanent skeleton = harness.addToBattlefieldAndReturn(player2, new DrudgeSkeletons());
-        skeleton.setRegenerationShield(1);
+        gd.addRegenerationShields(skeleton.getId(), 1);
         harness.activateAbility(player2, 0, null, skeleton.getId());
         harness.passBothPriorities();
 
@@ -135,7 +135,7 @@ class CarbonizeTest extends BaseCardTest {
     @DisplayName("Carbonize's exile replacement expires at the end of the turn")
     void exileReplacementExpiresAtEndOfTurn() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setDamagePreventionShield(3);
+        gd.addPermanentDamagePreventionShield(bears.getId(), 3);
         harness.setHand(player1, List.of(new Carbonize()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castAndResolveInstant(player1, 0, bears.getId());

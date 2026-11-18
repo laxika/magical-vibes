@@ -22,7 +22,7 @@ class TheAbyssTest extends BaseCardTest {
         Permanent controllerCreature = harness.addToBattlefieldAndReturn(player1, new KoboldsOfKherKeep());
         Permanent activeCreature = harness.addToBattlefieldAndReturn(player2, new KoboldsOfKherKeep());
         Permanent activeArtifactCreature = harness.addToBattlefieldAndReturn(player2, new CoalGolem());
-        activeCreature.setRegenerationShield(1);
+        gd.addRegenerationShields(activeCreature.getId(), 1);
 
         advanceToUpkeep(player2);
 

@@ -43,7 +43,7 @@ class KorlashHeirToBlackbladeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(korlash.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(korlash.getId())).isEqualTo(1);
     }
 
     @Test
@@ -179,7 +179,7 @@ class KorlashHeirToBlackbladeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(korlash.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(korlash.getId())).isEqualTo(1);
 
         gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Swamp"));
         harness.runStateBasedActions();

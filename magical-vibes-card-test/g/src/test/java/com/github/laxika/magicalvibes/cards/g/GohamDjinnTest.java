@@ -127,7 +127,7 @@ class GohamDjinnTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(goham.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(goham.getId())).isEqualTo(1);
     }
 
     @Test
@@ -164,7 +164,7 @@ class GohamDjinnTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(goham.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(goham.getId())).isEqualTo(1);
         assertThat(goham.isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Goham Djinn");
     }
@@ -187,7 +187,7 @@ class GohamDjinnTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Goham Djinn");
         assertThat(goham.isTapped()).isTrue();
-        assertThat(goham.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(goham.getId())).isZero();
     }
 
     private Permanent addGohamDjinn() {

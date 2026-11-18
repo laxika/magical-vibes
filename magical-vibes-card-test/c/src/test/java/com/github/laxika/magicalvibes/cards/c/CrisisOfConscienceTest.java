@@ -144,7 +144,7 @@ class CrisisOfConscienceTest extends BaseCardTest {
         Card protectedCard = modeIndex == 0 ? newToken() : new GrizzlyBears();
         Card unprotectedCard = modeIndex == 0 ? newToken() : new GrizzlyBears();
         Permanent protectedPermanent = harness.addToBattlefieldAndReturn(player1, protectedCard);
-        protectedPermanent.setRegenerationShield(1);
+        gd.addRegenerationShields(protectedPermanent.getId(), 1);
         harness.addToBattlefield(player2, unprotectedCard);
 
         cast(modeIndex);
@@ -152,7 +152,7 @@ class CrisisOfConscienceTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, protectedCard.getName());
         harness.assertNotOnBattlefield(player2, unprotectedCard.getName());
         assertThat(protectedPermanent.isTapped()).isTrue();
-        assertThat(protectedPermanent.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(protectedPermanent.getId())).isZero();
     }
 
     private Card newToken() {

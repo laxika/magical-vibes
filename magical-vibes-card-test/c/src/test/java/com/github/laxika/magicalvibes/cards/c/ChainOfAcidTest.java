@@ -148,13 +148,13 @@ class ChainOfAcidTest extends BaseCardTest {
     @DisplayName("Regeneration saves the target without preventing its controller from copying")
     void regeneratedTargetStillOffersCopy() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         castAt(target.getId());
 
         harness.assertOnBattlefield(player2, "Forest");
         harness.assertNotInGraveyard(player2, "Forest");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
 

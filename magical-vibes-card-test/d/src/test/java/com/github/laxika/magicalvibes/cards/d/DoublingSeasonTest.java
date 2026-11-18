@@ -70,7 +70,7 @@ class DoublingSeasonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(troll.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test

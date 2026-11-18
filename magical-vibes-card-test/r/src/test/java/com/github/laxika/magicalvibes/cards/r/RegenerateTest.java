@@ -52,7 +52,7 @@ class RegenerateTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
     }
 
     @Test
@@ -78,7 +78,7 @@ class RegenerateTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Runeclaw Bear");
         Permanent survivedBear = findPermanent(player1, "Runeclaw Bear");
         assertThat(survivedBear.isTapped()).isTrue();
-        assertThat(survivedBear.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(survivedBear.getId())).isEqualTo(0);
         assertThat(survivedBear.getMarkedDamage()).isZero();
         assertThat(survivedBear.isBlocking()).isFalse();
         assertThat(survivedBear.getBlockingTargets()).isEmpty();
@@ -95,7 +95,7 @@ class RegenerateTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
     }
 
     @Test
@@ -151,7 +151,7 @@ class RegenerateTest extends BaseCardTest {
 
         assertThat(bear.isTapped()).isFalse();
         assertThat(bear.getMarkedDamage()).isEqualTo(1);
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
     }
 
     @Test
@@ -167,7 +167,7 @@ class RegenerateTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Runeclaw Bear");
         assertThat(bear.isTapped()).isTrue();
-        assertThat(bear.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
 
         harness.castAndResolveInstant(player2, 0, bear.getId());
 
@@ -181,12 +181,12 @@ class RegenerateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Regenerate()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castAndResolveInstant(player1, 0, bear.getId());
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
     }
 }

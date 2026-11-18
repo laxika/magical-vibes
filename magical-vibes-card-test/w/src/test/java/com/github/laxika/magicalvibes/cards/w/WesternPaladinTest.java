@@ -267,7 +267,7 @@ class WesternPaladinTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Glory Seeker");
         harness.assertNotInGraveyard(player2, "Glory Seeker");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 
     private Permanent setupPaladin(int blackMana) {

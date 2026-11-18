@@ -85,7 +85,7 @@ class PublicExecutionTest extends BaseCardTest {
     @DisplayName("A regenerating target is excluded from the power reduction")
     void regeneratingTargetIsExcluded() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         harness.setHand(player1, List.of(new PublicExecution()));
         harness.addMana(player1, ManaColor.BLACK, 6);

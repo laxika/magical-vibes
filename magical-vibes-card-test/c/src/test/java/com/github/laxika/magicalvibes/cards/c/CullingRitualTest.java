@@ -82,7 +82,7 @@ class CullingRitualTest extends BaseCardTest {
     @DisplayName("Regeneration saves a matching creature without contributing mana")
     void regeneratedPermanentDoesNotCount() {
         var bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         harness.castFromHand(player1, new CullingRitual(), "{2}{B}{G}");
         harness.passBothPriorities();
@@ -90,7 +90,7 @@ class CullingRitualTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

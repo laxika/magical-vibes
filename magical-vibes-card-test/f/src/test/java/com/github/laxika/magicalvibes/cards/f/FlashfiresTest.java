@@ -82,7 +82,7 @@ class FlashfiresTest extends BaseCardTest {
     @DisplayName("Regeneration shields save Plains from Flashfires")
     void regenerationShieldsSavePlains() {
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
-        plains.setRegenerationShield(1);
+        gd.addRegenerationShields(plains.getId(), 1);
 
         castFlashfiresAndResolve();
 
@@ -105,7 +105,7 @@ class FlashfiresTest extends BaseCardTest {
         Permanent indestructible = harness.addToBattlefieldAndReturn(player1, new Plains());
         indestructible.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
         Permanent regenerating = harness.addToBattlefieldAndReturn(player2, new Plains());
-        regenerating.setRegenerationShield(1);
+        gd.addRegenerationShields(regenerating.getId(), 1);
         harness.addToBattlefield(player1, new Plateau());
         harness.addToBattlefield(player2, new Plateau());
         harness.addToBattlefield(player2, new Island());
@@ -117,7 +117,7 @@ class FlashfiresTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Plains");
         harness.assertNotInGraveyard(player2, "Plains");
         assertThat(regenerating.isTapped()).isTrue();
-        assertThat(regenerating.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(regenerating.getId())).isZero();
         harness.assertNotOnBattlefield(player1, "Plateau");
         harness.assertNotOnBattlefield(player2, "Plateau");
         harness.assertInGraveyard(player1, "Plateau");

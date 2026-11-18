@@ -21,7 +21,7 @@ class SkinthinnerTest extends BaseCardTest {
     @Test
     void turningFaceUpDestroysTargetNonblackCreatureWithoutRegeneration() {
         Permanent wizard = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
-        wizard.setRegenerationShield(1);
+        gd.addRegenerationShields(wizard.getId(), 1);
         Permanent skinthinner = castFaceDown();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLACK, 2);

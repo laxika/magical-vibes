@@ -60,7 +60,7 @@ class UltimatePriceTest extends BaseCardTest {
     @DisplayName("A regeneration shield saves the creature — destruction is not regeneration-proof")
     void regenerationShieldSavesTheCreature() {
         Permanent mono = addCreature(player2, "Mono Creature", CardColor.BLACK, null);
-        mono.setRegenerationShield(1);
+        gd.addRegenerationShields(mono.getId(), 1);
 
         castPrice(mono);
 

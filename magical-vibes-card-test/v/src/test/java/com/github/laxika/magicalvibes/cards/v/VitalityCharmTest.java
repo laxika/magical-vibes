@@ -76,7 +76,7 @@ class VitalityCharmTest extends BaseCardTest {
         harness.castInstant(player1, 0, 2, beast.getId());
         harness.passBothPriorities();
 
-        assertThat(beast.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(beast.getId())).isEqualTo(1);
     }
 
     @Test
@@ -106,7 +106,7 @@ class VitalityCharmTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Barkhide Mauler");
         assertThat(beast.isTapped()).isTrue();
         assertThat(beast.getMarkedDamage()).isZero();
-        assertThat(beast.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(beast.getId())).isZero();
 
         harness.castAndResolveInstant(player1, 0, beast.getId());
         harness.castAndResolveInstant(player1, 0, beast.getId());
@@ -128,7 +128,7 @@ class VitalityCharmTest extends BaseCardTest {
         assertThat(gqs.hasEffectiveSubtype(gd, beast, CardSubtype.BEAST)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(beast.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(beast.getId())).isZero();
         harness.assertInGraveyard(player1, "Vitality Charm");
     }
 
@@ -152,6 +152,6 @@ class VitalityCharmTest extends BaseCardTest {
         harness.castInstant(player1, 0, 2, aura.getId());
         harness.passBothPriorities();
 
-        assertThat(aura.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(aura.getId())).isEqualTo(1);
     }
 }

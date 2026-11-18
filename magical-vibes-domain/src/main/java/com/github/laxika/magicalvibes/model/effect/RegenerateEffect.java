@@ -1,20 +1,19 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Grants a regeneration shield (CR 701.15).
+ * Grants a regeneration shield (CR 701.19a): a floating {@code RegenerationShield} on the permanent until end of turn.
  * <p>
  * {@code opponentMayDrawOnRegenerate} is Soldevi Sentry's rider: "When it regenerates this way, that
  * player may draw a card." The draw is owed only when the shield is actually spent, so it rides on
- * the shield ({@code Permanent.opponentDrawRegenerationShield}) rather than resolving with the
+ * the shield (rider {@code OPPONENT_DRAW}, naming the opponent) rather than resolving with the
  * ability — a sibling {@code TargetOpponentMayDrawCardEffect} would hand over the card even if the
  * creature never regenerated.
  * <p>
  * {@code putMinusOneCounterOnRegenerate} is Matopi Golem's rider: "When it regenerates this way,
- * put a -1/-1 counter on it." Same shield-tagging pattern
- * ({@code Permanent.minusOneCounterRegenerationShield}).
+ * put a -1/-1 counter on it." Same shield-tagging pattern (rider {@code MINUS_ONE_COUNTER}).
  * <p>
  * {@code putPlusOnePlusOneCounterOnRegenerate} is Skeleton Scavengers' rider: "When it regenerates
- * this way, put a +1/+1 counter on it." Same shield-tagging pattern.
+ * this way, put a +1/+1 counter on it." Same shield-tagging pattern (rider {@code PLUS_ONE_COUNTER}).
  * <p>
  * {@code regeneratesEnchantedCreature} is for an ability that regenerates the creature the source is
  * attached to even though the source is not necessarily an Aura right now — Nurturing Licid keeps
@@ -23,8 +22,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * redirects a self-targeting regenerate on an Aura or Equipment to the attached creature.
  * <p>
  * {@code gainControlOnRegenerate} is Debt of Loyalty's rider: "You gain control of that creature if
- * it regenerates this way." Same shield-tagging pattern, except the shield remembers who granted it
- * ({@code Permanent.gainControlRegenerationShields}) so control goes to this spell's controller.
+ * it regenerates this way." Same shield-tagging pattern (rider {@code GAIN_CONTROL}); control goes to the
+ * shield's controller, this spell's controller.
  */
 public record RegenerateEffect(
         boolean targetsPermanent,

@@ -89,7 +89,7 @@ class SavageThallidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -138,7 +138,7 @@ class SavageThallidTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, thallid.getId());
 
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
-        assertThat(thallid.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(thallid.getId())).isZero();
         harness.passBothPriorities();
         assertThat(thallid.isTapped()).isFalse();
 
@@ -149,7 +149,7 @@ class SavageThallidTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(thallid);
         assertThat(thallid.isTapped()).isTrue();
-        assertThat(thallid.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(thallid.getId())).isZero();
         assertThat(thallid.getMarkedDamage()).isZero();
         harness.assertNotInGraveyard(player1, "Savage Thallid");
     }
@@ -166,7 +166,7 @@ class SavageThallidTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, thallid.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(findPermanents(player2, "Saproling")).hasSize(1);
-        assertThat(thallid.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(thallid.getId())).isZero();
     }
 
     @Test

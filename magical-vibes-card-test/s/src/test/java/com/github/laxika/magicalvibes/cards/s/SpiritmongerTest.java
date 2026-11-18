@@ -59,7 +59,7 @@ class SpiritmongerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(monger.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(monger.getId())).isEqualTo(1);
     }
 
     @Test
@@ -99,7 +99,7 @@ class SpiritmongerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Spiritmonger");
         harness.assertNotInGraveyard(player1, "Spiritmonger");
         harness.assertInGraveyard(player2, "Spiritmonger");
-        assertThat(monger.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(monger.getId())).isZero();
         assertThat(monger.isTapped()).isTrue();
         assertThat(monger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -159,12 +159,12 @@ class SpiritmongerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
-        assertThat(monger.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(monger.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(monger.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(monger.getId())).isZero();
     }
 }

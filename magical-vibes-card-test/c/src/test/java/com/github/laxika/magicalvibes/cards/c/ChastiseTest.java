@@ -78,7 +78,7 @@ class ChastiseTest extends BaseCardTest {
     void gainsLifeWhenTargetRegenerates() {
         harness.setLife(player2, 15);
         Permanent attacker = addAttacker(player1);
-        attacker.setRegenerationShield(1);
+        gd.addRegenerationShields(attacker.getId(), 1);
 
         castAndResolveChastise(attacker.getId());
 
@@ -86,7 +86,7 @@ class ChastiseTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(attacker.isTapped()).isTrue();
         assertThat(attacker.isAttacking()).isFalse();
-        assertThat(attacker.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(attacker.getId())).isZero();
         harness.assertLife(player2, 17);
     }
 
@@ -143,7 +143,7 @@ class ChastiseTest extends BaseCardTest {
         harness.addToBattlefield(player1, new OrcishOriflamme());
         Permanent attacker = addCreatureReady(player1, new DrudgeSkeletons());
         attacker.setAttacking(true);
-        attacker.setRegenerationShield(1);
+        gd.addRegenerationShields(attacker.getId(), 1);
 
         castAndResolveChastise(attacker.getId());
 
@@ -151,7 +151,7 @@ class ChastiseTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Drudge Skeletons");
         assertThat(attacker.isAttacking()).isFalse();
         assertThat(attacker.isTapped()).isTrue();
-        assertThat(attacker.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(attacker.getId())).isZero();
         harness.assertLife(player2, 16);
     }
 

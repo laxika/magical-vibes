@@ -80,7 +80,7 @@ class SunblastAngelTest extends BaseCardTest {
     void tappedCreatureCanBeRegenerated() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.tap();
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         harness.castFromHand(player1, new SunblastAngel(), "{4}{W}{W}");
         // Resolve the creature spell and put its trigger on the stack.

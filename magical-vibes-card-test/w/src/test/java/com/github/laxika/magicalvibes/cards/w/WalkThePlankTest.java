@@ -76,7 +76,7 @@ class WalkThePlankTest extends BaseCardTest {
     @DisplayName("Walk the Plank allows regeneration")
     void allowsRegeneration() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new AncientBrontodon());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         harness.setHand(player1, List.of(new WalkThePlank()));
         harness.addMana(player1, ManaColor.BLACK, 2);

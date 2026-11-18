@@ -69,7 +69,7 @@ class BaneOfProgressTest extends BaseCardTest {
     @DisplayName("Regenerated artifacts survive and do not contribute counters")
     void doesNotCountRegeneratedPermanents() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
-        artifact.setRegenerationShield(1);
+        gd.addRegenerationShields(artifact.getId(), 1);
         harness.addToBattlefield(player1, new RuleOfLaw());
 
         Permanent bane = castBaneOfProgress();
@@ -77,7 +77,7 @@ class BaneOfProgressTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Ornithopter");
         harness.assertNotInGraveyard(player2, "Ornithopter");
         assertThat(artifact.isTapped()).isTrue();
-        assertThat(artifact.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isZero();
         harness.assertInGraveyard(player1, "Rule of Law");
         assertThat(bane.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }

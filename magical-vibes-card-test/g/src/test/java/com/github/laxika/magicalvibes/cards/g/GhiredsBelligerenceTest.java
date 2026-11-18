@@ -136,7 +136,7 @@ class GhiredsBelligerenceTest extends BaseCardTest {
     void preventedDamageDoesNotTrigger() {
         harness.addToBattlefield(player1, creatureToken("Soldier Token"));
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(bears.getId(), 1);
 
         castBelligerence(1, Map.of(bears.getId(), 1));
         assertThat(bears.getMarkedDamage()).isZero();

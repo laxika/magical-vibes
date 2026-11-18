@@ -152,7 +152,7 @@ class OblivionStoneTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(troll);
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
         harness.assertInGraveyard(player1, "Oblivion Stone");
     }
 }

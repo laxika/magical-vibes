@@ -24,7 +24,7 @@ class KinTreeWardenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(warden.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(warden.getId())).isEqualTo(1);
     }
 
     @Test
@@ -62,7 +62,7 @@ class KinTreeWardenTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(warden);
         assertThat(warden.isTapped()).isTrue();
         assertThat(warden.getMarkedDamage()).isZero();
-        assertThat(warden.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(warden.getId())).isZero();
     }
 
     @Test
@@ -99,6 +99,6 @@ class KinTreeWardenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(warden.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(warden.getId())).isEqualTo(1);
     }
 }

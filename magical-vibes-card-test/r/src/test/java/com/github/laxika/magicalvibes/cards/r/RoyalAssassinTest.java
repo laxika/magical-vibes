@@ -86,13 +86,13 @@ class RoyalAssassinTest extends BaseCardTest {
     void regenerationSavesTarget() {
         addReadyAssassin(player1);
         Permanent target = addTappedBears(player2);
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 
     @Test

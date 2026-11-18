@@ -4,6 +4,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RoyalAssassin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DrudgeSkeletons.class, GrizzlyBears.class, RoyalAssassin.class, Shock.class, WrathOfGod.class})
+@CardUsed({DrudgeSkeletons.class, GrizzlyBears.class, RoyalAssassin.class, Shock.class, Unsummon.class, WrathOfGod.class})
 class DrudgeSkeletonsTest extends BaseCardTest {
 
     @Test
@@ -54,6 +55,25 @@ class DrudgeSkeletonsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A regeneration shield does not follow the creature back onto the battlefield")
+    void shieldDoesNotReturnWithTheCreature() {
+        Permanent skele = addCreatureReady(player1, new DrudgeSkeletons());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, skele.getId());
+
+        harness.castFromHand(player1, gd.playerHands.get(player1.getId()).getFirst(), "{1}{B}");
+        harness.passBothPriorities();
+        Permanent returned = findPermanent(player1, "Drudge Skeletons");
+
+        assertThat(returned.getId()).isNotEqualTo(skele.getId());
+        assertThat(gd.regenerationShieldCount(returned.getId())).isZero();
+    }
+
+    @Test
     @DisplayName("Activating regeneration ability does NOT tap the permanent")
     void activatingAbilityDoesNotTap() {
         Permanent skele = addCreatureReady(player1, new DrudgeSkeletons());
@@ -74,7 +94,7 @@ class DrudgeSkeletonsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(skele.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skele.getId())).isEqualTo(1);
     }
 
     @Test
@@ -90,7 +110,7 @@ class DrudgeSkeletonsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(skele.getRegenerationShield()).isEqualTo(3);
+        assertThat(gd.regenerationShieldCount(skele.getId())).isEqualTo(3);
     }
 
     @Test
@@ -179,7 +199,7 @@ class DrudgeSkeletonsTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Drudge Skeletons from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent skelePerm = addCreatureReady(player1, new DrudgeSkeletons());
-        skelePerm.setRegenerationShield(1);
+        gd.addRegenerationShields(skelePerm.getId(), 1);
         skelePerm.setBlocking(true);
         skelePerm.addBlockingTarget(0);
 
@@ -191,7 +211,7 @@ class DrudgeSkeletonsTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Drudge Skeletons");
         Permanent skele = findPermanent(player1, "Drudge Skeletons");
         assertThat(skele.isTapped()).isTrue();
-        assertThat(skele.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(skele.getId())).isEqualTo(0);
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
@@ -215,7 +235,7 @@ class DrudgeSkeletonsTest extends BaseCardTest {
     @DisplayName("Regeneration removes damage marked on Drudge Skeletons")
     void regenerationRemovesMarkedDamage() {
         Permanent skelePerm = addCreatureReady(player1, new DrudgeSkeletons());
-        skelePerm.setRegenerationShield(1);
+        gd.addRegenerationShields(skelePerm.getId(), 1);
         skelePerm.setBlocking(true);
         skelePerm.addBlockingTarget(0);
 
@@ -231,7 +251,7 @@ class DrudgeSkeletonsTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves attacking Drudge Skeletons from lethal blocker damage")
     void regenerationSavesAttackingCreature() {
         Permanent skelePerm = addCreatureReady(player1, new DrudgeSkeletons());
-        skelePerm.setRegenerationShield(1);
+        gd.addRegenerationShields(skelePerm.getId(), 1);
         skelePerm.setAttacking(true);
 
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
@@ -244,14 +264,14 @@ class DrudgeSkeletonsTest extends BaseCardTest {
         Permanent skele = findPermanent(player1, "Drudge Skeletons");
         assertThat(skele.isTapped()).isTrue();
         assertThat(skele.isAttacking()).isFalse();
-        assertThat(skele.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(skele.getId())).isEqualTo(0);
     }
 
     @Test
     @DisplayName("Regeneration logs that the creature regenerates")
     void regenerationLogsCombat() {
         Permanent skelePerm = addCreatureReady(player1, new DrudgeSkeletons());
-        skelePerm.setRegenerationShield(1);
+        gd.addRegenerationShields(skelePerm.getId(), 1);
         skelePerm.setBlocking(true);
         skelePerm.addBlockingTarget(0);
 
@@ -267,7 +287,7 @@ class DrudgeSkeletonsTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Drudge Skeletons from destruction")
     void regenerationSavesFromDestruction() {
         Permanent skelePerm = addCreatureReady(player1, new DrudgeSkeletons());
-        skelePerm.setRegenerationShield(1);
+        gd.addRegenerationShields(skelePerm.getId(), 1);
         skelePerm.tap();
 
         harness.forceActivePlayer(player2);
@@ -279,14 +299,14 @@ class DrudgeSkeletonsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Drudge Skeletons");
         harness.assertNotInGraveyard(player1, "Drudge Skeletons");
-        assertThat(skelePerm.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skelePerm.getId())).isZero();
     }
 
     @Test
     @DisplayName("Regeneration shield saves Drudge Skeletons from lethal noncombat damage")
     void regenerationSavesFromNoncombatDamage() {
         Permanent skelePerm = addCreatureReady(player1, new DrudgeSkeletons());
-        skelePerm.setRegenerationShield(1);
+        gd.addRegenerationShields(skelePerm.getId(), 1);
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -294,7 +314,7 @@ class DrudgeSkeletonsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Drudge Skeletons");
         harness.assertNotInGraveyard(player1, "Drudge Skeletons");
-        assertThat(skelePerm.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skelePerm.getId())).isZero();
     }
 
     @Test
@@ -309,14 +329,14 @@ class DrudgeSkeletonsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(skele.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skele.getId())).isEqualTo(1);
         assertThat(skele.isTapped()).isFalse();
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Drudge Skeletons");
         assertThat(skele.isTapped()).isTrue();
         assertThat(skele.getMarkedDamage()).isZero();
-        assertThat(skele.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skele.getId())).isZero();
 
         harness.castAndResolveInstant(player2, 0, skele.getId());
 
@@ -361,7 +381,7 @@ class DrudgeSkeletonsTest extends BaseCardTest {
     @DisplayName("Wrath of God destroys Drudge Skeletons even with regeneration shield")
     void wrathOfGodIgnoresRegenerationShield() {
         Permanent skelePerm = addCreatureReady(player1, new DrudgeSkeletons());
-        skelePerm.setRegenerationShield(2);
+        gd.addRegenerationShields(skelePerm.getId(), 2);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -385,19 +405,19 @@ class DrudgeSkeletonsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(skele.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(skele.getId())).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(skele.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skele.getId())).isZero();
     }
 
     @Test
     @DisplayName("Only one regeneration shield is consumed per lethal damage event")
     void onlyOneShieldConsumedPerLethalEvent() {
         Permanent skelePerm = addCreatureReady(player1, new DrudgeSkeletons());
-        skelePerm.setRegenerationShield(3);
+        gd.addRegenerationShields(skelePerm.getId(), 3);
         skelePerm.setBlocking(true);
         skelePerm.addBlockingTarget(0);
 
@@ -407,14 +427,14 @@ class DrudgeSkeletonsTest extends BaseCardTest {
         resolveCombat(player2);
 
         Permanent skele = findPermanent(player1, "Drudge Skeletons");
-        assertThat(skele.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(skele.getId())).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Regeneration clears blocking state")
     void regenerationClearsBlockingState() {
         Permanent skelePerm = addCreatureReady(player1, new DrudgeSkeletons());
-        skelePerm.setRegenerationShield(1);
+        gd.addRegenerationShields(skelePerm.getId(), 1);
         skelePerm.setBlocking(true);
         skelePerm.addBlockingTarget(0);
 

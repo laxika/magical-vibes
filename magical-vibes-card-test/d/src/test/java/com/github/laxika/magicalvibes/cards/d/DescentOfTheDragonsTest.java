@@ -116,7 +116,7 @@ class DescentOfTheDragonsTest extends BaseCardTest {
     @DisplayName("A regenerated creature survives and creates no Dragon")
     void regeneratedCreatureDoesNotCreateDragon() {
         Permanent regeneratingCreature = harness.addToBattlefieldAndReturn(player2, new ColossodonYearling());
-        regeneratingCreature.setRegenerationShield(1);
+        gd.addRegenerationShields(regeneratingCreature.getId(), 1);
         Permanent ordinaryCreature = harness.addToBattlefieldAndReturn(player2, new ColossodonYearling());
 
         castDescent(List.of(regeneratingCreature.getId(), ordinaryCreature.getId()));
@@ -124,7 +124,7 @@ class DescentOfTheDragonsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(regeneratingCreature)
                 .doesNotContain(ordinaryCreature);
         assertThat(regeneratingCreature.isTapped()).isTrue();
-        assertThat(regeneratingCreature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(regeneratingCreature.getId())).isZero();
         assertThat(dragons(player2)).hasSize(1).allSatisfy(this::assertDragon);
     }
 

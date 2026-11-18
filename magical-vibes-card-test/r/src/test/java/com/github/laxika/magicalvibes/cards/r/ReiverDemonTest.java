@@ -23,7 +23,7 @@ class ReiverDemonTest extends BaseCardTest {
     @DisplayName("When cast from hand, destroys nonartifact, nonblack creatures and they cannot be regenerated")
     void castFromHandDestroysNonartifactNonblackCreatures() {
         Permanent hunter = harness.addToBattlefieldAndReturn(player1, new FangrenHunter());
-        hunter.setRegenerationShield(1);
+        gd.addRegenerationShields(hunter.getId(), 1);
         harness.addToBattlefield(player1, new GreatFurnace());
         harness.addToBattlefield(player1, new AlphaMyr());
         harness.addToBattlefield(player2, new NimLasher());

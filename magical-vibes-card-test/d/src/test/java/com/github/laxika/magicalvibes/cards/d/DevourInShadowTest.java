@@ -35,7 +35,7 @@ class DevourInShadowTest extends BaseCardTest {
     @DisplayName("Destroys a creature with a regeneration shield")
     void cannotBeRegenerated() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         prepareDevourInShadow();
         harness.castAndResolveInstant(player1, 0, target.getId());
 

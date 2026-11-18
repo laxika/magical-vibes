@@ -23,7 +23,7 @@ class PutrefyTest extends BaseCardTest {
     @DisplayName("Resolving Putrefy destroys a target creature and it can't be regenerated")
     void destroysTargetCreatureIgnoringRegeneration() {
         Permanent watchwolf = harness.addToBattlefieldAndReturn(player2, new Watchwolf());
-        watchwolf.setRegenerationShield(1);
+        gd.addRegenerationShields(watchwolf.getId(), 1);
 
         harness.setHand(player1, List.of(new Putrefy()));
         harness.addMana(player1, ManaColor.BLACK, 2);

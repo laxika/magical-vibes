@@ -27,7 +27,7 @@ class LoxodonMenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, artifact.getId());
         harness.passBothPriorities();
 
-        assertThat(artifact.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isEqualTo(1);
     }
 
     @Test
@@ -39,7 +39,7 @@ class LoxodonMenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentArtifact.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentArtifact.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(opponentArtifact.getId())).isEqualTo(1);
     }
 
     @Test
@@ -51,7 +51,7 @@ class LoxodonMenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, equipment.getId());
         harness.passBothPriorities();
 
-        assertThat(equipment.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(equipment.getId())).isEqualTo(1);
     }
 
     @Test
@@ -87,7 +87,7 @@ class LoxodonMenderTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         assertThat(mender.isTapped()).isFalse();
-        assertThat(artifact.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -103,7 +103,7 @@ class LoxodonMenderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(artifact.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isZero();
     }
 
     @Test
@@ -123,7 +123,7 @@ class LoxodonMenderTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
         assertThat(artifact.isTapped()).isTrue();
         assertThat(artifact.getMarkedDamage()).isZero();
-        assertThat(artifact.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isZero();
 
         harness.castAndResolveInstant(player1, 0, artifact.getId());
 
@@ -145,7 +145,7 @@ class LoxodonMenderTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(equipment);
         assertThat(equipment.isTapped()).isTrue();
-        assertThat(equipment.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(equipment.getId())).isZero();
     }
 
     @Test
@@ -158,7 +158,7 @@ class LoxodonMenderTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(artifact.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isEqualTo(1);
     }
 
     @Test

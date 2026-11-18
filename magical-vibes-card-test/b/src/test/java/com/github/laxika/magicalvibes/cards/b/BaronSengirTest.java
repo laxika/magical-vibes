@@ -101,7 +101,7 @@ class BaronSengirTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, vampire.getId());
         harness.passBothPriorities();
 
-        assertThat(vampire.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(vampire.getId())).isEqualTo(1);
     }
 
     @Test
@@ -113,7 +113,7 @@ class BaronSengirTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentVampire.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentVampire.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(opponentVampire.getId())).isEqualTo(1);
     }
 
     @Test
@@ -135,7 +135,7 @@ class BaronSengirTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Irini Sengir");
         harness.assertNotInGraveyard(player1, "Irini Sengir");
-        assertThat(vampire.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(vampire.getId())).isZero();
         assertThat(vampire.getMarkedDamage()).isZero();
         assertThat(vampire.isTapped()).isTrue();
         assertThat(baron.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();

@@ -28,7 +28,7 @@ class RefreshTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Diligent Farmhand"));
 
-        assertThat(findPermanent(player1, "Diligent Farmhand").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Diligent Farmhand").getId())).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
@@ -54,7 +54,7 @@ class RefreshTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Diligent Farmhand");
         assertThat(target.isTapped()).isTrue();
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
 
         target.setMarkedDamage(1);
         harness.runStateBasedActions();
@@ -74,7 +74,7 @@ class RefreshTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Diligent Farmhand"));
 
-        assertThat(findPermanent(player2, "Diligent Farmhand").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player2, "Diligent Farmhand").getId())).isEqualTo(1);
     }
 
     @Test

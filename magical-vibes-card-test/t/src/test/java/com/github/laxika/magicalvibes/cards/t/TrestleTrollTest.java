@@ -50,7 +50,7 @@ class TrestleTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Trestle Troll").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Trestle Troll").getId())).isEqualTo(1);
     }
 
     @Test
@@ -100,7 +100,7 @@ class TrestleTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
         assertThat(troll.isTapped()).isTrue();
     }
 
@@ -113,10 +113,10 @@ class TrestleTrollTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
         harness.passBothPriorities();
         assertThat(troll.isTapped()).isFalse();
-        assertThat(otherTroll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(otherTroll.getId())).isZero();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -128,7 +128,7 @@ class TrestleTrollTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(troll, otherTroll);
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
         assertThat(troll.getMarkedDamage()).isZero();
 
         harness.clearPriorityPassed();
@@ -157,7 +157,7 @@ class TrestleTrollTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         assertThat(troll.isTapped()).isTrue();
         assertThat(troll.getMarkedDamage()).isZero();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
         assertThat(troll.isBlocking()).isFalse();
         assertThat(troll.getBlockingTargets()).isEmpty();
     }
@@ -170,12 +170,12 @@ class TrestleTrollTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
     }
 }

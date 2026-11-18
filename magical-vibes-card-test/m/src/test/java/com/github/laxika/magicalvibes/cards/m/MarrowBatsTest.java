@@ -21,11 +21,11 @@ class MarrowBatsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.assertLife(player1, 16);
-        assertThat(bats.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bats.getId())).isZero();
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
-        assertThat(bats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bats.getId())).isEqualTo(1);
     }
 
     @Test
@@ -58,7 +58,7 @@ class MarrowBatsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Marrow Bats");
         assertThat(bats.isTapped()).isTrue();
-        assertThat(bats.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(bats.getId())).isEqualTo(0);
         assertThat(bats.getMarkedDamage()).isZero();
         assertThat(bats.isBlocking()).isFalse();
         assertThat(bats.getBlockingTargets()).isEmpty();
@@ -92,7 +92,7 @@ class MarrowBatsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 16);
-        assertThat(bats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bats.getId())).isEqualTo(1);
         assertThat(bats.isTapped()).isTrue();
     }
 
@@ -108,7 +108,7 @@ class MarrowBatsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 12);
-        assertThat(bats.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(bats.getId())).isEqualTo(2);
         assertThat(bats.isTapped()).isFalse();
 
         bats.setBlocking(true);
@@ -118,7 +118,7 @@ class MarrowBatsTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Marrow Bats");
-        assertThat(bats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bats.getId())).isEqualTo(1);
         assertThat(bats.getMarkedDamage()).isZero();
         assertThat(bats.isTapped()).isTrue();
     }

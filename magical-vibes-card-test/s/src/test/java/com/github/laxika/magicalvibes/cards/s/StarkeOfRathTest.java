@@ -179,7 +179,7 @@ class StarkeOfRathTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Starke of Rath");
         harness.assertNotOnBattlefield(player1, "Starke of Rath");
         assertThat(spider.isTapped()).isTrue();
-        assertThat(spider.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(spider.getId())).isZero();
     }
 
     private Permanent addReadyStarke(Player player) {

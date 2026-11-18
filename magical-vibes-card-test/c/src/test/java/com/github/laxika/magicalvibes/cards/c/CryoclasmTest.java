@@ -137,7 +137,7 @@ class CryoclasmTest extends BaseCardTest {
     @DisplayName("Damage still happens when the target land regenerates")
     void dealsDamageWhenLandRegenerates() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Plains());
-        land.setRegenerationShield(1);
+        gd.addRegenerationShields(land.getId(), 1);
         harness.setHand(player1, List.of(new Cryoclasm()));
         harness.addMana(player1, ManaColor.RED, 3);
 
@@ -145,7 +145,7 @@ class CryoclasmTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Plains");
         assertThat(land.isTapped()).isTrue();
-        assertThat(land.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(land.getId())).isZero();
         harness.assertLife(player2, 17);
         harness.assertLife(player1, 20);
     }

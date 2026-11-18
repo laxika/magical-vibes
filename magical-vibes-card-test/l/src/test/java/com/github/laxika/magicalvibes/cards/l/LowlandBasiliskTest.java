@@ -193,6 +193,6 @@ class LowlandBasiliskTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Skeleton Scavengers");
         assertThat(scavengers.isTapped()).isTrue();
         assertThat(scavengers.getMarkedDamage()).isZero();
-        assertThat(scavengers.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(scavengers.getId())).isZero();
     }
 }

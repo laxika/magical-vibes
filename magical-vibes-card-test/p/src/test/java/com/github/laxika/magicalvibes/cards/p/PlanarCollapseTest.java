@@ -21,7 +21,7 @@ class PlanarCollapseTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GiantCockroach());
         harness.addToBattlefield(player2, new GiantCockroach());
         Permanent gnats = harness.addToBattlefieldAndReturn(player2, new FogOfGnats());
-        gnats.setRegenerationShield(1);
+        gd.addRegenerationShields(gnats.getId(), 1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();

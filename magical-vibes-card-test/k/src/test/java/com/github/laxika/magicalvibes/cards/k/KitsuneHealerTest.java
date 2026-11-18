@@ -62,7 +62,7 @@ class KitsuneHealerTest extends BaseCardTest {
         castYamabushisFlameAt(target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test

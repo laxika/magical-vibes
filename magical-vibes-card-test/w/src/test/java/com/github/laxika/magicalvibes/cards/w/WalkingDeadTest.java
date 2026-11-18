@@ -33,7 +33,7 @@ class WalkingDeadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(walkingDead.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(walkingDead.getId())).isEqualTo(1);
     }
 
     @Test
@@ -49,7 +49,7 @@ class WalkingDeadTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(walkingDead);
         assertThat(walkingDead.isTapped()).isTrue();
-        assertThat(walkingDead.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(walkingDead.getId())).isZero();
         assertThat(walkingDead.getMarkedDamage()).isZero();
     }
 
@@ -63,7 +63,7 @@ class WalkingDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(walkingDead.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(walkingDead.getId())).isEqualTo(1);
         assertThat(walkingDead.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
@@ -80,13 +80,13 @@ class WalkingDeadTest extends BaseCardTest {
 
         walkingDead.setMarkedDamage(1);
         harness.runStateBasedActions();
-        assertThat(walkingDead.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(walkingDead.getId())).isEqualTo(1);
         assertThat(walkingDead.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(walkingDead);
 
         walkingDead.setMarkedDamage(1);
         harness.runStateBasedActions();
-        assertThat(walkingDead.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(walkingDead.getId())).isZero();
         assertThat(walkingDead.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(walkingDead);
 

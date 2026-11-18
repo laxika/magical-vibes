@@ -87,7 +87,7 @@ class InkEyesServantOfOniTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(inkEyes.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(inkEyes.getId())).isEqualTo(1);
     }
 
     @Test
@@ -172,7 +172,7 @@ class InkEyesServantOfOniTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Ink-Eyes, Servant of Oni");
         assertThat(inkEyes.isTapped()).isTrue();
         assertThat(inkEyes.getMarkedDamage()).isZero();
-        assertThat(inkEyes.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(inkEyes.getId())).isZero();
     }
 
     @Test

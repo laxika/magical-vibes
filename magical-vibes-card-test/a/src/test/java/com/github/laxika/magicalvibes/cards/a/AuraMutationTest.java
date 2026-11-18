@@ -80,7 +80,7 @@ class AuraMutationTest extends BaseCardTest {
     @DisplayName("Creates Saprolings even when the enchantment regenerates")
     void createsSaprolingsWhenEnchantmentRegenerates() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new KavuLair());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setHand(player1, List.of(new AuraMutation()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -89,7 +89,7 @@ class AuraMutationTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Kavu Lair");
         harness.assertNotInGraveyard(player2, "Kavu Lair");
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(target.isTapped()).isTrue();
         assertThat(findPermanents(player1, "Saproling")).hasSize(3);
     }

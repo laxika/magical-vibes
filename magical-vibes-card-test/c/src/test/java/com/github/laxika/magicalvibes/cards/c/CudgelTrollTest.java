@@ -32,7 +32,7 @@ class CudgelTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
         assertThat(troll.isTapped()).isTrue();
     }
 
@@ -87,7 +87,7 @@ class CudgelTrollTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent troll = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
@@ -114,14 +114,14 @@ class CudgelTrollTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent troll = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(troll.getRegenerationShield()).isEqualTo(3);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Cudgel Troll from lethal combat damage when blocking")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent trollPerm = addCudgelTrollReady(player1);
-        trollPerm.setRegenerationShield(1);
+        gd.addRegenerationShields(trollPerm.getId(), 1);
         trollPerm.setBlocking(true);
         trollPerm.addBlockingTarget(0);
 
@@ -138,7 +138,7 @@ class CudgelTrollTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Cudgel Troll");
         Permanent troll = findPermanent(player1, "Cudgel Troll");
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(0);
         assertThat(troll.isBlocking()).isFalse();
     }
 
@@ -204,13 +204,13 @@ class CudgelTrollTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Cudgel Troll");
         assertThat(troll.isTapped()).isTrue();
         assertThat(troll.getMarkedDamage()).isZero();
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
 
         troll.setMarkedDamage(3);
         harness.runStateBasedActions();
         harness.assertOnBattlefield(player1, "Cudgel Troll");
         assertThat(troll.getMarkedDamage()).isZero();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
 
         troll.setMarkedDamage(3);
         harness.runStateBasedActions();

@@ -76,7 +76,7 @@ class SlayTest extends BaseCardTest {
     @DisplayName("Slay destroys the creature even with a regeneration shield")
     void cannotBeRegenerated() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         harness.setHand(player1, List.of(new Slay()));
         harness.addMana(player1, ManaColor.BLACK, 3);

@@ -107,6 +107,23 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps a permanent's prevention and regeneration shields and uses them independently")
+    void deepCopyKeepsPermanentShields() {
+        UUID permanentId = UUID.randomUUID();
+        gd.addPermanentDamagePreventionShield(permanentId, 3);
+        gd.addRegenerationShields(permanentId, 1);
+
+        GameData copy = gd.simulationCopy();
+        copy.usePermanentDamagePreventionShields(permanentId, false, 2);
+        copy.useOldestEffectOnPermanent(permanentId, com.github.laxika.magicalvibes.model.RegenerationShield.class);
+
+        assertThat(copy.permanentDamagePreventionShield(permanentId)).isEqualTo(1);
+        assertThat(copy.regenerationShieldCount(permanentId)).isZero();
+        assertThat(gd.permanentDamagePreventionShield(permanentId)).isEqualTo(3);
+        assertThat(gd.regenerationShieldCount(permanentId)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Deep copy keeps floating effects that begin later in an independent list")
     void deepCopyKeepsScheduledFloatingEffects() {
         FloatingContinuousEffect scheduled = gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null,

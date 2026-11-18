@@ -146,7 +146,7 @@ class CelestialJudgmentTest extends BaseCardTest {
     void unchosenCreatureCanRegenerate() {
         Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opposingBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        opposingBear.setRegenerationShield(1);
+        gd.addRegenerationShields(opposingBear.getId(), 1);
 
         castCelestialJudgment();
         harness.handlePermanentChosen(player1, ownBear.getId());
@@ -154,7 +154,7 @@ class CelestialJudgmentTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(opposingBear.isTapped()).isTrue();
-        assertThat(opposingBear.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(opposingBear.getId())).isZero();
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 

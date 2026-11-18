@@ -29,7 +29,7 @@ class MischievousPoltergeistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(poltergeist.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(poltergeist.getId())).isEqualTo(2);
     }
 
     @Test
@@ -59,7 +59,7 @@ class MischievousPoltergeistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(poltergeist.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(poltergeist.getId())).isEqualTo(1);
     }
 
     @Test
@@ -77,7 +77,7 @@ class MischievousPoltergeistTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Mischievous Poltergeist from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent poltergeist = addCreatureReady(player1, new MischievousPoltergeist());
-        poltergeist.setRegenerationShield(1);
+        gd.addRegenerationShields(poltergeist.getId(), 1);
         poltergeist.setBlocking(true);
         poltergeist.addBlockingTarget(0);
 
@@ -88,7 +88,7 @@ class MischievousPoltergeistTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Mischievous Poltergeist");
         assertThat(poltergeist.isTapped()).isTrue();
-        assertThat(poltergeist.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(poltergeist.getId())).isEqualTo(0);
     }
 
     @Test
@@ -126,7 +126,7 @@ class MischievousPoltergeistTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Mischievous Poltergeist");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(poltergeist.isTapped()).isTrue();
-        assertThat(poltergeist.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(poltergeist.getId())).isEqualTo(0);
     }
 
     @Test
@@ -137,12 +137,12 @@ class MischievousPoltergeistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         harness.assertLife(player1, 19);
-        assertThat(poltergeist.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(poltergeist.getId())).isZero();
         assertThat(poltergeist.isTapped()).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(poltergeist.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(poltergeist.getId())).isEqualTo(1);
         assertThat(poltergeist.isTapped()).isFalse();
     }
 
@@ -156,7 +156,7 @@ class MischievousPoltergeistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 19);
-        assertThat(poltergeist.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(poltergeist.getId())).isEqualTo(1);
         assertThat(poltergeist.isTapped()).isFalse();
     }
 
@@ -175,7 +175,7 @@ class MischievousPoltergeistTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Mischievous Poltergeist");
         harness.assertLife(player1, 19);
         assertThat(poltergeist.isTapped()).isTrue();
-        assertThat(poltergeist.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(poltergeist.getId())).isZero();
         assertThat(poltergeist.getMarkedDamage()).isZero();
 
         harness.setHand(player2, List.of(new Shock()));

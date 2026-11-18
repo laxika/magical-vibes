@@ -35,7 +35,7 @@ class KithkinHealerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent greatheart = findPermanent(player2, "Kithkin Greatheart");
-        assertThat(greatheart.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(greatheart.getId())).isEqualTo(1);
     }
 
     @Test
@@ -101,13 +101,13 @@ class KithkinHealerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test
@@ -124,7 +124,7 @@ class KithkinHealerTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, healer.getId());
 
         harness.assertOnBattlefield(player1, "Kithkin Healer");
-        assertThat(healer.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(healer.getId())).isZero();
     }
 
     @Test

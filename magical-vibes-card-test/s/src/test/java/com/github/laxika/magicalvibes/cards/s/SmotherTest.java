@@ -63,7 +63,7 @@ class SmotherTest extends BaseCardTest {
     @DisplayName("Smother destroys a creature even when it has a regeneration shield")
     void cannotBeRegenerated() {
         Permanent healer = harness.addToBattlefieldAndReturn(player2, new DaruHealer());
-        healer.setRegenerationShield(1);
+        gd.addRegenerationShields(healer.getId(), 1);
 
         harness.setHand(player1, List.of(new Smother()));
         harness.addMana(player1, ManaColor.BLACK, 2);

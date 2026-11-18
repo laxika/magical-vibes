@@ -24,7 +24,7 @@ class TelJiladExileTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(exile.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(exile.getId())).isEqualTo(1);
         assertThat(exile.isTapped()).isFalse();
     }
 
@@ -54,7 +54,7 @@ class TelJiladExileTest extends BaseCardTest {
     @DisplayName("A regeneration shield saves Tel-Jilad Exile from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent exile = addTelJiladExileReady(player1);
-        exile.setRegenerationShield(1);
+        gd.addRegenerationShields(exile.getId(), 1);
         exile.setBlocking(true);
         exile.addBlockingTarget(0);
 
@@ -66,7 +66,7 @@ class TelJiladExileTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Tel-Jilad Exile");
         Permanent survivingExile = findPermanent(player1, "Tel-Jilad Exile");
         assertThat(survivingExile.isTapped()).isTrue();
-        assertThat(survivingExile.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(survivingExile.getId())).isZero();
     }
 
     @Test
@@ -80,7 +80,7 @@ class TelJiladExileTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(exile.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(exile.getId())).isEqualTo(1);
         assertThat(exile.isTapped()).isTrue();
     }
 
@@ -94,7 +94,7 @@ class TelJiladExileTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(exile.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(exile.getId())).isEqualTo(2);
         assertThat(exile.isTapped()).isFalse();
     }
 
@@ -115,7 +115,7 @@ class TelJiladExileTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Tel-Jilad Exile");
         harness.assertNotInGraveyard(player1, "Tel-Jilad Exile");
-        assertThat(exile.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(exile.getId())).isZero();
         assertThat(exile.getMarkedDamage()).isZero();
         assertThat(exile.isTapped()).isTrue();
         assertThat(exile.isBlocking()).isFalse();

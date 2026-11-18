@@ -44,7 +44,7 @@ class RingOfXathridTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -57,7 +57,7 @@ class RingOfXathridTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
     }
 
     @Test
@@ -116,7 +116,7 @@ class RingOfXathridTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(ring.getAttachedTo()).isEqualTo(creature.getId());
     }
 
@@ -136,7 +136,7 @@ class RingOfXathridTest extends BaseCardTest {
         assertThat(ring.getAttachedTo()).isNull();
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
     }
 
     @Test
@@ -152,8 +152,8 @@ class RingOfXathridTest extends BaseCardTest {
         ring.setAttachedTo(current.getId());
         harness.passBothPriorities();
 
-        assertThat(original.getRegenerationShield()).isZero();
-        assertThat(current.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(original.getId())).isZero();
+        assertThat(gd.regenerationShieldCount(current.getId())).isEqualTo(1);
     }
 
     @Test
@@ -171,14 +171,14 @@ class RingOfXathridTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, creature.getId());
         assertThat(ring.getAttachedTo()).isNull();
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
 
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
     }
 
     @Test

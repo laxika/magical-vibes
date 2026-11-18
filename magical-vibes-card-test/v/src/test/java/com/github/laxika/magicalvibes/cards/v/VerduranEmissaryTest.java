@@ -51,7 +51,7 @@ class VerduranEmissaryTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Phyrexian Lens");

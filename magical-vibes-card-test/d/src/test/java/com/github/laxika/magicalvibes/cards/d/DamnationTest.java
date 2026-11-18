@@ -36,7 +36,7 @@ class DamnationTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
 
         castDamnation();
 
@@ -62,7 +62,7 @@ class DamnationTest extends BaseCardTest {
             harness.activateAbility(player2, 0, null, null);
             harness.passBothPriorities();
         }
-        assertThat(troll.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(2);
 
         castDamnation();
 

@@ -21,7 +21,7 @@ class AbuJafarTest extends BaseCardTest {
     void destroysAllBlockersWhenItDiesAttacking() {
         Permanent abu = addCreatureReady(player1, new AbuJafar());
         Permanent blockerOne = addCreatureReady(player2, new GrizzlyBears());
-        blockerOne.setRegenerationShield(1);
+        gd.addRegenerationShields(blockerOne.getId(), 1);
         Permanent blockerTwo = addCreatureReady(player2, new GrizzlyBears());
         Permanent bystander = addCreatureReady(player2, new GrizzlyBears());
 
@@ -82,7 +82,7 @@ class AbuJafarTest extends BaseCardTest {
     @DisplayName("Dying after regeneration does not destroy a former blocker")
     void deathAfterRegenerationLeavesFormerBlockerAlive() {
         Permanent abu = addCreatureReady(player1, new AbuJafar());
-        abu.setRegenerationShield(1);
+        gd.addRegenerationShields(abu.getId(), 1);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackersAndPrepareBlockers(player1,

@@ -42,7 +42,7 @@ class SoulRendTest extends BaseCardTest {
     @DisplayName("The destruction cannot be regenerated")
     void destructionCannotBeRegenerated() {
         Permanent griffin = harness.addToBattlefieldAndReturn(player2, new MtendaGriffin());
-        griffin.setRegenerationShield(1);
+        gd.addRegenerationShields(griffin.getId(), 1);
         harness.setHand(player1, List.of(new SoulRend()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 

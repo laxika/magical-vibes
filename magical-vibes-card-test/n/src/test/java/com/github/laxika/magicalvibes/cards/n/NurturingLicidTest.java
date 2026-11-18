@@ -75,7 +75,7 @@ class NurturingLicidTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(host.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(host.getId())).isEqualTo(1);
     }
 
     @Test
@@ -103,7 +103,7 @@ class NurturingLicidTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(licid.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(licid.getId())).isZero();
     }
 
     @Test
@@ -174,7 +174,7 @@ class NurturingLicidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Nurturing Licid");
-        assertThat(host.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(host.getId())).isEqualTo(1);
     }
 
     @Test
@@ -190,8 +190,8 @@ class NurturingLicidTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(host.getRegenerationShield()).isZero();
-        assertThat(licid.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(host.getId())).isZero();
+        assertThat(gd.regenerationShieldCount(licid.getId())).isZero();
         assertThat(licid.isTapped()).isTrue();
     }
 
@@ -207,7 +207,7 @@ class NurturingLicidTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(host.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(host.getId())).isEqualTo(1);
     }
 
     private Permanent addReadyLicid(Player player) {

@@ -72,7 +72,7 @@ class DevouringStrossusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(strossus).doesNotContain(otherCreature);
-        assertThat(strossus.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(strossus.getId())).isEqualTo(1);
 
         harness.setHand(player1, List.of(new GhituFire()));
         harness.addMana(player1, ManaColor.RED, 10);
@@ -80,7 +80,7 @@ class DevouringStrossusTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(strossus);
         assertThat(strossus.isTapped()).isTrue();
-        assertThat(strossus.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(strossus.getId())).isZero();
     }
 
     @Test
@@ -117,7 +117,7 @@ class DevouringStrossusTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, soldier.getId());
         harness.passBothPriorities();
 
-        assertThat(strossus.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(strossus.getId())).isEqualTo(1);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Ardent Soldier");
@@ -142,14 +142,14 @@ class DevouringStrossusTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, soldier.getId());
 
         harness.assertInGraveyard(player1, "Ardent Soldier");
-        assertThat(strossus.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(strossus.getId())).isZero();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(strossus, swamp).doesNotContain(soldier);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
 
         harness.passBothPriorities();
 
-        assertThat(strossus.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(strossus.getId())).isEqualTo(1);
         assertThat(strossus.isTapped()).isFalse();
     }
 }

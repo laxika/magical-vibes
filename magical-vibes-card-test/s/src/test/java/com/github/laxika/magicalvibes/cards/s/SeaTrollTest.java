@@ -30,7 +30,7 @@ class SeaTrollTest extends BaseCardTest {
 
         activateRegeneration(player1);
 
-        assertThat(findPermanent(player1, "Sea Troll").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Sea Troll").getId())).isEqualTo(1);
     }
 
     @Test
@@ -45,7 +45,7 @@ class SeaTrollTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         activateRegeneration(player2);
 
-        assertThat(findPermanent(player2, "Sea Troll").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player2, "Sea Troll").getId())).isEqualTo(1);
     }
 
     @Test
@@ -87,7 +87,7 @@ class SeaTrollTest extends BaseCardTest {
 
         activateRegeneration(player1);
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
@@ -102,7 +102,7 @@ class SeaTrollTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(troll);
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
     }
 
     @Test
@@ -148,7 +148,7 @@ class SeaTrollTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(uninvolvedTroll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(uninvolvedTroll.getId())).isZero();
     }
 
     @Test
@@ -164,11 +164,11 @@ class SeaTrollTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(troll);
         assertThat(troll.isTapped()).isTrue();
         assertThat(troll.isAttacking()).isFalse();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
 
         activateRegeneration(player1);
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     private void declareBlock() {

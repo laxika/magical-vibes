@@ -85,14 +85,14 @@ class FeedTheSwarmTest extends BaseCardTest {
     @DisplayName("The caster still loses life when the target regenerates")
     void casterLosesLifeWhenTargetRegenerates() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         cast(target);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 20);
     }

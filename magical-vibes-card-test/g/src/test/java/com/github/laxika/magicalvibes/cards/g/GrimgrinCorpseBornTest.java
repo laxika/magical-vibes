@@ -226,7 +226,7 @@ class GrimgrinCorpseBornTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Manor Skeleton");
-        assertThat(skeleton.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isZero();
         assertThat(grimgrin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 

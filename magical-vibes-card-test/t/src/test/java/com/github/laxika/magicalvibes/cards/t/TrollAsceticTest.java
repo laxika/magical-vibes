@@ -104,7 +104,7 @@ class TrollAsceticTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(trollPerm.isTapped()).isFalse();
-        assertThat(trollPerm.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(trollPerm.getId())).isEqualTo(1);
     }
 
     // ===== Regenerate activated ability =====
@@ -135,7 +135,7 @@ class TrollAsceticTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
@@ -165,7 +165,7 @@ class TrollAsceticTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Troll Ascetic from lethal combat damage")
     void regenSavesFromLethalCombatDamage() {
         Permanent trollPerm = addCreatureReady(player1, new TrollAscetic());
-        trollPerm.setRegenerationShield(1);
+        gd.addRegenerationShields(trollPerm.getId(), 1);
         trollPerm.setBlocking(true);
         trollPerm.addBlockingTarget(0);
 
@@ -178,7 +178,7 @@ class TrollAsceticTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Troll Ascetic");
         Permanent troll = findPermanent(player1, "Troll Ascetic");
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(0);
     }
 
     @Test
@@ -211,13 +211,13 @@ class TrollAsceticTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(0);
     }
 
     @Test
@@ -234,7 +234,7 @@ class TrollAsceticTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Troll Ascetic");
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
         assertThat(troll.getMarkedDamage()).isZero();
 
         harness.castAndResolveInstant(player1, 0, troll.getId());

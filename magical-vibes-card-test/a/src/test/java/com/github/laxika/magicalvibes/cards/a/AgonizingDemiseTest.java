@@ -44,7 +44,7 @@ class AgonizingDemiseTest extends BaseCardTest {
     @DisplayName("The destruction cannot be regenerated")
     void cannotBeRegenerated() {
         Permanent barbarian = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
-        barbarian.setRegenerationShield(1);
+        gd.addRegenerationShields(barbarian.getId(), 1);
         cast(barbarian, false);
 
         harness.assertNotOnBattlefield(player2, "Yavimaya Barbarian");
@@ -109,7 +109,7 @@ class AgonizingDemiseTest extends BaseCardTest {
     @Test
     void kickedDestructionCannotBeRegenerated() {
         Permanent barbarian = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
-        barbarian.setRegenerationShield(1);
+        gd.addRegenerationShields(barbarian.getId(), 1);
         cast(barbarian, true);
 
         harness.assertNotOnBattlefield(player2, "Yavimaya Barbarian");

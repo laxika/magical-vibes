@@ -85,7 +85,7 @@ class MadAuntieTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, goblin.getId());
         harness.passBothPriorities();
 
-        assertThat(goblin.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(goblin.getId())).isEqualTo(1);
     }
 
     @Test
@@ -97,7 +97,7 @@ class MadAuntieTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentGoblin.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentGoblin.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(opponentGoblin.getId())).isEqualTo(1);
     }
 
     @Test
@@ -140,7 +140,7 @@ class MadAuntieTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, enchantment.getId());
         harness.passBothPriorities();
 
-        assertThat(enchantment.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(enchantment.getId())).isEqualTo(1);
     }
 
     @Test
@@ -169,6 +169,6 @@ class MadAuntieTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Mudbutton Torchrunner");
         harness.assertNotInGraveyard(player1, "Mudbutton Torchrunner");
         assertThat(goblin.isTapped()).isTrue();
-        assertThat(goblin.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(goblin.getId())).isZero();
     }
 }

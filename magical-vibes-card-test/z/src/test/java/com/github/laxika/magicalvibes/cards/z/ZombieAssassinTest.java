@@ -26,7 +26,7 @@ class ZombieAssassinTest extends BaseCardTest {
         addReadyAssassin(player1);
         harness.setGraveyard(player1, List.of(new Plains(), new Plains()));
         Permanent target = addCreatureReady(player2, new NantukoDisciple());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();

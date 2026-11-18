@@ -69,7 +69,7 @@ class DetonateTest extends BaseCardTest {
     @Test
     void cannotBeRegenerated() {
         Permanent targetPermanent = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
-        targetPermanent.setRegenerationShield(1);
+        gd.addRegenerationShields(targetPermanent.getId(), 1);
         UUID target = targetPermanent.getId();
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
         harness.setHand(player1, List.of(new Detonate()));

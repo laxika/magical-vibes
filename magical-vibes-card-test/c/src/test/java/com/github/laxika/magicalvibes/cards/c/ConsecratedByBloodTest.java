@@ -56,7 +56,7 @@ class ConsecratedByBloodTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(fodder1) || p.getId().equals(fodder2));
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -117,7 +117,7 @@ class ConsecratedByBloodTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(bears.isTapped()).isTrue();
         assertThat(bears.getMarkedDamage()).isZero();
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
         harness.assertOnBattlefield(player1, "Consecrated by Blood");
 
         harness.castAndResolveInstant(player2, 0, bears.getId());
@@ -148,8 +148,8 @@ class ConsecratedByBloodTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(bears);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
-        assertThat(ownCreature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ownCreature.getId())).isZero();
     }
 
     /** Puts a ready Grizzly Bears on player1's battlefield enchanted by a resolved Consecrated by Blood. */

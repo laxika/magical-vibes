@@ -45,7 +45,7 @@ class MossbridgeTrollTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Mossbridge Troll");
         harness.assertNotInGraveyard(player1, "Mossbridge Troll");
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(0);
     }
 
     @Test

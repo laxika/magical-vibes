@@ -37,7 +37,7 @@ class DecreeOfPainTest extends BaseCardTest {
     @DisplayName("Cycling kills small creatures before its draw resolves, despite regeneration shields")
     void cyclingTriggerResolvesBeforeDraw() {
         Permanent scout = harness.addToBattlefieldAndReturn(player1, new TreetopScout());
-        scout.setRegenerationShield(1);
+        gd.addRegenerationShields(scout.getId(), 1);
         harness.addToBattlefield(player2, new TreetopScout());
         harness.setHand(player1, List.of(new DecreeOfPain()));
         harness.setLibrary(player1, List.of(new DawnElemental()));
@@ -85,7 +85,7 @@ class DecreeOfPainTest extends BaseCardTest {
     @DisplayName("Counts only creatures actually destroyed and ignores regeneration shields")
     void countsOnlyActuallyDestroyedCreatures() {
         Permanent creatureWithRegenerationShield = harness.addToBattlefieldAndReturn(player1, new TreetopScout());
-        creatureWithRegenerationShield.setRegenerationShield(1);
+        gd.addRegenerationShields(creatureWithRegenerationShield.getId(), 1);
         harness.addToBattlefield(player2, new TreetopScout());
         harness.addToBattlefield(player2, new ManorGargoyle());
         harness.addToBattlefield(player1, new TempleOfTheFalseGod());

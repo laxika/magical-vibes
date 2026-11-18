@@ -77,7 +77,7 @@ class RedcapMeleeTest extends BaseCardTest {
     void fullyPreventedDamageDoesNotRequireSacrifice() {
         harness.addToBattlefield(player1, new Mountain());
         var creature = harness.addToBattlefieldAndReturn(player2, new GarenbrigSquire());
-        creature.setDamagePreventionShield(4);
+        gd.addPermanentDamagePreventionShield(creature.getId(), 4);
         harness.setHand(player1, java.util.List.of(new RedcapMelee()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -92,7 +92,7 @@ class RedcapMeleeTest extends BaseCardTest {
     void partiallyPreventedDamageStillRequiresSacrifice() {
         harness.addToBattlefield(player1, new Mountain());
         var creature = harness.addToBattlefieldAndReturn(player2, new GarenbrigSquire());
-        creature.setDamagePreventionShield(3);
+        gd.addPermanentDamagePreventionShield(creature.getId(), 3);
         harness.setHand(player1, java.util.List.of(new RedcapMelee()));
         harness.addMana(player1, ManaColor.RED, 1);
 

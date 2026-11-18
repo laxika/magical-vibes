@@ -58,7 +58,7 @@ class BlightMambaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent mamba = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(mamba.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(mamba.getId())).isEqualTo(1);
     }
 
     @Test
@@ -75,7 +75,7 @@ class BlightMambaTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Blight Mamba from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent mamba = addBlightMambaReady(player1);
-        mamba.setRegenerationShield(1);
+        gd.addRegenerationShields(mamba.getId(), 1);
         mamba.setBlocking(true);
         mamba.addBlockingTarget(0);
 
@@ -93,7 +93,7 @@ class BlightMambaTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Blight Mamba");
         Permanent survivedMamba = findPermanent(player1, "Blight Mamba");
         assertThat(survivedMamba.isTapped()).isTrue();
-        assertThat(survivedMamba.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(survivedMamba.getId())).isEqualTo(0);
     }
 
     @Test
@@ -165,7 +165,7 @@ class BlightMambaTest extends BaseCardTest {
     @DisplayName("Blight Mamba with regen survives combat and still deals -1/-1 counters")
     void regenSurvivesCombatAndStillDealsInfect() {
         Permanent mamba = addBlightMambaReady(player1);
-        mamba.setRegenerationShield(1);
+        gd.addRegenerationShields(mamba.getId(), 1);
         mamba.setAttacking(true);
 
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new CarapaceForger());
@@ -196,7 +196,7 @@ class BlightMambaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mamba.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(mamba.getId())).isEqualTo(1);
         assertThat(mamba.isTapped()).isTrue();
     }
 
@@ -226,7 +226,7 @@ class BlightMambaTest extends BaseCardTest {
         assertThat(mamba.isTapped()).isTrue();
         assertThat(mamba.isAttacking()).isFalse();
         assertThat(mamba.getMarkedDamage()).isZero();
-        assertThat(mamba.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(mamba.getId())).isZero();
     }
 
     @Test

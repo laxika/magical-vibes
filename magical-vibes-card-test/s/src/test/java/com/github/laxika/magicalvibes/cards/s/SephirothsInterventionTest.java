@@ -56,7 +56,7 @@ class SephirothsInterventionTest extends BaseCardTest {
     @DisplayName("Gains life even if the target regenerates")
     void gainsLifeEvenIfTargetRegenerates() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         harness.setHand(player1, List.of(new SephirothsIntervention()));
         harness.addMana(player1, ManaColor.BLACK, 1);

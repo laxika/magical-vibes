@@ -33,7 +33,7 @@ class ClergyOfTheHolyNimbusTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Clergy of the Holy Nimbus");
         assertThat(clergy.isTapped()).isTrue();
-        assertThat(clergy.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(clergy.getId())).isZero();
     }
 
     @Test

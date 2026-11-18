@@ -44,7 +44,7 @@ class FlamebreakTest extends BaseCardTest {
     @DisplayName("Creatures dealt damage by Flamebreak can't be regenerated this turn")
     void damagedCreaturesCannotRegenerate() {
         Permanent creature = addCreatureReady(player2, new AuriokGlaivemaster());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
 
         castFlamebreak();
 
@@ -56,7 +56,7 @@ class FlamebreakTest extends BaseCardTest {
     @DisplayName("Prevented damage does not stop regeneration")
     void preventedDamageDoesNotStopRegeneration() {
         Permanent creature = addCreatureReady(player2, new AuriokGlaivemaster());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
         Flamebreak flamebreak = new Flamebreak();
         harness.castFromHand(player1, flamebreak, "{R}{R}{R}");
         harness.setHand(player2, List.of(new Hallow()));
@@ -68,7 +68,7 @@ class FlamebreakTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Auriok Glaivemaster");
         assertThat(creature.getMarkedDamage()).isZero();
         assertThat(gd.cantBeRegenerated(creature.getId())).isFalse();
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -76,7 +76,7 @@ class FlamebreakTest extends BaseCardTest {
     void redirectedDamageAlsoStopsRegeneration() {
         Permanent nomads = addCreatureReady(player1, new NomadsEnKor());
         Permanent flyer = addCreatureReady(player1, new HoverguardObserver());
-        flyer.setRegenerationShield(1);
+        gd.addRegenerationShields(flyer.getId(), 1);
         for (int i = 0; i < 3; i++) {
             harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(nomads),
                     null, flyer.getId());

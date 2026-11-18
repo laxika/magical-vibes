@@ -81,7 +81,7 @@ class RuneswordTest extends BaseCardTest {
         Permanent sword = addSwordReady();
         Permanent attacker = addAttacker();
         Permanent creature = addCreatureReady(player2, new NiallSilvain());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
 
         activate(sword, attacker);
 

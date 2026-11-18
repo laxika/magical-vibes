@@ -118,7 +118,7 @@ class IncinerateTest extends BaseCardTest {
     void nonlethalDamageStillPreventsRegeneration() {
         Permanent skelePerm = addCreatureReady(player2, new DrudgeSkeletons());
         skelePerm.setToughnessModifier(3);
-        skelePerm.setRegenerationShield(1);
+        gd.addRegenerationShields(skelePerm.getId(), 1);
 
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -141,7 +141,7 @@ class IncinerateTest extends BaseCardTest {
     void creatureCannotRegenerateFromIncinerate() {
         // Drudge Skeletons (1/1) with regeneration shield
         Permanent skelePerm = addCreatureReady(player2, new DrudgeSkeletons());
-        skelePerm.setRegenerationShield(1);
+        gd.addRegenerationShields(skelePerm.getId(), 1);
 
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -157,7 +157,7 @@ class IncinerateTest extends BaseCardTest {
     @DisplayName("Creature dealt lethal damage by Incinerate cannot be regenerated even with multiple shields")
     void creatureCannotRegenerateEvenWithMultipleShields() {
         Permanent skelePerm = addCreatureReady(player2, new DrudgeSkeletons());
-        skelePerm.setRegenerationShield(3);
+        gd.addRegenerationShields(skelePerm.getId(), 3);
 
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -172,8 +172,8 @@ class IncinerateTest extends BaseCardTest {
     @DisplayName("Fully prevented Incinerate damage does not stop regeneration this turn")
     void fullyPreventedDamageDoesNotStopRegeneration() {
         Permanent skelePerm = addCreatureReady(player2, new DrudgeSkeletons());
-        skelePerm.setRegenerationShield(1);
-        skelePerm.setDamagePreventionShield(3);
+        gd.addRegenerationShields(skelePerm.getId(), 1);
+        gd.addPermanentDamagePreventionShield(skelePerm.getId(), 3);
 
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -181,7 +181,7 @@ class IncinerateTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, skelePerm.getId());
 
         harness.assertOnBattlefield(player2, "Drudge Skeletons");
-        assertThat(skelePerm.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skelePerm.getId())).isEqualTo(1);
 
         harness.setHand(player1, List.of(new Fireball()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -189,15 +189,15 @@ class IncinerateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Drudge Skeletons");
-        assertThat(skelePerm.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skelePerm.getId())).isZero();
     }
 
     @Test
     @DisplayName("Partially prevented Incinerate damage still prevents regeneration")
     void partiallyPreventedDamageStillPreventsRegeneration() {
         Permanent skelePerm = addCreatureReady(player2, new DrudgeSkeletons());
-        skelePerm.setRegenerationShield(1);
-        skelePerm.setDamagePreventionShield(2);
+        gd.addRegenerationShields(skelePerm.getId(), 1);
+        gd.addPermanentDamagePreventionShield(skelePerm.getId(), 2);
 
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -212,7 +212,7 @@ class IncinerateTest extends BaseCardTest {
     @DisplayName("Damage redirected to another creature still prevents its regeneration")
     void redirectedDamagePreventsRegeneration() {
         Permanent enchantedCreature = addCreatureReady(player1, new DrudgeSkeletons());
-        enchantedCreature.setRegenerationShield(1);
+        gd.addRegenerationShields(enchantedCreature.getId(), 1);
         Permanent originalTarget = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SavingGrace()));
@@ -254,7 +254,7 @@ class IncinerateTest extends BaseCardTest {
     @DisplayName("Incinerate damage redirected from a player prevents regeneration")
     void damageRedirectedFromPlayerPreventsRegeneration() {
         Permanent skeleton = addCreatureReady(player1, new DrudgeSkeletons());
-        skeleton.setRegenerationShield(1);
+        gd.addRegenerationShields(skeleton.getId(), 1);
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new SavingGrace()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -298,7 +298,7 @@ class IncinerateTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Drudge Skeletons");
         assertThat(skeleton.getMarkedDamage()).isZero();
-        assertThat(skeleton.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isZero();
         assertThat(skeleton.isTapped()).isTrue();
     }
 }

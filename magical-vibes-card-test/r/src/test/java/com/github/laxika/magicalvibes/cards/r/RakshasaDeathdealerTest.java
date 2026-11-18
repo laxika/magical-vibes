@@ -40,7 +40,7 @@ class RakshasaDeathdealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(deathdealer.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(deathdealer.getId())).isEqualTo(1);
     }
 
     @Test
@@ -94,7 +94,7 @@ class RakshasaDeathdealerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Rakshasa Deathdealer");
         harness.assertNotInGraveyard(player1, "Rakshasa Deathdealer");
         assertThat(deathdealer.isTapped()).isTrue();
-        assertThat(deathdealer.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(deathdealer.getId())).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -111,6 +111,6 @@ class RakshasaDeathdealerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(deathdealer.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(deathdealer.getId())).isZero();
     }
 }

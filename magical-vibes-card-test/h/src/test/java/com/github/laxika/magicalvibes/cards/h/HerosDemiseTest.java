@@ -48,7 +48,7 @@ class HerosDemiseTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Ink-Eyes, Servant of Oni");
         harness.assertNotInGraveyard(player2, "Ink-Eyes, Servant of Oni");
         assertThat(inkEyes.isTapped()).isTrue();
-        assertThat(inkEyes.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(inkEyes.getId())).isZero();
         harness.assertInGraveyard(player1, "Hero's Demise");
     }
 

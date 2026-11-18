@@ -102,7 +102,7 @@ class ConsumingFerocityTest extends BaseCardTest {
         harness.activateAbility(player1, regenerationIndex, null, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
 
         harness.passBothPriorities();
 

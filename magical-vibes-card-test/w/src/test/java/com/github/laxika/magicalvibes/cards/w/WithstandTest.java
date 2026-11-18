@@ -26,7 +26,7 @@ class WithstandTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Wild Cantor"));
 
         Permanent target = findPermanent(player2, "Wild Cantor");
-        assertThat(target.getDamagePreventionShield()).isEqualTo(3);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(3);
         harness.assertInHand(player1, "Wild Cantor");
     }
 
@@ -92,7 +92,7 @@ class WithstandTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Wild Cantor");
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(2);
     }
 
     @Test

@@ -31,7 +31,7 @@ class RushwoodHerbalistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(herbalist.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         harness.assertInGraveyard(player1, "Forest");
     }
 
@@ -97,11 +97,11 @@ class RushwoodHerbalistTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Rushwood Dryad");
         assertThat(herbalist.isTapped()).isTrue();
-        assertThat(herbalist.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(herbalist.getId())).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(herbalist.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(herbalist.getId())).isEqualTo(1);
     }
 
     @Test
@@ -140,7 +140,7 @@ class RushwoodHerbalistTest extends BaseCardTest {
         assertThat(target.isTapped()).isTrue();
         assertThat(target.isAttacking()).isFalse();
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, target, false));
 
@@ -183,7 +183,7 @@ class RushwoodHerbalistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Rushwood Herbalist");
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -202,8 +202,8 @@ class RushwoodHerbalistTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Forest");
         harness.assertInGraveyard(player2, "Rushwood Dryad");
         assertThat(herbalist.isTapped()).isTrue();
-        assertThat(herbalist.getRegenerationShield()).isZero();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(herbalist.getId())).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

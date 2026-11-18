@@ -5461,7 +5461,7 @@ public class GameData {
     public final FloatingContinuousEffect addPlayerDamagePreventionShield(
             String sourceCardName, UUID controllerId, UUID playerId, int amount, boolean combatOnly) {
         return addShield(sourceCardName, null, controllerId, playerId,
-                new PlayerDamagePreventionShield(amount, combatOnly), Duration.UNTIL_END_OF_TURN);
+                new DamagePreventionShield(amount, combatOnly), Duration.UNTIL_END_OF_TURN);
     }
 
     /** As the five-argument method, for a shield that prevents all damage and has no card behind it. */
@@ -5485,9 +5485,10 @@ public class GameData {
     /** The damage the shields of {@code playerId} (none: the shared shield) of the given kind can still prevent. */
     public final int playerDamagePreventionShield(UUID playerId, boolean combatOnly) {
         int total = 0;
-        for (FloatingContinuousEffect fe : shieldEffects(PlayerDamagePreventionShield.class)) {
-            PlayerDamagePreventionShield shield = (PlayerDamagePreventionShield) fe.effect();
-            if (shield.combatOnly() == combatOnly && Objects.equals(playerId, fe.affectedPlayerId())) {
+        for (FloatingContinuousEffect fe : shieldEffects(DamagePreventionShield.class)) {
+            DamagePreventionShield shield = (DamagePreventionShield) fe.effect();
+            if (shield.combatOnly() == combatOnly && fe.affectedPermanentId() == null
+                    && Objects.equals(playerId, fe.affectedPlayerId())) {
                 total += shield.amount();
             }
         }
@@ -5501,12 +5502,13 @@ public class GameData {
      */
     public final int usePlayerDamagePreventionShields(UUID playerId, boolean combatOnly, int damage) {
         int remaining = damage;
-        for (FloatingContinuousEffect fe : shieldEffects(PlayerDamagePreventionShield.class)) {
+        for (FloatingContinuousEffect fe : shieldEffects(DamagePreventionShield.class)) {
             if (remaining <= 0) {
                 break;
             }
-            PlayerDamagePreventionShield shield = (PlayerDamagePreventionShield) fe.effect();
-            if (shield.combatOnly() != combatOnly || !Objects.equals(playerId, fe.affectedPlayerId())) {
+            DamagePreventionShield shield = (DamagePreventionShield) fe.effect();
+            if (shield.combatOnly() != combatOnly || fe.affectedPermanentId() != null
+                    || !Objects.equals(playerId, fe.affectedPlayerId())) {
                 continue;
             }
             int prevented = Math.min(shield.amount(), remaining);
@@ -5535,13 +5537,111 @@ public class GameData {
 
     private Map<UUID, Integer> playerDamagePreventionShieldTotals(boolean combatOnly) {
         Map<UUID, Integer> totals = new LinkedHashMap<>();
-        for (FloatingContinuousEffect fe : shieldEffects(PlayerDamagePreventionShield.class)) {
-            PlayerDamagePreventionShield shield = (PlayerDamagePreventionShield) fe.effect();
+        for (FloatingContinuousEffect fe : shieldEffects(DamagePreventionShield.class)) {
+            DamagePreventionShield shield = (DamagePreventionShield) fe.effect();
             if (shield.combatOnly() == combatOnly && fe.affectedPlayerId() != null && shield.amount() > 0) {
                 totals.merge(fe.affectedPlayerId(), shield.amount(), Integer::sum);
             }
         }
         return totals;
+    }
+
+    /**
+     * Starts "prevent the next {@code amount} damage that would be dealt to it this turn" (CR 615.7) on the permanent
+     * {@code permanentId}, made by the card {@code sourceCardName} controlled by {@code controllerId}.
+     * {@code plusOneCounters}: a +1/+1 counter is put on it for each 1 damage prevented this way (Temper).
+     */
+    public final FloatingContinuousEffect addPermanentDamagePreventionShield(String sourceCardName,
+                                                                           UUID sourcePermanentId, UUID controllerId,
+                                                                           UUID permanentId, int amount,
+                                                                           boolean plusOneCounters) {
+        return addEffectOnPermanent(sourceCardName, sourcePermanentId, controllerId,
+                new DamagePreventionShield(amount, false, plusOneCounters), permanentId, Duration.UNTIL_END_OF_TURN);
+    }
+
+    /** As the six-argument method, for a plain shield that has no card behind it. */
+    public final FloatingContinuousEffect addPermanentDamagePreventionShield(UUID permanentId, int amount) {
+        return addPermanentDamagePreventionShield("", null, null, permanentId, amount, false);
+    }
+
+    /**
+     * The damage the "prevent the next N damage" shields on the permanent {@code permanentId} can still prevent, added
+     * up; {@code plusOneCounters} selects the shields that also put +1/+1 counters on it.
+     */
+    public final int permanentDamagePreventionShield(UUID permanentId, boolean plusOneCounters) {
+        int total = 0;
+        for (FloatingContinuousEffect fe : floatingEffectsOnPermanent(permanentId, DamagePreventionShield.class)) {
+            DamagePreventionShield shield = (DamagePreventionShield) fe.effect();
+            if (shield.plusOneCounters() == plusOneCounters) {
+                total += shield.amount();
+            }
+        }
+        return total;
+    }
+
+    /** As {@link #permanentDamagePreventionShield(UUID, boolean)} for the plain shields. */
+    public final int permanentDamagePreventionShield(UUID permanentId) {
+        return permanentDamagePreventionShield(permanentId, false);
+    }
+
+    /**
+     * Prevents up to {@code damage} of the damage that would be dealt to the permanent {@code permanentId} with its
+     * shields of the given kind, oldest first; a used-up shield ends, a partly used one is replaced by what is left of
+     * it, keeping its timestamp. Returns the damage prevented.
+     */
+    public final int usePermanentDamagePreventionShields(UUID permanentId, boolean plusOneCounters, int damage) {
+        int remaining = damage;
+        for (FloatingContinuousEffect fe : floatingEffectsOnPermanent(permanentId, DamagePreventionShield.class)) {
+            if (remaining <= 0) {
+                break;
+            }
+            DamagePreventionShield shield = (DamagePreventionShield) fe.effect();
+            if (shield.plusOneCounters() != plusOneCounters || shield.amount() <= 0) {
+                continue;
+            }
+            int prevented = Math.min(shield.amount(), remaining);
+            remaining -= prevented;
+            if (prevented >= shield.amount()) {
+                endFloatingEffect(fe);
+            } else {
+                reduceShield(fe, shield.reducedBy(prevented));
+            }
+        }
+        return damage - remaining;
+    }
+
+    /**
+     * The regeneration shields on the permanent {@code permanentId} (CR 701.19a), oldest first. Each is a floating
+     * effect whose payload is a {@link RegenerationShield}; it ends as it is used, or at cleanup (CR 514.2).
+     */
+    public final List<FloatingContinuousEffect> regenerationShields(UUID permanentId) {
+        return floatingEffectsOnPermanent(permanentId, RegenerationShield.class);
+    }
+
+    /** How many regeneration shields the permanent {@code permanentId} has. */
+    public final int regenerationShieldCount(UUID permanentId) {
+        return regenerationShields(permanentId).size();
+    }
+
+    /** Gives the permanent {@code permanentId} {@code count} regeneration shields with no rider and no card behind them. */
+    public final void addRegenerationShields(UUID permanentId, int count) {
+        for (int i = 0; i < count; i++) {
+            addEffectOnPermanent("", null, null, RegenerationShield.PLAIN, permanentId, Duration.UNTIL_END_OF_TURN);
+        }
+    }
+
+    /**
+     * Ends the oldest floating effect of {@code type} on the permanent {@code permanentId} as it is used up (a
+     * regeneration shield, "destroy it instead of the next damage", "remove all damage instead of the next
+     * destruction"), returning whether there was one.
+     */
+    public final boolean useOldestEffectOnPermanent(UUID permanentId, Class<? extends CardEffect> type) {
+        List<FloatingContinuousEffect> effects = floatingEffectsOnPermanent(permanentId, type);
+        if (effects.isEmpty()) {
+            return false;
+        }
+        endFloatingEffect(effects.getFirst());
+        return true;
     }
 
     /**
@@ -6323,6 +6423,15 @@ public class GameData {
                     new PreventedDamageCounterTally(shieldId, 0), permanentId, Duration.PERMANENT));
         }
         return shieldId;
+    }
+
+    /** The damage the Sacred Boon shields on the permanent {@code permanentId} can still prevent, added up. */
+    public int sacredBoonShield(UUID permanentId) {
+        int total = 0;
+        for (FloatingContinuousEffect fe : floatingEffectsOnPermanent(permanentId, PreventedDamageCounterShield.class)) {
+            total += Math.max(0, ((PreventedDamageCounterShield) fe.effect()).remaining());
+        }
+        return total;
     }
 
     /**

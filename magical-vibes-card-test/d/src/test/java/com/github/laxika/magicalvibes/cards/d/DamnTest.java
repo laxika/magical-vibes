@@ -20,7 +20,7 @@ class DamnTest extends BaseCardTest {
     @DisplayName("Destroys target creature without allowing regeneration")
     void destroysTargetCreatureWithoutRegeneration() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setHand(player1, List.of(new Damn()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -46,7 +46,7 @@ class DamnTest extends BaseCardTest {
     @DisplayName("Overloaded, destroys every creature without allowing regeneration")
     void overloadDestroysEveryCreatureWithoutRegeneration() {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        opponentCreature.setRegenerationShield(1);
+        gd.addRegenerationShields(opponentCreature.getId(), 1);
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new Damn()));
@@ -101,7 +101,7 @@ class DamnTest extends BaseCardTest {
 
         harness.castWithOverload(player1, 0);
         Permanent lateCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        lateCreature.setRegenerationShield(1);
+        gd.addRegenerationShields(lateCreature.getId(), 1);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");

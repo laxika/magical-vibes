@@ -160,7 +160,7 @@ class SpawningPoolTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(pool.getRegenerationShield()).isGreaterThan(0);
+        assertThat(gd.regenerationShieldCount(pool.getId())).isGreaterThan(0);
     }
 
     @Test
@@ -178,7 +178,7 @@ class SpawningPoolTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, pool));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(pool);
-        assertThat(pool.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(pool.getId())).isZero();
         assertThat(pool.getMarkedDamage()).isZero();
         assertThat(pool.isTapped()).isTrue();
     }
@@ -229,7 +229,7 @@ class SpawningPoolTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
-        assertThat(pool.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(pool.getId())).isZero();
     }
 
     @Test
@@ -263,7 +263,7 @@ class SpawningPoolTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(pool.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(pool.getId())).isEqualTo(1);
         assertThat(pool.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
@@ -277,12 +277,12 @@ class SpawningPoolTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        assertThat(pool.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(pool.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(pool.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(pool.getId())).isZero();
         harness.addMana(player1, ManaColor.BLACK, 1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);

@@ -110,7 +110,7 @@ class SeedsOfInnocenceTest extends BaseCardTest {
     @DisplayName("The no-regeneration clause destroys an artifact with a regeneration shield")
     void cannotBeRegenerated() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new CrystalGolem());
-        artifact.setRegenerationShield(1);
+        gd.addRegenerationShields(artifact.getId(), 1);
         int life2 = gd.playerLifeTotals.get(player2.getId());
         castSeedsOfInnocence();
 

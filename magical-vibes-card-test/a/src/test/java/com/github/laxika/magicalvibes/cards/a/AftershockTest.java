@@ -70,12 +70,12 @@ class AftershockTest extends BaseCardTest {
     @DisplayName("Allows the target to regenerate")
     void allowsTargetToRegenerate() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FightingDrake());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castAftershock(target);
 
         harness.assertOnBattlefield(player2, "Fighting Drake");
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         harness.assertLife(player1, 17);
     }
 

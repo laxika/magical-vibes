@@ -27,7 +27,7 @@ class GhostShipTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ship.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ship.getId())).isEqualTo(1);
         assertThat(ship.isTapped()).isFalse();
     }
 
@@ -41,7 +41,7 @@ class GhostShipTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
-        assertThat(ship.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ship.getId())).isZero();
     }
 
     @Test
@@ -55,14 +55,14 @@ class GhostShipTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
-        assertThat(ship.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ship.getId())).isZero();
     }
 
     @Test
     @DisplayName("Regeneration shield saves Ghost Ship from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent ship = addCreatureReady(player1, new GhostShip());
-        ship.setRegenerationShield(1);
+        gd.addRegenerationShields(ship.getId(), 1);
         addCreatureReady(player2, new CrawWurm());
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
@@ -73,7 +73,7 @@ class GhostShipTest extends BaseCardTest {
         assertThat(ship.isTapped()).isTrue();
         assertThat(ship.isBlocking()).isFalse();
         assertThat(ship.getMarkedDamage()).isZero();
-        assertThat(ship.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(ship.getId())).isEqualTo(0);
     }
 
     @Test
@@ -100,11 +100,11 @@ class GhostShipTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(ship.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ship.getId())).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
 
-        assertThat(ship.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ship.getId())).isEqualTo(1);
         assertThat(ship.isTapped()).isTrue();
     }
 
@@ -120,7 +120,7 @@ class GhostShipTest extends BaseCardTest {
 
         assertThat(ship.getMarkedDamage()).isEqualTo(3);
         assertThat(ship.isTapped()).isFalse();
-        assertThat(ship.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ship.getId())).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Ghost Ship");
     }
 
@@ -131,7 +131,7 @@ class GhostShipTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(ship.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ship.getId())).isEqualTo(1);
 
         harness.setHand(player2, List.of(new Terror()));
         harness.addMana(player2, ManaColor.BLACK, 2);

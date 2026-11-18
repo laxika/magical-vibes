@@ -112,7 +112,7 @@ class TheWretchedTest extends BaseCardTest {
     @DisplayName("Does not gain control of a blocker after The Wretched regenerates")
     void doesNotGainControlOfBlockerAfterSourceRegenerates() {
         Permanent wretched = addCreatureReady(player1, new TheWretched());
-        wretched.setRegenerationShield(1);
+        gd.addRegenerationShields(wretched.getId(), 1);
         Permanent blocker = addCreatureReady(player2, new CrawGiant());
 
         declareAttackersAndPrepareBlockers(List.of(0));

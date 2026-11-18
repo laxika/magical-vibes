@@ -37,7 +37,7 @@ class SqueesToyTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, toy), null, spider.getId());
         harness.passBothPriorities();
 
-        assertThat(spider.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(spider.getId())).isEqualTo(1);
         assertThat(toy.isTapped()).isTrue();
     }
 
@@ -56,7 +56,7 @@ class SqueesToyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(spider.getMarkedDamage()).isEqualTo(1);
-        assertThat(spider.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(spider.getId())).isZero();
     }
 
     @Test
@@ -73,7 +73,7 @@ class SqueesToyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(spider.getMarkedDamage()).isEqualTo(0);
-        assertThat(spider.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(gd.permanentDamagePreventionShield(spider.getId())).isEqualTo(0);
     }
 
     @Test
@@ -102,13 +102,13 @@ class SqueesToyTest extends BaseCardTest {
 
         harness.activateAbility(player1, indexOf(player1, toy), null, spider.getId());
         harness.passBothPriorities();
-        assertThat(spider.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(spider.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(spider.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(gd.permanentDamagePreventionShield(spider.getId())).isEqualTo(0);
     }
 
     @Test
@@ -169,6 +169,6 @@ class SqueesToyTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, toy), null, spider.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(spider.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(spider.getId())).isEqualTo(1);
     }
 }

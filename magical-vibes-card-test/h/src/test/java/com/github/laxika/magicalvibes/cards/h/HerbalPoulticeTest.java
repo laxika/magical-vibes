@@ -46,7 +46,7 @@ class HerbalPoulticeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -82,7 +82,7 @@ class HerbalPoulticeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
         assertThat(creature.isTapped()).isFalse();
         harness.assertOnBattlefield(player2, "Woodland Changeling");
     }
@@ -103,7 +103,7 @@ class HerbalPoulticeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Woodland Changeling");
         assertThat(creature.isTapped()).isTrue();
         assertThat(creature.getMarkedDamage()).isZero();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
@@ -129,6 +129,6 @@ class HerbalPoulticeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Woodland Changeling");
         harness.assertInGraveyard(player1, "Herbal Poultice");
         harness.assertNotOnBattlefield(player1, "Herbal Poultice");
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
     }
 }

@@ -52,7 +52,7 @@ class ClotSliverTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(otherSliver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(otherSliver.getId())).isEqualTo(1);
     }
 
     @Test
@@ -85,7 +85,7 @@ class ClotSliverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(clotSliver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(clotSliver.getId())).isEqualTo(1);
         assertThat(clotSliver.isTapped()).isTrue();
     }
 
@@ -100,8 +100,8 @@ class ClotSliverTest extends BaseCardTest {
         harness.activateAbility(player2, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(opposingSliver.getRegenerationShield()).isEqualTo(1);
-        assertThat(clotSliver.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(opposingSliver.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(clotSliver.getId())).isZero();
         assertThat(opposingSliver.isTapped()).isFalse();
 
         harness.setHand(player1, List.of(new Kindle()));
@@ -111,7 +111,7 @@ class ClotSliverTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, opposingSliver.getId());
 
         harness.assertOnBattlefield(player2, "Winged Sliver");
-        assertThat(opposingSliver.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(opposingSliver.getId())).isZero();
         assertThat(opposingSliver.isTapped()).isTrue();
     }
 
@@ -134,6 +134,6 @@ class ClotSliverTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Clot Sliver");
         assertThat(gs.getEffectiveActivatedAbilities(gd, otherSliver)).isEmpty();
         resolveAllTriggers();
-        assertThat(otherSliver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(otherSliver.getId())).isEqualTo(1);
     }
 }

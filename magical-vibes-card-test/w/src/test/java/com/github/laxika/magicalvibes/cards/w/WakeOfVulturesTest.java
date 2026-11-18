@@ -26,11 +26,11 @@ class WakeOfVulturesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(vultures);
         harness.assertInGraveyard(player1, "Wake of Vultures");
         assertThat(gd.stack).hasSize(1);
-        assertThat(vultures.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(vultures.getId())).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(vultures.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(vultures.getId())).isEqualTo(1);
         assertThat(vultures.isTapped()).isFalse();
     }
 
@@ -49,7 +49,7 @@ class WakeOfVulturesTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, fodder.getId());
         harness.passBothPriorities();
 
-        assertThat(vultures.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(vultures.getId())).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(vultures);
     }
 
@@ -64,7 +64,7 @@ class WakeOfVulturesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, fodder.getId());
         harness.passBothPriorities();
-        assertThat(vultures.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(vultures.getId())).isEqualTo(1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -87,7 +87,7 @@ class WakeOfVulturesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(vultures.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(vultures.getId())).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(fodder.getId()));
         harness.assertOnBattlefield(player1, "Wake of Vultures");
@@ -122,7 +122,7 @@ class WakeOfVulturesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent vultures = findPermanent(player1, "Wake of Vultures");
-        assertThat(vultures.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(vultures.getId())).isEqualTo(1);
 
         vultures.setBlocking(true);
         vultures.addBlockingTarget(0);
@@ -135,7 +135,7 @@ class WakeOfVulturesTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Wake of Vultures");
         Permanent regenerated = findPermanent(player1, "Wake of Vultures");
         assertThat(regenerated.isTapped()).isTrue();
-        assertThat(regenerated.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(regenerated.getId())).isZero();
     }
 
     @Test

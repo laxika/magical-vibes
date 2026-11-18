@@ -179,7 +179,7 @@ class SpreadingPlagueTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.activateAbility(player2, 1, null, null);
         harness.passBothPriorities();
-        assertThat(victim.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(victim.getId())).isEqualTo(1);
 
         harness.addToBattlefield(player1, new SpreadingPlague());
         harness.forceActivePlayer(player1);

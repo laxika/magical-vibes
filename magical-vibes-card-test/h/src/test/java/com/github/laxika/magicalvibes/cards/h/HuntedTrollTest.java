@@ -83,7 +83,7 @@ class HuntedTrollTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent troll = findPermanent(player1, "Hunted Troll");
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
@@ -104,7 +104,7 @@ class HuntedTrollTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Hunted Troll");
         assertThat(troll.isTapped()).isTrue();
         assertThat(troll.getMarkedDamage()).isZero();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
     }
 
     @Test

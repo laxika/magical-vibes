@@ -85,7 +85,7 @@ class HandOfDeathTest extends BaseCardTest {
     @DisplayName("A regeneration shield saves the target from Hand of Death")
     void regenerationShieldSavesTarget() {
         Permanent griffin = harness.addToBattlefieldAndReturn(player2, new WildGriffin());
-        griffin.setRegenerationShield(1);
+        gd.addRegenerationShields(griffin.getId(), 1);
 
         harness.setHand(player1, List.of(new HandOfDeath()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -94,7 +94,7 @@ class HandOfDeathTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Wild Griffin");
         harness.assertNotInGraveyard(player2, "Wild Griffin");
-        assertThat(griffin.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(griffin.getId())).isZero();
     }
 
     @Test

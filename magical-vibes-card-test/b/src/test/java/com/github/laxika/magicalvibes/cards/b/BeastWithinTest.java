@@ -186,7 +186,7 @@ class BeastWithinTest extends BaseCardTest {
     @DisplayName("Regeneration saves the target without preventing the Beast token")
     void regeneratedTargetStillCreatesToken() {
         var target = harness.addToBattlefieldAndReturn(player2, new PorcelainLegionnaire());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new BeastWithin()));
@@ -197,7 +197,7 @@ class BeastWithinTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Porcelain Legionnaire");
         harness.assertNotInGraveyard(player2, "Porcelain Legionnaire");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .filteredOn(p -> p.getCard().isToken() && p.getCard().getName().equals("Beast"))
                 .hasSize(1);

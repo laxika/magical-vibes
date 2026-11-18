@@ -62,7 +62,7 @@ class RakdosRingleaderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gd.playerBattlefields.get(player1.getId()).getFirst().getId())).isEqualTo(1);
     }
 
     @Test
@@ -70,7 +70,7 @@ class RakdosRingleaderTest extends BaseCardTest {
     void regenerationSavesFromLethalCombatDamage() {
         // The 2/4 attacker survives first-strike damage and deals lethal damage in the normal step.
         Permanent ringleader = addCreatureReady(player1, new RakdosRingleader());
-        ringleader.setRegenerationShield(1);
+        gd.addRegenerationShields(ringleader.getId(), 1);
         ringleader.setBlocking(true);
         ringleader.addBlockingTarget(0);
 
@@ -82,7 +82,7 @@ class RakdosRingleaderTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Rakdos Ringleader");
         Permanent survivor = findPermanent(player1, "Rakdos Ringleader");
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isEqualTo(0);
         assertThat(survivor.isBlocking()).isFalse();
     }
 

@@ -23,7 +23,7 @@ class DarklingStalkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(stalker.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(stalker.getId())).isEqualTo(1);
         assertThat(stalker.isTapped()).isFalse();
     }
 
@@ -46,7 +46,7 @@ class DarklingStalkerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Darkling Stalker");
         assertThat(stalker.isTapped()).isTrue();
         assertThat(stalker.isBlocking()).isFalse();
-        assertThat(stalker.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(stalker.getId())).isZero();
     }
 
     @Test
@@ -98,7 +98,7 @@ class DarklingStalkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(stalker.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(stalker.getId())).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, stalker)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, stalker)).isEqualTo(2);
         assertThat(stalker.isTapped()).isTrue();
@@ -130,14 +130,14 @@ class DarklingStalkerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(stalker.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(stalker.getId())).isEqualTo(2);
         assertThat(stalker.isTapped()).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(stalker.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(stalker.getId())).isZero();
         harness.assertOnBattlefield(player1, "Darkling Stalker");
     }
 }

@@ -27,7 +27,7 @@ class DeathRattleTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
 
         List<Card> graveyard = List.of(
                 new Imperiosaur(), new Imperiosaur(), new Imperiosaur(),

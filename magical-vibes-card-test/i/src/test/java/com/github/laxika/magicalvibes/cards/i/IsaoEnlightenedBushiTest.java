@@ -98,7 +98,7 @@ class IsaoEnlightenedBushiTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, samurai.getId());
         harness.passBothPriorities();
 
-        assertThat(samurai.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(samurai.getId())).isEqualTo(1);
     }
 
     @Test
@@ -128,7 +128,7 @@ class IsaoEnlightenedBushiTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, isao.getId());
         harness.passBothPriorities();
 
-        assertThat(isao.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(isao.getId())).isEqualTo(1);
         assertThat(isao.isTapped()).isTrue();
     }
 
@@ -148,7 +148,7 @@ class IsaoEnlightenedBushiTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(isao);
-        assertThat(isao.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(isao.getId())).isZero();
         assertThat(isao.isTapped()).isTrue();
         assertThat(isao.isBlocking()).isFalse();
         assertThat(gd.playerGraveyards.get(player1.getId()))

@@ -54,7 +54,7 @@ class FlayedNimTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(nim.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(nim.getId())).isEqualTo(1);
     }
 
     @Test
@@ -71,7 +71,7 @@ class FlayedNimTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, nim.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(nim);
-        assertThat(nim.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(nim.getId())).isZero();
     }
 
     @Test
@@ -180,7 +180,7 @@ class FlayedNimTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(nim);
         assertThat(nim.isTapped()).isTrue();
-        assertThat(nim.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(nim.getId())).isZero();
     }
 
     @Test
@@ -215,6 +215,6 @@ class FlayedNimTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, nim.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(nim);
-        assertThat(nim.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(nim.getId())).isZero();
     }
 }

@@ -28,7 +28,7 @@ class ReveredElderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(elder.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(elder.getId())).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -47,7 +47,7 @@ class ReveredElderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(elder.getMarkedDamage()).isEqualTo(1);
-        assertThat(elder.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(elder.getId())).isZero();
     }
 
     @Test
@@ -67,7 +67,7 @@ class ReveredElderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(elder.getMarkedDamage()).isZero();
-        assertThat(elder.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(elder.getId())).isZero();
     }
 
     @Test
@@ -82,7 +82,7 @@ class ReveredElderTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(elder.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(elder.getId())).isZero();
     }
 
     @Test
@@ -102,7 +102,7 @@ class ReveredElderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(elder.getMarkedDamage()).isZero();
-        assertThat(elder.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(elder.getId())).isZero();
         assertThat(attacker.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
@@ -126,7 +126,7 @@ class ReveredElderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(elder.getMarkedDamage()).isZero();
-        assertThat(elder.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(elder.getId())).isZero();
         assertThat(elder.isTapped()).isTrue();
     }
 

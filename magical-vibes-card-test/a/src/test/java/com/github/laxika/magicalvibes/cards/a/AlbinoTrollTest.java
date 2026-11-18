@@ -27,14 +27,14 @@ class AlbinoTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Albino Troll from lethal combat damage")
     void regenerationShieldSavesTroll() {
         Permanent troll = addTrollReady();
-        troll.setRegenerationShield(1);
+        gd.addRegenerationShields(troll.getId(), 1);
         troll.setBlocking(true);
         troll.addBlockingTarget(0);
 
@@ -45,7 +45,7 @@ class AlbinoTrollTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Albino Troll");
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
     }
 
     @Test
@@ -115,7 +115,7 @@ class AlbinoTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Albino Troll").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Albino Troll").getId())).isEqualTo(1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

@@ -77,7 +77,7 @@ class CombustTest extends BaseCardTest {
         // Give the creature a damage prevention shield
         UUID targetId = harness.getPermanentId(player2, "Azure Drake");
         Permanent target = findPermanent(player2, "Azure Drake");
-        target.setDamagePreventionShield(10);
+        gd.addPermanentDamagePreventionShield(target.getId(), 10);
 
         harness.castAndResolveInstant(player1, 0, targetId);
 

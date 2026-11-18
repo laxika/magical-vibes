@@ -26,7 +26,7 @@ class HornedTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
         assertThat(troll.isTapped()).isFalse();
     }
 
@@ -39,7 +39,7 @@ class HornedTrollTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
         }
-        assertThat(troll.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(2);
         assertThat(troll.isTapped()).isFalse();
 
         harness.setHand(player2, List.of(new Shock(), new Shock(), new Shock()));
@@ -48,7 +48,7 @@ class HornedTrollTest extends BaseCardTest {
             harness.castAndResolveInstant(player2, 0, troll.getId());
 
             harness.assertOnBattlefield(player1, "Horned Troll");
-            assertThat(troll.getRegenerationShield()).isEqualTo(1 - damageEvent);
+            assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1 - damageEvent);
             assertThat(troll.getMarkedDamage()).isZero();
             assertThat(troll.isTapped()).isTrue();
         }
@@ -68,7 +68,7 @@ class HornedTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
@@ -82,14 +82,14 @@ class HornedTrollTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Horned Troll from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent troll = addCreatureReady(player1, new HornedTroll());
-        troll.setRegenerationShield(1);
+        gd.addRegenerationShields(troll.getId(), 1);
         troll.setBlocking(true);
         troll.addBlockingTarget(0);
 
@@ -102,7 +102,7 @@ class HornedTrollTest extends BaseCardTest {
         assertThat(troll.isTapped()).isTrue();
         assertThat(troll.isBlocking()).isFalse();
         assertThat(troll.getMarkedDamage()).isZero();
-        assertThat(troll.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(0);
     }
 
     @Test

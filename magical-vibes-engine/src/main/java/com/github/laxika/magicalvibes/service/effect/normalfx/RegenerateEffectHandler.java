@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.RegenerationShield;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -67,35 +69,40 @@ public class RegenerateEffectHandler implements NormalEffectHandlerBean {
                 if (perm == null) {
                     return;
                 }
-                perm.setRegenerationShield(perm.getRegenerationShield() + 1);
-                if (effect instanceof RegenerateEffect regenerate) {
-                    if (regenerate.opponentMayDrawOnRegenerate()) {
-                        perm.setOpponentDrawRegenerationShield(perm.getOpponentDrawRegenerationShield() + 1);
-                        UUID chosenOpponentId = !regenerate.targetsPermanent()
-                                && entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())
-                                ? entry.getTargetId() : null;
-                        UUID opponentId = chosenOpponentId != null ? chosenOpponentId
-                                : gameQueryService.getOpponentId(gameData, entry.getControllerId());
-                        if (opponentId != null) {
-                            perm.getOpponentDrawRegenerationShieldRecipients().add(opponentId);
-                            perm.getOpponentDrawRegenerationShieldControllers().add(entry.getControllerId());
-                        }
-                    }
-                    if (regenerate.putMinusOneCounterOnRegenerate()) {
-                        perm.setMinusOneCounterRegenerationShield(perm.getMinusOneCounterRegenerationShield() + 1);
-                    }
-                    if (regenerate.putPlusOnePlusOneCounterOnRegenerate()) {
-                        perm.setPlusOnePlusOneCounterRegenerationShield(
-                                perm.getPlusOnePlusOneCounterRegenerationShield() + 1);
-                        perm.getPlusOnePlusOneCounterRegenerationShieldControllers().add(entry.getControllerId());
-                    }
-                    if (regenerate.gainControlOnRegenerate() && entry.getControllerId() != null) {
-                        perm.getGainControlRegenerationShields().add(entry.getControllerId());
-                    }
-                }
+                gameData.addEffectOnPermanent(entry, shieldFor(gameData, entry, effect), perm.getId(),
+                        Duration.UNTIL_END_OF_TURN);
 
                 gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " gains a regeneration shield."));
                 log.info("Game {} - {} gains a regeneration shield", gameData.id, perm.getCard().getName());
     
+    }
+
+    /**
+     * The regeneration shield the resolving {@code entry} makes (CR 701.19a), with the rider its effect names. Soldevi
+     * Sentry's draw goes to the chosen opponent, or to the controller's opponent; with no opponent it has no rider.
+     */
+    private RegenerationShield shieldFor(GameData gameData, StackEntry entry, CardEffect effect) {
+        if (!(effect instanceof RegenerateEffect regenerate)) {
+            return RegenerationShield.PLAIN;
+        }
+        if (regenerate.opponentMayDrawOnRegenerate()) {
+            UUID chosenOpponentId = !regenerate.targetsPermanent()
+                    && entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())
+                    ? entry.getTargetId() : null;
+            UUID opponentId = chosenOpponentId != null ? chosenOpponentId
+                    : gameQueryService.getOpponentId(gameData, entry.getControllerId());
+            return opponentId == null ? RegenerationShield.PLAIN
+                    : new RegenerationShield(RegenerationShield.Rider.OPPONENT_DRAW, opponentId);
+        }
+        if (regenerate.putMinusOneCounterOnRegenerate()) {
+            return new RegenerationShield(RegenerationShield.Rider.MINUS_ONE_COUNTER, null);
+        }
+        if (regenerate.putPlusOnePlusOneCounterOnRegenerate()) {
+            return new RegenerationShield(RegenerationShield.Rider.PLUS_ONE_COUNTER, null);
+        }
+        if (regenerate.gainControlOnRegenerate() && entry.getControllerId() != null) {
+            return new RegenerationShield(RegenerationShield.Rider.GAIN_CONTROL, null);
+        }
+        return RegenerationShield.PLAIN;
     }
 }

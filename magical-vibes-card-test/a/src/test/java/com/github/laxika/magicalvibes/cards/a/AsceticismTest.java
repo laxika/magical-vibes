@@ -114,7 +114,7 @@ class AsceticismTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -127,7 +127,7 @@ class AsceticismTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentBears.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentBears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(opponentBears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -195,7 +195,7 @@ class AsceticismTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(2);
     }
 
     @Test
@@ -215,7 +215,7 @@ class AsceticismTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(creature.isTapped()).isTrue();
         assertThat(creature.getMarkedDamage()).isZero();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(MoriokReaver.class::isInstance);
     }
 
@@ -261,6 +261,6 @@ class AsceticismTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 }

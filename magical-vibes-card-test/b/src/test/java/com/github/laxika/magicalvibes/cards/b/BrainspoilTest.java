@@ -24,7 +24,7 @@ class BrainspoilTest extends BaseCardTest {
     @Test
     void destroysAnUnenchantedCreatureWithoutAllowingRegeneration() {
         Permanent gharial = harness.addToBattlefieldAndReturn(player2, new GrayscaledGharial());
-        gharial.setRegenerationShield(1);
+        gd.addRegenerationShields(gharial.getId(), 1);
 
         harness.setHand(player1, List.of(new Brainspoil()));
         harness.addMana(player1, ManaColor.BLACK, 2);

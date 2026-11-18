@@ -24,7 +24,7 @@ class SanguineGuardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(guard.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(guard.getId())).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
@@ -33,7 +33,7 @@ class SanguineGuardTest extends BaseCardTest {
     @DisplayName("A regeneration shield saves Sanguine Guard from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent guard = addCreatureReady(player1, new SanguineGuard());
-        guard.setRegenerationShield(1);
+        gd.addRegenerationShields(guard.getId(), 1);
         guard.setBlocking(true);
         guard.addBlockingTarget(0);
 
@@ -44,7 +44,7 @@ class SanguineGuardTest extends BaseCardTest {
 
         Permanent survivor = findPermanent(player1, "Sanguine Guard");
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isZero();
     }
 
     @Test
@@ -77,7 +77,7 @@ class SanguineGuardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(guard.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(guard.getId())).isEqualTo(2);
         assertThat(guard.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
@@ -103,7 +103,7 @@ class SanguineGuardTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Sanguine Guard");
         harness.assertOnBattlefield(player2, "Bull Hippo");
         assertThat(guard.isTapped()).isTrue();
-        assertThat(guard.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(guard.getId())).isZero();
         assertThat(guard.getMarkedDamage()).isZero();
         assertThat(guard.isBlocking()).isFalse();
         assertThat(guard.getBlockingTargets()).isEmpty();

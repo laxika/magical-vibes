@@ -169,7 +169,7 @@ class GelidShacklesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DEFENDER)).isTrue();
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     private Permanent readyCreature(Player player) {

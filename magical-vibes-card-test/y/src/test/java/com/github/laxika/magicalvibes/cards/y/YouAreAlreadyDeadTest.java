@@ -49,7 +49,7 @@ class YouAreAlreadyDeadTest extends BaseCardTest {
     @DisplayName("Draws a card when destruction is prevented")
     void drawsWhenDestructionIsPrevented() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new KamiOfTerribleSecrets());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         gd.permanentsDealtDamageThisTurn.add(target.getId());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setHand(player1, List.of(new YouAreAlreadyDead()));

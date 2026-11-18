@@ -59,7 +59,7 @@ class RexCyberHoundTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gd.playerBattlefields.get(player1.getId()).getFirst().getId())).isEqualTo(1);
     }
 
     @Test
@@ -104,7 +104,7 @@ class RexCyberHoundTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(skeletons);
-        assertThat(rex.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(rex.getId())).isEqualTo(1);
     }
 
     @Test
@@ -192,14 +192,14 @@ class RexCyberHoundTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        assertThat(rex.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(rex.getId())).isEqualTo(1);
 
         gd.removeFromExile(skeletons.getId());
         harness.setGraveyard(player2, List.of(skeletons));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(rex.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(rex.getId())).isEqualTo(1);
     }
 
     @Test

@@ -57,7 +57,7 @@ class SpectralLynxTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(lynx.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(lynx.getId())).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 
@@ -97,7 +97,7 @@ class SpectralLynxTest extends BaseCardTest {
         assertThat(lynx.isTapped()).isTrue();
         assertThat(lynx.isBlocking()).isFalse();
         assertThat(lynx.getMarkedDamage()).isZero();
-        assertThat(lynx.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(lynx.getId())).isZero();
     }
 
     @Test
@@ -125,7 +125,7 @@ class SpectralLynxTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(lynx.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(lynx.getId())).isEqualTo(1);
         assertThat(lynx.isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Spectral Lynx");
     }

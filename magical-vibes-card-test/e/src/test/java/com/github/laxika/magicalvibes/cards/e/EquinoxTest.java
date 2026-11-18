@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveDamageFromTargetLandInsteadOfNextDestructionEffect;
 import com.github.laxika.magicalvibes.cards.a.Armageddon;
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -231,10 +232,10 @@ class EquinoxTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(land.getLandDestructionShield()).isEqualTo(1);
+        assertThat(gd.floatingEffectsOnPermanent(land.getId(), RemoveDamageFromTargetLandInsteadOfNextDestructionEffect.class).size()).isEqualTo(1);
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Forest");
-        assertThat(land.getLandDestructionShield()).isZero();
+        assertThat(gd.floatingEffectsOnPermanent(land.getId(), RemoveDamageFromTargetLandInsteadOfNextDestructionEffect.class).size()).isZero();
     }
 
     @Test

@@ -94,7 +94,7 @@ class FumigateTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BastionMastodon());
         harness.addToBattlefield(player2, new BastionMastodon());
         Permanent regenerated = findPermanent(player2, "Bastion Mastodon");
-        regenerated.setRegenerationShield(1);
+        gd.addRegenerationShields(regenerated.getId(), 1);
         harness.setHand(player1, List.of(new Fumigate()));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
@@ -104,7 +104,7 @@ class FumigateTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Bastion Mastodon");
         harness.assertNotInGraveyard(player2, "Bastion Mastodon");
         assertThat(regenerated.isTapped()).isTrue();
-        assertThat(regenerated.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(regenerated.getId())).isZero();
         harness.assertLife(player1, 21);
         harness.assertLife(player2, 20);
     }

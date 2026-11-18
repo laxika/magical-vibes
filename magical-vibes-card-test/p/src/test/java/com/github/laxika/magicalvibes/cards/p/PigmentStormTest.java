@@ -78,7 +78,7 @@ class PigmentStormTest extends BaseCardTest {
     @Test
     void determinesExcessBeforeCreatureDamagePrevention() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SpinedKarok());
-        target.setDamagePreventionShield(4);
+        gd.addPermanentDamagePreventionShield(target.getId(), 4);
         harness.setHand(player1, List.of(new PigmentStorm()));
         harness.setLife(player2, 20);
         addPigmentStormMana();

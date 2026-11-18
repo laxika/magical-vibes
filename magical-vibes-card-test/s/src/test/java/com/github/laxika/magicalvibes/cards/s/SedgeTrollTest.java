@@ -86,7 +86,7 @@ class SedgeTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
@@ -102,7 +102,7 @@ class SedgeTrollTest extends BaseCardTest {
     @DisplayName("A regeneration shield saves Sedge Troll from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent troll = harness.addToBattlefieldAndReturn(player1, new SedgeTroll());
-        troll.setRegenerationShield(1);
+        gd.addRegenerationShields(troll.getId(), 1);
         troll.setBlocking(true);
         troll.addBlockingTarget(0);
 
@@ -113,7 +113,7 @@ class SedgeTrollTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Sedge Troll");
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
         assertThat(troll.getMarkedDamage()).isZero();
     }
 
@@ -136,10 +136,10 @@ class SedgeTrollTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
         assertThat(troll.isTapped()).isFalse();
         assertThat(troll.getMarkedDamage()).isEqualTo(1);
     }
@@ -153,7 +153,7 @@ class SedgeTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
         assertThat(troll.isTapped()).isTrue();
     }
 
@@ -171,7 +171,7 @@ class SedgeTrollTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Sedge Troll");
         assertThat(troll.isTapped()).isTrue();
         assertThat(troll.getMarkedDamage()).isZero();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
 
         harness.castAndResolveInstant(player2, 0, troll.getId());
 

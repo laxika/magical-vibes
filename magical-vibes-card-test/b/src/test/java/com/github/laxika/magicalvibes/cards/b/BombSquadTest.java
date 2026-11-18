@@ -164,7 +164,7 @@ class BombSquadTest extends BaseCardTest {
         addReadyBombSquad(player1);
         Permanent grunt = harness.addToBattlefieldAndReturn(player2, new DwarvenGrunt());
         grunt.setCounterCount(CounterType.FUSE, 3);
-        grunt.setRegenerationShield(1);
+        gd.addRegenerationShields(grunt.getId(), 1);
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, 0, null, grunt.getId());

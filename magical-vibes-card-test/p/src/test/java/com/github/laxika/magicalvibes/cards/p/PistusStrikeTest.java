@@ -54,7 +54,7 @@ class PistusStrikeTest extends BaseCardTest {
     @Test
     void givesPoisonEvenWhenTargetRegenerates() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new LeoninSkyhunter());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setHand(player1, List.of(new PistusStrike()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
@@ -63,7 +63,7 @@ class PistusStrikeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Leonin Skyhunter");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
         assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
     }

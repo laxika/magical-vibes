@@ -73,14 +73,14 @@ class BloodMoneyTest extends BaseCardTest {
     @Test
     void regeneratedCreatureSurvivesWithoutCreatingTreasure() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
 
         castBloodMoney();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
         assertThat(findPermanents(player2, "Treasure")).isEmpty();
     }

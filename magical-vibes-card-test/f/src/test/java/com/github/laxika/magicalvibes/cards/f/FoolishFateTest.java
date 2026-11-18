@@ -108,7 +108,7 @@ class FoolishFateTest extends BaseCardTest {
     @Test
     void regeneratedCreatureSurvivesButItsControllerStillLosesLife() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new HungryGraffalon());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
         harness.setHand(player1, List.of(new FoolishFate()));
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.getGameData().lifeGainedThisTurn.put(player1.getId(), 1);
@@ -116,7 +116,7 @@ class FoolishFateTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
         harness.assertOnBattlefield(player2, "Hungry Graffalon");
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(creature.isTapped()).isTrue();
         harness.assertLife(player2, 17);
     }

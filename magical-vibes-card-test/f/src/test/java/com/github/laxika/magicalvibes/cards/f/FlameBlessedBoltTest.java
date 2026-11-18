@@ -154,7 +154,7 @@ class FlameBlessedBoltTest extends BaseCardTest {
     @DisplayName("Still exiles the target later when all of the bolt's damage was prevented")
     void exileReplacementDoesNotRequireDamageDealt() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setDamagePreventionShield(2);
+        gd.addPermanentDamagePreventionShield(target.getId(), 2);
 
         castAt(target.getId());
         harness.assertOnBattlefield(player2, "Grizzly Bears");

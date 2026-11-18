@@ -30,7 +30,7 @@ class CadaverousKnightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent knight = findPermanent(player1, "Cadaverous Knight");
-        assertThat(knight.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(knight.getId())).isEqualTo(1);
     }
 
     @Test
@@ -64,7 +64,7 @@ class CadaverousKnightTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Cadaverous Knight");
         Permanent knight = findPermanent(player1, "Cadaverous Knight");
         assertThat(knight.isTapped()).isTrue();
-        assertThat(knight.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(knight.getId())).isEqualTo(0);
     }
 
     @Test
@@ -125,7 +125,7 @@ class CadaverousKnightTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(knight.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(knight.getId())).isEqualTo(1);
         assertThat(knight.isTapped()).isTrue();
     }
 

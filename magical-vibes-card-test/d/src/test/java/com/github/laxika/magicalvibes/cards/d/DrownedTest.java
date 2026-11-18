@@ -22,7 +22,7 @@ class DrownedTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(drowned.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(drowned.getId())).isEqualTo(1);
     }
 
     @Test
@@ -34,7 +34,7 @@ class DrownedTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(drowned.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(drowned.getId())).isEqualTo(1);
         assertThat(drowned.isTapped()).isFalse();
     }
 
@@ -42,7 +42,7 @@ class DrownedTest extends BaseCardTest {
     @DisplayName("Its regeneration shield saves it from lethal combat damage")
     void regenerationShieldSavesDrowned() {
         Permanent drowned = addCreatureReady(player1, new Drowned());
-        drowned.setRegenerationShield(1);
+        gd.addRegenerationShields(drowned.getId(), 1);
         drowned.setBlocking(true);
         drowned.addBlockingTarget(0);
 
@@ -52,7 +52,7 @@ class DrownedTest extends BaseCardTest {
         resolveCombat(player2);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(drowned);
-        assertThat(drowned.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(drowned.getId())).isZero();
     }
 
     @Test
@@ -65,7 +65,7 @@ class DrownedTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(drowned.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(drowned.getId())).isEqualTo(1);
         assertThat(drowned.isTapped()).isTrue();
     }
 
@@ -76,12 +76,12 @@ class DrownedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(drowned.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(drowned.getId())).isZero();
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(drowned.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(drowned.getId())).isEqualTo(2);
         assertThat(drowned.isTapped()).isFalse();
     }
 
@@ -94,7 +94,7 @@ class DrownedTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
 
-        assertThat(drowned.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(drowned.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

@@ -153,7 +153,7 @@ class MarrowShardsTest extends BaseCardTest {
     @DisplayName("Damage prevention can save an attacking creature")
     void respectsDamagePrevention() {
         Permanent attacker = addAttacker(player2, new GlistenerElf());
-        attacker.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(attacker.getId(), 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -163,7 +163,7 @@ class MarrowShardsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         harness.assertOnBattlefield(player2, "Glistener Elf");
-        assertThat(attacker.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(attacker.getId())).isZero();
     }
 
     private Permanent addAttacker(com.github.laxika.magicalvibes.model.Player player, Card card) {

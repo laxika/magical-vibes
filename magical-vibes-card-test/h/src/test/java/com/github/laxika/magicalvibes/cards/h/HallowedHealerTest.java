@@ -41,7 +41,7 @@ class HallowedHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(4);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(4);
     }
 
     @Test
@@ -90,7 +90,7 @@ class HallowedHealerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
 
@@ -202,6 +202,6 @@ class HallowedHealerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Hallowed Healer");
         assertThat(healer.getMarkedDamage()).isZero();
-        assertThat(healer.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(healer.getId())).isZero();
     }
 }

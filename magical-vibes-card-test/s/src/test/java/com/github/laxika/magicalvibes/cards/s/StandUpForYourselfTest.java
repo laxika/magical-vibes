@@ -144,7 +144,7 @@ class StandUpForYourselfTest extends BaseCardTest {
     @Test
     void allowsRegeneration() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setHand(player1, List.of(new StandUpForYourself()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -154,7 +154,7 @@ class StandUpForYourselfTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Hill Giant");
         harness.assertNotInGraveyard(player2, "Hill Giant");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         harness.assertInGraveyard(player1, "Stand Up for Yourself");
     }
 

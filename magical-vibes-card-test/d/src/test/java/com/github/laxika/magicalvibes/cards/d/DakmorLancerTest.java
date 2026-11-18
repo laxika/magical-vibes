@@ -78,7 +78,7 @@ class DakmorLancerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = findPermanent(player2, "Grizzly Bears");
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         harness.passBothPriorities();
 

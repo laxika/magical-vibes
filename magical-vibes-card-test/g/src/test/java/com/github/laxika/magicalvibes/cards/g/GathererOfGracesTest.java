@@ -45,7 +45,7 @@ class GathererOfGracesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gatherer.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gatherer.getId())).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, gatherer)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, gatherer)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Sinstriker's Will");
@@ -71,7 +71,7 @@ class GathererOfGracesTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Gatherer of Graces");
         Permanent survivor = findPermanent(player1, "Gatherer of Graces");
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isZero();
         assertThat(survivor.getMarkedDamage()).isZero();
         harness.assertInGraveyard(player1, "Sinstriker's Will");
     }
@@ -108,7 +108,7 @@ class GathererOfGracesTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.assertOnBattlefield(player2, "Sinstriker's Will");
-        assertThat(gatherer.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(gatherer.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -125,12 +125,12 @@ class GathererOfGracesTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Sinstriker's Will");
         harness.assertNotOnBattlefield(player1, "Sinstriker's Will");
         assertThat(gd.stack).hasSize(1);
-        assertThat(gatherer.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(gatherer.getId())).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(gatherer.getRegenerationShield()).isEqualTo(1);
-        assertThat(otherCreature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(gatherer.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(otherCreature.getId())).isZero();
         assertThat(gatherer.isTapped()).isFalse();
     }
 }

@@ -160,7 +160,7 @@ class ZeroPointBalladTest extends BaseCardTest {
     @Test
     void regeneratedCreatureSurvivesAndIsNotEligibleToReturn() {
         var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
         var giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         harness.setHand(player1, List.of(new ZeroPointBallad()));
         harness.addMana(player1, ManaColor.BLACK, 7);

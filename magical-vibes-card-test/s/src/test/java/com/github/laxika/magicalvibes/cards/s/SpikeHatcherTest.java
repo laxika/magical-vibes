@@ -70,7 +70,7 @@ class SpikeHatcherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(spikeHatcher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
-        assertThat(spikeHatcher.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(spikeHatcher.getId())).isEqualTo(1);
     }
 
     @Test
@@ -87,7 +87,7 @@ class SpikeHatcherTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(spikeHatcher);
         assertThat(spikeHatcher.getMarkedDamage()).isZero();
-        assertThat(spikeHatcher.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(spikeHatcher.getId())).isZero();
         assertThat(spikeHatcher.isTapped()).isTrue();
     }
 
@@ -143,7 +143,7 @@ class SpikeHatcherTest extends BaseCardTest {
 
         harness.activateAbility(player1, battlefieldIndex(spikeHatcher), 1, null, null);
         harness.passBothPriorities();
-        assertThat(spikeHatcher.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(spikeHatcher.getId())).isEqualTo(1);
 
         harness.activateAbility(player1, battlefieldIndex(spikeHatcher), 1, null, null);
 

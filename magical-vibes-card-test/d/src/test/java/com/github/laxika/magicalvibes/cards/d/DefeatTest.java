@@ -103,7 +103,7 @@ class DefeatTest extends BaseCardTest {
     @DisplayName("Allows regeneration")
     void regeneratedCreatureSurvives() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         castDefeat(target);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");

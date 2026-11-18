@@ -67,7 +67,7 @@ class ExterminatusTest extends BaseCardTest {
     void permitsRegenerationAfterRemovingIndestructible() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new SolRing());
         artifact.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
-        artifact.setRegenerationShield(1);
+        gd.addRegenerationShields(artifact.getId(), 1);
 
         harness.castFromHand(player1, new Exterminatus(), "{5}{W}{B}");
         harness.passBothPriorities();
@@ -75,7 +75,7 @@ class ExterminatusTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Sol Ring");
         harness.assertNotInGraveyard(player2, "Sol Ring");
         assertThat(artifact.isTapped()).isTrue();
-        assertThat(artifact.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isZero();
         assertThat(gqs.hasKeyword(gd, artifact, Keyword.INDESTRUCTIBLE)).isFalse();
 
         Permanent laterArtifact = harness.addToBattlefieldAndReturn(player2, new MindStone());

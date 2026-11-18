@@ -77,7 +77,7 @@ class EarsplittingRatsTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(rats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(rats.getId())).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Earsplitting Rats");
     }
@@ -118,11 +118,11 @@ class EarsplittingRatsTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Earsplitting Rats");
-        assertThat(rats.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(rats.getId())).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(rats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(rats.getId())).isEqualTo(1);
         assertThat(rats.isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Earsplitting Rats");
     }
@@ -148,7 +148,7 @@ class EarsplittingRatsTest extends BaseCardTest {
         assertThat(rats.isTapped()).isTrue();
         assertThat(rats.isBlocking()).isFalse();
         assertThat(rats.getMarkedDamage()).isZero();
-        assertThat(rats.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(rats.getId())).isZero();
     }
 
     @Test
@@ -170,7 +170,7 @@ class EarsplittingRatsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(rats.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(rats.getId())).isZero();
     }
 
     @Test
@@ -187,7 +187,7 @@ class EarsplittingRatsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, rats.getId());
 
         harness.assertOnBattlefield(player1, "Earsplitting Rats");
-        assertThat(rats.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(rats.getId())).isZero();
         assertThat(rats.isTapped()).isTrue();
         assertThat(rats.getMarkedDamage()).isZero();
         harness.assertInGraveyard(player1, "Shock");

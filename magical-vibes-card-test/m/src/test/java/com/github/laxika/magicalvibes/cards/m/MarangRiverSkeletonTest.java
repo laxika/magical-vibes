@@ -66,6 +66,6 @@ class MarangRiverSkeletonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(skeleton.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isEqualTo(1);
     }
 }

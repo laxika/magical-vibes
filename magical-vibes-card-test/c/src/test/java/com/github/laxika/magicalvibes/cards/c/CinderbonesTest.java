@@ -42,7 +42,7 @@ class CinderbonesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent cinderbones = findPermanent(player1, "Cinderbones");
-        assertThat(cinderbones.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(cinderbones.getId())).isEqualTo(1);
     }
 
     @Test
@@ -66,7 +66,7 @@ class CinderbonesTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Cinderbones from lethal combat damage")
     void regenSavesFromLethalCombat() {
         Permanent perm = addCinderbonesReady(player1);
-        perm.setRegenerationShield(1);
+        gd.addRegenerationShields(perm.getId(), 1);
         perm.setBlocking(true);
         perm.addBlockingTarget(0);
 
@@ -78,7 +78,7 @@ class CinderbonesTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Cinderbones");
         Permanent cinderbones = findPermanent(player1, "Cinderbones");
         assertThat(cinderbones.isTapped()).isTrue();
-        assertThat(cinderbones.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(cinderbones.getId())).isEqualTo(0);
     }
 
     @Test
@@ -109,7 +109,7 @@ class CinderbonesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(cinderbones.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(cinderbones.getId())).isEqualTo(1);
         assertThat(cinderbones.isTapped()).isTrue();
     }
 
@@ -123,7 +123,7 @@ class CinderbonesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(cinderbones.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(cinderbones.getId())).isEqualTo(1);
         assertThat(cinderbones.isTapped()).isFalse();
     }
 
@@ -147,7 +147,7 @@ class CinderbonesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(blocker.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(blocker.getId())).isEqualTo(1);
 
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);

@@ -119,14 +119,14 @@ class KathariRemnantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent kathari = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(kathari.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(kathari.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Kathari Remnant from lethal combat damage")
     void regenerationSavesFromLethalCombat() {
         Permanent kathariPerm = addKathariReady(player1);
-        kathariPerm.setRegenerationShield(1);
+        gd.addRegenerationShields(kathariPerm.getId(), 1);
         kathariPerm.setBlocking(true);
         kathariPerm.addBlockingTarget(0);
 
@@ -143,7 +143,7 @@ class KathariRemnantTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Kathari Remnant");
         Permanent kathari = findPermanent(player1, "Kathari Remnant");
         assertThat(kathari.isTapped()).isTrue();
-        assertThat(kathari.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(kathari.getId())).isEqualTo(0);
     }
 
     @Test
@@ -202,7 +202,7 @@ class KathariRemnantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(kathari.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(kathari.getId())).isEqualTo(2);
         assertThat(kathari.isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Kathari Remnant");
     }
@@ -226,7 +226,7 @@ class KathariRemnantTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Kathari Remnant");
         harness.assertNotInGraveyard(player1, "Kathari Remnant");
         harness.assertInGraveyard(player2, "Assassinate");
-        assertThat(kathari.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(kathari.getId())).isZero();
         assertThat(kathari.isTapped()).isTrue();
     }
 

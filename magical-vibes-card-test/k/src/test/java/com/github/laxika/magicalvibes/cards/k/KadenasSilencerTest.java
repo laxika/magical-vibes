@@ -123,7 +123,7 @@ class KadenasSilencerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(thrun.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(thrun.getId())).isZero();
         harness.assertOnBattlefield(player2, "Thrun, the Last Troll");
     }
 

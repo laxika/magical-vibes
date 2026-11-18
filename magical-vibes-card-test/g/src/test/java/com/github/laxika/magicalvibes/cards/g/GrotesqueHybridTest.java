@@ -25,7 +25,7 @@ class GrotesqueHybridTest extends BaseCardTest {
     void combatDamageDestroysWithoutRegeneration() {
         addCreatureReady(player1, new GrotesqueHybrid());
         Permanent gurzigost = addCreatureReady(player2, new Gurzigost());
-        gurzigost.setRegenerationShield(1);
+        gd.addRegenerationShields(gurzigost.getId(), 1);
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

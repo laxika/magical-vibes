@@ -86,7 +86,7 @@ class HumbleTheBruteTest extends BaseCardTest {
     @DisplayName("Still investigates when the target regenerates")
     void investigatesWhenTargetRegenerates() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setHand(player1, List.of(new HumbleTheBrute()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -96,7 +96,7 @@ class HumbleTheBruteTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Air Elemental");
         harness.assertNotInGraveyard(player2, "Air Elemental");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
     }
 

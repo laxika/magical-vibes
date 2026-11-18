@@ -26,7 +26,7 @@ class ChillingApparitionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(apparition.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(apparition.getId())).isEqualTo(1);
     }
 
     @Test
@@ -38,7 +38,7 @@ class ChillingApparitionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(apparition.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(apparition.getId())).isZero();
     }
 
     @Test
@@ -57,7 +57,7 @@ class ChillingApparitionTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(apparition);
-        assertThat(apparition.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(apparition.getId())).isZero();
     }
 
     @Test
@@ -145,7 +145,7 @@ class ChillingApparitionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(apparition.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(apparition.getId())).isEqualTo(2);
         assertThat(apparition.isTapped()).isTrue();
     }
 

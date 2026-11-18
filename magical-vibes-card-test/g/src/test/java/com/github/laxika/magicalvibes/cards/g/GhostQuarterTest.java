@@ -259,7 +259,7 @@ class GhostQuarterTest extends BaseCardTest {
     void regeneratedLandStillAllowsSearch() {
         harness.addToBattlefield(player1, new GhostQuarter());
         var target = harness.addToBattlefieldAndReturn(player2, new Forest());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setLibrary(player2, List.of(new Plains()));
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
@@ -270,7 +270,7 @@ class GhostQuarterTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Forest");
         harness.assertNotInGraveyard(player2, "Forest");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         harness.assertOnBattlefield(player2, "Plains");
     }
 

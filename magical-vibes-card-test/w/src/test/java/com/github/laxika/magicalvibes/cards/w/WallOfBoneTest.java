@@ -86,7 +86,7 @@ class WallOfBoneTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         Permanent wall = findPermanent(player1, "Wall of Bone");
-        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(1);
         assertThat(wall.isTapped()).isFalse();
     }
 
@@ -105,7 +105,7 @@ class WallOfBoneTest extends BaseCardTest {
     void regenerationSavesFromLethalCombatDamage() {
         // Wall of Bone (1/4) with a regeneration shield blocks Earth Elemental (4/5): 4 damage is lethal.
         Permanent wallPerm = addWallOfBoneReady(player1);
-        wallPerm.setRegenerationShield(1);
+        gd.addRegenerationShields(wallPerm.getId(), 1);
         wallPerm.setBlocking(true);
         wallPerm.addBlockingTarget(0);
 
@@ -117,7 +117,7 @@ class WallOfBoneTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Wall of Bone");
         Permanent wall = findPermanent(player1, "Wall of Bone");
         assertThat(wall.isTapped()).isTrue();
-        assertThat(wall.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wall.getId())).isZero();
     }
 
     @Test
@@ -140,7 +140,7 @@ class WallOfBoneTest extends BaseCardTest {
     @DisplayName("A regeneration shield remains after nonlethal combat damage")
     void regenerationShieldRemainsAfterNonlethalDamage() {
         Permanent wall = addWallOfBoneReady(player1);
-        wall.setRegenerationShield(1);
+        gd.addRegenerationShields(wall.getId(), 1);
         wall.setBlocking(true);
         wall.addBlockingTarget(0);
 
@@ -150,7 +150,7 @@ class WallOfBoneTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Wall of Bone");
-        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(1);
     }
 
     @Test
@@ -178,13 +178,13 @@ class WallOfBoneTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(findPermanent(player1, "Wall of Bone").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Wall of Bone").getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(findPermanent(player1, "Wall of Bone").getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Wall of Bone").getId())).isZero();
     }
 
     @Test
@@ -198,7 +198,7 @@ class WallOfBoneTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(1);
         assertThat(wall.isTapped()).isTrue();
     }
 
@@ -215,13 +215,13 @@ class WallOfBoneTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, wall.getId());
         assertThat(wall.getMarkedDamage()).isEqualTo(3);
-        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(1);
         assertThat(wall.isTapped()).isFalse();
 
         harness.castAndResolveInstant(player1, 0, wall.getId());
         harness.assertOnBattlefield(player1, "Wall of Bone");
         assertThat(wall.getMarkedDamage()).isZero();
-        assertThat(wall.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wall.getId())).isZero();
         assertThat(wall.isTapped()).isTrue();
 
         harness.castAndResolveInstant(player1, 0, wall.getId());
@@ -242,7 +242,7 @@ class WallOfBoneTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(wall.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(2);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
@@ -252,13 +252,13 @@ class WallOfBoneTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, wall.getId());
         harness.castAndResolveInstant(player1, 0, wall.getId());
-        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(1);
         assertThat(wall.getMarkedDamage()).isZero();
 
         harness.castAndResolveInstant(player1, 0, wall.getId());
         harness.castAndResolveInstant(player1, 0, wall.getId());
         harness.assertOnBattlefield(player1, "Wall of Bone");
-        assertThat(wall.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wall.getId())).isZero();
         assertThat(wall.getMarkedDamage()).isZero();
     }
 
@@ -281,7 +281,7 @@ class WallOfBoneTest extends BaseCardTest {
         assertThat(wall.isBlocking()).isFalse();
         assertThat(wall.getBlockingTargets()).isEmpty();
         assertThat(wall.getMarkedDamage()).isZero();
-        assertThat(wall.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wall.getId())).isZero();
         harness.assertLife(player1, 20);
     }
 

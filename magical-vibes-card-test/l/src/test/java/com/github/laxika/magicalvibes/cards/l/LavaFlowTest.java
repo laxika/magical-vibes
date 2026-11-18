@@ -62,7 +62,7 @@ class LavaFlowTest extends BaseCardTest {
     @DisplayName("Lava Flow allows a regeneration shield to save the target creature")
     void allowsRegeneration() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
         harness.setHand(player1, List.of(new LavaFlow()));
         harness.addMana(player1, ManaColor.RED, 5);
 
@@ -70,7 +70,7 @@ class LavaFlowTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
     }
 
     @Test

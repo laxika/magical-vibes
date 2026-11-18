@@ -123,7 +123,7 @@ class NumaiOutcastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
-        assertThat(outcast.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(outcast.getId())).isEqualTo(1);
     }
 
     @Test
@@ -149,13 +149,13 @@ class NumaiOutcastTest extends BaseCardTest {
 
         harness.assertLife(player1, 15);
         assertThat(gd.stack).hasSize(1);
-        assertThat(outcast.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(outcast.getId())).isZero();
         assertThat(outcast.isTapped()).isFalse();
 
         harness.passBothPriorities();
 
         harness.assertLife(player1, 15);
-        assertThat(outcast.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(outcast.getId())).isEqualTo(1);
         assertThat(outcast.isTapped()).isFalse();
     }
 
@@ -171,7 +171,7 @@ class NumaiOutcastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 15);
-        assertThat(outcast.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(outcast.getId())).isEqualTo(1);
         assertThat(outcast.isTapped()).isTrue();
     }
 
@@ -186,7 +186,7 @@ class NumaiOutcastTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         assertThat(gd.stack).isEmpty();
-        assertThat(outcast.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(outcast.getId())).isZero();
     }
 
     @Test
@@ -197,20 +197,20 @@ class NumaiOutcastTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(outcast.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(outcast.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(outcast.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(outcast.getId())).isZero();
     }
 
     @Test
     @DisplayName("The regeneration shield saves Numai Outcast from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent outcast = addCreatureReady(player1, new NumaiOutcast());
-        outcast.setRegenerationShield(1);
+        gd.addRegenerationShields(outcast.getId(), 1);
         outcast.setBlocking(true);
         outcast.addBlockingTarget(0);
 
@@ -221,6 +221,6 @@ class NumaiOutcastTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Numai Outcast");
         assertThat(outcast.isTapped()).isTrue();
-        assertThat(outcast.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(outcast.getId())).isEqualTo(0);
     }
 }

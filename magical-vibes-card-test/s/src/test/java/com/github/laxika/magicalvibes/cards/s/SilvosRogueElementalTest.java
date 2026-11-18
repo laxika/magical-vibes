@@ -29,7 +29,7 @@ class SilvosRogueElementalTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(silvos.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(silvos.getId())).isEqualTo(1);
     }
 
     @Test
@@ -70,7 +70,7 @@ class SilvosRogueElementalTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(silvos);
         assertThat(silvos.isTapped()).isTrue();
-        assertThat(silvos.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(silvos.getId())).isZero();
         assertThat(silvos.getMarkedDamage()).isZero();
         assertThat(silvos.isBlocking()).isFalse();
         assertThat(silvos.getBlockingTargets()).isEmpty();
@@ -113,7 +113,7 @@ class SilvosRogueElementalTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(silvos.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(silvos.getId())).isEqualTo(2);
         assertThat(silvos.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
@@ -128,7 +128,7 @@ class SilvosRogueElementalTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(silvos.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(silvos.getId())).isEqualTo(1);
         assertThat(silvos.getMarkedDamage()).isEqualTo(2);
         assertThat(silvos.isTapped()).isFalse();
     }

@@ -63,14 +63,14 @@ class DiabolicMachineTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         Permanent machine = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(machine.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(machine.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Diabolic Machine from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent machinePerm = addCreatureReady(player1, new DiabolicMachine());
-        machinePerm.setRegenerationShield(1);
+        gd.addRegenerationShields(machinePerm.getId(), 1);
         machinePerm.setBlocking(true);
         machinePerm.addBlockingTarget(0);
 
@@ -82,7 +82,7 @@ class DiabolicMachineTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Diabolic Machine");
         Permanent machine = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(machine.isTapped()).isTrue();
-        assertThat(machine.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(machine.getId())).isEqualTo(0);
         assertThat(machine.isBlocking()).isFalse();
         assertThat(machine.getMarkedDamage()).isZero();
     }
@@ -120,7 +120,7 @@ class DiabolicMachineTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Diabolic Machine");
         harness.assertNotInGraveyard(player1, "Diabolic Machine");
-        assertThat(machine.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(machine.getId())).isZero();
         assertThat(machine.getMarkedDamage()).isZero();
         assertThat(machine.isTapped()).isTrue();
         assertThat(machine.isBlocking()).isFalse();
@@ -137,7 +137,7 @@ class DiabolicMachineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(machine.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(machine.getId())).isEqualTo(1);
         assertThat(machine.isTapped()).isTrue();
     }
 
@@ -151,7 +151,7 @@ class DiabolicMachineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(machine.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(machine.getId())).isEqualTo(1);
         assertThat(machine.isTapped()).isFalse();
         assertThat(machine.getMarkedDamage()).isEqualTo(2);
     }
@@ -167,7 +167,7 @@ class DiabolicMachineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(machine.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(machine.getId())).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(machine.isTapped()).isFalse();
     }

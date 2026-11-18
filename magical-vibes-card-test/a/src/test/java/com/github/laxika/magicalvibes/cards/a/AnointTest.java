@@ -48,7 +48,7 @@ class AnointTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player1, "Trained Armodon");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        assertThat(armodon(player1).getDamagePreventionShield()).isEqualTo(3);
+        assertThat(gd.permanentDamagePreventionShield(armodon(player1).getId())).isEqualTo(3);
     }
 
     @Test
@@ -141,7 +141,7 @@ class AnointTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.castAndResolveInstant(player2, 0, targetId);
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(targetId));
     }
@@ -165,7 +165,7 @@ class AnointTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getId().equals(shielded.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(unshielded.getId()));
-        assertThat(shielded.getDamagePreventionShield()).isEqualTo(3);
+        assertThat(gd.permanentDamagePreventionShield(shielded.getId())).isEqualTo(3);
     }
 
     @Test
@@ -178,14 +178,14 @@ class AnointTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player1, "Trained Armodon");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        assertThat(armodon(player1).getDamagePreventionShield()).isEqualTo(3);
+        assertThat(gd.permanentDamagePreventionShield(armodon(player1).getId())).isEqualTo(3);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(armodon(player1).getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(armodon(player1).getId())).isZero();
     }
 
     @Test
@@ -215,13 +215,13 @@ class AnointTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, target.getId());
 
         harness.assertOnBattlefield(player1, "Trained Armodon");
-        assertThat(target.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(2);
         assertThat(target.getMarkedDamage()).isZero();
 
         harness.castAndResolveInstant(player2, 0, target.getId());
 
         harness.assertOnBattlefield(player1, "Trained Armodon");
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(target.getMarkedDamage()).isEqualTo(2);
     }
     private Permanent armodon(Player player) {

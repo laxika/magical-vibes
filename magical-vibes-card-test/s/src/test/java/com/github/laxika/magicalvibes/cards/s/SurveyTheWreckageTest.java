@@ -92,7 +92,7 @@ class SurveyTheWreckageTest extends BaseCardTest {
     @DisplayName("Creates a Goblin even when regeneration prevents the land's destruction")
     void createsGoblinWhenLandRegenerates() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        land.setRegenerationShield(1);
+        gd.addRegenerationShields(land.getId(), 1);
         prepare();
 
         harness.castSorcery(player1, 0, land.getId());
@@ -100,7 +100,7 @@ class SurveyTheWreckageTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Mountain");
         harness.assertNotInGraveyard(player2, "Mountain");
-        assertThat(land.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(land.getId())).isZero();
         assertThat(land.isTapped()).isTrue();
         assertThat(findPermanents(player1, "Goblin")).hasSize(1);
         assertThat(findPermanents(player2, "Goblin")).isEmpty();

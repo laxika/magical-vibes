@@ -71,7 +71,7 @@ class PlagueWindTest extends BaseCardTest {
     void ignoresRegenerationShields() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent opposingBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        opposingBears.setRegenerationShield(2);
+        gd.addRegenerationShields(opposingBears.getId(), 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -109,7 +109,7 @@ class PlagueWindTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isPositive();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isPositive();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 

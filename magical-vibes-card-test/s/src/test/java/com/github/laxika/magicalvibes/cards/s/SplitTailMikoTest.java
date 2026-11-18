@@ -37,7 +37,7 @@ class SplitTailMikoTest extends BaseCardTest {
         resolveCombat(player2);
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         harness.assertOnBattlefield(player1, "Gnarled Mass");
         harness.assertNotOnBattlefield(player2, "Gnarled Mass");
     }
@@ -80,12 +80,12 @@ class SplitTailMikoTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
         harness.assertLife(player2, 19);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         harness.assertLife(player2, 18);
     }
 
@@ -102,7 +102,7 @@ class SplitTailMikoTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0, other.getId());
 
-        assertThat(chosen.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(chosen.getId())).isEqualTo(2);
         assertThat(chosen.getMarkedDamage()).isZero();
         assertThat(other.getMarkedDamage()).isEqualTo(1);
         harness.assertLife(player2, 19);
@@ -115,13 +115,13 @@ class SplitTailMikoTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1, new GnarledMass());
         activateMiko(miko, target.getId());
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test
@@ -173,7 +173,7 @@ class SplitTailMikoTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, miko.getId());
 
         assertThat(miko.getMarkedDamage()).isZero();
-        assertThat(miko.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(miko.getId())).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Split-Tail Miko");
         harness.assertLife(player1, 19);
     }
@@ -193,7 +193,7 @@ class SplitTailMikoTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         harness.assertLife(player2, 17);
     }
 
@@ -233,7 +233,7 @@ class SplitTailMikoTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
     }
 
     @Test

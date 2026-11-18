@@ -28,7 +28,7 @@ class DuskworkerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(duskworker.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(duskworker.getId())).isEqualTo(1);
     }
 
     @Test
@@ -41,14 +41,14 @@ class DuskworkerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
-        assertThat(duskworker.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(duskworker.getId())).isEqualTo(1);
 
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Duskworker");
         Permanent survivor = findPermanent(player1, "Duskworker");
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isZero();
     }
 
     @Test
@@ -65,7 +65,7 @@ class DuskworkerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(duskworker.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(duskworker.getId())).isEqualTo(1);
     }
 
     @Test
@@ -104,7 +104,7 @@ class DuskworkerTest extends BaseCardTest {
         assertThat(duskworker.getToughnessModifier()).isZero();
         assertThat(duskworker.isTapped()).isTrue();
         assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(other.getId())).isZero();
     }
 
     @Test
@@ -116,7 +116,7 @@ class DuskworkerTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(duskworker.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(duskworker.getId())).isZero();
         resolveCombat();
 
         harness.assertNotOnBattlefield(player2, "Duskworker");

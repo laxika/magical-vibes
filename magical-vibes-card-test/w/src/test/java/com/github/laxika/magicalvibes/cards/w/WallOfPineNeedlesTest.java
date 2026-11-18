@@ -40,7 +40,7 @@ class WallOfPineNeedlesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent wall = findPermanent(player1, "Wall of Pine Needles");
-        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(1);
     }
 
     @Test
@@ -62,7 +62,7 @@ class WallOfPineNeedlesTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Wall of Pine Needles");
         Permanent survivingWall = findPermanent(player1, "Wall of Pine Needles");
         assertThat(survivingWall.isTapped()).isTrue();
-        assertThat(survivingWall.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(survivingWall.getId())).isZero();
     }
 
     @Test
@@ -85,7 +85,7 @@ class WallOfPineNeedlesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(1);
         assertThat(wall.isTapped()).isTrue();
     }
 
@@ -99,7 +99,7 @@ class WallOfPineNeedlesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(1);
         assertThat(wall.isTapped()).isFalse();
         assertThat(wall.getMarkedDamage()).isEqualTo(1);
     }
@@ -118,7 +118,7 @@ class WallOfPineNeedlesTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         harness.assertOnBattlefield(player1, "Wall of Pine Needles");
-        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(1);
         assertThat(wall.getMarkedDamage()).isZero();
         assertThat(wall.isTapped()).isTrue();
 
@@ -126,7 +126,7 @@ class WallOfPineNeedlesTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         harness.assertOnBattlefield(player1, "Wall of Pine Needles");
-        assertThat(wall.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wall.getId())).isZero();
         assertThat(wall.getMarkedDamage()).isZero();
 
         wall.setMarkedDamage(3);

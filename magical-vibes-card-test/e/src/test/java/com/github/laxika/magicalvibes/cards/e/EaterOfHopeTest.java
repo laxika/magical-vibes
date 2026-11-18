@@ -25,7 +25,7 @@ class EaterOfHopeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(eater.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(eater.getId())).isEqualTo(1);
         harness.assertInGraveyard(player1, "Satyr Wayfinder");
     }
 
@@ -137,7 +137,7 @@ class EaterOfHopeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, regenerationCost.getId());
         harness.passBothPriorities();
 
-        assertThat(eater.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(eater.getId())).isEqualTo(1);
         assertThat(eater.isTapped()).isFalse();
 
         harness.activateAbility(player1, 0, 1, null, eater.getId());
@@ -146,7 +146,7 @@ class EaterOfHopeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Eater of Hope");
         harness.assertNotInGraveyard(player1, "Eater of Hope");
-        assertThat(eater.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(eater.getId())).isZero();
         assertThat(eater.isTapped()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
     }

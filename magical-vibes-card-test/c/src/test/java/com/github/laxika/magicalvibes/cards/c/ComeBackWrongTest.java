@@ -88,7 +88,7 @@ class ComeBackWrongTest extends BaseCardTest {
     @DisplayName("Regeneration prevents both destruction and return")
     void doesNotReturnRegeneratedCreature() {
         Permanent target = addSurvivor(player2);
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castComeBackWrong(target);
 

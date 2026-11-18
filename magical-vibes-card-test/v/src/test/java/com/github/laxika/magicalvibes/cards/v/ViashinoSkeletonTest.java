@@ -65,7 +65,7 @@ class ViashinoSkeletonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(skeleton.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isEqualTo(1);
     }
 
     @Test
@@ -94,7 +94,7 @@ class ViashinoSkeletonTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Viashino Skeleton from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent skeleton = addSkeletonReady(player1);
-        skeleton.setRegenerationShield(1);
+        gd.addRegenerationShields(skeleton.getId(), 1);
         skeleton.setBlocking(true);
         skeleton.addBlockingTarget(0);
 
@@ -109,7 +109,7 @@ class ViashinoSkeletonTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Viashino Skeleton");
         assertThat(skeleton.isTapped()).isTrue();
-        assertThat(skeleton.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isEqualTo(0);
     }
 
     @Test
@@ -152,7 +152,7 @@ class ViashinoSkeletonTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(skeleton.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isEqualTo(1);
         assertThat(skeleton.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Cylian Elf");
     }
@@ -198,6 +198,6 @@ class ViashinoSkeletonTest extends BaseCardTest {
         assertThat(skeleton.isTapped()).isTrue();
         assertThat(skeleton.isBlocking()).isFalse();
         assertThat(skeleton.getMarkedDamage()).isZero();
-        assertThat(skeleton.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isZero();
     }
 }

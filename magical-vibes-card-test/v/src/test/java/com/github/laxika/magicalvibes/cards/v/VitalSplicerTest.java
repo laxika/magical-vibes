@@ -67,7 +67,7 @@ class VitalSplicerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, golemToken.getId());
         harness.passBothPriorities();
 
-        assertThat(golemToken.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(golemToken.getId())).isEqualTo(1);
     }
 
     @Test
@@ -82,7 +82,7 @@ class VitalSplicerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, golemToken.getId());
         harness.passBothPriorities();
 
-        assertThat(golemToken.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(golemToken.getId())).isEqualTo(2);
     }
 
     @Test
@@ -167,7 +167,7 @@ class VitalSplicerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(golem);
         assertThat(golem.isTapped()).isTrue();
-        assertThat(golem.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(golem.getId())).isZero();
     }
 
     @Test
@@ -187,7 +187,7 @@ class VitalSplicerTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Vital Splicer");
         harness.passBothPriorities();
 
-        assertThat(golem.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(golem.getId())).isEqualTo(1);
         assertThat(golem.isTapped()).isFalse();
     }
 

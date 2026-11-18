@@ -47,7 +47,7 @@ class HorrorOfHorrorsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, zombie.getId());
         harness.passBothPriorities();
 
-        assertThat(zombie.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(zombie.getId())).isEqualTo(1);
     }
 
     @Test
@@ -89,7 +89,7 @@ class HorrorOfHorrorsTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Drudge Skeletons");
         harness.assertNotInGraveyard(player1, "Drudge Skeletons");
         assertThat(zombie.isTapped()).isTrue();
-        assertThat(zombie.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(zombie.getId())).isZero();
     }
 
     @Test
@@ -102,7 +102,7 @@ class HorrorOfHorrorsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentSkeleton.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentSkeleton.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(opponentSkeleton.getId())).isEqualTo(1);
         harness.assertInGraveyard(player1, "Swamp");
     }
 
@@ -156,7 +156,7 @@ class HorrorOfHorrorsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Swamp");
-        assertThat(skeleton.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isEqualTo(1);
         assertThat(skeleton.isTapped()).isFalse();
     }
 
@@ -174,7 +174,7 @@ class HorrorOfHorrorsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Drudge Skeletons");
         assertThat(skeleton.getMarkedDamage()).isZero();
-        assertThat(skeleton.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isZero();
 
         harness.castAndResolveInstant(player2, 0, skeleton.getId());
 

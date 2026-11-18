@@ -29,7 +29,7 @@ class RootwaterAlligatorTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(alligator.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(alligator.getId())).isEqualTo(1);
     }
 
     @Test
@@ -46,7 +46,7 @@ class RootwaterAlligatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(alligator, remainingForest);
-        assertThat(alligator.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(alligator.getId())).isEqualTo(1);
         harness.assertInGraveyard(player1, "Forest");
     }
 
@@ -63,7 +63,7 @@ class RootwaterAlligatorTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(alligator);
-        assertThat(alligator.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(alligator.getId())).isZero();
         assertThat(alligator.getMarkedDamage()).isZero();
         assertThat(alligator.isTapped()).isTrue();
     }
@@ -110,7 +110,7 @@ class RootwaterAlligatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Forest");
-        assertThat(alligator.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(alligator.getId())).isEqualTo(1);
         assertThat(alligator.isTapped()).isTrue();
     }
 
@@ -124,7 +124,7 @@ class RootwaterAlligatorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(alligator.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(alligator.getId())).isEqualTo(1);
         assertThat(alligator.getMarkedDamage()).isEqualTo(1);
         assertThat(alligator.isTapped()).isFalse();
     }
@@ -142,20 +142,20 @@ class RootwaterAlligatorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(alligator.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(alligator.getId())).isEqualTo(2);
 
         alligator.setMarkedDamage(gqs.getEffectiveToughness(gd, alligator));
         harness.runStateBasedActions();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(alligator);
-        assertThat(alligator.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(alligator.getId())).isEqualTo(1);
         assertThat(alligator.getMarkedDamage()).isZero();
 
         alligator.setMarkedDamage(gqs.getEffectiveToughness(gd, alligator));
         harness.runStateBasedActions();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(alligator);
-        assertThat(alligator.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(alligator.getId())).isZero();
         assertThat(alligator.getMarkedDamage()).isZero();
 
         alligator.setMarkedDamage(gqs.getEffectiveToughness(gd, alligator));

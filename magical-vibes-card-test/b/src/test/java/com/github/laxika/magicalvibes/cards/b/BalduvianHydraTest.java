@@ -59,7 +59,7 @@ class BalduvianHydraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(2);
-        assertThat(hydra.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(hydra.getId())).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(2);
     }
 
@@ -77,7 +77,7 @@ class BalduvianHydraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hydra.getMarkedDamage()).isEqualTo(0);
-        assertThat(hydra.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(gd.permanentDamagePreventionShield(hydra.getId())).isEqualTo(0);
     }
 
     @Test
@@ -96,7 +96,7 @@ class BalduvianHydraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hydra.getMarkedDamage()).isEqualTo(1);
-        assertThat(hydra.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(gd.permanentDamagePreventionShield(hydra.getId())).isEqualTo(0);
     }
 
     @Test
@@ -167,7 +167,7 @@ class BalduvianHydraTest extends BaseCardTest {
         harness.activateAbility(player1, 2, null, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(hydra.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(hydra.getId())).isEqualTo(1);
         assertThat(bear.getMarkedDamage()).isEqualTo(1);
     }
 
@@ -179,13 +179,13 @@ class BalduvianHydraTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(hydra.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(hydra.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(hydra.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(gd.permanentDamagePreventionShield(hydra.getId())).isEqualTo(0);
     }
 
     @Test
@@ -197,12 +197,12 @@ class BalduvianHydraTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isZero();
-        assertThat(hydra.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(hydra.getId())).isZero();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.passBothPriorities();
-        assertThat(hydra.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(hydra.getId())).isEqualTo(1);
     }
 
     @Test
@@ -215,7 +215,7 @@ class BalduvianHydraTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(hydra.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(hydra.getId())).isZero();
     }
 
     @Test
@@ -239,6 +239,6 @@ class BalduvianHydraTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Balduvian Bears");
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(2);
         assertThat(hydra.getMarkedDamage()).isZero();
-        assertThat(hydra.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(hydra.getId())).isZero();
     }
 }

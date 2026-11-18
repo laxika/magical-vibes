@@ -141,7 +141,7 @@ class DemolishTest extends BaseCardTest {
     @DisplayName("Regeneration prevents Demolish from destroying the target")
     void regenerationPreventsDestruction() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Millstone());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setHand(player1, List.of(new Demolish()));
         harness.addMana(player1, ManaColor.RED, 4);
 
@@ -149,7 +149,7 @@ class DemolishTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Millstone");
         harness.assertNotInGraveyard(player2, "Millstone");
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(target.isTapped()).isTrue();
     }
 

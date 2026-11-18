@@ -53,7 +53,7 @@ class ScorchingLavaTest extends BaseCardTest {
     @Test
     void kickedDamagePreventsRegeneration() {
         Permanent skeletons = harness.addToBattlefieldAndReturn(player2, new MetathranZombie());
-        skeletons.setRegenerationShield(1);
+        gd.addRegenerationShields(skeletons.getId(), 1);
         castOnPermanent(true, skeletons);
 
         harness.assertNotOnBattlefield(player2, "Metathran Zombie");
@@ -65,8 +65,8 @@ class ScorchingLavaTest extends BaseCardTest {
     @Test
     void kickedDamagePreventsRegenerationEvenWhenDamageIsPrevented() {
         Permanent zombie = harness.addToBattlefieldAndReturn(player2, new MetathranZombie());
-        zombie.setRegenerationShield(1);
-        zombie.setDamagePreventionShield(2);
+        gd.addRegenerationShields(zombie.getId(), 1);
+        gd.addPermanentDamagePreventionShield(zombie.getId(), 2);
         castOnPermanent(true, zombie);
 
         Permanent attacker = addCreatureReady(player1, new KavuTitan());

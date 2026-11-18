@@ -55,7 +55,7 @@ class DaruHealerTest extends BaseCardTest {
         resolveCombat(player1);
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test

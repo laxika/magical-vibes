@@ -57,7 +57,7 @@ class HellkiteOverlordTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(overlord.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(overlord.getId())).isEqualTo(1);
     }
 
     @Test
@@ -80,7 +80,7 @@ class HellkiteOverlordTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Hellkite Overlord");
         assertThat(overlord.isTapped()).isTrue();
         assertThat(overlord.getMarkedDamage()).isZero();
-        assertThat(overlord.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(overlord.getId())).isZero();
 
         overlord.setMarkedDamage(8);
         harness.runStateBasedActions();
@@ -101,13 +101,13 @@ class HellkiteOverlordTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(overlord.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(overlord.getId())).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(overlord.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(overlord.getId())).isZero();
     }
 
     @Test
@@ -126,7 +126,7 @@ class HellkiteOverlordTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(overlord.getPowerModifier()).isEqualTo(1);
-        assertThat(overlord.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(overlord.getId())).isEqualTo(1);
         assertThat(overlord.isTapped()).isTrue();
     }
 }

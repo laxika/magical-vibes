@@ -62,7 +62,7 @@ class VillainousOgreTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gd.playerBattlefields.get(player1.getId()).getFirst().getId())).isEqualTo(1);
     }
 
     @Test
@@ -94,7 +94,7 @@ class VillainousOgreTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ogre);
-        assertThat(ogre.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ogre.getId())).isZero();
         assertThat(ogre.getMarkedDamage()).isZero();
     }
 
@@ -110,7 +110,7 @@ class VillainousOgreTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, demon));
         harness.passBothPriorities();
 
-        assertThat(ogre.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ogre.getId())).isEqualTo(1);
     }
 
     @Test
@@ -123,7 +123,7 @@ class VillainousOgreTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ogre.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ogre.getId())).isEqualTo(1);
     }
 
     @Test
@@ -140,7 +140,7 @@ class VillainousOgreTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(ogre.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ogre.getId())).isEqualTo(1);
     }
 
     @Test
@@ -156,7 +156,7 @@ class VillainousOgreTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ogre.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(ogre.getId())).isEqualTo(2);
         assertThat(ogre.isTapped()).isTrue();
     }
 
@@ -171,6 +171,6 @@ class VillainousOgreTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
-        assertThat(ooze.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ooze.getId())).isZero();
     }
 }

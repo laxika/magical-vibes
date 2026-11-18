@@ -40,7 +40,7 @@ class ConsumeTheMeekTest extends BaseCardTest {
     @DisplayName("Destroyed creatures cannot be regenerated")
     void cannotBeRegenerated() {
         Permanent skeletons = harness.addToBattlefieldAndReturn(player2, new DrudgeSkeletons());
-        skeletons.setRegenerationShield(1);
+        gd.addRegenerationShields(skeletons.getId(), 1);
 
         castConsumeTheMeek();
 

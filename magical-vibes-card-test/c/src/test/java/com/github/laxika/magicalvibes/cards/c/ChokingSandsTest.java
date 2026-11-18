@@ -93,7 +93,7 @@ class ChokingSandsTest extends BaseCardTest {
     @DisplayName("Deals damage even if the nonbasic land regenerates")
     void dealsDamageWhenLandRegenerates() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new CrystalVein());
-        land.setRegenerationShield(1);
+        gd.addRegenerationShields(land.getId(), 1);
         harness.setHand(player1, List.of(new ChokingSands()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 

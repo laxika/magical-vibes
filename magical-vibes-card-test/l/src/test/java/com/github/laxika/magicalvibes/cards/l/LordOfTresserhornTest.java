@@ -144,7 +144,7 @@ class LordOfTresserhornTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent lord = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(lord.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(lord.getId())).isEqualTo(1);
     }
 
     @Test
@@ -168,7 +168,7 @@ class LordOfTresserhornTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Lord of Tresserhorn");
-        assertThat(lord.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(lord.getId())).isZero();
     }
 
     @Test

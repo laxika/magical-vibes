@@ -296,7 +296,7 @@ class DeathgazerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Horned Troll");
         assertThat(troll.isBlocking()).isFalse();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
         harness.assertInGraveyard(player1, "Deathgazer");
 
         resolveAllTriggers();
@@ -319,14 +319,14 @@ class DeathgazerTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_OF_COMBAT);
 
         harness.assertOnBattlefield(player2, "Horned Troll");
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.activateAbility(player2, 0, null, null);
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Horned Troll");
         harness.assertNotInGraveyard(player2, "Horned Troll");
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
         assertThat(troll.isTapped()).isTrue();
     }
 

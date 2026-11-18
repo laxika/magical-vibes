@@ -82,7 +82,7 @@ class SkullCollectorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(collector.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(collector.getId())).isEqualTo(1);
     }
 
     @Test
@@ -109,7 +109,7 @@ class SkullCollectorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(collector.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(collector.getId())).isEqualTo(1);
 
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, collector.getId());
@@ -155,6 +155,6 @@ class SkullCollectorTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Skull Collector");
         assertThat(collector.isTapped()).isTrue();
         assertThat(collector.getMarkedDamage()).isZero();
-        assertThat(collector.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(collector.getId())).isZero();
     }
 }

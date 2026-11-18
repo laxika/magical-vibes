@@ -40,9 +40,9 @@ class LoxodonHierarchTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(hierarch);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getRegenerationShield()).isEqualTo(1);
-        assertThat(ownLand.getRegenerationShield()).isZero();
-        assertThat(opponentCreature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ownCreature.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ownLand.getId())).isZero();
+        assertThat(gd.regenerationShieldCount(opponentCreature.getId())).isZero();
     }
 
     @Test
@@ -62,7 +62,7 @@ class LoxodonHierarchTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, ownCreature.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
-        assertThat(ownCreature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ownCreature.getId())).isZero();
         assertThat(ownCreature.getMarkedDamage()).isZero();
     }
 
@@ -75,14 +75,14 @@ class LoxodonHierarchTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(original.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(original.getId())).isZero();
         Permanent beforeResolution = harness.enterBattlefieldAndReturn(player1, new SelesnyaEvangel());
         resolveAllTriggers();
         Permanent afterResolution = harness.enterBattlefieldAndReturn(player1, new SelesnyaEvangel());
 
-        assertThat(original.getRegenerationShield()).isEqualTo(1);
-        assertThat(beforeResolution.getRegenerationShield()).isEqualTo(1);
-        assertThat(afterResolution.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(original.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(beforeResolution.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(afterResolution.getId())).isZero();
         assertThat(original.isTapped()).isFalse();
         assertThat(beforeResolution.isTapped()).isFalse();
         harness.assertInGraveyard(player1, "Loxodon Hierarch");

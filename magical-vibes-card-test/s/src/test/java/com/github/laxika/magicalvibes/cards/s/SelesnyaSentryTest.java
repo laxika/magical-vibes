@@ -25,14 +25,14 @@ class SelesnyaSentryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent sentry = findPermanent(player1, "Selesnya Sentry");
-        assertThat(sentry.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(sentry.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Selesnya Sentry from lethal combat damage")
     void regenSavesFromLethalCombat() {
         Permanent perm = addCreatureReady(player1, new SelesnyaSentry());
-        perm.setRegenerationShield(1);
+        gd.addRegenerationShields(perm.getId(), 1);
         perm.setBlocking(true);
         perm.addBlockingTarget(0);
 
@@ -44,7 +44,7 @@ class SelesnyaSentryTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Selesnya Sentry");
         Permanent sentry = findPermanent(player1, "Selesnya Sentry");
         assertThat(sentry.isTapped()).isTrue();
-        assertThat(sentry.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(sentry.getId())).isEqualTo(0);
     }
 
     @Test
@@ -73,10 +73,10 @@ class SelesnyaSentryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(sentry.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(sentry.getId())).isZero();
         harness.passBothPriorities();
 
-        assertThat(sentry.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(sentry.getId())).isEqualTo(1);
         assertThat(sentry.isTapped()).isTrue();
     }
 
@@ -92,7 +92,7 @@ class SelesnyaSentryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(sentry.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(sentry.getId())).isEqualTo(2);
         assertThat(sentry.isTapped()).isFalse();
     }
 
@@ -106,7 +106,7 @@ class SelesnyaSentryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
 
-        assertThat(sentry.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(sentry.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

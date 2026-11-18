@@ -9,7 +9,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * Veteran), any target is legal: creatures get the counter-tracking shield; players get a plain
  * next-N damage prevention shield with no counters.
  * <p>
- * Creature resolution sets the target's {@code damageToCounterPreventionShield}. As that shield
+ * Creature resolution puts a {@code PreventedDamageCounterShield} floating effect on the target. As that shield
  * prevents damage in {@code DamagePreventionService}, the prevented amount is accumulated into a
  * {@code PreventedDamageCounterTally} floating effect on the creature, which the delayed triggered ability this
  * effect makes (CR 603.7a) reads as it resolves at the next end step.

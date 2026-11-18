@@ -24,7 +24,7 @@ class ExpungeTest extends BaseCardTest {
     @DisplayName("Destroys a nonartifact, nonblack creature and prevents regeneration")
     void destroysValidCreatureWithoutRegeneration() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GorillaWarrior());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
 
         castExpunge(creature);
 

@@ -61,7 +61,7 @@ class DevastateTest extends BaseCardTest {
     @DisplayName("Devastate respects a regeneration shield on its target land")
     void respectsRegenerationShieldOnTargetLand() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setHand(player1, List.of(new Devastate()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -100,7 +100,7 @@ class DevastateTest extends BaseCardTest {
     @DisplayName("Regenerating the target land does not stop Devastate's damage")
     void dealsDamageEvenWhenTargetLandRegenerates() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.addToBattlefield(player1, new SporeFrog());
         harness.addToBattlefield(player2, new SporeFrog());
         harness.setLife(player1, 20);

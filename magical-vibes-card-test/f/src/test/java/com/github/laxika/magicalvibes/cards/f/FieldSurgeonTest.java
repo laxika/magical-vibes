@@ -29,13 +29,13 @@ class FieldSurgeonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isTrue();
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
 
         Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
         harness.activateAbility(player2, indexOf(player2, pyromancer), null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(target.getMarkedDamage()).isZero();
     }
 
@@ -50,7 +50,7 @@ class FieldSurgeonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(surgeon.isTapped()).isTrue();
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -86,14 +86,14 @@ class FieldSurgeonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(surgeon.isTapped()).isTrue();
-        assertThat(surgeon.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(surgeon.getId())).isEqualTo(1);
         Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
         harness.activateAbility(player2, indexOf(player2, pyromancer), null, surgeon.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Field Surgeon");
         assertThat(surgeon.getMarkedDamage()).isZero();
-        assertThat(surgeon.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(surgeon.getId())).isZero();
     }
 
     @Test
@@ -109,7 +109,7 @@ class FieldSurgeonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(costCreature.isTapped()).isTrue();
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -129,17 +129,17 @@ class FieldSurgeonTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, surgeon), null, target.getId());
         harness.passBothPriorities();
         assertThat(firstCost.isTapped()).isTrue();
-        assertThat(target.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(2);
 
         Permanent firstPyromancer = addCreatureReady(player2, new ProdigalPyromancer());
         Permanent secondPyromancer = addCreatureReady(player2, new ProdigalPyromancer());
         harness.activateAbility(player2, indexOf(player2, firstPyromancer), null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
         harness.activateAbility(player2, indexOf(player2, secondPyromancer), null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(target.getMarkedDamage()).isZero();
     }
 
@@ -159,7 +159,7 @@ class FieldSurgeonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test
@@ -169,13 +169,13 @@ class FieldSurgeonTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.activateAbility(player1, indexOf(player1, surgeon), null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
         harness.activateAbility(player2, indexOf(player2, pyromancer), null, target.getId());
         harness.passBothPriorities();
@@ -215,7 +215,7 @@ class FieldSurgeonTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(blocker.getMarkedDamage()).isEqualTo(1);
-        assertThat(blocker.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(blocker.getId())).isZero();
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 

@@ -44,7 +44,7 @@ class CarrionWallTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         Permanent wall = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(1);
     }
 
     @Test
@@ -57,7 +57,7 @@ class CarrionWallTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(wall.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(2);
     }
 
     @Test
@@ -83,7 +83,7 @@ class CarrionWallTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(1);
         assertThat(wall.isTapped()).isTrue();
     }
 
@@ -107,7 +107,7 @@ class CarrionWallTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Carrion Wall");
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(wall.isTapped()).isTrue();
-        assertThat(wall.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wall.getId())).isZero();
         assertThat(wall.getMarkedDamage()).isZero();
         assertThat(wall.isBlocking()).isFalse();
         assertThat(wall.getBlockingTargets()).isEmpty();
@@ -128,7 +128,7 @@ class CarrionWallTest extends BaseCardTest {
     void regenerationSavesFromLethalCombatDamage() {
         // Carrion Wall (3/2) with regen shield blocks Grizzly Bears (2/2) — 2 damage = lethal
         Permanent wallPerm = addCreatureReady(player1, new CarrionWall());
-        wallPerm.setRegenerationShield(1);
+        gd.addRegenerationShields(wallPerm.getId(), 1);
 
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
@@ -139,7 +139,7 @@ class CarrionWallTest extends BaseCardTest {
 
         Permanent wall = findPermanent(player1, "Carrion Wall");
         assertThat(wall.isTapped()).isTrue();
-        assertThat(wall.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(0);
     }
 
     @Test

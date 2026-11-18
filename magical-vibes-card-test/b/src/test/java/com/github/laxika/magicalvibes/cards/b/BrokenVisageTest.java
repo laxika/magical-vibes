@@ -146,7 +146,7 @@ class BrokenVisageTest extends BaseCardTest {
     @DisplayName("Cannot be regenerated prevents a regeneration shield from replacing destruction")
     void destructionIgnoresRegenerationShield() {
         Permanent attacker = addAttacker(player1);
-        attacker.setRegenerationShield(1);
+        gd.addRegenerationShields(attacker.getId(), 1);
 
         castBrokenVisage(attacker.getId());
         harness.passBothPriorities();
@@ -217,7 +217,7 @@ class BrokenVisageTest extends BaseCardTest {
 
         Permanent spirit = findSpiritToken(player2);
         assertThat(gqs.hasKeyword(gd, spirit, Keyword.INDESTRUCTIBLE)).isFalse();
-        spirit.setRegenerationShield(1);
+        gd.addRegenerationShields(spirit.getId(), 1);
         harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
             harness.passBothPriorities();
             gs.declareBlockers(gd, player2, List.of());

@@ -93,7 +93,7 @@ class BilbosDeadlySliceTest extends BaseCardTest {
     @Test
     void regenerationShieldPreventsDestruction() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new DwarvenMauler());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
         harness.setHand(player1, List.of(new BilbosDeadlySlice()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -102,7 +102,7 @@ class BilbosDeadlySliceTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Dwarven Mauler");
         harness.assertNotInGraveyard(player2, "Dwarven Mauler");
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         harness.assertInGraveyard(player1, "Bilbo's Deadly Slice");
     }
 

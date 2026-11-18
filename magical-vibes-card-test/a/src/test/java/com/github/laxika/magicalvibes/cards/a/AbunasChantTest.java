@@ -33,7 +33,7 @@ class AbunasChantTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player2, new OupheVandals());
         cast(new int[]{1}, List.of(creature.getId()), false);
 
-        assertThat(creature.getDamagePreventionShield()).isEqualTo(5);
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isEqualTo(5);
     }
 
     @Test
@@ -46,7 +46,7 @@ class AbunasChantTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isZero();
     }
 
     @Test
@@ -57,7 +57,7 @@ class AbunasChantTest extends BaseCardTest {
         cast(new int[]{0, 1}, List.of(creature.getId()), true);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(15);
-        assertThat(creature.getDamagePreventionShield()).isEqualTo(5);
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isEqualTo(5);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
@@ -98,15 +98,15 @@ class AbunasChantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
-        assertThat(creature.getDamagePreventionShield()).isEqualTo(3);
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isEqualTo(3);
         assertThat(creature.getMarkedDamage()).isZero();
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
-        assertThat(creature.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isEqualTo(1);
         assertThat(creature.getMarkedDamage()).isZero();
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
-        assertThat(creature.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isZero();
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Ouphe Vandals");
     }

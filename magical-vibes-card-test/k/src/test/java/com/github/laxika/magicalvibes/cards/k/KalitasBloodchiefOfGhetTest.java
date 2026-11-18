@@ -70,7 +70,7 @@ class KalitasBloodchiefOfGhetTest extends BaseCardTest {
     void doesNotCreateTokenWhenTargetRegenerates() {
         Permanent kalitas = addCreatureReady(player1, new KalitasBloodchiefOfGhet());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         activate(kalitas, target.getId());
 

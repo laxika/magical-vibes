@@ -27,7 +27,7 @@ class WrapInVigorTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Wrap in Vigor");
         Permanent courser = harness.addToBattlefieldAndReturn(player1, new NessianCourser());
-        assertThat(courser.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(courser.getId())).isZero();
     }
 
     @Test
@@ -41,8 +41,8 @@ class WrapInVigorTest extends BaseCardTest {
 
         assertThat(courser.isTapped()).isFalse();
         Permanent laterCourser = harness.addToBattlefieldAndReturn(player1, new NessianCourser());
-        assertThat(laterCourser.getRegenerationShield()).isZero();
-        assertThat(courser.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(laterCourser.getId())).isZero();
+        assertThat(gd.regenerationShieldCount(courser.getId())).isEqualTo(1);
     }
 
     @Test
@@ -59,11 +59,11 @@ class WrapInVigorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
         harness.castAndResolveInstant(player1, 0, courser.getId());
-        assertThat(courser.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(courser.getId())).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Nessian Courser");
 
         harness.castAndResolveInstant(player1, 0, courser.getId());
-        assertThat(courser.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(courser.getId())).isZero();
         harness.assertOnBattlefield(player1, "Nessian Courser");
 
         harness.castAndResolveInstant(player1, 0, courser.getId());
@@ -84,9 +84,9 @@ class WrapInVigorTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         assertThat(findPermanents(player1, "Nessian Courser"))
-                .allMatch(permanent -> permanent.getRegenerationShield() == 1);
-        assertThat(findPermanent(player2, "Nessian Courser").getRegenerationShield()).isZero();
-        assertThat(canopy.getRegenerationShield()).isZero();
+                .allMatch(permanent -> gd.regenerationShieldCount(permanent.getId()) == 1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player2, "Nessian Courser").getId())).isZero();
+        assertThat(gd.regenerationShieldCount(canopy.getId())).isZero();
     }
 
     @Test
@@ -103,7 +103,7 @@ class WrapInVigorTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, courser.getId());
 
         assertThat(findPermanent(player1, "Nessian Courser")).isSameAs(courser);
-        assertThat(courser.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(courser.getId())).isZero();
         assertThat(courser.isTapped()).isTrue();
         assertThat(courser.getMarkedDamage()).isZero();
     }

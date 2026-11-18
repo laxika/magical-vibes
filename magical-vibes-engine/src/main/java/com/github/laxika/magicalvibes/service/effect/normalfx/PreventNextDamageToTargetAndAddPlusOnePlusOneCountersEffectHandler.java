@@ -40,8 +40,8 @@ public class PreventNextDamageToTargetAndAddPlusOnePlusOneCountersEffectHandler
 
         int amount = amountEvaluationService.evaluate(
                 gameData, prevent.amount(), AmountContext.forStackEntry(entry, null));
-        target.setDamageToPlusOnePlusOneCounterPreventionShield(
-                target.getDamageToPlusOnePlusOneCounterPreventionShield() + amount);
+        gameData.addPermanentDamagePreventionShield(entry.getCard().getName(), entry.getSourcePermanentId(),
+                entry.getControllerId(), target.getId(), amount, true);
         gameLogService.append(gameData, GameLog.builder()
                 .text("The next " + amount + " damage that would be dealt to ")
                 .card(target.getCard())

@@ -73,7 +73,7 @@ class DouseInGloomTest extends BaseCardTest {
     @Test
     void gainsTwoLifeEvenWhenAllDamageIsPrevented() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DaggerclawImp());
-        target.setDamagePreventionShield(2);
+        gd.addPermanentDamagePreventionShield(target.getId(), 2);
         harness.setHand(player1, List.of(new DouseInGloom()));
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.setLife(player1, 15);
@@ -82,7 +82,7 @@ class DouseInGloomTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         harness.assertOnBattlefield(player2, "Daggerclaw Imp");
         harness.assertLife(player1, 17);
         harness.assertLife(player2, 12);

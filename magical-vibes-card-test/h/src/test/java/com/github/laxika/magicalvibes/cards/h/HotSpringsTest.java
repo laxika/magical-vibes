@@ -156,7 +156,7 @@ class HotSpringsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
         assertThat(bear.getMarkedDamage()).isEqualTo(1);
-        assertThat(bear.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(bear.getId())).isZero();
     }
 
     @Test

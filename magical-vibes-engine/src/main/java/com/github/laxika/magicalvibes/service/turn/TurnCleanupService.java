@@ -241,21 +241,6 @@ public class TurnCleanupService {
             // state it clears (must-be-blocked, must-block, transient type overrides, ...) survive cleanup
             // whenever that was the permanent's only modification.
             p.resetModifiers();
-            p.setDamagePreventionShield(0);
-            p.setDamageToCounterPreventionShield(0);
-            p.setDamageToPlusOnePlusOneCounterPreventionShield(0);
-            p.setAllDamageToPlusOnePlusOneCounterPreventionShield(false);
-            p.setDamageReplacedByPlusOnePlusOneCounters(false);
-            p.setDamageDestructionShield(0);
-            p.setLandDestructionShield(0);
-            p.setRegenerationShield(0);
-            p.setOpponentDrawRegenerationShield(0);
-            p.getOpponentDrawRegenerationShieldRecipients().clear();
-            p.getOpponentDrawRegenerationShieldControllers().clear();
-            p.setMinusOneCounterRegenerationShield(0);
-            p.setPlusOnePlusOneCounterRegenerationShield(0);
-            p.getPlusOnePlusOneCounterRegenerationShieldControllers().clear();
-            p.getGainControlRegenerationShields().clear();
             p.clearTappedPermanentsForAbilityThisTurn();
             EndOfTurnStateShare retained = retainedState.get(p.getId());
             if (retained != null) {

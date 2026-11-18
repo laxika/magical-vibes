@@ -82,7 +82,7 @@ class FatalLoreTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.activateAbility(player2, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(chieftain.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(chieftain.getId())).isEqualTo(1);
 
         setupAndCast();
         GameData gd = harness.getGameData();

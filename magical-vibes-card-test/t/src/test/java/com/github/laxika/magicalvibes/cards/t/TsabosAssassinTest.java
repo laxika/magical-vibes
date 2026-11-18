@@ -27,7 +27,7 @@ class TsabosAssassinTest extends BaseCardTest {
     void destroysCreatureSharingMostCommonColor() {
         Permanent assassin = addAssassin();
         Permanent target = addCreatureReady(player2, new UrborgSkeleton());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();

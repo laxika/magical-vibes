@@ -38,7 +38,7 @@ class AlmsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(1);
 
         // The most recently added card (the last of the list) is the top of the graveyard
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -64,7 +64,7 @@ class AlmsTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, bears.getId());
 
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
-        assertThat(bears.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isZero();
     }
 
     @Test
@@ -81,7 +81,7 @@ class AlmsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isZero();
     }
 
     @Test
@@ -119,10 +119,10 @@ class AlmsTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.exiledCards).extracting(e -> e.card()).contains(costCard);
         assertThat(gd.stack).hasSize(1);
-        assertThat(bears.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isZero();
 
         harness.passBothPriorities();
-        assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -145,7 +145,7 @@ class AlmsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(bears.getMarkedDamage()).isZero();
-        assertThat(bears.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(bears.getId())).isZero();
     }
 
     @Test

@@ -67,8 +67,8 @@ class JolraelsFavorTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
-        assertThat(aura.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(aura.getId())).isZero();
     }
 
     @Test
@@ -99,8 +99,8 @@ class JolraelsFavorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
-        assertThat(aura.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(aura.getId())).isZero();
     }
 
     @Test
@@ -116,7 +116,7 @@ class JolraelsFavorTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(2);
         assertThat(bears.isTapped()).isFalse();
         assertThat(aura.isTapped()).isFalse();
     }
@@ -136,7 +136,7 @@ class JolraelsFavorTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears, aura);
         assertThat(bears.getMarkedDamage()).isZero();
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
         assertThat(bears.isTapped()).isTrue();
         assertThat(aura.getAttachedTo()).isEqualTo(bears.getId());
 
@@ -159,7 +159,7 @@ class JolraelsFavorTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, aura));
         harness.passBothPriorities();
 
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).contains(aura.getCard());
     }
 }

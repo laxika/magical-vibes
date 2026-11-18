@@ -186,7 +186,7 @@ class NecroticOozeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ooze.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ooze.getId())).isEqualTo(1);
     }
 
     @Test
@@ -211,7 +211,7 @@ class NecroticOozeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ooze.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ooze.getId())).isEqualTo(1);
     }
 
     @Test

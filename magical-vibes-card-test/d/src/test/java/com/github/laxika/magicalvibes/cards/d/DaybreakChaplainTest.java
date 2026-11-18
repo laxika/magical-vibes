@@ -66,7 +66,7 @@ class DaybreakChaplainTest extends BaseCardTest {
         harness.setLife(player2, 20);
         addCreatureReady(player1, new DaybreakChaplain());
         harness.addToBattlefield(player2, new DaybreakChaplain());
-        findPermanent(player2, "Daybreak Chaplain").setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(findPermanent(player2, "Daybreak Chaplain").getId(), 1);
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

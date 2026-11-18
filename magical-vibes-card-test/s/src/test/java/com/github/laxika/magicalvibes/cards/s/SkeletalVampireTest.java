@@ -61,7 +61,7 @@ class SkeletalVampireTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bat.getId());
         harness.passBothPriorities();
 
-        assertThat(vampire.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(vampire.getId())).isEqualTo(1);
     }
 
     @Test
@@ -86,7 +86,7 @@ class SkeletalVampireTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Skeletal Vampire");
         harness.assertInGraveyard(player2, "Giant Solifuge");
-        assertThat(vampire.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(vampire.getId())).isZero();
         assertThat(vampire.isTapped()).isTrue();
         assertThat(vampire.getMarkedDamage()).isZero();
     }
@@ -127,10 +127,10 @@ class SkeletalVampireTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handlePermanentChosen(player1, bat.getId());
         assertThat(bats()).hasSize(1).doesNotContain(bat);
-        assertThat(vampire.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(vampire.getId())).isZero();
         harness.passBothPriorities();
 
-        assertThat(vampire.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(vampire.getId())).isEqualTo(1);
         assertThat(vampire.isTapped()).isTrue();
     }
 

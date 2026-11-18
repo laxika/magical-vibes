@@ -40,7 +40,7 @@ class ElephantGraveyardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(land.isTapped()).isTrue();
-        assertThat(elephant.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(elephant.getId())).isEqualTo(1);
     }
 
     @Test
@@ -53,7 +53,7 @@ class ElephantGraveyardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(land.isTapped()).isTrue();
-        assertThat(elephant.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(elephant.getId())).isEqualTo(1);
     }
 
     @Test
@@ -66,7 +66,7 @@ class ElephantGraveyardTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an Elephant");
         assertThat(land.isTapped()).isFalse();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
     }
 
     @Test
@@ -87,7 +87,7 @@ class ElephantGraveyardTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Wild Elephant");
         assertThat(elephant.isTapped()).isTrue();
         assertThat(elephant.getMarkedDamage()).isZero();
-        assertThat(elephant.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(elephant.getId())).isZero();
 
         harness.castAndResolveInstant(player1, 0, elephant.getId());
 
@@ -110,7 +110,7 @@ class ElephantGraveyardTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Wild Elephant");
         harness.assertInGraveyard(player2, "Wild Elephant");
-        assertThat(elephant.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(elephant.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -124,7 +124,7 @@ class ElephantGraveyardTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, elephant.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(elephant.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(elephant.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

@@ -132,13 +132,13 @@ class GiantAlbatrossTest extends BaseCardTest {
     @DisplayName("A creature destroyed by the ability is not saved by a regeneration shield")
     void destructionIgnoresRegenerationShield() {
         Permanent troll = killByCreatureUntilMayPrompt(new SeaTroll());
-        troll.setRegenerationShield(1);
+        gd.addRegenerationShields(troll.getId(), 1);
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player2, false);
 
         harness.assertInGraveyard(player2, "Sea Troll");
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test

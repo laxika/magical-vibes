@@ -125,7 +125,7 @@ class PerniciousDeedTest extends BaseCardTest {
     void regenerationShieldPreventsDestruction() {
         addDeed(2);
         Permanent protectedCreature = harness.addToBattlefieldAndReturn(player2, new UrborgElf());
-        protectedCreature.setRegenerationShield(1);
+        gd.addRegenerationShields(protectedCreature.getId(), 1);
 
         harness.activateAbility(player1, 0, 2, null);
         harness.passBothPriorities();
@@ -186,7 +186,7 @@ class PerniciousDeedTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Cromat");
         harness.assertNotInGraveyard(player2, "Cromat");
         assertThat(cromat.isTapped()).isTrue();
-        assertThat(cromat.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(cromat.getId())).isZero();
         harness.assertNotOnBattlefield(player2, "Urborg Elf");
         harness.assertInGraveyard(player2, "Urborg Elf");
     }

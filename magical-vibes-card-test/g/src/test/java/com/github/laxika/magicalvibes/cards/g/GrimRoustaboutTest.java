@@ -73,14 +73,14 @@ class GrimRoustaboutTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Grim Roustabout").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Grim Roustabout").getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("The regeneration shield saves it from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent roustabout = addCreatureReady(player1, new GrimRoustabout());
-        roustabout.setRegenerationShield(1);
+        gd.addRegenerationShields(roustabout.getId(), 1);
         roustabout.setBlocking(true);
         roustabout.addBlockingTarget(0);
 
@@ -92,7 +92,7 @@ class GrimRoustaboutTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grim Roustabout");
         Permanent survivor = findPermanent(player1, "Grim Roustabout");
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isZero();
     }
 
     @Test

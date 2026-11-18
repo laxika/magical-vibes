@@ -130,7 +130,7 @@ class DarkBanishingTest extends BaseCardTest {
     @DisplayName("Dark Banishing destroys the creature even with a regeneration shield")
     void cannotBeRegenerated() {
         Permanent spider = harness.addToBattlefieldAndReturn(player2, new CanopySpider());
-        spider.setRegenerationShield(1);
+        gd.addRegenerationShields(spider.getId(), 1);
 
         harness.setHand(player1, List.of(new DarkBanishing()));
         harness.addMana(player1, ManaColor.BLACK, 3);

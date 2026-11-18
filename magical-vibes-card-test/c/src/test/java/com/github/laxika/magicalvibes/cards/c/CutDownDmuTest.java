@@ -125,13 +125,13 @@ class CutDownDmuTest extends BaseCardTest {
     @DisplayName("A regeneration shield can save the targeted creature")
     void allowsRegeneration() {
         Permanent target = addCreatureReady(player2, new GoblinPiker());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castCutDown(target);
 
         harness.assertOnBattlefield(player2, "Goblin Piker");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         harness.assertInGraveyard(player1, "Cut Down");
     }
 

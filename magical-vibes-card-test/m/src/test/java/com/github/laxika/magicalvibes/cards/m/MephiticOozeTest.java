@@ -57,13 +57,13 @@ class MephiticOozeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DarksteelCitadel());
 
         Permanent blocker = addCreatureReady(player2, new TangleSpider());
-        blocker.setRegenerationShield(1);
+        gd.addRegenerationShields(blocker.getId(), 1);
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
-        assertThat(blocker.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(blocker.getId())).isEqualTo(1);
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Tangle Spider");

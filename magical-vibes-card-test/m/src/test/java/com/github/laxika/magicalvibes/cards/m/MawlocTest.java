@@ -105,7 +105,7 @@ class MawlocTest extends BaseCardTest {
     @DisplayName("The chosen creature is exiled if it dies even when fight damage was prevented")
     void exilesTargetWhenFightDamageWasPrevented() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setDamagePreventionShield(3);
+        gd.addPermanentDamagePreventionShield(target.getId(), 3);
 
         castMawloc(1, List.of(target.getId()));
 

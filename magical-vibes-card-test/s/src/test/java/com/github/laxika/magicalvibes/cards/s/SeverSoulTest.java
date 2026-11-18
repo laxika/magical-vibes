@@ -41,7 +41,7 @@ class SeverSoulTest extends BaseCardTest {
     @DisplayName("Destroyed creature can't be regenerated")
     void cannotBeRegenerated() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         giveSpell();
         harness.castAndResolveSorcery(player1, 0, bears.getId());

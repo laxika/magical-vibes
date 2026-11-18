@@ -36,7 +36,7 @@ class SkeletonScavengersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(scavengers.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(scavengers.getId())).isEqualTo(1);
     }
 
     @Test
@@ -62,7 +62,7 @@ class SkeletonScavengersTest extends BaseCardTest {
         blockWithSpinedWurm(findPermanent(player1, "Skeleton Scavengers"));
 
         Permanent regenerated = findPermanent(player1, "Skeleton Scavengers");
-        assertThat(regenerated.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(regenerated.getId())).isZero();
         assertThat(regenerated.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
@@ -82,7 +82,7 @@ class SkeletonScavengersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(scavengers.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(scavengers.getId())).isEqualTo(1);
     }
 
     @Test
@@ -109,12 +109,12 @@ class SkeletonScavengersTest extends BaseCardTest {
     @DisplayName("A foreign regeneration shield does not trigger the rider")
     void foreignShieldDoesNotAddCounter() {
         Permanent scavengers = addScavengersReady();
-        scavengers.setRegenerationShield(1);
+        gd.addRegenerationShields(scavengers.getId(), 1);
 
         blockWithSpinedWurm(scavengers);
 
         Permanent regenerated = findPermanent(player1, "Skeleton Scavengers");
-        assertThat(regenerated.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(regenerated.getId())).isZero();
         assertThat(regenerated.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -129,7 +129,7 @@ class SkeletonScavengersTest extends BaseCardTest {
 
         scavengers.setMarkedDamage(1);
         harness.runStateBasedActions();
-        assertThat(scavengers.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(scavengers.getId())).isEqualTo(1);
         assertThat(scavengers.getMarkedDamage()).isZero();
         assertThat(scavengers.isTapped()).isTrue();
         assertThat(scavengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -139,7 +139,7 @@ class SkeletonScavengersTest extends BaseCardTest {
 
         scavengers.setMarkedDamage(2);
         harness.runStateBasedActions();
-        assertThat(scavengers.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(scavengers.getId())).isZero();
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
         assertThat(scavengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);

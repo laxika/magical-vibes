@@ -699,8 +699,8 @@ class LichsDuelMasteryTest extends BaseCardTest {
     @DisplayName("Deadly Tempest asks the Mastery after the destruction and before either player loses life")
     void destroyAllThenSimultaneousLossesAskTheMasteryBeforeAnyLifeIsLost() {
         Permanent mastery = animatedShieldlessMasteryAgainstKalitas();
-        mastery.setRegenerationShield(1);
-        kalitas().setRegenerationShield(1);
+        gd.addRegenerationShields(mastery.getId(), 1);
+        gd.addRegenerationShields(kalitas().getId(), 1);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         GrizzlyBears tokenCard = new GrizzlyBears();
         tokenCard.setToken(true);
@@ -738,7 +738,7 @@ class LichsDuelMasteryTest extends BaseCardTest {
     @DisplayName("Rain of Daggers' life loss asks the caster's Mastery after the destruction, destroying once")
     void destroyAllThenLifeLossAsksTheMasteryBeforeAnyLifeIsLost() {
         Permanent mastery = animatedShieldlessMasteryAgainstKalitas();
-        kalitas().setRegenerationShield(1);
+        gd.addRegenerationShields(kalitas().getId(), 1);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player2, List.of(new RainOfDaggers()));
         harness.addMana(player2, ManaColor.BLACK, 6);

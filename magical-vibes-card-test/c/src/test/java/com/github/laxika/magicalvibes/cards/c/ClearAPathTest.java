@@ -45,14 +45,14 @@ class ClearAPathTest extends BaseCardTest {
     @DisplayName("A regeneration shield saves the creature")
     void regenerationShieldSavesTheCreature() {
         Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfFire());
-        wall.setRegenerationShield(1);
+        gd.addRegenerationShields(wall.getId(), 1);
 
         prepare();
         harness.castAndResolveSorcery(player1, 0, wall.getId());
 
         harness.assertOnBattlefield(player2, "Wall of Fire");
         assertThat(wall.isTapped()).isTrue();
-        assertThat(wall.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(wall.getId())).isZero();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 

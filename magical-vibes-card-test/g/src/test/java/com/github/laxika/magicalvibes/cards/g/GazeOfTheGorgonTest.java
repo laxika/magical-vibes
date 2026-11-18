@@ -35,7 +35,7 @@ class GazeOfTheGorgonTest extends BaseCardTest {
         castGaze(player1, target);
         resolveAllTriggers();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(blockerOne, blockerTwo, bystander);
 
         resolveCombat();
@@ -43,7 +43,7 @@ class GazeOfTheGorgonTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(target);
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(bystander);
     }
 
@@ -59,14 +59,14 @@ class GazeOfTheGorgonTest extends BaseCardTest {
         castGaze(player1, target);
         resolveAllTriggers();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
 
         resolveCombat();
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(target);
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 
     @Test
@@ -125,7 +125,7 @@ class GazeOfTheGorgonTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
-        assertThat(blocker.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(blocker.getId())).isZero();
         assertThat(blocker.isTapped()).isTrue();
     }
 

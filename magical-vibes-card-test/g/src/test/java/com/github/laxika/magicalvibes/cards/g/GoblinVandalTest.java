@@ -168,7 +168,7 @@ class GoblinVandalTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, artifact.getId());
         harness.activateAbility(player2, 1, null, artifact.getId());
         harness.passBothPriorities();
-        assertThat(artifact.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isEqualTo(1);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -176,7 +176,7 @@ class GoblinVandalTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
-        assertThat(artifact.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isZero();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore);
     }
 

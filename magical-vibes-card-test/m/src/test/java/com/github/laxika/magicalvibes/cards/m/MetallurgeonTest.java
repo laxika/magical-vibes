@@ -26,7 +26,7 @@ class MetallurgeonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, artifact.getId());
         harness.passBothPriorities();
 
-        assertThat(artifact.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isEqualTo(1);
     }
 
     @Test
@@ -38,7 +38,7 @@ class MetallurgeonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentArtifact.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentArtifact.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(opponentArtifact.getId())).isEqualTo(1);
     }
 
     @Test
@@ -84,7 +84,7 @@ class MetallurgeonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, metallurgeon.getId());
         harness.passBothPriorities();
 
-        assertThat(metallurgeon.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(metallurgeon.getId())).isEqualTo(1);
         assertThat(metallurgeon.isTapped()).isTrue();
     }
 
@@ -105,7 +105,7 @@ class MetallurgeonTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
         assertThat(artifact.isTapped()).isTrue();
-        assertThat(artifact.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isZero();
 
         harness.castAndResolveInstant(player1, 0, artifact.getId());
 
@@ -143,7 +143,7 @@ class MetallurgeonTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(metallurgeon);
         assertThat(metallurgeon.getMarkedDamage()).isZero();
-        assertThat(metallurgeon.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(metallurgeon.getId())).isZero();
         assertThat(metallurgeon.isTapped()).isTrue();
     }
 
@@ -157,7 +157,7 @@ class MetallurgeonTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(metallurgeon);
         harness.passBothPriorities();
 
-        assertThat(artifact.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isEqualTo(1);
     }
 
     @Test

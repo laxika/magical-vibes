@@ -129,7 +129,7 @@ class PriceOfFreedomTest extends BaseCardTest {
     @DisplayName("Regeneration does not prevent the controller from searching or the caster from drawing")
     void regeneratedArtifactStillAllowsSearchAndDraw() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setLibrary(player2, List.of(new Forest()));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         givePriceOfFreedom();

@@ -132,8 +132,8 @@ class MythosOfVadrokTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Necropanther());
         Permanent other = harness.addToBattlefieldAndReturn(player2, new Necropanther());
         Permanent untargeted = harness.addToBattlefieldAndReturn(player2, new Necropanther());
-        target.setDamagePreventionShield(3);
-        other.setDamagePreventionShield(3);
+        gd.addPermanentDamagePreventionShield(target.getId(), 3);
+        gd.addPermanentDamagePreventionShield(other.getId(), 3);
         castWithMana(Map.of(target.getId(), 2, other.getId(), 3), true);
 
         assertThat(target.getMarkedDamage()).isZero();

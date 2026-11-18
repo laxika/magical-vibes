@@ -30,7 +30,7 @@ class TrollsOfTelJiladTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -44,7 +44,7 @@ class TrollsOfTelJiladTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -85,7 +85,7 @@ class TrollsOfTelJiladTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, source.getId());
         harness.passBothPriorities();
 
-        assertThat(source.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(source.getId())).isEqualTo(1);
         assertThat(source.isTapped()).isTrue();
     }
 
@@ -110,7 +110,7 @@ class TrollsOfTelJiladTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Fangren Hunter");
         assertThat(target.isTapped()).isTrue();
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
 
         target.setMarkedDamage(4);
         harness.runStateBasedActions();
@@ -132,15 +132,15 @@ class TrollsOfTelJiladTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(2);
         target.setMarkedDamage(4);
         harness.runStateBasedActions();
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         target.setMarkedDamage(4);
         harness.runStateBasedActions();
 
         harness.assertOnBattlefield(player1, "Fangren Hunter");
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(target.getMarkedDamage()).isZero();
     }
 }

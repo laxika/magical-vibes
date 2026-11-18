@@ -55,7 +55,7 @@ class CatastropheTest extends BaseCardTest {
     @DisplayName("Creatures destroyed by the creature mode cannot be regenerated")
     void creaturesCannotBeRegenerated() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new UnworthyDead());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
 
         castCatastrophe(1);
 
@@ -111,13 +111,13 @@ class CatastropheTest extends BaseCardTest {
     @DisplayName("A noncreature land with a regeneration shield survives land destruction")
     void noncreatureLandCanRegenerate() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
-        land.setRegenerationShield(1);
+        gd.addRegenerationShields(land.getId(), 1);
 
         castCatastrophe(0);
 
         harness.assertOnBattlefield(player2, "Forest");
         assertThat(land.isTapped()).isTrue();
-        assertThat(land.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(land.getId())).isZero();
     }
 
     private void castCatastrophe(int mode) {

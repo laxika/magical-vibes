@@ -26,7 +26,7 @@ class VotaryOfTheConclaveTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(votary.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(votary.getId())).isEqualTo(1);
     }
 
     @Test
@@ -45,7 +45,7 @@ class VotaryOfTheConclaveTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, votary.getId());
 
         harness.assertOnBattlefield(player1, "Votary of the Conclave");
-        assertThat(votary.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(votary.getId())).isZero();
     }
 
     @Test
@@ -84,7 +84,7 @@ class VotaryOfTheConclaveTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(votary.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(votary.getId())).isEqualTo(2);
         assertThat(votary.isTapped()).isTrue();
     }
 

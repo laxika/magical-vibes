@@ -162,7 +162,7 @@ class VanquishTheFoulTest extends BaseCardTest {
     @Test
     void regenerationSavesTargetAndDoesNotPreventScry() {
         Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        elemental.setRegenerationShield(1);
+        gd.addRegenerationShields(elemental.getId(), 1);
         harness.setLibrary(player1, List.of(new VanquishTheFoul()));
 
         addManaAndCast(elemental.getId());
@@ -170,7 +170,7 @@ class VanquishTheFoulTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Air Elemental");
         assertThat(elemental.isTapped()).isTrue();
-        assertThat(elemental.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(elemental.getId())).isZero();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
         harness.assertInGraveyard(player1, "Vanquish the Foul");

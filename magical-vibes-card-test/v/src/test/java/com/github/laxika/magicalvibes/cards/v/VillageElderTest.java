@@ -34,7 +34,7 @@ class VillageElderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, forest.getId());
         harness.passBothPriorities();
 
-        assertThat(mantis.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(mantis.getId())).isEqualTo(1);
         assertThat(elder.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Forest");
     }
@@ -50,7 +50,7 @@ class VillageElderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentMantis.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentMantis.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(opponentMantis.getId())).isEqualTo(1);
     }
 
     @Test
@@ -105,7 +105,7 @@ class VillageElderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, mantis.getId());
         harness.assertInGraveyard(player1, "Forest");
-        assertThat(mantis.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(mantis.getId())).isZero();
         harness.passBothPriorities();
 
         AtomicBoolean firstDestroyed = new AtomicBoolean(true);
@@ -114,7 +114,7 @@ class VillageElderTest extends BaseCardTest {
         assertThat(firstDestroyed).isFalse();
         harness.assertOnBattlefield(player1, "Giant Mantis");
         assertThat(mantis.isTapped()).isTrue();
-        assertThat(mantis.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(mantis.getId())).isZero();
 
         AtomicBoolean secondDestroyed = new AtomicBoolean(false);
         harness.inMutationScope(() -> secondDestroyed.set(
@@ -134,7 +134,7 @@ class VillageElderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, elder.getId());
         harness.passBothPriorities();
 
-        assertThat(elder.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(elder.getId())).isEqualTo(1);
         assertThat(elder.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Forest");
     }

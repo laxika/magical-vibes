@@ -141,7 +141,7 @@ class WeiAssassinsTest extends BaseCardTest {
     @DisplayName("Destruction consumes a regeneration shield and taps the chosen creature")
     void chosenCreatureCanRegenerate() {
         Permanent infantry = harness.addToBattlefieldAndReturn(player2, new WeiInfantry());
-        infantry.setRegenerationShield(1);
+        gd.addRegenerationShields(infantry.getId(), 1);
         harness.addToBattlefield(player2, new WeiEliteCompanions());
 
         castWeiAssassins(player2.getId());
@@ -152,7 +152,7 @@ class WeiAssassinsTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Wei Infantry");
         harness.assertNotInGraveyard(player2, "Wei Infantry");
         harness.assertOnBattlefield(player2, "Wei Elite Companions");
-        assertThat(infantry.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(infantry.getId())).isZero();
         assertThat(infantry.isTapped()).isTrue();
     }
 

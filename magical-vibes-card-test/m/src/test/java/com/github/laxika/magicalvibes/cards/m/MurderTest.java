@@ -143,7 +143,7 @@ class MurderTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Walking Corpse");
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         harness.assertInGraveyard(player1, "Murder");
     }
 }

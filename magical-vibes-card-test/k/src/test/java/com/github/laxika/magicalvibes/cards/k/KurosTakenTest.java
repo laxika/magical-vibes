@@ -92,7 +92,7 @@ class KurosTakenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(taken.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(taken.getId())).isEqualTo(1);
     }
 
     @Test
@@ -107,7 +107,7 @@ class KurosTakenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(taken.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(taken.getId())).isEqualTo(1);
         assertThat(taken.isTapped()).isTrue();
     }
 
@@ -121,12 +121,12 @@ class KurosTakenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(taken.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(taken.getId())).isEqualTo(1);
         assertThat(taken.isTapped()).isFalse();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(taken.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(taken.getId())).isZero();
         assertThat(taken.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(taken);
     }
@@ -164,6 +164,6 @@ class KurosTakenTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(taken);
         assertThat(taken.isTapped()).isTrue();
         assertThat(taken.getMarkedDamage()).isZero();
-        assertThat(taken.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(taken.getId())).isZero();
     }
 }

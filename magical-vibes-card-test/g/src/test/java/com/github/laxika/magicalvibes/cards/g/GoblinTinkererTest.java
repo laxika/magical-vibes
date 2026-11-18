@@ -87,14 +87,14 @@ class GoblinTinkererTest extends BaseCardTest {
     void artifactStillDealsDamageWhenItRegenerates() {
         addCreatureReady(player1, new GoblinTinkerer());
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BoneMask());
-        artifact.setRegenerationShield(1);
+        gd.addRegenerationShields(artifact.getId(), 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, null, artifact.getId());
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Bone Mask");
         harness.assertNotInGraveyard(player2, "Bone Mask");
         assertThat(artifact.isTapped()).isTrue();
-        assertThat(artifact.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(artifact.getId())).isZero();
         harness.assertInGraveyard(player1, "Goblin Tinkerer");
     }
 

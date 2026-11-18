@@ -102,7 +102,7 @@ class MurderousBetrayalTest extends BaseCardTest {
     void cannotBeRegenerated() {
         Permanent enchantment = betrayal(20);
         Permanent toady = harness.addToBattlefieldAndReturn(player2, new MoggToady());
-        toady.setRegenerationShield(1);
+        gd.addRegenerationShields(toady.getId(), 1);
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(enchantment);
         harness.activateAbility(player1, idx, null, toady.getId());

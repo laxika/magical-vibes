@@ -98,14 +98,14 @@ class BreakTheSpellTest extends BaseCardTest {
     @DisplayName("Regeneration prevents destruction and the card draw")
     void regeneratedEnchantmentDoesNotDraw() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new UpTheBeanstalk());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         prepareSpell();
 
         cast(target);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }

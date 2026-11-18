@@ -32,7 +32,7 @@ class NiallSilvainTest extends BaseCardTest {
         Permanent source = findPermanent(player1, "Niall Silvain");
         Permanent target = findPermanent(player2, "Squire");
         assertThat(source.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -54,7 +54,7 @@ class NiallSilvainTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Squire")).isSameAs(target);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 
     @Test
@@ -80,7 +80,7 @@ class NiallSilvainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(source.isTapped()).isTrue();
-        assertThat(source.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(source.getId())).isEqualTo(1);
     }
 
     @Test
@@ -138,6 +138,6 @@ class NiallSilvainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Niall Silvain");
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 }

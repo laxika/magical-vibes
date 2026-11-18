@@ -55,7 +55,7 @@ class DefilingTearsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -75,7 +75,7 @@ class DefilingTearsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Yavimaya Barbarian");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(target.getMarkedDamage()).isZero();
     }
 
@@ -116,7 +116,7 @@ class DefilingTearsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Yavimaya Barbarian");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(target.getMarkedDamage()).isZero();
     }
 

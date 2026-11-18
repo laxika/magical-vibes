@@ -207,7 +207,7 @@ class NekrataalTest extends BaseCardTest {
 
         // Give the target a regeneration shield before ETB resolves
         Permanent target = findPermanent(player2, "Grizzly Bears");
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         // Resolve ETB — should destroy despite regeneration shield
         harness.passBothPriorities();

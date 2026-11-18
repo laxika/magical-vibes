@@ -52,7 +52,7 @@ class ExcruciatorTest extends BaseCardTest {
     void combatDamageToBlockerCantBePrevented() {
         addExcruciatorReady(player1);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setDamagePreventionShield(10);
+        gd.addPermanentDamagePreventionShield(blocker.getId(), 10);
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -82,7 +82,7 @@ class ExcruciatorTest extends BaseCardTest {
     void noncombatDamageToCreatureCantBePrevented() {
         Permanent source = addExcruciatorReady(player1);
         Permanent victim = addExcruciatorReady(player2);
-        victim.setDamagePreventionShield(10);
+        gd.addPermanentDamagePreventionShield(victim.getId(), 10);
         harness.setHand(player1, List.of(new SoulsFire()));
         harness.addMana(player1, ManaColor.RED, 3);
 

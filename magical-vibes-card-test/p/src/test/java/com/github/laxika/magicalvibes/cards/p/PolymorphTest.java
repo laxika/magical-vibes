@@ -81,7 +81,7 @@ class PolymorphTest extends BaseCardTest {
     @DisplayName("Polymorph destroys a creature despite a regeneration shield")
     void cannotBeRegenerated() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new DrudgeSkeletons());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setHand(player1, List.of(new Polymorph()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.setLibrary(player1, List.of(new GrizzlyBears()));

@@ -495,8 +495,12 @@ Unleashed) and Illusionist's Gambit's must-attack and can't-attack-you are such 
 "skip your next …" effect (`SkipNextEffect`, CR 614.10) is a `PERMANENT` effect on the player, one per resolution,
 used up as it applies (`GameData.applySkipNext`; two skip the next two, CR 614.10a). A shield with an amount ("prevent the next 3
 damage", CR 615.7) carries the amount left; using part of it replaces it with a reduced copy (`replaceFloatingEffect`,
-same place and timestamp), and a used-up or "next time" shield ends. When several apply to one event the affected
-player chooses (CR 616.1). The "next spell you cast this turn" grants implement `NextMatchingSpellEffect` and end at
+same place and timestamp), and a used-up or "next time" shield ends. A permanent's shields are such effects on it
+(`onPermanent`): "prevent the next N damage" (`DamagePreventionShield`), each regeneration shield (`RegenerationShield`
+with its rider, CR 701.19a), "destroy it instead of the next damage" and "remove all damage instead of the next
+destruction" (the resolving effect itself), and they apply to that object only (CR 400.7). When several apply to one
+event the affected player chooses (CR 616.1); a permanent's prevention steps and regeneration riders are still taken
+in a fixed order. The "next spell you cast this turn" grants implement `NextMatchingSpellEffect` and end at
 the matching cast (`Duration.UNTIL_MATCHING_SPELL_CAST`) or at cleanup.
 "Exile it instead" replacements (CR 614.1a) are such effects too: on a permanent ("if that creature would die this
 turn", `GameData.exileInsteadOfDying`, optionally linking the exiled card to its source; "if it would leave the
@@ -812,7 +816,7 @@ authoritative per-step record; this section is the reconciled summary.
 
 ### Known limitations
 
-- **Dual-write fields remain** for P/T modifiers, keywords, protection, abilities and shields:
+- **Dual-write fields remain** for P/T modifiers, keywords, protection and abilities:
   one-shot handlers write legacy `Permanent` fields AND the floating effect; the fields feed
   LKI, mid-pass predicate leaves, null-`GameData` fallbacks, and views. One-shot colours, card
   types, subtypes (land and creature type setters, lost subtypes) and animations are floating

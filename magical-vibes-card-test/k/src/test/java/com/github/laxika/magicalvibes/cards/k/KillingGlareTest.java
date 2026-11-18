@@ -130,7 +130,7 @@ class KillingGlareTest extends BaseCardTest {
     @DisplayName("Destruction allows regeneration")
     void regenerationSavesTarget() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new MillennialGargoyle());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castKillingGlare(2, target);
         harness.passBothPriorities();
@@ -138,7 +138,7 @@ class KillingGlareTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Millennial Gargoyle");
         harness.assertNotInGraveyard(player2, "Millennial Gargoyle");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 
     @Test

@@ -24,7 +24,7 @@ class CryptSliverTest extends BaseCardTest {
 
         activateRegeneration(player1, 0, cryptSliver);
 
-        assertThat(cryptSliver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(cryptSliver.getId())).isEqualTo(1);
         assertThat(cryptSliver.isTapped()).isTrue();
     }
 
@@ -36,7 +36,7 @@ class CryptSliverTest extends BaseCardTest {
 
         activateRegeneration(player2, 0, cryptSliver);
 
-        assertThat(cryptSliver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(cryptSliver.getId())).isEqualTo(1);
         assertThat(opposingSliver.isTapped()).isTrue();
     }
 
@@ -48,7 +48,7 @@ class CryptSliverTest extends BaseCardTest {
 
         activateRegeneration(player1, 1, cryptSliver);
 
-        assertThat(cryptSliver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(cryptSliver.getId())).isEqualTo(1);
         assertThat(ownSliver.isTapped()).isTrue();
     }
 
@@ -89,7 +89,7 @@ class CryptSliverTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, cryptSliver.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(ownSliver.isTapped()).isFalse();
-        assertThat(cryptSliver.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(cryptSliver.getId())).isZero();
     }
 
     @Test
@@ -103,7 +103,7 @@ class CryptSliverTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(cryptSliver);
         harness.passBothPriorities();
 
-        assertThat(ownSliver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ownSliver.getId())).isEqualTo(1);
     }
 
     @Test
@@ -129,7 +129,7 @@ class CryptSliverTest extends BaseCardTest {
         activateRegeneration(player1, 1, cryptSliver);
 
         assertThat(aura.isTapped()).isTrue();
-        assertThat(cryptSliver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(cryptSliver.getId())).isEqualTo(1);
     }
 
     private void activateRegeneration(com.github.laxika.magicalvibes.model.Player player,

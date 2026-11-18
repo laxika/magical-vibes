@@ -38,7 +38,7 @@ class SawInHalfTestMarRegression extends BaseCardTest {
     @Test
     void doesNotCreateCopiesWhenRegenerationPreventsDestruction() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castSawInHalf(target);
 

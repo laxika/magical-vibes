@@ -63,7 +63,7 @@ class PoisonArrowTest extends BaseCardTest {
     @DisplayName("A creature with a regeneration shield is regenerated instead of destroyed")
     void regenerationShieldSavesCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new WuInfantry());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         preparePoisonArrow();
 
         harness.castAndResolveSorcery(player1, 0, target.getId());

@@ -25,7 +25,7 @@ class AnavolverTest extends BaseCardTest {
 
         assertThat(anavolver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gqs.hasKeyword(gd, anavolver, Keyword.FLYING)).isFalse();
-        assertThat(anavolver.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(anavolver.getId())).isZero();
     }
 
     @Test
@@ -42,7 +42,7 @@ class AnavolverTest extends BaseCardTest {
         Permanent anavolver = findAnavolver();
         assertThat(anavolver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, anavolver, Keyword.FLYING)).isTrue();
-        assertThat(anavolver.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(anavolver.getId())).isZero();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -66,7 +66,7 @@ class AnavolverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);
-        assertThat(anavolver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(anavolver.getId())).isEqualTo(1);
     }
 
     @Test
@@ -90,7 +90,7 @@ class AnavolverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);
-        assertThat(anavolver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(anavolver.getId())).isEqualTo(1);
     }
 
     @Test
@@ -145,14 +145,14 @@ class AnavolverTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);
-        assertThat(anavolver.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(anavolver.getId())).isZero();
         harness.passBothPriorities();
-        assertThat(anavolver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(anavolver.getId())).isEqualTo(1);
 
         harness.activateAbility(player1, 0, 0, null, null);
         assertThat(gd.getLife(player1.getId())).isEqualTo(14);
         harness.passBothPriorities();
-        assertThat(anavolver.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(anavolver.getId())).isEqualTo(2);
     }
 
     @Test
@@ -168,7 +168,7 @@ class AnavolverTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.getLife(player1.getId())).isEqualTo(2);
-        assertThat(findAnavolver().getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(findAnavolver().getId())).isZero();
     }
 
     private Permanent castAnavolver() {

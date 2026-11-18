@@ -64,7 +64,7 @@ class RuinousUltimatumTest extends BaseCardTest {
     @DisplayName("Regeneration replaces destruction")
     void allowsRegeneration() {
         var bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bear.setRegenerationShield(1);
+        gd.addRegenerationShields(bear.getId(), 1);
 
         harness.castFromHand(player1, new RuinousUltimatum(), "{R}{R}{W}{W}{W}{B}{B}");
         harness.passBothPriorities();
@@ -72,7 +72,7 @@ class RuinousUltimatumTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         org.assertj.core.api.Assertions.assertThat(bear.isTapped()).isTrue();
-        org.assertj.core.api.Assertions.assertThat(bear.getRegenerationShield()).isZero();
+        org.assertj.core.api.Assertions.assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
     }
 
     @Test

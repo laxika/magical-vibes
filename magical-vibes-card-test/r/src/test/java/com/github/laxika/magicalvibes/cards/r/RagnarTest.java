@@ -29,7 +29,7 @@ class RagnarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(source.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         assertThat(target.isTapped()).isFalse();
     }
 
@@ -73,7 +73,7 @@ class RagnarTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, source));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(source);
-        assertThat(source.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(source.getId())).isZero();
         assertThat(source.getMarkedDamage()).isZero();
         assertThat(source.isTapped()).isTrue();
 
@@ -122,7 +122,7 @@ class RagnarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source);
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         assertThat(target.isTapped()).isFalse();
     }
 
@@ -136,13 +136,13 @@ class RagnarTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 
     @Test
@@ -158,7 +158,7 @@ class RagnarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
-        assertThat(source.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(source.getId())).isZero();
         assertThat(source.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
     }

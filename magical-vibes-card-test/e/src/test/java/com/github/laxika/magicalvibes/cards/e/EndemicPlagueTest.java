@@ -46,7 +46,7 @@ class EndemicPlagueTest extends BaseCardTest {
     void destructionDoesNotAllowRegeneration() {
         Permanent sacrificed = addCreatureReady(player1, new ElvishWarrior());
         Permanent matchingCreature = harness.addToBattlefieldAndReturn(player2, new WirewoodElf());
-        matchingCreature.setRegenerationShield(1);
+        gd.addRegenerationShields(matchingCreature.getId(), 1);
         prepareCast();
 
         harness.castSorceryWithSacrifice(player1, 0, sacrificed.getId());

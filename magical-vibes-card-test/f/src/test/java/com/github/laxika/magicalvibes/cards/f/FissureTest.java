@@ -64,7 +64,7 @@ class FissureTest extends BaseCardTest {
     @DisplayName("Destroys a creature despite its regeneration shield")
     void destroysCreatureDespiteRegenerationShield() {
         var drowned = harness.addToBattlefieldAndReturn(player2, new Drowned());
-        drowned.setRegenerationShield(1);
+        gd.addRegenerationShields(drowned.getId(), 1);
         harness.setHand(player1, List.of(new Fissure()));
         addFissureMana();
 
@@ -101,7 +101,7 @@ class FissureTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Drowned");
-        assertThat(drowned.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(drowned.getId())).isEqualTo(1);
 
         harness.passBothPriorities();
 

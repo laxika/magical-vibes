@@ -29,7 +29,7 @@ class AlabasterWallTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
         assertThat(gd.globalDamagePreventionShield()).isZero();
     }
 
@@ -103,13 +103,13 @@ class AlabasterWallTest extends BaseCardTest {
         Permanent wall = addReadyWall(player1);
 
         activateWallAbility(wall, wall.getId());
-        assertThat(wall.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(wall.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wall.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(wall.getId())).isZero();
     }
 
     @Test

@@ -101,14 +101,14 @@ class FatefulAbsenceTest extends BaseCardTest {
     @DisplayName("Regeneration saves the target without preventing investigation")
     void targetCanRegenerateAndItsControllerInvestigates() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castFatefulAbsence(target);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(findPermanents(player2, "Clue")).hasSize(1);
     }
 

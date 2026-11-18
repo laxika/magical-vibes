@@ -43,7 +43,7 @@ class DutifulThrullTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent thrull = findPermanent(player1, "Dutiful Thrull");
-        assertThat(thrull.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(thrull.getId())).isEqualTo(1);
     }
 
     @Test
@@ -69,7 +69,7 @@ class DutifulThrullTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Dutiful Thrull");
         Permanent survivingThrull = findPermanent(player1, "Dutiful Thrull");
         assertThat(survivingThrull.isTapped()).isTrue();
-        assertThat(survivingThrull.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(survivingThrull.getId())).isZero();
         assertThat(survivingThrull.getMarkedDamage()).isZero();
         assertThat(survivingThrull.isBlocking()).isFalse();
         assertThat(survivingThrull.getBlockingTargets()).isEmpty();
@@ -112,7 +112,7 @@ class DutifulThrullTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thrull.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(thrull.getId())).isEqualTo(1);
         assertThat(thrull.isTapped()).isTrue();
     }
 
@@ -136,17 +136,17 @@ class DutifulThrullTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(thrull.isTapped()).isFalse();
-        assertThat(thrull.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(thrull.getId())).isEqualTo(2);
         thrull.setMarkedDamage(1);
         harness.runStateBasedActions();
         harness.assertOnBattlefield(player1, "Dutiful Thrull");
-        assertThat(thrull.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(thrull.getId())).isEqualTo(1);
         assertThat(thrull.getMarkedDamage()).isZero();
 
         thrull.setMarkedDamage(1);
         harness.runStateBasedActions();
         harness.assertOnBattlefield(player1, "Dutiful Thrull");
-        assertThat(thrull.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(thrull.getId())).isZero();
         assertThat(thrull.getMarkedDamage()).isZero();
 
         thrull.setMarkedDamage(1);

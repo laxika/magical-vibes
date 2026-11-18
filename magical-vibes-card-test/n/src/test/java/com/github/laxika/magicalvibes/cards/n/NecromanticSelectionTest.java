@@ -112,7 +112,7 @@ class NecromanticSelectionTest extends BaseCardTest {
     @Test
     void regeneratedCreatureIsNotOfferedForReturn() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
         Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         NecromanticSelection selection = new NecromanticSelection();
 

@@ -114,7 +114,7 @@ class RepelCalamityTest extends BaseCardTest {
     @Test
     void allowsRegeneration() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         cast(target);
 

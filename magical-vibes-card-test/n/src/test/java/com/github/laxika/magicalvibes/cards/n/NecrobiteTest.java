@@ -49,7 +49,7 @@ class NecrobiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -64,7 +64,7 @@ class NecrobiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
     }
 
     @Test
@@ -104,7 +104,7 @@ class NecrobiteTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Moorland Inquisitor");
         harness.assertInGraveyard(player2, "Nettle Swine");
-        assertThat(bears.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(0);
         assertThat(bears.isTapped()).isTrue();
         assertThat(bears.isBlocking()).isFalse();
     }
@@ -122,7 +122,7 @@ class NecrobiteTest extends BaseCardTest {
 
         assertThat(creature.isTapped()).isFalse();
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
 
         creature.setMarkedDamage(2);
         harness.runStateBasedActions();
@@ -130,7 +130,7 @@ class NecrobiteTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Moorland Inquisitor");
         assertThat(creature.isTapped()).isTrue();
         assertThat(creature.getMarkedDamage()).isZero();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(creature.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
 
         creature.setMarkedDamage(2);
@@ -153,7 +153,7 @@ class NecrobiteTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         creature.setMarkedDamage(2);
         harness.runStateBasedActions();
         harness.assertInGraveyard(player1, "Moorland Inquisitor");
@@ -172,7 +172,7 @@ class NecrobiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(returned.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
-        assertThat(returned.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(returned.getId())).isZero();
         harness.assertInGraveyard(player1, "Necrobite");
         assertThat(gd.stack).isEmpty();
     }

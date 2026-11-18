@@ -23,7 +23,7 @@ class BefoulTest extends BaseCardTest {
     @DisplayName("Resolving Befoul destroys a nonblack creature and it can't be regenerated")
     void destroysNonblackCreatureWithoutRegeneration() {
         Permanent kami = harness.addToBattlefieldAndReturn(player2, new KamiOfOldStone());
-        kami.setRegenerationShield(1);
+        gd.addRegenerationShields(kami.getId(), 1);
 
         harness.setHand(player1, List.of(new Befoul()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -113,7 +113,7 @@ class BefoulTest extends BaseCardTest {
     @DisplayName("Befoul prevents a land's regeneration")
     void destroysLandWithoutRegeneration() {
         Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
-        swamp.setRegenerationShield(1);
+        gd.addRegenerationShields(swamp.getId(), 1);
         harness.setHand(player1, List.of(new Befoul()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.RegenerationShield;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -50,7 +52,7 @@ public class RegenerateAllOwnCreaturesEffectHandler implements NormalEffectHandl
                     if (gameQueryService.isCreature(gameData, perm)
                             && (e.filter() == null
                                 || predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext))) {
-                        perm.setRegenerationShield(perm.getRegenerationShield() + 1);
+                        gameData.addEffectOnPermanent(entry, RegenerationShield.PLAIN, perm.getId(), Duration.UNTIL_END_OF_TURN);
                         count++;
                     }
                 }

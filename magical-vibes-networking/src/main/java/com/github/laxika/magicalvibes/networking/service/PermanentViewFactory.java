@@ -91,11 +91,20 @@ public class PermanentViewFactory {
                 faceUpExiledWithCards, faceDownExiledCount, staticName, Set.of());
     }
 
+    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, boolean losesAllNonManaAbilities, Set<CardSupertype> staticGrantedSupertypes, List<ModifierLine> modifierLines, List<Card> faceUpExiledWithCards, int faceDownExiledCount, String staticName, Set<CardSubtype> removedSubtypes) {
+        return create(p, bonusPower, bonusToughness, bonusKeywords, animatedCreature, grantedActivatedAbilities,
+                staticGrantedColors, staticGrantedSubtypes, staticGrantedCardTypes, colorOverriding,
+                subtypeOverriding, landSubtypeOverriding, cardTypeOverriding, staticRemovedKeywords,
+                losesAllAbilities, losesAllNonManaAbilities, staticGrantedSupertypes, modifierLines,
+                faceUpExiledWithCards, faceDownExiledCount, staticName, removedSubtypes, 0);
+    }
+
     /**
      * Builds the view; {@code removedSubtypes} are the printed subtypes the permanent no longer has after the
-     * layered pass (CR 613.1d), hidden from the card face.
+     * layered pass (CR 613.1d), hidden from the card face, and {@code regenerationShields} is how many regeneration
+     * shields the floating effects on it give it.
      */
-    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, boolean losesAllNonManaAbilities, Set<CardSupertype> staticGrantedSupertypes, List<ModifierLine> modifierLines, List<Card> faceUpExiledWithCards, int faceDownExiledCount, String staticName, Set<CardSubtype> removedSubtypes) {
+    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, boolean losesAllNonManaAbilities, Set<CardSupertype> staticGrantedSupertypes, List<ModifierLine> modifierLines, List<Card> faceUpExiledWithCards, int faceDownExiledCount, String staticName, Set<CardSubtype> removedSubtypes, int regenerationShields) {
         Set<Keyword> allKeywords = new HashSet<>(p.getGrantedKeywords());
         allKeywords.addAll(p.getUntilNextTurnKeywords());
         allKeywords.addAll(bonusKeywords);
@@ -144,7 +153,7 @@ public class PermanentViewFactory {
                 p.getAttachedTo(),
                 p.getChosenColor(),
                 p.getChosenName(),
-                p.getRegenerationShield(),
+                regenerationShields,
                 animatedCreature,
                 Map.copyOf(p.getCounters()),
                 p.getAttackTarget(),

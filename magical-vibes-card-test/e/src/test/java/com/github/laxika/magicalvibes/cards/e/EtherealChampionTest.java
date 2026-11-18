@@ -30,7 +30,7 @@ class EtherealChampionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);
-        assertThat(champion.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(champion.getId())).isEqualTo(1);
     }
 
     @Test
@@ -47,7 +47,7 @@ class EtherealChampionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(champion.getMarkedDamage()).isEqualTo(0);
-        assertThat(champion.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(gd.permanentDamagePreventionShield(champion.getId())).isEqualTo(0);
     }
 
     @Test
@@ -64,7 +64,7 @@ class EtherealChampionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 1);
-        assertThat(champion.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(champion.getId())).isEqualTo(1);
     }
 
     @Test
@@ -81,7 +81,7 @@ class EtherealChampionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(otherCreature.getMarkedDamage()).isEqualTo(1);
-        assertThat(champion.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(champion.getId())).isEqualTo(1);
     }
 
     @Test
@@ -99,7 +99,7 @@ class EtherealChampionTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, champion.getId());
 
         assertThat(champion.getMarkedDamage()).isEqualTo(0);
-        assertThat(champion.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(gd.permanentDamagePreventionShield(champion.getId())).isEqualTo(0);
     }
 
     @Test
@@ -129,11 +129,11 @@ class EtherealChampionTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, champion), null, null);
         harness.passBothPriorities();
 
-        assertThat(champion.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(champion.getId())).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(champion.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(gd.permanentDamagePreventionShield(champion.getId())).isEqualTo(0);
     }
 
     @Test

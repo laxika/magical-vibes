@@ -22,7 +22,7 @@ class UnworthyDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dead.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(dead.getId())).isEqualTo(1);
         assertThat(dead.isTapped()).isFalse();
     }
 
@@ -55,7 +55,7 @@ class UnworthyDeadTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Unworthy Dead");
         Permanent survivingDead = findPermanent(player1, "Unworthy Dead");
         assertThat(survivingDead.isTapped()).isTrue();
-        assertThat(survivingDead.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(survivingDead.getId())).isZero();
     }
 
     @Test
@@ -71,18 +71,18 @@ class UnworthyDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dead.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(dead.getId())).isEqualTo(2);
         assertThat(dead.isTapped()).isTrue();
 
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().tryDestroyPermanent(gd, dead));
         harness.assertOnBattlefield(player1, "Unworthy Dead");
-        assertThat(dead.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(dead.getId())).isEqualTo(1);
 
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().tryDestroyPermanent(gd, dead));
         harness.assertOnBattlefield(player1, "Unworthy Dead");
-        assertThat(dead.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(dead.getId())).isZero();
 
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().tryDestroyPermanent(gd, dead));

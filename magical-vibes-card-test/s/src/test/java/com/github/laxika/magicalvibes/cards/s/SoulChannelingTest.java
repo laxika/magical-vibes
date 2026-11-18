@@ -28,7 +28,7 @@ class SoulChannelingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -46,7 +46,7 @@ class SoulChannelingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -88,11 +88,11 @@ class SoulChannelingTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(aura), null, null);
 
         harness.assertLife(player1, 18);
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -107,7 +107,7 @@ class SoulChannelingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 16);
-        assertThat(creature.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(2);
         assertThat(creature.isTapped()).isFalse();
         assertThat(aura.isTapped()).isFalse();
     }
@@ -127,7 +127,7 @@ class SoulChannelingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 18);
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -149,7 +149,7 @@ class SoulChannelingTest extends BaseCardTest {
         assertThat(creature.isTapped()).isTrue();
         assertThat(creature.isBlocking()).isFalse();
         assertThat(creature.getMarkedDamage()).isZero();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         harness.assertInGraveyard(player2, "Fresh Volunteers");
     }
 

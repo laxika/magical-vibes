@@ -70,7 +70,7 @@ class ToxicNimTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         Permanent nim = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(nim.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(nim.getId())).isEqualTo(1);
     }
 
     @Test
@@ -131,7 +131,7 @@ class ToxicNimTest extends BaseCardTest {
     void regenerationSavesFromLethalCombatDamage() {
         // Toxic Nim (4/1) with regen shield blocks Grizzly Bears (2/2)
         Permanent nimPerm = addToxicNimReady(player1);
-        nimPerm.setRegenerationShield(1);
+        gd.addRegenerationShields(nimPerm.getId(), 1);
         nimPerm.setBlocking(true);
         nimPerm.addBlockingTarget(0);
 
@@ -150,7 +150,7 @@ class ToxicNimTest extends BaseCardTest {
         // Regeneration should tap the creature
         assertThat(nim.isTapped()).isTrue();
         // Regeneration shield should be consumed
-        assertThat(nim.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(nim.getId())).isEqualTo(0);
 
         // Grizzly Bears gets 4 -1/-1 counters from infect damage → dies
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -191,7 +191,7 @@ class ToxicNimTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(nim.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(nim.getId())).isEqualTo(2);
         assertThat(nim.isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Toxic Nim");
     }
@@ -203,7 +203,7 @@ class ToxicNimTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(blocker.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(blocker.getId())).isEqualTo(1);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 

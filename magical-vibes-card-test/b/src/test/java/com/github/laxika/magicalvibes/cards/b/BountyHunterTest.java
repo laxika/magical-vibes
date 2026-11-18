@@ -174,7 +174,7 @@ class BountyHunterTest extends BaseCardTest {
         addCreatureReady(player1, new BountyHunter());
         Permanent armodon = addCreatureReady(player2, new TrainedArmodon());
         armodon.setCounterCount(CounterType.BOUNTY, 2);
-        armodon.setRegenerationShield(1);
+        gd.addRegenerationShields(armodon.getId(), 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -183,7 +183,7 @@ class BountyHunterTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Trained Armodon");
         harness.assertNotInGraveyard(player2, "Trained Armodon");
-        assertThat(armodon.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(armodon.getId())).isZero();
         assertThat(armodon.isTapped()).isTrue();
         assertThat(armodon.getCounterCount(CounterType.BOUNTY)).isEqualTo(2);
     }

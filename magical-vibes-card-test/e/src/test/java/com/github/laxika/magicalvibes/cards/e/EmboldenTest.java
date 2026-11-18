@@ -28,7 +28,7 @@ class EmboldenTest extends BaseCardTest {
         castEmbolden(Map.of(wall.getId(), 2, player2.getId(), 2));
 
         GameData gd = harness.getGameData();
-        assertThat(wall.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(wall.getId())).isEqualTo(2);
         assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(2);
     }
 

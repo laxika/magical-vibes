@@ -63,7 +63,7 @@ class DutyBoundDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dead.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(dead.getId())).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Duty-Bound Dead");
     }
 
@@ -74,14 +74,14 @@ class DutyBoundDeadTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(dead.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(dead.getId())).isEqualTo(1);
         assertThat(dead.isTapped()).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dead.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(dead.getId())).isZero();
     }
 
     @Test
@@ -135,14 +135,14 @@ class DutyBoundDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dead.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(dead.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Duty-Bound Dead from lethal combat damage")
     void regenSavesFromLethalCombat() {
         Permanent dead = addCreatureReady(player1, new DutyBoundDead());
-        dead.setRegenerationShield(1);
+        gd.addRegenerationShields(dead.getId(), 1);
         dead.setBlocking(true);
         dead.addBlockingTarget(0);
 
@@ -153,7 +153,7 @@ class DutyBoundDeadTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Duty-Bound Dead");
         assertThat(dead.isTapped()).isTrue();
-        assertThat(dead.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(dead.getId())).isEqualTo(0);
     }
 
     @Test

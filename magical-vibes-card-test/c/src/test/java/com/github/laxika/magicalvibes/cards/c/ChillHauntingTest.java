@@ -181,7 +181,7 @@ class ChillHauntingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         harness.setGraveyard(player1, List.of(
                 new TwistedAbomination(), new TwistedAbomination(), new TwistedAbomination()));
         harness.setHand(player1, List.of(new ChillHaunting()));

@@ -74,7 +74,7 @@ class DarajaGriffinTest extends BaseCardTest {
     void regenerationPreventsDestruction() {
         setupGriffin();
         Permanent target = addCreatureReady(player2, new ScatheZombies());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -83,7 +83,7 @@ class DarajaGriffinTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Daraja Griffin");
         harness.assertOnBattlefield(player2, "Scathe Zombies");
         harness.assertNotInGraveyard(player2, "Scathe Zombies");
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 
     @Test

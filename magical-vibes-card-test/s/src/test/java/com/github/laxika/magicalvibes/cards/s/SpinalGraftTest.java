@@ -146,7 +146,7 @@ class SpinalGraftTest extends BaseCardTest {
     @DisplayName("A creature destroyed this way can't be regenerated")
     void destroyedCreatureCannotRegenerate() {
         Permanent giant = addCreatureReady(player2, new LowlandGiant());
-        giant.setRegenerationShield(1);
+        gd.addRegenerationShields(giant.getId(), 1);
         attachGraft(player1, giant);
 
         castKindleAt(player1, giant);

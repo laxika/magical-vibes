@@ -29,7 +29,7 @@ class RestlessDeadTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gd.playerBattlefields.get(player1.getId()).getFirst().getId())).isEqualTo(1);
     }
 
     @Test
@@ -46,7 +46,7 @@ class RestlessDeadTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Restless Dead from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent dead = addCreatureReady(player1, new RestlessDead());
-        dead.setRegenerationShield(1);
+        gd.addRegenerationShields(dead.getId(), 1);
 
         addCreatureReady(player2, new StalkingTiger());
         declareAttackersAndPrepareBlockers(player2, List.of(0));
@@ -57,7 +57,7 @@ class RestlessDeadTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Restless Dead");
         Permanent survivor = findPermanent(player1, "Restless Dead");
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isEqualTo(0);
         assertThat(survivor.isBlocking()).isFalse();
     }
 
@@ -95,7 +95,7 @@ class RestlessDeadTest extends BaseCardTest {
         assertThat(dead.isTapped()).isTrue();
         assertThat(dead.isBlocking()).isFalse();
         assertThat(dead.getMarkedDamage()).isZero();
-        assertThat(dead.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(dead.getId())).isZero();
     }
 
     @Test
@@ -111,7 +111,7 @@ class RestlessDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dead.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(dead.getId())).isEqualTo(2);
         assertThat(dead.isTapped()).isTrue();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

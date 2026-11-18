@@ -130,7 +130,7 @@ class DesertTwisterTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Horned Troll");
         harness.assertNotInGraveyard(player2, "Horned Troll");
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
         harness.assertInGraveyard(player1, "Desert Twister");
         assertThat(gd.stack).isEmpty();
     }

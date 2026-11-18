@@ -91,14 +91,14 @@ class GuanYus1000LiMarchTest extends BaseCardTest {
     void tappedCreatureCanRegenerate() {
         Permanent shuFootSoldiers = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
         shuFootSoldiers.tap();
-        shuFootSoldiers.setRegenerationShield(1);
+        gd.addRegenerationShields(shuFootSoldiers.getId(), 1);
 
         harness.castFromHand(player1, new GuanYus1000LiMarch(), "{4}{W}{W}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Shu Foot Soldiers");
         harness.assertNotInGraveyard(player2, "Shu Foot Soldiers");
-        assertThat(shuFootSoldiers.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(shuFootSoldiers.getId())).isZero();
         assertThat(shuFootSoldiers.isTapped()).isTrue();
     }
 }

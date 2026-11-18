@@ -129,7 +129,7 @@ class GallowsAtWillowHillTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GallowsAtWillowHill());
         addHumans(player1, 3);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Vorstclaw());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
@@ -138,7 +138,7 @@ class GallowsAtWillowHillTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .filteredOn(p -> p.getCard().getSubtypes().contains(CardSubtype.SPIRIT)).hasSize(1);
     }

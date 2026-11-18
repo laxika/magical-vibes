@@ -77,14 +77,14 @@ class TripWireTest extends BaseCardTest {
     @DisplayName("Allows a creature with horsemanship to regenerate")
     void allowsRegeneration() {
         Permanent horseman = harness.addToBattlefieldAndReturn(player2, new ShuCavalry());
-        horseman.setRegenerationShield(1);
+        gd.addRegenerationShields(horseman.getId(), 1);
         harness.setHand(player1, List.of(new TripWire()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castAndResolveSorcery(player1, 0, List.of(horseman.getId()));
 
         assertThat(gqs.findPermanentById(gd, horseman.getId())).isSameAs(horseman);
-        assertThat(horseman.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(horseman.getId())).isZero();
         assertThat(horseman.isTapped()).isTrue();
         harness.assertNotInGraveyard(player2, "Shu Cavalry");
         harness.assertInGraveyard(player1, "Trip Wire");

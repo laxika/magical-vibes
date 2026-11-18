@@ -38,8 +38,8 @@ class WarBargeTest extends BaseCardTest {
         Permanent barge = addBarge();
         Permanent firstDrowned = addDrowned(player2);
         Permanent secondDrowned = addDrowned(player2);
-        firstDrowned.setRegenerationShield(1);
-        secondDrowned.setRegenerationShield(1);
+        gd.addRegenerationShields(firstDrowned.getId(), 1);
+        gd.addRegenerationShields(secondDrowned.getId(), 1);
 
         enterMain();
         harness.addMana(player1, ManaColor.COLORLESS, 6);
@@ -61,7 +61,7 @@ class WarBargeTest extends BaseCardTest {
     void destroysTargetWhenSourceIsDestroyed() {
         Permanent barge = addBarge();
         Permanent drowned = addDrowned(player2);
-        drowned.setRegenerationShield(1);
+        gd.addRegenerationShields(drowned.getId(), 1);
 
         enterMain();
         harness.addMana(player1, ManaColor.COLORLESS, 3);

@@ -26,7 +26,7 @@ class MagetaTheLionTest extends BaseCardTest {
         mageta.setSummoningSick(false);
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent skeletons = harness.addToBattlefieldAndReturn(player2, new DrudgeSkeletons());
-        skeletons.setRegenerationShield(1);
+        gd.addRegenerationShields(skeletons.getId(), 1);
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Forest(), new Mountain()));
         harness.addMana(player1, ManaColor.WHITE, 2);

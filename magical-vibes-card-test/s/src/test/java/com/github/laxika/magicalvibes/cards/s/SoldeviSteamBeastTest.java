@@ -52,7 +52,7 @@ class SoldeviSteamBeastTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(beast.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(beast.getId())).isEqualTo(1);
         harness.setLife(player2, 20);
 
         beast.setBlocking(true);
@@ -67,7 +67,7 @@ class SoldeviSteamBeastTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Soldevi Steam Beast");
         Permanent regenerated = findPermanent(player1, "Soldevi Steam Beast");
         assertThat(regenerated.isTapped()).isTrue();
-        assertThat(regenerated.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(regenerated.getId())).isZero();
         harness.assertLife(player2, 22);
     }
 
@@ -136,7 +136,7 @@ class SoldeviSteamBeastTest extends BaseCardTest {
         assertThat(beast.isTapped()).isTrue();
         assertThat(beast.isAttacking()).isFalse();
         assertThat(beast.getMarkedDamage()).isZero();
-        assertThat(beast.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(beast.getId())).isZero();
         harness.assertLife(player2, 20);
     }
 }

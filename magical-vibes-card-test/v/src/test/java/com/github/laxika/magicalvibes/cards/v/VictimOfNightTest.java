@@ -106,7 +106,7 @@ class VictimOfNightTest extends BaseCardTest {
     @DisplayName("Victim of Night allows regeneration")
     void allowsRegeneration() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new AmbushViper());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         harness.setHand(player1, List.of(new VictimOfNight()));
         harness.addMana(player1, ManaColor.BLACK, 2);

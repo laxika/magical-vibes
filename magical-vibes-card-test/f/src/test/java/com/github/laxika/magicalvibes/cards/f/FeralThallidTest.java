@@ -34,7 +34,7 @@ class FeralThallidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
-        assertThat(thallid.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(thallid.getId())).isEqualTo(1);
     }
 
     @Test
@@ -47,7 +47,7 @@ class FeralThallidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
-        assertThat(thallid.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(thallid.getId())).isEqualTo(1);
     }
 
     @Test
@@ -84,12 +84,12 @@ class FeralThallidTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
-        assertThat(thallid.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(thallid.getId())).isZero();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.passBothPriorities();
-        assertThat(thallid.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(thallid.getId())).isEqualTo(1);
     }
 
     @Test
@@ -103,7 +103,7 @@ class FeralThallidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
-        assertThat(thallid.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(thallid.getId())).isEqualTo(1);
     }
 
     @Test
@@ -121,7 +121,7 @@ class FeralThallidTest extends BaseCardTest {
         assertThat(thallid.isTapped()).isTrue();
         assertThat(thallid.isAttacking()).isFalse();
         assertThat(thallid.getMarkedDamage()).isZero();
-        assertThat(thallid.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(thallid.getId())).isZero();
 
         thallid.setMarkedDamage(3);
         harness.runStateBasedActions();

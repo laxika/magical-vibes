@@ -23,7 +23,7 @@ class DegavolverTest extends BaseCardTest {
 
         assertThat(degavolver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gqs.hasKeyword(gd, degavolver, Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(degavolver.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(degavolver.getId())).isZero();
     }
 
     @Test
@@ -46,7 +46,7 @@ class DegavolverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);
-        assertThat(degavolver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(degavolver.getId())).isEqualTo(1);
     }
 
     @Test
@@ -87,7 +87,7 @@ class DegavolverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);
-        assertThat(degavolver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(degavolver.getId())).isEqualTo(1);
     }
 
     @Test
@@ -104,14 +104,14 @@ class DegavolverTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.activateAbility(player1, 0, 0, null, null);
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);
-        assertThat(degavolver.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(degavolver.getId())).isZero();
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, 0, null, null);
         assertThat(gd.getLife(player1.getId())).isEqualTo(14);
-        assertThat(degavolver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(degavolver.getId())).isEqualTo(1);
         harness.passBothPriorities();
 
-        assertThat(degavolver.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(degavolver.getId())).isEqualTo(2);
         assertThat(degavolver.isTapped()).isFalse();
         assertThat(degavolver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }

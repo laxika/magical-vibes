@@ -51,7 +51,7 @@ class DeathMutationTest extends BaseCardTest {
     @Test
     void cannotBeRegenerated() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Dodecapod());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         cast(target);
 
         harness.assertNotOnBattlefield(player2, "Dodecapod");

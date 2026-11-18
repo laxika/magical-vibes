@@ -93,14 +93,14 @@ class PygmyTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("The regeneration shield saves Pygmy Troll from lethal combat damage")
     void shieldSavesFromLethalCombatDamage() {
         Permanent troll = addCreatureReady(player1, new PygmyTroll());
-        troll.setRegenerationShield(1);
+        gd.addRegenerationShields(troll.getId(), 1);
         troll.setBlocking(true);
         troll.addBlockingTarget(0);
 
@@ -111,7 +111,7 @@ class PygmyTrollTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Pygmy Troll");
         assertThat(troll.isTapped()).isTrue();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
     }
 
     @Test
@@ -143,7 +143,7 @@ class PygmyTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
         assertThat(troll.isTapped()).isFalse();
 
         troll.setBlocking(true);
@@ -156,7 +156,7 @@ class PygmyTrollTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Pygmy Troll");
         assertThat(troll.isTapped()).isTrue();
         assertThat(troll.isBlocking()).isFalse();
-        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
         assertThat(troll.getPowerModifier()).isZero();
         assertThat(troll.getToughnessModifier()).isZero();
     }

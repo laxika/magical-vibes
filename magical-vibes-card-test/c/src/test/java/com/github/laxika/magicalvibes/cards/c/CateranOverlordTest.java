@@ -21,7 +21,7 @@ class CateranOverlordTest extends BaseCardTest {
     @Test
     void canSacrificeItselfButRegenerationDoesNotReturnIt() {
         Permanent overlord = addCreatureReady(player1, new CateranOverlord());
-        overlord.setRegenerationShield(1);
+        gd.addRegenerationShields(overlord.getId(), 1);
 
         // It's the only creature, so the sacrifice cost picks it automatically
         harness.activateAbility(player1, 0, null, null);
@@ -44,10 +44,10 @@ class CateranOverlordTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, fodder.getId());
 
         harness.assertInGraveyard(player1, "Ceremonial Guard");
-        assertThat(overlord.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(overlord.getId())).isZero();
         harness.passBothPriorities();
 
-        assertThat(overlord.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(overlord.getId())).isEqualTo(1);
         assertThat(overlord.isTapped()).isTrue();
     }
 
@@ -77,7 +77,7 @@ class CateranOverlordTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Ceremonial Guard");
-        assertThat(overlord.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(overlord.getId())).isEqualTo(1);
         assertThat(overlord.isTapped()).isFalse();
     }
 
@@ -153,7 +153,7 @@ class CateranOverlordTest extends BaseCardTest {
     @Test
     void regenerationShieldSavesCateranOverlordFromLethalCombatDamage() {
         Permanent overlord = addCreatureReady(player1, new CateranOverlord());
-        overlord.setRegenerationShield(1);
+        gd.addRegenerationShields(overlord.getId(), 1);
         overlord.setAttacking(true);
 
         Permanent firstBlocker = addCreatureReady(player2, new HiredGiant());
@@ -169,7 +169,7 @@ class CateranOverlordTest extends BaseCardTest {
                 secondBlocker.getId(), 3));
 
         harness.assertOnBattlefield(player1, "Cateran Overlord");
-        assertThat(overlord.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(overlord.getId())).isZero();
         assertThat(overlord.isTapped()).isTrue();
         assertThat(overlord.isAttacking()).isFalse();
         assertThat(overlord.getMarkedDamage()).isZero();

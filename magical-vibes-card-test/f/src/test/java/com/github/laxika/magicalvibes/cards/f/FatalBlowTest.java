@@ -78,7 +78,7 @@ class FatalBlowTest extends BaseCardTest {
     @DisplayName("Destroyed creature cannot regenerate")
     void cannotRegenerate() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
         gd.permanentsDealtDamageThisTurn.add(bears.getId());
 
         harness.setHand(player1, List.of(new FatalBlow()));
@@ -108,7 +108,7 @@ class FatalBlowTest extends BaseCardTest {
     @DisplayName("Damage prevention does not make a creature a legal target")
     void cannotTargetCreatureWhoseDamageWasPrevented() {
         Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        elemental.setDamagePreventionShield(2);
+        gd.addPermanentDamagePreventionShield(elemental.getId(), 2);
         harness.setHand(player1, List.of(new Shock(), new FatalBlow()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);

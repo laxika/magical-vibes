@@ -27,7 +27,7 @@ class ReveredDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dead.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(dead.getId())).isEqualTo(1);
         assertThat(dead.isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Revered Dead");
     }
@@ -43,7 +43,7 @@ class ReveredDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dead.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(dead.getId())).isEqualTo(2);
         assertThat(dead.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
     }
@@ -57,7 +57,7 @@ class ReveredDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dead.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(dead.getId())).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
     }
 
@@ -79,6 +79,6 @@ class ReveredDeadTest extends BaseCardTest {
         assertThat(dead.isTapped()).isTrue();
         assertThat(dead.isBlocking()).isFalse();
         assertThat(dead.getMarkedDamage()).isZero();
-        assertThat(dead.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(dead.getId())).isZero();
     }
 }

@@ -42,7 +42,7 @@ class SutureSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -65,7 +65,7 @@ class SutureSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -91,7 +91,7 @@ class SutureSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, spirit.getId());
         harness.passBothPriorities();
 
-        assertThat(spirit.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(spirit.getId())).isEqualTo(1);
         assertThat(spirit.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
@@ -108,7 +108,7 @@ class SutureSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, spirit.getId());
         harness.passBothPriorities();
 
-        assertThat(spirit.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(spirit.getId())).isEqualTo(2);
         assertThat(spirit.isTapped()).isTrue();
     }
 
@@ -128,6 +128,6 @@ class SutureSpiritTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Loyal Gyrfalcon");
         harness.assertNotInGraveyard(player1, "Loyal Gyrfalcon");
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
     }
 }

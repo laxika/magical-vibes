@@ -36,7 +36,7 @@ class GravebindTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, healer.getId());
 
         assertThat(gd.cantBeRegenerated(healer.getId())).isTrue();
-        assertThat(healer.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(healer.getId())).isEqualTo(1);
 
         List<TemporaryGlobalTriggeredAbility> scheduled = gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP);
         assertThat(scheduled).hasSize(1);
@@ -139,7 +139,7 @@ class GravebindTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
-        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(wall.getId())).isEqualTo(1);
 
         wall.setMarkedDamage(3);
         harness.runStateBasedActions();
@@ -201,7 +201,7 @@ class GravebindTest extends BaseCardTest {
 
     private Permanent addRegeneratingCreature(Player player) {
         Permanent perm = addCreatureReady(player, new OrcishHealer());
-        perm.setRegenerationShield(1);
+        gd.addRegenerationShields(perm.getId(), 1);
         return perm;
     }
 }

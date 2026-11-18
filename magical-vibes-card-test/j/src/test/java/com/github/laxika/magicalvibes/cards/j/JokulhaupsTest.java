@@ -48,7 +48,7 @@ class JokulhaupsTest extends BaseCardTest {
     @DisplayName("Destroyed permanents can't be regenerated")
     void destroyedPermanentsCannotBeRegenerated() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         harness.castFromHand(player1, new Jokulhaups(), "{4}{R}{R}");
         harness.passBothPriorities();
@@ -75,8 +75,8 @@ class JokulhaupsTest extends BaseCardTest {
     void artifactsAndLandsCannotBeRegenerated() {
         Permanent orb = harness.addToBattlefieldAndReturn(player1, new ZuranOrb());
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        orb.setRegenerationShield(1);
-        forest.setRegenerationShield(1);
+        gd.addRegenerationShields(orb.getId(), 1);
+        gd.addRegenerationShields(forest.getId(), 1);
 
         harness.castFromHand(player1, new Jokulhaups(), "{4}{R}{R}");
         harness.passBothPriorities();

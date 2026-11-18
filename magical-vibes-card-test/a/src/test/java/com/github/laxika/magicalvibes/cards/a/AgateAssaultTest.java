@@ -104,7 +104,7 @@ class AgateAssaultTest extends BaseCardTest {
     @DisplayName("Exile replacement applies when the creature is destroyed later after partial prevention")
     void survivingTargetIsExiledWhenDestroyedLater() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BarkformHarvester());
-        target.setDamagePreventionShield(2);
+        gd.addPermanentDamagePreventionShield(target.getId(), 2);
         harness.setHand(player1, List.of(new AgateAssault(), new FeedTheCycle()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.addMana(player1, ManaColor.BLACK, 5);
@@ -125,7 +125,7 @@ class AgateAssaultTest extends BaseCardTest {
     @DisplayName("Exile replacement applies even when all damage is prevented")
     void fullyPreventedDamageStillExilesTargetDestroyedLater() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BarkformHarvester());
-        target.setDamagePreventionShield(4);
+        gd.addPermanentDamagePreventionShield(target.getId(), 4);
         harness.setHand(player1, List.of(new AgateAssault(), new FeedTheCycle()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.addMana(player1, ManaColor.BLACK, 5);

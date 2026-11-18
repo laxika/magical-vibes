@@ -47,7 +47,7 @@ class DeityOfScarsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(deity.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(deity.getId())).isEqualTo(1);
         assertThat(deity.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(deity.getEffectivePower()).isEqualTo(6);
         assertThat(deity.getEffectiveToughness()).isEqualTo(6);
@@ -64,7 +64,7 @@ class DeityOfScarsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(deity.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(deity.getId())).isEqualTo(1);
     }
 
     @Test
@@ -105,7 +105,7 @@ class DeityOfScarsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(deity.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
-        assertThat(deity.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(deity.getId())).isZero();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough counters");
@@ -113,7 +113,7 @@ class DeityOfScarsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(deity.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(deity.getId())).isEqualTo(2);
         assertThat(deity.getEffectiveToughness()).isEqualTo(7);
     }
 
@@ -131,7 +131,7 @@ class DeityOfScarsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(deity.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(deity.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(deity.getId())).isEqualTo(1);
     }
 
     @Test
@@ -150,7 +150,7 @@ class DeityOfScarsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(deity);
         assertThat(deity.isTapped()).isTrue();
         assertThat(deity.getMarkedDamage()).isZero();
-        assertThat(deity.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(deity.getId())).isZero();
         assertThat(deity.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 

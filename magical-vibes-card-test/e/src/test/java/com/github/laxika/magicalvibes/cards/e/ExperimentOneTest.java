@@ -60,7 +60,7 @@ class ExperimentOneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(experimentOne.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(experimentOne.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(experimentOne.getId())).isEqualTo(1);
     }
 
     @Test
@@ -80,7 +80,7 @@ class ExperimentOneTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Experiment One from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent experimentOne = addCreatureReady(player1, new ExperimentOne());
-        experimentOne.setRegenerationShield(1);
+        gd.addRegenerationShields(experimentOne.getId(), 1);
         experimentOne.setBlocking(true);
         experimentOne.addBlockingTarget(0);
 
@@ -91,7 +91,7 @@ class ExperimentOneTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Experiment One");
         Permanent survivor = findPermanent(player1, "Experiment One");
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isZero();
     }
 
     @Test
@@ -164,9 +164,9 @@ class ExperimentOneTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(experimentOne.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(experimentOne.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(experimentOne.getId())).isZero();
         harness.passBothPriorities();
-        assertThat(experimentOne.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(experimentOne.getId())).isEqualTo(1);
     }
 
     @Test
@@ -188,7 +188,7 @@ class ExperimentOneTest extends BaseCardTest {
         assertThat(experimentOne.isBlocking()).isFalse();
         assertThat(experimentOne.getBlockingTargets()).isEmpty();
         assertThat(experimentOne.getMarkedDamage()).isZero();
-        assertThat(experimentOne.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(experimentOne.getId())).isZero();
     }
 
     @Test

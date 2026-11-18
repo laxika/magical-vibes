@@ -128,7 +128,7 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent skithiryx = findPermanent(player1, "Skithiryx, the Blight Dragon");
-        assertThat(skithiryx.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skithiryx.getId())).isEqualTo(1);
     }
 
     @Test
@@ -143,7 +143,7 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(skithiryx.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skithiryx.getId())).isEqualTo(1);
     }
 
     @Test
@@ -189,7 +189,7 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Skithiryx, the Blight Dragon");
-        assertThat(skithiryx.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skithiryx.getId())).isZero();
         assertThat(skithiryx.isTapped()).isTrue();
         assertThat(skithiryx.isBlocking()).isFalse();
         assertThat(skithiryx.getMarkedDamage()).isZero();
@@ -288,12 +288,12 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(skithiryx.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(skithiryx.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skithiryx.getId())).isEqualTo(1);
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(skithiryx.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(skithiryx.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skithiryx.getId())).isZero();
     }
 
 }

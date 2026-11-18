@@ -156,7 +156,7 @@ class IvoryCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 2, targetId);
             harness.passBothPriorities();
 
-            assertThat(findPermanent(player1, "Iron Tusk Elephant").getDamagePreventionShield()).isEqualTo(1);
+            assertThat(gd.permanentDamagePreventionShield(findPermanent(player1, "Iron Tusk Elephant").getId())).isEqualTo(1);
         }
 
         @Test

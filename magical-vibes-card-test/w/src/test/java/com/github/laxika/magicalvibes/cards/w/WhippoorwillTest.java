@@ -33,8 +33,8 @@ class WhippoorwillTest extends BaseCardTest {
     void marksTargetForDamageAndRegenerationRestrictions() {
         addCreatureReady(player1, new Whippoorwill());
         Permanent target = addCreatureReady(player2, new DrudgeSkeletons());
-        target.setDamagePreventionShield(5);
-        target.setRegenerationShield(1);
+        gd.addPermanentDamagePreventionShield(target.getId(), 5);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -49,7 +49,7 @@ class WhippoorwillTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getName().equals("Drudge Skeletons"));
-        assertThat(target.getDamagePreventionShield()).isEqualTo(5);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(5);
     }
 
     @Test

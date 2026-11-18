@@ -104,7 +104,7 @@ class SeedlingCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, lionId);
             harness.passBothPriorities();
 
-            assertThat(gqs.findPermanentById(gd, lionId).getRegenerationShield()).isEqualTo(1);
+            assertThat(gd.regenerationShieldCount(gqs.findPermanentById(gd, lionId).getId())).isEqualTo(1);
         }
 
         @Test
@@ -116,7 +116,7 @@ class SeedlingCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, lion.getId());
             harness.passBothPriorities();
 
-            assertThat(lion.getRegenerationShield()).isEqualTo(1);
+            assertThat(gd.regenerationShieldCount(lion.getId())).isEqualTo(1);
             assertThat(lion.isTapped()).isFalse();
         }
 
@@ -127,13 +127,13 @@ class SeedlingCharmTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.GREEN, 1);
             harness.castInstant(player1, 0, 1, lion.getId());
             harness.passBothPriorities();
-            assertThat(lion.getRegenerationShield()).isEqualTo(1);
+            assertThat(gd.regenerationShieldCount(lion.getId())).isEqualTo(1);
 
             harness.forceStep(TurnStep.END_STEP);
             harness.clearPriorityPassed();
             harness.passBothPriorities();
 
-            assertThat(lion.getRegenerationShield()).isZero();
+            assertThat(gd.regenerationShieldCount(lion.getId())).isZero();
         }
 
         @Test
@@ -150,7 +150,7 @@ class SeedlingCharmTest extends BaseCardTest {
             harness.runStateBasedActions();
 
             assertThat(gd.playerBattlefields.get(player1.getId())).contains(lion);
-            assertThat(lion.getRegenerationShield()).isZero();
+            assertThat(gd.regenerationShieldCount(lion.getId())).isZero();
             assertThat(lion.getMarkedDamage()).isZero();
             assertThat(lion.isTapped()).isTrue();
         }

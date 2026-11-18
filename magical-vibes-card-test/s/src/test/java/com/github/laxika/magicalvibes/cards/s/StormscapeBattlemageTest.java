@@ -52,7 +52,7 @@ class StormscapeBattlemageTest extends BaseCardTest {
     @DisplayName("Black kicker destroys a target nonblack creature without regeneration")
     void blackKicker() {
         Permanent target = addTarget(new AuroraGriffin());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setHand(player1, List.of(new StormscapeBattlemage()));
         addMana(4, ManaColor.BLUE, ManaColor.BLACK);
 

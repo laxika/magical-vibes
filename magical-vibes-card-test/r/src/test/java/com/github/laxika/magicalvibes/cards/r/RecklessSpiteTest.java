@@ -153,7 +153,7 @@ class RecklessSpiteTest extends BaseCardTest {
     void allowsRegeneration() {
         Permanent regeneratingCreature = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
         Permanent destroyedCreature = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
-        regeneratingCreature.setRegenerationShield(1);
+        gd.addRegenerationShields(regeneratingCreature.getId(), 1);
         prepareCast();
 
         harness.castAndResolveInstant(player1, 0,
@@ -187,8 +187,8 @@ class RecklessSpiteTest extends BaseCardTest {
     void losesLifeWhenNeitherTargetIsDestroyed() {
         Permanent firstCreature = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
         Permanent secondCreature = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
-        firstCreature.setRegenerationShield(1);
-        secondCreature.setRegenerationShield(1);
+        gd.addRegenerationShields(firstCreature.getId(), 1);
+        gd.addRegenerationShields(secondCreature.getId(), 1);
         prepareCast();
 
         harness.castAndResolveInstant(player1, 0,

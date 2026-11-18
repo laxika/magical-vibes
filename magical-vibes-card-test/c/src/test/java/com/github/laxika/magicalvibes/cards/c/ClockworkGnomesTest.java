@@ -27,7 +27,7 @@ class ClockworkGnomesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, thopter.getId());
         harness.passBothPriorities();
 
-        assertThat(thopter.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(thopter.getId())).isEqualTo(1);
     }
 
     @Test
@@ -39,7 +39,7 @@ class ClockworkGnomesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, thopter.getId());
         harness.passBothPriorities();
 
-        assertThat(thopter.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(thopter.getId())).isEqualTo(1);
     }
 
     @Test
@@ -61,7 +61,7 @@ class ClockworkGnomesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, gnomes.getId());
         harness.passBothPriorities();
 
-        assertThat(gnomes.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gnomes.getId())).isEqualTo(1);
     }
 
     @Test
@@ -98,7 +98,7 @@ class ClockworkGnomesTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Roterothopter");
         assertThat(thopter.isTapped()).isTrue();
-        assertThat(thopter.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(thopter.getId())).isZero();
         assertThat(thopter.getMarkedDamage()).isZero();
     }
 
@@ -134,7 +134,7 @@ class ClockworkGnomesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(thopter.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(thopter.getId())).isZero();
     }
 
     @Test
@@ -175,11 +175,11 @@ class ClockworkGnomesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, thopter.getId());
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
-        assertThat(thopter.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(thopter.getId())).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(thopter.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(thopter.getId())).isEqualTo(1);
         assertThat(thopter.isTapped()).isFalse();
     }
 
@@ -194,7 +194,7 @@ class ClockworkGnomesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Clockwork Gnomes");
-        assertThat(thopter.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(thopter.getId())).isEqualTo(1);
     }
 
     private Permanent setupGnomes() {

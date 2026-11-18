@@ -66,12 +66,12 @@ class ShreddersTechniqueTest extends BaseCardTest {
     @Test
     void regeneratedEnchantmentDoesNotCauseLifeLoss() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new VernalEquinox());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castNormally(target.getId());
 
         harness.assertOnBattlefield(player2, "Vernal Equinox");
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(target.isTapped()).isTrue();
         harness.assertLife(player1, 20);
     }

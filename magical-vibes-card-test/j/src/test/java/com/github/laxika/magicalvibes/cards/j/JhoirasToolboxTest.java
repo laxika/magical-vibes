@@ -26,7 +26,7 @@ class JhoirasToolboxTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -47,7 +47,7 @@ class JhoirasToolboxTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Ticking Gnomes");
         harness.assertNotInGraveyard(player2, "Ticking Gnomes");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         harness.assertLife(player2, 17);
     }
 
@@ -82,7 +82,7 @@ class JhoirasToolboxTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, toolbox.getId());
         harness.passBothPriorities();
 
-        assertThat(toolbox.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(toolbox.getId())).isEqualTo(1);
         assertThat(toolbox.isTapped()).isTrue();
     }
 
@@ -96,7 +96,7 @@ class JhoirasToolboxTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, toolbox.getId());
         harness.passBothPriorities();
 
-        assertThat(toolbox.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(toolbox.getId())).isEqualTo(2);
         assertThat(toolbox.isTapped()).isFalse();
         assertThat(toolbox.getTimesRegeneratedThisTurn()).isZero();
     }
@@ -115,8 +115,8 @@ class JhoirasToolboxTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Ticking Gnomes");
         harness.assertNotOnBattlefield(player2, "Ticking Gnomes");
         harness.assertLife(player1, 19);
-        assertThat(target.getRegenerationShield()).isZero();
-        assertThat(toolbox.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
+        assertThat(gd.regenerationShieldCount(toolbox.getId())).isZero();
     }
 
     @Test
@@ -134,6 +134,6 @@ class JhoirasToolboxTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Jhoira's Toolbox");
         harness.assertNotOnBattlefield(player1, "Jhoira's Toolbox");
         harness.assertOnBattlefield(player1, "Ticking Gnomes");
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 }

@@ -258,7 +258,7 @@ class HuatliWarriorPoetTest extends BaseCardTest {
     void minusXPreventedDamageDoesNotPreventBlocking() {
         addReadyHuatli(player1);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new IxallisKeeper());
-        creature.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(creature.getId(), 1);
         harness.activateAbilityWithDamageAssignments(player1, 0, 2, 1, Map.of(creature.getId(), 1));
         harness.passBothPriorities();
         assertThat(creature.getMarkedDamage()).isZero();

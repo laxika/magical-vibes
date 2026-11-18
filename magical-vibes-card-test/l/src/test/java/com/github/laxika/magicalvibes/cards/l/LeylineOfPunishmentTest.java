@@ -184,7 +184,7 @@ class LeylineOfPunishmentTest {
         // Add a creature and give it a prevention shield
         var permanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         var permanentId = permanent.getId();
-        permanent.setDamagePreventionShield(5);
+        gd.addPermanentDamagePreventionShield(permanent.getId(), 5);
 
         // Shock the creature
         harness.setHand(player1, List.of(new Shock()));

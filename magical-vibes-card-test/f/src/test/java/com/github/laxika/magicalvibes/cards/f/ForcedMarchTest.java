@@ -75,7 +75,7 @@ class ForcedMarchTest extends BaseCardTest {
     @DisplayName("Allows matching creatures to regenerate")
     void allowsMatchingCreaturesToRegenerate() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
 
         castForcedMarch(2);
 

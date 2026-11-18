@@ -70,7 +70,7 @@ class ChildOfGaeaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(child.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(child.getId())).isEqualTo(1);
     }
 
     @Test
@@ -92,7 +92,7 @@ class ChildOfGaeaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(child.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(child.getId())).isEqualTo(1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -118,7 +118,7 @@ class ChildOfGaeaTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(child);
         assertThat(child.isTapped()).isTrue();
-        assertThat(child.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(child.getId())).isZero();
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(attacker.getCard());
         harness.assertLife(player1, 20);
     }

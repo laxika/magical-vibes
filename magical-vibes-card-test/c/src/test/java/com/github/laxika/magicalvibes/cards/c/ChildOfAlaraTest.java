@@ -88,7 +88,7 @@ class ChildOfAlaraTest extends BaseCardTest {
     void cannotRegenerateOtherPermanents() {
         harness.addToBattlefield(player1, new ChildOfAlara());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new BeaconBehemoth());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
         Permanent blocker = setupCombatWhereChildDies();
 
         harness.passBothPriorities();

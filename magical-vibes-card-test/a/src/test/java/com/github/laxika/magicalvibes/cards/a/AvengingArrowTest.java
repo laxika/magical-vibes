@@ -78,7 +78,7 @@ class AvengingArrowTest extends BaseCardTest {
     @DisplayName("A regeneration shield saves the creature — destruction is not regeneration-proof")
     void regenerationShieldSavesTheCreature() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
         gd.recordDamageDealtBySource(bears.getId(), 2);
 
         castArrow(bears);

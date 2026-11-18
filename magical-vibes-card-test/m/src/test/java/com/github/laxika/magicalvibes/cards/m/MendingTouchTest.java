@@ -31,7 +31,7 @@ class MendingTouchTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
     }
 
     @Test
@@ -60,7 +60,7 @@ class MendingTouchTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Kraul Warrior");
         Permanent survivor = findPermanent(player1, "Kraul Warrior");
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isEqualTo(0);
         assertThat(survivor.getMarkedDamage()).isZero();
         assertThat(survivor.isBlocking()).isFalse();
         assertThat(survivor.getBlockingTargets()).isEmpty();
@@ -77,7 +77,7 @@ class MendingTouchTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
     }
 
     @Test
@@ -106,7 +106,7 @@ class MendingTouchTest extends BaseCardTest {
 
         assertThat(warrior.isTapped()).isFalse();
         assertThat(warrior.getMarkedDamage()).isEqualTo(1);
-        assertThat(warrior.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(warrior.getId())).isEqualTo(1);
     }
 
     @Test
@@ -118,18 +118,18 @@ class MendingTouchTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, warrior.getId());
         harness.castAndResolveInstant(player1, 0, warrior.getId());
-        assertThat(warrior.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(warrior.getId())).isEqualTo(2);
 
         warrior.setMarkedDamage(2);
         harness.runStateBasedActions();
         harness.assertOnBattlefield(player1, "Kraul Warrior");
-        assertThat(warrior.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(warrior.getId())).isEqualTo(1);
         assertThat(warrior.getMarkedDamage()).isZero();
 
         warrior.setMarkedDamage(2);
         harness.runStateBasedActions();
         harness.assertOnBattlefield(player1, "Kraul Warrior");
-        assertThat(warrior.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(warrior.getId())).isZero();
         assertThat(warrior.getMarkedDamage()).isZero();
 
         warrior.setMarkedDamage(2);

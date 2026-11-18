@@ -64,7 +64,7 @@ class RetributionOfTheMeekTest extends BaseCardTest {
     @DisplayName("Destroyed creatures can't be regenerated")
     void cannotBeRegenerated() {
         Permanent elemental = harness.addToBattlefieldAndReturn(player2, new Archangel());
-        elemental.setRegenerationShield(1);
+        gd.addRegenerationShields(elemental.getId(), 1);
 
         harness.setHand(player1, List.of(new RetributionOfTheMeek()));
         harness.addMana(player1, ManaColor.WHITE, 3);

@@ -82,7 +82,7 @@ class DefibrillatingCurrentTest extends BaseCardTest {
     @DisplayName("Gain 2 life even when all 4 damage is prevented")
     void gainsLifeWhenDamageIsPrevented() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BalothGorger());
-        target.setDamagePreventionShield(4);
+        gd.addPermanentDamagePreventionShield(target.getId(), 4);
         harness.setHand(player1, List.of(new DefibrillatingCurrent()));
         harness.setLife(player1, 20);
         addDefibrillatingCurrentMana();
@@ -91,7 +91,7 @@ class DefibrillatingCurrentTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Baloth Gorger");
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         harness.assertLife(player1, 22);
         harness.assertLife(player2, 20);
     }

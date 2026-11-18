@@ -106,12 +106,12 @@ class BearerOfTheHeavensTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntil(TurnStep.END_STEP);
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
         harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();

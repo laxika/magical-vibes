@@ -65,7 +65,7 @@ class EyeOfSingularityTest extends BaseCardTest {
     @DisplayName("ETB destruction can't be regenerated")
     void etbDestructionCannotBeRegenerated() {
         Permanent shielded = addCreatureReady(player1, new RiverBoa());
-        shielded.setRegenerationShield(1);
+        gd.addRegenerationShields(shielded.getId(), 1);
         harness.addToBattlefield(player2, new RiverBoa());
 
         harness.castFromHand(player1, new EyeOfSingularity(), "{3}{W}");
@@ -82,7 +82,7 @@ class EyeOfSingularityTest extends BaseCardTest {
     void enteringDestroysOthersWithSameName() {
         harness.addToBattlefield(player1, new EyeOfSingularity());
         Permanent shielded = addCreatureReady(player2, new RiverBoa());
-        shielded.setRegenerationShield(1);
+        gd.addRegenerationShields(shielded.getId(), 1);
         harness.addToBattlefield(player2, new RiverBoa());
 
         harness.castFromHand(player1, new RiverBoa(), "{1}{G}");

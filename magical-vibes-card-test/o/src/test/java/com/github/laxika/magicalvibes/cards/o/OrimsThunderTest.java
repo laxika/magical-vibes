@@ -171,7 +171,7 @@ class OrimsThunderTest extends BaseCardTest {
     void kickedDealsDamageEvenWhenArtifactRegenerates() {
         harness.addToBattlefield(player2, new Dodecapod());
         harness.addToBattlefield(player2, new PenumbraWurm());
-        findPermanent(player2, "Dodecapod").setRegenerationShield(1);
+        gd.addRegenerationShields(findPermanent(player2, "Dodecapod").getId(), 1);
         harness.setHand(player1, List.of(new OrimsThunder()));
         addOrimsThunderMana();
 
@@ -182,7 +182,7 @@ class OrimsThunderTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Dodecapod");
         assertThat(findPermanent(player2, "Dodecapod").isTapped()).isTrue();
-        assertThat(findPermanent(player2, "Dodecapod").getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(findPermanent(player2, "Dodecapod").getId())).isZero();
         assertThat(findPermanent(player2, "Penumbra Wurm").getMarkedDamage()).isEqualTo(4);
     }
 

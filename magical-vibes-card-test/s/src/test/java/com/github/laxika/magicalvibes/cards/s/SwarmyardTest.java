@@ -42,7 +42,7 @@ class SwarmyardTest extends BaseCardTest {
 
         activateRegeneration(0, spider.getId());
 
-        assertThat(spider.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(spider.getId())).isEqualTo(1);
     }
 
     @Test
@@ -56,8 +56,8 @@ class SwarmyardTest extends BaseCardTest {
         activateRegeneration(0, rat.getId());
         activateRegeneration(1, squirrel.getId());
 
-        assertThat(rat.getRegenerationShield()).isEqualTo(1);
-        assertThat(squirrel.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(rat.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(squirrel.getId())).isEqualTo(1);
     }
 
     @Test
@@ -81,12 +81,12 @@ class SwarmyardTest extends BaseCardTest {
 
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.stack).hasSize(1);
-        assertThat(bees.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bees.getId())).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(bees.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bees.getId())).isEqualTo(1);
         assertThat(bees.isTapped()).isFalse();
     }
 
@@ -106,7 +106,7 @@ class SwarmyardTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Unyaro Bees");
         harness.assertNotInGraveyard(player2, "Unyaro Bees");
         assertThat(bees.isTapped()).isTrue();
-        assertThat(bees.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bees.getId())).isZero();
 
         harness.castInstant(player1, 0, bees.getId());
         harness.passBothPriorities();
@@ -147,7 +147,7 @@ class SwarmyardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Unyaro Bees");
-        assertThat(bees.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bees.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

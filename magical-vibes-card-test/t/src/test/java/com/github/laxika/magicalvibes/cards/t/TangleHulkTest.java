@@ -34,7 +34,7 @@ class TangleHulkTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(hulk.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(hulk.getId())).isEqualTo(1);
         assertThat(hulk.isTapped()).isTrue();
     }
 
@@ -94,7 +94,7 @@ class TangleHulkTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         Permanent hulk = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(hulk.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(hulk.getId())).isEqualTo(1);
     }
 
     @Test
@@ -141,7 +141,7 @@ class TangleHulkTest extends BaseCardTest {
         // Tangle Hulk (5/3) with regen shield blocks Ogre Resister (4/3)
         // Ogre Resister deals 4 damage >= 3 toughness - lethal, but regen saves
         Permanent hulkPerm = addTangleHulkReady(player1);
-        hulkPerm.setRegenerationShield(1);
+        gd.addRegenerationShields(hulkPerm.getId(), 1);
         hulkPerm.setBlocking(true);
         hulkPerm.addBlockingTarget(0);
 
@@ -159,7 +159,7 @@ class TangleHulkTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Tangle Hulk");
         Permanent hulk = findPermanent(player1, "Tangle Hulk");
         assertThat(hulk.isTapped()).isTrue();
-        assertThat(hulk.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(hulk.getId())).isEqualTo(0);
         // Ogre Resister should also die (5 damage from Tangle Hulk >= 3 toughness)
         harness.assertNotOnBattlefield(player2, "Ogre Resister");
     }
@@ -192,7 +192,7 @@ class TangleHulkTest extends BaseCardTest {
     void regenerationSavesAttackingCreature() {
         // Tangle Hulk (5/3) with regen attacks, blocked by Ogre Resister (4/3)
         Permanent hulkPerm = addTangleHulkReady(player1);
-        hulkPerm.setRegenerationShield(1);
+        gd.addRegenerationShields(hulkPerm.getId(), 1);
         hulkPerm.setAttacking(true);
 
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new OgreResister());
@@ -211,7 +211,7 @@ class TangleHulkTest extends BaseCardTest {
         Permanent hulk = findPermanent(player1, "Tangle Hulk");
         assertThat(hulk.isTapped()).isTrue();
         assertThat(hulk.isAttacking()).isFalse();
-        assertThat(hulk.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(hulk.getId())).isEqualTo(0);
     }
 
     @Test
@@ -228,7 +228,7 @@ class TangleHulkTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Tangle Hulk");
         assertThat(hulk.getMarkedDamage()).isZero();
-        assertThat(hulk.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(hulk.getId())).isZero();
         assertThat(hulk.isTapped()).isTrue();
 
         hulk.setMarkedDamage(3);
@@ -249,17 +249,17 @@ class TangleHulkTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(hulk.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(hulk.getId())).isEqualTo(2);
         assertThat(hulk.isTapped()).isFalse();
 
         hulk.setMarkedDamage(3);
         harness.runStateBasedActions();
-        assertThat(hulk.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(hulk.getId())).isEqualTo(1);
 
         hulk.setMarkedDamage(3);
         harness.runStateBasedActions();
         harness.assertOnBattlefield(player1, "Tangle Hulk");
-        assertThat(hulk.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(hulk.getId())).isZero();
         assertThat(hulk.getMarkedDamage()).isZero();
     }
 

@@ -137,7 +137,7 @@ class TerrorTest extends BaseCardTest {
     @DisplayName("Terror ignores regeneration shield because it cannot be regenerated")
     void ignoresRegenerationShield() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         harness.setHand(player1, List.of(new Terror()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -223,7 +223,7 @@ class TerrorTest extends BaseCardTest {
         harness.castInstant(player1, 0, troll.getId());
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Troll Ascetic");
         harness.passBothPriorities();
 

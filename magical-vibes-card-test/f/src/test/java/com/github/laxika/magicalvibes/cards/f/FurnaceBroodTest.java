@@ -29,7 +29,7 @@ class FurnaceBroodTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
 
         troll.setMarkedDamage(1);
         harness.runStateBasedActions();
@@ -61,14 +61,14 @@ class FurnaceBroodTest extends BaseCardTest {
     void marksTargetCreature() {
         addCreatureReady(player1, new FurnaceBrood());
         Permanent troll = addCreatureReady(player2, new PygmyTroll());
-        troll.setRegenerationShield(1);
+        gd.addRegenerationShields(troll.getId(), 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, troll.getId());
         harness.passBothPriorities();
 
         assertThat(gd.cantBeRegenerated(troll.getId())).isTrue();
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 
     @Test
@@ -106,7 +106,7 @@ class FurnaceBroodTest extends BaseCardTest {
     void preventsRegenerationFromSavingCreature() {
         addCreatureReady(player1, new FurnaceBrood());
         Permanent troll = addCreatureReady(player2, new PygmyTroll());
-        troll.setRegenerationShield(1);
+        gd.addRegenerationShields(troll.getId(), 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, troll.getId());
@@ -117,6 +117,6 @@ class FurnaceBroodTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Pygmy Troll");
         harness.assertInGraveyard(player2, "Pygmy Troll");
-        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isEqualTo(1);
     }
 }

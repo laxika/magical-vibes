@@ -24,7 +24,7 @@ class PhyrexianMonitorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(monitor.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(monitor.getId())).isEqualTo(1);
     }
 
     @Test
@@ -62,14 +62,14 @@ class PhyrexianMonitorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(monitor.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(monitor.getId())).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Phyrexian Monitor from lethal combat damage")
     void regenerationSavesFromLethalCombat() {
         Permanent monitor = addCreatureReady(player1, new PhyrexianMonitor());
-        monitor.setRegenerationShield(1);
+        gd.addRegenerationShields(monitor.getId(), 1);
         monitor.setBlocking(true);
         monitor.addBlockingTarget(0);
 
@@ -80,14 +80,14 @@ class PhyrexianMonitorTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Phyrexian Monitor");
         assertThat(monitor.isTapped()).isTrue();
-        assertThat(monitor.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(monitor.getId())).isZero();
     }
 
     @Test
     @DisplayName("Regeneration shield is not spent by nonlethal combat damage")
     void nonlethalCombatDamageDoesNotSpendShield() {
         Permanent monitor = addCreatureReady(player1, new PhyrexianMonitor());
-        monitor.setRegenerationShield(1);
+        gd.addRegenerationShields(monitor.getId(), 1);
         monitor.setBlocking(true);
         monitor.addBlockingTarget(0);
 
@@ -97,7 +97,7 @@ class PhyrexianMonitorTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Phyrexian Monitor");
-        assertThat(monitor.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(monitor.getId())).isEqualTo(1);
     }
 
     @Test
@@ -126,10 +126,10 @@ class PhyrexianMonitorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(monitor.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(monitor.getId())).isZero();
         harness.passBothPriorities();
 
-        assertThat(monitor.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(monitor.getId())).isEqualTo(1);
         assertThat(monitor.isTapped()).isTrue();
     }
 
@@ -153,6 +153,6 @@ class PhyrexianMonitorTest extends BaseCardTest {
         assertThat(monitor.isTapped()).isTrue();
         assertThat(monitor.isBlocking()).isFalse();
         assertThat(monitor.getMarkedDamage()).isZero();
-        assertThat(monitor.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(monitor.getId())).isZero();
     }
 }

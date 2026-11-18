@@ -35,7 +35,7 @@ class PollenRemedyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gameData = harness.getGameData();
-        assertThat(spider.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(spider.getId())).isEqualTo(2);
         assertThat(gameData.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
 
@@ -51,7 +51,7 @@ class PollenRemedyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gameData = harness.getGameData();
-        assertThat(spider.getDamagePreventionShield()).isEqualTo(3);
+        assertThat(gd.permanentDamagePreventionShield(spider.getId())).isEqualTo(3);
         assertThat(gameData.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(3);
         assertThat(gameData.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(land.getId()));
@@ -118,7 +118,7 @@ class PollenRemedyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
-        assertThat(spider.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(spider.getId())).isZero();
         harness.assertInGraveyard(player1, "Pollen Remedy");
     }
 
@@ -135,7 +135,7 @@ class PollenRemedyTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, spider.getId());
 
         assertThat(spider.getMarkedDamage()).isEqualTo(1);
-        assertThat(spider.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(spider.getId())).isZero();
         assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
 
@@ -164,7 +164,7 @@ class PollenRemedyTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(spider.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(spider.getId())).isZero();
         assertThat(gd.playerDamagePreventionShields()).isEmpty();
     }
 

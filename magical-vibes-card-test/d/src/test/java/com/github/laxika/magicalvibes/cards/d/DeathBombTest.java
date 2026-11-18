@@ -51,7 +51,7 @@ class DeathBombTest extends BaseCardTest {
     void cannotBeRegenerated() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new AncientSpider());
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new AncientSpider());
-        victim.setRegenerationShield(1);
+        gd.addRegenerationShields(victim.getId(), 1);
 
         harness.setHand(player1, List.of(new DeathBomb()));
         giveMana();

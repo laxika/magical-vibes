@@ -71,7 +71,7 @@ class CreepingCorrosionTest extends BaseCardTest {
     void regenerationShieldsProtectArtifacts() {
         harness.addToBattlefield(player1, new Ornithopter());
         Permanent ornithopter = findPermanent(player1, "Ornithopter");
-        ornithopter.setRegenerationShield(1);
+        gd.addRegenerationShields(ornithopter.getId(), 1);
 
         harness.setHand(player2, List.of(new CreepingCorrosion()));
         harness.addMana(player2, ManaColor.GREEN, 4);

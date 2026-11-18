@@ -40,7 +40,7 @@ class HarshMercyTest extends BaseCardTest {
     void creaturesCannotBeRegenerated() {
         harness.addToBattlefield(player1, new DaruLancer());
         var goblin = harness.addToBattlefieldAndReturn(player1, new SkirkProspector());
-        goblin.setRegenerationShield(1);
+        gd.addRegenerationShields(goblin.getId(), 1);
         cast();
 
         harness.handleListChoice(player1, "HUMAN");

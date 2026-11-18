@@ -26,7 +26,7 @@ class FatalMutationTest extends BaseCardTest {
     void destroysEnchantedCreatureWhenTurnedFaceUp() {
         Permanent creature = addFaceDownCreature();
         attachFatalMutation(creature);
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
 
         gs.turnPermanentFaceUpWithoutPayingManaCost(gd, creature);
         harness.passBothPriorities();

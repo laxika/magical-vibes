@@ -66,7 +66,7 @@ class OrbitalPlungeTest extends BaseCardTest {
     @Test
     void fullyPreventedDamageDoesNotCreateLander() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setDamagePreventionShield(6);
+        gd.addPermanentDamagePreventionShield(target.getId(), 6);
 
         castOrbitalPlunge(target);
 
@@ -78,7 +78,7 @@ class OrbitalPlungeTest extends BaseCardTest {
     @Test
     void partiallyPreventedExactlyLethalDamageDoesNotCreateLander() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setDamagePreventionShield(4);
+        gd.addPermanentDamagePreventionShield(target.getId(), 4);
 
         castOrbitalPlunge(target);
 

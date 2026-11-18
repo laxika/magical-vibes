@@ -140,7 +140,7 @@ class AlabornZealotTest extends BaseCardTest {
     @DisplayName("Regenerating Alaborn Zealot does not save the blocked creature")
     void regeneratingZealotStillDestroysAttacker() {
         Permanent zealot = addZealotBlocker();
-        zealot.setRegenerationShield(1);
+        gd.addRegenerationShields(zealot.getId(), 1);
         Permanent attacker = addCreatureReady(player1, new AlabornTrooper());
         attacker.setAttacking(true);
 
@@ -151,7 +151,7 @@ class AlabornZealotTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Alaborn Zealot");
         harness.assertNotInGraveyard(player2, "Alaborn Zealot");
         assertThat(zealot.isTapped()).isTrue();
-        assertThat(zealot.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(zealot.getId())).isZero();
     }
 
     @Test
@@ -160,7 +160,7 @@ class AlabornZealotTest extends BaseCardTest {
         addZealotBlocker();
         Permanent attacker = addCreatureReady(player1, new AlabornTrooper());
         attacker.setAttacking(true);
-        attacker.setRegenerationShield(1);
+        gd.addRegenerationShields(attacker.getId(), 1);
 
         declareZealotBlock();
         resolveAllTriggers();
@@ -169,7 +169,7 @@ class AlabornZealotTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Alaborn Trooper");
         harness.assertInGraveyard(player2, "Alaborn Zealot");
         assertThat(attacker.isAttacking()).isFalse();
-        assertThat(attacker.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(attacker.getId())).isZero();
     }
 
     @Test

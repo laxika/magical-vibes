@@ -92,7 +92,7 @@ class ThrullRetainerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Thrull Retainer");
         harness.assertInGraveyard(player1, "Thrull Retainer");
     }
@@ -119,7 +119,7 @@ class ThrullRetainerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
     }
 
     @Test
@@ -141,7 +141,7 @@ class ThrullRetainerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(creature.getMarkedDamage()).isZero();
     }
 
@@ -176,7 +176,7 @@ class ThrullRetainerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Thrull Retainer");
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(creature.getMarkedDamage()).isZero();
         assertThat(creature.isTapped()).isTrue();
     }
@@ -195,13 +195,13 @@ class ThrullRetainerTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
 
         harness.assertInGraveyard(player1, "Thrull Retainer");
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
         assertThat(creature.isTapped()).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
         assertThat(creature.isTapped()).isFalse();
     }

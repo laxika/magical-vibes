@@ -46,7 +46,7 @@ class RestlessBonesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bones.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bones.getId())).isEqualTo(1);
     }
 
     @Test
@@ -68,7 +68,7 @@ class RestlessBonesTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Restless Bones");
         assertThat(bones.isTapped()).isTrue();
         assertThat(bones.isBlocking()).isFalse();
-        assertThat(bones.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bones.getId())).isZero();
     }
 
     @Test
@@ -107,7 +107,7 @@ class RestlessBonesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bones.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bones.getId())).isEqualTo(1);
         assertThat(bones.isTapped()).isTrue();
     }
 
@@ -124,7 +124,7 @@ class RestlessBonesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bones.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bones.getId())).isEqualTo(1);
         assertThat(bones.isTapped()).isFalse();
         assertThat(bones.isBlocking()).isTrue();
     }

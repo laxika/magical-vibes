@@ -28,14 +28,14 @@ class SamiteSanctuaryTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
 
         harness.setHand(player1, List.of(new RhysticLightning()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(target.getMarkedDamage()).isEqualTo(3);
     }
 
@@ -67,7 +67,7 @@ class SamiteSanctuaryTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, otherTarget.getId());
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(protectedTarget.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(protectedTarget.getId())).isEqualTo(1);
         assertThat(protectedTarget.getMarkedDamage()).isZero();
         assertThat(otherTarget.getMarkedDamage()).isEqualTo(4);
     }
@@ -85,11 +85,11 @@ class SamiteSanctuaryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test
@@ -103,12 +103,12 @@ class SamiteSanctuaryTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, target.getId());
         harness.activateAbility(player2, 0, null, target.getId());
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(5);
 
         resolveAllTriggers();
-        assertThat(target.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(2);
 
         harness.setHand(player2, List.of(new RhysticLightning(), new RhysticLightning()));
         harness.addMana(player2, ManaColor.RED, 3);
@@ -116,7 +116,7 @@ class SamiteSanctuaryTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
 
         harness.addMana(player2, ManaColor.RED, 3);
         harness.castAndResolveInstant(player2, 0, target.getId());
@@ -139,7 +139,7 @@ class SamiteSanctuaryTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isEqualTo(1);
     }

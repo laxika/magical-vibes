@@ -89,7 +89,7 @@ class RadiantsJudgmentTest extends BaseCardTest {
     @DisplayName("Allows the target to regenerate")
     void allowsRegeneration() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new YavimayaScion());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         harness.setHand(player1, List.of(new RadiantsJudgment()));
         harness.addMana(player1, ManaColor.WHITE, 1);

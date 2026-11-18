@@ -160,13 +160,13 @@ class StenchOfEvilTest extends BaseCardTest {
     @DisplayName("A regenerated Plains survives and does not cause a payment or damage")
     void regeneratedPlainsAreNotCounted() {
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new SnowCoveredPlains());
-        plains.setRegenerationShield(1);
+        gd.addRegenerationShields(plains.getId(), 1);
         harness.setLife(player2, 20);
         castStenchOfEvil();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(plains);
         assertThat(plains.isTapped()).isTrue();
-        assertThat(plains.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(plains.getId())).isZero();
         harness.assertLife(player2, 20);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

@@ -117,14 +117,14 @@ class NoxiousGearhulkTest extends BaseCardTest {
     void regeneratedTargetDoesNotGrantLife() {
         harness.setLife(player1, 20);
         Permanent target = addCreatureReady(player2, new EagerConstruct());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castAndAcceptMay(target.getId());
 
         harness.assertOnBattlefield(player2, "Eager Construct");
         harness.assertNotInGraveyard(player2, "Eager Construct");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         harness.assertLife(player1, 20);
     }
 

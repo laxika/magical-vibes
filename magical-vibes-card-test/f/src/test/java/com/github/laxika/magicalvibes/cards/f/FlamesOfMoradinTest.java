@@ -122,7 +122,7 @@ class FlamesOfMoradinTest extends BaseCardTest {
     @Test
     void doesNotConjureDuplicateOfRegeneratedArtifact() {
         Permanent regenerated = harness.addToBattlefieldAndReturn(player2, new SolRing());
-        regenerated.setRegenerationShield(1);
+        gd.addRegenerationShields(regenerated.getId(), 1);
         Permanent destroyed = harness.addToBattlefieldAndReturn(player2, new SolRing());
         harness.setHand(player1, List.of(new FlamesOfMoradin()));
         harness.addMana(player1, ManaColor.RED, 2);

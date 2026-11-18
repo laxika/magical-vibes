@@ -126,14 +126,14 @@ class SereneOfferingTest extends BaseCardTest {
     void gainsLifeWhenTargetRegenerates() {
         harness.setLife(player1, 10);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new LightOfDay());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         prepareSereneOffering();
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertOnBattlefield(player2, "Light of Day");
         harness.assertNotInGraveyard(player2, "Light of Day");
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         harness.assertLife(player1, 14);
         harness.assertLife(player2, 20);
     }

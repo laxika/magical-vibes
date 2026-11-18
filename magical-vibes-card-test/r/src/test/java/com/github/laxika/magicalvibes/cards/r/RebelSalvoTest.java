@@ -140,7 +140,7 @@ class RebelSalvoTest extends BaseCardTest {
     @Test
     void removesIndestructibleEvenWhenDamageIsPreventedAndRestoresItAfterCleanup() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DarksteelGargoyle());
-        target.setDamagePreventionShield(5);
+        gd.addPermanentDamagePreventionShield(target.getId(), 5);
         harness.setHand(player1, List.of(new RebelSalvo()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);

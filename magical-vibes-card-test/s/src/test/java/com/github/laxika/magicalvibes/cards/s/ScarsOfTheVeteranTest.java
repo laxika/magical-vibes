@@ -41,7 +41,7 @@ class ScarsOfTheVeteranTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gargoyle(player1).getDamageToCounterPreventionShield()).isEqualTo(7);
+        assertThat(gd.sacredBoonShield(gargoyle(player1).getId())).isEqualTo(7);
     }
 
     @Test
@@ -91,7 +91,7 @@ class ScarsOfTheVeteranTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent gargoyle = gargoyle(player1);
-        assertThat(gargoyle.getDamageToCounterPreventionShield()).isEqualTo(5);
+        assertThat(gd.sacredBoonShield(gargoyle.getId())).isEqualTo(5);
         assertThat(gargoyle.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isZero();
 
         advanceToEndStep(player1);
@@ -135,7 +135,7 @@ class ScarsOfTheVeteranTest extends BaseCardTest {
         harness.castInstantWithAlternateExileFromHand(player1, 0, targetId, 1);
         harness.passBothPriorities();
 
-        assertThat(gargoyle(player1).getDamageToCounterPreventionShield()).isEqualTo(7);
+        assertThat(gd.sacredBoonShield(gargoyle(player1).getId())).isEqualTo(7);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.exiledCards).hasSize(1);
         assertThat(gd.exiledCards.getFirst().card()).isInstanceOf(KjeldoranEscort.class);

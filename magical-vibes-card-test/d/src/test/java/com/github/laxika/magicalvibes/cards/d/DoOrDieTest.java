@@ -23,7 +23,7 @@ class DoOrDieTest extends BaseCardTest {
     void targetPlayerChoosesPileToDestroy() {
         Permanent kavu = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
         Permanent griffin = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
-        kavu.setRegenerationShield(1);
+        gd.addRegenerationShields(kavu.getId(), 1);
 
         castDoOrDie(player2.getId());
 

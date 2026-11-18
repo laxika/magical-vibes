@@ -34,7 +34,7 @@ class VolcanoHellionTest extends BaseCardTest {
     void damageCannotBePrevented() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraSphinx());
         gd.addPlayerDamagePreventionShield(player1.getId(), 10);
-        target.setDamagePreventionShield(10);
+        gd.addPermanentDamagePreventionShield(target.getId(), 10);
         castVolcanoHellion(target);
 
         harness.handleXValueChosen(player1, 3);

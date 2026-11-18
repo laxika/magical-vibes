@@ -189,7 +189,7 @@ class ZenithFlareTest extends BaseCardTest {
     @DisplayName("Preventing damage does not reduce Zenith Flare's life gain")
     void preventedDamageStillGainsFullLife() {
         var target = harness.addToBattlefieldAndReturn(player2, new HumbleNaturalist());
-        target.setDamagePreventionShield(2);
+        gd.addPermanentDamagePreventionShield(target.getId(), 2);
         harness.setGraveyard(player1, List.of(new GoForBlood(), new MemoryLeak()));
         harness.setHand(player1, List.of(new ZenithFlare()));
         addZenithFlareMana();

@@ -45,7 +45,7 @@ class VagrantPlowbeastsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, avatar.getId());
         harness.passBothPriorities();
 
-        assertThat(avatar.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(avatar.getId())).isEqualTo(1);
     }
 
     @Test
@@ -58,7 +58,7 @@ class VagrantPlowbeastsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentAvatar.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentAvatar.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(opponentAvatar.getId())).isEqualTo(1);
     }
 
     @Test
@@ -95,7 +95,7 @@ class VagrantPlowbeastsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, plowbeasts.getId());
         harness.passBothPriorities();
 
-        assertThat(plowbeasts.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(plowbeasts.getId())).isEqualTo(1);
     }
 
     @Test
@@ -108,7 +108,7 @@ class VagrantPlowbeastsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(plowbeasts.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(plowbeasts.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -123,7 +123,7 @@ class VagrantPlowbeastsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, plowbeasts.getId());
         harness.passBothPriorities();
 
-        assertThat(plowbeasts.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(plowbeasts.getId())).isEqualTo(2);
         assertThat(plowbeasts.isTapped()).isFalse();
     }
 
@@ -144,7 +144,7 @@ class VagrantPlowbeastsTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, plowbeasts.getId());
 
         harness.assertOnBattlefield(player1, "Vagrant Plowbeasts");
-        assertThat(plowbeasts.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(plowbeasts.getId())).isZero();
         assertThat(plowbeasts.isTapped()).isTrue();
         assertThat(plowbeasts.getMarkedDamage()).isZero();
 

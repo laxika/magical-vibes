@@ -42,7 +42,7 @@ class EiganjoCastleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, mirri.getId());
         harness.passBothPriorities();
 
-        assertThat(mirri.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(mirri.getId())).isEqualTo(2);
     }
 
     @Test
@@ -61,7 +61,7 @@ class EiganjoCastleTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, mirri.getId());
 
         assertThat(mirri.getMarkedDamage()).isEqualTo(1);
-        assertThat(mirri.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(mirri.getId())).isZero();
     }
 
     @Test
@@ -75,7 +75,7 @@ class EiganjoCastleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, mirri.getId());
         harness.passBothPriorities();
 
-        assertThat(mirri.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(mirri.getId())).isEqualTo(2);
     }
 
     @Test

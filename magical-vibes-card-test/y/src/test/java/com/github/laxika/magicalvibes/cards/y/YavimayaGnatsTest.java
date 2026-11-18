@@ -45,14 +45,14 @@ class YavimayaGnatsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent gnats = findPermanent(player1, "Yavimaya Gnats");
-        assertThat(gnats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gnats.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Yavimaya Gnats from lethal combat damage")
     void regenSavesFromLethalCombat() {
         Permanent perm = addCreatureReady(player1, new YavimayaGnats());
-        perm.setRegenerationShield(1);
+        gd.addRegenerationShields(perm.getId(), 1);
         perm.setBlocking(true);
         perm.addBlockingTarget(0);
 
@@ -65,7 +65,7 @@ class YavimayaGnatsTest extends BaseCardTest {
         Permanent gnats = findPermanent(player1, "Yavimaya Gnats");
         assertThat(gnats.isTapped()).isTrue();
         assertThat(gnats.isBlocking()).isFalse();
-        assertThat(gnats.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(gnats.getId())).isEqualTo(0);
     }
 
     @Test
@@ -97,7 +97,7 @@ class YavimayaGnatsTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         harness.passBothPriorities();
 
-        assertThat(gnats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gnats.getId())).isEqualTo(1);
         assertThat(gnats.isTapped()).isTrue();
     }
 
@@ -113,9 +113,9 @@ class YavimayaGnatsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gnats.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(gnats.getId())).isEqualTo(2);
         assertThat(gnats.isTapped()).isFalse();
-        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bears.getId())).isZero();
     }
 
     @Test
@@ -134,7 +134,7 @@ class YavimayaGnatsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Yavimaya Gnats");
         harness.assertNotInGraveyard(player1, "Yavimaya Gnats");
-        assertThat(gnats.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(gnats.getId())).isZero();
         assertThat(gnats.getMarkedDamage()).isZero();
         assertThat(gnats.isTapped()).isTrue();
         assertThat(gnats.isBlocking()).isFalse();
@@ -165,7 +165,7 @@ class YavimayaGnatsTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gnats.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(gnats.getId())).isZero();
         assertThat(gnats.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
@@ -184,7 +184,7 @@ class YavimayaGnatsTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         harness.assertOnBattlefield(player1, "Yavimaya Gnats");
-        assertThat(gnats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gnats.getId())).isEqualTo(1);
         assertThat(gnats.getMarkedDamage()).isZero();
         assertThat(gnats.isTapped()).isTrue();
 
@@ -192,7 +192,7 @@ class YavimayaGnatsTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         harness.assertOnBattlefield(player1, "Yavimaya Gnats");
-        assertThat(gnats.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(gnats.getId())).isZero();
         assertThat(gnats.getMarkedDamage()).isZero();
 
         gnats.setMarkedDamage(1);

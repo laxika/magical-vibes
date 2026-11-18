@@ -87,7 +87,7 @@ class KjeldoranDeadTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(findPermanent(player1, "Kjeldoran Dead").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Kjeldoran Dead").getId())).isEqualTo(1);
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Kjeldoran Dead");
@@ -105,7 +105,7 @@ class KjeldoranDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(perm.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(perm.getId())).isEqualTo(1);
         assertThat(perm.isTapped()).isTrue();
     }
 
@@ -120,7 +120,7 @@ class KjeldoranDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(perm.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(perm.getId())).isEqualTo(1);
     }
 
     @Test
@@ -159,7 +159,7 @@ class KjeldoranDeadTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Kjeldoran Dead from lethal combat damage")
     void regenerationSavesFromLethalCombat() {
         Permanent perm = addCreatureReady(player1, new KjeldoranDead());
-        perm.setRegenerationShield(1);
+        gd.addRegenerationShields(perm.getId(), 1);
         perm.setBlocking(true);
         perm.addBlockingTarget(0);
 
@@ -170,7 +170,7 @@ class KjeldoranDeadTest extends BaseCardTest {
 
         Permanent survivor = findPermanent(player1, "Kjeldoran Dead");
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isEqualTo(0);
     }
 
 }

@@ -36,14 +36,14 @@ class EronTheRelentlessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent eron = findPermanent(player1, "Eron the Relentless");
-        assertThat(eron.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(eron.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Eron from lethal combat damage")
     void regenSavesFromLethalCombat() {
         Permanent perm = addCreatureReady(player1, new EronTheRelentless());
-        perm.setRegenerationShield(1);
+        gd.addRegenerationShields(perm.getId(), 1);
         perm.setBlocking(true);
         perm.addBlockingTarget(0);
 
@@ -55,7 +55,7 @@ class EronTheRelentlessTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Eron the Relentless");
         Permanent eron = findPermanent(player1, "Eron the Relentless");
         assertThat(eron.isTapped()).isTrue();
-        assertThat(eron.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(eron.getId())).isEqualTo(0);
     }
 
     @Test
@@ -84,7 +84,7 @@ class EronTheRelentlessTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(eron.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(eron.getId())).isEqualTo(1);
         assertThat(eron.isTapped()).isTrue();
     }
 
@@ -97,12 +97,12 @@ class EronTheRelentlessTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(eron.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(eron.getId())).isZero();
         assertThat(eron.isTapped()).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(eron.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(eron.getId())).isEqualTo(1);
         assertThat(eron.isTapped()).isFalse();
         assertThat(eron.getMarkedDamage()).isEqualTo(1);
     }
@@ -118,7 +118,7 @@ class EronTheRelentlessTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(eron.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(eron.getId())).isEqualTo(2);
 
         eron.setBlocking(true);
         eron.addBlockingTarget(0);
@@ -129,7 +129,7 @@ class EronTheRelentlessTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Eron the Relentless");
         harness.assertNotInGraveyard(player1, "Eron the Relentless");
-        assertThat(eron.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(eron.getId())).isEqualTo(1);
         assertThat(eron.getMarkedDamage()).isZero();
         assertThat(eron.isTapped()).isTrue();
         assertThat(eron.isBlocking()).isFalse();

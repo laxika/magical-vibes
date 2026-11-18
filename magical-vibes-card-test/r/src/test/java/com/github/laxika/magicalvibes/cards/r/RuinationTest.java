@@ -81,7 +81,7 @@ class RuinationTest extends BaseCardTest {
     @DisplayName("Regeneration saves one nonbasic land without saving the others")
     void allowsRegeneration() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Taiga());
-        land.setRegenerationShield(1);
+        gd.addRegenerationShields(land.getId(), 1);
         harness.addToBattlefield(player1, new SavageLands());
 
         castRuinationAndResolve();
@@ -89,7 +89,7 @@ class RuinationTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Taiga");
         harness.assertNotInGraveyard(player2, "Taiga");
         assertThat(land.isTapped()).isTrue();
-        assertThat(land.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(land.getId())).isZero();
         harness.assertNotOnBattlefield(player1, "Savage Lands");
         harness.assertInGraveyard(player1, "Savage Lands");
     }

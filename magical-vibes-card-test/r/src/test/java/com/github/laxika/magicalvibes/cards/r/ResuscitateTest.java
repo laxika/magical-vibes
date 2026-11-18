@@ -30,8 +30,8 @@ class ResuscitateTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getRegenerationShield()).isEqualTo(1);
-        assertThat(opponentCreature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ownCreature.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(opponentCreature.getId())).isZero();
     }
 
     @Test
@@ -44,7 +44,7 @@ class ResuscitateTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
-        assertThat(ownCreature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ownCreature.getId())).isZero();
     }
 
     @Test
@@ -58,7 +58,7 @@ class ResuscitateTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(laterCreature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(laterCreature.getId())).isZero();
     }
 
     @Test
@@ -75,7 +75,7 @@ class ResuscitateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(ownCreature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ownCreature.getId())).isZero();
     }
 
     @Test
@@ -87,7 +87,7 @@ class ResuscitateTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(noncreature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(noncreature.getId())).isZero();
     }
 
     @Test
@@ -109,7 +109,7 @@ class ResuscitateTest extends BaseCardTest {
         assertThat(blocker.isTapped()).isTrue();
         assertThat(blocker.isBlocking()).isFalse();
         assertThat(blocker.getMarkedDamage()).isZero();
-        assertThat(blocker.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(blocker.getId())).isZero();
     }
 
     @Test
@@ -126,8 +126,8 @@ class ResuscitateTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getRegenerationShield()).isEqualTo(1);
-        assertThat(second.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(first.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(second.getId())).isEqualTo(1);
     }
 
     @Test
@@ -143,7 +143,7 @@ class ResuscitateTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(2);
         assertThat(creature.isTapped()).isTrue();
     }
 

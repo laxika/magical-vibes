@@ -65,7 +65,7 @@ class HealingLeavesTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, bears.getId());
             harness.passBothPriorities();
 
-            assertThat(bears.getDamagePreventionShield()).isEqualTo(3);
+            assertThat(gd.permanentDamagePreventionShield(bears.getId())).isEqualTo(3);
         }
 
         @Test
@@ -99,7 +99,7 @@ class HealingLeavesTest extends BaseCardTest {
             resolveCombat(player1);
 
             assertThat(blocker.getMarkedDamage()).isZero();
-            assertThat(blocker.getDamagePreventionShield()).isEqualTo(1);
+            assertThat(gd.permanentDamagePreventionShield(blocker.getId())).isEqualTo(1);
             assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
         }
 
@@ -140,7 +140,7 @@ class HealingLeavesTest extends BaseCardTest {
 
             assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
             assertThat(bears.getMarkedDamage()).isZero();
-            assertThat(bears.getDamagePreventionShield()).isZero();
+            assertThat(gd.permanentDamagePreventionShield(bears.getId())).isZero();
 
             harness.castSorcery(player1, 0, bears.getId());
             harness.passBothPriorities();

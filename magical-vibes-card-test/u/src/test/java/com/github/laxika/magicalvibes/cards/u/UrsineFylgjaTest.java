@@ -37,7 +37,7 @@ class UrsineFylgjaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.HEALING)).isEqualTo(3);
-        assertThat(creature.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -53,7 +53,7 @@ class UrsineFylgjaTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(creature.getMarkedDamage()).isEqualTo(2);
-        assertThat(creature.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isZero();
     }
 
     @Test
@@ -72,7 +72,7 @@ class UrsineFylgjaTest extends BaseCardTest {
 
         assertThat(creature.getCounterCount(CounterType.HEALING)).isEqualTo(2);
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
-        assertThat(creature.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isZero();
     }
 
     @Test
@@ -122,13 +122,13 @@ class UrsineFylgjaTest extends BaseCardTest {
 
         harness.activateAbility(player1, indexOf(creature), 0, null, null);
         harness.passBothPriorities();
-        assertThat(creature.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isZero();
     }
 
     @Test
@@ -140,11 +140,11 @@ class UrsineFylgjaTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(creature), 0, null, null);
 
         assertThat(creature.getCounterCount(CounterType.HEALING)).isEqualTo(3);
-        assertThat(creature.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(creature.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isEqualTo(1);
         assertThat(creature.isTapped()).isTrue();
     }
 
@@ -165,7 +165,7 @@ class UrsineFylgjaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.HEALING)).isZero();
-        assertThat(creature.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -182,7 +182,7 @@ class UrsineFylgjaTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player1.getId());
 
         harness.assertLife(player1, lifeBefore - 3);
-        assertThat(creature.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isEqualTo(1);
         assertThat(creature.getMarkedDamage()).isZero();
     }
 

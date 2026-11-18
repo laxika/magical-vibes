@@ -79,7 +79,7 @@ class MeriekeRiBeritTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player2, new BalduvianBears());
 
         activateSteal(merieke, bears);
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);

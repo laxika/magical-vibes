@@ -84,7 +84,7 @@ class BreakingPointTest extends BaseCardTest {
     @DisplayName("Creatures destroyed by the decline branch cannot be regenerated")
     void destructionCannotBeRegenerated() {
         var skeletons = harness.addToBattlefieldAndReturn(player2, new DrudgeSkeletons());
-        skeletons.setRegenerationShield(1);
+        gd.addRegenerationShields(skeletons.getId(), 1);
 
         castBreakingPoint();
         harness.handleMayAbilityChosen(player1, false);

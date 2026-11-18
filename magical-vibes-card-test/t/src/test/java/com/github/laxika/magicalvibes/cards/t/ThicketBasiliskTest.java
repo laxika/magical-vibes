@@ -196,12 +196,12 @@ class ThicketBasiliskTest extends BaseCardTest {
                 entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && entry.getCard().getName().equals("Thicket Basilisk"));
 
-        blocker.setRegenerationShield(1);
+        gd.addRegenerationShields(blocker.getId(), 1);
         harness.withAutoStop(TurnStep.END_OF_COMBAT, this::resolveAllTriggers);
 
         harness.assertOnBattlefield(player2, "Giant Spider");
         harness.assertNotInGraveyard(player2, "Giant Spider");
-        assertThat(blocker.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(blocker.getId())).isZero();
         assertThat(blocker.isTapped()).isTrue();
         assertThat(blocker.getMarkedDamage()).isZero();
     }

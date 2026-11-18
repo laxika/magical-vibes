@@ -100,7 +100,7 @@ class ExterminatorMagmarchTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(magmarch.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(magmarch.getId())).isEqualTo(1);
     }
 
     @Test
@@ -248,7 +248,7 @@ class ExterminatorMagmarchTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(magmarch);
         assertThat(magmarch.isTapped()).isTrue();
-        assertThat(magmarch.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(magmarch.getId())).isZero();
         harness.assertOnBattlefield(player1, "Beast");
     }
 

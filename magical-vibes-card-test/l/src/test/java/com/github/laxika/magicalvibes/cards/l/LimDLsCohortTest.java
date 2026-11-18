@@ -90,7 +90,7 @@ class LimDLsCohortTest extends BaseCardTest {
         Permanent cohort = addCreatureReady(player1, new LimDLsCohort());
         cohort.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new KjeldoranDead());
-        blocker.setRegenerationShield(1);
+        gd.addRegenerationShields(blocker.getId(), 1);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

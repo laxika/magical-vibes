@@ -37,7 +37,7 @@ class GrotagSiegeRunnerTest extends BaseCardTest {
     void dealsDamageWhenDestructionIsPrevented() {
         harness.addToBattlefield(player1, new GrotagSiegeRunner());
         Permanent wall = harness.addToBattlefieldAndReturn(player2, new OvergrownBattlement());
-        wall.setRegenerationShield(1);
+        gd.addRegenerationShields(wall.getId(), 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, wall.getId());

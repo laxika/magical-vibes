@@ -62,7 +62,7 @@ class NecriteTest extends BaseCardTest {
     @DisplayName("The destroyed creature can't be regenerated")
     void cannotBeRegenerated() {
         Permanent victim = addDefenderCreature();
-        victim.setRegenerationShield(1);
+        gd.addRegenerationShields(victim.getId(), 1);
         addAttacker();
 
         advanceToMayChoice(victim);

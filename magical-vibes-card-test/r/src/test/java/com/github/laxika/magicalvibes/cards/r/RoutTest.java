@@ -44,7 +44,7 @@ class RoutTest extends BaseCardTest {
     @DisplayName("Destroyed creatures can't be regenerated")
     void destroyedCreaturesCannotRegenerate() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
 
         harness.setHand(player1, List.of(new Rout()));
         harness.addMana(player1, ManaColor.WHITE, 2);

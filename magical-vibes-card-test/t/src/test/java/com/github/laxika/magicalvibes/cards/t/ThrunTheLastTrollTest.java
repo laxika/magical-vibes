@@ -137,14 +137,14 @@ class ThrunTheLastTrollTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent thrun = findPermanent(player1, "Thrun, the Last Troll");
-        assertThat(thrun.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(thrun.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Thrun from lethal combat damage")
     void regenSavesFromLethalCombat() {
         Permanent thrunPerm = addCreatureReady(player1, new ThrunTheLastTroll());
-        thrunPerm.setRegenerationShield(1);
+        gd.addRegenerationShields(thrunPerm.getId(), 1);
         thrunPerm.setBlocking(true);
         thrunPerm.addBlockingTarget(0);
 
@@ -156,7 +156,7 @@ class ThrunTheLastTrollTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Thrun, the Last Troll");
         Permanent thrun = findPermanent(player1, "Thrun, the Last Troll");
         assertThat(thrun.isTapped()).isTrue();
-        assertThat(thrun.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(thrun.getId())).isEqualTo(0);
     }
 
     @Test
@@ -187,7 +187,7 @@ class ThrunTheLastTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thrun.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(thrun.getId())).isEqualTo(1);
         assertThat(thrun.isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Thrun, the Last Troll");
     }
@@ -210,7 +210,7 @@ class ThrunTheLastTrollTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Thrun, the Last Troll");
         assertThat(thrun.isTapped()).isTrue();
-        assertThat(thrun.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(thrun.getId())).isZero();
 
         harness.castInstant(player1, 0, thrun.getId());
         harness.passBothPriorities();

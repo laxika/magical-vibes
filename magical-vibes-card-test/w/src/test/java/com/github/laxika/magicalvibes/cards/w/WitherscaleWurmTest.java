@@ -109,7 +109,7 @@ class WitherscaleWurmTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.WITHER)).isTrue();
 
-        attacker.setDamagePreventionShield(9);
+        gd.addPermanentDamagePreventionShield(attacker.getId(), 9);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.WITHER)).isFalse();

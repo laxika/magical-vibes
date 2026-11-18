@@ -28,7 +28,7 @@ class FanaticalDevotionTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -47,7 +47,7 @@ class FanaticalDevotionTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -89,7 +89,7 @@ class FanaticalDevotionTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Carrion Wall");
         assertThat(target.isTapped()).isTrue();
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 
     @Test
@@ -102,7 +102,7 @@ class FanaticalDevotionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.handlePermanentChosen(player1, fodder.getId());
         harness.passBothPriorities();
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
 

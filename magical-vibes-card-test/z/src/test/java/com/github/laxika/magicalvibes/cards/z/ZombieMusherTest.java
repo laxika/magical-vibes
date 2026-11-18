@@ -71,7 +71,7 @@ class ZombieMusherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(musher.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(musher.getId())).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
     }
 
@@ -110,7 +110,7 @@ class ZombieMusherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(musher.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(musher.getId())).isEqualTo(1);
         assertThat(musher.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
@@ -126,7 +126,7 @@ class ZombieMusherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(musher.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(musher.getId())).isEqualTo(2);
         assertThat(musher.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
     }
@@ -148,7 +148,7 @@ class ZombieMusherTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Zombie Musher");
         assertThat(musher.isTapped()).isTrue();
-        assertThat(musher.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(musher.getId())).isZero();
         assertThat(musher.getMarkedDamage()).isZero();
         assertThat(musher.isBlocking()).isFalse();
     }

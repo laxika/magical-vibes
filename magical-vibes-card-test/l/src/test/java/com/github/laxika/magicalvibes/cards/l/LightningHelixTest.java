@@ -71,7 +71,7 @@ class LightningHelixTest extends BaseCardTest {
     @Test
     void gainsFullLifeWhenAllDamageIsPrevented() {
         Permanent hierarch = harness.addToBattlefieldAndReturn(player2, new LoxodonHierarch());
-        hierarch.setDamagePreventionShield(3);
+        gd.addPermanentDamagePreventionShield(hierarch.getId(), 3);
         harness.setHand(player1, List.of(new LightningHelix()));
         addLightningHelixMana();
         harness.setLife(player1, 15);
@@ -79,7 +79,7 @@ class LightningHelixTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, hierarch.getId());
 
         assertThat(hierarch.getMarkedDamage()).isZero();
-        assertThat(hierarch.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(hierarch.getId())).isZero();
         harness.assertOnBattlefield(player2, "Loxodon Hierarch");
         harness.assertLife(player1, 18);
     }

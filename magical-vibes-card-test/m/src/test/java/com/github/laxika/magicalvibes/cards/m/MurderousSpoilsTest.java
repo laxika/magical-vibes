@@ -59,7 +59,7 @@ class MurderousSpoilsTest extends BaseCardTest {
     @DisplayName("The creature cannot be regenerated")
     void cannotBeRegenerated() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castMurderousSpoils(target);
         harness.passBothPriorities();

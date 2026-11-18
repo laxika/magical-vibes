@@ -134,4 +134,50 @@ class GameDataPermanentEffectTest {
         assertThat(gd.useAdaptOverride(creatureId)).isTrue();
         assertThat(gd.useAdaptOverride(creatureId)).isFalse();
     }
+
+    @Test
+    @DisplayName("A permanent's prevention shields are used oldest first, and a partly used one keeps its timestamp")
+    void permanentPreventionShieldsAreUsedOldestFirst() {
+        FloatingContinuousEffect older = gd.addPermanentDamagePreventionShield(creatureId, 2);
+        gd.addPermanentDamagePreventionShield(creatureId, 3);
+
+        assertThat(gd.usePermanentDamagePreventionShields(creatureId, false, 3)).isEqualTo(3);
+
+        assertThat(gd.permanentDamagePreventionShield(creatureId)).isEqualTo(2);
+        assertThat(gd.floatingEffectsOnPermanent(creatureId, DamagePreventionShield.class))
+                .singleElement()
+                .satisfies(left -> assertThat(left.timestamp()).isGreaterThan(older.timestamp()));
+        gd.addPermanentDamagePreventionShield("Test", null, null, creatureId, 4, false);
+        FloatingContinuousEffect partlyUsed = gd.floatingEffectsOnPermanent(creatureId, DamagePreventionShield.class)
+                .getFirst();
+        gd.usePermanentDamagePreventionShields(creatureId, false, 1);
+        assertThat(gd.floatingEffectsOnPermanent(creatureId, DamagePreventionShield.class).getFirst().timestamp())
+                .isEqualTo(partlyUsed.timestamp());
+    }
+
+    @Test
+    @DisplayName("A permanent's prevention shields are neither a player's nor the shared shield")
+    void permanentPreventionShieldsAreKeptApartFromPlayerShields() {
+        gd.addPermanentDamagePreventionShield(creatureId, 2);
+        gd.addPermanentDamagePreventionShield("Temper", null, null, creatureId, 5, true);
+
+        assertThat(gd.globalDamagePreventionShield()).isZero();
+        assertThat(gd.usePlayerDamagePreventionShields(null, false, 2)).isZero();
+        assertThat(gd.playerDamagePreventionShields()).isEmpty();
+        assertThat(gd.permanentDamagePreventionShield(creatureId)).isEqualTo(2);
+        assertThat(gd.permanentDamagePreventionShield(creatureId, true)).isEqualTo(5);
+        assertThat(gd.permanentDamagePreventionShield(otherCreatureId)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each regeneration shield is its own effect on the permanent, used up one at a time")
+    void regenerationShieldsAreUsedOneAtATime() {
+        gd.addRegenerationShields(creatureId, 2);
+
+        assertThat(gd.regenerationShieldCount(creatureId)).isEqualTo(2);
+        assertThat(gd.useOldestEffectOnPermanent(creatureId, RegenerationShield.class)).isTrue();
+        assertThat(gd.regenerationShieldCount(creatureId)).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(otherCreatureId)).isZero();
+        assertThat(gd.useOldestEffectOnPermanent(otherCreatureId, RegenerationShield.class)).isFalse();
+    }
 }

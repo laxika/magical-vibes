@@ -78,7 +78,7 @@ class WintersInterventionTest extends BaseCardTest {
     @Test
     void canTargetOwnCreatureAndGainsLifeWhenAllDamageIsPrevented() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        target.setDamagePreventionShield(2);
+        gd.addPermanentDamagePreventionShield(target.getId(), 2);
         harness.setHand(player1, List.of(new WintersIntervention()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.setLife(player1, 15);
@@ -87,7 +87,7 @@ class WintersInterventionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertLife(player1, 17);
     }

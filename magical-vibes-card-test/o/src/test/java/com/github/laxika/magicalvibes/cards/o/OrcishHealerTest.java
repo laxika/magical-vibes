@@ -57,7 +57,7 @@ class OrcishHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, gnats.getId());
         harness.passBothPriorities();
 
-        assertThat(gnats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gnats.getId())).isEqualTo(1);
         assertThat(gd.cantBeRegenerated(gnats.getId())).isTrue();
 
         gnats.setMarkedDamage(1);
@@ -78,7 +78,7 @@ class OrcishHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, specter.getId());
         harness.passBothPriorities();
 
-        assertThat(specter.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(specter.getId())).isEqualTo(1);
     }
 
     @Test
@@ -92,7 +92,7 @@ class OrcishHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, gnats.getId());
         harness.passBothPriorities();
 
-        assertThat(gnats.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gnats.getId())).isEqualTo(1);
     }
 
     @Test
@@ -140,7 +140,7 @@ class OrcishHealerTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Yavimaya Gnats");
         assertThat(gnats.isTapped()).isTrue();
         assertThat(gnats.getMarkedDamage()).isZero();
-        assertThat(gnats.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(gnats.getId())).isZero();
     }
 
     @Test
@@ -155,7 +155,7 @@ class OrcishHealerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(healer.isTapped()).isTrue();
-        assertThat(specter.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(specter.getId())).isEqualTo(1);
         assertThat(specter.isTapped()).isFalse();
     }
 

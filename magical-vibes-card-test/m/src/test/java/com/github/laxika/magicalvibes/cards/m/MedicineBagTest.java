@@ -48,7 +48,7 @@ class MedicineBagTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Raging Goblin");
     }
@@ -96,7 +96,7 @@ class MedicineBagTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Raging Goblin");
         assertThat(target.getMarkedDamage()).isZero();
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 
     @Test
@@ -111,7 +111,7 @@ class MedicineBagTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         assertThat(target.isTapped()).isFalse();
         harness.assertInGraveyard(player1, "Spellbook");
     }
@@ -159,7 +159,7 @@ class MedicineBagTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Raging Goblin");
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(bag.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
         harness.assertInGraveyard(player1, "Spellbook");

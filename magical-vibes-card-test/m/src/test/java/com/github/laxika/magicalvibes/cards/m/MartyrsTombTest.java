@@ -27,7 +27,7 @@ class MartyrsTombTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
 
         harness.addMana(player2, ManaColor.RED, 1);
         int sourceIndex = gd.playerBattlefields.get(player2.getId()).indexOf(damageSource);
@@ -35,7 +35,7 @@ class MartyrsTombTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test
@@ -47,12 +47,12 @@ class MartyrsTombTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test
@@ -74,11 +74,11 @@ class MartyrsTombTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
 
         harness.assertLife(player1, 18);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -102,7 +102,7 @@ class MartyrsTombTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         harness.assertOnBattlefield(player1, "Goblin Legionnaire");
 
         harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(secondSource),
@@ -125,7 +125,7 @@ class MartyrsTombTest extends BaseCardTest {
 
         harness.assertLife(player1, 1);
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test

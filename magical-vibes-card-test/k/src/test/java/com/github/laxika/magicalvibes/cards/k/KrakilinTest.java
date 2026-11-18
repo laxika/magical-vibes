@@ -57,14 +57,14 @@ class KrakilinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent krakilin = findPermanent(player1, "Krakilin");
-        assertThat(krakilin.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(krakilin.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Krakilin from lethal combat damage")
     void regenSavesFromLethalCombat() {
         Permanent krakilin = addKrakilinReady(player1, 2);
-        krakilin.setRegenerationShield(1);
+        gd.addRegenerationShields(krakilin.getId(), 1);
         krakilin.setBlocking(true);
         krakilin.addBlockingTarget(0);
 
@@ -76,7 +76,7 @@ class KrakilinTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Krakilin");
         Permanent survivor = findPermanent(player1, "Krakilin");
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isEqualTo(0);
     }
 
     @Test
@@ -107,7 +107,7 @@ class KrakilinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(krakilin.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(krakilin.getId())).isEqualTo(1);
         assertThat(krakilin.isTapped()).isTrue();
         assertThat(krakilin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
@@ -131,7 +131,7 @@ class KrakilinTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Krakilin");
         assertThat(krakilin.isTapped()).isTrue();
-        assertThat(krakilin.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(krakilin.getId())).isZero();
         assertThat(krakilin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(krakilin.isBlocking()).isFalse();
     }

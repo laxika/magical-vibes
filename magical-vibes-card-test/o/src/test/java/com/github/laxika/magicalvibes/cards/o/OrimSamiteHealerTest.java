@@ -92,7 +92,7 @@ class OrimSamiteHealerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
-        assertThat(blocker.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(blocker.getId())).isEqualTo(1);
     }
 
     @Test
@@ -127,7 +127,7 @@ class OrimSamiteHealerTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, orim.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(orim);
-        assertThat(orim.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(orim.getId())).isZero();
 
         harness.castAndResolveInstant(player2, 0, orim.getId());
 

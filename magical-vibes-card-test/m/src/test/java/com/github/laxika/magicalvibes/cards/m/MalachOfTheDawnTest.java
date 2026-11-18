@@ -23,7 +23,7 @@ class MalachOfTheDawnTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(malach.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(malach.getId())).isEqualTo(1);
     }
 
     @Test
@@ -37,14 +37,14 @@ class MalachOfTheDawnTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(malach.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(malach.getId())).isZero();
     }
 
     @Test
     @DisplayName("A regeneration shield saves Malach of the Dawn from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent malach = addCreatureReady(player1, new MalachOfTheDawn());
-        malach.setRegenerationShield(1);
+        gd.addRegenerationShields(malach.getId(), 1);
         malach.setBlocking(true);
         malach.addBlockingTarget(0);
 
@@ -58,7 +58,7 @@ class MalachOfTheDawnTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Malach of the Dawn");
         assertThat(malach.isTapped()).isTrue();
-        assertThat(malach.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(malach.getId())).isZero();
         assertThat(malach.getMarkedDamage()).isZero();
     }
 
@@ -73,7 +73,7 @@ class MalachOfTheDawnTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(malach.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(malach.getId())).isEqualTo(1);
         assertThat(malach.isTapped()).isTrue();
     }
 
@@ -88,7 +88,7 @@ class MalachOfTheDawnTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(malach.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(malach.getId())).isEqualTo(2);
         assertThat(malach.isTapped()).isFalse();
     }
 
@@ -111,7 +111,7 @@ class MalachOfTheDawnTest extends BaseCardTest {
         assertThat(malach.isTapped()).isTrue();
         assertThat(malach.isBlocking()).isFalse();
         assertThat(malach.getBlockingTargets()).isEmpty();
-        assertThat(malach.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(malach.getId())).isZero();
         assertThat(malach.getMarkedDamage()).isZero();
         assertThat(sphinx.getMarkedDamage()).isEqualTo(2);
     }

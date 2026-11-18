@@ -28,7 +28,7 @@ class RangerEnVecTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ranger.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ranger.getId())).isEqualTo(1);
         assertThat(ranger.isTapped()).isFalse();
     }
 
@@ -46,7 +46,7 @@ class RangerEnVecTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Ranger en-Vec from lethal combat damage")
     void regenSavesFromLethalCombat() {
         Permanent perm = addCreatureReady(player1, new RangerEnVec());
-        perm.setRegenerationShield(1);
+        gd.addRegenerationShields(perm.getId(), 1);
         perm.setBlocking(true);
         perm.addBlockingTarget(0);
 
@@ -58,7 +58,7 @@ class RangerEnVecTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Ranger en-Vec");
         Permanent ranger = findPermanent(player1, "Ranger en-Vec");
         assertThat(ranger.isTapped()).isTrue();
-        assertThat(ranger.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(ranger.getId())).isEqualTo(0);
     }
 
     @Test
@@ -102,11 +102,11 @@ class RangerEnVecTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(ranger.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ranger.getId())).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(ranger.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ranger.getId())).isEqualTo(1);
         assertThat(ranger.isTapped()).isTrue();
         assertThat(ranger.isSummoningSick()).isTrue();
     }
@@ -121,7 +121,7 @@ class RangerEnVecTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(ranger.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(ranger.getId())).isEqualTo(2);
         assertThat(ranger.isTapped()).isFalse();
     }
 
@@ -133,11 +133,11 @@ class RangerEnVecTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ranger.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(ranger.getId())).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(null, TurnStep.UPKEEP);
 
-        assertThat(ranger.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ranger.getId())).isZero();
         harness.assertOnBattlefield(player1, "Ranger en-Vec");
     }
 
@@ -162,7 +162,7 @@ class RangerEnVecTest extends BaseCardTest {
         assertThat(ranger.isBlocking()).isFalse();
         assertThat(ranger.getBlockingTargets()).isEmpty();
         assertThat(ranger.getMarkedDamage()).isZero();
-        assertThat(ranger.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(ranger.getId())).isZero();
     }
 
     @Test

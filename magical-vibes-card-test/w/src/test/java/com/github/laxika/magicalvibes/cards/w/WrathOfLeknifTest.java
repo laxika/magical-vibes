@@ -18,7 +18,7 @@ class WrathOfLeknifTest extends BaseCardTest {
     @Test
     void destroysAllCreaturesWithoutAllowingRegeneration() {
         Permanent player1Bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        player1Bears.setRegenerationShield(1);
+        gd.addRegenerationShields(player1Bears.getId(), 1);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         castWrath();

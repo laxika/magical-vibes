@@ -38,7 +38,7 @@ class RustedSlasherTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Spellbook");
 
         // Rusted Slasher should have a regeneration shield
-        assertThat(slasher.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(slasher.getId())).isEqualTo(1);
     }
 
     @Test
@@ -53,14 +53,14 @@ class RustedSlasherTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, spellbookId);
         harness.passBothPriorities();
 
-        assertThat(slasher.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(slasher.getId())).isEqualTo(1);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(slasher.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(slasher.getId())).isEqualTo(0);
     }
 
     @Test
@@ -126,7 +126,7 @@ class RustedSlasherTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, spellbookId);
         harness.passBothPriorities();
 
-        assertThat(slasher.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(slasher.getId())).isEqualTo(1);
 
         UUID scimitarId = findPermanent(player1, "Leonin Scimitar").getId();
 
@@ -135,7 +135,7 @@ class RustedSlasherTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, scimitarId);
         harness.passBothPriorities();
 
-        assertThat(slasher.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(slasher.getId())).isEqualTo(2);
 
         // Both other artifacts should be gone
         harness.assertNotOnBattlefield(player1, "Spellbook");
@@ -147,7 +147,7 @@ class RustedSlasherTest extends BaseCardTest {
     void regenerationSavesFromLethalCombatDamage() {
         // Rusted Slasher (4/1) with regen shield blocks Grizzly Bears (2/2)
         Permanent slasher = addReadySlasher(player1);
-        slasher.setRegenerationShield(1);
+        gd.addRegenerationShields(slasher.getId(), 1);
         slasher.setBlocking(true);
         slasher.addBlockingTarget(0);
 
@@ -165,7 +165,7 @@ class RustedSlasherTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Rusted Slasher");
         Permanent survivedSlasher = findPermanent(player1, "Rusted Slasher");
         assertThat(survivedSlasher.isTapped()).isTrue();
-        assertThat(survivedSlasher.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(survivedSlasher.getId())).isEqualTo(0);
     }
 
     @Test
@@ -224,12 +224,12 @@ class RustedSlasherTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Spellbook");
         assertThat(gd.stack).hasSize(1);
-        assertThat(slasher.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(slasher.getId())).isZero();
         assertThat(slasher.isTapped()).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(slasher.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(slasher.getId())).isEqualTo(1);
         assertThat(slasher.isTapped()).isFalse();
     }
 
@@ -270,7 +270,7 @@ class RustedSlasherTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Rusted Slasher");
         harness.assertInGraveyard(player2, "Grizzly Bears");
-        assertThat(slasher.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(slasher.getId())).isZero();
         assertThat(slasher.isTapped()).isTrue();
         assertThat(slasher.getMarkedDamage()).isZero();
         assertThat(slasher.isBlocking()).isFalse();

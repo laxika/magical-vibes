@@ -88,14 +88,14 @@ class RampageOfTheClansTest extends BaseCardTest {
     @DisplayName("A regenerated artifact creature survives and does not earn a Centaur")
     void regeneratedArtifactCreatureCreatesNoToken() {
         Permanent sphinx = harness.addToBattlefieldAndReturn(player2, new SphinxOfTheGuildpact());
-        sphinx.setRegenerationShield(1);
+        gd.addRegenerationShields(sphinx.getId(), 1);
         harness.addToBattlefield(player2, new GlassOfTheGuildpact());
 
         castRampageOfTheClans();
 
         harness.assertOnBattlefield(player2, "Sphinx of the Guildpact");
         assertThat(sphinx.isTapped()).isTrue();
-        assertThat(sphinx.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(sphinx.getId())).isZero();
         harness.assertInGraveyard(player2, "Glass of the Guildpact");
         assertThat(centaurs(player2)).hasSize(1).allSatisfy(this::assertCentaur);
     }

@@ -27,8 +27,8 @@ class PlagueSporesTest extends BaseCardTest {
     void destroysNonblackCreatureAndLandWithoutRegeneration() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        creature.setRegenerationShield(1);
-        land.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
+        gd.addRegenerationShields(land.getId(), 1);
         prepareCast();
 
         harness.castAndResolveSorcery(player1, 0, List.of(creature.getId(), land.getId()));
@@ -94,7 +94,7 @@ class PlagueSporesTest extends BaseCardTest {
     void destroysLandWhenCreatureTargetLeaves() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        land.setRegenerationShield(1);
+        gd.addRegenerationShields(land.getId(), 1);
         prepareCast();
         harness.castSorcery(player1, 0, List.of(creature.getId(), land.getId()));
 
@@ -114,7 +114,7 @@ class PlagueSporesTest extends BaseCardTest {
     void destroysCreatureWhenLandTargetLeaves() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
         prepareCast();
         harness.castSorcery(player1, 0, List.of(creature.getId(), land.getId()));
 
@@ -178,7 +178,7 @@ class PlagueSporesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        creatureLand.setRegenerationShield(1);
+        gd.addRegenerationShields(creatureLand.getId(), 1);
         prepareCast();
         harness.castSorcery(player1, 0, List.of(creatureLand.getId(), creatureLand.getId()));
 

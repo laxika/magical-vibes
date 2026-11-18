@@ -79,7 +79,7 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
                         delta.put(field, Boolean.TRUE);
                     }
                 }
-                case ADDITIVE, SHIELD -> delta.put(field, SaturatingMath.subtract(intValue(current), intValue(old)));
+                case ADDITIVE -> delta.put(field, SaturatingMath.subtract(intValue(current), intValue(old)));
                 case VALUE -> {
                     if (current != null && !Objects.equals(current, old)) {
                         delta.put(field, current);
@@ -113,7 +113,7 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
             }
             switch (field.kind()) {
                 case FLAG -> combined.put(field, Boolean.TRUE);
-                case ADDITIVE, SHIELD -> combined.put(field, SaturatingMath.add(intValue(mine), intValue(theirs)));
+                case ADDITIVE -> combined.put(field, SaturatingMath.add(intValue(mine), intValue(theirs)));
                 case VALUE -> combined.put(field, theirs);
                 case SET -> {
                     Set<Object> union = new HashSet<>(setValue(mine));
@@ -147,7 +147,6 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
                         capped.put(field, mine);
                     }
                 }
-                case SHIELD -> capped.put(field, Math.max(0, Math.min(intValue(mine), intValue(now))));
                 case SET -> {
                     Set<Object> kept = new HashSet<>(setValue(mine));
                     kept.retainAll(setValue(now));
@@ -199,7 +198,7 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
         }
         return switch (field.kind()) {
             case FLAG -> Boolean.TRUE.equals(value) ? Boolean.TRUE : null;
-            case ADDITIVE, SHIELD -> intValue(value) == 0 ? null : value;
+            case ADDITIVE -> intValue(value) == 0 ? null : value;
             case VALUE -> value instanceof Integer i && i == 0 ? null : value;
             case SET -> setValue(value).isEmpty() ? null : Set.copyOf(setValue(value));
             case LIST, IDENTITY_LIST -> listValue(value).isEmpty() ? null : List.copyOf(listValue(value));

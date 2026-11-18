@@ -82,12 +82,12 @@ class SoulOfEmancipationTest extends BaseCardTest {
     @Test
     void regeneratedTargetStillGivesItsControllerAnAngel() {
         Permanent other = harness.addToBattlefieldAndReturn(player2, new SoulOfEmancipation());
-        other.setRegenerationShield(1);
+        gd.addRegenerationShields(other.getId(), 1);
 
         castSoul(List.of(other.getId()));
 
         assertThat(findPermanents(player2, "Soul of Emancipation")).containsExactly(other);
-        assertThat(other.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(other.getId())).isZero();
         assertThat(other.isTapped()).isTrue();
         assertThat(findPermanents(player2, "Angel")).hasSize(1);
     }

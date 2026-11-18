@@ -91,7 +91,7 @@ class SporebackTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, charger.getId());
         harness.passBothPriorities();
 
-        assertThat(charger.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(charger.getId())).isEqualTo(1);
     }
 
     @Test
@@ -113,7 +113,7 @@ class SporebackTrollTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, charger.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(charger);
-        assertThat(charger.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(charger.getId())).isZero();
         assertThat(charger.isTapped()).isTrue();
     }
 
@@ -157,7 +157,7 @@ class SporebackTrollTest extends BaseCardTest {
         charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
         harness.passBothPriorities();
 
-        assertThat(charger.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(charger.getId())).isZero();
     }
 
     @Test
@@ -172,8 +172,8 @@ class SporebackTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, charger.getId());
         harness.passBothPriorities();
 
-        assertThat(troll.getRegenerationShield()).isZero();
-        assertThat(charger.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
+        assertThat(gd.regenerationShieldCount(charger.getId())).isEqualTo(1);
     }
 
     @Test
@@ -231,7 +231,7 @@ class SporebackTrollTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Sporeback Troll");
-        assertThat(charger.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(charger.getId())).isEqualTo(1);
     }
 
     private Permanent castTroll() {

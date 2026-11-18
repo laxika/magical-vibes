@@ -57,7 +57,7 @@ class MisfortunesGainTest extends BaseCardTest {
     @DisplayName("Its owner gains life even when the target creature regenerates")
     void ownerGainsLifeWhenCreatureRegenerates() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ForestBear());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setHand(player1, List.of(new MisfortunesGain()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -68,7 +68,7 @@ class MisfortunesGainTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Forest Bear");
         harness.assertNotInGraveyard(player2, "Forest Bear");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         harness.assertLife(player2, ownerLifeBefore + 4);
         harness.assertLife(player1, casterLifeBefore);
     }

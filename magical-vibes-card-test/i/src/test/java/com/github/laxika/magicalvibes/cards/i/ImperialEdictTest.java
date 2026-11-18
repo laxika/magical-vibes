@@ -89,7 +89,7 @@ class ImperialEdictTest extends BaseCardTest {
     @DisplayName("A creature with a regeneration shield survives")
     void regenerationShieldPreventsDestruction() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new ForestBear());
-        bear.setRegenerationShield(1);
+        gd.addRegenerationShields(bear.getId(), 1);
 
         harness.setHand(player1, List.of(new ImperialEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);

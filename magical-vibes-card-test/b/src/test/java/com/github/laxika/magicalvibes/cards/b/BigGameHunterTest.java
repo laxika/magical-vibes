@@ -23,7 +23,7 @@ class BigGameHunterTest extends BaseCardTest {
     @DisplayName("ETB destroys a target creature with power 4 or greater and prevents regeneration")
     void etbDestroysHighPowerCreatureWithoutRegeneration() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Groundbreaker());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         harness.setHand(player1, List.of(new BigGameHunter()));
         addBigGameHunterMana(player1);
 

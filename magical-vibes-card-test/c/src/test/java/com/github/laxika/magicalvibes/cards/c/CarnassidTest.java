@@ -28,7 +28,7 @@ class CarnassidTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(carnassid.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(carnassid.getId())).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -36,7 +36,7 @@ class CarnassidTest extends BaseCardTest {
     @DisplayName("A regeneration shield saves Carnassid from lethal combat damage")
     void regenerationShieldSavesFromLethalCombatDamage() {
         Permanent carnassid = addCreatureReady(player1, new Carnassid());
-        carnassid.setRegenerationShield(1);
+        gd.addRegenerationShields(carnassid.getId(), 1);
         Permanent attacker = addCreatureReady(player2, new SpinedWurm());
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
@@ -45,7 +45,7 @@ class CarnassidTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(carnassid);
         assertThat(carnassid.isTapped()).isTrue();
-        assertThat(carnassid.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(carnassid.getId())).isZero();
         assertThat(carnassid.getMarkedDamage()).isZero();
         assertThat(carnassid.isBlocking()).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
@@ -99,7 +99,7 @@ class CarnassidTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(carnassid.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(carnassid.getId())).isEqualTo(1);
         assertThat(carnassid.isTapped()).isTrue();
     }
 
@@ -114,7 +114,7 @@ class CarnassidTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(carnassid.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(carnassid.getId())).isEqualTo(2);
         assertThat(carnassid.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
@@ -135,7 +135,7 @@ class CarnassidTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(carnassid);
         assertThat(carnassid.isTapped()).isTrue();
-        assertThat(carnassid.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(carnassid.getId())).isZero();
         assertThat(carnassid.getMarkedDamage()).isZero();
         assertThat(carnassid.isBlocking()).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);

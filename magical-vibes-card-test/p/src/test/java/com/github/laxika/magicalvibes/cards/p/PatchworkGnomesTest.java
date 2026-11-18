@@ -85,14 +85,14 @@ class PatchworkGnomesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gnomes.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gnomes.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves Patchwork Gnomes from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent gnomes = addCreatureReady(player1, new PatchworkGnomes());
-        gnomes.setRegenerationShield(1);
+        gd.addRegenerationShields(gnomes.getId(), 1);
         gnomes.setBlocking(true);
         gnomes.addBlockingTarget(0);
 
@@ -106,7 +106,7 @@ class PatchworkGnomesTest extends BaseCardTest {
         assertThat(survivor).isSameAs(gnomes);
         assertThat(survivor.isTapped()).isTrue();
         assertThat(survivor.isBlocking()).isFalse();
-        assertThat(survivor.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isEqualTo(0);
         assertThat(survivor.getMarkedDamage()).isZero();
     }
 
@@ -138,13 +138,13 @@ class PatchworkGnomesTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gnomes.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gnomes.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gnomes.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(gnomes.getId())).isEqualTo(0);
     }
 
     @Test
@@ -171,7 +171,7 @@ class PatchworkGnomesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gnomes.isTapped()).isTrue();
-        assertThat(gnomes.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gnomes.getId())).isEqualTo(1);
     }
 
     @Test
@@ -188,7 +188,7 @@ class PatchworkGnomesTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gnomes.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(gnomes.getId())).isEqualTo(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 
@@ -202,11 +202,11 @@ class PatchworkGnomesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gnomes.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(gnomes.getId())).isZero();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.passBothPriorities();
 
-        assertThat(gnomes.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gnomes.getId())).isEqualTo(1);
         assertThat(gnomes.isTapped()).isFalse();
     }
 
@@ -222,8 +222,8 @@ class PatchworkGnomesTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gnomes.getRegenerationShield()).isEqualTo(1);
-        assertThat(otherGnomes.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(gnomes.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(otherGnomes.getId())).isZero();
         assertThat(gnomes.isTapped()).isFalse();
         assertThat(gnomes.isAttacking()).isTrue();
         assertThat(gnomes.getTimesRegeneratedThisTurn()).isZero();
@@ -249,7 +249,7 @@ class PatchworkGnomesTest extends BaseCardTest {
         assertThat(gnomes.isBlocking()).isFalse();
         assertThat(gnomes.getBlockingTargets()).isEmpty();
         assertThat(gnomes.getMarkedDamage()).isZero();
-        assertThat(gnomes.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(gnomes.getId())).isZero();
         assertThat(gnomes.getTimesRegeneratedThisTurn()).isEqualTo(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(attacker.getCard());

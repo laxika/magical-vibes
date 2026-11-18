@@ -25,7 +25,7 @@ class DragonScarredBearTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
         assertThat(bear.isTapped()).isFalse();
     }
 
@@ -40,7 +40,7 @@ class DragonScarredBearTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
     }
 
     @Test
@@ -53,7 +53,7 @@ class DragonScarredBearTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("total power 8 or greater");
-        assertThat(bear.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
     }
 
     @Test
@@ -66,7 +66,7 @@ class DragonScarredBearTest extends BaseCardTest {
         bear.setPowerModifier(-2);
         harness.passBothPriorities();
 
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
     }
 
     @Test
@@ -79,7 +79,7 @@ class DragonScarredBearTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("total power 8 or greater");
-        assertThat(bear.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
     }
 
     @Test
@@ -93,7 +93,7 @@ class DragonScarredBearTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("total power 8 or greater");
-        assertThat(bear.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
     }
 
     @Test
@@ -107,7 +107,7 @@ class DragonScarredBearTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
         assertThat(bear.isTapped()).isTrue();
     }
 
@@ -123,16 +123,16 @@ class DragonScarredBearTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bear.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(2);
         bear.setMarkedDamage(1);
         harness.inMutationScope(() ->
                 assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, bear)).isFalse());
-        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
         assertThat(bear.getMarkedDamage()).isZero();
         assertThat(bear.isTapped()).isTrue();
         harness.inMutationScope(() ->
                 assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, bear)).isFalse());
-        assertThat(bear.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
         harness.inMutationScope(() ->
                 assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, bear)).isTrue());

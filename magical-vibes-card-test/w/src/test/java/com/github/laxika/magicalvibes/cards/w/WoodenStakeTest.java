@@ -242,7 +242,7 @@ class WoodenStakeTest extends BaseCardTest {
         Permanent stake = addStake(player2);
         stake.setAttachedTo(creature.getId());
         Permanent vampire = addReadyVampire(player1);
-        vampire.setRegenerationShield(1);
+        gd.addRegenerationShields(vampire.getId(), 1);
         vampire.setAttacking(true);
 
         prepareDeclareBlockers();

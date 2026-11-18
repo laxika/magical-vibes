@@ -48,7 +48,7 @@ class VileRequiemTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
         Permanent blackCreature = harness.addToBattlefieldAndReturn(player2, new BogRaiders());
-        first.setRegenerationShield(1);
+        gd.addRegenerationShields(first.getId(), 1);
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(first.getId(), second.getId()));

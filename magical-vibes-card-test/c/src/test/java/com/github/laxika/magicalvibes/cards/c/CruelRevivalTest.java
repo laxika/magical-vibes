@@ -79,7 +79,7 @@ class CruelRevivalTest extends BaseCardTest {
     void destroyedCreatureCannotRegenerate() {
         harness.addToBattlefield(player2, new BarkhideMauler());
         Permanent mauler = findPermanent(player2, "Barkhide Mauler");
-        mauler.setRegenerationShield(1);
+        gd.addRegenerationShields(mauler.getId(), 1);
         harness.setHand(player1, List.of(new CruelRevival()));
         harness.addMana(player1, ManaColor.BLACK, 5);
         harness.forceActivePlayer(player1);

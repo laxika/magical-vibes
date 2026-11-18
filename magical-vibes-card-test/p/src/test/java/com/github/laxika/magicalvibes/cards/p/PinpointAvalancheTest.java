@@ -35,7 +35,7 @@ class PinpointAvalancheTest extends BaseCardTest {
     @DisplayName("Damage cannot be prevented")
     void damageCannotBePrevented() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
-        target.setDamagePreventionShield(10);
+        gd.addPermanentDamagePreventionShield(target.getId(), 10);
         harness.setHand(player1, List.of(new PinpointAvalanche()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -64,7 +64,7 @@ class PinpointAvalancheTest extends BaseCardTest {
     @DisplayName("Unpreventable damage does not consume a surviving creature's prevention shield")
     void leavesPreventionShieldIntact() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ButcherOrgg());
-        target.setDamagePreventionShield(10);
+        gd.addPermanentDamagePreventionShield(target.getId(), 10);
         harness.setHand(player1, List.of(new PinpointAvalanche()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -73,7 +73,7 @@ class PinpointAvalancheTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Butcher Orgg");
         assertThat(target.getMarkedDamage()).isEqualTo(4);
-        assertThat(target.getDamagePreventionShield()).isEqualTo(10);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(10);
     }
 
     @Test

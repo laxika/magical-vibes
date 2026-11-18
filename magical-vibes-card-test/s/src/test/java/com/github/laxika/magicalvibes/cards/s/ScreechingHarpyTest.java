@@ -41,7 +41,7 @@ class ScreechingHarpyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(harpy.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(harpy.getId())).isEqualTo(1);
     }
 
     @Test
@@ -59,7 +59,7 @@ class ScreechingHarpyTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Screeching Harpy from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent harpy = addCreatureReady(player1, new ScreechingHarpy());
-        harpy.setRegenerationShield(1);
+        gd.addRegenerationShields(harpy.getId(), 1);
         harpy.setBlocking(true);
         harpy.addBlockingTarget(0);
 
@@ -70,7 +70,7 @@ class ScreechingHarpyTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Screeching Harpy");
         assertThat(harpy.isTapped()).isTrue();
-        assertThat(harpy.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(harpy.getId())).isEqualTo(0);
     }
 
     @Test
@@ -100,7 +100,7 @@ class ScreechingHarpyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(harpy.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(harpy.getId())).isEqualTo(1);
         assertThat(harpy.isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Screeching Harpy");
     }
@@ -117,7 +117,7 @@ class ScreechingHarpyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(harpy.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(harpy.getId())).isEqualTo(2);
         assertThat(harpy.isTapped()).isFalse();
         assertThat(harpy.getMarkedDamage()).isEqualTo(1);
     }
@@ -139,7 +139,7 @@ class ScreechingHarpyTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Screeching Harpy");
         harness.assertNotInGraveyard(player1, "Screeching Harpy");
         assertThat(harpy.isTapped()).isTrue();
-        assertThat(harpy.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(harpy.getId())).isZero();
         assertThat(harpy.getMarkedDamage()).isZero();
         assertThat(harpy.isBlocking()).isFalse();
         assertThat(harpy.getBlockingTargets()).isEmpty();

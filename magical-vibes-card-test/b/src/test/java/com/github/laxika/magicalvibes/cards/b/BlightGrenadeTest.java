@@ -128,13 +128,13 @@ class BlightGrenadeTest extends BaseCardTest {
     @DisplayName("A regenerated target also receives the reduction")
     void regeneratedTargetIsWeakened() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castBlightGrenade(target.getId());
 
         harness.assertOnBattlefield(player2, "Serra Angel");
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
@@ -143,7 +143,7 @@ class BlightGrenadeTest extends BaseCardTest {
     @DisplayName("Regeneration cannot save a target reduced to zero toughness")
     void regeneratedSmallTargetDiesFromReduction() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setRegenerationShield(2);
+        gd.addRegenerationShields(target.getId(), 2);
 
         castBlightGrenade(target.getId());
 

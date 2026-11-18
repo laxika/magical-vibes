@@ -164,7 +164,7 @@ class TransformingFlourishTest extends BaseCardTest {
     @Test
     void regenerationPreventsTheExileAndFreeCast() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
         Card top = new GrizzlyBears();
         harness.setLibrary(player2, List.of(top));
         harness.setHand(player1, List.of(new TransformingFlourish()));

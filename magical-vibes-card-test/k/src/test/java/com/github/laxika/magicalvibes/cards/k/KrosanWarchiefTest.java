@@ -66,7 +66,7 @@ class KrosanWarchiefTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -79,7 +79,7 @@ class KrosanWarchiefTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
     @Test
@@ -129,7 +129,7 @@ class KrosanWarchiefTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, warchief.getId());
         harness.passBothPriorities();
 
-        assertThat(warchief.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(warchief.getId())).isEqualTo(1);
     }
 
     @Test
@@ -139,7 +139,7 @@ class KrosanWarchiefTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, warchief.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(warchief.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(warchief.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -158,7 +158,7 @@ class KrosanWarchiefTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(warchief);
         assertThat(warchief.isTapped()).isTrue();
-        assertThat(warchief.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(warchief.getId())).isZero();
         harness.assertNotInGraveyard(player1, "Krosan Warchief");
 
         harness.castAndResolveSorcery(player1, 0, warchief.getId());

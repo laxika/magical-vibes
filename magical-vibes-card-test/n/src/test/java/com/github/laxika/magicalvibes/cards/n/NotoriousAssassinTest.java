@@ -28,7 +28,7 @@ class NotoriousAssassinTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         Permanent target = addCreatureReady(player2, new RockBadger());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.handleCardChosen(player1, 0);

@@ -120,7 +120,7 @@ class MasticoreTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(gd.playerBattlefields.get(player1.getId()).getFirst().getId())).isEqualTo(1);
     }
 
     @Test
@@ -140,7 +140,7 @@ class MasticoreTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Masticore");
         Permanent survivor = findPermanent(player1, "Masticore");
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isZero();
         assertThat(survivor.getMarkedDamage()).isZero();
     }
 
@@ -170,7 +170,7 @@ class MasticoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanent(player2, "Masticore").getMarkedDamage()).isEqualTo(1);
-        assertThat(masticore.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(masticore.getId())).isEqualTo(1);
         assertThat(masticore.isTapped()).isTrue();
     }
 
@@ -183,7 +183,7 @@ class MasticoreTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        assertThat(findPermanent(player1, "Masticore").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Masticore").getId())).isEqualTo(1);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Masticore");

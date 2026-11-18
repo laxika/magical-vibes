@@ -127,8 +127,8 @@ class BlessingOfLeechesTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
-        assertThat(aura.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(aura.getId())).isEqualTo(0);
     }
 
     @Test
@@ -140,7 +140,7 @@ class BlessingOfLeechesTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
     }
 
     @Test

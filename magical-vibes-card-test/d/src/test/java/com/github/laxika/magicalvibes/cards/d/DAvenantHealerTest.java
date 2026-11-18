@@ -93,7 +93,7 @@ class DAvenantHealerTest extends BaseCardTest {
 
         activatePrevention(creature.getId());
 
-        assertThat(creature.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(creature.getId())).isEqualTo(1);
     }
 
     @Test
@@ -164,7 +164,7 @@ class DAvenantHealerTest extends BaseCardTest {
             harness.activateAbility(player1, 1, null, attacker.getId());
             harness.passBothPriorities();
             assertThat(attacker.getMarkedDamage()).isZero();
-            assertThat(attacker.getDamagePreventionShield()).isZero();
+            assertThat(gd.permanentDamagePreventionShield(attacker.getId())).isZero();
 
             harness.activateAbility(player1, 2, null, attacker.getId());
             harness.passBothPriorities();

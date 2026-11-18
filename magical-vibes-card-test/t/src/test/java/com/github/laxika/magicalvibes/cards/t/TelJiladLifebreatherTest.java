@@ -26,11 +26,11 @@ class TelJiladLifebreatherTest extends BaseCardTest {
         assertThat(lifebreather.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Forest");
         harness.assertNotOnBattlefield(player1, "Forest");
-        assertThat(lifebreather.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(lifebreather.getId())).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(lifebreather.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(lifebreather.getId())).isEqualTo(1);
     }
 
     @Test
@@ -59,7 +59,7 @@ class TelJiladLifebreatherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
@@ -82,7 +82,7 @@ class TelJiladLifebreatherTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(target.isTapped()).isTrue();
         assertThat(target.getMarkedDamage()).isZero();
         assertThat(target.isBlocking()).isFalse();
@@ -100,7 +100,7 @@ class TelJiladLifebreatherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         harness.assertInGraveyard(player1, "Forest");
         assertThat(lifebreather.isTapped()).isTrue();
@@ -176,7 +176,7 @@ class TelJiladLifebreatherTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(target);
         harness.passBothPriorities();
 
-        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         harness.assertInGraveyard(player1, "Forest");
     }
 }

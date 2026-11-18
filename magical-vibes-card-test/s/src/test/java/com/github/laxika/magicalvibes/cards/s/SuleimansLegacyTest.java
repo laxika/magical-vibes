@@ -36,7 +36,7 @@ class SuleimansLegacyTest extends BaseCardTest {
     @DisplayName("ETB destruction ignores regeneration shields")
     void etbCannotBeRegenerated() {
         Permanent djinn = harness.addToBattlefieldAndReturn(player2, new NettletoothDjinn());
-        djinn.setRegenerationShield(1);
+        gd.addRegenerationShields(djinn.getId(), 1);
 
         castLegacy();
         harness.passBothPriorities();
@@ -70,7 +70,7 @@ class SuleimansLegacyTest extends BaseCardTest {
         harness.castFromHand(player2, new HarmattanEfreet(), "{2}{U}{U}");
         harness.passBothPriorities(); // resolve creature → Legacy trigger queues
         Permanent efreet = findPermanent(player2, "Harmattan Efreet");
-        efreet.setRegenerationShield(1);
+        gd.addRegenerationShields(efreet.getId(), 1);
         harness.passBothPriorities(); // resolve Legacy trigger
 
         harness.assertNotOnBattlefield(player2, "Harmattan Efreet");

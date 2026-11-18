@@ -81,14 +81,14 @@ class MidnightCharmTest extends BaseCardTest {
     @DisplayName("Damage mode gains life even when all damage is prevented")
     void damageModeGainsLifeWhenDamageIsPrevented() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SulfurElemental());
-        target.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(target.getId(), 1);
         harness.setLife(player1, 10);
 
         castMode(0, target);
 
         harness.assertLife(player1, 11);
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         harness.assertOnBattlefield(player2, "Sulfur Elemental");
     }
 

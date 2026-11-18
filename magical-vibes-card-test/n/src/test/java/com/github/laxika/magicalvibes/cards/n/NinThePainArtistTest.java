@@ -90,7 +90,7 @@ class NinThePainArtistTest extends BaseCardTest {
     void drawsChosenXEvenWhenDamageIsPrevented() {
         addReadyNin(player1);
         Permanent target = addCreatureReady(player2, new NinThePainArtist());
-        target.setDamagePreventionShield(3);
+        gd.addPermanentDamagePreventionShield(target.getId(), 3);
         harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new NinThePainArtist(), new NinThePainArtist(), new NinThePainArtist()));
         harness.addMana(player1, ManaColor.BLUE, 4);

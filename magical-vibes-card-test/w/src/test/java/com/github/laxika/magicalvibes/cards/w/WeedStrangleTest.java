@@ -125,14 +125,14 @@ class WeedStrangleTest extends BaseCardTest {
     @DisplayName("A regenerated target survives but a clash win still gains life")
     void regeneratedTargetStillGrantsLife() {
         Permanent creature = prepareTargetCreature();
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
         stackClashWinForCaster();
         harness.castAndResolveSorcery(player1, 0, creature.getId());
         finishClash();
         harness.assertOnBattlefield(player2, "Knight of Meadowgrain");
         harness.assertNotInGraveyard(player2, "Knight of Meadowgrain");
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         harness.assertLife(player1, 22);
     }
 

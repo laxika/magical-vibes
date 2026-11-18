@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.EyeForAnEyeReflection;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.EndOfTurnStateField;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureInsteadOfNextDamageEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.JudgmentOfAlexanderDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -220,13 +221,15 @@ public class DamagePreventionService {
 
     /** Applies a one-shot replacement that destroys a target creature instead of dealing damage. */
     public boolean replaceNextDamageToTargetWithDestruction(GameData gameData, Permanent permanent, int damage) {
-        if (damage <= 0 || permanent == null || permanent.getDamageDestructionShield() <= 0
+        if (damage <= 0 || permanent == null
+                || !gameData.hasFloatingEffectOnPermanent(permanent.getId(),
+                DestroyTargetCreatureInsteadOfNextDamageEffect.class)
                 || !gameQueryService.isCreature(gameData, permanent)
                 || gameQueryService.findPermanentById(gameData, permanent.getId()) != permanent) {
             return false;
         }
 
-        permanent.setDamageDestructionShield(permanent.getDamageDestructionShield() - 1);
+        gameData.useOldestEffectOnPermanent(permanent.getId(), DestroyTargetCreatureInsteadOfNextDamageEffect.class);
         destructionSupportProvider.getObject().tryDestroyAndLog(
                 gameData, permanent, "a damage replacement effect");
         return true;
@@ -519,7 +522,8 @@ public class DamagePreventionService {
                 (gd, c,
                         damage) -> c.combatDamage() && gd.hasPrevention(PreventionScope.ALL_COMBAT) && preventable(gd, c)));
         steps.add(new CreatureDamageStep("DestructionShield", "Destroy it instead", replacement, false,
-                (gd, c, damage) -> damage > 0 && c.permanent().getDamageDestructionShield() > 0
+                (gd, c, damage) -> damage > 0 && gd.hasFloatingEffectOnPermanent(c.permanent().getId(),
+                        DestroyTargetCreatureInsteadOfNextDamageEffect.class)
                         && gameQueryService.isCreature(gd, c.permanent())
                         && gameQueryService.findPermanentById(gd, c.permanent().getId()) == c.permanent(),
                 (gd, c, damage) -> replaceNextDamageToTargetWithDestruction(gd, c.permanent(), damage) ? 0 : damage,
@@ -570,8 +574,8 @@ public class DamagePreventionService {
                 (gd, c, damage) -> applyCombatDamageToSelfAndAddPlusOneCounter(gd, c.permanent(), c.damageSource(), damage)));
         steps.add(step("PlusOneCounterShieldUnpreventable", "Put +1/+1 counters on it equal to the damage (can't be prevented)", replacement, false,
                 (gd, c, damage) -> damage > 0 && !preventable(gd, c)
-                        && c.permanent().isAllDamageToPlusOnePlusOneCounterPreventionShield()
-                        && c.permanent().isDamageReplacedByPlusOnePlusOneCounters(),
+                        && gd.hasPreventionOnPermanent(c.permanent().getId(),
+                        PreventionScope.ALL_TO_TARGET_CREATURES_REPLACED_BY_PLUS_ONE_PLUS_ONE_COUNTERS),
                 (gd, c, damage) -> {
                     putShieldPlusOneCounters(gd, c.permanent(), damage);
                     return damage;
@@ -777,19 +781,19 @@ public class DamagePreventionService {
                 }));
         steps.add(step("PlusOneCounterShield", "Prevent the damage and put +1/+1 counters on it", prevention, false,
                 (gd, c, damage) -> preventable(gd,
-                        c) && c.permanent().isAllDamageToPlusOnePlusOneCounterPreventionShield(),
+                        c) && gd.hasPreventionOnPermanent(c.permanent().getId(),
+                        PreventionScope.ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS,
+                        PreventionScope.ALL_TO_TARGET_CREATURES_REPLACED_BY_PLUS_ONE_PLUS_ONE_COUNTERS),
                 (gd, c, damage) -> {
                     putShieldPlusOneCounters(gd, c.permanent(), damage);
                     return 0;
                 }));
         steps.add(step("Temper", "Prevent damage and put +1/+1 counters on it (Temper)", prevention, false,
                 (gd, c, damage) -> preventable(gd,
-                        c) && c.permanent().getDamageToPlusOnePlusOneCounterPreventionShield() > 0,
+                        c) && gd.permanentDamagePreventionShield(c.permanent().getId(), true) > 0,
                 (gd, c, damage) -> {
                     Permanent permanent = c.permanent();
-                    int temperShield = permanent.getDamageToPlusOnePlusOneCounterPreventionShield();
-                    int temperPrevented = Math.min(temperShield, damage);
-                    permanent.setDamageToPlusOnePlusOneCounterPreventionShield(temperShield - temperPrevented);
+                    int temperPrevented = gd.usePermanentDamagePreventionShields(permanent.getId(), true, damage);
                     if (!gameQueryService.cantHaveCounters(gd, permanent)) {
                         int counters = gameQueryService.doublePlusOnePlusOneCounters(gd, permanent, temperPrevented);
                         if (counters > 0) {
@@ -802,11 +806,9 @@ public class DamagePreventionService {
                 }));
         steps.add(step("SacredBoon", "Prevent damage and put +0/+1 counters on it later (Sacred Boon)", prevention,
                 false,
-                (gd, c, damage) -> preventable(gd, c) && c.permanent().getDamageToCounterPreventionShield() > 0,
+                (gd, c, damage) -> preventable(gd, c) && gd.sacredBoonShield(c.permanent().getId()) > 0,
                 (gd, c, damage) -> {
-                    Permanent permanent = c.permanent();
-                    int boonPrevented = gd.consumeSacredBoonShields(permanent.getId(), damage);
-                    permanent.setDamageToCounterPreventionShield(permanent.getDamageToCounterPreventionShield() - boonPrevented);
+                    int boonPrevented = gd.consumeSacredBoonShields(c.permanent().getId(), damage);
                     return damage - boonPrevented;
                 }));
         steps.add(step("ControlledPermanentRedirectShield", "Redirect the damage (Divine Deflection)", ReplacementOption.Kind.REDIRECT, false,
@@ -822,7 +824,7 @@ public class DamagePreventionService {
                 (gd, c, damage) -> applyDamagePreventionLifeGainShield(gd, c.permanent().getId(), damage,
                         c.combatDamage())));
         steps.add(step("PermanentPreventionShield", "Prevent the next damage to it", prevention, false,
-                (gd, c, damage) -> preventable(gd, c) && c.permanent().getDamagePreventionShield() > 0,
+                (gd, c, damage) -> preventable(gd, c) && gd.permanentDamagePreventionShield(c.permanent().getId()) > 0,
                 (gd, c, damage) -> applyPermanentDamagePreventionShield(gd, c.permanent(), damage, c.combatDamage())));
         return List.copyOf(steps);
     }
@@ -1131,12 +1133,7 @@ public class DamagePreventionService {
                                                      boolean combatDamage) {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage) || damage <= 0) return damage;
 
-        int shield = permanent.getDamagePreventionShield();
-        if (shield <= 0) return damage;
-
-        int prevented = Math.min(shield, damage);
-        permanent.setDamagePreventionShield(shield - prevented);
-        return damage - prevented;
+        return damage - gameData.usePermanentDamagePreventionShields(permanent.getId(), false, damage);
     }
 
     private void queuePhyrexianVindicatorTrigger(GameData gameData, Permanent permanent, int preventedDamage) {
@@ -3542,7 +3539,7 @@ public class DamagePreventionService {
     }
 
     /**
-     * Consumes the player's "prevent the next N damage" shield ({@code PlayerDamagePreventionShield})
+     * Consumes the player's "prevent the next N damage" shield ({@code DamagePreventionShield})
      * against {@code damage} and returns what remains.
      */
     public int applyPlayerDamagePreventionShield(GameData gameData, UUID playerId, int damage) {

@@ -27,7 +27,7 @@ class RiverBoaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(boa.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(boa.getId())).isEqualTo(1);
     }
 
     @Test
@@ -45,7 +45,7 @@ class RiverBoaTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves River Boa from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent boa = addCreatureReady(player1, new RiverBoa());
-        boa.setRegenerationShield(1);
+        gd.addRegenerationShields(boa.getId(), 1);
         boa.setBlocking(true);
         boa.addBlockingTarget(0);
 
@@ -56,7 +56,7 @@ class RiverBoaTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "River Boa");
         assertThat(boa.isTapped()).isTrue();
-        assertThat(boa.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(boa.getId())).isEqualTo(0);
         assertThat(boa.getMarkedDamage()).isZero();
         assertThat(boa.isBlocking()).isFalse();
     }
@@ -122,7 +122,7 @@ class RiverBoaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(boa.isTapped()).isFalse();
-        assertThat(boa.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(boa.getId())).isEqualTo(1);
         harness.assertOnBattlefield(player1, "River Boa");
     }
 
@@ -138,7 +138,7 @@ class RiverBoaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(boa.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(boa.getId())).isEqualTo(1);
         assertThat(boa.isTapped()).isTrue();
     }
 
@@ -161,7 +161,7 @@ class RiverBoaTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "River Boa");
         assertThat(boa.isTapped()).isTrue();
         assertThat(boa.getMarkedDamage()).isZero();
-        assertThat(boa.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(boa.getId())).isZero();
         assertThat(boa.isBlocking()).isFalse();
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }

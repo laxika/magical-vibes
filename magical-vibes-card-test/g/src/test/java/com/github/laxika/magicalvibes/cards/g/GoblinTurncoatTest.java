@@ -28,7 +28,7 @@ class GoblinTurncoatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(turncoat).doesNotContain(goblin);
-        assertThat(turncoat.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(turncoat.getId())).isEqualTo(1);
     }
 
     @Test
@@ -81,7 +81,7 @@ class GoblinTurncoatTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(turncoat);
         assertThat(turncoat.isTapped()).isTrue();
-        assertThat(turncoat.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(turncoat.getId())).isZero();
         harness.assertNotInGraveyard(player1, "Goblin Turncoat");
     }
 
@@ -97,7 +97,7 @@ class GoblinTurncoatTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(turncoat).doesNotContain(shenanigans);
         harness.assertInGraveyard(player1, "Boggart Shenanigans");
-        assertThat(turncoat.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(turncoat.getId())).isEqualTo(1);
     }
 
     @Test
@@ -115,7 +115,7 @@ class GoblinTurncoatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingGoblin);
-        assertThat(turncoat.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(turncoat.getId())).isEqualTo(1);
     }
 
     @Test
@@ -128,14 +128,14 @@ class GoblinTurncoatTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, firstGoblin.getId());
-        assertThat(turncoat.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(turncoat.getId())).isZero();
         harness.passBothPriorities();
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, secondGoblin.getId());
         harness.passBothPriorities();
 
-        assertThat(turncoat.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(turncoat.getId())).isEqualTo(2);
         assertThat(turncoat.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .contains(turncoat).doesNotContain(firstGoblin, secondGoblin);

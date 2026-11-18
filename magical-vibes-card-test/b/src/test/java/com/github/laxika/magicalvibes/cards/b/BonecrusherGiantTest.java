@@ -38,7 +38,7 @@ class BonecrusherGiantTest extends BaseCardTest {
     @DisplayName("Stomp deals 2 damage to a creature and damage cannot be prevented this turn")
     void stompDealsUnpreventableDamageToCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setDamagePreventionShield(5);
+        gd.addPermanentDamagePreventionShield(target.getId(), 5);
 
         BonecrusherGiant card = new BonecrusherGiant();
         harness.setHand(player1, List.of(card));
@@ -135,7 +135,7 @@ class BonecrusherGiantTest extends BaseCardTest {
     @DisplayName("Stomp stops prevention for subsequent damage from either player")
     void stompStopsSubsequentDamagePrevention() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        target.setDamagePreventionShield(5);
+        gd.addPermanentDamagePreventionShield(target.getId(), 5);
         harness.setHand(player1, List.of(new BonecrusherGiant()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

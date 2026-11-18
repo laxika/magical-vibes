@@ -27,7 +27,7 @@ class VampireWarlordTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Coral Merfolk");
-        assertThat(findPermanent(player1, "Vampire Warlord").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Vampire Warlord").getId())).isEqualTo(1);
     }
 
     @Test
@@ -62,7 +62,7 @@ class VampireWarlordTest extends BaseCardTest {
     @DisplayName("Regeneration shield saves Vampire Warlord from lethal combat damage")
     void regenSavesFromLethalCombat() {
         Permanent warlord = addCreatureReady(player1, new VampireWarlord());
-        warlord.setRegenerationShield(1);
+        gd.addRegenerationShields(warlord.getId(), 1);
         warlord.setBlocking(true);
         warlord.addBlockingTarget(0);
 
@@ -74,7 +74,7 @@ class VampireWarlordTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Vampire Warlord");
         Permanent survivor = findPermanent(player1, "Vampire Warlord");
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(survivor.getId())).isEqualTo(0);
     }
 
     @Test
@@ -106,7 +106,7 @@ class VampireWarlordTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Canyon Minotaur");
         harness.assertOnBattlefield(player1, "Coral Merfolk");
-        assertThat(findPermanent(player1, "Vampire Warlord").getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Vampire Warlord").getId())).isEqualTo(1);
     }
 
     @Test
@@ -118,12 +118,12 @@ class VampireWarlordTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         harness.assertInGraveyard(player1, "Coral Merfolk");
-        assertThat(warlord.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(warlord.getId())).isZero();
         assertThat(warlord.isTapped()).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(warlord.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(warlord.getId())).isEqualTo(1);
         assertThat(warlord.isTapped()).isFalse();
     }
 
@@ -139,7 +139,7 @@ class VampireWarlordTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Coral Merfolk");
-        assertThat(warlord.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(warlord.getId())).isEqualTo(1);
     }
 
     @Test
@@ -173,7 +173,7 @@ class VampireWarlordTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Vampire Warlord");
         assertThat(warlord.isTapped()).isTrue();
-        assertThat(warlord.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(warlord.getId())).isZero();
         assertThat(warlord.getMarkedDamage()).isZero();
         assertThat(warlord.isBlocking()).isFalse();
         assertThat(warlord.getBlockingTargets()).isEmpty();
@@ -190,7 +190,7 @@ class VampireWarlordTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(source).doesNotContain(other);
         harness.assertInGraveyard(player1, "Vampire Warlord");
-        assertThat(source.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(source.getId())).isEqualTo(1);
     }
 
     @Test
@@ -208,6 +208,6 @@ class VampireWarlordTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Coral Merfolk");
         harness.assertInGraveyard(player1, "Canyon Minotaur");
-        assertThat(warlord.getRegenerationShield()).isEqualTo(2);
+        assertThat(gd.regenerationShieldCount(warlord.getId())).isEqualTo(2);
     }
 }

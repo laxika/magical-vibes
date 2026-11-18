@@ -29,7 +29,7 @@ class VigilantMartyrTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, griffin.getId());
         harness.passBothPriorities();
 
-        assertThat(griffin.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(griffin.getId())).isEqualTo(1);
         harness.assertInGraveyard(player1, "Vigilant Martyr");
     }
 
@@ -115,10 +115,10 @@ class VigilantMartyrTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, griffin.getId());
         harness.assertInGraveyard(player1, "Vigilant Martyr");
-        assertThat(griffin.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(griffin.getId())).isZero();
         harness.passBothPriorities();
 
-        assertThat(griffin.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(griffin.getId())).isEqualTo(1);
     }
 
     @Test

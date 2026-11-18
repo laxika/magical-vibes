@@ -44,7 +44,7 @@ class DranaAndLinvalaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dranaAndLinvala.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(dranaAndLinvala.getId())).isEqualTo(1);
     }
 
     @Test
@@ -77,7 +77,7 @@ class DranaAndLinvalaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dranaAndLinvala.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(dranaAndLinvala.getId())).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 

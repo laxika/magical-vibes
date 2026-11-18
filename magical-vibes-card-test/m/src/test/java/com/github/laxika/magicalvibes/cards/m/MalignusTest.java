@@ -94,7 +94,7 @@ class MalignusTest extends BaseCardTest {
         addMalignus(player1);
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         blocker.setSummoningSick(false);
-        blocker.setDamagePreventionShield(10);
+        gd.addPermanentDamagePreventionShield(blocker.getId(), 10);
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

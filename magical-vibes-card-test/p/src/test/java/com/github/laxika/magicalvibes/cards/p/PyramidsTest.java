@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveDamageFromTargetLandInsteadOfNextDestructionEffect;
 import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.IceStorm;
@@ -52,7 +53,7 @@ class PyramidsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
         assertThat(land.getMarkedDamage()).isZero();
-        assertThat(land.getLandDestructionShield()).isZero();
+        assertThat(gd.floatingEffectsOnPermanent(land.getId(), RemoveDamageFromTargetLandInsteadOfNextDestructionEffect.class).size()).isZero();
         assertThat(land.isTapped()).isFalse();
     }
 
@@ -69,7 +70,7 @@ class PyramidsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(arbor);
         assertThat(arbor.getMarkedDamage()).isZero();
-        assertThat(arbor.getLandDestructionShield()).isZero();
+        assertThat(gd.floatingEffectsOnPermanent(arbor.getId(), RemoveDamageFromTargetLandInsteadOfNextDestructionEffect.class).size()).isZero();
     }
 
     @Test

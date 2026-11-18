@@ -103,13 +103,13 @@ class AnarchyTest extends BaseCardTest {
     @DisplayName("Allows a white permanent to regenerate")
     void allowsRegeneration() {
         var angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
-        angel.setRegenerationShield(1);
+        gd.addRegenerationShields(angel.getId(), 1);
         castAnarchy();
 
         harness.assertOnBattlefield(player2, "Serra Angel");
         harness.assertNotInGraveyard(player2, "Serra Angel");
         assertThat(angel.isTapped()).isTrue();
-        assertThat(angel.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(angel.getId())).isZero();
     }
 
     private void castAnarchy() {

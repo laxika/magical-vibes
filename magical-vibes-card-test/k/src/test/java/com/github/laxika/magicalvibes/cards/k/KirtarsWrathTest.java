@@ -77,7 +77,7 @@ class KirtarsWrathTest extends BaseCardTest {
     @DisplayName("Kirtar's Wrath cannot be stopped by a regeneration shield")
     void destructionCannotBeRegenerated() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new DuskImp());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
         harness.setHand(player1, List.of(new KirtarsWrath()));
         harness.addMana(player1, ManaColor.WHITE, 6);
 
@@ -105,7 +105,7 @@ class KirtarsWrathTest extends BaseCardTest {
     @DisplayName("Threshold destruction bypasses regeneration before creating Spirits")
     void thresholdDestructionCannotBeRegenerated() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new DuskImp());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
         harness.setGraveyard(player1, List.of(
                 new Forest(), new Forest(), new Forest(), new Forest(),
                 new Forest(), new Forest(), new Forest()));

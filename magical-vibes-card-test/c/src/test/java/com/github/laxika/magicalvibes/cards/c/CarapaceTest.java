@@ -76,7 +76,7 @@ class CarapaceTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
         harness.assertInGraveyard(player1, "Carapace");
     }
 
@@ -93,7 +93,7 @@ class CarapaceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Carapace");
         harness.assertInGraveyard(player1, "Carapace");
     }
@@ -144,13 +144,13 @@ class CarapaceTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Carapace");
         harness.assertInGraveyard(player1, "Carapace");
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
         assertThat(creature.isTapped()).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(creature.getId())).isEqualTo(1);
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
         assertThat(creature.isTapped()).isFalse();
     }
@@ -190,7 +190,7 @@ class CarapaceTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         harness.assertOnBattlefield(player1, "Anaba Bodyguard");
-        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
         assertThat(creature.getMarkedDamage()).isZero();
         assertThat(creature.isTapped()).isTrue();
 

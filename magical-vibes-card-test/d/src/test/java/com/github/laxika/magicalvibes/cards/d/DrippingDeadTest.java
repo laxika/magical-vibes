@@ -25,7 +25,7 @@ class DrippingDeadTest extends BaseCardTest {
     void combatDamageDestroysDamagedCreatureWithoutRegeneration() {
         addCreatureReady(player1, new DrippingDead());
         Permanent wall = addCreatureReady(player2, new WallOfDeceit());
-        wall.setRegenerationShield(1);
+        gd.addRegenerationShields(wall.getId(), 1);
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

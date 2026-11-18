@@ -42,7 +42,7 @@ class ServantOfTymaretTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(servant.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(servant.getId())).isEqualTo(1);
     }
 
     @Test
@@ -89,7 +89,7 @@ class ServantOfTymaretTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Servant of Tymaret");
         assertThat(servant.isTapped()).isTrue();
         assertThat(servant.getMarkedDamage()).isZero();
-        assertThat(servant.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(servant.getId())).isZero();
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
     }

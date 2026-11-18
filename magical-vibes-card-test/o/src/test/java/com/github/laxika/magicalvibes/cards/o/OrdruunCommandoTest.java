@@ -28,7 +28,7 @@ class OrdruunCommandoTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(commando.getMarkedDamage()).isZero();
-        assertThat(commando.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(commando.getId())).isZero();
         harness.assertOnBattlefield(player1, "Ordruun Commando");
     }
 
@@ -47,7 +47,7 @@ class OrdruunCommandoTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(otherCreature.getMarkedDamage()).isEqualTo(1);
-        assertThat(commando.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(commando.getId())).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Ordruun Commando");
     }
 
@@ -90,13 +90,13 @@ class OrdruunCommandoTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, commando.getId());
         harness.passBothPriorities();
-        assertThat(commando.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(commando.getId())).isEqualTo(1);
 
         harness.activateAbility(player2, 1, null, commando.getId());
         harness.passBothPriorities();
 
         assertThat(commando.getMarkedDamage()).isZero();
-        assertThat(commando.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(commando.getId())).isZero();
         harness.assertOnBattlefield(player1, "Ordruun Commando");
     }
 
@@ -109,12 +109,12 @@ class OrdruunCommandoTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(commando.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.permanentDamagePreventionShield(commando.getId())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(commando.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(commando.getId())).isZero();
     }
 }

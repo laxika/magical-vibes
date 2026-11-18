@@ -40,7 +40,7 @@ class AfterlifeTest extends BaseCardTest {
     @DisplayName("Target creature can't be regenerated")
     void targetCannotBeRegenerated() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castAfterlife(target.getId());
 

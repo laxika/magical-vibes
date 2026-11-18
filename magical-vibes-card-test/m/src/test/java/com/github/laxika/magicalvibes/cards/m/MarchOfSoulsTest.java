@@ -59,7 +59,7 @@ class MarchOfSoulsTest extends BaseCardTest {
     @DisplayName("Destroys creatures despite regeneration shields")
     void destroysCreaturesDespiteRegenerationShields() {
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
-        creature.setRegenerationShield(1);
+        gd.addRegenerationShields(creature.getId(), 1);
 
         castMarchOfSouls();
 

@@ -73,14 +73,14 @@ class SlithBloodletterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bloodletter.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bloodletter.getId())).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield saves it from lethal combat damage")
     void regenSavesFromLethalCombat() {
         Permanent bloodletter = addCreatureReady(player1, new SlithBloodletter());
-        bloodletter.setRegenerationShield(1);
+        gd.addRegenerationShields(bloodletter.getId(), 1);
         bloodletter.setBlocking(true);
         bloodletter.addBlockingTarget(0);
 
@@ -91,7 +91,7 @@ class SlithBloodletterTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Slith Bloodletter");
         assertThat(findPermanent(player1, "Slith Bloodletter").isTapped()).isTrue();
-        assertThat(findPermanent(player1, "Slith Bloodletter").getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(findPermanent(player1, "Slith Bloodletter").getId())).isEqualTo(0);
     }
 
     @Test
@@ -121,11 +121,11 @@ class SlithBloodletterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(bloodletter.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bloodletter.getId())).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(bloodletter.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(bloodletter.getId())).isEqualTo(1);
         assertThat(bloodletter.isTapped()).isTrue();
     }
 
@@ -144,7 +144,7 @@ class SlithBloodletterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bloodletter.isTapped()).isFalse();
-        assertThat(otherBloodletter.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(otherBloodletter.getId())).isZero();
 
         harness.activateAbility(player2, 0, null, bloodletter.getId());
         harness.passBothPriorities();
@@ -152,7 +152,7 @@ class SlithBloodletterTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Slith Bloodletter");
         assertThat(bloodletter.isTapped()).isTrue();
         assertThat(bloodletter.getMarkedDamage()).isZero();
-        assertThat(bloodletter.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(bloodletter.getId())).isZero();
         assertThat(bloodletter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         harness.activateAbility(player2, 1, null, otherBloodletter.getId());

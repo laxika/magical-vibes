@@ -75,7 +75,7 @@ class SedgeSliverTest extends BaseCardTest {
         harness.activateAbility(player2, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(opposingSliver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(opposingSliver.getId())).isEqualTo(1);
         assertThat(opposingSliver.isTapped()).isFalse();
     }
 
@@ -90,7 +90,7 @@ class SedgeSliverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(sedgeSliver.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(sedgeSliver.getId())).isEqualTo(1);
         assertThat(sedgeSliver.isTapped()).isFalse();
     }
 
@@ -155,7 +155,7 @@ class SedgeSliverTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(enchantment.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(enchantment.getId())).isEqualTo(1);
         assertThat(enchantment.isTapped()).isFalse();
     }
 
@@ -176,7 +176,7 @@ class SedgeSliverTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Sidewinder Sliver");
         harness.assertNotInGraveyard(player2, "Sidewinder Sliver");
         assertThat(sliver.isTapped()).isTrue();
-        assertThat(sliver.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(sliver.getId())).isZero();
     }
 
     @Test

@@ -40,7 +40,7 @@ class VendettaTest extends BaseCardTest {
     @DisplayName("Cannot be regenerated")
     void cannotBeRegenerated() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new LagacLizard());
-        target.setRegenerationShield(1);
+        gd.addRegenerationShields(target.getId(), 1);
 
         castVendetta(target);
 

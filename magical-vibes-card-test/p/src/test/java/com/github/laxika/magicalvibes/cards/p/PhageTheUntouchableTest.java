@@ -82,7 +82,7 @@ class PhageTheUntouchableTest extends BaseCardTest {
         Permanent phage = addCreatureReady(player1, new PhageTheUntouchable());
         phage.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new MahamotiDjinn());
-        blocker.setRegenerationShield(1);
+        gd.addRegenerationShields(blocker.getId(), 1);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 

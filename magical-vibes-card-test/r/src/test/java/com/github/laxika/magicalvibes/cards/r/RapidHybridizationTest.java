@@ -48,7 +48,7 @@ class RapidHybridizationTest extends BaseCardTest {
     @DisplayName("Destroys the target despite a regeneration shield")
     void cannotBeRegenerated() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setRegenerationShield(1);
+        gd.addRegenerationShields(bears.getId(), 1);
         harness.setHand(player1, List.of(new RapidHybridization()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 

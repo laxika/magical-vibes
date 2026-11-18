@@ -35,7 +35,7 @@ class StifleTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, warchief.getCard().getId());
 
-        assertThat(warchief.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(warchief.getId())).isZero();
         assertThat(harness.getGameData().stack).isEmpty();
     }
 
@@ -80,7 +80,7 @@ class StifleTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetableId()).isEqualTo(remainingAbilityId);
-        assertThat(warchief.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(warchief.getId())).isZero();
         harness.assertOnBattlefield(player2, "Krosan Warchief");
         harness.assertNotInGraveyard(player2, "Krosan Warchief");
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
@@ -88,7 +88,7 @@ class StifleTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(warchief.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(warchief.getId())).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 

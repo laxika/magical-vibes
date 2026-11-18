@@ -27,7 +27,7 @@ class MendingHandsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getDamagePreventionShield()).isEqualTo(4);
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isEqualTo(4);
     }
 
     @Test
@@ -59,7 +59,7 @@ class MendingHandsTest extends BaseCardTest {
         }
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
@@ -82,7 +82,7 @@ class MendingHandsTest extends BaseCardTest {
     @DisplayName("Prevention shields are cleared at end of turn")
     void preventionShieldsClearedAtEndOfTurn() {
         Permanent perm = addCreatureReady(player1, new GrizzlyBears());
-        perm.setDamagePreventionShield(4);
+        gd.addPermanentDamagePreventionShield(perm.getId(), 4);
         harness.getGameData().addPlayerDamagePreventionShield(player1.getId(), 4);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -90,7 +90,7 @@ class MendingHandsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent afterCleanup = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(afterCleanup.getDamagePreventionShield()).isEqualTo(0);
+        assertThat(gd.permanentDamagePreventionShield(afterCleanup.getId())).isEqualTo(0);
         assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isEqualTo(0);
     }
 
@@ -109,7 +109,7 @@ class MendingHandsTest extends BaseCardTest {
         }
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         harness.assertOnBattlefield(player2, "Gnarled Mass");
     }
 
@@ -129,7 +129,7 @@ class MendingHandsTest extends BaseCardTest {
         }
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
     }
 
     @Test
@@ -163,7 +163,7 @@ class MendingHandsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.permanentDamagePreventionShield(target.getId())).isZero();
         assertThat(gd.playerDamagePreventionShields().getOrDefault(player1.getId(), 0)).isZero();
     }
 

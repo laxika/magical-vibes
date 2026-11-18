@@ -149,7 +149,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Chosen of Markov");
-        assertThat(fiend.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(fiend.getId())).isEqualTo(1);
     }
 
     @Test
@@ -235,7 +235,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Black Cat");
         harness.assertOnBattlefield(player2, "Chosen of Markov");
-        assertThat(fiend.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(fiend.getId())).isZero();
     }
 
     @Test
@@ -248,9 +248,9 @@ class FiendOfTheShadowsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         harness.assertInGraveyard(player1, "Chosen of Markov");
-        assertThat(fiend.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(fiend.getId())).isZero();
         harness.passBothPriorities();
-        assertThat(fiend.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(fiend.getId())).isEqualTo(1);
     }
 
     @Test
@@ -269,7 +269,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Fiend of the Shadows");
         harness.assertInGraveyard(player2, "Fiend of the Shadows");
-        assertThat(fiend.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(fiend.getId())).isZero();
         assertThat(fiend.isTapped()).isTrue();
         assertThat(fiend.isAttacking()).isFalse();
     }

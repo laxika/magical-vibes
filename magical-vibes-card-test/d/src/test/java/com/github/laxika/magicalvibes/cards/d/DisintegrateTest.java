@@ -84,7 +84,7 @@ class DisintegrateTest extends BaseCardTest {
     @DisplayName("Creature remains marked for exile if Disintegrate damage is prevented")
     void creatureWithPreventedDisintegrateDamageIsExiledIfItDiesLaterThatTurn() {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        bears.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(bears.getId(), 1);
 
         harness.setHand(player1, List.of(new Disintegrate()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -107,14 +107,14 @@ class DisintegrateTest extends BaseCardTest {
     @DisplayName("Creature cannot regenerate even when Disintegrate damage is prevented")
     void creatureCannotRegenerateWhenDamageIsPrevented() {
         Permanent skeleton = addCreatureReady(player2, new DrudgeSkeletons());
-        skeleton.setRegenerationShield(1);
-        skeleton.setDamagePreventionShield(1);
+        gd.addRegenerationShields(skeleton.getId(), 1);
+        gd.addPermanentDamagePreventionShield(skeleton.getId(), 1);
 
         harness.setHand(player1, List.of(new Disintegrate()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveSorcery(player1, 0, 1, skeleton.getId());
 
-        assertThat(skeleton.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(skeleton);
 
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
@@ -206,7 +206,7 @@ class DisintegrateTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Drudge Skeletons");
         assertThat(skeleton.isTapped()).isTrue();
         assertThat(skeleton.getMarkedDamage()).isZero();
-        assertThat(skeleton.getRegenerationShield()).isZero();
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isZero();
         assertThat(nomads.getMarkedDamage()).isZero();
     }
 }

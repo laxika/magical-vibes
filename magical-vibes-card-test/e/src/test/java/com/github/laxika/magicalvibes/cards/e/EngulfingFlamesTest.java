@@ -22,7 +22,7 @@ class EngulfingFlamesTest extends BaseCardTest {
     @DisplayName("Deals 1 damage and prevents regeneration of the target creature")
     void dealsDamageAndPreventsRegeneration() {
         Permanent grunt = addCreatureReady(player2, new DwarvenGrunt());
-        grunt.setRegenerationShield(1);
+        gd.addRegenerationShields(grunt.getId(), 1);
         harness.setHand(player1, List.of(new EngulfingFlames()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -83,7 +83,7 @@ class EngulfingFlamesTest extends BaseCardTest {
     @DisplayName("Prevents regeneration from later damage even when its own damage is prevented")
     void preventsRegenerationWhenDamageIsPrevented() {
         Permanent grunt = harness.addToBattlefieldAndReturn(player1, new DwarvenGrunt());
-        grunt.setDamagePreventionShield(1);
+        gd.addPermanentDamagePreventionShield(grunt.getId(), 1);
         harness.setHand(player1, List.of(new EngulfingFlames(), new Firebolt()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -92,7 +92,7 @@ class EngulfingFlamesTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Dwarven Grunt");
         assertThat(grunt.getMarkedDamage()).isZero();
         harness.assertInGraveyard(player1, "Engulfing Flames");
-        grunt.setRegenerationShield(1);
+        gd.addRegenerationShields(grunt.getId(), 1);
 
         harness.castAndResolveSorcery(player1, 0, grunt.getId());
 
@@ -104,7 +104,7 @@ class EngulfingFlamesTest extends BaseCardTest {
     @DisplayName("Flashback prevents an existing regeneration shield from saving a creature")
     void flashbackPreventsRegeneration() {
         Permanent grunt = harness.addToBattlefieldAndReturn(player2, new DwarvenGrunt());
-        grunt.setRegenerationShield(1);
+        gd.addRegenerationShields(grunt.getId(), 1);
         harness.setGraveyard(player1, List.of(new EngulfingFlames()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

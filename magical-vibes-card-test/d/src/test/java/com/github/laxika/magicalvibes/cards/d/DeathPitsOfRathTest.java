@@ -90,7 +90,7 @@ class DeathPitsOfRathTest extends BaseCardTest {
     void destructionCannotBeRegenerated() {
         harness.addToBattlefield(player1, new DeathPitsOfRath());
         Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        giant.setRegenerationShield(1);
+        gd.addRegenerationShields(giant.getId(), 1);
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -106,7 +106,7 @@ class DeathPitsOfRathTest extends BaseCardTest {
     void preventedDamageDoesNotTrigger() {
         harness.addToBattlefield(player1, new DeathPitsOfRath());
         Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        giant.setDamagePreventionShield(2);
+        gd.addPermanentDamagePreventionShield(giant.getId(), 2);
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 

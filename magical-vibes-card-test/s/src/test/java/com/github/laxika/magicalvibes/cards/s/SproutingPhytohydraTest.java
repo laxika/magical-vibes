@@ -112,7 +112,7 @@ class SproutingPhytohydraTest extends BaseCardTest {
     @DisplayName("Fully prevented damage does not trigger a copy")
     void fullyPreventedDamageDoesNotTrigger() {
         UUID phytohydraId = addPhytohydraAndSealOfFire();
-        findPermanent(player2, "Sprouting Phytohydra").setDamagePreventionShield(2);
+        gd.addPermanentDamagePreventionShield(findPermanent(player2, "Sprouting Phytohydra").getId(), 2);
 
         harness.activateAbility(player1, 0, null, phytohydraId);
         resolveAllTriggers();

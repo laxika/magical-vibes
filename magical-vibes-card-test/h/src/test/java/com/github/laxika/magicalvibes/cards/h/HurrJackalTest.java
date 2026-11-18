@@ -55,7 +55,7 @@ class HurrJackalTest extends BaseCardTest {
 
         assertThat(gd.cantBeRegenerated(skele.getId())).isTrue();
         // The mark does not touch the shield — it blocks regeneration outright.
-        assertThat(skele.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skele.getId())).isEqualTo(1);
     }
 
     // ===== Prevents regeneration =====
@@ -95,7 +95,7 @@ class HurrJackalTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertOnBattlefield(player2, "Drudge Skeletons");
-        assertThat(skele.getRegenerationShield()).isEqualTo(0);
+        assertThat(gd.regenerationShieldCount(skele.getId())).isEqualTo(0);
     }
 
     @Test
@@ -111,7 +111,7 @@ class HurrJackalTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(skele.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skele.getId())).isEqualTo(1);
     }
 
     // ===== Mark wears off =====
@@ -174,7 +174,7 @@ class HurrJackalTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Hurr Jackal");
         assertThat(gd.cantBeRegenerated(skeleton.getId())).isTrue();
-        assertThat(skeleton.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.regenerationShieldCount(skeleton.getId())).isEqualTo(1);
     }
 
     @Test
@@ -198,7 +198,7 @@ class HurrJackalTest extends BaseCardTest {
 
     private Permanent addRegeneratingSkeleton(Player player) {
         Permanent perm = addCreatureReady(player, new DrudgeSkeletons());
-        perm.setRegenerationShield(1);
+        gd.addRegenerationShields(perm.getId(), 1);
         return perm;
     }
 }
